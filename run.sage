@@ -16,7 +16,7 @@ Coh = Cohomology(G.Gpn,0,overconvergent = False,base = Qp(p,prec))
 CohOC = Cohomology(G.Gpn,0,overconvergent = True,base = Qp(p,prec))
 
 # set_verbose(0)
-# for l in [7,11,17]:
+# for l in [5,7,11,17]:
 #     print l
 #     print matrix(QQ,2,2,[o.rational_reconstruction() for o in Coh.hecke_matrix(l).list()])
 #     print '--'
@@ -27,7 +27,6 @@ assert matrix(QQ,2,2,[o.rational_reconstruction() for o in Coh.hecke_matrix(p).l
 # Apply t_r
 #PhiE = Coh.apply_hecke_operator(Coh.gen(0),5) - Coh.gen(0).__rmul__(6)
 PhiE = Coh.gen(0)
-
 
 #############################################
 # Overconvergent lift
@@ -41,7 +40,7 @@ cycle = G.embed_order(5,prec).hecke_smoothen(5)
 
 # Integration with Riemann sums
 tot_time = walltime()
-J = integrate_H1(G,cycle,PhiE,2,method = 'riemann')
+J = integrate_H1(G,cycle,PhiE,3,method = 'riemann') #,smoothen_prime = 5)
 print 'tot_time = %s'%walltime(tot_time)
 print J
 x,y = getcoords(E,J)
@@ -50,7 +49,7 @@ print x
 
 # Integration with moments
 tot_time = walltime()
-J = integrate_H1(G,cycle,PhiElift,1,method = 'moments')
+J = integrate_H1(G,cycle,PhiElift,1,method = 'moments',smoothen_prime = 5)
 print 'tot_time = %s'%walltime(tot_time)
 print J
 x,y = getcoords(E,J)
