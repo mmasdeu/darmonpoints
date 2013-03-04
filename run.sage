@@ -40,7 +40,7 @@ cycle = G.embed_order(5,prec).hecke_smoothen(5)
 
 # Integration with Riemann sums
 tot_time = walltime()
-J = integrate_H1(G,cycle,PhiE,3,method = 'riemann') #,smoothen_prime = 5)
+J = integrate_H1(G,cycle,PhiE,2,method = 'riemann') #,smoothen_prime = 5)
 print 'tot_time = %s'%walltime(tot_time)
 print J
 x,y = getcoords(E,J)
@@ -49,7 +49,7 @@ print x
 
 # Integration with moments
 tot_time = walltime()
-J = integrate_H1(G,cycle,PhiElift,1,method = 'moments',smoothen_prime = 5)
+J = integrate_H1(G,cycle,PhiElift,1,method = 'moments') #,smoothen_prime = 5)
 print 'tot_time = %s'%walltime(tot_time)
 print J
 x,y = getcoords(E,J)
