@@ -1,7 +1,7 @@
 p= 13
 D = 2*3
 Np = 1
-prec = 20
+prec = 10
 E = EllipticCurve(str(p*D*Np))
 P_E = E.base_extend(QuadraticField(5,names = 'a')).lift_x(-2)
 set_verbose(1)
@@ -40,7 +40,7 @@ cycle = G.embed_order(5,prec).hecke_smoothen(5)
 
 # Integration with Riemann sums
 tot_time = walltime()
-J = integrate_H1(G,cycle,PhiE,2,method = 'riemann') #,smoothen_prime = 5)
+J = integrate_H1(G,cycle,PhiE,2,method = 'riemann')#,smoothen_prime = 5)
 print 'tot_time = %s'%walltime(tot_time)
 print J
 x,y = getcoords(E,J)
@@ -49,7 +49,7 @@ print x
 
 # Integration with moments
 tot_time = walltime()
-J = integrate_H1(G,cycle,PhiElift,1,method = 'moments') #,smoothen_prime = 5)
+J = integrate_H1(G,cycle,PhiElift,1,method = 'moments',smoothen_prime = 5)
 print 'tot_time = %s'%walltime(tot_time)
 print J
 x,y = getcoords(E,J)
@@ -65,6 +65,33 @@ for n in range(1,200):
     if val > 10:
         break
     nP_E += P_E
+
+# Measure tests
+Up_reps = G.get_Up_reps()
+sj = Up_reps[2]
+emb = G.get_embedding(prec)
+
+# We get the corresponding open of Zp by looking at the opens given by BTreps
+for i,e in enumerate(G.get_covering(1)):
+    _,g,_ = list(e)
+    pt1 = emb( g * sj**-1 ) * matrix(2,1,[0,1])
+    pt2 = emb( sj * g**-1 ) * matrix(2,1,[0,1])
+    val1 = (pt1[0,0]/pt1[1,0]).valuation()
+    val2 = (pt2[0,0]/pt2[1,0]).valuation()
+    if val1 >= 0 and val2 >= 0:
+        print i,val1,val2
+        res = e
+
+a,b,c,d = emb(list(res)[1]**-1).list()
+fd = lambda x: ((a*x+b)/(c*x+d))^3
+cover = G.subdivide([res],3)
+gamma = G.Gn.gen(2).quaternion_rep
+hc = PhiE.shapiro_image(G)(gamma)
+J = Qp(p,prec)(riemann_sum(G,fd,hc,cover = cover));print J
+
+ti = G.Gn.get_hecke_ti(sj,gamma,p).quaternion_rep
+J2 = PhiElift.shapiro_image(G)(ti)(BTEdge(False,G.get_BT_reps()[0],'even'))._moments[3]
+
 
 
 # We test the measures directly
