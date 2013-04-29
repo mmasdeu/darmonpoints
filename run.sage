@@ -1,60 +1,86 @@
 p= 13
 D = 2*3
 Np = 1
-prec = 10
+dK = 5
+ell = 7
+prec = 20
 E = EllipticCurve(str(p*D*Np))
-P_E = E.base_extend(QuadraticField(5,names = 'a')).lift_x(-2)
+# P_E = E.base_extend(QuadraticField(dK,names = 'a')).lift_x(-2)
 set_verbose(1)
-total_magma_time = 0
 G = BigArithGroup(p,D,Np)
 
 # Test that coverings work
-points_test(G,2)
+# points_test(G,2)
 
 # Calculate PhiE, the cohomology class associated to the curve E.
-Coh = Cohomology(G.Gpn,0,overconvergent = False,base = Qp(p,prec))
+Coh = CohomologyTrivialCoeffs(G.Gpn,0,base = QQ)
 CohOC = Cohomology(G.Gpn,0,overconvergent = True,base = Qp(p,prec))
 
 # set_verbose(0)
 # for l in [5,7,11,17]:
 #     print l
-#     print matrix(QQ,2,2,[o.rational_reconstruction() for o in Coh.hecke_matrix(l).list()])
+#     print matrix(QQ,2,2,[o for o in Coh.hecke_matrix(l).list()])
 #     print '--'
 # set_verbose(1)
-# print Coh.involution_at_infinity_matrix()
-assert matrix(QQ,2,2,[o.rational_reconstruction() for o in Coh.hecke_matrix(p).list()]) == 1
+print Coh.involution_at_infinity_matrix()
+#assert matrix(QQ,2,2,[o for o in Coh.hecke_matrix(p).list()]) == 1
 
-# Apply t_r
-#PhiE = Coh.apply_hecke_operator(Coh.gen(0),5) - Coh.gen(0).__rmul__(6)
+
+# For D = 2 * 5
+# PhiE = Coh.gen(0) + Coh.gen(1) + Coh.gen(3)
+
+# For D = 2 * 3
 PhiE = Coh.gen(0)
+
+# Define the cycle ( in H_1(G,Div^0 Hp) )
+cycleGn,nn = G.construct_cycle(dK,prec,hecke_smoothen = ell)
 
 #############################################
 # Overconvergent lift
 VOC = CohOC.coefficient_module()
-PhiElift = CohOC([VOC(b).lift(M = prec) for b in PhiE.values()])
-PhiElift.improve()
-
+PhiElift = CohOC([VOC(QQ(PhiE.evaluate(g)[0])).lift(M = prec) for g in G.Gpn.gens()])
+# PhiElift = CohOC([VOC(matrix(Qp(p,prec),prec + 1, 1,[QQ(PhiE.evaluate(g)[0])]+[0]*prec)) for g in G.Gpn.gens()])
+PhiElift = PhiElift.improve(prec = prec)
 ####################################################
-# Define the cycle ( in H_1(G,Div^0 Hp) )
-cycle = G.embed_order(5,prec).hecke_smoothen(5)
+
+
+###
+# Integration with moments
+tot_time = walltime()
+J = integrate_H1(G,cycleGn,PhiElift,1,method = 'moments',orig_cocycle = PhiE) # do not smoothen
+print 'tot_time = %s'%walltime(tot_time)
+print J
+x,y = getcoords(E,J)
+print x
+## Should be 11 + 8*13 + 5*13^2 + 9*13^3 + 9*13^4 + 5*13^5 + 5*13^6 + 4*13^7 + 7*13^8 + 8*13^9 + O(13^10)
 
 # Integration with Riemann sums
 tot_time = walltime()
-J = integrate_H1(G,cycle,PhiE,2,method = 'riemann')#,smoothen_prime = 5)
+J = integrate_H1(G,cycleGn,PhiE,2,method = 'riemann') # do not smoothen
 print 'tot_time = %s'%walltime(tot_time)
 print J
 x,y = getcoords(E,J)
+print '------\n'
 print x
-## Should be 11 + 8*13 + 5*13^2 + O(13^3)
+print y
+## Should be 11 + 8*13 + 5*13^2 + 9*13^3 + 9*13^4 + 5*13^5 + 5*13^6 + 4*13^7 + 7*13^8 + 8*13^9 + O(13^10)
 
-# Integration with moments
-tot_time = walltime()
-J = integrate_H1(G,cycle,PhiElift,1,method = 'moments',smoothen_prime = 5)
-print 'tot_time = %s'%walltime(tot_time)
-print J
-x,y = getcoords(E,J)
-print x
-## Should be 11 + 8*13 + 5*13^2 + O(13^3)
+Jlog = J.log()
+Cp = Jlog.parent()
+addpart = Jlog/(2*nn)
+for a,b in product(range(p),repeat = 2):
+    if a == 0 and b == 0:
+        continue
+    multpart = Cp.teichmuller(a + Cp.gen()*b)
+    J1 = multpart * addpart.exp()
+    x,y = getcoords(E,J1)
+    try:
+        poly = algdep(x+O(p^17),2)
+        print "%s,%s:\t(%s) %s"%(a,b,poly,poly.discriminant().squarefree_part())
+    except PariError:
+        continue
+
+Jgood = addpart.exp()
 
 ## Check for multiples of P_E that agree
 nP_E = P_E
@@ -67,7 +93,7 @@ for n in range(1,200):
     nP_E += P_E
 
 # Measure tests
-Up_reps = G.get_Up_reps()
+Up_reps = G.Gpn.get_Up_reps(p)
 sj = Up_reps[2]
 emb = G.get_embedding(prec)
 
@@ -91,8 +117,6 @@ J = Qp(p,prec)(riemann_sum(G,fd,hc,cover = cover));print J
 
 ti = G.Gn.get_hecke_ti(sj,gamma,p).quaternion_rep
 J2 = PhiElift.shapiro_image(G)(ti)(BTEdge(False,G.get_BT_reps()[0],'even'))._moments[3]
-
-
 
 # We test the measures directly
 reps = G.get_BT_reps()
@@ -131,7 +155,7 @@ hc = PhiE.shapiro_image(G)(gvec[0])
 ebad = None
 edgelist = G.get_covering(2)
 for e in edgelist:
-    subdiv = G.subdivide([e],1)
+    subdiv = G.subdivide([e],1,1)
     mue = measure_test(G,hc,[e])
     print 'mue =', mue
     if mue != measure_test(G,hc,subdiv):
@@ -141,23 +165,153 @@ if ebad is None:
     print 'Great!'
 else:
     print ':-('
-    subdiv = G.subdivide([ebad],1)
+    subdiv = G.subdivide([ebad],1,1)
     print [G.reduce_in_amalgam(e[1]) for e in subdiv]
 
 # Test the sample points
-level = 2
+level = 3
+#edgelist = G.get_covering(level)
 edgelist = G.get_covering(level)
 v = []
 vinf = []
 for e in edgelist:
     te = sample_point(G,e,prec = 20)
     if te == Infinity:
-        print 'Infty'
+        vinf.append(-1)
     elif te.valuation() < 0 :
-        vinf.append(Zmod(p^(level-1))(-1/(p*te)))
+        vinf.append(Zmod(p^(level))(-1/(p*te)))
     else:
         v.append(Zmod(p^level)(te).lift())
 print factor(len(set(v)))
 print factor(len(set(vinf)))
 
-points_test(G,3)
+points_test(G,2)
+
+# Test the BT reps
+level = 1
+reps = G.get_BT_reps()
+v = []
+vinf = []
+emb = G.get_embedding(10)
+for e in reps:
+    a,b,c,d = emb(e**-1).list()
+    if d == 0:
+        vinf.append(-1)
+    elif (b/d).valuation() < 0:
+        vinf.append(-1)
+    else:
+        v.append(Zmod(p)(b/d).lift())
+print factor(len(set(v)))
+print factor(len(set(vinf)))
+
+###### Test moment method (1) ################
+depth = 3
+g = G.Gpn.gen(3).quaternion_rep
+
+emb = G.get_embedding(prec)
+Cp =  cycleGn.parent().coefficient_module().base_ring()
+K.<T> = PolynomialRing(Cp)
+mom = 6
+phi = T^mom
+
+phi2 =  lambda t : phi(t)
+cover = G.subdivide([BTEdge(False, 1)], 1, depth)
+
+J1 = Cp(riemann_sum(G,phi2,PhiE.shapiro_image(G)(g),-1,cover))
+print '..'
+print J1 #11 + 4*13 + 2*13^2
+J2 = PhiElift.evaluate(G.Gpn(g)).moment(mom) # (E.ap(5)-6) *
+print '..'
+print J2
+print 'error:'
+print J1-J2
+print 'ratio:'
+print J1/J2
+##########################################
+
+
+####################
+g = (G.Gpn.gen(3)**-1*G.Gpn.gen(2)**2).quaternion_rep
+emb = G.get_embedding(prec)
+Upreps = G.Gpn.get_Up_reps()
+Cp =  cycleGn.parent().coefficient_module().base_ring()
+K.<T> = PolynomialRing(Cp)
+mom = 2
+phi = T**mom
+R1.<r1> = LaurentSeriesRing(Cp)
+
+J1 = PhiElift.evaluate(G.Gpn(g)).moment(mom)
+print J1
+J2 = 0
+for j in range(p):
+    sj = Upreps[j]
+    a,b,c,d = emb(sj).list()
+    tj = G.Gpn.get_hecke_ti(sj,g,p,reps = Upreps)
+    mu_e = PhiElift.evaluate(G.Gpn(tj))
+    pol = phi((R1(a)*r1+R1(b))/(R1(c)*r1+R1(d)))
+    J2 += sum(Cp(a*mu_e.moment(i)) for a,i in izip(pol.coefficients(),pol.exponents()) if i < prec)
+print '..'
+print J2
+print 'error:'
+print J1-J2
+print 'ratio:'
+print J1/J2
+##########################################
+
+
+####################
+wd1 = G.Gpn._relation_words[7][:8]
+wd2 = G.Gpn._relation_words[7][8:]
+g1 = G.Gpn(wd1)
+
+g2 = G.Gpn(wd2)
+print g2.quaternion_rep
+g2 = g2**-1
+
+tmp = PhiElift.evaluate(G.Gpn(g1)) - PhiElift.evaluate(G.Gpn(g2))
+##########################################
+
+###################3
+
+###### Test moment method (2) ################
+j = 6
+depth = 3
+g = (G.Gpn.gen(3)**-1*G.Gpn.gen(2)**2).quaternion_rep
+
+emb = G.get_embedding(prec)
+Upreps = G.Gpn.get_Up_reps()
+sj = Upreps[j]
+Cp =  cycleGn.parent().coefficient_module().base_ring()
+K.<T> = PolynomialRing(Cp)
+phi = T**2
+
+phi2 =  lambda t : phi(t)
+cover = G.subdivide([BTEdge(True, G.get_BT_reps()[j+1])], 0, depth - 1)
+J1 = Cp(riemann_sum(G,phi2,PhiE.shapiro_image(G)(g),-1,cover))
+print '..'
+print J1 #
+
+a,b,c,d = emb(sj).list()
+R1.<r1> = LaurentSeriesRing(Cp)
+tj = G.Gpn.get_hecke_ti(sj,g,p,reps = Upreps)
+mu_e = PhiElift.evaluate(G.Gpn(tj))
+pol = phi((a*r1+b)/(c*r1+d))
+J2 = sum(Cp(a*mu_e.moment(i)) for a,i in izip(pol.coefficients(),pol.exponents()) if i < prec)
+print '..'
+print J2
+print 'error:'
+print J1-J2
+##########################################
+
+###########
+good_dK = []
+for dK in range(1000,10000):
+    if not is_fundamental_discriminant(dK):
+        continue
+    if kronecker_symbol(dK,2) != -1:
+        continue
+    if kronecker_symbol(dK,3) != -1:
+        continue
+    if kronecker_symbol(dK,13) != -1:
+        continue
+    good_dK.append(dK)

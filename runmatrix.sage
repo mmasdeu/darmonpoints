@@ -16,8 +16,8 @@ Coh = Cohomology(G.Gpn,0,overconvergent = False, base = Qp(p,prec))
 
 r = 3
 
-#PhiE = Coh.Coh.gen(0)
-Coh.apply_hecke_operator(PhiE,r) - (r+1)*PhiE
+PhiE = Coh.gen(0)
+# Coh.apply_hecke_operator(PhiE,r) - (r+1)*PhiE
 
 h0 = G.embed_order(disc,20) #.hecke_smoothen(r)
 
