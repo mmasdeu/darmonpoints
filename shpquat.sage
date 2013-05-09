@@ -8,6 +8,7 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.modular.pollack_stevens.distributions import Distributions, Symk
 from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
+from util import *
 
 class BTEdge(SageObject):
     r'''
@@ -40,178 +41,10 @@ class _our_adjuster(Sigma0ActionAdjuster):
         a,b,c,d = g.list()
         return tuple([d,b,c,a])
 
-def is_in_Sigma0(x):
-    if x.determinant() == 0:
-        return False
-    a,b,c,d = _our_adjuster()(x)
-    if c.valuation() < 1:
-        return False
-    if a.valuation() != 0:
-        return False
-    if b.valuation() < 0 or d.valuation() < 0:
-        return False
-    return True
-
 sys.setrecursionlimit(10**6)
-
-def set_immutable(x):
-    try:
-        x.set_immutable()
-        return x
-    except AttributeError:
-        return x
 
 def GG(x,y):
     return [(1,x,y),(-1,y,x),(-1,y*x,(y*x)**-1),(1,x*y,(y*x)**-1)]
-
-def act_flt(g,x):
-    a,b,c,d = g.list()
-    return (a*x + b)/(c*x + d)
-
-def act_flt_in_disc(g,x,P):
-    z = (P.conjugate()*x - P)/(x-1)
-    a,b,c,d = g.list()
-    z1 = (a*z + b)/(c*z + d)
-    return (z1 - P)/(z1 - P.conjugate())
-
-def translate_into_twosided_list(V):
-    vp,vm = V
-    return [None] + vp + list(reversed(vm))
-
-def getcoords(E,u,prec,R = None):
-    if R is None:
-        R = u.parent()
-        u = R(u)
-    p = R.prime()
-    jE = E.j_invariant()
-
-    # Calculate the Tate parameter
-    E4 = EisensteinForms(weight=4).basis()[0]
-    Delta = CuspForms(weight=12).basis()[0]
-    j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reversion()(R(1/jE))
-
-    # Normalize the period by appropriate powers of qE
-    un = u * qE**(-(u.valuation()/qE.valuation()).floor())
-
-    precn = (prec/qE.valuation()).floor() + 4
-    # formulas in Silverman II (Advanced Topics in the Arithmetic of Elliptic curves, p. 425)
-    xx = un/(1-un)**2 + sum( [qE**n*un/(1-qE**n*un)**2 + qE**n/un/(1-qE**n/un)**2-2*qE**n/(1-qE**n)**2 for n in range(1,precn) ])
-    yy = un**2/(1-un)**3 + sum( [qE**(2*n)*un**2/(1-qE**n*un)**3 - qE**n/un/(1-qE**n/un)**3+qE**n/(1-qE**n)**2 for n in range(1,precn) ])
-
-
-    sk = lambda q,k,pprec: sum( [n**k*q**n/(1-q**n) for n in range(1,pprec+1)] )
-    n = qE.valuation()
-    precp = ((prec+4)/n).floor() + 2;
-
-    tate_a4 = -5  * sk(qE,3,precp)
-    tate_a6 = (tate_a4 - 7 * sk(qE,5,precp) )/12
-    Eq = EllipticCurve([R(1),R(0),R(0),tate_a4,tate_a6])
-
-    C2 = (Eq.c4() * E.c6()) / (Eq.c6() * E.c4())
-
-    C = our_sqrt(R(C2),R) #R(C2).square_root()
-    s = (C - R(E.a1()))/R(2)
-    r = (s*(C-s) - R(E.a2())) / 3
-    t =  (r*(2*s-C)-R(E.a3())) / 2
-    return  ( r + C2 * xx, t + s * C2 * xx + C * C2 * yy )
-
-def our_sqrt(x,K):
-    if x==0:
-        return x
-    x=K(x)
-    p=K.base_ring().prime()
-    valp = x.valuation(p)
-    try:
-        eK = K.ramification_index()
-    except AttributeError:
-        eK = 1
-    valpi = eK * valp
-    if valpi % 2 != 0:
-        raise RuntimeError,'Not a square'
-    x = p**(-valp) * x
-    z = K.gen()
-    deg = K.degree()
-    found = False
-    for avec in product(range(p),repeat=deg):
-        y0 = avec[0]
-        for a in avec[1:]:
-            y0 = y0*z + a
-        if (y0**2-x).valuation() > 0:
-            found = True
-            break
-    if found == False:
-        raise RuntimeError,'Not a square'
-    y1 = y0
-    y = 0
-    while y != y1:
-        y = y1
-        y1 = (y**2+x)/(2*y)
-    return K.uniformizer()**(ZZ(valpi/2)) * y
-
-def enumerate_words(v, n = None):
-    if n is None:
-        n = []
-    while True:
-        add_new = True
-        for jj in range(len(n)):
-            n[jj] += 1
-            if n[jj] != len(v):
-                add_new = False
-                break
-            else:
-                n[jj] = 0
-        if add_new:
-            n.append(0)
-        yield [v[x] for x in n]
-
-def cantor_diagonal(iter1,iter2):
-    v1 = [iter1.next()]
-    v2 = [iter2.next()]
-    while True:
-        for a,b in zip(v1,v2):
-            yield a,b
-        v1.append(iter1.next())
-        v2.insert(0,iter2.next())
-
-def shorten_word(longword):
-    r'''
-    Converts a word in Magma format into our own format.
-
-        TESTS:
-
-            sage: short = shorten_word([1,1,-3,-3,-3,2,2,2,2,2,-1,-1,-1])
-            sage: print short
-            [(0, 2), (2, -3), (1, 5), (0, -3)]
-    '''
-    return [(a-1,len(list(g))) if a > 0 else (-a-1,-len(list(g))) for a,g in groupby(longword)]
-
-def reduce_word(word):
-    r'''
-    Simplifies the given word by cancelling out [g^a, g^b] -> [g^(a+b)],
-    and [g^0] -> []
-    '''
-    new_word = copy(word)
-    old_word = []
-    while len(new_word) != len(old_word):
-        old_word = new_word
-        for i in range(len(old_word)-1):
-            if old_word[i][0] == old_word[i+1][0]:
-                new_exp = old_word[i][1]+old_word[i+1][1]
-                if new_exp != 0:
-                    new_word = old_word[:i]+[(old_word[i][0],new_exp)]+old_word[i+2:]
-                else:
-                    new_word = old_word[:i]+old_word[i+2:]
-                break
-    return new_word
-
-def is_in_Gamma0loc(A,det_condition = True):
-    r'''
-    Whether the matrix A has all entries Zp-integral, and is upper-triangular mod p.
-    '''
-    if det_condition == True and A.determinant() != 1:
-        return False
-    return all([o.valuation() >=0 for o in A.list()]) and A[1,0].valuation() > 0
 
 class ArithGroupAction(sage.categories.action.Action):
     def __init__(self,G,M):
@@ -526,9 +359,13 @@ class BigArithGroup(AlgebraicGroup):
                 verbose('...')
                 n += 1
                 gamman *= gamma
-        if hecke_smoothen is not None:
-            tmp = tmp.hecke_smoothen(hecke_smoothen,prec = prec)
-        return tmp,n
+        if hecke_smoothen:
+            q = ZZ(2)
+            D = self.Gpn.O.discriminant()
+            while D%q == 0:
+                q = q.next_prime()
+            tmp = tmp.hecke_smoothen(q,prec = prec)
+        return tmp,n,q
 
 class ArithGroup(AlgebraicGroup):
     def __init__(self,discriminant,level,info_magma = None):
@@ -1104,7 +941,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
             refering to fixed generators, and the ai are integers, or
             an element of the quaternion algebra ``self.parent().quaternion_algebra()``
         '''
-
         MultiplicativeGroupElement.__init__(self, parent)
         init_data = False
         self.has_word_rep = False
@@ -1259,59 +1095,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
 ##                  ##
 ######################
 
-def apply_hecke_operator(coh_group,c,l,fix_first_moments = False,hecke_reps = None,group = None,scale = 1):
-    r"""
-    Apply the l-th Hecke operator operator to ``c``.
-
-    EXAMPLES::
-
-    """
-    if hecke_reps is None:
-        hecke_reps = coh_group.group().get_hecke_reps(l)
-    V = coh_group.coefficient_module()
-    if V.base_ring().is_exact():
-        prec = 200
-    else:
-        prec = V.base_ring().precision_cap()
-
-    Gpn = coh_group.group()
-    group = Gpn
-    emb = Gpn.get_embedding(prec)
-    vals = []
-    if fix_first_moments:
-        try:
-            orig_moments = [v._moments[0] for v in c.values()]
-        except IndexError:
-            orig_moments = [V(0) for v in c.values()]
-    R = V.base_ring()
-    if hasattr(coh_group.coefficient_module(),'dimension'):
-        gammas = []
-        Gab,Vmod,free_idx = Gpn.abelianization()
-        for i in free_idx:
-            idxlist = list(Gab.gen(i).lift())
-            gammas.append(prod([t**a for a,t in zip(idxlist,Gpn.gens()) if a != 0]))
-    else:
-        gammas = Gpn.gens()
-
-    for j,gamma in enumerate(gammas):
-        newval = V(0)
-        for gk1 in hecke_reps:
-            tig = group.get_hecke_ti(gk1,gamma.quaternion_rep,l,reps = hecke_reps)
-            val0 = c.evaluate(tig)
-            try:
-                newval += coh_group._Sigma0(emb(gk1)) * val0
-            except AttributeError:
-                newval += val0
-        if fix_first_moments:
-            try:
-                newval._moments[0] = orig_moments[j] # only works for weight 0!
-            except TypeError:
-                pass
-        vals.append(scale * newval)
-    return coh_group(vals)
-
-
-class CohomologyTrivialCoeffsClass(ModuleElement):
+class CohomologyElement(ModuleElement):
     def __init__(self, parent, data):
         r'''
         Define an element of `H^1(G,ZZ)`
@@ -1335,8 +1119,11 @@ class CohomologyTrivialCoeffsClass(ModuleElement):
         V = parent.coefficient_module()
         if isinstance(data,list):
             self._val = [V(o) for o in data]
-        else:
+        elif parent.is_overconvergent:
+            self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
+        elif not parent.is_overconvergent:
             self._val = [V(data.evaluate(b)) for b in parent._space.domain().basis()]
+
         ModuleElement.__init__(self,parent)
 
     def values(self):
@@ -1358,14 +1145,17 @@ class CohomologyTrivialCoeffsClass(ModuleElement):
         return self.__class__(self.parent(),[ZZ(right) * a for a in self._val])
 
     def shapiro_image(self,G):
+        if self.parent().is_overconvergent():
+            raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
-    @cached_method
     def evaluate(self,x):
-        word = tuple(x.word_rep)
-        G = self.parent().group()
-        V = self.parent().coefficient_module()
-        return sum([a*self._evaluate_at_group_generator(g) for g,a in word],V(0))
+        word = tuple(self.parent().group()(x).word_rep)
+        if self.parent().is_overconvergent:
+            return self._evaluate_word(word)
+        else:
+            V = self.parent().coefficient_module()
+            return sum([a*self._evaluate_at_group_generator(g) for g,a in word],V(0))
 
     @cached_method
     def _evaluate_at_group_generator(self,j): # j is the index in Gpn.gens()
@@ -1378,189 +1168,14 @@ class CohomologyTrivialCoeffsClass(ModuleElement):
         val0 = sum((ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0),coeff_module(0))
         return val0
 
-class CohomologyTrivialCoeffs(Parent):
-    Element = CohomologyTrivialCoeffsClass
-    def __init__(self,G,n,base = None):
-        self._group = G
-        if base is None:
-            base = QQ
-        self._coeffmodule = base**1
-        self._Ga,self._V,self._free_idx = G.abelianization()
-        self._num_abgens = len(self._free_idx)
-        self._F = QQ**self._num_abgens
-        self._space = Hom(self._F,self._coeffmodule)
-        Parent.__init__(self)
-
-    def _an_element_(self):
-        return self.gen(0)
-
-    def _element_constructor_(self,data):
-        if isinstance(data,list):
-            return self.element_class(self,data)
-        elif isinstance(data.parent(),Cohomology):
-            V = self.coefficient_module()
-            tmp = []
-            for i in self._free_idx:
-                idxlist = list(self._Ga.gen(i).lift())
-                tmp.append([a*data.evaluate(t).moment(0).rational_reconstruction() for a,t in zip(idxlist,self.group().gens()) if a != 0])
-            return self.element_class(self,tmp)
-        else:
-            raise RuntimeError
-
-    def _coerce_map_from_(self,S):
-        if isinstance(S,(Cohomology,CohomologyTrivialCoeffs)):
-            return True
-        else:
-            return False
-
-    def construct_element_from_vector(self,v):
-        return sum([a*self.gen(i) for i,a in enumerate(v) if a != 0],self(self._num_abgens * [0]))
-
-    def group(self):
-        return self._group
-
-    def _repr_(self):
-        return 'H^1(G,V), with G being %s and V = %s'%(self.group(),self.coefficient_module())
-
-    def coefficient_module(self):
-        return self._coeffmodule
-
-    def basis(self):
-        return self._space.basis()
-
-    def group_rank(self):
-        return self._num_abgens
-
-    def dimension(self):
-        return len(self.basis())
-
-    def gen(self,i):
-        phi = self.basis()[i]
-        dom = phi.domain()
-        return self([phi(o) for o in dom.gens()])
-
-    def gens(self):
-        return [self.gen(i) for i in range(self.dimension())]
-
     @cached_method
-    def hecke_matrix(self,l):
-        if self._group.discriminant == 1:
-            raise NotImplementedError
-        if self.coefficient_module().dimension() > 1:
-            raise NotImplementedError
-        H = self._space
-        Gpn = self.group()
-        dim = self.dimension()
-        gprank = self.group_rank()
-        R = self.coefficient_module().base_ring()
-        M = matrix(R,dim,dim,0)
-        for j,cocycle in enumerate(self.gens()):
-            # Construct column j of the matrix
-            Tc = [o[0] for o in self.apply_hecke_operator(cocycle,l).values()]
-            # Tc = []
-            # for i in self._free_idx:
-            #     idxlist = list(self._Ga.gen(i).lift())
-            #     Tc.append([a*t[0] for a,t in zip(idxlist,tmp) if a != 0])
-            M.set_column(j,Tc)
-        return M
-
-    def apply_hecke_operator(self,c,l,hecke_reps = None,group = None,scale = 1):
-        r"""
-        Apply the l-th Hecke operator operator to ``c``.
-        """
-        return apply_hecke_operator(self,c,l,hecke_reps = hecke_reps, group = group,scale = scale)
-
-    @cached_method
-    def involution_at_infinity_matrix(self):
-        emb = self.group().get_embedding(20)
-        H = self._space
-        Gpn = self.group()
-        Obasis = Gpn.Obasis
-        for V in product(range(-5,6),repeat = len(Obasis)):
-            x = sum((v*o for v,o in zip(V,Obasis)))
-            rednrm = x.reduced_norm() if self.group().discriminant != 1 else x.determinant()
-            if rednrm == -1:
-                found = True
-                break
-        assert found
-        dim = self.dimension()
-        M = matrix(QQ,dim,dim,0)
-        for j,c in enumerate(self.gens()):
-            # Construct column j of the matrix
-            for i in range(dim):
-                ti = x**-1 * prod([Gpn.gen(idx)**a for idx,a in zip(range(len(Gpn.gens())),list(self._Ga.gen(self._free_idx[i]).lift()))]).quaternion_rep * x
-                tmp = Gpn(ti)
-                M[i,j] = c.evaluate(tmp)[0]
-        return M
-
-##########################
-#
-# Nontrivial coefficients
-#
-##########################
-
-class CohomologyClass(ModuleElement):
-    def __init__(self, parent, data):
-        r'''
-        Define an element of `H^1(G,V)`
-
-        INPUT:
-            - G: a BigArithGroup
-            - V: a CoeffModule
-            - data: a list
-
-        TESTS:
-
-            sage: G = BigArithGroup(5,6,1)
-            sage: V = QQ^1
-            sage: Coh = Cohomology(G,V)
-            sage: print Coh.hecke_matrix(13).eigenvalues()
-            [2,2]
-            sage: print Coh.hecke_matrix(7).eigenvalues()
-            [4,-4]
-            sage: PhiE = Coh.gen(1)
-        '''
-        G = parent.group()
-        V = parent.coefficient_module()
-        if not isinstance(data,list):
-            raise ValueError,'Expecting a list'
-        if len(data) != len(G.gens()):
-            raise ValueError,'Passed %s values, need %s'%(len(data),len(G.gens()))
-        self._val = [V(o) for o in data]
-        ModuleElement.__init__(self,parent)
-
-    def values(self):
-        return self._val
-
-    def _repr_(self):
-        return 'Cohomology class %s'%self._val
-
-    def  _add_(self,right):
-        return self.__class__(self.parent(),[a+b for a,b in zip(self._val,right._val)])
-
-    def  _sub_(self,right):
-        return self.__class__(self.parent(),[a+ ZZ(-1)*b for a,b in zip(self._val,right._val)])
-
-    def  _neg_(self):
-        return self.__class__(self.parent(),[ZZ(-1) * a for a in self._val])
-
-    def  __rmul__(self,right):
-        return self.__class__(self.parent(),[ZZ(right) * a for a in self._val])
-
-    def evaluate(self,x):
-        if x.parent() is not self.parent().group():
-            x = self.parent().group()(x)
-        return self.evaluate_word(tuple(x.word_rep))
-
-    @cached_method
-    def evaluate_word(self,word):
+    def _evaluate_word(self,word):
         r''' Evaluate recursively, using cocycle condition:
         self(gh) = self(g) + g*self(h)
         This implies also that:
         1) self(g^a) = self(g^b) + g^b*self(g^(a-b)) (will apply it to b = a // 2, a > 0
         2) self(g^-1) = - g^(-1)*self(g)
         '''
-        # verbose('evaluating word %s'%list(word))
         G = self.parent().group()
         V = self.parent().coefficient_module()
         Sigma0 = self.parent()._Sigma0
@@ -1574,7 +1189,7 @@ class CohomologyClass(ModuleElement):
             elif a == -1:
                 return -(Sigma0(emb(G.gen(g).quaternion_rep**-1)) * self._val[g])
             elif a < 0:
-                return -(Sigma0(emb(G.gen(g).quaternion_rep**a)) * self.evaluate_word(tuple([(g,-a)])))
+                return -(Sigma0(emb(G.gen(g).quaternion_rep**a)) * self._evaluate_word(tuple([(g,-a)])))
             elif a == 1:
                 return self._val[g]
             else:
@@ -1586,25 +1201,22 @@ class CohomologyClass(ModuleElement):
         else:
             pivot = len(word) // 2
             gamma = prod([G.gen(g).quaternion_rep**a for g,a in word[:pivot]],G.B(1))
-            return self.evaluate_word(tuple(word[:pivot])) + Sigma0(emb(gamma)) *  self.evaluate_word(tuple(word[pivot:]))
+            return self._evaluate_word(tuple(word[:pivot])) + Sigma0(emb(gamma)) *  self._evaluate_word(tuple(word[pivot:]))
 
-
-    def improve(self,group = None,prec = None,sign = 1):
+    def improve(self,prec = None,sign = 1):
         r"""
         Repeatedly applies U_p.
 
         EXAMPLES::
 
         """
-        MMM = self.parent()
-        U = MMM.coefficient_module()
+        U = self.parent().coefficient_module()
         p = U.base_ring().prime()
-        if group is None:
-            group = self.parent().group()
+        group = self.parent().group()
         if prec is None:
             prec = U.precision_cap()
         reps = group.get_Up_reps()
-        h2 = MMM.apply_hecke_operator(self,p,fix_first_moments = False, hecke_reps = reps,group = group,scale = sign)
+        h2 = self.parent().apply_hecke_operator(self,p, hecke_reps = reps,group = group,scale = sign)
         verbose('%s'%h2,level = 2)
         verbose("Applied Up once")
         ii = 0
@@ -1614,55 +1226,36 @@ class CohomologyClass(ModuleElement):
             h1 = h2
             old_val = current_val
             ii += 1
-            h2 = MMM.apply_hecke_operator(h1,p, fix_first_moments = False, hecke_reps = reps,group = group,scale = sign)
+            h2 = self.parent().apply_hecke_operator(h1,p, hecke_reps = reps,group = group,scale = sign)
             verbose('%s'%h2,level = 2)
-
             current_val = min([(h2._val[i] - h1._val[i]).valuation() for i in range(len(h2._val))])
             verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
         self._val = h2._val
         verbose('Final precision of %s digits'%current_val)
         return h2
 
-class Cohomology(Parent):
-    Element = CohomologyClass
-    def __init__(self,G,n,overconvergent = False,base = None):
-        assert n == 0
+class CohomologyGroup(Parent):
+    Element = CohomologyElement
+    def __init__(self,G,overconvergent = False,base = None):
         self._group = G
         if overconvergent and base is None:
             raise ValueError, 'Must give base if overconvergent'
         if base is None:
             base = QQ
-        if not overconvergent:
-            self._coeffmodule = Symk(n,base = base, act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
+        if overconvergent:
+            self.is_overconvergent = True
+            self._coeffmodule = Distributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
+            self._Sigma0 = self._coeffmodule._act._Sigma0
+            self._num_abgens = len(self._group.gens())
         else:
-            self._coeffmodule = Distributions(n,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
-        self._Sigma0 = self._coeffmodule._act._Sigma0
+            #self._coeffmodule = Symk(n,base = base, act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
+            self.is_overconvergent = False
+            self._coeffmodule = base**1
+            self._Ga,self._V,self._free_idx = G.abelianization()
+            self._num_abgens = len(self._free_idx)
+            self._F = QQ**self._num_abgens
+            self._space = Hom(self._F,self._coeffmodule)
         Parent.__init__(self)
-
-    def _an_element_(self):
-        return self([0] * len(self.group().gens()))
-
-    def _element_constructor_(self,data):
-        if isinstance(data,list):
-            if len(data) != len(self.group().gens()):
-                raise ValueError
-            return self.element_class(self,data)
-        elif data.parent() is self:
-            return self.element_class(self,data._val)
-        elif data.parent() is CohomologyTrivialCoeffs:
-            G = self.group()
-            V = self.coefficient_module()
-            return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
-        else:
-            raise ValueError
-
-    def _coerce_map_from_(self,S):
-        if isinstance(S,Cohomology):
-            return True
-        elif isinstance(S,CohomologyTrivialCoeffs):
-            return True
-        else:
-            return False
 
     def group(self):
         return self._group
@@ -1670,15 +1263,133 @@ class Cohomology(Parent):
     def _repr_(self):
         return 'H^1(G,V), with G being %s and V = %s'%(self.group(),self.coefficient_module())
 
+    def _an_element_(self):
+        return self(0)
+
+    def _coerce_map_from_(self,S):
+        if isinstance(S,CohomologyGroup):
+            return True
+        else:
+            return False
+
+    def _element_constructor_(self,data):
+        if isinstance(data,list):
+            return self.element_class(self,data)
+        elif isinstance(data,self.element_class):
+            G = self.group()
+            V = self.coefficient_module()
+            if data.parent().is_overconvergent:
+                tmp = []
+                for i in self._free_idx:
+                    idxlist = list(self._Ga.gen(i).lift())
+                    tmp.append(sum([a*data.evaluate(t).moment(0).rational_reconstruction() for a,t in zip(idxlist,gens)]))
+                return self.element_class(self,tmp)
+            else:
+                return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
+        else:
+            return self.element_class(self,[self._coeffmodule(data) for g in range(self._num_abgens)])
+
+    def dimension(self):
+        raise NotImplementedError
+
     def coefficient_module(self):
         return self._coeffmodule
 
-    def apply_hecke_operator(self,c,l,fix_first_moments = False, hecke_reps = None,group = None,scale = 1):
+    def dimension(self): # Warning
+        return len(self._space.basis())
+
+    def gen(self,i): # Warning
+        phi = self._space.basis()[i]
+        dom = phi.domain()
+        return self([phi(o) for o in dom.gens()])
+
+    def gens(self): # Warning
+        return [self.gen(i) for i in range(self.dimension())]
+
+    @cached_method
+    def hecke_matrix(self,l):
+        if self._group.discriminant == 1:
+            raise NotImplementedError
+        if self.coefficient_module().dimension() > 1:
+            raise NotImplementedError
+        dim = self.dimension()
+        R = self.coefficient_module().base_ring()
+        M = matrix(R,dim,dim,0)
+        for j,cocycle in enumerate(self.gens()):
+            # Construct column j of the matrix
+            M.set_column(j,[o[0] for o in self.apply_hecke_operator(cocycle,l).values()])
+        return M
+
+    @cached_method
+    def involution_at_infinity_matrix(self):
+        if self._group.discriminant == 1:
+            raise NotImplementedError
+        if self.coefficient_module().dimension() > 1:
+            raise NotImplementedError
+        emb = self.group().get_embedding(20)
+        H = self._space
+        Gpn = self.group()
+        Obasis = Gpn.Obasis
+        x = Gpn.element_of_norm(-1)
+        dim = self.dimension()
+        M = matrix(QQ,dim,dim,0)
+        for j,c in enumerate(self.gens()):
+            # Construct column j of the matrix
+            for i in range(dim):
+                ti = Gpn(x**-1 * prod([Gpn.gen(idx)**a for idx,a in zip(range(len(Gpn.gens())),list(self._Ga.gen(self._free_idx[i]).lift()))]).quaternion_rep * x)
+                M[i,j] = c.evaluate(ti)[0]
+        return M
+
+    def get_cocycle_from_elliptic_curve(self,E,sign = 1):
+        K = (Coh.involution_at_infinity_matrix()-sign).right_kernel()
+        N = self.group().O.discriminant()
+        q = ZZ(1)
+        while K.dimension() != 1:
+            q = q.next_prime()
+            if N % q == 0:
+                continue
+            K1 = (Coh.hecke_matrix(q)-E.ap(q)).right_kernel()
+            K = K.intersection(K1)
+        col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
+        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
+
+    def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1):
         r"""
         Apply the l-th Hecke operator operator to ``c``.
-        """
-        return apply_hecke_operator(self,c,l,fix_first_moments = fix_first_moments,hecke_reps = hecke_reps, group = group,scale = scale)
 
+        EXAMPLES::
+
+        """
+        if hecke_reps is None:
+            hecke_reps = self.group().get_hecke_reps(l)
+        V = self.coefficient_module()
+        padic = not V.base_ring().is_exact()
+        Gpn = self.group()
+        group = Gpn
+        if padic:
+            emb = Gpn.get_embedding(V.base_ring().precision_cap())
+        vals = []
+        R = V.base_ring()
+        if hasattr(V,'dimension'):
+            gammas = []
+            Gab,Vmod,free_idx = Gpn.abelianization()
+            for i in free_idx:
+                idxlist = list(Gab.gen(i).lift())
+                gammas.append(prod([t**a for a,t in zip(idxlist,Gpn.gens()) if a != 0]))
+        else:
+            gammas = Gpn.gens()
+
+        for j,gamma in enumerate(gammas):
+            newval = V(0)
+            for gk1 in hecke_reps:
+                tig = group.get_hecke_ti(gk1,gamma.quaternion_rep,l,reps = hecke_reps)
+                val0 = c.evaluate(tig)
+                if padic:
+                    newval += self._Sigma0(emb(gk1)) * val0
+                else:
+                    newval += val0
+            vals.append(scale * newval)
+        return self(vals)
 
 class ShapiroImage(SageObject):
     def __init__(self,G,cocycle):
@@ -1842,8 +1553,6 @@ class Homology(Parent):
         Parent.__init__(self)
         V._unset_coercions_used()
         V.register_action(ArithGroupAction(G,V))
-        #V.register_action(ArithGroupAction(G.Gn,V))
-        #V.register_action(ArithGroupAction(G.Gpn,V))
         self._populate_coercion_lists_()
 
     def _an_element_(self):
@@ -2005,10 +1714,8 @@ class HomologyClass(ModuleElement):
         return self.act_by_hecke(r,prec = prec) - self.mult_by(r+1)
 
     def __rmul__(self,a):
-        if a == 0:
-            return HomologyClass(self.parent(),dict([]))
-        else:
-            return HomologyClass(self.parent(),dict(((g,a*v) for g,v in self._data.iteritems())))
+        newdict = dict(((g,a*v) for g,v in self._data.iteritems())) if a != 0 else dict([])
+        return HomologyClass(self.parent(),newdict)
 
 ######################
 ##                  ##
@@ -2085,7 +1792,8 @@ def integrate_H0_riemann(G,phi,hc,depth = 1,cover = None,gamma = None):
 
 def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None):
     p = G.p
-    prec = hc.parent().coefficient_module().precision_cap()
+    HOC = hc.parent()
+    prec = HOC.coefficient_module().precision_cap()
     K = phi.parent().base_ring()
     R = PolynomialRing(K,'x')
     x = R.gen()
@@ -2094,7 +1802,8 @@ def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None):
     R1.set_default_prec(prec)
     emb = G.get_embedding(prec)
     resadd = 0
-    for h in G.get_BT_reps_twisted():
+    resmul = 1
+    for _,h in G.get_covering(1):
         a,b,c,d = emb(h**-1).change_ring(K).list()
         y0 = phi((a*r1+b)/(c*r1+d))
         val = y0(0)
@@ -2103,9 +1812,8 @@ def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None):
         mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma,check = True))
         nmoments = len(mu_e._moments)
         resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments)
-    HOC = hc.parent()
-    Htriv = CohomologyTrivialCoeffs(HOC.group(),0,base = QQ)
-    resmul = integrate_H0_riemann(G,phi,Htriv(hc),depth = 1,gamma = gamma)
+        if nmoments > 0:
+            resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
     val =  resmul.valuation(p)
     tmp = p**val * K.teichmuller(p**(-val)*resmul)
     if resadd != 0:
