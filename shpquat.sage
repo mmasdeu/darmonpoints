@@ -9,6 +9,7 @@ from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.modular.pollack_stevens.distributions import Distributions, Symk
 from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
+import os
 
 class BTEdge(SageObject):
     r'''
@@ -230,33 +231,6 @@ class BigArithGroup(AlgebraicGroup):
                     if all([self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis]):
                         return new_candidate
 
-    @lazy_attribute
-    def wp_magma(self):
-        if all([kronecker_symbol(-self.p,a) != 1 for a,r in factor(self.discriminant)]):
-            rootminusp = True
-            K_magma = magma.RadicalExtension(self.Gpn._B_magma.BaseField(),2,-self.p)
-            OK_magma = K_magma.MaximalOrder()
-            _,iota = magma.Embed(OK_magma,self.Gpn._O_magma,nvals = 2)
-        elif all([kronecker_symbol(self.p,a) != 1 for a,r in factor(self.discriminant)]):
-            assert 0
-            rootminusp = False
-            K_magma = magma.RadicalExtension(self.Gpn._B_magma.BaseField(),2,self.p)
-            OK_magma = K_magma.MaximalOrder()
-            _,iota = magma.Embed(OK_magma,self.Gpn._O_magma,nvals = 2)
-        else:
-            raise ValueError,'Quaternion algebra not compatible with \pm p'
-
-        mu_magma = iota.Image(OK_magma(K_magma.1))
-        Bgens = list(self.Gpn.B.gens())
-        mu = sum(a*b for a,b in zip([self.Gpn.B(1)]+Bgens,[self.Gpn._B_magma(mu_magma).Vector()[m+1].Norm()._sage_() for m in range(4)]))
-        assert all([self.Gpn._is_in_order(mu**-1 * g * mu) for g in self.Gpn.Obasis])
-        if rootminusp is True:
-            assert is_in_Gamma0loc(matrix(QQ,2,2,[0,-1,self.p,0])**-1 * self.get_embedding(20)(mu))
-        else:
-            assert is_in_Gamma0loc(matrix(QQ,2,2,[0,1,self.p,0])**-1 * self.get_embedding(20)(mu))
-        verbose('Done!')
-        return mu
-
     def get_embedding(self,prec):
         r"""
         Returns an embedding of the quaternion algebra
@@ -340,7 +314,7 @@ class BigArithGroup(AlgebraicGroup):
             assert i > 0
             wd1 = (i,1)
             x = set_immutable(x * gitildes[i])
-            a,wd = G._reduce_in_amalgam(x)
+            a,wd = self._reduce_in_amalgam(x)
             return a, wd + [wd1,wd0]
 
     def construct_cycle(self,D,prec,hecke_smoothen = None):
@@ -609,12 +583,6 @@ class ArithGroup(AlgebraicGroup):
     def _denominator_valuation(self,x,l):
         return max((o.denominator().valuation(l) for o in self._quaternion_to_list(x)))
 
-    def _list_to_quaternion(self,x):
-        return sum(a*b for a,b in zip(self.Obasis,x))
-
-    def _list_to_magma_quaternion(self,x):
-        return self._quaternion_to_magma_quaternion(self._list_to_quaternion(x))
-
     def _quaternion_to_magma_quaternion(self,x):
         v = list(x)
         return self._B_magma(v[0]) + sum(v[i+1]*self._B_magma.gen(i+1) for i in range(3))
@@ -734,7 +702,7 @@ class ArithGroup(AlgebraicGroup):
         else:
             if len(x) != 4:
                 raise ValueError, 'x (=%s) should be a list of length 4'%x
-            x = self._list_to_magma_quaternion(x)
+            x = self._quaternion_to_magma_quaternion(sum(a*b for a,b in zip(self.Obasis,x)))
         x_magma = self._G_magma(x)
         #verbose('Calling _magma_word_problem with x = %s'%x)
         V = magma.WordProblem(x_magma).ElementToSequence()._sage_()
@@ -1341,14 +1309,14 @@ class CohomologyGroup(Parent):
         return M
 
     def get_cocycle_from_elliptic_curve(self,E,sign = 1):
-        K = (Coh.involution_at_infinity_matrix()-sign).right_kernel()
+        K = (self.involution_at_infinity_matrix()-sign).right_kernel()
         N = self.group().O.discriminant()
         q = ZZ(1)
         while K.dimension() != 1:
             q = q.next_prime()
             if N % q == 0:
                 continue
-            K1 = (Coh.hecke_matrix(q)-E.ap(q)).right_kernel()
+            K1 = (self.hecke_matrix(q)-E.ap(q)).right_kernel()
             K = K.intersection(K1)
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
@@ -1866,3 +1834,86 @@ def points_test(G,level):
             thisval = (((te-tau1)/(te-tau2)) / ((te1-tau1)/(te1-tau2)) - 1).valuation()
             if  thisval < level:
                 print thisval
+
+def darmon_point(p,DB,dK,prec,working_prec = None):
+    QQp = Qp(p,prec)
+    Np = 1 # For now, can't do more...
+    if dK % 4 == 0:
+        dK = ZZ(dK/4)
+    if working_prec is None:
+        working_prec = prec + 2
+    # Define the elliptic curve
+    E = EllipticCurve(str(p*DB*Np))
+    fname = 'moments_%s_%s_%s'%(p,DB,prec)
+
+    print "Computing the Darmon points attached to the data:"
+    print 'D_B = %s = %s'%(DB,factor(DB))
+    print 'Np = %s'%Np
+    print 'dK = %s'%dK
+    print "The calculation is being done with p = %s and prec = %s"%(p,working_prec)
+    print "Should find points in the elliptic curve:"
+    print E
+    print "Partial results will be saved in %s/%s"%(os.getcwd(),fname)
+    print "====================================================================================="
+
+    # Define the S-arithmetic group
+    G = BigArithGroup(p,DB,Np)
+
+    # Define phiE, the cohomology class associated to the curve E.
+    Coh = CohomologyGroup(G.Gpn)
+    phiE = Coh.get_cocycle_from_elliptic_curve(E,sign = 1)
+
+    # Define the cycle ( in H_1(G,Div^0 Hp) )
+    cycleGn,nn,ell = G.construct_cycle(dK,prec,hecke_smoothen = True)
+
+    # Overconvergent lift
+    CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
+    VOC = CohOC.coefficient_module()
+
+    if not os.path.isfile(fname):
+        Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.Gpn.gens()])
+        Phi = Phi.improve(prec = prec,sign = E.ap(p))
+        save(Phi._val,fname)
+    else:
+        Phivals = load(fname)
+        Phi = CohOC([VOC(o) for o in Phivals])
+
+    # Integration with moments
+    tot_time = walltime()
+    J = integrate_H1(G,cycleGn,Phi,1,method = 'moments') # do not smoothen
+    verbose('integration tot_time = %s'%walltime(tot_time))
+    x,y = getcoords(E,J,prec)
+
+    # Try to recognize the point
+    F.<r> = QuadraticField(dK)
+    Jlog = J.log()
+    Cp = Jlog.parent()
+    addpart = (2*Jlog)/((E.ap(ell) - (ell+1))*nn)
+    candidate = None
+    for a,b in product(range(p),repeat = 2):
+        if a == 0 and b == 0:
+            continue
+        # print a,b
+        multpart = Cp.teichmuller(a + Cp.gen()*b)
+        J1 = multpart * addpart.exp()
+        if J1 == Cp(1):
+            candidate = E(0)
+            verbose('Recognized the point, it is zero!')
+            break
+        else:
+            x,y = getcoords(E,J1,prec)
+            success = False
+            prec0 = prec
+            while not success and prec0 > prec-5:
+                verbose('Trying to recognize point with precision %s'%prec0, level = 2)
+                candidate,success = recognize_point(x,y,E.change_ring(F),prec = prec0)
+                prec0 -= 1
+            if not success:
+                verbose('Could not recognize point',level = 2)
+                continue
+            verbose('Recognized the point!')
+            break
+    try:
+        return E.change_ring(F)(candidate)
+    except (TypeError,ValueError):
+        return candidate
