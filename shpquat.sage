@@ -78,7 +78,7 @@ def translate_into_twosided_list(V):
     vp,vm = V
     return [None] + vp + list(reversed(vm))
 
-def getcoords(E,u,prec=20,R = None):
+def getcoords(E,u,prec,R = None):
     if R is None:
         R = u.parent()
         u = R(u)
@@ -164,6 +164,15 @@ def enumerate_words(v, n = None):
         if add_new:
             n.append(0)
         yield [v[x] for x in n]
+
+def cantor_diagonal(iter1,iter2):
+    v1 = [iter1.next()]
+    v2 = [iter2.next()]
+    while True:
+        for a,b in zip(v1,v2):
+            yield a,b
+        v1.append(iter1.next())
+        v2.insert(0,iter2.next())
 
 def shorten_word(longword):
     r'''
@@ -253,7 +262,12 @@ class BigArithGroup(AlgebraicGroup):
         self.p = ZZ(p)
         if not self.p.is_prime():
             raise ValueError, 'p ( = %s) must be prime'%self.p
-        self.discriminant = ZZ(discriminant)
+        if isinstance(discriminant,list):
+            tmp = QuaternionAlgebra(discriminant[0],discriminant[1])
+            disc = tmp.discriminant()
+            self.discriminant = ZZ(tmp.discriminant())
+        else:
+            self.discriminant = ZZ(discriminant)
         self.level = ZZ(level)
         if len(self.discriminant.factor()) % 2 != 0:
             raise ValueError, 'Discriminant must contain an even number of primes'
@@ -264,16 +278,9 @@ class BigArithGroup(AlgebraicGroup):
         self.Gpn = ArithGroup(discriminant,p*level,info_magma = self.Gn)
         self.Gpn.get_embedding = self.get_embedding
         self._prec = -1
-
         self.get_Up_reps()
-
         verbose('Done initializing arithmetic groups')
-
         self.Gpn.get_Up_reps = self.get_Up_reps
-
-
-        self.gis = [ g**-1 for g in self.get_BT_reps()]
-        self.gihats = [ g**-1 for g in self.get_BT_reps_twisted()]
         verbose('Done initialization of BigArithmeticGroup')
 
     def _repr_(self):
@@ -327,40 +334,38 @@ class BigArithGroup(AlgebraicGroup):
 
         return self._II, self._JJ, self._KK
 
+    @cached_method
     def get_BT_reps(self):
-        emb = self.get_embedding(20)
-        wp = self.wp
-        reps = [self.Gn.B(1)] + [wp * o**-1 for o in self.get_Up_reps()]
-        return reps
-
-    @cached_method
-    def get_BT_reps_twisted(self):
-        return [self.wp * g * self.wp**-1 for g in self.get_BT_reps()]
-
-    @cached_method
-    def get_Up_reps(self):
-        r'''
-        '''
-        if self.level % self.p == 0:
-            raise NotImplementedError
-
-        reps = []
-        emb = self.get_embedding(20)
-        wp = self.wp
-        mats = [matrix(QQ,2,2,[self.p,i,0,1]) for i in range(p)]
+        reps = [self.Gn.B(1)]
         for n_iters,elt0 in enumerate(self.Gn.enumerate_elements()):
             if n_iters % 100 == 0:
                 verbose('%s, len = %s/%s'%(n_iters,len(reps),self.p+1))
-            elt = elt0.quaternion_rep**-1 * wp
-            if is_in_Gamma0loc(mats[len(reps)]**-1 * emb(elt)):
-                new_inv = elt**(-1)
-                if all([not self.Gpn._is_in_order(new_inv * old) for old in reps]):
-                    reps.append(set_immutable(elt))
-                    if len(reps) == self.p:
-                        return reps
+            elt = elt0.quaternion_rep
+            new_inv = elt**(-1)
+            if all([not self.Gpn._is_in_order(old * new_inv) for old in reps]):
+                reps.append(set_immutable(elt))
+                if len(reps) == self.p + 1:
+                    return reps
+
+    def do_hat(self,g):
+        return self.wp * g * self.wp**-1
+
+    def do_tilde(self,g):
+        return QQ(-1/self.p) * self.wp * g * self.wp
+
+    @cached_method
+    def get_BT_reps_twisted(self):
+        return [self.Gn.B(1)] + [self.do_tilde(g) for g in self.get_BT_reps()[1:]]
+
+    @cached_method
+    def get_Up_reps(self):
+        if self.level % self.p == 0:
+            raise NotImplementedError
+        tmp = [-self.p * o**-1 * self.wp**-1 for o in self.get_BT_reps()[1:]] # note the -1 in wp!
+        return tmp
 
     def get_covering(self,depth):
-        return self.subdivide([BTEdge(False, o) for o in self.get_BT_reps_twisted()], 1, depth - 1) # works
+        return self.subdivide([BTEdge(False, o) for o in self.get_BT_reps_twisted()], 1, depth - 1)
 
     def subdivide(self,edgelist,parity,depth):
         if depth < 0:
@@ -377,30 +382,47 @@ class BigArithGroup(AlgebraicGroup):
                 newEgood.extend([BTEdge(not rev, e * gamma) for e in self.get_BT_reps()[1:]])
         return self.subdivide(newEgood,1-parity,depth - 1)
 
-    ## Make sure that it normalizes the suborder.
     @lazy_attribute
     def wp(self):
         verbose('Finding a suitable wp...')
         if self.discriminant == 1:
             return matrix(QQ,2,2,[0,-1,self.p,0])
         else:
-            #if all([kronecker_symbol(-self.p,a) == -1 for a,r in factor(self.discriminant)]):
-            try:
-                K_magma = magma.RadicalExtension(self.Gpn._B_magma.BaseField(),2,-self.p)
-                OK_magma = K_magma.MaximalOrder()
-                _,iota = magma.Embed(OK_magma,self.Gpn._O_magma,nvals = 2)
-            except RuntimeError:
-            #elif all([kronecker_symbol(self.p,a) == -1 for a,r in factor(self.discriminant)]):
-                K_magma = magma.RadicalExtension(self.Gpn._B_magma.BaseField(),2,self.p)
-                OK_magma = K_magma.MaximalOrder()
-                _,iota = magma.Embed(OK_magma,self.Gpn._O_magma,nvals = 2)
-            mu_magma = iota.Image(OK_magma(K_magma.1))
-            Bgens = list(self.Gpn.B.gens())
-            mu = sum(a*b for a,b in zip([self.Gpn.B(1)]+Bgens,[self.Gpn._B_magma(mu_magma).Vector()[m+1].Norm()._sage_() for m in range(4)]))
-            assert all([self.Gpn._is_in_order(mu**-1 * g * mu) for g in self.Gpn.Obasis])
-            # assert is_in_Gamma0loc(matrix(QQ,2,2,[0,-1,self.p,0])**-1 * self.get_embedding(20)(mu))
-            verbose('Done!')
-            return mu
+            epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
+            tmp = self.Gpn.element_of_norm(self.p)
+            emb = self.get_embedding(20)
+            for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
+                new_candidate =   v2.quaternion_rep * tmp *  v1.quaternion_rep
+                if is_in_Gamma0loc(epsinv * emb(new_candidate), det_condition = False):
+                    if all([self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis]):
+                        return new_candidate
+
+    @lazy_attribute
+    def wp_magma(self):
+        if all([kronecker_symbol(-self.p,a) != 1 for a,r in factor(self.discriminant)]):
+            rootminusp = True
+            K_magma = magma.RadicalExtension(self.Gpn._B_magma.BaseField(),2,-self.p)
+            OK_magma = K_magma.MaximalOrder()
+            _,iota = magma.Embed(OK_magma,self.Gpn._O_magma,nvals = 2)
+        elif all([kronecker_symbol(self.p,a) != 1 for a,r in factor(self.discriminant)]):
+            assert 0
+            rootminusp = False
+            K_magma = magma.RadicalExtension(self.Gpn._B_magma.BaseField(),2,self.p)
+            OK_magma = K_magma.MaximalOrder()
+            _,iota = magma.Embed(OK_magma,self.Gpn._O_magma,nvals = 2)
+        else:
+            raise ValueError,'Quaternion algebra not compatible with \pm p'
+
+        mu_magma = iota.Image(OK_magma(K_magma.1))
+        Bgens = list(self.Gpn.B.gens())
+        mu = sum(a*b for a,b in zip([self.Gpn.B(1)]+Bgens,[self.Gpn._B_magma(mu_magma).Vector()[m+1].Norm()._sage_() for m in range(4)]))
+        assert all([self.Gpn._is_in_order(mu**-1 * g * mu) for g in self.Gpn.Obasis])
+        if rootminusp is True:
+            assert is_in_Gamma0loc(matrix(QQ,2,2,[0,-1,self.p,0])**-1 * self.get_embedding(20)(mu))
+        else:
+            assert is_in_Gamma0loc(matrix(QQ,2,2,[0,1,self.p,0])**-1 * self.get_embedding(20)(mu))
+        verbose('Done!')
+        return mu
 
     def get_embedding(self,prec):
         r"""
@@ -429,32 +451,20 @@ class BigArithGroup(AlgebraicGroup):
 
     def _mult_word(self,a,wd):
         r'''
-
         EXAMPLES:
-
-            sage: G = BigArithGroup(5,6,1)
-            sage: greps = G.get_BT_reps()
-            sage: wp = G.wp
-            sage: test_word = wp**-1*greps[1]*wp * greps[4] * wp**-1*greps[2]*wp * greps[3] * wp**-1 *greps[1]*wp *greps[3] *wp**-1*greps[2]*wp * greps[3] * wp**-1 *greps[1]*wp *greps[5]
-            sage: x,wd = G.reduce_in_amalgam(test_word,return_word = True,check=True)
-            sage: test_word = wp**-1*greps[0]*wp  * greps[5]
-            sage: x,wd = G.reduce_in_amalgam(test_word,return_word = True,check=True)
         '''
         x1 = a
-        wp = self.wp
-        for j,i,new_factor in wd:
+        for j,i in wd:
             g = self.get_BT_reps()[j]
-            if i == 1:
-                g = wp * g * wp**-1
-            assert new_factor == g
-            x1 = x1 * new_factor
+            if i == 1: #and j != 0:
+                g = self.do_tilde(g)
+            x1 = x1 * g
         return x1
 
-    def reduce_in_amalgam(self,x,return_word = False, check = True):
+    def reduce_in_amalgam(self,x,return_word = False, check = False):
         rednrm = x.reduced_norm() if self.discriminant != 1 else x.determinant()
         if rednrm != 1:
             raise ValueError,'x (= %s) must have reduced norm 1'%x
-
         a,wd = self._reduce_in_amalgam(set_immutable(x))
         if check == True:
             assert x == self._mult_word(a,wd)
@@ -466,38 +476,37 @@ class BigArithGroup(AlgebraicGroup):
     @cached_method
     def _reduce_in_amalgam(self,x):
         x0 = x
-        emb = self.get_embedding(20)
-        wp = self.wp
         p = self.p
         rednrm = x.reduced_norm() if self.discriminant != 1 else x.determinant()
-        btreps = self.get_BT_reps()
-        btrepshat = self.get_BT_reps_twisted()
         denval = self.Gn._denominator_valuation
-
         x = set_immutable(p**-(rednrm.valuation(p)/2) * x)
         if self.Gpn._denominator(x) == 1:
             return x,[]
         else:
-            gis = self.gis
-            gihats = self.gihats
-            xhat = wp * x * wp**-1
+            gis = [ g**-1 for g in self.get_BT_reps()]
+            gitildes = [self.Gn.B(1)] + [ g**-1 for g in self.get_BT_reps_twisted()[1:]]
 
-            valx = denval(xhat,p)
+            xtilde = self.do_tilde(x)
+            valx = denval(xtilde,p)
             if valx == 0:
                 valx = 1
             found = False
 
-            i = next((i for i,g in enumerate(gihats) if denval(xhat * g,p) < valx),0)
-            wd0 = (i,0,btreps[i])
+            i = next((i for i,g in enumerate(gitildes) if denval(xtilde * g,p) < valx),0)
+            wd0 = (i,0)
             x = x * gis[i]
 
             valx = denval(x,p)
             if valx == 0:
                 valx = 1
 
-            i = next((i for i,g in enumerate(gihats) if denval(x * g,p) < valx),0)
-            wd1 = (i,1,btrepshat[i])
-            x = set_immutable(x * gihats[i])
+            if self.Gpn._denominator(x) == 1:
+                return x, [wd0]
+
+            i = next((i for i,g in enumerate(gitildes) if denval(x * g,p) < valx),0)
+            assert i > 0
+            wd1 = (i,1)
+            x = set_immutable(x * gitildes[i])
             a,wd = G._reduce_in_amalgam(x)
             return a, wd + [wd1,wd0]
 
@@ -518,12 +527,17 @@ class BigArithGroup(AlgebraicGroup):
                 n += 1
                 gamman *= gamma
         if hecke_smoothen is not None:
-            tmp = tmp.hecke_smoothen(hecke_smoothen)
+            tmp = tmp.hecke_smoothen(hecke_smoothen,prec = prec)
         return tmp,n
 
 class ArithGroup(AlgebraicGroup):
     def __init__(self,discriminant,level,info_magma = None):
-        self.discriminant = ZZ(discriminant)
+        if isinstance(discriminant,list):
+            tmp = QuaternionAlgebra(discriminant[0],discriminant[1])
+            self.abtuple = discriminant
+            self.discriminant = ZZ(tmp.discriminant())
+        else:
+            self.discriminant = ZZ(discriminant)
         self.level = ZZ(level)
 
         self._prec_inf = -1
@@ -534,17 +548,18 @@ class ArithGroup(AlgebraicGroup):
         self._init_magma_objects(info_magma)
         if self.discriminant != 1:
             self.B = QuaternionAlgebra((self._B_magma.gen(1)**2)._sage_(),(self._B_magma.gen(2)**2)._sage_())
-            if self.B.discriminant() != discriminant:
+            if self.B.discriminant() != self.discriminant:
                 print 'Error while constructing quaternion algebra...'
                 assert 0
             self.O = self.B.quaternion_order([self.B([QQ(self._O_magma.ZBasis()[n+1].Vector()[m+1]) for m in range(4)]) for n in range(4)])
             self.Obasis = self.O.basis()
-            self.basis_invmat = matrix(QQ,4,4,[list(self.O.gen(n)) for n in range(4)]).transpose().inverse() # !!!
+            self.basis_invmat = matrix(QQ,4,4,[list(self.O.gen(n)) for n in range(4)]).transpose().inverse()
             self.Ugens = [self.B([self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1))).Vector()[m+1] for m in range(4)]) for n in range(len(self._U_magma.gens()))]
 
             Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
             mside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsMap')
             UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
+
 
             self.Uside = [self.B([self._B_magma(self._m2_magma.Image(mside_magma.Image(g))).Vector()[m+1] for m in range(4)]) for g in Uside_magma.Generators()]
 
@@ -557,39 +572,24 @@ class ArithGroup(AlgebraicGroup):
             self.gquats = translate_into_twosided_list([[self.B([self._B_magma(gquats_magma[i+1][n+1].Quaternion()).Vector()[m+1] for m in range(4)]) for n in range(len(gquats_magma[i+1]))] for i in range(2)])
             self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
 
-            self.pi = RealField(200)(4*arctan(1))
+            self.pi = RealField(100)(4*arctan(1))
             self.findex = [ZZ(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimGroupSidepairsIndex')]
-            self.fdargs = [RealField(200)(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimFDArgs')]
+            self.fdargs = [RealField(100)(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimFDArgs')]
 
+            self.minus_one_long = [ len(self.Ugens) + 1 ]
+            self.minus_one = shorten_word(self.minus_one_long)
+            self.Ugens.append(self.B(-1))
 
-            ngens = len(self.Ugens)
-            for v in enumerate_words(range(ngens)):
-                tmp = prod([self.Ugens[i] for i in v])
-                if tmp == -1:
-                    self.minus_one_long = [i+1 for i in v]
-                    self.minus_one = shorten_word(self.minus_one_long)
-                    break
-            # found = False
-            # for i1,g1 in enumerate(self.Ugens):
-            #     for i2,g2 in enumerate(self.Ugens):
-            #         if g1 * g2 == -1:
-            #             self.minus_one_long = [i1 + 1, i2 + 1]
-            #             self.minus_one = shorten_word(self.minus_one_long)
-            #             found = True
-            #             break
-            #     if found:
-            #         break
-            # assert found
             self.translate = [None] + [self._magma_word_problem(g**-1) for g in self.gquats[1:]]
 
-            self._gens = [ArithGroupElement(self,quaternion_rep = self.Ugens[i], word_rep = [(i,1)],check = False) for i in range(len(self.Ugens))]
+            self._gens = [ArithGroupElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens)]
 
-            temp_relation_words = [shorten_word(self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(self._U_magma.Relations()))]
+            temp_relation_words = [shorten_word(self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(self._U_magma.Relations()))] + [[(len(self.Ugens)-1,2)]]
         else:
             self.B = MatrixSpace(QQ,2,2)
             self.Obasis = [matrix(ZZ,2,2,v) for v in [[1,0,0,0],[0,1,0,0],[0,0,self.level,0],[0,0,0,1]]]
             self.Ugens = [self.B([1,1,0,1]), self.B([1,0,level,1])]
-            self._gens = [ArithGroupElement(self,quaternion_rep = self.Ugens[i], word_rep = [(i,1)],check = False) for i in range(len(self.Ugens))]
+            self._gens = [ArithGroupElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens)]
             if self.level == 1:
                 temp_relation_words = [6*[(0,-1),(1,1)],4*[(0,1),(1,-1),(0,1)]]
             else:
@@ -602,13 +602,16 @@ class ArithGroup(AlgebraicGroup):
             if sign == 1:
                 self._relation_words.append(rel)
             elif sign == -1:
-                self._relation_words.append(reduce_word(2*rel))
+                newrel = rel + self.minus_one
+                sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1))
+                assert sign == 1
+                #self._relation_words.append(reduce_word(2*rel))
+                self._relation_words.append(newrel)
             else:
                 print 'What? Sign should be either +1 or -1!'
                 assert 0
-
-        # Define the relation matrix
-        self._relation_matrix = matrix(ZZ,len(self._relation_words),len(self.Ugens),0)
+        # Define the (abelian) relation matrix
+        self._relation_matrix = matrix(ZZ,len(self._relation_words),len(self._gens),0)
         for i,rel in enumerate(self._relation_words):
             for j,k in rel:
                 self._relation_matrix[i,j] += k
@@ -626,7 +629,6 @@ class ArithGroup(AlgebraicGroup):
             if any([self._is_in_order(V[j] * vi_inv) for j in range(i)+range(i+1,len(V))]):
                 return False
         return True
-
 
     def check_right_coset_reps(self,V):
         r'''
@@ -677,8 +679,13 @@ class ArithGroup(AlgebraicGroup):
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
             if self.discriminant != 1:
-                self._ZZ_magma = magma.RationalsAsNumberField().Integers()
-                self._B_magma = magma.QuaternionAlgebra('%s*%s'%(self.discriminant,self._ZZ_magma.name()))
+                QQ_magma = magma.RationalsAsNumberField()
+                self._ZZ_magma = QQ_magma.Integers()
+                if hasattr(self,'abtuple'):
+                    self._B_magma = magma.QuaternionAlgebra('%s'%QQ_magma.name(),self.abtuple[0],self.abtuple[1])
+                else:
+                    self._B_magma = magma.QuaternionAlgebra('%s*%s'%(self.discriminant,self._ZZ_magma.name()))
+
                 self._O_magma = self._B_magma.MaximalOrder().Order('%s*%s'%(self.level,self._ZZ_magma.name()))
                 self._D_magma = magma.UnitDisc(Precision = 100)
             else:
@@ -808,13 +815,12 @@ class ArithGroup(AlgebraicGroup):
             try:
                 c = self._get_word_recursive(delta,0)
             except RuntimeError:
-                verbose('!!! Resorted to Magma, indicates a bug !!!')
+                verbose('!! Resorted to Magma, indicates a bug !!')
                 c = self._magma_word_problem(delta)
             tmp = [(a-1,len(list(g))) if a > 0 else (-a-1,-len(list(g))) for a,g in groupby(c)] # shorten_word(c)
             delta1 =  prod(self.Ugens[g]**a for g,a in tmp) # Should be fixed...this is not efficient
             if delta1 != delta:
                 tmp.extend(self.minus_one)
-            #assert self.get_word_rep_old(delta) == tmp
         #verbose('done.')
         return tmp
 
@@ -1002,12 +1008,7 @@ class ArithGroup(AlgebraicGroup):
         for gk2 in reps:
             ti = elt * gk2
             if self._is_in_order(ti):
-                if found:
-                    print 'Repetition!!'
-                    assert 0
-                found = True
-                retval = self(ti)
-        return retval
+                return self(ti)
 
     def gen(self,i):
         if self.discriminant == 1 and self.level != 1:
@@ -1093,7 +1094,7 @@ class ArithGroup(AlgebraicGroup):
 
 
 class ArithGroupElement(MultiplicativeGroupElement):
-    def __init__(self,parent, word_rep = None, quaternion_rep = None, check = False):
+    def __init__(self,parent, word_rep = None, quaternion_rep = None, check = True):
         r'''
         Initialize.
 
@@ -1105,7 +1106,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
         '''
 
         MultiplicativeGroupElement.__init__(self, parent)
-
         init_data = False
         self.has_word_rep = False
         self.has_quaternion_rep = False
@@ -1126,9 +1126,11 @@ class ArithGroupElement(MultiplicativeGroupElement):
                     raise ValueError,'Quaternion must be in order'
             self.quaternion_rep = set_immutable(quaternion_rep)
             self.has_quaternion_rep = True
-            try:
-                self.word_rep = self._word_rep() # debug
-            except ValueError: pass
+            if word_rep is None:
+                try:
+                    self.word_rep = self._word_rep() # debug
+                    self.has_word_rep = True
+                except ValueError: pass
             init_data = True
         if init_data is False:
             raise ValueError,'Must pass either quaternion_rep or word_rep'
@@ -1164,7 +1166,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         rightquatrep = right.quaternion_rep
         return selfquatrep.__cmp__(rightquatrep)
 
-    def _reduce_word(self, check = False):
+    def _reduce_word(self, check = True):
         if not self.has_word_rep:
             return
         if check:
@@ -1180,7 +1182,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         '''
         tmp = self.parent().get_word_rep(self.quaternion_rep)
         self.has_word_rep = True
-        # self.check_consistency(self.quaternion_rep,tmp,txt = '3')
+        self.check_consistency(self.quaternion_rep,tmp,txt = '3')
         return tmp
 
     @lazy_attribute
@@ -1257,7 +1259,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
 ##                  ##
 ######################
 
-def apply_hecke_operator(coh_group,c,l,fix_first_moments = False,hecke_reps = None,group = None):
+def apply_hecke_operator(coh_group,c,l,fix_first_moments = False,hecke_reps = None,group = None,scale = 1):
     r"""
     Apply the l-th Hecke operator operator to ``c``.
 
@@ -1268,7 +1270,7 @@ def apply_hecke_operator(coh_group,c,l,fix_first_moments = False,hecke_reps = No
         hecke_reps = coh_group.group().get_hecke_reps(l)
     V = coh_group.coefficient_module()
     if V.base_ring().is_exact():
-        prec = 20
+        prec = 200
     else:
         prec = V.base_ring().precision_cap()
 
@@ -1277,11 +1279,21 @@ def apply_hecke_operator(coh_group,c,l,fix_first_moments = False,hecke_reps = No
     emb = Gpn.get_embedding(prec)
     vals = []
     if fix_first_moments:
-        orig_moments = [v.moment(0) for v in c.values()]
-
+        try:
+            orig_moments = [v._moments[0] for v in c.values()]
+        except IndexError:
+            orig_moments = [V(0) for v in c.values()]
     R = V.base_ring()
-    for j,gamma in enumerate(Gpn.gens()):
-        # verbose('gamma = %s'%gamma)
+    if hasattr(coh_group.coefficient_module(),'dimension'):
+        gammas = []
+        Gab,Vmod,free_idx = Gpn.abelianization()
+        for i in free_idx:
+            idxlist = list(Gab.gen(i).lift())
+            gammas.append(prod([t**a for a,t in zip(idxlist,Gpn.gens()) if a != 0]))
+    else:
+        gammas = Gpn.gens()
+
+    for j,gamma in enumerate(gammas):
         newval = V(0)
         for gk1 in hecke_reps:
             tig = group.get_hecke_ti(gk1,gamma.quaternion_rep,l,reps = hecke_reps)
@@ -1291,8 +1303,11 @@ def apply_hecke_operator(coh_group,c,l,fix_first_moments = False,hecke_reps = No
             except AttributeError:
                 newval += val0
         if fix_first_moments:
-            newval._moments[0] = orig_moments[j] # only works for weight 0!
-        vals.append(newval)
+            try:
+                newval._moments[0] = orig_moments[j] # only works for weight 0!
+            except TypeError:
+                pass
+        vals.append(scale * newval)
     return coh_group(vals)
 
 
@@ -1321,7 +1336,7 @@ class CohomologyTrivialCoeffsClass(ModuleElement):
         if isinstance(data,list):
             self._val = [V(o) for o in data]
         else:
-            self._val = [V(data(b)) for b in parent._space.domain().basis()]
+            self._val = [V(data.evaluate(b)) for b in parent._space.domain().basis()]
         ModuleElement.__init__(self,parent)
 
     def values(self):
@@ -1370,7 +1385,6 @@ class CohomologyTrivialCoeffs(Parent):
         if base is None:
             base = QQ
         self._coeffmodule = base**1
-
         self._Ga,self._V,self._free_idx = G.abelianization()
         self._num_abgens = len(self._free_idx)
         self._F = QQ**self._num_abgens
@@ -1378,16 +1392,29 @@ class CohomologyTrivialCoeffs(Parent):
         Parent.__init__(self)
 
     def _an_element_(self):
-        return self(matrix(QQ,self._F.dimension(),self._coeffmodule.dimension(),range(1,1+self._num_abgens)))
+        return self.gen(0)
 
     def _element_constructor_(self,data):
-        return self.element_class(self,data)
+        if isinstance(data,list):
+            return self.element_class(self,data)
+        elif isinstance(data.parent(),Cohomology):
+            V = self.coefficient_module()
+            tmp = []
+            for i in self._free_idx:
+                idxlist = list(self._Ga.gen(i).lift())
+                tmp.append([a*data.evaluate(t).moment(0).rational_reconstruction() for a,t in zip(idxlist,self.group().gens()) if a != 0])
+            return self.element_class(self,tmp)
+        else:
+            raise RuntimeError
 
     def _coerce_map_from_(self,S):
-        if isinstance(S,Cohomology):
+        if isinstance(S,(Cohomology,CohomologyTrivialCoeffs)):
             return True
         else:
             return False
+
+    def construct_element_from_vector(self,v):
+        return sum([a*self.gen(i) for i,a in enumerate(v) if a != 0],self(self._num_abgens * [0]))
 
     def group(self):
         return self._group
@@ -1408,10 +1435,12 @@ class CohomologyTrivialCoeffs(Parent):
         return len(self.basis())
 
     def gen(self,i):
-        return self(self.basis()[i])
+        phi = self.basis()[i]
+        dom = phi.domain()
+        return self([phi(o) for o in dom.gens()])
 
     def gens(self):
-        return [self(f) for f in self.basis()]
+        return [self.gen(i) for i in range(self.dimension())]
 
     @cached_method
     def hecke_matrix(self,l):
@@ -1425,21 +1454,21 @@ class CohomologyTrivialCoeffs(Parent):
         gprank = self.group_rank()
         R = self.coefficient_module().base_ring()
         M = matrix(R,dim,dim,0)
-        for j,c in enumerate(self.gens()):
+        for j,cocycle in enumerate(self.gens()):
             # Construct column j of the matrix
-            tmp = self.apply_hecke_operator(c,l).values()
-            Tc = []
-            for i in self._free_idx:
-                idxlist = list(self._Ga.gen(i).lift())
-                Tc.append([a*t[0] for a,t in zip(idxlist,tmp) if a != 0])
+            Tc = [o[0] for o in self.apply_hecke_operator(cocycle,l).values()]
+            # Tc = []
+            # for i in self._free_idx:
+            #     idxlist = list(self._Ga.gen(i).lift())
+            #     Tc.append([a*t[0] for a,t in zip(idxlist,tmp) if a != 0])
             M.set_column(j,Tc)
         return M
 
-    def apply_hecke_operator(self,c,l,hecke_reps = None,group = None):
+    def apply_hecke_operator(self,c,l,hecke_reps = None,group = None,scale = 1):
         r"""
         Apply the l-th Hecke operator operator to ``c``.
         """
-        return apply_hecke_operator(self,c,l,hecke_reps = hecke_reps, group = group)
+        return apply_hecke_operator(self,c,l,hecke_reps = hecke_reps, group = group,scale = scale)
 
     @cached_method
     def involution_at_infinity_matrix(self):
@@ -1537,7 +1566,7 @@ class CohomologyClass(ModuleElement):
         Sigma0 = self.parent()._Sigma0
         if len(word) == 0:
             return V(0)
-        emb = G.get_embedding(20)
+        emb = G.get_embedding(200)
         if len(word) == 1:
             g,a = word[0]
             if a == 0:
@@ -1560,7 +1589,7 @@ class CohomologyClass(ModuleElement):
             return self.evaluate_word(tuple(word[:pivot])) + Sigma0(emb(gamma)) *  self.evaluate_word(tuple(word[pivot:]))
 
 
-    def improve(self,group = None,prec = None):
+    def improve(self,group = None,prec = None,sign = 1):
         r"""
         Repeatedly applies U_p.
 
@@ -1575,7 +1604,8 @@ class CohomologyClass(ModuleElement):
         if prec is None:
             prec = U.precision_cap()
         reps = group.get_Up_reps()
-        h2 = MMM.apply_hecke_operator(self,p,fix_first_moments = True, hecke_reps = reps,group = group)
+        h2 = MMM.apply_hecke_operator(self,p,fix_first_moments = False, hecke_reps = reps,group = group,scale = sign)
+        verbose('%s'%h2,level = 2)
         verbose("Applied Up once")
         ii = 0
         current_val = min([(h2._val[i] - self._val[i]).valuation() for i in range(len(h2._val))])
@@ -1584,10 +1614,12 @@ class CohomologyClass(ModuleElement):
             h1 = h2
             old_val = current_val
             ii += 1
-            h2 = MMM.apply_hecke_operator(h1,p, fix_first_moments = True, hecke_reps = reps,group = group)
+            h2 = MMM.apply_hecke_operator(h1,p, fix_first_moments = False, hecke_reps = reps,group = group,scale = sign)
+            verbose('%s'%h2,level = 2)
+
             current_val = min([(h2._val[i] - h1._val[i]).valuation() for i in range(len(h2._val))])
             verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
-        self._val = h2._val #[U(c.lift(M = current_val)) for c in h2._val]
+        self._val = h2._val
         verbose('Final precision of %s digits'%current_val)
         return h2
 
@@ -1608,7 +1640,7 @@ class Cohomology(Parent):
         Parent.__init__(self)
 
     def _an_element_(self):
-        return self(0)
+        return self([0] * len(self.group().gens()))
 
     def _element_constructor_(self,data):
         if isinstance(data,list):
@@ -1621,6 +1653,8 @@ class Cohomology(Parent):
             G = self.group()
             V = self.coefficient_module()
             return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
+        else:
+            raise ValueError
 
     def _coerce_map_from_(self,S):
         if isinstance(S,Cohomology):
@@ -1639,11 +1673,11 @@ class Cohomology(Parent):
     def coefficient_module(self):
         return self._coeffmodule
 
-    def apply_hecke_operator(self,c,l,fix_first_moments = False, hecke_reps = None,group = None):
+    def apply_hecke_operator(self,c,l,fix_first_moments = False, hecke_reps = None,group = None,scale = 1):
         r"""
         Apply the l-th Hecke operator operator to ``c``.
         """
-        return apply_hecke_operator(self,c,l,fix_first_moments = fix_first_moments,hecke_reps = hecke_reps, group = group)
+        return apply_hecke_operator(self,c,l,fix_first_moments = fix_first_moments,hecke_reps = hecke_reps, group = group,scale = scale)
 
 
 class ShapiroImage(SageObject):
@@ -1664,9 +1698,6 @@ class CoinducedElement(SageObject):
         rev, b = h
         if check:
             assert self.G.reduce_in_amalgam(b,check = True) == 1
-            # What's below only works when integrating inside Z_p!
-            wp = self.G.wp
-            assert all([self.G.reduce_in_amalgam(wp*b*wp**-1 * gammai,check = True) == 1 for gammai in self.G.get_BT_reps()])
         a = self.G.reduce_in_amalgam(b * self.gamma,check = check)
         elt = self.G.Gpn(a)
         tmp = self.cocycle.evaluate(elt)
@@ -1828,7 +1859,7 @@ class Homology(Parent):
         return self._coeffmodule
 
     def _element_constructor_(self,data):
-        return HomologyClass(self,data,check = True)
+        return HomologyClass(self,data)
 
     def _coerce_map_from_(self,S):
         if isinstance(S,Homology):
@@ -1940,10 +1971,10 @@ class HomologyClass(ModuleElement):
                 newdict[g] = -v
         return HomologyClass(self.parent(),newdict)
 
-    def act_by_hecke(self,l):
+    def act_by_hecke(self,l,prec):
         newdict = dict()
         G = self.parent().group()
-        emb = G.get_embedding(20) # Watch precision!
+        emb = G.get_embedding(prec)
         hecke_reps = G.get_hecke_reps(l)
         for gk1 in hecke_reps:
             for g,v in self._data.iteritems():
@@ -1970,8 +2001,8 @@ class HomologyClass(ModuleElement):
     def mult_by(self,a):
         return self.__rmul__(a)
 
-    def hecke_smoothen(self,r):
-        return self.act_by_hecke(r) - self.mult_by(r+1)
+    def hecke_smoothen(self,r,prec = 20):
+        return self.act_by_hecke(r,prec = prec) - self.mult_by(r+1)
 
     def __rmul__(self,a):
         if a == 0:
@@ -1990,12 +2021,11 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,tohat = True,orig_cocycle = None):
+def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,tohat = True):
     res = 1
     R.<t> = PolynomialRing(cycle.parent().coefficient_module().base_field())
     emb = G.get_embedding(prec)
-    wp = G.wp
-    wpa,wpb,wpc,wpd = emb(wp).change_ring(R.base_ring()).list()
+    wpa,wpb,wpc,wpd = emb(G.wp).change_ring(R.base_ring()).list()
     if method == 'moments':
         integrate_H0 = integrate_H0_moments
     else:
@@ -2009,10 +2039,10 @@ def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,toh
             raise ValueError,'Divisor must be of degree 0'
         if tohat:
             fd = prod([(t - (wpa*P +wpb)/(wpc*P+wpd))**ZZ(n) for P,n in divisor._data.iteritems()],R(1))
-            tmp = integrate_H0(G,fd,cocycle,depth = depth,gamma = wp*g.quaternion_rep*wp**-1,orig_cocycle = orig_cocycle)
+            tmp = integrate_H0(G,fd,cocycle,depth = depth,gamma = G.do_hat(g.quaternion_rep))
         else:
             fd = prod([(t - P)**ZZ(n) for P,n in divisor._data.iteritems()],R(1))
-            tmp = integrate_H0(G,fd,cocycle,depth = depth,gamma = g.quaternion_rep,orig_cocycle = orig_cocycle)
+            tmp = integrate_H0(G,fd,cocycle,depth = depth,gamma = g.quaternion_rep)
         res *= tmp
     return res
 
@@ -2029,7 +2059,7 @@ def riemann_sum(G,phi,hc,depth = 1,cover = None,mult = False):
         cover = G.get_covering(depth)
     n_ints = 0
     for e in cover:
-        if n_ints % 100 == 99:
+        if n_ints % 500 == 499:
             verbose('Done %s percent'%(100*RealField(10)(n_ints)/len(cover)))
         n_ints += 1
         val = hc(e)
@@ -2050,10 +2080,10 @@ def riemann_sum(G,phi,hc,depth = 1,cover = None,mult = False):
             res += phi(K(te)) * hce
     return res
 
-def integrate_H0_riemann(G,phi,hc,depth = 1,cover = None,gamma = None,orig_cocycle = None):
+def integrate_H0_riemann(G,phi,hc,depth = 1,cover = None,gamma = None):
     return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,cover,mult = True)
 
-def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None,orig_cocycle = None):
+def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None):
     p = G.p
     prec = hc.parent().coefficient_module().precision_cap()
     K = phi.parent().base_ring()
@@ -2063,23 +2093,21 @@ def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None,orig_c
     r1 = R1.gen()
     R1.set_default_prec(prec)
     emb = G.get_embedding(prec)
-    wp = G.wp
-    wp0 = emb(wp)
-    if cover is None:
-        cover = G.get_BT_reps_twisted()
     resadd = 0
-    for h in cover:
+    for h in G.get_BT_reps_twisted():
         a,b,c,d = emb(h**-1).change_ring(K).list()
         y0 = phi((a*r1+b)/(c*r1+d))
         val = y0(0)
         assert all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()])
         pol = val.log() + (y0.derivative()/y0).integral()
-        mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma)) #.list()
+        mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma,check = True))
         nmoments = len(mu_e._moments)
         resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments)
-    resmul = integrate_H0_riemann(G,phi,orig_cocycle,depth = 1,gamma = gamma)
+    HOC = hc.parent()
+    Htriv = CohomologyTrivialCoeffs(HOC.group(),0,base = QQ)
+    resmul = integrate_H0_riemann(G,phi,Htriv(hc),depth = 1,gamma = gamma)
     val =  resmul.valuation(p)
-    tmp = p**val*K.teichmuller(p**(-val)*resmul)
+    tmp = p**val * K.teichmuller(p**(-val)*resmul)
     if resadd != 0:
          tmp *= resadd.exp()
     return tmp
@@ -2089,9 +2117,11 @@ def sample_point(G,e,prec = 20):
      Returns a point in U_h = (e)^{-1} Z_p.
     '''
     rev, h = e
+    hemb = G.get_embedding(prec)(h**-1)
+    wploc = G.get_embedding(prec)(G.wp)
     if rev == True:
-        h = G.wp**-1 * h
-    a,b,c,d = G.get_embedding(prec)(h**-1).list()
+        hemb = hemb * wploc
+    a,b,c,d = hemb.list()
     if d == 0:
         return Infinity
     return b/d

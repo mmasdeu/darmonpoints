@@ -1,36 +1,24 @@
 p= 13
-D = 2*3
+D = 2 * 3
 Np = 1
 dK = 5
-ell = 7
-prec = 20
+ell = 5
+prec = 10
 E = EllipticCurve(str(p*D*Np))
 # P_E = E.base_extend(QuadraticField(dK,names = 'a')).lift_x(-2)
 set_verbose(1)
 G = BigArithGroup(p,D,Np)
 
-# Test that coverings work
-# points_test(G,2)
-
 # Calculate PhiE, the cohomology class associated to the curve E.
 Coh = CohomologyTrivialCoeffs(G.Gpn,0,base = QQ)
 CohOC = Cohomology(G.Gpn,0,overconvergent = True,base = Qp(p,prec))
 
-# set_verbose(0)
-# for l in [5,7,11,17]:
-#     print l
-#     print matrix(QQ,2,2,[o for o in Coh.hecke_matrix(l).list()])
-#     print '--'
-# set_verbose(1)
-print Coh.involution_at_infinity_matrix()
-#assert matrix(QQ,2,2,[o for o in Coh.hecke_matrix(p).list()]) == 1
-
-
-# For D = 2 * 5
-# PhiE = Coh.gen(0) + Coh.gen(1) + Coh.gen(3)
-
-# For D = 2 * 3
-PhiE = Coh.gen(0)
+n = 5
+K1 = (Coh.hecke_matrix(n)-E.ap(n)).right_kernel()
+assert K1.dimension() == 2
+K2 = K1.intersection((Coh.involution_at_infinity_matrix()-1).right_kernel())
+assert K2.dimension() == 1
+col = [ZZ(o) for o in K2.matrix().list()]
 
 # Define the cycle ( in H_1(G,Div^0 Hp) )
 cycleGn,nn = G.construct_cycle(dK,prec,hecke_smoothen = ell)
@@ -39,7 +27,6 @@ cycleGn,nn = G.construct_cycle(dK,prec,hecke_smoothen = ell)
 # Overconvergent lift
 VOC = CohOC.coefficient_module()
 PhiElift = CohOC([VOC(QQ(PhiE.evaluate(g)[0])).lift(M = prec) for g in G.Gpn.gens()])
-# PhiElift = CohOC([VOC(matrix(Qp(p,prec),prec + 1, 1,[QQ(PhiE.evaluate(g)[0])]+[0]*prec)) for g in G.Gpn.gens()])
 PhiElift = PhiElift.improve(prec = prec)
 ####################################################
 
@@ -47,7 +34,7 @@ PhiElift = PhiElift.improve(prec = prec)
 ###
 # Integration with moments
 tot_time = walltime()
-J = integrate_H1(G,cycleGn,PhiElift,1,method = 'moments',orig_cocycle = PhiE) # do not smoothen
+J = integrate_H1(G,cycleGn,PhiElift,1,method = 'moments') # do not smoothen
 print 'tot_time = %s'%walltime(tot_time)
 print J
 x,y = getcoords(E,J)
@@ -62,7 +49,6 @@ print J
 x,y = getcoords(E,J)
 print '------\n'
 print x
-print y
 ## Should be 11 + 8*13 + 5*13^2 + 9*13^3 + 9*13^4 + 5*13^5 + 5*13^6 + 4*13^7 + 7*13^8 + 8*13^9 + O(13^10)
 
 Jlog = J.log()
@@ -259,20 +245,6 @@ print J1/J2
 ##########################################
 
 
-####################
-wd1 = G.Gpn._relation_words[7][:8]
-wd2 = G.Gpn._relation_words[7][8:]
-g1 = G.Gpn(wd1)
-
-g2 = G.Gpn(wd2)
-print g2.quaternion_rep
-g2 = g2**-1
-
-tmp = PhiElift.evaluate(G.Gpn(g1)) - PhiElift.evaluate(G.Gpn(g2))
-##########################################
-
-###################3
-
 ###### Test moment method (2) ################
 j = 6
 depth = 3
@@ -315,3 +287,24 @@ for dK in range(1000,10000):
     if kronecker_symbol(dK,13) != -1:
         continue
     good_dK.append(dK)
+
+def is_good_K(D,p,DK):
+	K=QuadraticField(DK)
+	
+	if all(K.ideal(q).is_prime() for q in D.prime_divisors()) and K.ideal(p).is_prime():
+		return True
+	else:	
+		return False
+
+
+
+#says true if -p has a square root in the algebra of discriminant D
+def is_good_p(D,p):
+	p1=D.factor()[0][0];p2=D.factor()[1][0]
+	K=QuadraticField(-p)
+	print K
+	f1=K.ideal(p1).factor()
+	f2=K.ideal(p2).factor()
+	if len(f1)==1 and len(f2)==1 and f1[0][1]==1 and f2[0][1]==1:
+		return True
+	return False
