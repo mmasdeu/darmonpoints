@@ -774,7 +774,7 @@ class ArithGroup(AlgebraicGroup):
         if self.discriminant == 1: # or self.level % l == 0:
             reps = [self.B([l,i,0,1]) for i in range(l)] + [self.B([1,0,0,l])]
         else:
-            g0 = self.element_of_norm(l)
+            g0 = self.element_of_norm(l,use_magma = True)
             assert g0.reduced_norm() == l
             reps = [g0]
             ngens = len(self.gens())
@@ -1062,7 +1062,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
 ##    COHOMOLOGY    ##
 ##                  ##
 ######################
-
 class CohomologyElement(ModuleElement):
     def __init__(self, parent, data):
         r'''
@@ -1086,7 +1085,7 @@ class CohomologyElement(ModuleElement):
         G = parent.group()
         V = parent.coefficient_module()
         if isinstance(data,list):
-            self._val = [V(o) for o in data]
+            self._val = [V(0) if o.is_zero() else V(o) for o in data]
         elif parent.is_overconvergent:
             self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
         elif not parent.is_overconvergent:
@@ -1146,7 +1145,7 @@ class CohomologyElement(ModuleElement):
         '''
         G = self.parent().group()
         V = self.parent().coefficient_module()
-        Sigma0 = self.parent()._Sigma0
+        Sigma0 = self.parent().Sigma0()
         if len(word) == 0:
             return V(0)
         emb = G.get_embedding(200)
@@ -1213,7 +1212,6 @@ class CohomologyGroup(Parent):
         if overconvergent:
             self.is_overconvergent = True
             self._coeffmodule = Distributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
-            self._Sigma0 = self._coeffmodule._act._Sigma0
             self._num_abgens = len(self._group.gens())
         else:
             #self._coeffmodule = Symk(n,base = base, act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
@@ -1227,6 +1225,9 @@ class CohomologyGroup(Parent):
 
     def group(self):
         return self._group
+
+    def Sigma0(self):
+        return self._coeffmodule._act._Sigma0
 
     def _repr_(self):
         return 'H^1(G,V), with G being %s and V = %s'%(self.group(),self.coefficient_module())
@@ -1328,8 +1329,14 @@ class CohomologyGroup(Parent):
         EXAMPLES::
 
         """
+        if self.group().B.discriminant() % l == 0:
+            raise ValueError,'l divides the discriminant of the quaternion algebra'
+
         if hecke_reps is None:
-            hecke_reps = self.group().get_hecke_reps(l)
+            if self.group().O.discriminant() % l == 0:
+                hecke_reps = self.group().get_Up_reps()
+            else:
+                hecke_reps = self.group().get_hecke_reps(l)
         V = self.coefficient_module()
         padic = not V.base_ring().is_exact()
         Gpn = self.group()
@@ -1353,7 +1360,7 @@ class CohomologyGroup(Parent):
                 tig = group.get_hecke_ti(gk1,gamma.quaternion_rep,l,reps = hecke_reps)
                 val0 = c.evaluate(tig)
                 if padic:
-                    newval += self._Sigma0(emb(gk1)) * val0
+                    newval += self.Sigma0()(emb(gk1)) * val0
                 else:
                     newval += val0
             vals.append(scale * newval)
@@ -1578,6 +1585,9 @@ class HomologyClass(ModuleElement):
     def get_data(self):
         return self._data.iteritems()
 
+    def size_of_support(self):
+        return len(self._data)
+
     def _repr_(self):
         if len(self._data) == 0:
             return '0'
@@ -1696,8 +1706,10 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,tohat = True):
+def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,tohat = True,prec = None):
     res = 1
+    if prec is None:
+        prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     R.<t> = PolynomialRing(cycle.parent().coefficient_module().base_field())
     emb = G.get_embedding(prec)
     wpa,wpb,wpc,wpd = emb(G.wp).change_ring(R.base_ring()).list()
@@ -1707,9 +1719,10 @@ def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,toh
         assert method == 'riemann'
         integrate_H0 = integrate_H0_riemann
     jj = 0
+    total_integrals = cycle.size_of_support()
     for g,divisor in cycle.get_data():
         jj += 1
-        print 'Integral %s...'%jj
+        verbose('Integral %s/%s...'%(jj,total_integrals))
         if divisor.degree() != 0:
             raise ValueError,'Divisor must be of degree 0'
         if tohat:
@@ -1844,7 +1857,7 @@ def darmon_point(p,DB,dK,prec,working_prec = None):
         working_prec = prec + 2
     # Define the elliptic curve
     E = EllipticCurve(str(p*DB*Np))
-    fname = 'moments_%s_%s_%s'%(p,DB,prec)
+    fname = '.moments_%s_%s_%s.sobj'%(p,DB,prec)
 
     print "Computing the Darmon points attached to the data:"
     print 'D_B = %s = %s'%(DB,factor(DB))
@@ -1854,7 +1867,7 @@ def darmon_point(p,DB,dK,prec,working_prec = None):
     print "Should find points in the elliptic curve:"
     print E
     print "Partial results will be saved in %s/%s"%(os.getcwd(),fname)
-    print "====================================================================================="
+    print "=================================================="
 
     # Define the S-arithmetic group
     G = BigArithGroup(p,DB,Np)
@@ -1867,22 +1880,28 @@ def darmon_point(p,DB,dK,prec,working_prec = None):
     cycleGn,nn,ell = G.construct_cycle(dK,prec,hecke_smoothen = True)
 
     # Overconvergent lift
-    CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
-    VOC = CohOC.coefficient_module()
-
     if not os.path.isfile(fname):
+        CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
+        verbose('Computing moments...')
+        VOC = CohOC.coefficient_module()
         Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.Gpn.gens()])
         Phi = Phi.improve(prec = prec,sign = E.ap(p))
         save(Phi._val,fname)
+        verbose('Done.')
     else:
+        verbose('Using precomputed moments')
         Phivals = load(fname)
+        CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
+        CohOC._coeff_module = Phivals[0].parent()
+        VOC = CohOC.coefficient_module()
         Phi = CohOC([VOC(o) for o in Phivals])
+        #Phi = Phi.improve(prec = prec,sign = E.ap(p))
 
     # Integration with moments
     tot_time = walltime()
-    J = integrate_H1(G,cycleGn,Phi,1,method = 'moments') # do not smoothen
+    J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec)
     verbose('integration tot_time = %s'%walltime(tot_time))
-    x,y = getcoords(E,J,prec)
+    #x,y = getcoords(E,J,prec)
 
     # Try to recognize the point
     F.<r> = QuadraticField(dK)

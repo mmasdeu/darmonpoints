@@ -5,8 +5,8 @@
 p= 13 # The prime
 D = 2 * 3 # Discriminant of the quaternion algebra (even number of primes)
 Np = 1 # Conductor of order. Currently only 1 is supported
-dK = 197 # Calculate points on extensions of QQ(sqrt(dK))
-prec = 10 # Precision to which result is desired
+dK = 5 # Calculate points on extensions of QQ(sqrt(dK))
+prec = 20 # Precision to which result is desired
 
 verb_level = 1 # Set to 0 to remove output
 
@@ -32,11 +32,24 @@ PhiE = Coh.get_cocycle_from_elliptic_curve(E,sign = 1)
 # Define the cycle ( in H_1(G,Div^0 Hp) )
 cycleGn,nn,ell = G.construct_cycle(dK,prec,hecke_smoothen = True)
 
+
 # Overconvergent lift
-CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
-VOC = CohOC.coefficient_module()
-PhiElift = CohOC([VOC(QQ(PhiE.evaluate(g)[0])).lift(M = prec) for g in G.Gpn.gens()])
-PhiElift = PhiElift.improve(prec = prec,sign = E.ap(p))
+fname = '.moments_%s_%s_%s.sobj'%(p,D,prec)
+if not os.path.isfile(fname):
+    CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
+    verbose('Computing moments...')
+    VOC = CohOC.coefficient_module()
+    PhiElift = CohOC([VOC(QQ(PhiE.evaluate(g)[0])).lift(M = prec) for g in G.Gpn.gens()])
+    PhiElift = PhiElift.improve(prec = prec,sign = E.ap(p))
+    save(PhiElift._val,fname)
+    verbose('Done.')
+else:
+    verbose('Using precomputed moments')
+    Phivals = load(fname)
+    CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
+    CohOC._coeff_module = Phivals[0].parent()
+    VOC = CohOC.coefficient_module()
+    PhiElift = CohOC([VOC(o) for o in Phivals])
 
 # Integration with moments
 tot_time = walltime()

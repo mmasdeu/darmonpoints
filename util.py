@@ -3,6 +3,7 @@ from sage.rings.all import ZZ
 from sage.modular.pollack_stevens.manin_map import M2Z
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
+from sage.misc.misc import verbose
 
 def find_containing_affinoid(p,z,level = 1):
     r"""
@@ -225,18 +226,15 @@ def recognize_point(x,y,EF,prec = None):
           y1 = algdep(y1,1).roots(QQ)[0][0]
           y2 = algdep(y2,1).roots(QQ)[0][0]
           candidate =  [ x1+x2*w, y1+y2*w, 1]
-      except:
-          verbose('Something couldnt be recognized...')
-          try:
-              return EF.lift_x(x),True
-          except:
-              return [x,y,1],False
+      except IndexError:
+          verbose('Something couldnt be recognized...',level=2)
+          return [x,y,1],False
   try:
       Pt = EF(candidate)
-      verbose('Point is in curve: %s'%Pt)
+      verbose('Point is in curve: %s'%Pt,level=2)
       return candidate,True
   except TypeError:
-      verbose('Point does not appear to lie on curve...')
+      verbose('Point does not appear to lie on curve...',level=2)
       return candidate,False
 
 def our_sqrt(x,K):
