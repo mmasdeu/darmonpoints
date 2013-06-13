@@ -1,5 +1,5 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.all import ZZ
+from sage.rings.all import ZZ,QQ,algdep
 from sage.modular.pollack_stevens.manin_map import M2Z
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve

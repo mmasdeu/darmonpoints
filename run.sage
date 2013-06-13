@@ -5,23 +5,18 @@ dK = 5
 ell = 5
 prec = 10
 E = EllipticCurve(str(p*D*Np))
-# P_E = E.base_extend(QuadraticField(dK,names = 'a')).lift_x(-2)
+P_E = E.base_extend(QuadraticField(dK,names = 'a')).lift_x(-2)
 set_verbose(1)
 G = BigArithGroup(p,D,Np)
 
 # Calculate PhiE, the cohomology class associated to the curve E.
-Coh = CohomologyTrivialCoeffs(G.Gpn,0,base = QQ)
-CohOC = Cohomology(G.Gpn,0,overconvergent = True,base = Qp(p,prec))
+Coh = CohomologyGroup(G.Gpn,overconvergent = False,base = Qp(p,prec))
+CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
 
-n = 5
-K1 = (Coh.hecke_matrix(n)-E.ap(n)).right_kernel()
-assert K1.dimension() == 2
-K2 = K1.intersection((Coh.involution_at_infinity_matrix()-1).right_kernel())
-assert K2.dimension() == 1
-col = [ZZ(o) for o in K2.matrix().list()]
+PhiE = Coh.get_cocycle_from_elliptic_curve(E)
 
 # Define the cycle ( in H_1(G,Div^0 Hp) )
-cycleGn,nn = G.construct_cycle(dK,prec,hecke_smoothen = ell)
+cycleGn,nn,q = G.construct_cycle(dK,prec,hecke_smoothen = ell)
 
 #############################################
 # Overconvergent lift
@@ -43,7 +38,7 @@ print x
 
 # Integration with Riemann sums
 tot_time = walltime()
-J = integrate_H1(G,cycleGn,PhiE,2,method = 'riemann') # do not smoothen
+J = integrate_H1(G,cycleGn,PhiE,3,method = 'riemann') # do not smoothen
 print 'tot_time = %s'%walltime(tot_time)
 print J
 x,y = getcoords(E,J)
