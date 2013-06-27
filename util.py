@@ -134,6 +134,9 @@ def getcoords(E,u,prec=20,R = None):
     # Normalize the period by appropriate powers of qE
     un = u * qE**(-(u.valuation()/qE.valuation()).floor())
 
+    if un == 1:
+        return 0,Infinity
+
     precn = (prec/qE.valuation()).floor() + 4
     # formulas in Silverman II (Advanced Topics in the Arithmetic of Elliptic curves, p. 425)
     xx = un/(1-un)**2 + sum( [qE**n*un/(1-qE**n*un)**2 + qE**n/un/(1-qE**n/un)**2-2*qE**n/(1-qE**n)**2 for n in range(1,precn) ])
@@ -185,7 +188,7 @@ def period_from_coords(p,E, P, prec = 20):
     try:
         EqCp = Eq.change_ring(yy.parent())
         Pq = EqCp([xx,yy])
-    except:
+    except TypeError:
         raise RuntimeError, "Bug : Point %s does not lie on the curve "%[xx,yy]
 
     tt = -xx/yy

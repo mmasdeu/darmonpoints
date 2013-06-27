@@ -1,5 +1,5 @@
 ##########################################################################
-### Stark-Heegner points for quaternion algebras (following M.Greenberg)
+### Stark-Heegner points for quaternion algebras (following M.Greenberg) #
 ##########################################################################
 from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement
@@ -11,31 +11,6 @@ from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 import os
 from sage.modular.btquotients.ocmodule import *
-
-use_ps_dists = True
-
-def _reduce_in_amalgam_new(self,x):
-    p = self.p
-    rednrm = x.reduced_norm() if self.discriminant != 1 else x.determinant()
-    xval = rednrm.valuation(p)
-    print 'rednrm = %s'%rednrm
-    denval = self.Gn._denominator_valuation
-    wp = self.wp
-    # x0 = set_immutable(p**-(xval/2) * x)
-    # if self.Gpn._denominator(x0) == 1:
-    #     return x,[]
-    # elif self.Gn._is_in_order(x0):
-    #     pass
-    # else:
-    emb = self.get_embedding(2*xval)
-    a,b,c,d = emb(x).list()
-    new = (b/a)[0]
-    xnew = p * x * (wp * self.get_BT_reps()[new + 1])**-1
-    if self.Gpn._is_in_order(xnew):
-        return xnew,[new + 1]
-    else:
-        a,wd =  _reduce_in_amalgam_new(self,xnew)
-        return a,wd + [new + 1]
 
 class BTEdge(SageObject):
     r'''
@@ -117,7 +92,7 @@ class BigArithGroup(AlgebraicGroup):
         sage: (a*b).word_rep
         [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,p,discriminant,level,seed = 1000000):
+    def __init__(self,p,discriminant,level,seed = 1000000,outfile = None):
         magma.eval('SetSeed(%s)'%seed)
         self.p = ZZ(p)
         if not self.p.is_prime():
@@ -136,6 +111,9 @@ class BigArithGroup(AlgebraicGroup):
         self.Gn.get_embedding = self.get_embedding
         verbose('Initializing arithmetic group G(pn)...')
         self.Gpn = ArithGroup(discriminant,p*level,info_magma = self.Gn)
+        fwrite('B = Q<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gn.B.gens()[0]**2,self.Gn.B.gens()[1]**2),outfile)
+        fwrite('R with basis %s'%list(self.Gn.Obasis),outfile)
+        fwrite('R(p) with basis %s'%list(self.Gpn.Obasis),outfile)
         self.Gpn.get_embedding = self.get_embedding
         self._prec = -1
         self.get_Up_reps()
@@ -175,7 +153,7 @@ class BigArithGroup(AlgebraicGroup):
         wtime = walltime()
         verbose('Calling pMatrixRing...')
 
-        M,f,_ = magma.pMatrixRing(self.Gn._O_magma.name(),prime*self.Gn._ZZ_magma,nvals = 3)
+        M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._ZZ_magma,nvals = 3)
         verbose('Spent %s seconds in pMatrixRing'%walltime(wtime))
         QQp = Qp(prime,prec)
         self._prec = prec
@@ -190,24 +168,8 @@ class BigArithGroup(AlgebraicGroup):
         for g in self.Gpn.Obasis:
             tup = g.coefficient_tuple()
             mat = tup[0] + tup[1]*self._II + tup[2]*self._JJ + tup[3]*self._KK
-            # assert is_in_Gamma0loc(mat,det_condition = False)
-
+            assert is_in_Gamma0loc(mat,det_condition = False)
         return self._II, self._JJ, self._KK
-
-    @cached_method
-    def get_BT_reps_old(self):
-        reps = [self.Gn.B(1)]
-        found_reps = 1
-        for n_iters,elt0 in enumerate(self.Gn.enumerate_elements()):
-            if n_iters % 100 == 0:
-                verbose('%s, len = %s/%s'%(n_iters,len(reps),self.p+1))
-            elt = elt0.quaternion_rep
-            new_inv = elt**(-1)
-            if all([not self.Gpn._is_in_order(o * new_inv) for o in reps]):
-                reps.append(set_immutable(elt))
-                found_reps += 1
-                if found_reps == self.p + 1:
-                    return reps
 
     @cached_method
     def get_BT_reps(self):
@@ -221,13 +183,13 @@ class BigArithGroup(AlgebraicGroup):
                 verbose('%s, len = %s/%s'%(n_iters,len(reps),self.p+1))
             elt = elt0.quaternion_rep
             new_inv = elt**(-1)
+            #idx,mat = next( (idx,mat for idx,mat in enumerate(matrices) if emb(elt)*mat), (-1,None))
             tmp = emb(elt) * matrices[found_reps -1]
             if all([not self.Gpn._is_in_order(o * new_inv) for o in reps]) and is_in_Gamma0loc(tmp) and ZZ(emb(elt)[0,0][0]) == 1:
                 reps.append(set_immutable(elt))
                 found_reps += 1
-                if found_reps == self.p + 1:
+                if len(reps) == self.p + 1:
                     return reps
-    #i = next(j for j,fda in enumerate(fdargs) if az0 <= fda)
 
     def do_hat(self,g):
         return self.wp * g * self.wp**-1
@@ -277,6 +239,7 @@ class BigArithGroup(AlgebraicGroup):
                 new_candidate =   v2.quaternion_rep * tmp *  v1.quaternion_rep
                 if is_in_Gamma0loc(epsinv * emb(new_candidate), det_condition = False):
                     if all([self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis]):
+                        verbose('Found wp.')
                         return new_candidate
 
     def get_embedding(self,prec):
@@ -366,8 +329,8 @@ class BigArithGroup(AlgebraicGroup):
             a,wd = self._reduce_in_amalgam(x)
             return a, wd + [wd1,wd0]
 
-    def construct_cycle(self,D,prec,hecke_smoothen = None):
-        gamma, tau = self.Gn.embed_order(self.p,D,prec)
+    def construct_cycle(self,D,prec,hecke_smoothen = True,outfile = None):
+        gamma, tau = self.Gn.embed_order(self.p,D,prec,outfile = outfile)
         Div = DivisorsOnHp(tau.parent())
         D1 = Div(tau)
         H1 = Homology(self.Gn,Div)
@@ -379,7 +342,6 @@ class BigArithGroup(AlgebraicGroup):
                 tmp = H1(dict([(gamman,D1)])).zero_degree_equivalent()
                 found = True
             except ValueError:
-                verbose('...')
                 n += 1
                 gamman *= gamma
         if hecke_smoothen:
@@ -387,7 +349,7 @@ class BigArithGroup(AlgebraicGroup):
             D = self.Gpn.O.discriminant()
             while D%q == 0:
                 q = q.next_prime()
-            tmp = tmp.hecke_smoothen(q,prec = prec)
+            tmp = tmp.hecke_smoothen(q,prec = prec).factor_into_generators()
         return tmp,n,q
 
 class ArithGroup(AlgebraicGroup):
@@ -546,17 +508,20 @@ class ArithGroup(AlgebraicGroup):
                 else:
                     self._B_magma = magma.QuaternionAlgebra('%s*%s'%(self.discriminant,self._ZZ_magma.name()))
 
+                self._Omax_magma = self._B_magma.MaximalOrder()
                 self._O_magma = self._B_magma.MaximalOrder().Order('%s*%s'%(self.level,self._ZZ_magma.name()))
                 self._D_magma = magma.UnitDisc(Precision = 300)
             else:
                 self._ZZ_magma = magma.Integers()
                 self._B_magma = magma.QuaternionAlgebra(magma.Rationals(),1,1)
                 self._O_magma = self._B_magma.MaximalOrder().Order('%s'%self.level)
+                self._Omax_magma = self._B_magma.MaximalOrder()
         else:
             self._ZZ_magma = info_magma._B_magma.BaseRing().Integers()
             self._B_magma = info_magma._B_magma
             if self.discriminant != 1:
                 # self._O_magma = info_magma._O_magma.Order('%s*%s'%(self.level,self._ZZ_magma.name()))
+                self._Omax_magma = info_magma._B_magma.MaximalOrder()
                 self._O_magma = info_magma._B_magma.MaximalOrder().Order('%s*%s'%(self.level,self._ZZ_magma.name()))
                 self._D_magma = info_magma._D_magma
             else:
@@ -679,7 +644,7 @@ class ArithGroup(AlgebraicGroup):
         #verbose('done.')
         return tmp
 
-    #@cached_method
+    @cached_method
     def _get_word_recursive(self,delta,oldji,depth = 0):
         if depth > 100:
             raise RuntimeError
@@ -855,7 +820,6 @@ class ArithGroup(AlgebraicGroup):
         - t_{gk1}(gamma)
 
         """
-        #verbose('gk1 = %s, gamma = %s, l = %s'%(gk1,gamma,l))
         elt = gk1**-1 * gamma
         found = False
         if reps is None:
@@ -910,7 +874,7 @@ class ArithGroup(AlgebraicGroup):
                 free_idx.append(i)
         return Gab,V,free_idx
 
-    def embed_order(self,p,D,prec,zero_deg = True,seed = None):
+    def embed_order(self,p,D,prec,zero_deg = True,seed = None,outfile = None):
         r'''
         sage: G = ArithGroup(5,6,1)
         sage: f = G.embed_order(23,20)
@@ -932,12 +896,14 @@ class ArithGroup(AlgebraicGroup):
         r0,r1 = w.coordinates_in_terms_of_powers()(K.gen())
         v0 = K.hom([Cp(r0)+Cp(r1)*Cp.gen()])
         phi = K.hom([mu])
-
+        fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+        fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
         if self.discriminant == 1:
             assert K.gen(0).minpoly() == mu.minpoly()
-            self._is_in_order(phi(w))
+            assert self._is_in_order(phi(w))
 
         iotap = self.get_embedding(prec)
+        fwrite('Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
         a,b,c,d = iotap(mu).list()
         R.<X> = PolynomialRing(Cp)
         tau = (Cp(a-d) + 2*v0(K.gen()))/Cp(2*c)
@@ -945,6 +911,10 @@ class ArithGroup(AlgebraicGroup):
 
         found = False
         gamma = self(phi(K.units()[0])**2)
+        fwrite('\cO_K to R_0 given by w_K |-> %s'%phi(w),outfile)
+        fwrite('gamma_psi = %s'%gamma,outfile)
+        fwrite('tau_psi = %s'%tau,outfile)
+        fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
         return gamma, tau
 
 
@@ -1198,18 +1168,19 @@ class CohomologyElement(ModuleElement):
         Sigma0 = self.parent().Sigma0()
         if len(word) == 0:
             return V(0)
+        # verbose('word = %s'%list(word))
         emb = G.get_embedding(200)
         if len(word) == 1:
             g,a = word[0]
             if a == 0:
                 return V(0)
             elif a == -1:
-                if use_ps_dists:
+                if self.parent()._use_ps_dists:
                     return -(Sigma0(emb(G.gen(g).quaternion_rep**-1)) * self._val[g])
                 else:
                     return  -self._val[g].l_act_by(emb(G.gen(g).quaternion_rep**-1))
             elif a < 0:
-                if use_ps_dists:
+                if self.parent()._use_ps_dists:
                     return -(Sigma0(emb(G.gen(g).quaternion_rep**a)) * self._evaluate_word(tuple([(g,-a)])))
                 else:
                     return -self._evaluate_word(tuple([(g,-a)])).l_act_by(emb(G.gen(g).quaternion_rep**a))
@@ -1220,7 +1191,7 @@ class CohomologyElement(ModuleElement):
                 phig = self._val[g]
                 tmp = V(phig)
                 for i in range(a-1):
-                    if use_ps_dists:
+                    if self.parent()._use_ps_dists:
                         tmp = phig + Sigma0(emb(G.gen(g).quaternion_rep)) * tmp
                     else:
                         tmp = phig + tmp.l_act_by(emb(G.gen(g).quaternion_rep))
@@ -1228,7 +1199,7 @@ class CohomologyElement(ModuleElement):
         else:
             pivot = len(word) // 2
             gamma = prod([G.gen(g).quaternion_rep**a for g,a in word[:pivot]],G.B(1))
-            if use_ps_dists:
+            if self.parent()._use_ps_dists:
                 return self._evaluate_word(tuple(word[:pivot])) + Sigma0(emb(gamma)) *  self._evaluate_word(tuple(word[pivot:]))
             else:
                 return self._evaluate_word(tuple(word[:pivot])) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(emb(gamma))
@@ -1266,15 +1237,16 @@ class CohomologyElement(ModuleElement):
 
 class CohomologyGroup(Parent):
     Element = CohomologyElement
-    def __init__(self,G,overconvergent = False,base = None):
+    def __init__(self,G,overconvergent = False,base = None,use_ps_dists = True):
         self._group = G
+        self._use_ps_dists = use_ps_dists
         if overconvergent and base is None:
             raise ValueError, 'Must give base if overconvergent'
         if base is None:
             base = ZZ
         if overconvergent:
             self.is_overconvergent = True
-            if use_ps_dists:
+            if self._use_ps_dists:
                 self._coeffmodule = Distributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
             else:
                 self._coeffmodule = OCVn(0,base,1+base.precision_cap())
@@ -1293,7 +1265,7 @@ class CohomologyGroup(Parent):
         return self._group
 
     def Sigma0(self):
-        if use_ps_dists:
+        if self._use_ps_dists:
             return self._coeffmodule._act._Sigma0
         else:
             return (lambda x:x)
@@ -1414,7 +1386,7 @@ class CohomologyGroup(Parent):
             emb = Gpn.get_embedding(V.base_ring().precision_cap())
         vals = []
         R = V.base_ring()
-        if hasattr(V,'dimension'):
+        if hasattr(V,'is_full'): # This should be more robust
             gammas = []
             Gab,Vmod,free_idx = Gpn.abelianization()
             for i in free_idx:
@@ -1429,7 +1401,7 @@ class CohomologyGroup(Parent):
                 tig = group.get_hecke_ti(gk1,gamma.quaternion_rep,l,reps = hecke_reps)
                 val0 = c.evaluate(tig)
                 if padic:
-                    if use_ps_dists:
+                    if self._use_ps_dists:
                         newval += self.Sigma0()(emb(gk1)) * val0
                     else:
                         newval += val0.l_act_by(emb(gk1))
@@ -1688,24 +1660,50 @@ class HomologyClass(ModuleElement):
         G = self.parent().group()
         newdict = defaultdict(V)
         for oldg,v in self._data.iteritems():
-            if v.degree() == 0:
-                newdict[oldg] += v
-            else:
-                newv = v
-                gword = oldg._calculate_weight_zero_word()
-                for i,a in gword:
-                    g = G.gen(i)
-                    oldv = newv
-                    newv = (g^-a) * oldv
-                    if a < 0:
-                        a = -a
-                        oldv = (g^a) * oldv
-                        sign = -1
-                    else:
-                        sign = 1
-                    for j in range(a):
-                        newdict[g] += sign * oldv
-                        oldv = (g**-1) * oldv
+            gword = oldg._calculate_weight_zero_word()
+            newv = v
+            for i,a in gword:
+                g = G.gen(i)
+                oldv = newv
+                newv = (g^-a) * oldv
+                if a < 0:
+                    a = -a
+                    oldv = (g^a) * oldv
+                    sign = -1
+                else:
+                    sign = 1
+                for j in range(a):
+                    newdict[g] += sign * oldv
+                    oldv = (g**-1) * oldv
+        return HomologyClass(self.parent(),newdict)
+
+    def factor_into_generators(self):
+        r'''
+        Use the relations:
+            * gh|v = g|v + h|g^-1 v
+            * g^a|v = g|(v + g^-1v + ... + g^-(a-1)v)
+            * g^(-a)|v = - g^a|g^av
+        '''
+
+        V = self.parent().coefficient_module()
+        G = self.parent().group()
+        newdict = defaultdict(V)
+        for oldword,v in self._data.iteritems():
+            gword = oldword.word_rep
+            newv = v
+            for i,a in gword:
+                g = G.gen(i)
+                oldv = newv
+                newv = (g^-a) * oldv
+                if a < 0:
+                    a = -a
+                    oldv = (g^a) * oldv
+                    sign = -1
+                else:
+                    sign = 1
+                for j in range(a):
+                    newdict[g] += sign * oldv
+                    oldv = (g**-1) * oldv
         return HomologyClass(self.parent(),newdict)
 
     def _add_(self,right):
@@ -1745,7 +1743,7 @@ class HomologyClass(ModuleElement):
                         del newdict[ti]
                 except KeyError:
                     newdict[ti] = newv
-        return HomologyClass(self.parent(),newdict)
+        return HomologyClass(self.parent(),newdict).factor_into_generators()
 
     def _check_cycle_condition(self):
         res = self.parent().coefficient_module()(0)
@@ -1848,8 +1846,6 @@ def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None):
     HOC = hc.parent()
     prec = HOC.coefficient_module().precision_cap()
     K = phi.parent().base_ring()
-    R = PolynomialRing(K,'x')
-    x = R.gen()
     R1 = LaurentSeriesRing(K,'r1')
     r1 = R1.gen()
     R1.set_default_prec(prec)
@@ -1863,13 +1859,14 @@ def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None):
         assert all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()])
         pol = val.log() + (y0.derivative()/y0).integral()
         mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma,check = True))
-        nmoments = len(mu_e._moments)
-        if use_ps_dists:
+        if HOC._use_ps_dists:
+            nmoments = len(mu_e._moments)
             resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments)
         else:
             resadd += mu_e.evaluate_at_poly(pol)
-        if nmoments > 0:
+        try:
             resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
+        except IndexError: pass
     val =  resmul.valuation(p)
     tmp = p**val * K.teichmuller(p**(-val)*resmul)
     if resadd != 0:
@@ -1923,9 +1920,16 @@ def points_test(G,level):
             if  thisval < level:
                 print thisval
 
-def darmon_point(p,DB,dK,prec,working_prec = None,sign_at_infinity = 1):
+def fwrite(string, outfile):
+    if outfile is None:
+        return
+    with open(outfile,"a") as fout:
+        fout.write(string + '\n')
+    return
+
+def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = True,group = None):
     QQp = Qp(p,prec)
-    Np = 1 # For now, can't do more...
+    assert Np == 1 # For now, can't do more...
     if dK % 4 == 0:
         dK = ZZ(dK/4)
     if working_prec is None:
@@ -1934,42 +1938,53 @@ def darmon_point(p,DB,dK,prec,working_prec = None,sign_at_infinity = 1):
     E = EllipticCurve(str(p*DB*Np))
     fname = '.moments_%s_%s_%s.sobj'%(p,DB,prec)
 
-    print "Computing the Darmon points attached to the data:"
+    print "Computing the Darmon point attached to the data:"
     print 'D_B = %s = %s'%(DB,factor(DB))
     print 'Np = %s'%Np
     print 'dK = %s'%dK
     print "The calculation is being done with p = %s and prec = %s"%(p,working_prec)
     print "Should find points in the elliptic curve:"
     print E
-    print "Partial results will be saved in %s/%s"%(os.getcwd(),fname)
+    print "Moments will be saved in %s/%s"%(os.getcwd(),fname)
+    fwrite("Starting computation of the Darmon point",outfile)
+    fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
+    fwrite('Np = %s'%Np,outfile)
+    fwrite('dK = %s'%dK,outfile)
+    fwrite('Calculation with p = %s and prec = %s+%s'%(p,prec,working_prec-prec),outfile)
+    fwrite('Elliptic curve: %s'%E,outfile)
+    if outfile is not None:
+        print "Partial results will be saved in %s/%s"%(os.getcwd(),outfile)
     print "=================================================="
 
-    # Define the S-arithmetic group
-    G = BigArithGroup(p,DB,Np)
+    if group is None:
+        # Define the S-arithmetic group
+        G = BigArithGroup(p,DB,Np,outfile = outfile)
+    else:
+        G = group
 
     # Define phiE, the cohomology class associated to the curve E.
     Coh = CohomologyGroup(G.Gpn)
     phiE = Coh.get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
 
     # Define the cycle ( in H_1(G,Div^0 Hp) )
-    cycleGn,nn,ell = G.construct_cycle(dK,prec,hecke_smoothen = True)
+    cycleGn,nn,ell = G.construct_cycle(dK,prec,hecke_smoothen = True,outfile = outfile)
 
     # Overconvergent lift
     if not os.path.isfile(fname):
-        CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
+        CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
         verbose('Computing moments...')
         VOC = CohOC.coefficient_module()
-        if use_ps_dists:
+        if CohOC._use_ps_dists:
             Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.Gpn.gens()])
         else:
-            Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])) for g in G.Gpn.gens()])
+            Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.Gpn.gens()])
         Phi = Phi.improve(prec = prec,sign = E.ap(p))
         save(Phi._val,fname)
         verbose('Done.')
     else:
         verbose('Using precomputed moments')
         Phivals = load(fname)
-        CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec))
+        CohOC = CohomologyGroup(G.Gpn,overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
         CohOC._coeff_module = Phivals[0].parent()
         VOC = CohOC.coefficient_module()
         Phi = CohOC([VOC(o) for o in Phivals])
@@ -1978,14 +1993,18 @@ def darmon_point(p,DB,dK,prec,working_prec = None,sign_at_infinity = 1):
     # Integration with moments
     tot_time = walltime()
     J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec)
+    fwrite('J_psi = %s'%J,outfile)
     verbose('integration tot_time = %s'%walltime(tot_time))
     #x,y = getcoords(E,J,prec)
 
-    # Try to recognize the point
+    # Try to recognize a generator
     F.<r> = QuadraticField(dK)
     Jlog = J.log()
     Cp = Jlog.parent()
-    addpart = (2*Jlog)/((E.ap(ell) - (ell+1))*nn)
+    smoothen_constant = E.ap(ell)- ell - 1
+    fwrite('a_r(E) - r - 1 = %s'%smoothen_constant,outfile)
+    fwrite('exponent = %s'%nn,outfile)
+    addpart = (2*Jlog)/(smoothen_constant*nn)
     candidate = None
     for a,b in product(range(p),repeat = 2):
         if a == 0 and b == 0:
@@ -1998,7 +2017,11 @@ def darmon_point(p,DB,dK,prec,working_prec = None,sign_at_infinity = 1):
             verbose('Recognized the point, it is zero!')
             break
         else:
-            x,y = getcoords(E,J1,prec)
+            pt = getcoords(E,J1,prec)
+            if pt is Infinity:
+                continue
+            else:
+                x,y = pt
             success = False
             prec0 = prec
             while not success and prec0 > prec-5:
@@ -2011,6 +2034,19 @@ def darmon_point(p,DB,dK,prec,working_prec = None,sign_at_infinity = 1):
             verbose('Recognized the point!')
             break
     try:
-        return E.change_ring(F)(candidate)
+        Ptsmall = E.change_ring(F)(candidate)
+        alldivs = [Ptsmall]
+        m0 = 1
+        for m in [2,3,5,7]:
+            while any([o.is_divisible_by(m) for o in alldivs]):
+                alldivs = [pt for o in alldivs for pt in o.divison_points(m)]
+                m0 *= m
+        fwrite('m0 = %s'%m0,outfile)
+        fwrite('This should be close to 1: %s'%((J1**(smoothen_constant * nn * m0))/(J**2)),outfile)
+        fwrite('Pt = %s'%Ptsmall)
+        fwrite('================================================')
+        return Ptsmall
     except (TypeError,ValueError):
+        verbose("Couldn't recognize the point. Returning the result of algdep")
+        fwrite('FAIL',outfile)
         return candidate

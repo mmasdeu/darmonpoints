@@ -2,23 +2,22 @@
 # Parameters         #
 ######################
 
-p= 13 # The prime
-D = 2 * 3 # Discriminant of the quaternion algebra (even number of primes)
-Np = 1 # Conductor of order. Currently only 1 is supported
+p= 11 # The prime
+D = 2 * 5 # Discriminant of the quaternion algebra (even number of primes)
+Np = 1 # Conductor of order.
 # dK = 5 # Calculate points on extensions of QQ(sqrt(dK))
-dKlist = [ 5 ]
+dKlist = [ 13, 173, 197, 237, 277, 293, 373, 413, 437, 453, 557] # p = 11, D = 10
+dKlist = [13]
+# dKlist = [ 29, 61, 109, 173, 197, 277, 381, 413,437,453,469,541,589] # p = 17, D = 22
+# dKlist_6_13 = [5, 149, 197, 293, 317, 437, 461, 509, 557]
+# dKlist = [13, 37, 53, 77, 197, 213, 277, 437, 517, 533, 557, 573]
+prec = 50 # Precision to which result is desired
+outfile = 'test4.txt'
 
-# 5, 149, 197, 293, 317, 437, 461, 509, 557
-# [10, 18*r - 5, 1]
-# [-10654790/1138489, 1229396070/1214767763*r + 5327395/1138489, 1]
-# [964090/121), -67449270/1331*r - 482045/121, 1]
-# [66626/7325, -23188374/10731125*r - 33313/7325, 1]
-# [36974414/388325, -226154303712/4308465875*r - 18487207/388325, 1]
-# [971110/339889, -244302600/198155287*r - 485555/339889, 1]
-# [-146849210/23609881, 132062657760/114720411779*r + 73424605/23609881, 1]
-# [86626030090/4613262241, -1193915313019350/313337384670961*r - 43313015045/4613262241, 1]
-# [394312144429886/2528440578125, 7858947314645355852384/94887001960802734375*r - 197156072214943/2528440578125, 1]
-prec = 19 # Precision to which result is desired
+# Define the S-arithmetic group
+G = BigArithGroup(p,D,Np)
+for dK in dKlist:
+    darmon_point(p,D,Np,dK,prec,outfile = outfile,use_ps_dists = False, group = G)
 
 verb_level = 1 # Set to 0 to remove output
 
@@ -104,5 +103,8 @@ for dK in dKlist:
             verbose('Recognized the point!')
             break
     set_verbose(verb_level)
-    print 'Here is the candidate point:'
-    print candidate
+    if success:
+        print 'Here is the candidate point:'
+        print candidate
+    else:
+        print 'No success this time...'
