@@ -1,9 +1,11 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.rings.all import ZZ,QQ,algdep
-from sage.modular.pollack_stevens.manin_map import M2Z
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
 from sage.misc.misc import verbose
+
+def M2Z(v):
+    return Matrix(ZZ,2,2,v)
 
 def find_containing_affinoid(p,z,level = 1):
     r"""
@@ -118,6 +120,16 @@ def act_flt(g,x):
     a,b,c,d = g.list()
     return (a*x + b)/(c*x + d)
 
+def tate_parameter(E,R):
+    p = R.prime()
+    jE = E.j_invariant()
+
+    # Calculate the Tate parameter
+    E4 = EisensteinForms(weight=4).basis()[0]
+    Delta = CuspForms(weight=12).basis()[0]
+    j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
+    qE =  (1/j).power_series().reversion()(R(1/jE))
+
 def getcoords(E,u,prec=20,R = None):
     if R is None:
         R = u.parent()
@@ -173,9 +185,6 @@ def period_from_coords(p,E, P, prec = 20):
     - ``prec`` - the `p`-adic precision, default is 20.
 
     """
-    R = Qp(p,prec)
-    if P[0].valuation(p) >= 0:
-        raise  ValueError , "The point must lie in the formal group."
     Etate = E.tate_curve(p)
     Eq = Etate.curve(prec = prec)
     isom = Etate._isomorphism(prec=prec)
@@ -192,6 +201,9 @@ def period_from_coords(p,E, P, prec = 20):
         raise RuntimeError, "Bug : Point %s does not lie on the curve "%[xx,yy]
 
     tt = -xx/yy
+    if tt.valuation(p) <= 0:
+        raise  ValueError , "The point must lie in the formal group."
+
     eqhat = Eq.formal()
     eqlog = eqhat.log(prec + 3)
     z = eqlog(tt)

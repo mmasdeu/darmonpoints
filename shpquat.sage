@@ -6,11 +6,11 @@ from sage.structure.element import MultiplicativeGroupElement
 import itertools
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.modular.pollack_stevens.distributions import Distributions, Symk
-from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
+from distributions import Distributions, Symk
+from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 import os
-from sage.modular.btquotients.ocmodule import *
+from ocmodule import *
 
 class BTEdge(SageObject):
     r'''
@@ -331,7 +331,7 @@ class BigArithGroup(AlgebraicGroup):
 
     def construct_cycle(self,D,prec,hecke_smoothen = True,outfile = None):
         gamma, tau = self.Gn.embed_order(self.p,D,prec,outfile = outfile)
-        Div = DivisorsOnHp(tau.parent())
+        Div = Divisors(tau.parent())
         D1 = Div(tau)
         H1 = Homology(self.Gn,Div)
         gamman = gamma
@@ -349,7 +349,7 @@ class BigArithGroup(AlgebraicGroup):
             D = self.Gpn.O.discriminant()
             while D%q == 0:
                 q = q.next_prime()
-            tmp = tmp.hecke_smoothen(q,prec = prec).factor_into_generators()
+            tmp = tmp.hecke_smoothen(q,prec = prec) #.factor_into_generators()
         return tmp,n,q
 
 class ArithGroup(AlgebraicGroup):
@@ -1442,19 +1442,19 @@ class CoinducedElement(SageObject):
 ##                  ##
 ######################
 
-class DivisorsOnHp(Parent):
+class Divisors(Parent):
     def __init__(self,field):
         self._field = field
         Parent.__init__(self)
 
     def _an_element_(self):
-        return DivisorOnHp(self,[(3,self._field._an_element_())])
+        return Divisor_element(self,[(3,self._field._an_element_())])
 
-    def _element_constructor_(self,data):
-        return DivisorOnHp(self,data)
+    def _element_constructor_(self,data,ptdata = None):
+        return Divisor_element(self,data,ptdata)
 
     def _coerce_map_from_(self,S):
-        if isinstance(S,DivisorOnHp):
+        if isinstance(S,self.__class__):
             return S._field is self._field
         else:
             return False
@@ -1466,44 +1466,58 @@ class DivisorsOnHp(Parent):
         return self._field
 
     def _repr_(self):
-        return 'Group of divisors on Hp, over ' + self._field._repr_()
+        return 'Group of divisors over ' + self._field._repr_()
+
+# Returns a hash of an element of Cp (which is a quadratic extension of Qp)
+def _hash(x):
+    # ans = x._ntl_rep_abs()
+    # tmp = (ZZ(ans[0][0]),ZZ(ans[0][1]))
+    # return hash((tmp,ans[1]))
+    return hash(x.trace(),x.norm())
 
 
-class DivisorOnHp(ModuleElement):
-    def __init__(self,parent,data):
+class Divisor_element(ModuleElement):
+    def __init__(self,parent,data,ptdata = None):
         r'''
         A Divisor is given by a list of pairs (P,nP), where P is a point, and nP is an integer.
 
         TESTS:
 
             sage: Cp.<g> = Qq(5^3,20)
-            sage: Div = DivisorsOnHp(Cp)
+            sage: Div = Divisors(Cp)
             sage: D1 = Div(g+3)
             sage: D2 = Div(2*g+1)
             sage: D = D1 + D2
             sage: print -D
             sage: print 2*D1 + 5*D2
         '''
-
         self._data = defaultdict(ZZ)
+        self._ptdict = {}
         ModuleElement.__init__(self,parent)
         if data == 0:
             return
-        if isinstance(data,list):
+        elif isinstance(data,list):
             for n,P in data:
                 if n == 0:
                     continue
-                self._data[P] += n
-                if self._data[P] == 0:
-                    del self._data[P]
-        elif isinstance(data,dict):
+                hP = _hash(P)
+                self._data[hP] += n
+                if self._data[hP] == 0:
+                    del self._data[hP]
+                    del self._ptdict[hP]
+                else:
+                    self._ptdict[hP] = P
+        elif isinstance(data,dict) and ptdata is not None:
             self._data.update(data)
+            self._ptdict.update(ptdata)
         else:
             P = self.parent().base_field()(data)
-            self._data[P] = 1
+            hP = _hash(P)
+            self._data[hP] = 1
+            self._ptdict[hP] = P
 
     def _repr_(self):
-        return 'Divisor on Hp of degree %s'%self.degree()
+        return 'Divisor of degree %s'%self.degree()
 
     def value(self):
         if len(self._data) == 0:
@@ -1515,7 +1529,7 @@ class DivisorOnHp(ModuleElement):
                 mystr += ' + '
             else:
                 is_first = False
-            mystr += '%s*(%s)'%(n,P)
+            mystr += '%s*(%s)'%(n,self._ptdict[P])
         return mystr
 
     def __cmp__(self,right):
@@ -1527,27 +1541,45 @@ class DivisorOnHp(ModuleElement):
     def _add_(self,right):
         newdict = defaultdict(ZZ)
         newdict.update(self._data)
+        newptdata = {}
+        newptdata.update(self._ptdict)
         for P,n in right._data.iteritems():
             newdict[P] += n
             if newdict[P] == 0:
                 del newdict[P]
-        return DivisorOnHp(self.parent(),newdict)
+                del newptdata[P]
+            else:
+                newptdata[P] = right._ptdict[P]
+        return self.__class__(self.parent(),newdict,ptdata = newptdata)
 
     def _sub_(self,right):
         newdict = defaultdict(ZZ)
         newdict.update(self._data)
+        newptdata = {}
+        newptdata.update(self._ptdict)
         for P,n in right._data.iteritems():
             newdict[P] -= n
             if newdict[P] == 0:
                 del newdict[P]
-        return DivisorOnHp(self.parent(),newdict)
+                del newptdata[P]
+            else:
+                newptdata[P] = right._ptdict[P]
+        return self.__class__(self.parent(),newdict,ptdata = newptdata)
 
     def _neg_(self):
-        return DivisorOnHp(self.parent(),dict((P,-n) for P,n in self._data.iteritems()))
+        return self.__class__(self.parent(),dict((P,-n) for P,n in self._data.iteritems()))
 
     def left_act_by_matrix(self,g):
         a,b,c,d = g.list()
-        return DivisorOnHp(self.parent(),dict(((P.parent()(a)*P+P.parent()(b))/(P.parent()(c)*P+P.parent()(d)),n) for P,n in self._data.iteritems()))
+        gp = self.parent()
+        K = self.parent().base_ring()
+        ptdict = self._ptdict
+        for P,n in self._data.iteritems():
+            newpt = (K(a)*ptdict[P]+K(b))/(K(c)*ptdict[P]+K(d))
+            hnewpt = _hash(newpt)
+            newdict[hnewpt] = n
+            newptdata[hnewpt] = newpt
+        return self.__class__(gp,newdict,ptdata = newptdata)
 
     @cached_method
     def degree(self):
@@ -1558,7 +1590,7 @@ class DivisorOnHp(ModuleElement):
         return sum(ZZ(d).abs() for d in self._data.itervalues())
 
     def support(self):
-        return Set([d for d in self._data])
+        return [self._ptdict[P] for P in Set([d for d in self._data])]
 
 class Homology(Parent):
     def __init__(self,G,V):
@@ -1610,7 +1642,7 @@ class HomologyClass(ModuleElement):
             sage: rel_words = G.Gn.get_relation_words()
             sage: x = commutator(a,b)*G(rel_words[0])*commutator(c,b)*(G(rel_words[3])^-3)*commutator(a*b,c)*commutator(b,a)*G(rel_words[2])^5*commutator(a*b,c*a)
             sage: Cp.<g> = Qq(5^3,20)
-            sage: Div = DivisorsOnHp(Cp)
+            sage: Div = Divisors(Cp)
             sage: D1 = Div(g+3)
             sage: D2 = Div(2*g+1)
             sage: H1 = Homology(G,Div)
@@ -1743,7 +1775,7 @@ class HomologyClass(ModuleElement):
                         del newdict[ti]
                 except KeyError:
                     newdict[ti] = newv
-        return HomologyClass(self.parent(),newdict).factor_into_generators()
+        return HomologyClass(self.parent(),newdict)#.factor_into_generators()
 
     def _check_cycle_condition(self):
         res = self.parent().coefficient_module()(0)
@@ -1752,7 +1784,6 @@ class HomologyClass(ModuleElement):
         if res.is_zero():
             return True
         else:
-            print res.value()
             return False
 
     def mult_by(self,a):
@@ -1781,6 +1812,8 @@ def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,toh
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     R.<t> = PolynomialRing(cycle.parent().coefficient_module().base_field())
+    #R.<t> = LaurentSeriesRing(cycle.parent().coefficient_module().base_field())
+    #R.set_default_prec(prec)
     emb = G.get_embedding(prec)
     wpa,wpb,wpc,wpd = emb(G.wp).change_ring(R.base_ring()).list()
     if method == 'moments':
@@ -1927,7 +1960,7 @@ def fwrite(string, outfile):
         fout.write(string + '\n')
     return
 
-def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = True,group = None):
+def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = True,group = None,cremona_label_modifier = ''):
     QQp = Qp(p,prec)
     assert Np == 1 # For now, can't do more...
     if dK % 4 == 0:
@@ -1935,7 +1968,7 @@ def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfil
     if working_prec is None:
         working_prec = prec + 2
     # Define the elliptic curve
-    E = EllipticCurve(str(p*DB*Np))
+    E = EllipticCurve(str(p*DB*Np)+cremona_label_modifier)
     fname = '.moments_%s_%s_%s.sobj'%(p,DB,prec)
 
     print "Computing the Darmon point attached to the data:"
@@ -1951,7 +1984,7 @@ def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfil
     fwrite('Np = %s'%Np,outfile)
     fwrite('dK = %s'%dK,outfile)
     fwrite('Calculation with p = %s and prec = %s+%s'%(p,prec,working_prec-prec),outfile)
-    fwrite('Elliptic curve: %s'%E,outfile)
+    fwrite('Elliptic curve %s: %s'%(E.cremona_label(),E),outfile)
     if outfile is not None:
         print "Partial results will be saved in %s/%s"%(os.getcwd(),outfile)
     print "=================================================="
@@ -1968,6 +2001,9 @@ def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfil
 
     # Define the cycle ( in H_1(G,Div^0 Hp) )
     cycleGn,nn,ell = G.construct_cycle(dK,prec,hecke_smoothen = True,outfile = outfile)
+    smoothen_constant = E.ap(ell)- ell - 1
+    fwrite('a_r(E) - r - 1 = %s'%smoothen_constant,outfile)
+    fwrite('exponent = %s'%nn,outfile)
 
     # Overconvergent lift
     if not os.path.isfile(fname):
@@ -2001,52 +2037,61 @@ def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfil
     F.<r> = QuadraticField(dK)
     Jlog = J.log()
     Cp = Jlog.parent()
-    smoothen_constant = E.ap(ell)- ell - 1
-    fwrite('a_r(E) - r - 1 = %s'%smoothen_constant,outfile)
-    fwrite('exponent = %s'%nn,outfile)
-    addpart = (2*Jlog)/(smoothen_constant*nn)
+    addpart0 = Jlog/(smoothen_constant*nn)
     candidate = None
-    for a,b in product(range(p),repeat = 2):
-        if a == 0 and b == 0:
-            continue
-        # print a,b
-        multpart = Cp.teichmuller(a + Cp.gen()*b)
-        J1 = multpart * addpart.exp()
-        if J1 == Cp(1):
-            candidate = E(0)
-            verbose('Recognized the point, it is zero!')
-            break
-        else:
-            pt = getcoords(E,J1,prec)
-            if pt is Infinity:
+    twopowlist = [8, 4, 2, 1, 1/2, 1/4]
+    for twopow in twopowlist:
+        addpart =  addpart0 / twopow
+        for a,b in product(range(p),repeat = 2):
+            if a == 0 and b == 0:
                 continue
+            # print a,b
+            multpart = Cp.teichmuller(a + Cp.gen()*b)
+            J1 = multpart * addpart.exp()
+            if J1 == Cp(1):
+                candidate = E(0)
+                verbose('Recognized the point, it is zero!')
+                break
             else:
-                x,y = pt
-            success = False
-            prec0 = prec
-            while not success and prec0 > prec-5:
-                verbose('Trying to recognize point with precision %s'%prec0, level = 2)
-                candidate,success = recognize_point(x,y,E.change_ring(F),prec = prec0)
-                prec0 -= 1
-            if not success:
-                verbose('Could not recognize point',level = 2)
-                continue
-            verbose('Recognized the point!')
-            break
-    try:
-        Ptsmall = E.change_ring(F)(candidate)
-        alldivs = [Ptsmall]
-        m0 = 1
-        for m in [2,3,5,7]:
-            while any([o.is_divisible_by(m) for o in alldivs]):
-                alldivs = [pt for o in alldivs for pt in o.divison_points(m)]
-                m0 *= m
-        fwrite('m0 = %s'%m0,outfile)
-        fwrite('This should be close to 1: %s'%((J1**(smoothen_constant * nn * m0))/(J**2)),outfile)
-        fwrite('Pt = %s'%Ptsmall)
-        fwrite('================================================')
-        return Ptsmall
-    except (TypeError,ValueError):
-        verbose("Couldn't recognize the point. Returning the result of algdep")
-        fwrite('FAIL',outfile)
-        return candidate
+                pt = getcoords(E,J1,prec)
+                if pt is Infinity:
+                    continue
+                else:
+                    x,y = pt
+                success = False
+                prec0 = prec
+                while not success and prec0 > prec-5:
+                    verbose('Trying to recognize point with precision %s'%prec0, level = 2)
+                    candidate,success = recognize_point(x,y,E.change_ring(F),prec = prec0)
+                    prec0 -= 1
+                if not success:
+                    verbose('Could not recognize point',level = 2)
+                    continue
+                verbose('Recognized the point!')
+                fwrite('x,y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
+                break
+        try:
+            Ptsmall = E.change_ring(F)(candidate)
+            alldivs = [Ptsmall]
+            m0 = 1
+            for m in [2,3,5,7]:
+                while any([o.is_divisible_by(m) for o in alldivs]):
+                    alldivs = [pt for o in alldivs for pt in o.division_points(m)]
+                    m0 *= m
+            fwrite('m0 = %s'%m0,outfile)
+            fwrite('twopow = %s'%twopow,outfile)
+            if twopow < 1:
+                tmp = (J1**(smoothen_constant * nn * m0))/(J**ZZ(1/twopow))
+            else:
+                tmp = (J1**(smoothen_constant * nn * m0 * twopow))/J
+            if tmp != 1:
+                fwrite('Constant multiples do not match...',outfile)
+            fwrite('Computed point:  %s * %s * %s'%(twopow*m0,smoothen_constant * nn,Ptsmall),outfile)
+            fwrite('(first factor is not understood, second factor is)',outfile)
+            fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
+            fwrite('================================================',outfile)
+            return Ptsmall
+        except (TypeError,ValueError):
+            verbose("Couldn't recognize the point.")
+    fwrite('================================================',outfile)
+    return None
