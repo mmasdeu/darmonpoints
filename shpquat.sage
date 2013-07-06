@@ -6,7 +6,7 @@ from sage.structure.element import MultiplicativeGroupElement
 import itertools
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from distributions import Distributions, Symk
+#from distributions import Distributions, Symk
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 import os
@@ -57,9 +57,13 @@ class ArithGroupAction(sage.categories.action.Action):
         iota = g.parent().get_embedding(K.precision_cap())
         a,b,c,d = iota(g.quaternion_rep).change_ring(K).list()
         newdict = defaultdict(ZZ)
-        for P,n in v._data.iteritems():
-            newdict[(a*P+b)/(c*P+d)] += n #K0(a)*P+K0(b))/(K0(c)*P+K0(d))] += n
-        return v.parent()(newdict)
+        newpts = {}
+        for P,n in v:
+            newpt = (a*P+b)/(c*P+d)
+            hp = _hash(newpt)
+            newdict[hp] += n #K0(a)*P+K0(b))/(K0(c)*P+K0(d))] += n
+            newpts[hp] = newpt
+        return v.parent()(newdict,newpts)
 
 class BigArithGroup(AlgebraicGroup):
     r'''
@@ -1237,7 +1241,7 @@ class CohomologyElement(ModuleElement):
 
 class CohomologyGroup(Parent):
     Element = CohomologyElement
-    def __init__(self,G,overconvergent = False,base = None,use_ps_dists = True):
+    def __init__(self,G,overconvergent = False,base = None,use_ps_dists = False):
         self._group = G
         self._use_ps_dists = use_ps_dists
         if overconvergent and base is None:
@@ -1473,7 +1477,7 @@ def _hash(x):
     # ans = x._ntl_rep_abs()
     # tmp = (ZZ(ans[0][0]),ZZ(ans[0][1]))
     # return hash((tmp,ans[1]))
-    return hash(x.trace(),x.norm())
+    return hash((x.trace(),x.norm()))
 
 
 class Divisor_element(ModuleElement):
@@ -1515,6 +1519,9 @@ class Divisor_element(ModuleElement):
             hP = _hash(P)
             self._data[hP] = 1
             self._ptdict[hP] = P
+
+    def __iter__(self):
+        return iter(((self._ptdict[hP],n) for hP,n in self._data.iteritems()))
 
     def _repr_(self):
         return 'Divisor of degree %s'%self.degree()
@@ -1567,15 +1574,22 @@ class Divisor_element(ModuleElement):
         return self.__class__(self.parent(),newdict,ptdata = newptdata)
 
     def _neg_(self):
-        return self.__class__(self.parent(),dict((P,-n) for P,n in self._data.iteritems()))
+        newdict = defaultdict(ZZ)
+        newdict.update(self._data)
+        newptdata = {}
+        newptdata.update(self._ptdict)
+        for P,n in newdict.iteritems():
+            newdict[P] = -n
+        return self.__class__(self.parent(),newdict,ptdata = newptdata)
 
     def left_act_by_matrix(self,g):
         a,b,c,d = g.list()
         gp = self.parent()
         K = self.parent().base_ring()
-        ptdict = self._ptdict
-        for P,n in self._data.iteritems():
-            newpt = (K(a)*ptdict[P]+K(b))/(K(c)*ptdict[P]+K(d))
+        newdict = {}
+        newptdata = {}
+        for P,n in self:
+            newpt = (K(a)*P+K(b))/(K(c)*P+K(d))
             hnewpt = _hash(newpt)
             newdict[hnewpt] = n
             newptdata[hnewpt] = newpt
@@ -1829,10 +1843,10 @@ def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,toh
         if divisor.degree() != 0:
             raise ValueError,'Divisor must be of degree 0'
         if tohat:
-            fd = prod([(t - (wpa*P +wpb)/(wpc*P+wpd))**ZZ(n) for P,n in divisor._data.iteritems()],R(1))
+            fd = prod([(t - (wpa*P +wpb)/(wpc*P+wpd))**ZZ(n) for P,n in divisor],R(1))
             tmp = integrate_H0(G,fd,cocycle,depth = depth,gamma = G.do_hat(g.quaternion_rep))
         else:
-            fd = prod([(t - P)**ZZ(n) for P,n in divisor._data.iteritems()],R(1))
+            fd = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
             tmp = integrate_H0(G,fd,cocycle,depth = depth,gamma = g.quaternion_rep)
         res *= tmp
     return res
@@ -1960,7 +1974,7 @@ def fwrite(string, outfile):
         fout.write(string + '\n')
     return
 
-def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = True,group = None,cremona_label_modifier = ''):
+def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = False,group = None,cremona_label_modifier = ''):
     QQp = Qp(p,prec)
     assert Np == 1 # For now, can't do more...
     if dK % 4 == 0:

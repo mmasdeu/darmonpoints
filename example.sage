@@ -2,19 +2,19 @@
 # Parameters         #
 ######################
 use_ps_dists = True
-p = 3 # The prime
+p = 5 # The prime
 D = 2 * 11 # Discriminant of the quaternion algebra (even number of primes)
 Np = 1 # Conductor of order.
 crlabel_modif = ''
 
 # Calculate points on extensions of QQ(sqrt(dK))
 # dKlist = [29, 53, 173, 221, 269, 293, 317, 341, 413, 485, 509]
-#dKlist = [13, 173, 197, 237, 277, 293, 373, 413, 437, 453, 557] # p = 11, D = 10
+dKlist = [13, 173, 197, 237, 277, 293, 373, 413, 437, 453, 557] # p = 11, D = 10
 # dKlist = [ 29, 61, 109, 173, 197, 277, 381, 413,437,453,469,541,589] # p = 17, D = 22
 # dKlist = [21, 85, 109, 149, 197, 293, 349, 437, 453, 461, 501, 541, 557]
 # dKlist = [13, 61, 101, 173, 237, 285, 293, 349, 381, 437, 453, 461]
 #dKlist = [5, 149, 197, 293, 317, 437, 461, 509, 557]
-dKlist = [29, 101, 149, 173, 197, 293, 365, 413, 437, 461, 557, 677]
+#dKlist = [29, 101, 149, 173, 197, 293, 365, 413, 437, 461, 557, 677]
 # dKlist = [13, 37, 53, 77, 197, 213, 277, 437, 517, 533, 557, 573]
 prec = 60 # Precision to which result is desired
 outfile = 'points_%s_%s.txt'%(p,D)
