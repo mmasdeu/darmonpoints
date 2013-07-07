@@ -353,7 +353,7 @@ class BigArithGroup(AlgebraicGroup):
             D = self.Gpn.O.discriminant()
             while D%q == 0:
                 q = q.next_prime()
-            tmp = tmp.hecke_smoothen(q,prec = prec) #.factor_into_generators()
+            tmp = tmp.hecke_smoothen(q,prec = prec).factor_into_generators()
         return tmp,n,q
 
 class ArithGroup(AlgebraicGroup):
@@ -1821,15 +1821,12 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,tohat = True,prec = None):
+def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,prec = None):
     res = 1
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     R.<t> = PolynomialRing(cycle.parent().coefficient_module().base_field())
-    #R.<t> = LaurentSeriesRing(cycle.parent().coefficient_module().base_field())
-    #R.set_default_prec(prec)
     emb = G.get_embedding(prec)
-    wpa,wpb,wpc,wpd = emb(G.wp).change_ring(R.base_ring()).list()
     if method == 'moments':
         integrate_H0 = integrate_H0_moments
     else:
@@ -1842,12 +1839,8 @@ def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,toh
         verbose('Integral %s/%s...'%(jj,total_integrals))
         if divisor.degree() != 0:
             raise ValueError,'Divisor must be of degree 0'
-        if tohat:
-            fd = prod([(t - (wpa*P +wpb)/(wpc*P+wpd))**ZZ(n) for P,n in divisor],R(1))
-            tmp = integrate_H0(G,fd,cocycle,depth = depth,gamma = G.do_hat(g.quaternion_rep))
-        else:
-            fd = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
-            tmp = integrate_H0(G,fd,cocycle,depth = depth,gamma = g.quaternion_rep)
+        divhat = divisor.left_act_by_matrix(emb(G.wp).change_ring(R.base_ring()))
+        tmp = integrate_H0(G,divhat,cocycle,depth = depth,gamma = G.do_hat(g.quaternion_rep))
         res *= tmp
     return res
 
@@ -1885,23 +1878,33 @@ def riemann_sum(G,phi,hc,depth = 1,cover = None,mult = False):
             res += phi(K(te)) * hce
     return res
 
-def integrate_H0_riemann(G,phi,hc,depth = 1,cover = None,gamma = None):
+def integrate_H0_riemann(G,divisor,hc,depth = 1,cover = None,gamma = None):
+    HOC = hc.parent()
+    prec = HOC.coefficient_module().precision_cap()
+    K = divisor.parent().base_ring()
+    R = LaurentSeriesRing(K,'t')
+    R.set_default_prec(prec)
+    t = R.gen()
+    phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
     return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,cover,mult = True)
 
-def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None):
+def integrate_H0_moments(G,divisor,hc,depth = None, cover = None,gamma = None):
     p = G.p
     HOC = hc.parent()
     prec = HOC.coefficient_module().precision_cap()
-    K = phi.parent().base_ring()
+    K = divisor.parent().base_ring()
     R1 = LaurentSeriesRing(K,'r1')
     r1 = R1.gen()
     R1.set_default_prec(prec)
+    Kx = PolynomialRing(K,names = 't')
+    t = Kx.gen()
     emb = G.get_embedding(prec)
     resadd = 0
     resmul = 1
     for _,h in G.get_covering(1):
         a,b,c,d = emb(h**-1).change_ring(K).list()
-        y0 = phi((a*r1+b)/(c*r1+d))
+        hexp = (a*r1+b)/(c*r1+d)
+        y0 = prod([(hexp - P)**ZZ(n) for P,n in divisor if n > 0],R1(1))/prod([(hexp - P)**ZZ(-n) for P,n in divisor if n < 0],R1(1))
         val = y0(0)
         assert all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()])
         pol = val.log() + (y0.derivative()/y0).integral()
@@ -1919,6 +1922,48 @@ def integrate_H0_moments(G,phi,hc,depth = None, cover = None,gamma = None):
     if resadd != 0:
          tmp *= resadd.exp()
     return tmp
+
+
+# def integrate_H0_moments(G,divisor,hc,depth = None, cover = None,gamma = None):
+#     p = G.p
+#     HOC = hc.parent()
+#     prec = HOC.coefficient_module().precision_cap()
+#     K = divisor.parent().base_ring()
+#     Rx = PolynomialRing(K,'t')
+#     t = Rx.gen()
+#     R1 = LaurentSeriesRing(K,'r1')
+#     r1 = R1.gen()
+#     R1.set_default_prec(prec)
+#     #polnum = prod(( (t-P)**ZZ(n) for P,n in divisor if n > 0),K(1))
+#     #polden = prod(( (t-P)**-ZZ(n) for P,n in divisor if n < 0),K(1))
+#     #pol = polnum/polden
+#     pol = prod(( (t-P)**ZZ(n) for P,n in divisor),K(1))
+#     polapp = pol(r1)
+#     print polapp
+#     emb = G.get_embedding(prec)
+#     resadd = 0
+#     resmul = 1
+#     for _,h in G.get_covering(1):
+#         a,b,c,d = emb(h**-1).change_ring(K).list()
+#         y0 = pol((a*r1+b)/c*r1+d)
+#         #y0 = prod(((a*r1+b)/(c*r1+d) - P for P,n in divisor ), R1(1))
+#         val = y0(0)
+#         assert all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()])
+#         pol = val.log() + (y0.derivative()/y0).integral()
+#         mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma,check = True))
+#         if HOC._use_ps_dists:
+#             nmoments = len(mu_e._moments)
+#             resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments)
+#         else:
+#             resadd += mu_e.evaluate_at_poly(pol)
+#         try:
+#             resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
+#         except IndexError: pass
+#     val =  resmul.valuation(p)
+#     tmp = p**val * K.teichmuller(p**(-val)*resmul)
+#     if resadd != 0:
+#          tmp *= resadd.exp()
+#     return tmp
 
 def sample_point(G,e,prec = 20):
     r'''
