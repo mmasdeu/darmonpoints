@@ -353,7 +353,7 @@ class BigArithGroup(AlgebraicGroup):
             D = self.Gpn.O.discriminant()
             while D%q == 0:
                 q = q.next_prime()
-            tmp = tmp.hecke_smoothen(q,prec = prec).factor_into_generators()
+            tmp = tmp.hecke_smoothen(q,prec = prec)#.factor_into_generators()
         return tmp,n,q
 
 class ArithGroup(AlgebraicGroup):
@@ -1896,8 +1896,6 @@ def integrate_H0_moments(G,divisor,hc,depth = None, cover = None,gamma = None):
     R1 = LaurentSeriesRing(K,'r1')
     r1 = R1.gen()
     R1.set_default_prec(prec)
-    Kx = PolynomialRing(K,names = 't')
-    t = Kx.gen()
     emb = G.get_embedding(prec)
     resadd = 0
     resmul = 1
@@ -1922,48 +1920,6 @@ def integrate_H0_moments(G,divisor,hc,depth = None, cover = None,gamma = None):
     if resadd != 0:
          tmp *= resadd.exp()
     return tmp
-
-
-# def integrate_H0_moments(G,divisor,hc,depth = None, cover = None,gamma = None):
-#     p = G.p
-#     HOC = hc.parent()
-#     prec = HOC.coefficient_module().precision_cap()
-#     K = divisor.parent().base_ring()
-#     Rx = PolynomialRing(K,'t')
-#     t = Rx.gen()
-#     R1 = LaurentSeriesRing(K,'r1')
-#     r1 = R1.gen()
-#     R1.set_default_prec(prec)
-#     #polnum = prod(( (t-P)**ZZ(n) for P,n in divisor if n > 0),K(1))
-#     #polden = prod(( (t-P)**-ZZ(n) for P,n in divisor if n < 0),K(1))
-#     #pol = polnum/polden
-#     pol = prod(( (t-P)**ZZ(n) for P,n in divisor),K(1))
-#     polapp = pol(r1)
-#     print polapp
-#     emb = G.get_embedding(prec)
-#     resadd = 0
-#     resmul = 1
-#     for _,h in G.get_covering(1):
-#         a,b,c,d = emb(h**-1).change_ring(K).list()
-#         y0 = pol((a*r1+b)/c*r1+d)
-#         #y0 = prod(((a*r1+b)/(c*r1+d) - P for P,n in divisor ), R1(1))
-#         val = y0(0)
-#         assert all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()])
-#         pol = val.log() + (y0.derivative()/y0).integral()
-#         mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma,check = True))
-#         if HOC._use_ps_dists:
-#             nmoments = len(mu_e._moments)
-#             resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments)
-#         else:
-#             resadd += mu_e.evaluate_at_poly(pol)
-#         try:
-#             resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
-#         except IndexError: pass
-#     val =  resmul.valuation(p)
-#     tmp = p**val * K.teichmuller(p**(-val)*resmul)
-#     if resadd != 0:
-#          tmp *= resadd.exp()
-#     return tmp
 
 def sample_point(G,e,prec = 20):
     r'''
@@ -2019,7 +1975,7 @@ def fwrite(string, outfile):
         fout.write(string + '\n')
     return
 
-def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = False,group = None,cremona_label_modifier = ''):
+def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = False,group = None,cremona_label_modifier = '',return_all_data = False):
     QQp = Qp(p,prec)
     assert Np == 1 # For now, can't do more...
     if dK % 4 == 0:
@@ -2096,17 +2052,26 @@ def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfil
     F.<r> = QuadraticField(dK)
     Jlog = J.log()
     Cp = Jlog.parent()
+
+    ppow = 1
+    while smoothen_constant % p == 0 :
+        ppow *= p
+        smoothen_constant = ZZ(smoothen_constant/p)
+
     addpart0 = Jlog/(smoothen_constant*nn)
     candidate = None
     twopowlist = [8, 4, 2, 1, 1/2, 1/4]
     for twopow in twopowlist:
-        addpart =  addpart0 / twopow
+        addpart = addpart0 / twopow
         for a,b in product(range(p),repeat = 2):
             if a == 0 and b == 0:
                 continue
             # print a,b
             multpart = Cp.teichmuller(a + Cp.gen()*b)
-            J1 = multpart * addpart.exp()
+            try:
+                J1 = multpart * addpart.exp()
+            except ValueError:
+                continue
             if J1 == Cp(1):
                 candidate = E(0)
                 verbose('Recognized the point, it is zero!')
@@ -2119,7 +2084,7 @@ def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfil
                     x,y = pt
                 success = False
                 prec0 = prec
-                while not success and prec0 > prec-5:
+                while not success and 2*prec0 > prec:
                     verbose('Trying to recognize point with precision %s'%prec0, level = 2)
                     candidate,success = recognize_point(x,y,E.change_ring(F),prec = prec0)
                     prec0 -= 1
@@ -2147,10 +2112,18 @@ def darmon_point(p,DB,Np,dK,prec,working_prec = None,sign_at_infinity = 1,outfil
                 fwrite('Constant multiples do not match...',outfile)
             fwrite('Computed point:  %s * %s * %s'%(twopow*m0,smoothen_constant * nn,Ptsmall),outfile)
             fwrite('(first factor is not understood, second factor is)',outfile)
+            if ppow != 1:
+                fwrite('Took the %s-power %s out also'%(p,ppow),outfile)
             fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
             fwrite('================================================',outfile)
-            return Ptsmall
+            if return_all_data == True:
+                return Ptsmall, G, Phi, cycleGn, J
+            else:
+                return Ptsmall
         except (TypeError,ValueError):
             verbose("Couldn't recognize the point.")
     fwrite('================================================',outfile)
-    return None
+    if return_all_data == True:
+        return None, G, Phi, cycleGn, J
+    else:
+        return None

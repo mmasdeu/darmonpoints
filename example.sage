@@ -1,7 +1,7 @@
 ######################
 # Parameters         #
 ######################
-use_ps_dists = True
+use_ps_dists = False
 p = 5 # The prime
 D = 2 * 11 # Discriminant of the quaternion algebra (even number of primes)
 Np = 1 # Conductor of order.
@@ -81,7 +81,10 @@ for dK in dKlist:
     F.<r> = QuadraticField(dK)
     Jlog = J.log()
     Cp = Jlog.parent()
-    addpart = (2*Jlog)/((E.ap(ell) - (ell+1))*nn)
+    smoothen_constant = ZZ(E.ap(ell) - (ell+1))
+    while smoothen_constant % p == 0 :
+        smoothen_constant /= smoothen_constant
+    addpart = (2*Jlog)/smoothen_constant*nn)
     candidate = None
     for a,b in product(range(p),repeat = 2):
         if a == 0 and b == 0:
@@ -112,3 +115,38 @@ for dK in dKlist:
         print candidate
     else:
         print 'No success this time...'
+
+##################3
+def pol_height(f):
+    return sum((RR(o).abs().log() for o in f.coeffs()))/(RR(p).log())
+
+Jlog = J.log()/(12)
+Cp = Jlog.parent()
+for multiple in range(1,25):
+    if multiple == p:
+        continue
+    print 'multiple = %s'%multiple
+    addpart = Jlog/multiple
+    candidate = None
+    for a,b in product(range(p),repeat = 2):
+        if a == 0 and b == 0:
+            continue
+        multpart = Cp.teichmuller(a + Cp.gen()*b)
+        try:
+            J1 = multpart * addpart.exp()
+        except ValueError:
+            continue
+        if J1 == Cp(1):
+            print '!!!'
+        pt = getcoords(E,J1,prec)
+        if pt is Infinity:
+            continue
+        else:
+            x,y = pt
+            try:
+                f = algdep(x+O(p**58),1)
+            except PariError:
+                continue
+            if pol_height(f) < prec/2:
+                print multiple,a,b,pol_height(f)
+                print f
