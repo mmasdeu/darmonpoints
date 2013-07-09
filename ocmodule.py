@@ -1,10 +1,10 @@
-########################################################################
+#########################################################################
 #       Copyright (C) 2011 Cameron Franc and Marc Masdeu
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
 #
 #                  http://www.gnu.org/licenses/
-########################################################################
+#########################################################################
 
 from sage.structure.element import ModuleElement
 from sage.modules.module import Module
