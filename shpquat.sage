@@ -7,12 +7,10 @@ import itertools
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
-#from sigma0 import Sigma0,Sigma0ActionAdjuster
+from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 import os
 from ocmodule import *
-
-load 'sigma0.py'
 
 class BTEdge(SageObject):
     r'''
