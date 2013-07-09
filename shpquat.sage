@@ -7,10 +7,12 @@ import itertools
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
-from sigma0 import Sigma0,Sigma0ActionAdjuster
+#from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 import os
 from ocmodule import *
+
+load 'sigma0.py'
 
 class BTEdge(SageObject):
     r'''
@@ -1821,10 +1823,11 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,prec = None):
+def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None):
     res = 1
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
+    verbose('precision = %s'%prec)
     R.<t> = PolynomialRing(cycle.parent().coefficient_module().base_field())
     emb = G.get_embedding(prec)
     if method == 'moments':
@@ -1840,8 +1843,10 @@ def integrate_H1(G,cycle,cocycle,depth,method = 'moments',smoothen_prime = 0,pre
         if divisor.degree() != 0:
             raise ValueError,'Divisor must be of degree 0'
         divhat = divisor.left_act_by_matrix(emb(G.wp).change_ring(R.base_ring()))
-        tmp = integrate_H0(G,divhat,cocycle,depth = depth,gamma = G.do_hat(g.quaternion_rep))
+        ghat = G.do_hat(g.quaternion_rep)
+        tmp = integrate_H0(G,divhat,cocycle,depth = depth,gamma = ghat)
         res *= tmp
+        verbose('%s/%s'%(res.precision_relative(),res.precision_absolute()))
     return res
 
 r'''
