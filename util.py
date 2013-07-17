@@ -1,5 +1,6 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.all import ZZ,QQ,algdep
+from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol
+from sage.matrix.all import matrix,Matrix
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
 from sage.misc.misc import verbose
@@ -122,6 +123,7 @@ def act_flt(g,x):
 
 def tate_parameter(E,R):
     p = R.prime()
+    prec = R.precision_cap()
     jE = E.j_invariant()
 
     # Calculate the Tate parameter
@@ -129,6 +131,7 @@ def tate_parameter(E,R):
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
     qE =  (1/j).power_series().reversion()(R(1/jE))
+    return qE
 
 def getcoords(E,u,prec=20,R = None):
     if R is None:
@@ -351,3 +354,35 @@ def reduce_word(word):
                     new_word = old_word[:i]+old_word[i+2:]
                 break
     return new_word
+
+
+def get_heegner_params(p,N,dK):
+    if N % p != 0:
+        raise ValueError,'p (=%s) must divide conductor (=%s)'%(p,N)
+    if kronecker_symbol(dK,p) != -1:
+        raise ValueError,'p (=%s) must be inert in K (=Q(sqrt{%s}))'%(p,dK)
+    N1 = ZZ(N/p)
+    if N1 % p == 0:
+        raise ValueError,'p (=%s) must exactly divide the conductor (=%s)'%(p,N)
+    DB = 1
+    Np = 1
+    num_inert_primes = 0
+    for ell,r in N1.factor():
+        if kronecker_symbol(dK,ell) == -1: # inert
+            if r != 1:
+                raise ValueError,'The inert prime l = %s divides too much the conductor.'%ell
+            num_inert_primes += 1
+            DB *= ell
+        else:
+            Np *= ell**r
+    assert N == p * DB * Np
+    if num_inert_primes % 2 != 0:
+        raise ValueError,'There should an even number of primes different than p which are inert'
+    return DB,Np
+
+def fwrite(string, outfile):
+    if outfile is None:
+        return
+    with open(outfile,"a") as fout:
+        fout.write(string + '\n')
+    return

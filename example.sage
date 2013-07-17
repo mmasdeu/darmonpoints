@@ -23,7 +23,7 @@ outfile = 'points_%s_%s.txt'%(p,D)
 # Define the S-arithmetic group
 G = BigArithGroup(p,D,Np)
 for dK in dKlist:
-    pt = darmon_point(p,D,Np,dK,prec,outfile = outfile,use_ps_dists = use_ps_dists, group = G,cremona_label_modifier = crlabel_modif)
+    pt = darmon_point(p,E,dK,prec,outfile = outfile,use_ps_dists = use_ps_dists, group = G,cremona_label_modifier = crlabel_modif)
 
 verb_level = 1 # Set to 0 to remove output
 
