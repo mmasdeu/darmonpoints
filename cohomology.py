@@ -21,31 +21,32 @@ from sage.rings.infinity import Infinity
 from util import *
 import os
 from ocmodule import OCVn
+from sage.misc.persist import db,db_save
 
-def get_overconvergent_class_quaternionic(p,E,G,prec,fname,sign_at_infinity,use_ps_dists):
+def get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = True):
     # Define phiE, the cohomology class associated to the curve E.
     Coh = CohomologyGroup(G.small_group())
     phiE = Coh.get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
-
-    # Overconvergent lift
-    if not os.path.isfile(fname):
-        CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
-        verbose('Computing moments...')
-        VOC = CohOC.coefficient_module()
-        if use_ps_dists:
-            Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group_gens()])
-        else:
-            Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.small_group_gens()])
-        Phi = Phi.improve(prec = prec,sign = E.ap(p))
-        save(Phi._val,fname)
-        verbose('Done.')
-    else:
-        verbose('Using precomputed moments')
-        Phivals = load(fname)
+    sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
+    fname = 'moments_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec)
+    try:
+        Phivals = db(fname)
         CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
         CohOC._coeff_module = Phivals[0].parent()
         VOC = CohOC.coefficient_module()
         Phi = CohOC([VOC(o) for o in Phivals])
+        return Phi
+    except IOError: pass
+    CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
+    verbose('Computing moments...')
+    VOC = CohOC.coefficient_module()
+    if use_ps_dists:
+        Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group_gens()])
+    else:
+        Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.small_group_gens()])
+    Phi = Phi.improve(prec = prec,sign = E.ap(p))
+    db_save(Phi._val,fname)
+    verbose('Done.')
     return Phi
 
 

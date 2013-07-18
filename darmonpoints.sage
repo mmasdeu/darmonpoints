@@ -10,13 +10,15 @@ from quatarithgp import BigArithGroup,load_bigarithgroup
 from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
 from integrals import integrate_H1,double_integral_zero_infty
 from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
-from sage.misc.persist import db
+from sage.misc.persist import db,db_save
 
 sys.setrecursionlimit(10**6)
 
-def get_overconvergent_class_matrices(p,E,prec,fname,sign_at_infinity,use_sage_db = True):
+def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_sage_db = True):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
+    sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
+    fname = 'moments_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec)
     if use_sage_db:
         try:
             Phi = db(fname)
@@ -90,7 +92,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
         smoothen_constant = E.ap(ell)- ell - 1
         fwrite('a_r(E) - r - 1 = %s'%smoothen_constant,outfile)
         fwrite('exponent = %s'%nn,outfile)
-        Phi = get_overconvergent_class_quaternionic(p,E,G,prec,fname,sign_at_infinity,use_ps_dists)
+        Phi = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists)
         # Integration with moments
         tot_time = walltime()
         J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec)
