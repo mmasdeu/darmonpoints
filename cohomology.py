@@ -28,7 +28,8 @@ def get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dis
     Coh = CohomologyGroup(G.small_group())
     phiE = Coh.get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
-    fname = 'moments_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec)
+    dist_type = 'ps' if use_ps_dists == True else 'fm'
+    fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec,dist_type)
     try:
         Phivals = db(fname)
         CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
