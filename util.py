@@ -96,7 +96,7 @@ def is_in_Gamma0loc(A,det_condition = True):
     '''
     if det_condition == True and A.determinant() != 1:
         return False
-    return all([o.valuation() >=0 for o in A.list()]) and A[1,0].valuation() > 0
+    return all((o.valuation() >= 0 for o in A.list())) and A[1,0].valuation() > 0
 
 def is_in_Sigma0(x):
     if x.determinant() == 0:

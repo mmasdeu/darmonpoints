@@ -170,7 +170,6 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
     verbose('precision = %s'%prec)
     R = PolynomialRing(cycle.parent().coefficient_module().base_field(),names = 't')
     t = R.gen()
-    emb = G.get_embedding(prec)
     if method == 'moments':
         integrate_H0 = integrate_H0_moments
     else:
@@ -183,7 +182,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         verbose('Integral %s/%s...'%(jj,total_integrals))
         if divisor.degree() != 0:
             raise ValueError,'Divisor must be of degree 0'
-        divhat = divisor.left_act_by_matrix(emb(G.wp).change_ring(R.base_ring()))
+        divhat = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(R.base_ring()))
         ghat = G.wp * g.quaternion_rep * G.wp**-1
         res *= integrate_H0(G,divhat,cocycle,depth = depth,gamma = ghat)
         verbose('%s/%s'%(res.precision_relative(),res.precision_absolute()))
@@ -195,8 +194,8 @@ def sample_point(G,e,prec = 20):
      Returns a point in U_h = (e)^{-1} Z_p.
     '''
     rev, h = e
-    hemb = G.get_embedding(prec)(h**-1)
-    wploc = G.get_embedding(prec)(G.wp)
+    hemb = G.embed(h**-1,prec)
+    wploc = G.embed(G.wp,prec)
     if rev == True:
         hemb = hemb * wploc
     a,b,c,d = hemb.list()
@@ -210,7 +209,6 @@ Integration pairing of a function with an harmonic cocycle.
 def riemann_sum(G,phi,hc,depth = 1,cover = None,mult = False):
     p = G.p
     prec = max([20,2*depth])
-    emb = G.get_embedding(prec)
     res = 1 if mult else 0
     K = phi(0).parent().base_ring()
     if cover is None:
@@ -256,11 +254,10 @@ def integrate_H0_moments(G,divisor,hc,depth = None, cover = None,gamma = None):
     R1 = LaurentSeriesRing(K,'r1')
     r1 = R1.gen()
     R1.set_default_prec(prec)
-    emb = G.get_embedding(prec)
     resadd = 0
     resmul = 1
     for _,h in G.get_covering(1):
-        a,b,c,d = emb(h**-1).change_ring(K).list()
+        a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
         hexp = (a*r1+b)/(c*r1+d)
         y0 = prod([(hexp - P)**ZZ(n) for P,n in divisor if n > 0],R1(1))/prod([(hexp - P)**ZZ(-n) for P,n in divisor if n < 0],R1(1))
         val = y0(y0.parent().base_ring()(0))

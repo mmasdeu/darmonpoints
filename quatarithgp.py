@@ -20,12 +20,17 @@ from sage.interfaces.magma import magma
 from sage.all import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-#from distributions import Distributions, Symk
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 from homology import Divisors, Homology
-import os,sys
+from sage.structure.sage_object import save,load
 from copy import copy
+from sage.misc.persist import db
+
+def load_bigarithgroup(fname):
+    G = load(fname)
+    G._restore_magma_objects()
+    return G
 
 class BTEdge(SageObject):
     r'''
@@ -43,7 +48,22 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-class BigArithGroup(AlgebraicGroup):
+def BigArithGroup(p,discriminant,level,seed = None,use_sage_db = True,outfile = None):
+        if seed is None:
+            seed = 1000000
+        fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level)
+        if use_sage_db:
+            try:
+                newobj = db(fname)
+                newobj._restore_magma_objects()
+            except IOError:
+                newobj = BigArithGroup_class(p,discriminant,level,seed,outfile = outfile)
+                newobj.save_to_db()
+        else:
+            newobj = BigArithGroup_class(p,discriminant,level,seed,outfile = outfile)
+        return newobj
+
+class BigArithGroup_class(AlgebraicGroup):
     r'''
     This class hold information about the group `\Gamma`: a finite
     presentation for it, a solution to the word problem,...
@@ -74,12 +94,10 @@ class BigArithGroup(AlgebraicGroup):
         sage: (a*b).word_rep
         [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,p,discriminant,level,seed = None,outfile = None):
-        if seed is None:
-            seed = 1000000
+    def __init__(self,p,discriminant,level,seed,outfile = None):
+        self.seed = seed
         verbose('Setting Magma seed to %s'%seed)
-        self.magma = magma
-        self.magma.eval('SetSeed(%s)'%seed)
+        magma.eval('SetSeed(%s)'%seed)
         self.p = ZZ(p)
         if not self.p.is_prime():
             raise ValueError, 'p ( = %s) must be prime'%self.p
@@ -93,22 +111,50 @@ class BigArithGroup(AlgebraicGroup):
         if len(self.discriminant.factor()) % 2 != 0:
             raise ValueError, 'Discriminant must contain an even number of primes'
         verbose('Initializing arithmetic group G(n)...')
-        self.Gn = ArithGroup(discriminant,level,magma_machine = self.magma)
+        self.Gn = ArithGroup(discriminant,level)
         self.Gn.get_embedding = self.get_embedding
+        self.Gn.embed = self.embed
         verbose('Initializing arithmetic group G(pn)...')
-        self.Gpn = ArithGroup(discriminant,p*level,info_magma = self.Gn,magma_machine = self.magma)
+        self.Gpn = ArithGroup(discriminant,p*level,info_magma = self.Gn)
         fwrite('B = Q<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gn.B.gens()[0]**2,self.Gn.B.gens()[1]**2),outfile)
         fwrite('R with basis %s'%list(self.Gn.Obasis),outfile)
         fwrite('R(p) with basis %s'%list(self.Gpn.Obasis),outfile)
         self.Gpn.get_embedding = self.get_embedding
+        self.Gpn.embed = self.embed
         self._prec = -1
         self.get_Up_reps()
         verbose('Done initializing arithmetic groups')
         self.Gpn.get_Up_reps = self.get_Up_reps
+
+        del self.Gpn._m2_magma
+        del self.Gn._m2_magma
+        del self.Gpn._U_magma
+        del self.Gn._U_magma
+        del self.Gpn._D_magma
+        del self.Gn._D_magma
+        del self.Gpn._G_magma
+        del self.Gn._G_magma
+
         verbose('Done initialization of BigArithmeticGroup')
 
     def _repr_(self):
         return 'Big Arithmetic Group attached to data p = %s,  disc = %s, level = %s'%(self.p,self.discriminant,self.level)
+
+    def _restore_magma_objects(self):
+        a,b = self.Gn.B.invariants()
+        QQmagma = magma.RationalsAsNumberField()
+        ZZ_magma = QQmagma.Integers()
+        B_magma = magma.QuaternionAlgebra(QQmagma,a,b)
+        self.Gn._B_magma = B_magma
+        self.Gpn._B_magma = B_magma
+        self.Gn._Omax_magma = B_magma.MaximalOrder()
+        self.Gpn._Omax_magma = B_magma.MaximalOrder()
+        if self.discriminant != 1:
+            self.Gn._O_magma = self.Gn._Omax_magma.Order('%s*%s'%(self.Gn.level,ZZ_magma.name()))
+            self.Gpn._O_magma = self.Gn._Omax_magma.Order('%s*%s'%(self.Gpn.level,ZZ_magma.name()))
+        else:
+            self.Gn._O_magma = self.Gn._Omax_magma.Order('%s'%self.Gn.level)
+            self.Gpn._O_magma = self.Gn._Omax_magma.Order('%s'%self.Gpn.level)
 
     def _local_splitting(self,prec):
         r"""
@@ -138,8 +184,9 @@ class BigArithGroup(AlgebraicGroup):
 
         wtime = walltime()
         verbose('Calling pMatrixRing...')
-
-        M,f,_ = self.magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._ZZ_magma,nvals = 3)
+        print 'Setting magma Seed to %s'%self.seed
+        magma.eval('SetSeed(%s)'%self.seed)
+        M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
         verbose('Spent %s seconds in pMatrixRing'%walltime(wtime))
         QQp = Qp(prime,prec)
         self._prec = prec
@@ -156,6 +203,26 @@ class BigArithGroup(AlgebraicGroup):
             mat = tup[0] + tup[1]*self._II + tup[2]*self._JJ + tup[3]*self._KK
             assert is_in_Gamma0loc(mat,det_condition = False)
         return self._II, self._JJ, self._KK
+
+    def save_to_db(self):#,fname):
+        fname = 'arithgroup%s_%s_%s_%s.sobj'%(self.seed,self.p,self.discriminant,self.level)
+        B_magma = self.Gn._B_magma
+        Omax_magma = self.Gn._Omax_magma
+        O1_magma = self.Gn._O_magma
+        O2_magma = self.Gpn._O_magma
+        del self.Gn._Omax_magma
+        del self.Gn._O_magma
+        del self.Gn._B_magma
+        del self.Gpn._Omax_magma
+        del self.Gpn._O_magma
+        del self.Gpn._B_magma
+        self.db(fname)
+        self.Gn._B_magma = B_magma
+        self.Gpn._B_magma = B_magma
+        self.Gn._Omax_magma = Omax_magma
+        self.Gpn._Omax_magma = Omax_magma
+        self.Gn._O_magma = O1_magma
+        self.Gpn._O_magma = O2_magma
 
     def small_group(self):
         return self.Gpn
@@ -176,7 +243,7 @@ class BigArithGroup(AlgebraicGroup):
             for idx,o1 in enumerate(matrices):
                 i,mat = o1
                 tmp = emb(elt) * mat
-                if all([not self.Gpn._is_in_order(o * new_inv) for o in reps if o is not None]) and is_in_Gamma0loc(tmp) and ZZ(emb(elt)[0,0][0]) == 1:
+                if all([not self.Gpn._is_in_order(o * new_inv) for o in reps if o is not None]) and is_in_Gamma0loc(tmp) and (emb(elt)[0,0]-1).valuation() > 0:
                     reps[i] = set_immutable(elt)
                     del matrices[idx]
                     verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
@@ -185,7 +252,7 @@ class BigArithGroup(AlgebraicGroup):
                     break
 
     def do_tilde(self,g):
-        return QQ(-1/self.p) * self.wp * g * self.wp
+        return QQ(-1)/QQ(self.p) * self.wp * g * self.wp
 
     @cached_method
     def get_BT_reps_twisted(self):
@@ -224,10 +291,9 @@ class BigArithGroup(AlgebraicGroup):
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             tmp = self.Gpn.element_of_norm(self.p)
-            emb = self.get_embedding(20)
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
                 new_candidate =   v2.quaternion_rep * tmp *  v1.quaternion_rep
-                if is_in_Gamma0loc(epsinv * emb(new_candidate), det_condition = False) and all([self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis]):
+                if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all([self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis]):
                         return new_candidate
 
     def get_embedding(self,prec):
@@ -244,16 +310,29 @@ class BigArithGroup(AlgebraicGroup):
             I,J,K = self._local_splitting(prec)
             def iota(q):
                 R=I.parent()
-                if type(q) is tuple:
-                    v = q
-                else:
-                    v = q.coefficient_tuple()
+                v = q
+                try:
+                    v = v.coefficient_tuple()
+                except AttributeError: pass
                 return R(v[0] + I*v[1] + J*v[2] + K*v[3])
         else:
             R =  Qp(self.p,prec)
             def iota(q):
-                return q.apply_map(lambda x:R(x))
+                #return q.apply_map(lambda x:R(x))
+                return q.change_ring(R)
         return iota
+
+    def embed(self,q,prec):
+        if self.discriminant != 1:
+            I,J,K = self._local_splitting(prec)
+            R=I.parent()
+            v = q
+            try:
+                v = v.coefficient_tuple()
+            except AttributeError: pass
+            return R(v[0] + I*v[1] + J*v[2] + K*v[3])
+        else:
+            return q.change_ring(Qp(self.p,prec))
 
     def reduce_in_amalgam(self,x,return_word = False):
         rednrm = x.reduced_norm() if self.discriminant != 1 else x.determinant()
@@ -272,7 +351,7 @@ class BigArithGroup(AlgebraicGroup):
         p = self.p
         rednrm = x.reduced_norm() if self.discriminant != 1 else x.determinant()
         denval = self.Gn._denominator_valuation
-        x = set_immutable(p**-(rednrm.valuation(p)/2) * x)
+        x = set_immutable(p**-ZZ(QQ(rednrm.valuation(p))/QQ(2)) * x)
         if self.Gpn._denominator(x) == 1:
             return x,[]
         else:
@@ -327,8 +406,7 @@ class BigArithGroup(AlgebraicGroup):
         return tmp,n,q
 
 class ArithGroup(AlgebraicGroup):
-    def __init__(self,discriminant,level,info_magma = None,magma_machine = None):
-        self.magma = magma_machine
+    def __init__(self,discriminant,level,info_magma = None):
         if isinstance(discriminant,list):
             tmp = QuaternionAlgebra(discriminant[0],discriminant[1])
             self.abtuple = discriminant
@@ -360,15 +438,15 @@ class ArithGroup(AlgebraicGroup):
             self.Uside = [self.B([self._B_magma(self._m2_magma.Image(mside_magma.Image(g))).Vector()[m+1] for m in range(4)]) for g in Uside_magma.Generators()]
 
             # We initialize some attributes by calling this function stupidly
-            self.magma.WordProblem(self._G_magma(1))
+            magma.WordProblem(self._G_magma(1))
 
             gquats_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsQuats')
             self.ngquats = ZZ(len(gquats_magma[1]))
-            emb = self.get_archimedean_embedding(100)
+            emb = self.get_archimedean_embedding(200)
             self.gquats = translate_into_twosided_list([[self.B([self._B_magma(gquats_magma[i+1][n+1].Quaternion()).Vector()[m+1] for m in range(4)]) for n in range(len(gquats_magma[i+1]))] for i in range(2)])
             self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
 
-            self.pi = RealField(100)(4*arctan(1))
+            self.pi = RealField(100)(4)*arctan(1)
             self.findex = [ZZ(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimGroupSidepairsIndex')]
             self.fdargs = [RealField(200)(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimFDArgs')]
 
@@ -475,36 +553,35 @@ class ArithGroup(AlgebraicGroup):
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
             if self.discriminant != 1:
-                QQ_magma = self.magma.RationalsAsNumberField()
-                self._ZZ_magma = QQ_magma.Integers()
+                QQ_magma = magma.RationalsAsNumberField()
+                ZZ_magma = QQ_magma.Integers()
                 if hasattr(self,'abtuple'):
-                    self._B_magma = self.magma.QuaternionAlgebra('%s'%QQ_magma.name(),self.abtuple[0],self.abtuple[1])
+                    self._B_magma = magma.QuaternionAlgebra('%s'%QQ_magma.name(),self.abtuple[0],self.abtuple[1])
                 else:
-                    self._B_magma = self.magma.QuaternionAlgebra('%s*%s'%(self.discriminant,self._ZZ_magma.name()))
+                    self._B_magma = magma.QuaternionAlgebra('%s*%s'%(self.discriminant,ZZ_magma.name()))
 
                 self._Omax_magma = self._B_magma.MaximalOrder()
-                self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,self._ZZ_magma.name()))
-                self._D_magma = self.magma.UnitDisc(Precision = 300)
+                self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,ZZ_magma.name()))
+                self._D_magma = magma.UnitDisc(Precision = 300)
             else:
-                self._ZZ_magma = self.magma.Integers()
-                self._B_magma = self.magma.QuaternionAlgebra(self.magma.Rationals(),1,1)
+                ZZ_magma = magma.Integers()
+                self._B_magma = magma.QuaternionAlgebra(magma.Rationals(),1,1)
                 self._Omax_magma = self._B_magma.MaximalOrder()
                 self._O_magma = self._Omax_magma.Order('%s'%self.level)
         else:
-            self._ZZ_magma = info_magma._B_magma.BaseRing().Integers()
+            ZZ_magma = info_magma._B_magma.BaseRing().Integers()
             self._B_magma = info_magma._B_magma
             if self.discriminant != 1:
-                # self._O_magma = info_magma._O_magma.Order('%s*%s'%(self.level,self._ZZ_magma.name()))
                 self._Omax_magma = info_magma._B_magma.MaximalOrder()
-                self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,self._ZZ_magma.name()))
+                self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,ZZ_magma.name()))
                 self._D_magma = info_magma._D_magma
             else:
                 self._O_magma = info_magma._O_magma.Order('%s'%self.level)
 
         if self.discriminant != 1:
-            self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
-            self._FDom_magma = self._G_magma.FundamentalDomain(self._D_magma.name())
-            self._U_magma,self._m1_magma,self._m2_magma = self._G_magma.Group(nvals = 3)
+            self._G_magma = magma.FuchsianGroup(self._O_magma.name())
+            FDom_magma = self._G_magma.FundamentalDomain(self._D_magma.name())
+            self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
 
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
 
@@ -544,7 +621,7 @@ class ArithGroup(AlgebraicGroup):
             wtime = walltime()
             verbose('Calling MatrixRing...')
             B_magma = self._B_magma
-            f = self.magma.FuchsianMatrixRepresentation(B_magma.name(),nvals = 1)
+            f = magma.FuchsianMatrixRepresentation(B_magma.name(),nvals = 1)
             verbose('Spent %s seconds in MatrixRing'%walltime(wtime))
             RR = RealField(prec)
             self._prec_inf=prec
@@ -561,7 +638,7 @@ class ArithGroup(AlgebraicGroup):
             return (self.basis_invmat * matrix(QQ,4,1,x.coefficient_tuple())).list()
         else:
             a,b,c,d = x.list()
-            return [a, b, c/self.level, d]
+            return [a, b, QQ(c)/self.level, d]
 
     def _is_in_order(self,x):
         return self._denominator(set_immutable(x)) == 1
@@ -586,7 +663,7 @@ class ArithGroup(AlgebraicGroup):
             m1 = matrix(ZZ,2,2,[1,0,0,1])
             tmp = []
             if c != 0:
-                decomp = continued_fraction_list(a/c)
+                decomp = continued_fraction_list(QQ(a)/QQ(c))
                 if len(decomp) % 2 == 1:
                     decomp[-1] -= 1
                     decomp.append(1)
@@ -606,12 +683,11 @@ class ArithGroup(AlgebraicGroup):
             #verbose('Entering get_word_rep...')
             if not self._is_in_order(delta):
                 raise RuntimeError,'delta (= %s) is not in order!'%delta
-            c = self._get_word_recursive(delta,0)
-            # try:
-            #     c = self._get_word_recursive(delta,0)
-            # except RuntimeError:
-            #     print '!! Resorted to Magma, indicates a bug (delta = %s,norm = %s)!!'%(delta,delta.reduced_norm())
-            #     c = self._magma_word_problem(delta)
+            try:
+                c = self._get_word_recursive(delta,0)
+            except RuntimeError:
+                print '!! Resorted to Magma, indicates a bug (delta = %s,norm = %s)!!'%(delta,delta.reduced_norm())
+                c = self._magma_word_problem(delta)
             tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)] # shorten_word(c)
             delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
             if delta1 != delta:
@@ -697,7 +773,7 @@ class ArithGroup(AlgebraicGroup):
             x = self._quaternion_to_magma_quaternion(sum(a*b for a,b in zip(self.Obasis,x)))
         x_magma = self._G_magma(x)
         #verbose('Calling _magma_word_problem with x = %s'%x)
-        V = self.magma.WordProblem(x_magma).ElementToSequence()._sage_()
+        V = magma.WordProblem(x_magma).ElementToSequence()._sage_()
         delta1 = self.B(1)
         for v in V:
             delta1 = delta1 * self.Ugens[v - 1] if v > 0 else delta1 * self.Ugens[-v - 1]
@@ -718,7 +794,7 @@ class ArithGroup(AlgebraicGroup):
             self._element_of_norm  = dict([])
         if self.discriminant != 1:
             if use_magma:
-                elt_magma = self._O_magma.ElementOfNorm(N*self._ZZ_magma)
+                elt_magma = self._O_magma.ElementOfNorm(N*self._O_magma.BaseRing())
                 candidate = self.B([QQ(elt_magma.Vector()[m+1]) for m in range(4)])
                 if candidate.reduced_norm() != N:
                     candidate = candidate * self.element_of_norm(-1)
@@ -858,11 +934,12 @@ class ArithGroup(AlgebraicGroup):
         sage: f0 = f.zero_degree_equivalent()
         '''
         if self.discriminant == 1:
-            K_magma = self.magma.RadicalExtension(QQ,2,D)
+            K_magma = magma.RadicalExtension(QQ,2,D)
         else:
-            K_magma = self.magma.RadicalExtension(self._B_magma.BaseField(),2,D)
+            QQmagma = self._B_magma.BaseRing()#magma.RationalsAsNumberField()
+            K_magma = magma.RadicalExtension(QQmagma,2,D) #self._B_magma.BaseField()
         OK_magma = K_magma.MaximalOrder()
-        _,iota = self.magma.Embed(OK_magma,self._O_magma,nvals = 2)
+        _,iota = magma.Embed(OK_magma,self._O_magma,nvals = 2)
         mu_magma = iota.Image(OK_magma(K_magma.gen(1)))
         Bgens = list(self.B.gens()) if self.discriminant != 1 else [matrix(QQ,2,2,[1,0,0,-1]),matrix(QQ,2,2,[0,1,1,0]),matrix(QQ,2,2,[0,1,-1,0])]
         mu = sum(a*b for a,b in zip([self.B(1)]+Bgens,[self._B_magma(mu_magma).Vector()[m+1].Norm()._sage_() for m in range(4)]))

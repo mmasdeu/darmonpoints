@@ -8,14 +8,16 @@ from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement,ModuleElement
 from sage.structure.parent import Parent
 from sage.categories.homset import Hom
-from sage.matrix.all import matrix,Matrix
+from sage.matrix.constructor import Matrix,matrix
 from sage.misc.cachefunc import cached_method
-from sage.all import prod,load
+from sage.structure.sage_object import load,save
+from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Qp
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
 from sigma0 import Sigma0,Sigma0ActionAdjuster
+from sage.rings.infinity import Infinity
 from util import *
 import os
 from ocmodule import OCVn
@@ -130,26 +132,27 @@ class CohomologyElement(ModuleElement):
         '''
         G = self.parent().group()
         V = self.parent().coefficient_module()
+        prec = V.base_ring().precision_cap()
         Sigma0 = self.parent().Sigma0()
         if len(word) == 0:
             return V(0)
         # verbose('word = %s'%list(word))
-        emb = G.get_embedding(200)
         if len(word) == 1:
             g,a = word[0]
-            gmat = emb(G.gen(g).quaternion_rep)
+            gmat = G.embed(G.gen(g).quaternion_rep,prec)
+            gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
             if a == 0:
                 return V(0)
             elif a == -1:
                 if self.parent()._use_ps_dists:
-                    return -(Sigma0(gmat**-1) * self._val[g])
+                    return -(Sigma0(gmat_inv) * self._val[g])
                 else:
-                    return  -self._val[g].l_act_by(gmat**-1)
+                    return  -self._val[g].l_act_by(gmat_inv)
             elif a < 0:
                 if self.parent()._use_ps_dists:
-                    return -(Sigma0(gmat**a) * self._evaluate_word(tuple([(g,-a)])))
+                    return -(Sigma0(gmat_inv**-a) * self._evaluate_word(tuple([(g,-a)])))
                 else:
-                    return -self._evaluate_word(tuple([(g,-a)])).l_act_by(gmat**a)
+                    return -self._evaluate_word(tuple([(g,-a)])).l_act_by(gmat_inv**-a)
 
             elif a == 1:
                 return self._val[g]
@@ -166,9 +169,9 @@ class CohomologyElement(ModuleElement):
             pivot = len(word) // 2
             gamma = prod([G.gen(g).quaternion_rep**a for g,a in word[:pivot]],G.B(1))
             if self.parent()._use_ps_dists:
-                return self._evaluate_word(tuple(word[:pivot])) + Sigma0(emb(gamma)) *  self._evaluate_word(tuple(word[pivot:]))
+                return self._evaluate_word(tuple(word[:pivot])) + Sigma0(G.embed(gamma,prec)) *  self._evaluate_word(tuple(word[pivot:]))
             else:
-                return self._evaluate_word(tuple(word[:pivot])) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(emb(gamma))
+                return self._evaluate_word(tuple(word[:pivot])) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(G.embed(gamma,prec))
 
     def improve(self,prec = None,sign = 1):
         r"""
@@ -316,7 +319,6 @@ class CohomologyGroup(Parent):
             raise NotImplementedError
         if self.coefficient_module().dimension() > 1:
             raise NotImplementedError
-        emb = self.group().get_embedding(20)
         H = self._space
         Gpn = self.group()
         Obasis = Gpn.Obasis
@@ -363,7 +365,7 @@ class CohomologyGroup(Parent):
         Gpn = self.group()
         group = Gpn
         if padic:
-            emb = Gpn.get_embedding(V.base_ring().precision_cap())
+            prec = V.base_ring().precision_cap()
         vals = []
         R = V.base_ring()
         if hasattr(V,'is_full'): # This should be more robust
@@ -382,9 +384,9 @@ class CohomologyGroup(Parent):
                 val0 = c.evaluate(tig)
                 if padic:
                     if self._use_ps_dists:
-                        newval += self.Sigma0()(emb(gk1)) * val0
+                        newval += self.Sigma0()(Gpn.embed(gk1,prec)) * val0
                     else:
-                        newval += val0.l_act_by(emb(gk1))
+                        newval += val0.l_act_by(Gpn.embed(gk1,prec))
                 else:
                     newval += val0
             vals.append(scale * newval)

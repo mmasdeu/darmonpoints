@@ -185,8 +185,9 @@ class ArithGroupAction(Action):
 
     def _call_(self,g,v):
         K = v.parent().base_ring()
-        iota = g.parent().get_embedding(K.precision_cap())
-        a,b,c,d = iota(g.quaternion_rep).change_ring(K).list()
+        prec = K.precision_cap()
+        G = g.parent()
+        a,b,c,d = G.embed(g.quaternion_rep,prec).change_ring(K).list()
         newdict = defaultdict(ZZ)
         newpts = {}
         for P,n in v:
@@ -367,12 +368,11 @@ class HomologyClass(ModuleElement):
     def act_by_hecke(self,l,prec):
         newdict = dict()
         G = self.parent().group()
-        emb = G.get_embedding(prec)
         hecke_reps = G.get_hecke_reps(l)
         for gk1 in hecke_reps:
             for g,v in self._data.iteritems():
                 ti = G.get_hecke_ti(gk1,g.quaternion_rep,l,reps = hecke_reps)
-                newv = v.left_act_by_matrix(emb(gk1**-1))
+                newv = v.left_act_by_matrix(G.embed(gk1**-1,prec))
                 try:
                     newdict[ti] += newv
                     if newdict[ti].is_zero():

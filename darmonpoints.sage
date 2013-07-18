@@ -5,35 +5,38 @@ from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
 from util import *
 import os
-from quatarithgp import BigArithGroup
+from quatarithgp import BigArithGroup,load_bigarithgroup
 #load 'quatarithgp.sage'
 from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
 from integrals import integrate_H1,double_integral_zero_infty
 from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
+from sage.misc.persist import db
 
 sys.setrecursionlimit(10**6)
 
-def get_overconvergent_class_matrices(p,E,prec,fname,sign_at_infinity):
+def get_overconvergent_class_matrices(p,E,prec,fname,sign_at_infinity,use_sage_db = True):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
-    if not os.path.isfile(fname):
-        print 'Computing the moments...'
-        phi0 = E.PS_modular_symbol()
-        if sign_at_infinity == 1:
-            phi0 = phi0.plus_part()
-        else:
-            phi0 = phi0.minus_part()
-        phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0
-        verb_level = get_verbose()
-        set_verbose(1)
-        Phi = phi0.lift(p,M = prec,algorithm = 'stevens',eigensymbol = True)
-        set_verbose(verb_level)
-        save(Phi,fname)
+    if use_sage_db:
+        try:
+            Phi = db(fname)
+            return Phi
+        except IoError: pass
+    print 'Computing the moments...'
+    phi0 = E.PS_modular_symbol()
+    if sign_at_infinity == 1:
+        phi0 = phi0.plus_part()
     else:
-        Phi = load(fname)
+        phi0 = phi0.minus_part()
+    phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0
+    verb_level = get_verbose()
+    set_verbose(1)
+    Phi = phi0.lift(p,M = prec,algorithm = 'stevens',eigensymbol = True)
+    set_verbose(verb_level)
+    Phi.db(fname)
     return Phi
 
-def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = False,group = None,return_all_data = False,algorithm = None,magma_seed = None):
+def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = False,return_all_data = False,algorithm = None,magma_seed = None):
     DB,Np = get_heegner_params(p,E.conductor(),dK)
     quaternionic = ( DB != 1 )
     QQp = Qp(p,prec)
@@ -57,7 +60,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
     v0 = F.hom([r0+r1*Cp.gen()])
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
-    fname = '.moments_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec)
+    fname = 'moments_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec)
 
     print "Computing the Darmon point attached to the data:"
     print 'D_B = %s = %s'%(DB,factor(DB))
@@ -66,7 +69,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
     print "The calculation is being done with p = %s and prec = %s"%(p,working_prec)
     print "Should find points in the elliptic curve:"
     print E
-    print "Moments will be saved in %s/%s"%(os.getcwd(),fname)
+    print "Moments will be stored in database as %s"%(fname)
     fwrite("Starting computation of the Darmon point",outfile)
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
     fwrite('Np = %s'%Np,outfile)
@@ -79,11 +82,8 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
 
 
     if quaternionic:
-        if group is None:
-            # Define the S-arithmetic group
-            G = BigArithGroup(p,DB,Np,outfile = outfile,seed = magma_seed)
-        else:
-            G = group
+        # Define the S-arithmetic group
+        G = BigArithGroup(p,DB,Np,outfile = outfile,seed = magma_seed)
 
         # Define the cycle ( in H_1(G,Div^0 Hp) )
         cycleGn,nn,ell = G.construct_cycle(dK,prec,hecke_smoothen = True,outfile = outfile)
@@ -96,6 +96,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
         J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec)
         fwrite('J_psi = %s'%J,outfile)
         verbose('integration tot_time = %s'%walltime(tot_time))
+        G.save_to_db()
     else:
         nn = 1
         smoothen_constant = 1
