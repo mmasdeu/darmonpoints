@@ -184,7 +184,6 @@ class BigArithGroup_class(AlgebraicGroup):
 
         wtime = walltime()
         verbose('Calling pMatrixRing...')
-        print 'Setting magma Seed to %s'%self.seed
         magma.eval('SetSeed(%s)'%self.seed)
         M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
         verbose('Spent %s seconds in pMatrixRing'%walltime(wtime))
