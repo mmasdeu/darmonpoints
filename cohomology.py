@@ -15,7 +15,6 @@ from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Qp
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-#from distributions import Distributions, Symk
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.rings.infinity import Infinity
 from util import *
@@ -233,6 +232,7 @@ class CohomologyGroup(Parent):
         if overconvergent:
             self.is_overconvergent = True
             if self._use_ps_dists:
+                from pollack_stevens.distributions import Distributions, Symk
                 self._coeffmodule = Distributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
             else:
                 self._coeffmodule = OCVn(0,base,1+base.precision_cap())

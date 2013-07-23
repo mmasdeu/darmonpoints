@@ -13,10 +13,11 @@ from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 from sage.misc.persist import db,db_save
 
 sys.setrecursionlimit(10**6)
-
-def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_sage_db = True):
+def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = True,use_sage_db = True):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
+    if use_ps_dists == False:
+        raise NotImplementedError
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     fname = 'moments_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec)
     if use_sage_db:
@@ -25,6 +26,8 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_sage_db = Tr
             return Phi
         except IOError: pass
     print 'Computing the moments...'
+    from pollack_stevens.space import ps_modsym_from_elliptic_curve
+    #phi0 = ps_modsym_from_elliptic_curve(E,use_ps_dists = use_ps_dists)
     phi0 = E.PS_modular_symbol()
     if sign_at_infinity == 1:
         phi0 = phi0.plus_part()
@@ -38,7 +41,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_sage_db = Tr
     Phi.db(fname)
     return Phi
 
-def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = False,return_all_data = False,algorithm = None,magma_seed = None):
+def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = False,return_all_data = False,algorithm = None,magma_seed = None,use_sage_db = True):
     DB,Np = get_heegner_params(p,E.conductor(),dK)
     quaternionic = ( DB != 1 )
     QQp = Qp(p,prec)
@@ -92,11 +95,10 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
         smoothen_constant = E.ap(ell)- ell - 1
         fwrite('a_r(E) - r - 1 = %s'%smoothen_constant,outfile)
         fwrite('exponent = %s'%nn,outfile)
-        Phi = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists)
+        Phi = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db)
         # Integration with moments
         tot_time = walltime()
         J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec)
-        fwrite('J_psi = %s'%J,outfile)
         verbose('integration tot_time = %s'%walltime(tot_time))
         G.save_to_db()
     else:
@@ -107,7 +109,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
                 algorithm = 'darmon_pollack'
             else:
                 algorithm = 'guitart_masdeu'
-        Phi = get_overconvergent_class_matrices(p,E,prec,fname,sign_at_infinity)
+        Phi = get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db)
 
         # Optimal embeddings of level one
         print "Computing optimal embeddings of level one..."
@@ -138,6 +140,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
             Jlist.append(newJ)
             J *= newJ
 
+    fwrite('J_psi = %s'%J,outfile)
     #Try to recognize a generator
     valqE = QQ(qE.valuation())
     numqE,denqE = valqE.numerator(),valqE.denominator()
@@ -152,7 +155,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
 
     addpart0 = Jlog/(smoothen_constant*nn)
     candidate = None
-    twopowlist = [4, 2, 1, 1/2, 1/4]
+    twopowlist = [8, 4, 2, 1, 1/2, 1/4]
     for twopow in twopowlist:
         addpart = addpart0 / twopow
         for a,b in product(range(p),repeat = 2):
@@ -180,40 +183,40 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
                     verbose('Trying to recognize point with precision %s'%prec0, level = 2)
                     candidate,success = recognize_point(x,y,E.change_ring(F),prec = prec0)
                     prec0 -= 1
-                if not success:
-                    verbose('Could not recognize point',level = 2)
-                    continue
-                verbose('Recognized the point!')
-                fwrite('x,y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
-                break
-        try:
-            Ptsmall = E.change_ring(F)(candidate)
-            alldivs = [Ptsmall]
-            m0 = 1
-            for m in [3,5]:
-                while any([o.is_divisible_by(m) for o in alldivs]):
-                    alldivs = [pt for o in alldivs for pt in o.division_points(m)]
-                    m0 *= m
-            fwrite('m0 = %s'%m0,outfile)
-            fwrite('twopow = %s'%twopow,outfile)
-            if twopow < 1:
-                tmp = (J1**(smoothen_constant * nn * m0))/(J**ZZ(1/twopow))
-            else:
-                tmp = (J1**(smoothen_constant * nn * m0 * twopow))/J
-            if tmp != 1:
-                fwrite('Constant multiples do not match...',outfile)
-            fwrite('Computed point:  %s * %s * %s'%(twopow*m0,smoothen_constant * nn,Ptsmall),outfile)
-            fwrite('(first factor is not understood, second factor is)',outfile)
-            if ppow != 1:
-                fwrite('Took the %s-power %s out also'%(p,ppow),outfile)
-            fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
-            fwrite('================================================',outfile)
-            if return_all_data == True:
-                return Ptsmall, Phi, J, getcoords(E,J,prec)
-            else:
-                return Ptsmall
-        except (TypeError,ValueError):
-            verbose("Couldn't recognize the point.")
+                if success:
+                    verbose('Recognized the point!')
+                    fwrite('x,y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
+                    break
+        if success:
+            try:
+                verbose('candidate = %s'%candidate)
+                Ptsmall = E.change_ring(F)(candidate)
+                alldivs = [Ptsmall]
+                m0 = 1
+                for m in [3,5]:
+                    while any([o.is_divisible_by(m) for o in alldivs]):
+                        alldivs = [pt for o in alldivs for pt in o.division_points(m)]
+                        m0 *= m
+                fwrite('m0 = %s'%m0,outfile)
+                fwrite('twopow = %s'%twopow,outfile)
+                if twopow < 1:
+                    tmp = (J1**(smoothen_constant * nn * m0))/(J**ZZ(1/twopow))
+                else:
+                    tmp = (J1**(smoothen_constant * nn * m0 * twopow))/J
+                if tmp != 1:
+                    fwrite('Constant multiples do not match...',outfile)
+                fwrite('Computed point:  %s * %s * %s'%(twopow*m0,smoothen_constant * nn,Ptsmall),outfile)
+                fwrite('(first factor is not understood, second factor is)',outfile)
+                if ppow != 1:
+                    fwrite('Took the %s-power %s out also'%(p,ppow),outfile)
+                fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
+                fwrite('================================================',outfile)
+                if return_all_data == True:
+                    return Ptsmall, Phi, J, getcoords(E,J,prec)
+                else:
+                    return Ptsmall
+            except (TypeError,ValueError):
+                verbose("Could not recognize the point.")
     fwrite('================================================',outfile)
     if return_all_data == True:
         return [], Phi, J, getcoords(E,J,prec)
