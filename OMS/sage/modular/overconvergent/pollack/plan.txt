@@ -1,0 +1,121 @@
+Stage 1: Get all existing tests to pass in the following files (some
+have no tests right now):
+
+dist.py
+distributions.py
+fund_domain.py
+modsym.py
+modsym_dist.py
+modsym_symk.py
+pLfunction.py
+symk.py
+
+sage -tp 4 fund_domain.py lvalue_test.py modsym.py modsym_symk.py pLfunction.py
+
+Stage 2: Come up with the simplest *design* for this functionality that
+could possibly go into Sage and do the same thing as the above.
+
+Parents:
+   
+ - CoefficientModule
+    - Symk(k, base_field)
+    - Distribution(...?)
+
+ - OverconvergentModSymSpace(level, coefficient_module)
+
+
+Elements:
+
+ - CoefficientModuleElement
+    - SymkElement
+    - DistributionElement
+
+ - OverconvergentModSymElement
+
+Other Objects:
+
+ - p-adic L-series (attached to overconvergent eigenform)
+ - ManinRelations
+ - ManinSymbol 
+
+Example code:
+
+sage: E = EllipticCurve('11a')
+sage: f = E.overconvergent_modsym()
+sage: f
+Overconvergent modular symbol attached to Elliptic Curve defined by y^2 + y = x^3 - x^2 - 10*x - 20 over Rational Field
+sage: L = f.padic_lseries(7)
+sage: L
+7-adic L-series of Overconvergent modular symbol attached to Elliptic Curve defined by y^2 + y = x^3 - x^2 - 10*x - 20 over Rational Field
+sage: L.series(2)  # not sure about input/output
+5 + 7 + 5*7^2 + 4*7^3 + O(7^4) + (5 + O(7))*T + (6 + O(7))*T^2 + O(7)*T^3 + (4 + O(7))*T^4 + O(T^5)
+sage: L = f.padic_lseries(7, -3)  # twist by -3
+sage: L
+7-adic L-series of twist by -3 of Overconvergent modular symbol attached to Elliptic Curve defined by y^2 + y = x^3 - x^2 - 10*x - 20 over Rational Field
+
+sage: f.domain()
+?
+sage: f(...)
+?
+sage: f.parent()
+Space of overconvergent modular symbols of level 11
+
+sage: f.minus_part()
+Overconvergent modular symbol ...
+sage: f.plus_part()
+Overconvergent modular symbol ...
+
+sage: f + f
+?
+sage: 2*f
+?
+
+sage: X = OverconvergentModularSymbols(...); X
+?
+sage: T2 = X.hecke_operator(2); T2
+?
+sage: T2(f)
+?
+
+
+
+Stage 3: Implement:
+
+  - one group: write test suite (doctest/docstrings) using the new 
+    function names/classes/etc.  Use the program above to generate
+    the expected output
+
+  - another group: "quick" implementation in Python of
+    parents/elements/etc.  Will copy over a lot of code from above (or
+    just refactor things, etc.)
+
+
+TASKS:
+
+[x] Create: modular/pollack_stevens
+[x] dist.pyx, dist.pxd, fund_domain.py: Copy over dist cython code and fund_domain.
+[ ] (wstein) fix fund_domain.py; better name; clean up.
+[ ] (everybody; wstein) (*) map.py: Create pure Python Map Object that represents map from coset reps
+        to coefficient module using Python dicts and establishes the API
+[ ] (wstein) doctest coverage of map.py to 100%
+[ ] (roe) (optimization) map_QQ.pyx:   Create Cython Map Object for special cases of codomain QQ
+[ ] doctest coverage of map_QQ.pyx to 100%
+[ ] (optimization) map_F.pyx:   Create Cython Map Object for special cases of codomain a number field
+[ ] (optimization) map_dist.pyx: Create Cython Map Object for general distributions based on David's dist cython code
+[ ] doctest coverage of map_dist.pyx to 100%
+[ ] (roe) modsym.py:  Create element: ModularSymbolElement class 
+[ ] (roe) space.py :  Create parent: ModularSymbolSpace class
+[ ] (jen/steffan) (*) rewrite various functions from modsym.py to use map object (new code in modsym.py, space.py)
+[ ] (jen/steffan) rewrite various functions from modsym_dist.py to use map object (new code in modsym.py, space.py)
+[ ] (jen/steffan) rewrite various functions from modsym_symk.py to use map object (new code in modsym.py, space.py)
+[ ] (wstein) doctest coverage of modsym.py to 100%
+[ ] (wstein) doctest coverage of space.py to 100%
+[ ] (jen/steffan) padic_lseries.py: rewrite pLfunction.py and lvalue_test.py to use above 
+[ ] (wstein) doctest coverage of padic_lseries.py to 100%
+    include function that calls tests on a bunch of curves.
+
+Stage 4: Optimization
+
+  - depends on results of stage 3.  Fast dist code is relevant. 
+
+
