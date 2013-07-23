@@ -23,7 +23,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_sage_db = Tr
         try:
             Phi = db(fname)
             return Phi
-        except IoError: pass
+        except IOError: pass
     print 'Computing the moments...'
     phi0 = E.PS_modular_symbol()
     if sign_at_infinity == 1:
