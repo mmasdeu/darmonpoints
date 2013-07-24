@@ -19,7 +19,8 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = T
     if use_ps_dists == False:
         raise NotImplementedError
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
-    fname = 'moments_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec)
+    dist_type = 'ps' if use_ps_dists == True else 'fm'
+    fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec,dist_type)
     if use_sage_db:
         try:
             Phi = db(fname)
@@ -41,9 +42,11 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = T
     Phi.db(fname)
     return Phi
 
-def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = False,return_all_data = False,algorithm = None,magma_seed = None,use_sage_db = True):
+def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,magma_seed = None,use_sage_db = True):
     DB,Np = get_heegner_params(p,E.conductor(),dK)
     quaternionic = ( DB != 1 )
+    if use_ps_dists is None:
+        use_ps_dists = False if quaternionic else True
     QQp = Qp(p,prec)
     extra_conductor_sq = dK/fundamental_discriminant(dK)
     assert ZZ(extra_conductor_sq).is_square()
