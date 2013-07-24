@@ -1,6 +1,7 @@
-A package to compute quaternionic Darmon points.
+A package to compute quaternionic Darmon points
+===============================================
 
-Here there is simple example. Look at example.sage for a more detailed calculation::
+Here there is simple example. Look at ``example.sage`` for a more detailed calculation::
 
 
     sage: load('shpquat.sage')
