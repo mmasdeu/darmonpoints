@@ -1,8 +1,7 @@
 A package to compute quaternionic Darmon points.
 
-Here there is simple example. Look at example.sage for a more detailed calculation.
+Here there is simple example. Look at example.sage for a more detailed calculation::
 
-::
 
     sage: load('shpquat.sage')
     sage: E = EllipticCurve('78a1')
@@ -12,9 +11,8 @@ Here there is simple example. Look at example.sage for a more detailed calculati
     sage: outfile = 'point_quaternionic.txt' # Optional
     sage: darmon_point(p,E,dK,prec,outfile = outfile)
 
-The package is capable of computing the classical Darmon (a.k.a. Stark-Heegner) points:
+The package is capable of computing the classical Darmon (a.k.a. Stark-Heegner) points::
 
-::
 
     sage: load('shpquat.sage')
     sage: E = EllipticCurve('35a1')
