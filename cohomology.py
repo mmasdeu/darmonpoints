@@ -15,7 +15,6 @@ from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Qp
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-#from distributions import Distributions, Symk
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.rings.infinity import Infinity
 from util import *
@@ -30,16 +29,17 @@ def get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dis
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
     fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec,dist_type)
-    try:
-        Phivals = db(fname)
-        CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
-        CohOC._coeff_module = Phivals[0].parent()
-        VOC = CohOC.coefficient_module()
-        Phi = CohOC([VOC(o) for o in Phivals])
-        return Phi
-    except IOError: pass
-    CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
+    if use_sage_db:
+        try:
+            Phivals = db(fname)
+            CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
+            CohOC._coeff_module = Phivals[0].parent()
+            VOC = CohOC.coefficient_module()
+            Phi = CohOC([VOC(o) for o in Phivals])
+            return Phi
+        except IOError: pass
     verbose('Computing moments...')
+    CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
     VOC = CohOC.coefficient_module()
     if use_ps_dists:
         Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group_gens()])
@@ -233,6 +233,7 @@ class CohomologyGroup(Parent):
         if overconvergent:
             self.is_overconvergent = True
             if self._use_ps_dists:
+                from sage.modular.pollack_stevens.distributions import Distributions, Symk
                 self._coeffmodule = Distributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
             else:
                 self._coeffmodule = OCVn(0,base,1+base.precision_cap())

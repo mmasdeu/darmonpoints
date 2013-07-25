@@ -219,6 +219,38 @@ def period_from_coords(p,E, P, prec = 20):
     un = u * q**(-(u.valuation()/q.valuation()).floor())
     return un
 
+
+def our_algdep(z,degree,prec = None):
+    try:
+        return algdep(z,degree)
+    except PariError: pass
+    if prec is None:
+        prec = z.precision_relative()
+    field_deg = z.parent().degree()
+    p = z.parent().prime()
+    R = ZZ['x']
+    x = R.gen()
+    n = degree+1
+    zval = z.valuation()
+    ptozval = p**zval
+    z /= ptozval
+    assert z.valuation() == 0
+    pn = p**prec
+    r = 1
+    M = matrix(ZZ, n+field_deg, field_deg)
+    M[0,-1] = 1 # Encodes 1
+    for k in range(1, degree+1):
+        r *= z
+        for i in range(field_deg):
+            M[k,-1-i] = ZZ(r._ntl_rep()[i])
+    for i in range(field_deg):
+        M[n+i,-1-i] = pn
+    tmp = M.left_kernel().matrix().change_ring(ZZ).LLL().row(0)
+    f = R(list(tmp[:n]))(x/ptozval)
+    if f.leading_coefficient() < 0:
+        f = -f
+    return R(f.denominator() * f)
+
 def recognize_point(x,y,EF,prec = None):
   F = EF.base_ring()
   Cp = x.parent()
