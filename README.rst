@@ -11,7 +11,7 @@ Basic usage
 
 Here there is simple example. Look at ``example.sage`` for a more detailed calculation::
 
-    sage: load('shpquat.sage')
+    sage: load('darmonpoints.sage')
     sage: E = EllipticCurve('78a1')
     sage: p = 13 # Must divide the conductor of E
     sage: dK = 5 # The discriminant of the real quadratic field.
@@ -21,7 +21,7 @@ Here there is simple example. Look at ``example.sage`` for a more detailed calcu
 
 The package is capable of computing the classical Darmon (a.k.a. Stark-Heegner) points::
 
-    sage: load('shpquat.sage')
+    sage: load('darmonpoints.sage')
     sage: E = EllipticCurve('35a1')
     sage: p = 7 # Must divide the conductor of E
     sage: dK = 41 # The discriminant of the real quadratic field.
