@@ -6,7 +6,6 @@ from itertools import product,chain,izip,groupby,islice,tee,starmap
 from util import *
 import os
 from quatarithgp import BigArithGroup,load_bigarithgroup
-#load 'quatarithgp.sage'
 from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
 from integrals import integrate_H1,double_integral_zero_infty
 from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals

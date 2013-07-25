@@ -13,7 +13,7 @@ from sage.structure.parent import Parent
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,lcm
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm
 from sage.rings.padics.all import Qp
 from sage.functions.trig import arctan
 from sage.interfaces.magma import magma
@@ -122,6 +122,8 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
         self._prec = -1
+        self._II_exact,self._JJ_exact,self._KK_exact = self._compute_exact_quadratic_splitting()
+
         self.get_Up_reps()
         verbose('Done initializing arithmetic groups')
         self.Gpn.get_Up_reps = self.get_Up_reps
@@ -156,6 +158,29 @@ class BigArithGroup_class(AlgebraicGroup):
             self.Gn._O_magma = self.Gn._Omax_magma.Order('%s'%self.Gn.level)
             self.Gpn._O_magma = self.Gn._Omax_magma.Order('%s'%self.Gpn.level)
 
+    def _compute_exact_quadratic_splitting(self):
+        # Now we compute a splitting
+        Btmp = magma.QuaternionAlgebra(magma.Rationals(),self.Gn.B.invariants()[0],self.Gn.B.invariants()[1])
+        def quat_to_mquat(x):
+            v = list(x)
+            return Btmp(v[0]) + sum(v[i+1]*Btmp.gen(i+1) for i in range(3))
+        R = magma.QuaternionOrder([quat_to_mquat(o) for o in self.Gpn.Obasis])
+        f = R.MatrixRepresentation(nvals = 1)
+        self._splitting_field = NumberField(f.Codomain().BaseRing().DefiningPolynomial().sage(),names = 'a')
+        allmats = []
+        for kk in range(4):
+           x = magma.eval('x:=%s(%s)'%(f.name(),R.gen(kk+1).name()))#f.Image(self._O_magma.gen(kk+1))
+           all_str=[]
+           for ii in range(2):
+               for jj in range(2):
+                   magma.eval('v%s%s:=[Sage(z) : z in Eltseq(x[%s,%s])]'%(ii,jj,ii+1,jj+1))
+           v=[self._splitting_field(magma.eval('Sprint(v%s)'%tt)) for tt in ['00','01','10','11']]
+           allmats.append(Matrix(self._splitting_field,2,2,v))
+        ansmats = []
+        for col in self.Gpn.basis_invmat.columns()[1:]:
+            ansmats.append(sum(a*b for a,b in zip(allmats,col.list())))
+        return ansmats
+
     def _local_splitting(self,prec):
         r"""
         Finds an embedding of the definite quaternion algebra
@@ -182,20 +207,24 @@ class BigArithGroup_class(AlgebraicGroup):
         if prec <= self._prec:
             return self._II,self._JJ,self._KK
 
-        wtime = walltime()
-        verbose('Calling pMatrixRing...')
-        magma.eval('SetSeed(%s)'%self.seed)
-        M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
-        verbose('Spent %s seconds in pMatrixRing'%walltime(wtime))
+        F = self._II_exact.base_ring()
         QQp = Qp(prime,prec)
-        self._prec = prec
-        B_magma = self.Gn._B_magma
-        v = f.Image(B_magma.gen(1)).Vector()
-        self._II = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
-        v = f.Image(B_magma.gen(2)).Vector()
-        self._JJ = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
-        v = f.Image(B_magma.gen(3)).Vector()
-        self._KK = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        alphap = our_sqrt(QQp(F.gen()**2),QQp)
+        phi = F.hom([alphap])
+        self._II = self._II_exact.apply_morphism(phi)
+        self._JJ = self._JJ_exact.apply_morphism(phi)
+        self._KK = self._KK_exact.apply_morphism(phi)
+        # magma.eval('SetSeed(%s)'%self.seed)
+        # M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
+        # QQp = Qp(prime,prec)
+        # self._prec = prec
+        # B_magma = self.Gn._B_magma
+        # v = f.Image(B_magma.gen(1)).Vector()
+        # self._II = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        # v = f.Image(B_magma.gen(2)).Vector()
+        # self._JJ = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        # v = f.Image(B_magma.gen(3)).Vector()
+        # self._KK = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
         # Test splitting
         for g in self.Gpn.Obasis:
             tup = g.coefficient_tuple()
@@ -546,7 +575,7 @@ class ArithGroup(AlgebraicGroup):
         if isinstance(S,list):
             return True
         return False
-
+ 
     def _init_magma_objects(self,info_magma = None):
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
