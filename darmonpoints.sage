@@ -62,6 +62,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
 
     # Compute the completion of F at p
     F.<r> = QuadraticField(dK)
+    hF = F.class_number()
     w = F.maximal_order().ring_generators()[0]
     r0,r1 = w.coordinates_in_terms_of_powers()(F.gen())
     Cp = Qp(p,working_prec).extension(w.minpoly(),names = 'g')
@@ -81,7 +82,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
     fwrite("Starting computation of the Darmon point",outfile)
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
     fwrite('Np = %s'%Np,outfile)
-    fwrite('dK = %s'%dK,outfile)
+    fwrite('dK = %s (class number = %s)'%(dK,hF),outfile)
     fwrite('Calculation with p = %s and prec = %s+%s'%(p,prec,working_prec-prec),outfile)
     fwrite('Elliptic curve %s: %s'%(E.cremona_label(),E),outfile)
     if outfile is not None:
@@ -184,22 +185,51 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
                 prec0 = prec
                 while not success and 2*prec0 > prec:
                     verbose('Trying to recognize point with precision %s'%prec0, level = 2)
-                    candidate,success = recognize_point(x,y,E.change_ring(F),prec = prec0)
+                    if hF == 1:
+                        candidate,success = recognize_point(x,y,E.change_ring(F),prec = prec0)
+                    else:
+                        candidate = [our_algdep(x,2*hF,prec0),our_algdep(y,2*hF,prec0)]
+                        success = True # Must decide in terms of height of polynomial!
                     prec0 -= 1
+
                 if success:
                     verbose('Recognized the point!')
                     fwrite('x,y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
                     break
         if success:
-            try:
-                verbose('candidate = %s'%candidate)
-                Ptsmall = E.change_ring(F)(candidate)
-                alldivs = [Ptsmall]
+            if hF == 1:
+                try:
+                    verbose('candidate = %s'%candidate)
+                    Ptsmall = E.change_ring(F)(candidate)
+                    alldivs = [Ptsmall]
+                    m0 = 1
+                    for m in [3,5]:
+                        while any([o.is_divisible_by(m) for o in alldivs]):
+                            alldivs = [pt for o in alldivs for pt in o.division_points(m)]
+                            m0 *= m
+                    fwrite('m0 = %s'%m0,outfile)
+                    fwrite('twopow = %s'%twopow,outfile)
+                    if twopow < 1:
+                        tmp = (J1**(smoothen_constant * nn * m0))/(J**ZZ(1/twopow))
+                    else:
+                        tmp = (J1**(smoothen_constant * nn * m0 * twopow))/J
+                    if tmp != 1:
+                        fwrite('Constant multiples do not match...',outfile)
+                    fwrite('Computed point:  %s * %s * %s'%(twopow*m0,smoothen_constant * nn,Ptsmall),outfile)
+                    fwrite('(first factor is not understood, second factor is)',outfile)
+                    if ppow != 1:
+                        fwrite('Took the %s-power %s out also'%(p,ppow),outfile)
+                    fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
+                    fwrite('================================================',outfile)
+                    if return_all_data == True:
+                        return Ptsmall, Phi, J, getcoords(E,J,prec)
+                    else:
+                        return Ptsmall
+                except (TypeError,ValueError):
+                    verbose("Could not recognize the point.")
+            else:
                 m0 = 1
-                for m in [3,5]:
-                    while any([o.is_divisible_by(m) for o in alldivs]):
-                        alldivs = [pt for o in alldivs for pt in o.division_points(m)]
-                        m0 *= m
+                verbose('candidate = %s'%candidate)
                 fwrite('m0 = %s'%m0,outfile)
                 fwrite('twopow = %s'%twopow,outfile)
                 if twopow < 1:
@@ -208,18 +238,16 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
                     tmp = (J1**(smoothen_constant * nn * m0 * twopow))/J
                 if tmp != 1:
                     fwrite('Constant multiples do not match...',outfile)
-                fwrite('Computed point:  %s * %s * %s'%(twopow*m0,smoothen_constant * nn,Ptsmall),outfile)
+                fwrite('Computed point:  %s * %s * (x,y)'%(twopow*m0,smoothen_constant * nn),outfile)
                 fwrite('(first factor is not understood, second factor is)',outfile)
-                if ppow != 1:
-                    fwrite('Took the %s-power %s out also'%(p,ppow),outfile)
-                fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
+                fwrite('Where x satisfies %s'%candidate[0],outfile)
+                fwrite('and y satisfies %s'%candidate[1],outfile)
                 fwrite('================================================',outfile)
                 if return_all_data == True:
-                    return Ptsmall, Phi, J, getcoords(E,J,prec)
+                    return candidate, Phi, J, getcoords(E,J,prec)
                 else:
-                    return Ptsmall
-            except (TypeError,ValueError):
-                verbose("Could not recognize the point.")
+                    return candidate
+
     fwrite('================================================',outfile)
     if return_all_data == True:
         return [], Phi, J, getcoords(E,J,prec)
