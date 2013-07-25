@@ -1,8 +1,15 @@
-A package to compute quaternionic Darmon points
-===============================================
+A package to compute Darmon points
+==================================
+
+Installation
+~~~~~~~~~~~~
+
+Currently Sage does not work with the Overconvergent modular symbols of Pollack-Stevens. This is why this package includes a frozen copy of the OMS package (the current version can be found in https://github.com/roed314/OMS ). Instructions for the installation of this package are included in ``OMS/README_ps.txt``.
+
+Basic usage
+~~~~~~~~~~~
 
 Here there is simple example. Look at ``example.sage`` for a more detailed calculation::
-
 
     sage: load('shpquat.sage')
     sage: E = EllipticCurve('78a1')
@@ -13,7 +20,6 @@ Here there is simple example. Look at ``example.sage`` for a more detailed calcu
     sage: darmon_point(p,E,dK,prec,outfile = outfile)
 
 The package is capable of computing the classical Darmon (a.k.a. Stark-Heegner) points::
-
 
     sage: load('shpquat.sage')
     sage: E = EllipticCurve('35a1')
