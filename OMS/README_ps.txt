@@ -8,7 +8,7 @@
 
 #     The following should work fine (notice the trailing slash after OMS):
       sage -sh
-      cp -r /path/to/OMS/ $SAGE_ROOT/devel/sage-main/
+      cp -r /path/to/OMS/sage/ $SAGE_ROOT/devel/sage/
 
 #  But if you're worried about overwriting things you can do the following instead:
       sage -sh
