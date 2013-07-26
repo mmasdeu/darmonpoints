@@ -122,7 +122,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
         self._prec = -1
-        self._II_exact,self._JJ_exact,self._KK_exact = self._compute_exact_quadratic_splitting()
+        # self._II_exact,self._JJ_exact,self._KK_exact = self._compute_exact_quadratic_splitting()
 
         self.get_Up_reps()
         verbose('Done initializing arithmetic groups')
@@ -165,6 +165,19 @@ class BigArithGroup_class(AlgebraicGroup):
             v = list(x)
             return Btmp(v[0]) + sum(v[i+1]*Btmp.gen(i+1) for i in range(3))
         R = magma.QuaternionOrder([quat_to_mquat(o) for o in self.Gpn.Obasis])
+        if self.p <= 3:
+            disc = 7
+        elif kronecker_symbol(2,self.p) == 1:
+            disc = 2
+        elif kronecker_symbol(3,self.p) == 1:
+            disc = 3
+        else:
+            disc = 6
+        assert kronecker_symbol(disc,self.p) == 1
+        self._splitting_field = QuadraticField(disc,names = 'a')
+        Fmagma = magma.QuadraticField(disc)
+        g = Fmagma.Embed(Btmp)
+        # FIXME
         f = R.MatrixRepresentation(nvals = 1)
         self._splitting_field = NumberField(f.Codomain().BaseRing().DefiningPolynomial().sage(),names = 'a')
         allmats = []
@@ -207,24 +220,24 @@ class BigArithGroup_class(AlgebraicGroup):
         if prec <= self._prec:
             return self._II,self._JJ,self._KK
 
-        F = self._II_exact.base_ring()
-        QQp = Qp(prime,prec)
-        alphap = our_sqrt(QQp(F.gen()**2),QQp)
-        phi = F.hom([alphap])
-        self._II = self._II_exact.apply_morphism(phi)
-        self._JJ = self._JJ_exact.apply_morphism(phi)
-        self._KK = self._KK_exact.apply_morphism(phi)
-        # magma.eval('SetSeed(%s)'%self.seed)
-        # M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
+        # F = self._II_exact.base_ring()
         # QQp = Qp(prime,prec)
-        # self._prec = prec
-        # B_magma = self.Gn._B_magma
-        # v = f.Image(B_magma.gen(1)).Vector()
-        # self._II = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
-        # v = f.Image(B_magma.gen(2)).Vector()
-        # self._JJ = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
-        # v = f.Image(B_magma.gen(3)).Vector()
-        # self._KK = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        # alphap = our_sqrt(QQp(F.gen()**2),QQp)
+        # phi = F.hom([alphap])
+        # self._II = self._II_exact.apply_morphism(phi)
+        # self._JJ = self._JJ_exact.apply_morphism(phi)
+        # self._KK = self._KK_exact.apply_morphism(phi)
+        magma.eval('SetSeed(%s)'%self.seed)
+        M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
+        QQp = Qp(prime,prec)
+        self._prec = prec
+        B_magma = self.Gn._B_magma
+        v = f.Image(B_magma.gen(1)).Vector()
+        self._II = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        v = f.Image(B_magma.gen(2)).Vector()
+        self._JJ = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        v = f.Image(B_magma.gen(3)).Vector()
+        self._KK = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
         # Test splitting
         for g in self.Gpn.Obasis:
             tup = g.coefficient_tuple()
