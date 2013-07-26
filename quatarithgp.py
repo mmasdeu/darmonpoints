@@ -29,7 +29,6 @@ from sage.misc.persist import db
 
 def load_bigarithgroup(fname):
     G = load(fname)
-    G._restore_magma_objects()
     return G
 
 class BTEdge(SageObject):
@@ -50,12 +49,11 @@ class BTEdge(SageObject):
 
 def BigArithGroup(p,discriminant,level,seed = None,use_sage_db = True,outfile = None):
         if seed is None:
-            seed = 1000000
+            seed = 1000
         fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level)
         if use_sage_db:
             try:
                 newobj = db(fname)
-                newobj._restore_magma_objects()
             except IOError:
                 newobj = BigArithGroup_class(p,discriminant,level,seed,outfile = outfile)
                 newobj.save_to_db()
@@ -121,45 +119,55 @@ class BigArithGroup_class(AlgebraicGroup):
         fwrite('R(p) with basis %s'%list(self.Gpn.Obasis),outfile)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
-        self._prec = -1
-        # self._II_exact,self._JJ_exact,self._KK_exact = self._compute_exact_quadratic_splitting()
+        # self._prec = -1
+        self._II,self._JJ,self._KK = self._compute_padic_splitting(2)
 
         self.get_Up_reps()
         verbose('Done initializing arithmetic groups')
         self.Gpn.get_Up_reps = self.get_Up_reps
 
-        del self.Gpn._m2_magma
-        del self.Gn._m2_magma
-        del self.Gpn._U_magma
-        del self.Gn._U_magma
-        del self.Gpn._D_magma
-        del self.Gn._D_magma
-        del self.Gpn._G_magma
-        del self.Gn._G_magma
+        self.Gn._ArithGroup__delete_unused_attributes()
+        self.Gpn._ArithGroup__delete_unused_attributes()
 
         verbose('Done initialization of BigArithmeticGroup')
 
     def _repr_(self):
         return 'Big Arithmetic Group attached to data p = %s,  disc = %s, level = %s'%(self.p,self.discriminant,self.level)
 
-    def _restore_magma_objects(self):
-        a,b = self.Gn.B.invariants()
-        QQmagma = magma.RationalsAsNumberField()
-        ZZ_magma = QQmagma.Integers()
-        B_magma = magma.QuaternionAlgebra(QQmagma,a,b)
-        self.Gn._B_magma = B_magma
-        self.Gpn._B_magma = B_magma
-        self.Gn._Omax_magma = B_magma.MaximalOrder()
-        self.Gpn._Omax_magma = B_magma.MaximalOrder()
-        if self.discriminant != 1:
-            self.Gn._O_magma = self.Gn._Omax_magma.Order('%s*%s'%(self.Gn.level,ZZ_magma.name()))
-            self.Gpn._O_magma = self.Gn._Omax_magma.Order('%s*%s'%(self.Gpn.level,ZZ_magma.name()))
-        else:
-            self.Gn._O_magma = self.Gn._Omax_magma.Order('%s'%self.Gn.level)
-            self.Gpn._O_magma = self.Gn._Omax_magma.Order('%s'%self.Gpn.level)
+    def _compute_padic_splitting(self,prec):
+        prime = self.p
+        magma.eval('SetSeed(%s)'%self.seed)
+        M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
+        QQp = Qp(prime,prec)
+        B_magma = self.Gn._B_magma
+        v = f.Image(B_magma.gen(1)).Vector()
+        self._II = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        v = f.Image(B_magma.gen(2)).Vector()
+        self._JJ = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        v = f.Image(B_magma.gen(3)).Vector()
+        self._KK = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        # Test splitting
+        for g in self.Gpn.Obasis:
+            tup = g.coefficient_tuple()
+            mat = tup[0] + tup[1]*self._II + tup[2]*self._JJ + tup[3]*self._KK
+            assert is_in_Gamma0loc(mat,det_condition = False)
+        self._prec = prec
+        return self._II, self._JJ, self._KK
 
     def _compute_exact_quadratic_splitting(self):
-        # Now we compute a splitting
+        a = B.invariants()[0]
+        F = QuadraticField(a,names = 'i')
+        self._splitting_field = F
+        i = F.gen()
+        phi = F.hom([B.gen(0)])
+        # II is matrix of x\mapsto i*x
+        II = matrix(F,2,2,[i,0,0,-i])
+        # JJ is the matrix of x\mapsto j*x
+        JJ = matrix(F,2,2,[0,B.invariants()[1],1,0])
+        assert II**2,JJ**2 == B.invariants()
+        assert II*JJ + JJ*II == 0
+        return II,JJ,II*JJ
+
         Btmp = magma.QuaternionAlgebra(magma.Rationals(),self.Gn.B.invariants()[0],self.Gn.B.invariants()[1])
         def quat_to_mquat(x):
             v = list(x)
@@ -175,8 +183,9 @@ class BigArithGroup_class(AlgebraicGroup):
             disc = 6
         assert kronecker_symbol(disc,self.p) == 1
         self._splitting_field = QuadraticField(disc,names = 'a')
-        Fmagma = magma.QuadraticField(disc)
-        g = Fmagma.Embed(Btmp)
+        Omagma = magma.QuadraticField(disc).MaximalOrder()
+        g = O.Embed(R)
+        return g
         # FIXME
         f = R.MatrixRepresentation(nvals = 1)
         self._splitting_field = NumberField(f.Codomain().BaseRing().DefiningPolynomial().sage(),names = 'a')
@@ -219,51 +228,21 @@ class BigArithGroup_class(AlgebraicGroup):
         prime = self.p
         if prec <= self._prec:
             return self._II,self._JJ,self._KK
-
-        # F = self._II_exact.base_ring()
-        # QQp = Qp(prime,prec)
-        # alphap = our_sqrt(QQp(F.gen()**2),QQp)
-        # phi = F.hom([alphap])
-        # self._II = self._II_exact.apply_morphism(phi)
-        # self._JJ = self._JJ_exact.apply_morphism(phi)
-        # self._KK = self._KK_exact.apply_morphism(phi)
-        magma.eval('SetSeed(%s)'%self.seed)
-        M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
-        QQp = Qp(prime,prec)
+        a,b = self.Gn.B.invariants()
+        self._II,self._JJ = lift_padic_splitting(a,b,self._II,self._JJ,self.p,prec)
         self._prec = prec
-        B_magma = self.Gn._B_magma
-        v = f.Image(B_magma.gen(1)).Vector()
-        self._II = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
-        v = f.Image(B_magma.gen(2)).Vector()
-        self._JJ = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
-        v = f.Image(B_magma.gen(3)).Vector()
-        self._KK = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        self._KK = self._II * self._JJ
         # Test splitting
         for g in self.Gpn.Obasis:
             tup = g.coefficient_tuple()
             mat = tup[0] + tup[1]*self._II + tup[2]*self._JJ + tup[3]*self._KK
             assert is_in_Gamma0loc(mat,det_condition = False)
+
         return self._II, self._JJ, self._KK
 
-    def save_to_db(self):#,fname):
+    def save_to_db(self):
         fname = 'arithgroup%s_%s_%s_%s.sobj'%(self.seed,self.p,self.discriminant,self.level)
-        B_magma = self.Gn._B_magma
-        Omax_magma = self.Gn._Omax_magma
-        O1_magma = self.Gn._O_magma
-        O2_magma = self.Gpn._O_magma
-        del self.Gn._Omax_magma
-        del self.Gn._O_magma
-        del self.Gn._B_magma
-        del self.Gpn._Omax_magma
-        del self.Gpn._O_magma
-        del self.Gpn._B_magma
         self.db(fname)
-        self.Gn._B_magma = B_magma
-        self.Gpn._B_magma = B_magma
-        self.Gn._Omax_magma = Omax_magma
-        self.Gpn._Omax_magma = Omax_magma
-        self.Gn._O_magma = O1_magma
-        self.Gpn._O_magma = O2_magma
 
     def small_group(self):
         return self.Gpn
@@ -461,7 +440,7 @@ class ArithGroup(AlgebraicGroup):
         if len(self.discriminant.factor()) % 2 != 0:
             raise ValueError, 'Discriminant must contain an even number of primes'
 
-        self._init_magma_objects(info_magma)
+        self.__init_magma_objects(info_magma)
         if self.discriminant != 1:
             self.B = QuaternionAlgebra((self._B_magma.gen(1)**2)._sage_(),(self._B_magma.gen(2)**2)._sage_())
             if self.B.discriminant() != self.discriminant:
@@ -495,7 +474,7 @@ class ArithGroup(AlgebraicGroup):
             self.minus_one = shorten_word(self.minus_one_long)
             self.Ugens.append(self.B(-1))
 
-            self.translate = [None] + [self._magma_word_problem(g**-1) for g in self.gquats[1:]]
+            self.translate = [None] + [self.__magma_word_problem(g**-1) for g in self.gquats[1:]]
 
             self._gens = [ ArithGroupElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
 
@@ -531,6 +510,15 @@ class ArithGroup(AlgebraicGroup):
             for j,k in rel:
                 self._relation_matrix[i,j] += k
         Parent.__init__(self)
+
+    def __delete_unused_attributes(self):
+        del self._m2_magma
+        del self._U_magma
+        del self._D_magma
+        del self._G_magma
+        del self._B_magma
+        del self._Omax_magma
+        del self._O_magma
 
     def _an_element_(self):
         return self.gen(0)
@@ -589,7 +577,7 @@ class ArithGroup(AlgebraicGroup):
             return True
         return False
  
-    def _init_magma_objects(self,info_magma = None):
+    def __init_magma_objects(self,info_magma = None):
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
@@ -690,7 +678,7 @@ class ArithGroup(AlgebraicGroup):
     def _denominator_valuation(self,x,l):
         return max((o.denominator().valuation(l) for o in self._quaternion_to_list(x)))
 
-    def _quaternion_to_magma_quaternion(self,x):
+    def __quaternion_to_magma_quaternion(self,x):
         v = list(x)
         return self._B_magma(v[0]) + sum(v[i+1]*self._B_magma.gen(i+1) for i in range(3))
 
@@ -728,7 +716,7 @@ class ArithGroup(AlgebraicGroup):
                 c = self._get_word_recursive(delta,0)
             except RuntimeError:
                 print '!! Resorted to Magma, indicates a bug (delta = %s,norm = %s)!!'%(delta,delta.reduced_norm())
-                c = self._magma_word_problem(delta)
+                c = self.__magma_word_problem(delta)
             tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)] # shorten_word(c)
             delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
             if delta1 != delta:
@@ -786,9 +774,7 @@ class ArithGroup(AlgebraicGroup):
             tmp = newcs + self._get_word_recursive(delta,oldji,depth = depth + 1)
             return tmp
 
-
-    @cached_method
-    def _magma_word_problem(self,x):
+    def __magma_word_problem(self,x):
         r'''
         Given a quaternion x, finds its decomposition in terms of the generators
 
@@ -800,18 +786,18 @@ class ArithGroup(AlgebraicGroup):
         EXAMPLES:
 
         sage: G = ArithGroup(7,15,1)
-        sage: G._magma_word_problem(G.Ugens[2]*G.Ugens[1]) == [2,1]
+        sage: G.__magma_word_problem(G.Ugens[2]*G.Ugens[1]) == [2,1]
         '''
         wtime = walltime()
         B = self.O
         x0 = x
         # If x is a quaternion, find the expression in the generators.
         if x.parent() is self.O or x.parent() is self.B:
-            x = self._quaternion_to_magma_quaternion(x)
+            x = self.__quaternion_to_magma_quaternion(x)
         else:
             if len(x) != 4:
                 raise ValueError, 'x (=%s) should be a list of length 4'%x
-            x = self._quaternion_to_magma_quaternion(sum(a*b for a,b in zip(self.Obasis,x)))
+            x = self.__quaternion_to_magma_quaternion(sum(a*b for a,b in zip(self.Obasis,x)))
         x_magma = self._G_magma(x)
         #verbose('Calling _magma_word_problem with x = %s'%x)
         V = magma.WordProblem(x_magma).ElementToSequence()._sage_()
@@ -977,13 +963,23 @@ class ArithGroup(AlgebraicGroup):
         if self.discriminant == 1:
             K_magma = magma.RadicalExtension(QQ,2,D)
         else:
-            QQmagma = self._B_magma.BaseRing()#magma.RationalsAsNumberField()
+            a,b = self.B.invariants()
+            QQmagma = magma.Rationals()
+            ZZ_magma = magma.Integers()
+            Btmp = magma.QuaternionAlgebra(QQmagma,a,b)
+            def quat_to_mquat(x):
+                v = list(x)
+                return Btmp(v[0]) + sum(v[i+1]*Btmp.gen(i+1) for i in range(3))
+
+            O_magma = magma.QuaternionOrder(ZZ_magma,[quat_to_mquat(o) for o in self.Obasis])
+
+            #QQmagma = self._B_magma.BaseRing()#magma.RationalsAsNumberField()
             K_magma = magma.RadicalExtension(QQmagma,2,D) #self._B_magma.BaseField()
         OK_magma = K_magma.MaximalOrder()
-        _,iota = magma.Embed(OK_magma,self._O_magma,nvals = 2)
+        _,iota = magma.Embed(OK_magma,O_magma,nvals = 2)
         mu_magma = iota.Image(OK_magma(K_magma.gen(1)))
         Bgens = list(self.B.gens()) if self.discriminant != 1 else [matrix(QQ,2,2,[1,0,0,-1]),matrix(QQ,2,2,[0,1,1,0]),matrix(QQ,2,2,[0,1,-1,0])]
-        mu = sum(a*b for a,b in zip([self.B(1)]+Bgens,[self._B_magma(mu_magma).Vector()[m+1].Norm()._sage_() for m in range(4)]))
+        mu = sum(a*b for a,b in zip([self.B(1)]+Bgens,[Btmp(mu_magma).Vector()[m+1].Norm()._sage_() for m in range(4)]))
 
         K = QuadraticField(D,names = 'kg')
         w = K.maximal_order().ring_generators()[0]

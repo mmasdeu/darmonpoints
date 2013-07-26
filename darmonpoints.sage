@@ -54,7 +54,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
     if dK % 4 == 0:
         dK = ZZ(dK/4)
     if working_prec is None:
-        working_prec = prec + 2
+        working_prec = prec
 
     # Tate parameter
     qE = tate_parameter(E,QQp)
@@ -158,7 +158,7 @@ def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = 
 
     addpart0 = Jlog/(smoothen_constant*nn)
     candidate = None
-    twopowlist = [8, 4, 2, 1, 1/2, 1/4]
+    twopowlist = [2, 1, 1/2]
     for twopow in twopowlist:
         addpart = addpart0 / twopow
         for a,b in product(range(p),repeat = 2):

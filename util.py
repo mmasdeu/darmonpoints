@@ -1,5 +1,5 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol
+from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp
 from sage.matrix.all import matrix,Matrix
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
@@ -228,7 +228,7 @@ def our_algdep(z,degree,prec = None):
         prec = z.precision_relative()
     field_deg = z.parent().degree()
     p = z.parent().prime()
-    R = ZZ['x']
+    R = PolynomialRing(ZZ,names = 'x')
     x = R.gen()
     n = degree+1
     zval = z.valuation()
@@ -250,6 +250,37 @@ def our_algdep(z,degree,prec = None):
     if f.leading_coefficient() < 0:
         f = -f
     return R(f.denominator() * f)
+
+
+def lift_padic_splitting(a,b,II0,JJ0,p,prec):
+    R = Qp(p,prec)
+    #II0,JJ0,_ = Q.modp_splitting_data(p)
+    II0 = II0.apply_map(lambda o:R(o.lift()))
+    II0[1,1] = -II0[0,0]
+    JJ0 = JJ0.apply_map(lambda o:R(o.lift()))
+    JJ0[1,1] = -JJ0[0,0]
+    oldII = None
+    oldJJ = None
+    newII = II0
+    newJJ = JJ0
+    n_iters = 0
+    while newII != oldII or newJJ != oldJJ:
+        n_iters += 1
+        oldII,oldJJ = newII,newJJ
+        x1,x2,x3,_ = oldII.list()
+        y1,y2,y3,_ = oldJJ.list()
+        n = min(o.valuation() for o in [x1**2+x2*x3-a,y1**2+y2*y3-b,2*x1*y1+x2*y3+x3*y2])
+        verbose('current_prec = %s'%n)
+        x1,x2,x3,_ = [o.lift() for o in oldII.list()]
+        y1,y2,y3,_ = [o.lift() for o in oldJJ.list()]
+        B = matrix(R,3,6,[2*x1,x3,x2,0,0,0,0,0,0,2*y1,y3,y2,2*y1,y3,y2,2*x1,x3,x2])
+        pn = p**n
+        A = -matrix(R,3,1,[ZZ((x1**2+x2*x3-a)/pn),ZZ((y1**2+y2*y3-b)/pn),ZZ((2*x1*y1+x2*y3+x3*y2)/pn)])
+        delta = B.solve_right(A)
+        x1,x2,x3,y1,y2,y3 = delta.list()
+        newII = oldII + pn*matrix(R,2,2,[x1,x2,x3,-x1])
+        newJJ = oldJJ + pn*matrix(R,2,2,[y1,y2,y3,-y1])
+    return newII,newJJ
 
 def recognize_point(x,y,EF,prec = None):
   F = EF.base_ring()

@@ -10,7 +10,7 @@ Currently (as of version 5.10) Sage does not work with the "Overconvergent modul
 
      sage -sh
      cd $SAGE_ROOT/devel/sage
-     hg qimport -P /path/to/changes_to_sagelib-5.10.patch
+     hg qimport -P /path/to/OMS/changes_to_sagelib-5.10.patch
 
 2. Copy files:
 
