@@ -4,7 +4,31 @@ A package to compute Darmon points
 Installation
 ~~~~~~~~~~~~
 
-Currently Sage does not work with the Overconvergent modular symbols of Pollack-Stevens. This is why this package includes a frozen copy of the OMS package (the current version can be found in https://github.com/roed314/OMS ). Instructions for the installation of this package are included in ``OMS/README_ps.txt``.
+Currently (as of version 5.10) Sage does not work with the "Overconvergent modular symbols" of Pollack-Stevens. This is why this package includes a frozen copy of the OMS package (the cutting-edge version can be found at https://github.com/roed314/OMS ). Here is how to install it.
+
+  1. Patch the Sage library::
+
+         sage -sh
+         cd $SAGE_ROOT/devel/sage
+         hg qimport -P /path/to/changes_to_sagelib-5.10.patch
+
+  2. Copy files:
+
+     - The following should work fine (notice the trailing slash after sage)::
+
+         sage -sh
+         cp -r /path/to/OMS/sage/ $SAGE_ROOT/devel/sage/
+
+     - But if you're worried about overwriting things you can do the following instead::
+
+         sage -sh
+         cd $SAGE_ROOT/devel/sage/sage/modular
+         cp -r /path/to/OMS/sage/modular/btquotients .
+         cp -r /path/to/OMS/sage/modular/pollack_stevens .
+
+  3. Build::
+
+         sage -b
 
 Basic usage
 ~~~~~~~~~~~
