@@ -4,7 +4,12 @@ A package to compute Darmon points
 Installation
 ~~~~~~~~~~~~
 
-Currently (as of version 5.10) Sage does not work with the "Overconvergent modular symbols" of Pollack-Stevens. This is why this package includes a frozen copy of the OMS package (the cutting-edge version can be found at https://github.com/roed314/OMS ). Here is how to install it.
+Currently (as of version 5.10) Sage does not work with the "Overconvergent modular symbols" of Pollack-Stevens. This is why this package includes a frozen copy of the OMS package (the cutting-edge version can be found at https://github.com/roed314/OMS ).
+
+The following are the needed steps to install the *darmonpoints* package. The first 3 steps are needed in order to use the overconvergent modular symbols, and the last step allows the package to be run without having *Magma*, as long as the computations are done with elliptic curves of conductor `pD`, where:
+  a) `D = 6` and `p \leq 59`,
+  b) `D = 10` and `p \leq 47`,
+  c) `D = 22` and `p \leq 37`.
 
 1. Patch the Sage library::
 
@@ -29,6 +34,11 @@ Currently (as of version 5.10) Sage does not work with the "Overconvergent modul
 3. Build::
 
      sage -b
+
+4. (Optional) Copy precomputed groups to local database::
+
+     cp -r /path/to/precomputed_groups/* $HOME/.sage/db/
+
 
 Basic usage
 ~~~~~~~~~~~

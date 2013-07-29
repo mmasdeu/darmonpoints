@@ -869,7 +869,7 @@ class ArithGroup(AlgebraicGroup):
         if self.discriminant == 1: # or self.level % l == 0:
             reps = [self.B([l,i,0,1]) for i in range(l)] + [self.B([1,0,0,l])]
         else:
-            g0 = self.element_of_norm(l,use_magma = True)
+            g0 = self.element_of_norm(l,use_magma = False)
             assert g0.reduced_norm() == l
             reps = [g0]
             ngens = len(self.gens())

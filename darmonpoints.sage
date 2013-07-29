@@ -26,7 +26,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = T
             return Phi
         except IOError: pass
     print 'Computing the moments...'
-    from pollack_stevens.space import ps_modsym_from_elliptic_curve
+    from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
     #phi0 = ps_modsym_from_elliptic_curve(E,use_ps_dists = use_ps_dists)
     phi0 = E.PS_modular_symbol()
     if sign_at_infinity == 1:
