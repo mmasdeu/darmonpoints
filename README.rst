@@ -8,9 +8,9 @@ Currently (as of version 5.10) Sage does not work with the "Overconvergent modul
 
 The following are the needed steps to install the *darmonpoints* package. The first 3 steps are needed in order to use the overconvergent modular symbols, and the last step allows the package to be run without having *Magma*, as long as the computations are done with elliptic curves of conductor `pD`, where:
 
-    a) `D = 6` and `p \leq 59`,
-    b) `D = 10` and `p \leq 47`,
-    c) `D = 22` and `p \leq 37`.
+a) `D = 6` and `p \leq 59`,
+b) `D = 10` and `p \leq 47`,
+c) `D = 22` and `p \leq 37`.
 
 1. Patch the Sage library::
 
