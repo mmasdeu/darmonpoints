@@ -12,7 +12,7 @@ from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 from sage.misc.persist import db,db_save
 
 sys.setrecursionlimit(10**6)
-def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = True,use_sage_db = True):
+def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = True,use_sage_db = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     if use_ps_dists == False:
@@ -41,7 +41,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = T
     Phi.db(fname)
     return Phi
 
-def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,magma_seed = None,use_sage_db = True):
+def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,magma_seed = None,use_sage_db = False):
     DB,Np = get_heegner_params(p,E.conductor(),dK)
     quaternionic = ( DB != 1 )
     if use_ps_dists is None:
