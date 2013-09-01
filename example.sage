@@ -1,3 +1,4 @@
+load 'darmonpoints.sage'
 ######################
 # Parameters         #
 ######################
@@ -67,7 +68,7 @@ for a,b in product(range(p),repeat = 2):
         prec0 = prec
         while not success and 2 * prec0 > prec:
             verbose('Trying to recognize point with precision %s'%prec0, level = 2)
-            candidate,success = recognize_point(x,y,E.change_ring(F),prec = prec0)
+            candidate,success = recognize_point(x,y,E.change_ring(F),F,prec = prec0)
             prec0 -= 1
         if not success:
             verbose('Could not recognize point',level = 2)
