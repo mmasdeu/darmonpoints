@@ -18,6 +18,44 @@ import os
 from ocmodule import *
 import operator
 
+def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False):
+    t = PolynomialRing(G.F,names = 't').gen()
+    K = G.F.extension(t**2 - D,names = 'beta')
+    if trace_down:
+        gamma, tau1,tau2 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = True)
+    else:
+        gamma, tau1 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = False)
+    Div = Divisors(tau1.parent())
+    if trace_down:
+        D1 = Div(tau1) - Div(tau2)
+    else:
+        D1 = Div(tau1)
+    H1 = Homology(G.large_group(),Div)
+    gamman = gamma
+    found = False
+    n = 1
+    while not found:
+        try:
+            tmp = H1(dict([(gamman,D1)])).zero_degree_equivalent()
+            found = True
+        except ValueError:
+            n += 1
+            gamman *= gamma
+    if hecke_smoothen:
+        q = ZZ(2)
+        D = G.prime() * G.discriminant * G.level
+        try:
+            D = D.norm()
+        except AttributeError: pass
+        while D%q == 0:
+            q = q.next_prime()
+        if G.F.degree() == 1:
+            tmp = tmp.hecke_smoothen(q,prec = prec)#.factor_into_generators()
+        else:
+            q1 = G.F.ideal(q).factor()[0][0]
+            tmp = tmp.hecke_smoothen(q1,prec = prec)
+    return tmp,n,q
+
 class Divisors(Parent):
     def __init__(self,field):
         self._field = field
@@ -244,7 +282,7 @@ class HomologyClass(ModuleElement):
             sage: a = G([(1,2),(0,3),(2,-1)])
             sage: b = G([(1,3),(2,-1),(0,2)])
             sage: c= a^2*b^-1
-            sage: rel_words = G.Gn.get_relation_words()
+            sage: rel_words = G.large_group().get_relation_words()
             sage: x = commutator(a,b)*G(rel_words[0])*commutator(c,b)*(G(rel_words[3])^-3)*commutator(a*b,c)*commutator(b,a)*G(rel_words[2])^5*commutator(a*b,c*a)
             sage: Cp.<g> = Qq(5^3,20)
             sage: Div = Divisors(Cp)
@@ -394,7 +432,11 @@ class HomologyClass(ModuleElement):
         return self.__rmul__(a)
 
     def hecke_smoothen(self,r,prec = 20):
-        return self.act_by_hecke(r,prec = prec) - self.mult_by(r+1)
+        rnorm = r
+        try:
+            rnorm = r.norm()
+        except AttributeError: pass
+        return self.act_by_hecke(r,prec = prec) - self.mult_by(ZZ(rnorm+1))
 
     def __rmul__(self,a):
         newdict = dict(((g,a*v) for g,v in self._data.iteritems())) if a != 0 else dict([])

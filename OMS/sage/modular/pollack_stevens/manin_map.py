@@ -62,7 +62,8 @@ def fast_dist_act(v,g,acting_matrix = None):
             ans = v._moments.apply_map(methodcaller('lift')) * acting_matrix
     except AttributeError, TypeError:
         ans = (v * g)._moments
-    assert len(ans) > 0
+    if len(v._moments) > 0:
+        assert len(ans) > 0
     return ans
 
 @parallel

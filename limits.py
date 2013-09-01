@@ -174,7 +174,9 @@ def order_and_unit(F,conductor):
         u0 = 1/u0
     D = F.discriminant() * conductor**2
     sqrtD = conductor * F.gen()
-    assert sqrtD**2 - D == 0
+    if D % 4 == 0:
+        sqrtD *= 2
+    assert sqrtD**2 == D
     delta = sqrtD/2 if D % 4 == 0 else (1+sqrtD)/2
     u = u0
     O_D = F.order(delta)
@@ -209,7 +211,7 @@ def _find_initial_embedding_list(v0,M,W,orientation,OD,u):
                 assert all([W_M[0,0] % ell == orientation % ell for ell,r in ZZ(M).factor()])
             # Computation of tau_0: it's one of the roots of the minimal polynomial of W.
             tau0 = compute_tau0(v0,W_M,wD,return_exact = True)
-            if F.class_number() > 1 and find_containing_affinoid(p,v0(tau0)).determinant().valuation(p) % 2 == 1:
+            if F.class_number() > 1 and find_containing_affinoid(p,v0(tau0)).determinant().valuation(p) % 2 == 1 and orientation is not None:
                 Wp = Matrix(ZZ,2,2,[0,-1,p,0])
                 W_M = Wp**(-1) * W_M * Wp
                 assert all([W_M[0,0] % ell == orientation % ell for ell,r in ZZ(M).factor()])
@@ -335,7 +337,8 @@ def find_optimal_embeddings(F,use_magma = False,extra_conductor = 1):
             G.append((a,b,c))
     delta = extra_conductor * F.gen() if D%4 == 1 else 2*extra_conductor * F.gen() # delta = sqrt{discriminant}
     r,s = delta.coordinates_in_terms_of_powers()(w) # w = r + s*delta
-    return [Matrix(QQ,2,2,[r+s*B,-2*s*C,2*s*A,r-s*B]) for A,B,C in G]
+    #return [Matrix(QQ,2,2,[r+s*B,-2*s*C,2*s*A,r-s*B]) for A,B,C in G] # By Juan Restrepo's suggestion
+    return [Matrix(QQ,2,2,[r-s*B,-2*s*C,2*s*A,r+s*B]) for A,B,C in G]
 
 def _find_limits_manin_trick(tau,gtau):
     if gtau[0,0] == 0:

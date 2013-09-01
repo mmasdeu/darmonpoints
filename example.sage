@@ -24,14 +24,14 @@ set_verbose(verb_level)
 E = EllipticCurve(str(p*D*Np))
 
 # Define the S-arithmetic group
-G = BigArithGroup(p,D,Np)
+G = BigArithGroup(p,D,Np,use_sage_db = False)
 
 # Define PhiE, the cohomology class associated to the curve E.
 Coh = CohomologyGroup(G.Gpn)
 PhiE = Coh.get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
 
 # Define the cycle ( in H_1(G,Div^0 Hp) )
-cycleGn,nn,ell = G.construct_cycle(dK,prec,hecke_smoothen = True)
+cycleGn,nn,ell = construct_homology_cycle(G,dK,prec,hecke_smoothen = True)
 
 PhiElift = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists)
 

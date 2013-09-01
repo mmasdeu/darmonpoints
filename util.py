@@ -1,12 +1,25 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp
+from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp,RR
 from sage.matrix.all import matrix,Matrix
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
-from sage.misc.misc import verbose
+from sage.libs.pari.gen import PariError
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.misc.misc import verbose,get_verbose,set_verbose
+from sage.calculus.var import var
+from sage.interfaces.gp import gp
+from sage.libs.pari.gen import pari
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
+
+def is_in_principal_affinoid(p,z):
+    if z.valuation() != 0:
+        return False
+    for i in range(p):
+        if (z-z.parent()(i)).valuation() > 0:
+            return False
+    return True
 
 def find_containing_affinoid(p,z,level = 1):
     r"""
@@ -156,18 +169,15 @@ def getcoords(E,u,prec=20,R = None):
     # formulas in Silverman II (Advanced Topics in the Arithmetic of Elliptic curves, p. 425)
     xx = un/(1-un)**2 + sum( [qE**n*un/(1-qE**n*un)**2 + qE**n/un/(1-qE**n/un)**2-2*qE**n/(1-qE**n)**2 for n in range(1,precn) ])
     yy = un**2/(1-un)**3 + sum( [qE**(2*n)*un**2/(1-qE**n*un)**3 - qE**n/un/(1-qE**n/un)**3+qE**n/(1-qE**n)**2 for n in range(1,precn) ])
-
+    
 
     sk = lambda q,k,pprec: sum( [n**k*q**n/(1-q**n) for n in range(1,pprec+1)] )
     n = qE.valuation()
     precp = ((prec+4)/n).floor() + 2;
-
     tate_a4 = -5  * sk(qE,3,precp)
     tate_a6 = (tate_a4 - 7 * sk(qE,5,precp) )/12
     Eq = EllipticCurve([R(1),R(0),R(0),tate_a4,tate_a6])
-
-    C2 = (Eq.c4() * E.c6()) / (Eq.c6() * E.c4())
-
+    C2 = (Eq.c4() * R(E.c6())) / (Eq.c6() * R(E.c4()))
     C = our_sqrt(R(C2),R) #.square_root()
     s = (C - R(E.a1()))/R(2)
     r = (s*(C-s) - R(E.a2())) / 3
@@ -175,7 +185,7 @@ def getcoords(E,u,prec=20,R = None):
     return  ( r + C2 * xx, t + s * C2 * xx + C * C2 * yy )
 
 
-def period_from_coords(p,E, P, prec = 20):
+def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     r"""
     Given a point `P` in the formal group of the elliptic curve `E` with split multiplicative reduction,
     this produces an element `u` in `\QQ_p^{\times}` mapped to the point `P` by the Tate parametrisation.
@@ -188,21 +198,43 @@ def period_from_coords(p,E, P, prec = 20):
     - ``prec`` - the `p`-adic precision, default is 20.
 
     """
-    Etate = E.tate_curve(p)
-    Eq = Etate.curve(prec = prec)
-    isom = Etate._isomorphism(prec=prec)
-    C = isom[0]
-    r = isom[1]
-    s = isom[2]
-    t = isom[3]
-    xx = r + C**2 * P[0]
-    yy = t + s * C**2 * P[0] + C**3 * P[1]
+    # if R is None:
+    #     R = u.parent()
+    #     u = R(u)
+    # p = R.prime()
+
+    #R = Qp(p,prec)
+    p = R.prime()
+
+    jE = E.j_invariant()
+
+    if K_to_Cp is None:
+        K_to_Cp = lambda x:x
+
+    # Calculate the Tate parameter
+    E4 = EisensteinForms(weight=4).basis()[0]
+    Delta = CuspForms(weight=12).basis()[0]
+    j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
+    qE =  (1/j).power_series().reversion()(R(1/jE))
+    sk = lambda q,k,pprec: sum( [n**k*q**n/(1-q**n) for n in range(1,pprec+1)] )
+    n = qE.valuation()
+    precp = ((prec+4)/n).floor() + 2;
+    tate_a4 = -5  * sk(qE,3,precp)
+    tate_a6 = (tate_a4 - 7 * sk(qE,5,precp) )/12
+    Eq = EllipticCurve([R(1),R(0),R(0),tate_a4,tate_a6])
+
+    C2 = (Eq.c4() * R(E.c6())) / (Eq.c6() * R(E.c4()))
+    C = our_sqrt(R(C2),R) #.square_root()
+    s = (C * R(E.a1()) -R(1))/R(2)
+    r = (C**2*R(E.a2()) +s +s**2)/R(3)
+    t = (C**3*R(E.a3()) - r)/R(2)
+    xx = r + C**2 * K_to_Cp(P[0])
+    yy = t + s * C**2 * K_to_Cp(P[0]) + C**3 * K_to_Cp(P[1])
     try:
         EqCp = Eq.change_ring(yy.parent())
         Pq = EqCp([xx,yy])
     except TypeError:
         raise RuntimeError, "Bug : Point %s does not lie on the curve "%[xx,yy]
-
     tt = -xx/yy
     if tt.valuation(p) <= 0:
         raise  ValueError , "The point must lie in the formal group."
@@ -215,14 +247,12 @@ def period_from_coords(p,E, P, prec = 20):
     for i in range(1,2*prec+1):
         fac = fac * i
         u = u + z**i/fac
-    q = Etate.parameter(prec = prec)
-    un = u * q**(-(u.valuation()/q.valuation()).floor())
+    un = u * qE**(-(u.valuation()/qE.valuation()).floor())
     return un
 
 
 def our_algdep(z,degree,prec = None):
-    try:
-        return algdep(z,degree)
+    try: return algdep(z,degree)
     except PariError: pass
     if prec is None:
         prec = z.precision_relative()
@@ -245,7 +275,10 @@ def our_algdep(z,degree,prec = None):
             M[k,-1-i] = ZZ(r._ntl_rep()[i])
     for i in range(field_deg):
         M[n+i,-1-i] = pn
+    verb_lev = get_verbose()
+    set_verbose(0)
     tmp = M.left_kernel().matrix().change_ring(ZZ).LLL().row(0)
+    set_verbose(verb_lev)
     f = R(list(tmp[:n]))(x/ptozval)
     if f.leading_coefficient() < 0:
         f = -f
@@ -264,7 +297,8 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
     newII = II0
     newJJ = JJ0
     n_iters = 0
-    while newII != oldII or newJJ != oldJJ:
+    current_prec = -1
+    while current_prec < prec: #newII != oldII or newJJ != oldJJ:
         n_iters += 1
         oldII,oldJJ = newII,newJJ
         x1,x2,x3,_ = oldII.list()
@@ -280,43 +314,53 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
         x1,x2,x3,y1,y2,y3 = delta.list()
         newII = oldII + pn*matrix(R,2,2,[x1,x2,x3,-x1])
         newJJ = oldJJ + pn*matrix(R,2,2,[y1,y2,y3,-y1])
+        current_prec = n
+        if n_iters > 2 * prec:
+            raise RuntimeError,'Hensel iteration does not seem to converge'
     return newII,newJJ
 
-def recognize_point(x,y,EF,prec = None):
-  F = EF.base_ring()
+def recognize_point(x,y,E,F,prec = None,HCF = None):
+  if HCF is None:
+      HCF = F.hilbert_class_field(names = 'r1')
+  hF = F.class_number()
   Cp = x.parent()
   s = F.gen()
   w = F.maximal_order().ring_generators()[0]
-  assert w.minpoly()(Cp.gen()) == 0
+  #assert w.minpoly()(Cp.gen()) == 0
   QQp = Cp.base_ring()
   p = Cp.prime()
   if prec is None:
       prec = QQp.precision_cap()
   if x == 0 and y == 0:
-      candidate = [0,0,1]
+      candidate_x = 0
   elif (1/x).valuation() > prec and (1/y).valuation() > prec:
-      candidate = [0,1,0]
+      return E.change_ring(HCF)(0),True
   else:
-      x1 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[0]))).add_bigoh(prec)
-      x2 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[1]))).add_bigoh(prec)
-      y1 = (p**(y.valuation())*QQp(ZZ(y._ntl_rep()[0]))).add_bigoh(prec)
-      y2 = (p**(y.valuation())*QQp(ZZ(y._ntl_rep()[1]))).add_bigoh(prec)
-      try:
-          x1 = algdep(x1,1).roots(QQ)[0][0]
-          x2 = algdep(x2,1).roots(QQ)[0][0]
-          y1 = algdep(y1,1).roots(QQ)[0][0]
-          y2 = algdep(y2,1).roots(QQ)[0][0]
-          candidate =  [ x1+x2*w, y1+y2*w, 1]
-      except IndexError:
-          verbose('Something couldnt be recognized...',level=2)
-          return [x,y,1],False
+      if hF == 1:
+          x1 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[0]))).add_bigoh(prec)
+          x2 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[1]))).add_bigoh(prec)
+          try:
+              x1 = algdep(x1,1).roots(QQ)[0][0]
+              x2 = algdep(x2,1).roots(QQ)[0][0]
+          except IndexError:
+              return x,False
+          candidate_x = x1+x2*w
+      else:
+          candidate_x = our_algdep(x,2*hF,prec)
+          pol_height = sum((RR(o).abs().log() for o in candidate_x.coeffs()))/RR(p).log()
+          # if pol_height < .8 * prec: # .8 is quite arbitrary...
+          #     return candidate_x,True
+          try:
+              candidate_x = candidate_x.change_ring(HCF).roots()[0][0]
+          except IndexError:
+              return candidate_x,False
   try:
-      Pt = EF(candidate)
+      Pt = E.change_ring(HCF).lift_x(candidate_x)
       verbose('Point is in curve: %s'%Pt,level=2)
-      return candidate,True
-  except TypeError:
+      return Pt,True
+  except ValueError:
       verbose('Point does not appear to lie on curve...',level=2)
-      return candidate,False
+      return candidate_x,False
 
 def our_sqrt(x,K):
     if x==0:
@@ -335,11 +379,13 @@ def our_sqrt(x,K):
     z = K.gen()
     deg = K.degree()
     found = False
-    for avec in product(range(p),repeat=deg):
+    ppow = p if p != 2 else 8
+    minval = 1 if p != 2 else 3
+    for avec in product(range(ppow),repeat=deg):
         y0 = avec[0]
         for a in avec[1:]:
             y0 = y0*z + a
-        if (y0**2-x).valuation() > 0:
+        if (y0**2-x).valuation() >= minval:
             found = True
             break
     if found == False:
@@ -449,3 +495,88 @@ def fwrite(string, outfile):
     with open(outfile,"a") as fout:
         fout.write(string + '\n')
     return
+
+def module_generators(K):
+    x=var('x')
+    y=var('y')
+    F=K.base_field()
+    f=F.polynomial()
+    g=K.relative_polynomial()
+    a=F.gen()
+    b=K.gen()
+
+    # Equivalent pari objects
+    FP=F.pari_bnf().subst(x,y)
+    fP=pari(f)
+    KP=K.pari_rnf()
+    gP=KP[0]
+    BP=gp.rnfhnfbasis(FP,gP)
+
+    E=[gp.matbasistoalg(FP,BP.vecextract(1)).lift(),gp.matbasistoalg(FP,BP.vecextract(2)).lift()]
+
+    A=Matrix(F,2,2,0)
+    for jj in range(2):
+        for ii in [1,2]:
+            tmp=E[jj][ii,1].Vec().sage()
+            if(len(tmp)==2):
+                A[ii-1,jj]=tmp[0]*a+tmp[1]
+            else:
+                A[ii-1,jj]=tmp[0]
+    return (Matrix(K,1,2,[1,b])*A).list()
+
+def find_the_unit_of(F,K):
+    found=False
+    for eps in K.units():
+        is_square,root=eps.norm(F).is_square(root=True)
+        deg=eps.minpoly().degree()
+        if deg==2:
+            unit_not_in_F=eps
+        if is_square and deg==2:
+            return eps/root
+    # Not found so far..
+    norm=unit_not_in_F.norm(F)
+    return unit_not_in_F**2/norm
+
+def conjugate_quaternion_over_base(q):
+    v = q.coefficient_tuple()
+    B = q.parent()
+    F = B.base_ring()
+    deg = F.degree()
+    if deg == 1:
+        return q
+    elif deg > 2:
+        raise NotImplementedError
+    else:
+        return B([F(o).trace() - o for o in v])
+
+def sage_F_elt_to_magma(F_magma,x):
+    return F_magma(x.list())
+
+def magma_F_elt_to_sage(F_sage,x):
+    return F_sage([QQ(x[i+1]) for i in range(F_sage.degree())])
+
+def magma_quaternion_to_sage(B_sage,x):
+    tmp = B_sage([magma_F_elt_to_sage(B_sage.base_ring(),x.Vector()[m+1]) for m in range(4)])
+    return tmp
+
+def magma_integral_quaternion_to_sage(B_sage,O_magma,F_magma,x):
+    F = B_sage.base_ring()
+    tmp = []
+    xseq = x.ElementToSequence()
+    basis = O_magma.Basis()
+    return sum(magma_F_elt_to_sage(F,F_magma(xseq[i+1])) * magma_quaternion_to_sage(B_sage,basis[i+1]) for i in range(4))
+
+def sage_quaternion_to_magma(B_magma,x):
+    v = list(x.coefficient_tuple())
+    return B_magma(sage_F_elt_to_magma(B_magma.BaseRing(),v[0])) + sum(sage_F_elt_to_magma(B_magma.BaseRing(),v[i+1])*B_magma.gen(i+1) for i in range(3))
+
+def sage_F_ideal_to_magma(F_magma,x):
+    Zm = F_magma.RingOfIntegers()
+    gens = x.gens_two()
+    return sage_F_elt_to_magma(F_magma,gens[0])*Zm + sage_F_elt_to_magma(F_magma,gens[1])*Zm
+
+def magma_F_ideal_to_sage(F_sage,x):
+    gens = x.TwoElement(nvals = 2)
+    return F_sage.ideal([magma_F_elt_to_sage(F_sage,gens[0]),magma_F_elt_to_sage(F_sage,gens[1])])
+
+

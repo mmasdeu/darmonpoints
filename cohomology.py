@@ -22,7 +22,7 @@ import os
 from ocmodule import OCVn
 from sage.misc.persist import db,db_save
 
-def get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = True):
+def get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False):
     # Define phiE, the cohomology class associated to the curve E.
     Coh = CohomologyGroup(G.small_group())
     phiE = Coh.get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
@@ -42,9 +42,9 @@ def get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dis
     CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
     VOC = CohOC.coefficient_module()
     if use_ps_dists:
-        Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group_gens()])
+        Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group().gens()])
     else:
-        Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.small_group_gens()])
+        Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.small_group().gens()])
     Phi = Phi.improve(prec = prec,sign = E.ap(p))
     db_save(Phi._val,fname)
     verbose('Done.')
@@ -304,8 +304,6 @@ class CohomologyGroup(Parent):
 
     @cached_method
     def hecke_matrix(self,l):
-        if self._group.discriminant == 1:
-            raise NotImplementedError
         if self.coefficient_module().dimension() > 1:
             raise NotImplementedError
         dim = self.dimension()
@@ -318,13 +316,10 @@ class CohomologyGroup(Parent):
 
     @cached_method
     def involution_at_infinity_matrix(self):
-        if self._group.discriminant == 1:
-            raise NotImplementedError
         if self.coefficient_module().dimension() > 1:
             raise NotImplementedError
         H = self._space
         Gpn = self.group()
-        Obasis = Gpn.Obasis
         x = Gpn.element_of_norm(-1)
         dim = self.dimension()
         M = matrix(QQ,dim,dim,0)
@@ -355,14 +350,13 @@ class CohomologyGroup(Parent):
         EXAMPLES::
 
         """
-        if self.group().B.discriminant() % l == 0:
-            raise ValueError,'l divides the discriminant of the quaternion algebra'
-
         if hecke_reps is None:
-            if self.group().O.discriminant() % l == 0:
-                hecke_reps = self.group().get_Up_reps()
-            else:
-                hecke_reps = self.group().get_hecke_reps(l)
+            hecke_reps = self.group().get_hecke_reps(l) # Assume l != p here!
+            # if self.group().O.discriminant() % l == 0:
+            #     hecke_reps = self.group().get_Up_reps()
+            # else:
+            #     hecke_reps = self.group().get_hecke_reps(l)
+
         V = self.coefficient_module()
         padic = not V.base_ring().is_exact()
         Gpn = self.group()

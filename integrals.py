@@ -10,11 +10,12 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
 from sigma0 import Sigma0,Sigma0ActionAdjuster
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Infinity
 from sage.all import prod
 from operator import mul
 from util import *
 from limits import num_evals,find_center
+from sage.parallel.decorate import fork,parallel
 import os
 
 def double_integral_zero_infty(Phi,tau1,tau2):
@@ -56,7 +57,7 @@ def double_integral_zero_infty(Phi,tau1,tau2):
                     if total_evals % 100 == 0:
                         Phi._map._codomain.clear_cache()
                     pol = val.log(p_branch = 0)+((y0.derivative()/y0).integral())
-                    V = [0]*pol.valuation() + pol.shift(-pol.valuation()).list()
+                    V = [0] * pol.valuation() + pol.shift(-pol.valuation()).list()
 
                     phimap = Phi._map(M2Z([b,d,a,c]))
                     mu_e0 = ZZ(phimap.moment(0).rational_reconstruction())
@@ -150,11 +151,12 @@ def indef_integral(Phi,tau,r,s  = None,limits = None):
         Vs = []
     n_evals = sum((num_evals(t1,t2) for t1,t2 in Vr+Vs))
     verbose('Will perform a total of %s evaluations...'%n_evals)
-
     for t1,t2 in Vr:
-        I *= double_integral(Phi,t1,t2,[0,1],[1,0])
+        tmp = double_integral(Phi,t1,t2,[0,1],[1,0])
+        I *= tmp
     for t1,t2 in Vs:
-        I /= double_integral(Phi,t1,t2,[0,1],[1,0])
+        tmp = double_integral(Phi,t1,t2,[0,1],[1,0])
+        I /= tmp
     return I
 
 
@@ -163,12 +165,13 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None):
+def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False):
     res = 1
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
-    R = PolynomialRing(cycle.parent().coefficient_module().base_field(),names = 't')
+    Cp = cycle.parent().coefficient_module().base_field()
+    R = PolynomialRing(Cp,names = 't')
     t = R.gen()
     if method == 'moments':
         integrate_H0 = integrate_H0_moments
@@ -177,15 +180,27 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         integrate_H0 = integrate_H0_riemann
     jj = 0
     total_integrals = cycle.size_of_support()
+    input_vec = []
     for g,divisor in cycle.get_data():
         jj += 1
         verbose('Integral %s/%s...'%(jj,total_integrals))
         if divisor.degree() != 0:
             raise ValueError,'Divisor must be of degree 0'
-        divhat = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(R.base_ring()))
+        #assert all((is_in_principal_affinoid(G.p,P) for P,n in divisor))
+        divhat = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
         ghat = G.wp * g.quaternion_rep * G.wp**-1
-        res *= integrate_H0(G,divhat,cocycle,depth = depth,gamma = ghat)
-        verbose('%s/%s'%(res.precision_relative(),res.precision_absolute()))
+        if not parallelize:
+            res *= integrate_H0(G,divhat,cocycle,depth,ghat,prec)
+        else:
+            input_vec.append((G,divhat,cocycle,depth,ghat,prec))
+        #verbose('%s/%s'%(res.precision_relative(),res.precision_absolute()))
+    if parallelize:
+        integrate_parallel = parallel(integrate_H0)
+        i = 0
+        for _,outp in integrate_parallel(input_vec):
+            i += 1
+            verbose('Done %s/%s'%(i,len(input_vec)))
+            res *= outp
     return res
 
 
@@ -206,13 +221,11 @@ def sample_point(G,e,prec = 20):
 r'''
 Integration pairing of a function with an harmonic cocycle.
 '''
-def riemann_sum(G,phi,hc,depth = 1,cover = None,mult = False):
-    p = G.p
+def riemann_sum(G,phi,hc,depth = 1,mult = False):
     prec = max([20,2*depth])
     res = 1 if mult else 0
-    K = phi(0).parent().base_ring()
-    if cover is None:
-        cover = G.get_covering(depth)
+    K = phi.parent().base_ring()
+    cover = G.get_covering(depth)
     n_ints = 0
     for e in cover:
         if n_ints % 500 == 499:
@@ -236,34 +249,46 @@ def riemann_sum(G,phi,hc,depth = 1,cover = None,mult = False):
             res += phi(K(te)) * hce
     return res
 
-def integrate_H0_riemann(G,divisor,hc,depth = 1,cover = None,gamma = None):
+def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,power = 1):
     HOC = hc.parent()
-    prec = HOC.coefficient_module().precision_cap()
+    if prec is None:
+        prec = HOC.coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
-    R = LaurentSeriesRing(K,'t')
-    R.set_default_prec(prec)
+    #R = LaurentSeriesRing(K,'t')
+    #R.set_default_prec(prec)
+    R = PolynomialRing(K,names = 't').fraction_field()
     t = R.gen()
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
-    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,cover,mult = True)
+    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = True)**power
 
-def integrate_H0_moments(G,divisor,hc,depth = None, cover = None,gamma = None):
+def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
     p = G.p
     HOC = hc.parent()
-    prec = HOC.coefficient_module().precision_cap()
+    if prec is None:
+        prec = HOC.coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
     R1 = LaurentSeriesRing(K,'r1')
     r1 = R1.gen()
     R1.set_default_prec(prec)
+
+    R0 = PolynomialRing(K,'t')
+    t = R0.gen()
+    R0 = R0.fraction_field()
+    phi = R0(prod(((t - P)**ZZ(n) for P,n in divisor if n > 0))/prod(((t - P)**ZZ(-n) for P,n in divisor if n < 0)))
     resadd = 0
     resmul = 1
     for _,h in G.get_covering(1):
         a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
         hexp = (a*r1+b)/(c*r1+d)
-        y0 = prod([(hexp - P)**ZZ(n) for P,n in divisor if n > 0],R1(1))/prod([(hexp - P)**ZZ(-n) for P,n in divisor if n < 0],R1(1))
+        #y0 = prod([(hexp - P)**ZZ(n) for P,n in divisor if n > 0],R1(1))/prod([(hexp - P)**ZZ(-n) for P,n in divisor if n < 0],R1(1))
+        y0 = phi(hexp)
         val = y0(y0.parent().base_ring()(0))
+        #verbose('val has precision = %s/%s'%(val.precision_absolute(),val.precision_relative()))
         assert all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()])
         pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
+        #verbose('pol = %s'%pol)
         mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
+        #verbose('mu_e = %s'%mu_e)
         if HOC._use_ps_dists:
             nmoments = len(mu_e._moments)
             resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments)
@@ -272,8 +297,13 @@ def integrate_H0_moments(G,divisor,hc,depth = None, cover = None,gamma = None):
         try:
             resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
         except IndexError: pass
+    #print resmul
+    #print resadd
+    resmul = resmul**power
+    resadd *= power
     val =  resmul.valuation(p)
     tmp = p**val * K.teichmuller(p**(-val)*resmul)
     if resadd != 0:
-         tmp *= resadd.exp()
+        tmp *= resadd.exp()
+    #print tmp
     return tmp
