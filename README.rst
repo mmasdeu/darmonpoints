@@ -36,6 +36,8 @@ c) `D = 22` and `p < 40`.
 
      sage -b
 
+#### Precomputed data does not work currently !!! Use with caution.
+
 4. (Optional) Copy precomputed groups to local database::
 
      cp -r /path/to/precomputed_groups/* $HOME/.sage/db/

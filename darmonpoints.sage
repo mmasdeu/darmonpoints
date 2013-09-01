@@ -57,7 +57,7 @@ def precompute_magma_embeddings(quat_disc,max_dK):
     print 'All done'
     return
 
-def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = True,idx_embedding = None):
+def darmon_point(p,E,dK,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = None):
     DB,Np = get_heegner_params(p,E.conductor(),dK)
     quaternionic = ( DB != 1 )
     if use_ps_dists is None:
