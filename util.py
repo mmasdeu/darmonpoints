@@ -1,14 +1,17 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp,RR
 from sage.matrix.all import matrix,Matrix
+from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
 from sage.libs.pari.gen import PariError
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
+from sage.rings.arith import next_prime
 from sage.interfaces.gp import gp
 from sage.libs.pari.gen import pari
+from sage.rings.infinity import Infinity
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
@@ -230,11 +233,11 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     t = (C**3*R(E.a3()) - r)/R(2)
     xx = r + C**2 * K_to_Cp(P[0])
     yy = t + s * C**2 * K_to_Cp(P[0]) + C**3 * K_to_Cp(P[1])
-    try:
-        EqCp = Eq.change_ring(yy.parent())
-        Pq = EqCp([xx,yy])
-    except TypeError:
-        raise RuntimeError, "Bug : Point %s does not lie on the curve "%[xx,yy]
+    # try:
+    #     EqCp = Eq.change_ring(yy.parent())
+    #     Pq = EqCp([xx,yy])
+    # except TypeError:
+    #     raise RuntimeError, "Bug : Point %s does not lie on the curve "%[xx,yy]
     tt = -xx/yy
     if tt.valuation(p) <= 0:
         raise  ValueError , "The point must lie in the formal group."
@@ -525,17 +528,25 @@ def module_generators(K):
     return (Matrix(K,1,2,[1,b])*A).list()
 
 def find_the_unit_of(F,K):
-    found=False
-    for eps in K.units():
-        is_square,root=eps.norm(F).is_square(root=True)
-        deg=eps.minpoly().degree()
-        if deg==2:
-            unit_not_in_F=eps
-        if is_square and deg==2:
-            return eps/root
-    # Not found so far..
-    norm=unit_not_in_F.norm(F)
-    return unit_not_in_F**2/norm
+    GF = F.unit_group()
+    GK = K.unit_group()
+    #assert GK(GF.fundamental_units()[0]).exponents()[-1] == 0
+    tmp = K(GK.gens()[-1])
+    if tmp.norm(F) == -1:
+        tmp = tmp**2
+    assert tmp.norm(F) == 1
+    return tmp
+    # found=False
+    # for eps in K.unit_group().fundamental_units():
+    #     is_square,root = eps.norm(F).is_square(root=True)
+    #     deg = eps.minpoly().degree()
+    #     if deg > 1:
+    #         unit_not_in_F = eps
+    #     if is_square and deg > 1:
+    #         return eps/root
+    # # Not found so far..
+    # norm = unit_not_in_F.norm(F)
+    # return unit_not_in_F**2/norm
 
 def conjugate_quaternion_over_base(q):
     v = q.coefficient_tuple()
@@ -579,4 +590,50 @@ def magma_F_ideal_to_sage(F_sage,x):
     gens = x.TwoElement(nvals = 2)
     return F_sage.ideal([magma_F_elt_to_sage(F_sage,gens[0]),magma_F_elt_to_sage(F_sage,gens[1])])
 
+r'''
+Follows S.Johansson, "A description of quaternion algebras"
+ramification_at_infinity is a list of the same length as the real places.
+Ramified = -1, Split = +1
+'''
+def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None):
+    if F.degree() == 1:
+        return QuaternionAlgebra(disc)
+    if len(F.embeddings(RR)) > 1 and ramification_at_infinity is None:
+        raise ValueError, 'Must specify ramification type at infinity places'
+    if ramification_at_infinity is not None and len(ramification_at_infinity) != len(F.embeddings(RR)):
+        raise ValueError, 'Must specify exactly %s ramifications at infinity'%len(F.embeddings(RR))
+    if ramification_at_infinity is not None:
+        ramification_at_infinity = [ZZ(r) for r in ramification_at_infinity]
+        assert all((r.abs() == 1 for r in ramification_at_infinity))
+
+    disc = F.ideal(disc)
+    if not disc.is_principal():
+        raise ValueError, 'Discriminant should be principal'
+    d = disc.gens_reduced()[0]
+    vinf = F.embeddings(RR)
+    vfin = disc.factor()
+    if ramification_at_infinity is not None and (len(vfin) + sum((1 if ram == -1 else 0 for ram in ramification_at_infinity))) % 2 == 1:
+        raise ValueError, 'There is no quaternion algebra with the specified ramification'
+    if any([ri % 2 == 0 for _,ri in vfin]):
+        raise ValueError, 'All exponents in the discriminant factorization must be odd'
+    B = QuaternionAlgebra(F,-1,d)
+    if B.discriminant() == disc:
+        return B
+    p = 1
+    while True:
+        p = next_prime(p)
+        verbose('p = %s'%p)
+        for P in F.ideal(p).prime_factors():
+            if not P.is_coprime(disc) or not P.is_principal():
+                continue
+            pi0 = P.gens_reduced()[0]
+            for sgn in [-1,+1]:
+                a = sgn * pi0
+                if ramification_at_infinity is not None and not all((si * sigma(a) > 0 for si,sigma in zip(ramification_at_infinity,F.embeddings(RR)))):
+                    continue
+                if not all((Q.residue_symbol(a,ZZ(2)) == -1 for Q,_ in vfin if Q.norm() % 2 != 0)):
+                    continue
+                B = QuaternionAlgebra(F,a,-d)
+                if B.discriminant() == disc:
+                    return B
 
