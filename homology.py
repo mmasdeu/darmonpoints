@@ -21,6 +21,15 @@ import operator
 def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False):
     t = PolynomialRing(G.F,names = 't').gen()
     K = G.F.extension(t**2 - D,names = 'beta')
+    if G.F.degree() == 1:
+        assert len(K.embeddings(RR)) == 2
+    else:
+        if len(G.F.embeddings(RR)) > 1:
+            raise NotImplementedError
+        elif len(G.F.embeddings(RR)) == 1:
+            if G.F.degree() != 3:
+                raise NotImplementedError
+            assert len(K.embeddings(RR)) == 0
     if trace_down:
         gamma, tau1,tau2 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = True)
     else:

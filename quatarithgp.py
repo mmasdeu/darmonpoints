@@ -13,11 +13,10 @@ from sage.structure.parent import Parent
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ
-from sage.rings.padics.all import Qp
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ,ZZ,Qp
 from sage.functions.trig import arctan
 from sage.interfaces.magma import magma
-from sage.all import prod
+from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sigma0 import Sigma0,Sigma0ActionAdjuster
@@ -455,6 +454,7 @@ class ArithGroup_generic(AlgebraicGroup):
     def __init__(self):
         raise NotImplementedError
     def __delete_unused_attributes(self):
+        return # FIXME
         del self._m2_magma
         del self._U_magma
         del self._D_magma
@@ -879,11 +879,11 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         x0 = x
         # If x is a quaternion, find the expression in the generators.
         if x.parent() is self.O or x.parent() is self.B:
-            x = self.__quaternion_to_magma_quaternion(x)
+            x = self.__quaternion_to_magma_quaternion(self.B(x))
         else:
             if len(x) != 4:
                 raise ValueError, 'x (=%s) should be a list of length 4'%x
-            x = self.__quaternion_to_magma_quaternion(sum(a*b for a,b in zip(self.Obasis,x)))
+            x = self.__quaternion_to_magma_quaternion(self.B(sum(a*b for a,b in zip(self.Obasis,x))))
         x_magma = self._G_magma(x)
         #verbose('Calling _magma_word_problem with x = %s'%x)
         V = magma.WordProblem(x_magma).ElementToSequence()._sage_()

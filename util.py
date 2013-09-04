@@ -12,6 +12,7 @@ from sage.rings.arith import next_prime
 from sage.interfaces.gp import gp
 from sage.libs.pari.gen import pari
 from sage.rings.infinity import Infinity
+from sage.sets.primes import Primes
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
@@ -528,25 +529,19 @@ def module_generators(K):
     return (Matrix(K,1,2,[1,b])*A).list()
 
 def find_the_unit_of(F,K):
-    GF = F.unit_group()
+    found=False
     GK = K.unit_group()
-    #assert GK(GF.fundamental_units()[0]).exponents()[-1] == 0
-    tmp = K(GK.gens()[-1])
-    if tmp.norm(F) == -1:
-        tmp = tmp**2
-    assert tmp.norm(F) == 1
-    return tmp
-    # found=False
-    # for eps in K.unit_group().fundamental_units():
-    #     is_square,root = eps.norm(F).is_square(root=True)
-    #     deg = eps.minpoly().degree()
-    #     if deg > 1:
-    #         unit_not_in_F = eps
-    #     if is_square and deg > 1:
-    #         return eps/root
-    # # Not found so far..
-    # norm = unit_not_in_F.norm(F)
-    # return unit_not_in_F**2/norm
+    for uK in GK.fundamental_units():
+        is_square,rootNuK = uK.norm(F).is_square(root=True)
+        if uK not in F:
+            unit_not_in_F = uK
+        if is_square and uK not in F:
+            return uK/rootNuK
+    # Not found so far..
+    norm = unit_not_in_F.norm(F)
+    ans = unit_not_in_F**2/norm
+    assert ans not in F
+    return ans
 
 def conjugate_quaternion_over_base(q):
     v = q.coefficient_tuple()
@@ -605,7 +600,6 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
     if ramification_at_infinity is not None:
         ramification_at_infinity = [ZZ(r) for r in ramification_at_infinity]
         assert all((r.abs() == 1 for r in ramification_at_infinity))
-
     disc = F.ideal(disc)
     if not disc.is_principal():
         raise ValueError, 'Discriminant should be principal'
@@ -616,24 +610,18 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
         raise ValueError, 'There is no quaternion algebra with the specified ramification'
     if any([ri % 2 == 0 for _,ri in vfin]):
         raise ValueError, 'All exponents in the discriminant factorization must be odd'
-    B = QuaternionAlgebra(F,-1,d)
-    if B.discriminant() == disc:
-        return B
-    p = 1
-    while True:
-        p = next_prime(p)
-        verbose('p = %s'%p)
-        for P in F.ideal(p).prime_factors():
-            if not P.is_coprime(disc) or not P.is_principal():
-                continue
-            pi0 = P.gens_reduced()[0]
-            for sgn in [-1,+1]:
-                a = sgn * pi0
-                if ramification_at_infinity is not None and not all((si * sigma(a) > 0 for si,sigma in zip(ramification_at_infinity,F.embeddings(RR)))):
-                    continue
-                if not all((Q.residue_symbol(a,ZZ(2)) == -1 for Q,_ in vfin if Q.norm() % 2 != 0)):
-                    continue
-                B = QuaternionAlgebra(F,a,-d)
-                if B.discriminant() == disc:
-                    return B
+    if ramification_at_infinity is None:
+        ramification_at_infinity = []
+    for p in chain([1],Primes()):
+        facts = F.ideal(p).prime_factors() if p > 1 else [F.ideal(1)]
+        for P in facts:
+            if P.is_coprime(disc) and P.is_principal():
+                pi0 = P.gens_reduced()[0]
+                for sgn1,sgn2 in product([-1,+1],repeat = 2):
+                    a = sgn1 * pi0
+                    B = QuaternionAlgebra(F,a,sgn2 * d)
+                    if B.discriminant() == disc:
+                        assert all((si * sigma(a) > 0 for si,sigma in zip(ramification_at_infinity,F.embeddings(RR))))
+                        return B
+
 
