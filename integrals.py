@@ -59,7 +59,11 @@ def double_integral_zero_infty(Phi,tau1,tau2):
                     pol = val.log(p_branch = 0)+((y0.derivative()/y0).integral())
                     V = [0] * pol.valuation() + pol.shift(-pol.valuation()).list()
 
-                    phimap = Phi._map(M2Z([b,d,a,c]))
+                    try:
+                        phimap = Phi._map(M2Z([b,d,a,c]))
+                    except OverflowError:
+                        print a,b,c,d
+                        raise OverflowError,'Matrix too large?'
                     mu_e0 = ZZ(phimap.moment(0).rational_reconstruction())
                     mu_e = [mu_e0] + [phimap.moment(o).lift() for o in range(1,len(V))]
                     resadd += sum(starmap(mul,izip(V,mu_e)))

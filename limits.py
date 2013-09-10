@@ -382,11 +382,10 @@ def _find_limits_prefactoring(tau,gtau,level,v0):
             if not is_in_Gamma_1(mat,level,p,determinant_condition = False):
                 print mat.list()
                 raise RuntimeError
-    V, n_evals = get_limits_from_decomp(tau,decomp,v0)
-    if n_evals < len(decomp) * (p**2 + p):
-        return V
-    else:
+    if any((get_limits_from_decomp(tau,[mat],v0)[1] > p*(p+1) for mat in decomp)):
         raise RuntimeError
+    V, n_evals = get_limits_from_decomp(tau,decomp,v0)
+    return V
 
 def _find_limits_original(tau,gtau,level,v0):
     if tau.parent().is_exact():
