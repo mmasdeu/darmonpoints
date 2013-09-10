@@ -1,5 +1,5 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp,RR
+from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp,RR,CC
 from sage.matrix.all import matrix,Matrix
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
@@ -13,6 +13,7 @@ from sage.interfaces.gp import gp
 from sage.libs.pari.gen import pari
 from sage.rings.infinity import Infinity
 from sage.sets.primes import Primes
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing,Zmod
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
@@ -95,14 +96,16 @@ def find_center(p,level,t1,t2):
         else:
             old_dir = new_dir
 
-def is_in_Gamma_1(mat,N,p):
+def is_in_Gamma_1(mat,N,p = None,determinant_condition = True):
     if N != 1:
         a,b,c,d=mat.list()
-        if not all([QQ(x).is_S_integral([p]) for x in [a,b,c,d]]):
+        if p is None and not all([QQ(x).is_integral() for x in [a,b,c,d]]):
+            return False
+        if p is not None and not all([QQ(x).is_S_integral([p]) for x in [a,b,c,d]]):
             return False
         if Zmod(N)(a) != 1 or Zmod(N)(c) % N != 0:
             return False
-    if mat.det() != 1:
+    if determinant_condition and mat.det() != 1:
         return False
     return True
 
@@ -324,9 +327,12 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
     return newII,newJJ
 
 def recognize_point(x,y,E,F,prec = None,HCF = None):
-  if HCF is None:
-      HCF = F.hilbert_class_field(names = 'r1')
   hF = F.class_number()
+  if HCF is None:
+      if hF > 1:
+          HCF = F.hilbert_class_field(names = 'r1')
+      else:
+          HCF = F
   Cp = x.parent()
   s = F.gen()
   w = F.maximal_order().ring_generators()[0]
@@ -336,11 +342,12 @@ def recognize_point(x,y,E,F,prec = None,HCF = None):
   if prec is None:
       prec = QQp.precision_cap()
   if x == 0 and y == 0:
-      candidate_x = 0
+      list_candidate_x = [0]
   elif (1/x).valuation() > prec and (1/y).valuation() > prec:
       return E.change_ring(HCF)(0),True
   else:
-      if hF == 1:
+      if E.base_ring() == QQ and hF == 1:
+          assert w.minpoly()(Cp.gen()) == 0
           x1 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[0]))).add_bigoh(prec)
           x2 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[1]))).add_bigoh(prec)
           try:
@@ -348,23 +355,22 @@ def recognize_point(x,y,E,F,prec = None,HCF = None):
               x2 = algdep(x2,1).roots(QQ)[0][0]
           except IndexError:
               return x,False
-          candidate_x = x1+x2*w
+          list_candidate_x = [x1+x2*w]
       else:
-          candidate_x = our_algdep(x,2*hF,prec)
+          candidate_x = our_algdep(x,E.base_ring().degree()*2*hF,prec)
           pol_height = sum((RR(o).abs().log() for o in candidate_x.coeffs()))/RR(p).log()
-          # if pol_height < .8 * prec: # .8 is quite arbitrary...
-          #     return candidate_x,True
-          try:
-              candidate_x = candidate_x.change_ring(HCF).roots()[0][0]
-          except IndexError:
-              return candidate_x,False
-  try:
-      Pt = E.change_ring(HCF).lift_x(candidate_x)
-      verbose('Point is in curve: %s'%Pt,level=2)
-      return Pt,True
-  except ValueError:
-      verbose('Point does not appear to lie on curve...',level=2)
-      return candidate_x,False
+          if pol_height < .7 * prec: # .8 is quite arbitrary...
+              list_candidate_x = [rt for rt,pw in candidate_x.change_ring(HCF).roots()]
+          else:
+              list_candidate_x = []
+  for candidate_x in list_candidate_x:
+      try:
+          Pt = E.change_ring(HCF).lift_x(candidate_x)
+          verbose('Point is in curve: %s'%Pt,level=2)
+          return Pt,True
+      except ValueError:
+          verbose('Point does not appear to lie on curve...',level=2)
+  return candidate_x,False
 
 def our_sqrt(x,K):
     if x==0:
@@ -469,11 +475,49 @@ def reduce_word(word):
     return new_word
 
 
-def get_heegner_params(p,N,dK):
+def get_heegner_params(p,E,beta):
+    F = E.base_ring()
+    if F == QQ:
+        return _get_heegner_params_rational(p,E.conductor(),beta)
+    else:
+        return _get_heegner_params_numberfield(p,E.conductor(),beta)
+
+def _get_heegner_params_numberfield(P,N,beta):
+    F = N.number_field()
+    x = PolynomialRing(F,names = 'x').gen()
+    K = F.extension(x**2-beta,names = 'b')
+    if not P.divides(N):
+        raise ValueError,'p (=%s) must divide conductor (=%s)'%(P,N)
+    PK = K.ideal(P)
+    if PK.relative_ramification_index() > 1 or not PK.is_prime():
+        raise ValueError,'p (=%s) must be inert in K (=Q(sqrt{%s}))'%(P,beta)
+    N1 = N/P
+    if P.divides(N1):
+        raise ValueError,'p (=%s) must exactly divide the conductor (=%s)'%(p,N)
+    DB = F.ideal(1)
+    Np = F.ideal(1)
+    num_inert_primes = 0
+    for ell,r in N1.factor():
+        LK = K.ideal(ell)
+        assert LK.relative_ramification_index() == 1
+        if LK.is_prime(): # inert
+            if r != 1:
+                raise ValueError,'The inert prime l = %s divides too much the conductor.'%ell
+            num_inert_primes += 1
+            DB *= ell
+        else:
+            Np *= ell**r
+    assert N == P * DB * Np
+    inert_primes_at_infty =  K.signature()[1] - 2 * F.signature()[1]
+    if (inert_primes_at_infty + num_inert_primes) % 2 != 0:
+        raise ValueError,'There should an even number of primes different than p which are inert'
+    return DB,Np
+
+def _get_heegner_params_rational(p,N,beta):
     if N % p != 0:
         raise ValueError,'p (=%s) must divide conductor (=%s)'%(p,N)
-    if kronecker_symbol(dK,p) != -1:
-        raise ValueError,'p (=%s) must be inert in K (=Q(sqrt{%s}))'%(p,dK)
+    if kronecker_symbol(beta,p) != -1:
+        raise ValueError,'p (=%s) must be inert in K (=Q(sqrt{%s}))'%(p,beta)
     N1 = ZZ(N/p)
     if N1 % p == 0:
         raise ValueError,'p (=%s) must exactly divide the conductor (=%s)'%(p,N)
@@ -481,7 +525,7 @@ def get_heegner_params(p,N,dK):
     Np = 1
     num_inert_primes = 0
     for ell,r in N1.factor():
-        if kronecker_symbol(dK,ell) == -1: # inert
+        if kronecker_symbol(beta,ell) == -1: # inert
             if r != 1:
                 raise ValueError,'The inert prime l = %s divides too much the conductor.'%ell
             num_inert_primes += 1
@@ -504,9 +548,11 @@ def module_generators(K):
     x=var('x')
     y=var('y')
     F=K.base_field()
+    if F == QQ:
+        return [1,K.maximal_order().ring_generators()[0]]
     f=F.polynomial()
-    g=K.relative_polynomial()
     a=F.gen()
+    g=K.relative_polynomial()
     b=K.gen()
 
     # Equivalent pari objects
@@ -529,18 +575,20 @@ def module_generators(K):
     return (Matrix(K,1,2,[1,b])*A).list()
 
 def find_the_unit_of(F,K):
-    found=False
+    found = False
     GK = K.unit_group()
     for uK in GK.fundamental_units():
         is_square,rootNuK = uK.norm(F).is_square(root=True)
         if uK not in F:
             unit_not_in_F = uK
         if is_square and uK not in F:
-            return uK/rootNuK
+            tmp = uK/rootNuK
+            if tmp.multiplicative_order() == Infinity:
+                return tmp
     # Not found so far..
     norm = unit_not_in_F.norm(F)
     ans = unit_not_in_F**2/norm
-    assert ans not in F
+    assert ans not in F and ans.multiplicative_order() == Infinity
     return ans
 
 def conjugate_quaternion_over_base(q):
@@ -567,7 +615,6 @@ def magma_quaternion_to_sage(B_sage,x):
 
 def magma_integral_quaternion_to_sage(B_sage,O_magma,F_magma,x):
     F = B_sage.base_ring()
-    tmp = []
     xseq = x.ElementToSequence()
     basis = O_magma.Basis()
     return sum(magma_F_elt_to_sage(F,F_magma(xseq[i+1])) * magma_quaternion_to_sage(B_sage,basis[i+1]) for i in range(4))

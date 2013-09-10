@@ -56,14 +56,15 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
         try:
             D = D.norm()
         except AttributeError: pass
-        while D%q == 0:
+        while D % q == 0:
             q = q.next_prime()
         if G.F.degree() == 1:
-            tmp = tmp.hecke_smoothen(q,prec = prec)#.factor_into_generators()
+            q1 = q
+            tmp = tmp.hecke_smoothen(q,prec = prec) #.factor_into_generators()
         else:
             q1 = G.F.ideal(q).factor()[0][0]
             tmp = tmp.hecke_smoothen(q1,prec = prec)
-    return tmp,n,q
+    return tmp,n,q1
 
 class Divisors(Parent):
     def __init__(self,field):

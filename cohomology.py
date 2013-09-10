@@ -21,32 +21,54 @@ from util import *
 import os
 from ocmodule import OCVn
 from sage.misc.persist import db,db_save
+from sage.schemes.plane_curves.constructor import Curve
 
-def get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False):
+def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False):
+    try:
+        p = ZZ(P)
+        Pnorm = p
+        F = QQ
+    except TypeError:
+        p = ZZ(P.norm().factor()[0][0])
+        Pnorm = ZZ(P.norm())
+        F = P.number_field()
+
+    if Pnorm != p:
+        raise NotImplementedError,'For now I can only work over Qp'
+
+    base_field = Qp(p,prec)
+
     # Define phiE, the cohomology class associated to the curve E.
     Coh = CohomologyGroup(G.small_group())
     phiE = Coh.get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
-    fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec,dist_type)
+    if hasattr(E,'cremona_label'):
+        Ename = E.cremona_label()
+    else:
+        Ename = E.ainvs()
+    fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,Ename,sgninfty,prec,dist_type)
     if use_sage_db:
         try:
             Phivals = db(fname)
-            CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
+            CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = base_field,use_ps_dists = use_ps_dists)
             CohOC._coeff_module = Phivals[0].parent()
             VOC = CohOC.coefficient_module()
             Phi = CohOC([VOC(o) for o in Phivals])
             return Phi
         except IOError: pass
     verbose('Computing moments...')
-    CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = Qp(p,prec),use_ps_dists = use_ps_dists)
+    CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = base_field,use_ps_dists = use_ps_dists)
     VOC = CohOC.coefficient_module()
     if use_ps_dists:
         Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group().gens()])
     else:
         Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.small_group().gens()])
-    Phi = Phi.improve(prec = prec,sign = E.ap(p))
-    db_save(Phi._val,fname)
+    apsign = ZZ(E.ap(p)) if E.base_ring() == QQ else ZZ(Pnorm + 1 - Curve(E.defining_polynomial().change_ring(F.residue_field(P))).count_points(1)[0])
+    assert apsign.abs() == 1
+    Phi = Phi.improve(prec = prec,sign = apsign)
+    if use_sage_db:
+        db_save(Phi._val,fname)
     verbose('Done.')
     return Phi
 
@@ -332,13 +354,25 @@ class CohomologyGroup(Parent):
 
     def get_cocycle_from_elliptic_curve(self,E,sign = 1):
         K = (self.involution_at_infinity_matrix()-sign).right_kernel()
-        N = self.group().O.discriminant()
+        discnorm = self.group()._O_discriminant.norm()
+        F = self.group().base_ring()
+        try:
+            N = ZZ(discnorm.gen())
+        except AttributeError:
+            N = ZZ(discnorm)
+
         q = ZZ(1)
         while K.dimension() != 1:
             q = q.next_prime()
             if N % q == 0:
                 continue
-            K1 = (self.hecke_matrix(q)-E.ap(q)).right_kernel()
+            if F == QQ:
+                Eap = E.ap(q)
+            else:
+                Q = F(q).factor()[0][0]
+                Eap = ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
+
+            K1 = (self.hecke_matrix(q)-Eap).right_kernel()
             K = K.intersection(K1)
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))

@@ -275,8 +275,8 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
     t = R0.gen()
     R0 = R0.fraction_field()
     phi = R0(prod(((t - P)**ZZ(n) for P,n in divisor if n > 0))/prod(((t - P)**ZZ(-n) for P,n in divisor if n < 0)))
-    resadd = 0
-    resmul = 1
+    resadd = ZZ(0)
+    resmul = ZZ(1)
     for _,h in G.get_covering(1):
         a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
         hexp = (a*r1+b)/(c*r1+d)
@@ -286,14 +286,17 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
         #verbose('val has precision = %s/%s'%(val.precision_absolute(),val.precision_relative()))
         assert all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()])
         pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
-        #verbose('pol = %s'%pol)
+        #verbose('pol_err = %s'%(max([o2 - o.valuation() for o,o2 in zip(pol.coefficients(),pol.exponents())])))
         mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
         #verbose('mu_e = %s'%mu_e)
         if HOC._use_ps_dists:
             nmoments = len(mu_e._moments)
-            resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments)
+            #verbose('mom_vals = %s'%[(a.precision_absolute(),i,mu_e.moment(i).valuation()) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments])
+            newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments)
         else:
-            resadd += mu_e.evaluate_at_poly(pol)
+            newresadd = mu_e.evaluate_at_poly(pol)
+        #verbose('newresadd = %s'%newresadd)
+        resadd += newresadd
         try:
             resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
         except IndexError: pass

@@ -10,52 +10,45 @@ from sage.interfaces.magma import magma
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,Zmod,gcd,divisors
 from sage.groups.generic import discrete_log
 from sage.all import prod
-
-
-########################################################################################
-# First some auxiliary functions
-########################################################################################
-def fields_up_to(p,M,bound):
-    good = []
-    for disc in range(2,bound):
-        if fundamental_discriminant(disc) != disc:
-            continue
-        D = ZZ(disc/4) if disc%4 == 0 else ZZ(disc)
-        assert D.is_squarefree()
-        if kronecker_symbol(disc,p) == -1:
-            if all([kronecker_symbol(disc,ff[0]) == 1 for ff in ZZ(M).factor()]):
-                if True:# QuadraticField(D,names='r').narrow_class_group().order() == 1:
-                    good.append((disc,QuadraticField(D,names='r').class_group().order(),QuadraticField(D,names='r').narrow_class_group().order()))
-    return good
+from random import shuffle
+from sage.rings.arith import GCD
 
 ##########################################################################################
 # now the new functions that we need...they follow pretty close the article we're writting
 ##########################################################################################
 def factorize_matrix(m,M):
+    assert is_in_Gamma_1(m,M,determinant_condition = False)
+    assert m.det().abs() == 1
     a,b,c,d = m.list()
     if QQ(a).denominator() != 1:
         return [m]
+    assert a % M == 1
     aabs = ZZ(a).abs()
     Zm = Zmod(M)
-    for alpha0 in xrange(1,aabs,M):
-        for alpha in [alpha0,-alpha0]:
-            delta0 = (Zm(alpha)**(-1)).lift()
-            for delta in xrange(delta0-10*M,delta0+10*M,M):
-                if alpha*delta == 1:
-                    continue
-                gamma0 = ZZ( (alpha*delta -1) / M)
-                c1vec = divisors(gamma0)
-                for c1 in c1vec:
-                    ulentry = (a*delta-b*c1*M).abs()
-                    if ulentry < aabs:
-                        gamma = c1*M
-                        beta = ZZ(gamma0/c1)
-                        r1 = Matrix(QQ,2,2,[alpha,beta,gamma,delta])
-                        r2 = m*r1.adjoint()
-                        assert r1.determinant() == 1
-                        V1 = factorize_matrix(r1,M)
-                        V2 = factorize_matrix(r2,M)
-                        return V2 + V1
+    for alphamul in sorted(range(-aabs.sqrt(50)/M,aabs.sqrt(50)/M),key = lambda x: ZZ(x).abs()):
+        alpha = 1 + M*alphamul
+        if alpha.abs() >= aabs:
+            continue
+        delta0 = (Zm(alpha)**(-1)).lift()
+        for delta in xrange(delta0-10*M,delta0+10*M,M):
+            if alpha * delta == 1:
+                continue
+            gamma0 = ZZ( (alpha*delta -1) / M)
+            c1vec = divisors(gamma0)
+            for c1 in c1vec:
+                ulentry = (a*delta-b*c1*M).abs()
+                urentry = (b*alpha-a*gamma0/c1).abs()
+                if ulentry < aabs and urentry < b.abs():
+                    gamma = c1*M
+                    beta = ZZ(gamma0/c1)
+                    r1 = Matrix(QQ,2,2,[alpha,beta,gamma,delta])
+                    r2 = m*r1.adjoint()
+                    assert r1.determinant() == 1
+                    assert is_in_Gamma_1(r1,M,determinant_condition = False)
+                    assert is_in_Gamma_1(r1,M,determinant_condition = False)
+                    V1 = factorize_matrix(r1,M)
+                    V2 = factorize_matrix(r2,M)
+                    return V2 + V1
     return [m]
 
 #given a matrix M=[a,b,c,d] we run over all lambda in O until we find some satisfying that the class of c mod a+lambda*c is represented by a unit; observe that we are not requiring that a+lambda*c is a prime, nor that the units generate all the quotient ring: if the class of c (mod a+lambda*c) can be represented by a unit, that's fine
@@ -128,6 +121,7 @@ def num_evals(tau1,tau2):
     distance = dr1+dr2-2*delta
     return p + 1  + (p-1) * distance
 
+
 def compute_tau0(v0,gamma,wD,return_exact = False):
     r'''
     INPUT:
@@ -161,23 +155,23 @@ def order_and_unit(F,conductor):
     r'''
      Returns an order in F and a fundamental unit in the order.
      It ensures that u satisfies (recall that F is real quadratic):
-       1. u > 1 (with respect to the first embedding of F)
-       2. u belongs to the order ZZ + ZZ[delta], where delta
+       u belongs to the order ZZ + ZZ[delta], where delta
           is either sqrt{D}/2 (if D = 0 mod 4), or (1+sqrt{D})/2.
           Here D is the discriminant of the order.
     '''
     #we have to square the unit, so that the determinant is 1
     u0 = F.units()[0] # It looks like the square can (sometimes) be removed!
-    if F.real_embeddings()[0](u0) < 0:
-        u0 = -u0
-    if F.real_embeddings()[0](u0) < 1:
-        u0 = 1/u0
+    # if F.real_embeddings()[0](u0) < 0:
+    #     u0 = -u0
+    # if F.real_embeddings()[0](u0) < 1:
+    #     u0 = 1/u0
     D = F.discriminant() * conductor**2
     sqrtD = conductor * F.gen()
     if D % 4 == 0:
         sqrtD *= 2
     assert sqrtD**2 == D
     delta = sqrtD/2 if D % 4 == 0 else (1+sqrtD)/2
+    verbose('delta = %s'%delta)
     u = u0
     O_D = F.order(delta)
     i = 1
@@ -194,13 +188,12 @@ def _find_initial_embedding_list(v0,M,W,orientation,OD,u):
     F = v0.domain()
     p = v0.codomain().base_ring().prime()
     emblist = []
-    Mover2 = 2*ZZ(QQ(M/2).ceil())
     wD = OD.ring_generators()[0]
     u0vec = wD.coordinates_in_terms_of_powers()(u)
     u0vec_inv = wD.coordinates_in_terms_of_powers()(u**-1)
     assert wD.minpoly() == W.minpoly()
-
-    for B in [M2Z([1,0,0,1])] +  [M2Z([ZZ(M/d1),i,0,d1]) for d1 in ZZ(M).divisors() for i in range(d1)]:
+    Blist = [ M2Z([1,0,0,1]) ] + [ M2Z([ZZ(M/d1),i,0,d1]) for d1 in ZZ(M).divisors() for i in range(-2*ZZ(QQ(d1/2).ceil()),2*ZZ(QQ(d1/2).ceil()) + 1) ]
+    for B in Blist:
         W_M = B * W * B**-1
         if all([x.is_integral() == 1 for x in W_M.list()]) and ZZ(W_M[1,0]) % M == 0:
             if orientation is not None:
@@ -217,8 +210,8 @@ def _find_initial_embedding_list(v0,M,W,orientation,OD,u):
                 assert all([W_M[0,0] % ell == orientation % ell for ell,r in ZZ(M).factor()])
                 tau0 = compute_tau0(v0, W_M,wD,return_exact = True)
                 assert find_containing_affinoid(p,v0(tau0)).determinant().valuation(p) % 2 == 0
-            gtau_orig_1 = u0vec[0]+u0vec[1]*W_M
-            gtau_orig_2 = u0vec_inv[0]+u0vec_inv[1]*W_M
+            gtau_orig_1 = u0vec[0] + u0vec[1] * W_M
+            gtau_orig_2 = u0vec_inv[0] + u0vec_inv[1] * W_M
             emblist.extend([(tau0,gtau_orig_1),(tau0,gtau_orig_2)])
     if len(emblist) == 0:
         raise RuntimeError,'No embeddings found !'
@@ -236,8 +229,10 @@ def _explode_embedding_list(v0,M,emblist):
             u_M1 = matrix(QQ,2,2,[u1**-1,0,0,u1])
             gtau1 = u_M1 * gtau
             tau01 = tau0 / (u1**2)
-            list_embeddings.append((tau01,gtau1,1))
-
+            if gtau1[0,0] % M == 1:
+                list_embeddings.append((tau01,gtau1,1))
+            elif gtau1[0,0] % M == -1:
+                list_embeddings.append((tau01,-gtau1,1))
         ## Second method
         if M > 1:
             a_inv = ZZ((1/Zmod(M)(gtau[0,0])).lift())
@@ -245,16 +240,20 @@ def _explode_embedding_list(v0,M,emblist):
                 u_M2 = matrix(QQ,2,2,[u2,0,0,u2**-1])
                 gtau2 = u_M2 * gtau
                 tau02 = u2**2 * tau0 #act_flt(u_M2,tau0)
-                list_embeddings.append((tau02,gtau2,1))
+                if gtau2[0,0] % M == 1:
+                    list_embeddings.append((tau02,gtau2,1))
+                elif gtau1[0,0] % M == -1:
+                    list_embeddings.append((tau02,-gtau2,1))
 
-    ## Third method
-    new_embs = []
-    for tau,gtau,sign in list_embeddings:
-        gtauinv = gtau**(-1)
-        a,b,c,d = gtauinv.list()
-        newtau = (a*tau+b) / (c*tau+d) #act_flt(gtau^(-1),tau)
-        new_embs.append((newtau,gtauinv,-sign))
-    list_embeddings.extend(new_embs)
+    # ## Third method
+    # new_embs = []
+    # for tau,gtau,sign in list_embeddings:
+    #     gtauinv = gtau**(-1)
+    #     a,b,c,d = gtauinv.list()
+    #     newtau = (a*tau+b) / (c*tau+d) #act_flt(gtau^(-1),tau)
+    #     if gtauinv[0,0] % M == 1:
+    #         new_embs.append((newtau,gtauinv,-sign))
+    # list_embeddings.extend(new_embs)
     verbose('Found %s embeddings...'%len(list_embeddings))
     return list_embeddings
 
@@ -273,7 +272,7 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
     wDvec = w.coordinates_in_terms_of_powers()(wD)
     WD = wDvec[0] + wDvec[1]*W
     assert WD.minpoly() == wD.minpoly()
-    assert F.real_embeddings()[0](u) > 1
+    #assert F.real_embeddings()[0](u) > 1
     if algorithm == 'darmon_pollack':
         if M != 1:
             raise ValueError,'the level (=%s) must be =1'%M
@@ -283,7 +282,7 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
         return tau0,gtau,1,find_limits(tau0,gtau,1)
     elif algorithm == 'guitart_masdeu':
         # We seek for an optimal embedding of conductor M
-        emblist = _find_initial_embedding_list(v0,M,WD,orientation,OD,u)
+        emblist = [emb for sgn in [+1,-1] for emb in _find_initial_embedding_list(v0,M,WD,orientation,OD,sgn * u)]
         list_embeddings = _explode_embedding_list(v0,M,emblist)
 
         # Now choose the best
@@ -295,8 +294,14 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
             print 'Analyzing embedding %s. Press C-c C-c to skip.'%num_emb
             num_emb += 1
             assert tau.parent().is_exact()
-            try: V = find_limits(tau,gtau,M,v0)
-            except KeyboardInterrupt:
+            try:
+                gtauint = matrix(ZZ,2,2,gtau.list())
+            except TypeError:
+                continue
+            if not is_in_Gamma_1(gtau,M,p,determinant_condition = False):
+                continue
+            try: V = find_limits(tau,gtau,M,v0,method = 2)
+            except (KeyboardInterrupt,RuntimeError):
                 # verbose('Impacient user. Continuing...')
                 print 'Key press detected. Continuing!'
                 continue
@@ -305,6 +310,8 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
             verbose('opt_evals = %s'%opt_evals)
             if opt_evals is None or n_evals < opt_evals:
                 opt_evals,opt_tau,opt_gtau,opt_sign,opt_V = n_evals,tau,gtau,sign,V
+            if opt_evals is not None:
+                break
         if opt_tau is None:
             raise RuntimeError,'No embedding found'
         verbose('The optimal number of evaluations found is %s'%opt_evals)
@@ -337,8 +344,8 @@ def find_optimal_embeddings(F,use_magma = False,extra_conductor = 1):
             G.append((a,b,c))
     delta = extra_conductor * F.gen() if D%4 == 1 else 2*extra_conductor * F.gen() # delta = sqrt{discriminant}
     r,s = delta.coordinates_in_terms_of_powers()(w) # w = r + s*delta
-    #return [Matrix(QQ,2,2,[r+s*B,-2*s*C,2*s*A,r-s*B]) for A,B,C in G] # By Juan Restrepo's suggestion
-    return [Matrix(QQ,2,2,[r-s*B,-2*s*C,2*s*A,r+s*B]) for A,B,C in G]
+    #return [Matrix(QQ,2,2,[r+s*B,-2*s*C,2*s*A,r-s*B]) for A,B,C in G] # Bad (By Juan Restrepo's suggestion)
+    return [Matrix(QQ,2,2,[r-s*B,-2*s*C,2*s*A,r+s*B]) for A,B,C in G] # Good
 
 def _find_limits_manin_trick(tau,gtau):
     if gtau[0,0] == 0:
@@ -362,18 +369,24 @@ def _find_limits_prefactoring(tau,gtau,level,v0):
         p = v0.codomain().prime()
     else:
         p = tau.parent().prime()
+    verbose('Factorizing matrix %s'%gtau.list())
     factorization = factorize_matrix(gtau,level)
+    verbose('Done! Used %s matrices.'%len(factorization))
     decomp = []
-    verbose('Factored original gtau into %s matrices!'%len(factorization))
     for vv in factorization:
-        verbose('findinig lambda for matrix %s'%vv)
         lmb,uu = find_lambda(vv,p,n_results = 1)[0]
-        verbose('done')
         decomp.extend(decompose(vv,lmb,uu))
     assert prod(decomp) == gtau
+    if not all((is_in_Gamma_1(mat,level,p,determinant_condition = False) for mat in decomp)):
+        for mat in decomp:
+            if not is_in_Gamma_1(mat,level,p,determinant_condition = False):
+                print mat.list()
+                raise RuntimeError
     V, n_evals = get_limits_from_decomp(tau,decomp,v0)
-    verbose('n_evals = %s'%n_evals)
-    return V
+    if n_evals < len(decomp) * (p**2 + p):
+        return V
+    else:
+        raise RuntimeError
 
 def _find_limits_original(tau,gtau,level,v0):
     if tau.parent().is_exact():
@@ -385,6 +398,7 @@ def _find_limits_original(tau,gtau,level,v0):
     for lmb,uu in find_lambda(gtau,p,n_results = 1):
         #verbose('trying lambda = %s, u = (-)p^%s'%(lmb,uu.valuation(p)))
         dec = decompose(gtau,lmb,uu)
+        assert prod(dec) == gtau
         V,n_evals = get_limits_from_decomp(tau,dec,v0)
         # verbose('n_evals = %s'%n_evals)
         if opt_evals is None or n_evals < opt_evals:
@@ -392,7 +406,7 @@ def _find_limits_original(tau,gtau,level,v0):
             opt_evals = n_evals
     return opt_V
 
-def find_limits(tau,gtau = None,level = 1,v0 = None):
+def find_limits(tau,gtau = None,level = 1,v0 = None,method = 1):
     if gtau is None: return []
     if gtau.determinant() == 0:
         raise ValueError,'gtau must have nonzero determinant.'
@@ -400,14 +414,16 @@ def find_limits(tau,gtau = None,level = 1,v0 = None):
     if level == 1: # Use Manin trick
         return _find_limits_manin_trick(tau,gtau)
     else:
-        # Original method, only 5 matrices but possible very ill-conditioned
-        # return _find_limits_original(tau,gtau,level,v0)
-
-        # Factors the given matrix before doing the 5-step factorization.
-        return _find_limits_prefactoring(tau,gtau,level,v0)
+        if method == 1:
+            # Original method, only 5 matrices but possible very ill-conditioned
+            return _find_limits_original(tau,gtau,level,v0)
+        else:
+            assert method == 2
+            # Factors the given matrix before doing the 5-step factorization.
+            return _find_limits_prefactoring(tau,gtau,level,v0)
 
 def decompose(gtau,lmb,uu):
-    if uu == 0: 
+    if uu == 0:
         return [gtau]
     E_lambda = Matrix(QQ,2,2,[1,lmb,0,1])
     #we know that E_lambda*gtau is a matrix [a,b,c,d] such that c=uu+ta for some unit uu; now we find uu and t
@@ -429,6 +445,7 @@ def get_limits_from_decomp(tau,decomp,v0):
         assert oldTau.parent().is_exact()
         newTau = (a*oldTau+b)/(c*oldTau+d)
         if c != 0: # lower-triangular
+            assert b == 0
             t1,t2 = v0(oldTau),v0(newTau)
             V.append([t1,t2])
             n_evals += num_evals(t1,t2)
