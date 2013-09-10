@@ -1,0 +1,23 @@
+This is the changelog of KleinianGroups, version 1.0 of September 25, 2012
+
+KleinianGroups is a Magma package computing fundamental domains for arithmetic Kleinian groups.
+Copyright (C) 2010-2012  Aurel Page
+
+======================================================================
+
+Version 0.1 (2012-05-20) :
+  First public release. Features include :
+    - computation of Dirichlet domains for the norm one group in an order of a Fuchsian or Kleinian quaternion algebra.
+    - computation of a presentation for this group, and expression of any element as a word in the generators.
+    - production of Maple code for graphic output of the fundamental polyhedron.
+
+Version 1.0 (2012-09-25) :
+    Bugfixes :
+        - when computing the same group with different centers, only the first center was used
+        - fixed an infinite loop when computing Bianchi groups
+    New features :
+        - computation of the unit group and the maximal group (normalizer of the order)
+        - lift of the presentation from the group modulo center to the full group (norm one and units)
+        - computation of the systole (slow)
+        - more examples and (hopefully) simpler use
+        - various optimizations
