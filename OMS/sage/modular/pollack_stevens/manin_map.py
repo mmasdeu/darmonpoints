@@ -553,9 +553,10 @@ class ManinMap(object):
             (10 + 10*11 + O(11^2), 8 + O(11))
             
         """
-        SN = Sigma0(self._manin._N)
+        N = self._manin._N
+        SN = Sigma0(N)
         A = M2Z(A)
-        B = self._manin.equivalent_rep(A)
+        B = self._manin.equivalent_rep(M2Z([A[t00] % N,A[t01] % N,A[t10] % N,A[t11] % N]))
         gaminv = SN(B * M2Z(A).inverse())
         return self[B] * gaminv
 

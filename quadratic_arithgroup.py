@@ -451,6 +451,7 @@ class ArithGroupQuadraticElement(MultiplicativeGroupElement):
             init_data = True
         if quaternion_rep is not None:
             if not parent._is_in_order(quaternion_rep):
+                print quaternion_rep
                 raise ValueError,'Quaternion must be in order'
             if check:
                 rednrm = quaternion_rep.reduced_norm()

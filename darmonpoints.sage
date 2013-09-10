@@ -189,9 +189,8 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 #print 'tau = %s'%tau
                 #print 'gtau = %s'%gtau.list()
                 emblist.append((tau,gtau,sign,limits))
-                print "Embedding found, now computing the period..."
-                #n_evals = sum((num_evals(t1,t2) for t1,t2 in limits))
-                #verbose('Will perform a total of %s evaluations...'%n_evals)
+                n_evals = sum((num_evals(t1,t2) for t1,t2 in limits))
+                print "Embedding found, now computing the period...(total of %s evaluations)"%n_evals
                 newJ = prod((double_integral_zero_infty(Phi,t1,t2) for t1,t2 in limits))**ZZ(sign)
                 #newJ = indef_integral(Phi,tau,gtau,limits = limits)**ZZ(sign)
                 Jlist.append(newJ)

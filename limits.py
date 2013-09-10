@@ -17,11 +17,12 @@ from sage.rings.arith import GCD
 # now the new functions that we need...they follow pretty close the article we're writting
 ##########################################################################################
 def factorize_matrix(m,M):
-    assert is_in_Gamma_1(m,M,determinant_condition = False)
+    #assert is_in_Gamma_1(m,M,determinant_condition = False)
     assert m.det().abs() == 1
     a,b,c,d = m.list()
     if QQ(a).denominator() != 1:
-        return [m]
+        raise RuntimeError
+        #return [m]
     assert a % M == 1
     aabs = ZZ(a).abs()
     Zm = Zmod(M)
@@ -160,7 +161,7 @@ def order_and_unit(F,conductor):
           Here D is the discriminant of the order.
     '''
     #we have to square the unit, so that the determinant is 1
-    u0 = F.units()[0] # It looks like the square can (sometimes) be removed!
+    u0 = F.units()[0]**2 # It looks like the square can (sometimes) be removed!
     # if F.real_embeddings()[0](u0) < 0:
     #     u0 = -u0
     # if F.real_embeddings()[0](u0) < 1:
@@ -294,23 +295,21 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
             print 'Analyzing embedding %s. Press C-c C-c to skip.'%num_emb
             num_emb += 1
             assert tau.parent().is_exact()
-            try:
-                gtauint = matrix(ZZ,2,2,gtau.list())
-            except TypeError:
-                continue
-            if not is_in_Gamma_1(gtau,M,p,determinant_condition = False):
-                continue
+            #if not is_in_Gamma_1(gtau,M,p,determinant_condition = False):
+            #    continue
             try: V = find_limits(tau,gtau,M,v0,method = 2)
-            except (KeyboardInterrupt,RuntimeError):
-                # verbose('Impacient user. Continuing...')
-                print 'Key press detected. Continuing!'
+            except KeyboardInterrupt:
+                print 'Key press detected. Continuing.'
+                continue
+            except RuntimeError:
+                print 'Not suitable. Continuing.'
                 continue
             if V is None: continue
             n_evals = sum((num_evals(t1,t2) for t1,t2 in V))
             verbose('opt_evals = %s'%opt_evals)
             if opt_evals is None or n_evals < opt_evals:
                 opt_evals,opt_tau,opt_gtau,opt_sign,opt_V = n_evals,tau,gtau,sign,V
-            if opt_evals is not None:
+            if opt_evals is not None and opt_evals < 5 * (p+1)*p**2: # FIXME
                 break
         if opt_tau is None:
             raise RuntimeError,'No embedding found'

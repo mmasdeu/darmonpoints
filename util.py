@@ -582,13 +582,13 @@ def find_the_unit_of(F,K):
         if uK not in F:
             unit_not_in_F = uK
         if is_square and uK not in F:
-            tmp = uK/rootNuK
-            if tmp.multiplicative_order() == Infinity:
-                return tmp
+            ans = uK/rootNuK
+            if ans not in F and ans.multiplicative_order() == Infinity and ans.norm(F) == 1:
+                return ans
     # Not found so far..
     norm = unit_not_in_F.norm(F)
     ans = unit_not_in_F**2/norm
-    assert ans not in F and ans.multiplicative_order() == Infinity
+    assert ans not in F and ans.multiplicative_order() == Infinity and ans.norm(F) == 1
     return ans
 
 def conjugate_quaternion_over_base(q):
@@ -610,8 +610,7 @@ def magma_F_elt_to_sage(F_sage,x):
     return F_sage([QQ(x[i+1]) for i in range(F_sage.degree())])
 
 def magma_quaternion_to_sage(B_sage,x):
-    tmp = B_sage([magma_F_elt_to_sage(B_sage.base_ring(),x.Vector()[m+1]) for m in range(4)])
-    return tmp
+    return B_sage([magma_F_elt_to_sage(B_sage.base_ring(),x.Vector()[m+1]) for m in range(4)])
 
 def magma_integral_quaternion_to_sage(B_sage,O_magma,F_magma,x):
     F = B_sage.base_ring()
