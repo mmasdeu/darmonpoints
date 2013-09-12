@@ -60,7 +60,69 @@ def precompute_magma_embeddings(quat_disc,max_dK):
     print 'All done'
     return
 
-def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = None, input_data = None,quatalg_disc = None):
+def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,quaternionic = True,outfile = None):
+    p = J.parent().prime()
+    prec = J.parent().precision_cap()
+    QQp = Qp(p,prec)
+    if local_embedding is None:
+        local_embedding = QQp
+    hK = K.class_number()
+    # Tate parameter
+    qE = tate_parameter(E.change_ring(local_embedding),QQp)
+
+    valqE = QQ(qE.valuation())
+    numqE,denqE = valqE.numerator(),valqE.denominator()
+
+    ulog = 1/numqE * (ZZ(p)**numqE/qE**denqE).log()
+    Jlog = J.log(p_branch = ulog)
+    Cp = Jlog.parent()
+    addpart0 = Jlog/known_multiple
+    candidate = None
+    if twopowlist is None:
+        if quaternionic:
+            twopowlist = [8, 4, 3, 2, 1, 1/2, 3/2, 1/3, 2/3, 1/4, 3/4, 5/2, 4/3, 5/3]
+        else:
+            twopowlist = [2, 1, 1/2]
+    HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
+    for twopow in twopowlist:
+        addpart = addpart0 / twopow
+        success = False
+        for a,b in product(range(p),repeat = 2):
+            if a == 0 and b == 0:
+                continue
+            try:
+                J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
+            except ValueError: continue
+            if J1 == Cp(1):
+                candidate = E.change_ring(HCF)(0)
+                verbose('Recognized the point, it is zero!')
+                success = True
+                break
+            else:
+                pt = getcoords(E.change_ring(local_embedding),J1,prec)
+                if pt is Infinity:
+                    continue
+                else:
+                    x,y = pt
+                success = False
+                prec0 = prec
+                while not success and prec0 > 2/3 * prec:
+                    verbose('Trying to recognize point with precision %s'%prec0, level = 2)
+                    candidate,success = recognize_point(x,y,E,K,prec = prec0,HCF = HCF)
+                    prec0 -= 1
+
+                if success:
+                    verbose('Recognized the point!')
+                    fwrite('x,y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
+                    break
+        if success:
+            assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
+            return candidate,twopow,J1
+    assert not success
+    return None,None
+
+
+def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = None, input_data = None,quatalg_disc = None,parallelize = False):
     F = E.base_ring()
     beta = F(beta)
     DB,Np = get_heegner_params(P,E,beta)
@@ -151,7 +213,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             Phi = get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db)
             # Integration with moments
             tot_time = walltime()
-            J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec)
+            J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec,parallelize = parallelize)
             verbose('integration tot_time = %s'%walltime(tot_time))
             if use_sage_db:
                 G.save_to_db()
@@ -217,96 +279,52 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
         local_embedding = G.base_ring_local_embedding(working_prec)
     else:
         local_embedding = Qp(p,working_prec)
-    # Tate parameter
-    qE = tate_parameter(E.change_ring(local_embedding),QQp)
-
-    valqE = QQ(qE.valuation())
-    numqE,denqE = valqE.numerator(),valqE.denominator()
-    ulog = 1/numqE * (ZZ(p)**numqE/qE**denqE).log()
-    Jlog = J.log(p_branch = ulog)
-    Cp = Jlog.parent()
 
     known_multiple = (smoothen_constant*nn)
     while known_multiple % p == 0:
         known_multiple = ZZ(known_multiple / p)
 
-    addpart0 = Jlog/known_multiple
-    candidate = None
-    if quaternionic:
-        twopowlist = [4, 3, 2, 1, 1/2, 3/2, 1/3, 2/3, 1/4, 3/4]
-    else:
-        twopowlist = [2, 1, 1/2]
-    HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
-    for twopow in twopowlist:
-        addpart = addpart0 / twopow
-        success = False
-        for a,b in product(range(p),repeat = 2):
-            if a == 0 and b == 0:
-                continue
-            try:
-                J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
-            except ValueError: continue
-            if J1 == Cp(1):
-                candidate = E.change_ring(HCF)(0)
-                verbose('Recognized the point, it is zero!')
-                success = True
-                break
-            else:
-                pt = getcoords(E.change_ring(local_embedding),J1,prec)
-                if pt is Infinity:
-                    continue
-                else:
-                    x,y = pt
-                success = False
-                prec0 = prec
-                while not success and prec0 > 2/3 * prec:
-                    verbose('Trying to recognize point with precision %s'%prec0, level = 2)
-                    candidate,success = recognize_point(x,y,E,K,prec = prec0,HCF = HCF)
-                    prec0 -= 1
+    candidate,twopow,J1 = recognize_J(E,J,K,local_embedding = local_embedding,known_multiple = known_multiple,quaternionic = quaternionic,outfile = outfile)
 
-                if success:
-                    verbose('Recognized the point!')
-                    fwrite('x,y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
-                    break
-        if success:
-            if hK == 1:
-                try:
-                    verbose('candidate = %s'%candidate)
-                    Ptsmall = E.change_ring(HCF)(candidate)
-                    fwrite('twopow = %s'%twopow,outfile)
-                    assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
-                    fwrite('Computed point:  %s * %s * %s'%(twopow,known_multiple,Ptsmall),outfile)
-                    fwrite('(first factor is not understood, second factor is)',outfile)
-                    # if ppow != 1:
-                    #     fwrite('Took the %s-power %s out also'%(p,ppow),outfile)
-                    fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
-                    fwrite('================================================',outfile)
-                    if return_all_data == True:
-                        return Ptsmall, Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
-                    else:
-                        return Ptsmall
-                except (TypeError,ValueError):
-                    verbose("Could not recognize the point.")
-            else:
+    if candidate is not None:
+        HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
+        if hK == 1:
+            try:
                 verbose('candidate = %s'%candidate)
+                Ptsmall = E.change_ring(HCF)(candidate)
                 fwrite('twopow = %s'%twopow,outfile)
-                assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
-                fwrite('Computed point:  %s * %s * (x,y)'%(twopow,known_multiple),outfile)
+                
+                fwrite('Computed point:  %s * %s * %s'%(twopow,known_multiple,Ptsmall),outfile)
                 fwrite('(first factor is not understood, second factor is)',outfile)
-                try:
-                    pols = [HCF(c).relative_minpoly() for c in candidate[:2]]
-                except AttributeError:
-                    pols = [HCF(c).minpoly() for c in candidate[:2]]
-                fwrite('Where x satisfies %s'%pols[0],outfile)
-                fwrite('and y satisfies %s'%pols[1],outfile)
+                # if ppow != 1:
+                #     fwrite('Took the %s-power %s out also'%(p,ppow),outfile)
+                fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
                 fwrite('================================================',outfile)
                 if return_all_data == True:
-                    return candidate, Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
+                    return Ptsmall, Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
                 else:
-                    return candidate
-
-    fwrite('================================================',outfile)
-    if return_all_data == True:
-        return [], Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
+                    return Ptsmall
+            except (TypeError,ValueError):
+                verbose("Could not recognize the point.")
+        else:
+            verbose('candidate = %s'%candidate)
+            fwrite('twopow = %s'%twopow,outfile)
+            fwrite('Computed point:  %s * %s * (x,y)'%(twopow,known_multiple),outfile)
+            fwrite('(first factor is not understood, second factor is)',outfile)
+            try:
+                pols = [HCF(c).relative_minpoly() for c in candidate[:2]]
+            except AttributeError:
+                pols = [HCF(c).minpoly() for c in candidate[:2]]
+            fwrite('Where x satisfies %s'%pols[0],outfile)
+            fwrite('and y satisfies %s'%pols[1],outfile)
+            fwrite('================================================',outfile)
+            if return_all_data == True:
+                return candidate, Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
+            else:
+                return candidate
     else:
-        return []
+        fwrite('================================================',outfile)
+        if return_all_data == True:
+            return [], Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
+        else:
+            return []

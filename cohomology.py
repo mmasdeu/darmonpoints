@@ -110,7 +110,7 @@ class CohomologyElement(ModuleElement):
         return self._val
 
     def _repr_(self):
-        return 'Cohomology class %s'%self._val
+        return 'Cohomology class in %s'%self.parent()
 
     def  _add_(self,right):
         return self.__class__(self.parent(),[a+b for a,b in zip(self._val,right._val)])
