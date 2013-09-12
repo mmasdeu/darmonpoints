@@ -23,6 +23,8 @@ from ocmodule import OCVn
 from sage.misc.persist import db,db_save
 from sage.schemes.plane_curves.constructor import Curve
 
+oo = Infinity
+
 def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False):
     try:
         p = ZZ(P)
@@ -163,16 +165,16 @@ class CohomologyElement(ModuleElement):
         # verbose('word = %s'%list(word))
         if len(word) == 1:
             g,a = word[0]
-            gmat = G.embed(G.gen(g).quaternion_rep,prec)
-            gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
             if a == 0:
                 return V(0)
             elif a == -1:
+                gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
                 if self.parent()._use_ps_dists:
                     return -(Sigma0(gmat_inv) * self._val[g])
                 else:
                     return  -self._val[g].l_act_by(gmat_inv)
             elif a < 0:
+                gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
                 if self.parent()._use_ps_dists:
                     return -(Sigma0(gmat_inv**-a) * self._evaluate_word(tuple([(g,-a)])))
                 else:
@@ -181,6 +183,7 @@ class CohomologyElement(ModuleElement):
             elif a == 1:
                 return self._val[g]
             else:
+                gmat = G.embed(G.gen(g).quaternion_rep,prec)
                 phig = self._val[g]
                 tmp = V(phig)
                 for i in range(a-1):
@@ -215,7 +218,7 @@ class CohomologyElement(ModuleElement):
         verbose("Applied Up once")
         ii = 0
         current_val = min([(h2._val[i] - self._val[i]).valuation() for i in range(len(h2._val))])
-        old_val = -Infinity
+        old_val = -oo
         while current_val < prec and current_val > old_val:
             h1 = h2
             old_val = current_val

@@ -16,7 +16,7 @@ magma.attach_spec('KleinianGroups-1.0/klngpspec')
 
 sys.setrecursionlimit(10**6)
 
-def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = True,use_sage_db = False):
+def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     if use_ps_dists == False:
@@ -60,9 +60,13 @@ def precompute_magma_embeddings(quat_disc,max_dK):
     print 'All done'
     return
 
-def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = None, input_data = None):
+def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = None, input_data = None,quatalg_disc = None):
     F = E.base_ring()
+    beta = F(beta)
     DB,Np = get_heegner_params(P,E,beta)
+    if quatalg_disc is not None:
+        assert DB == F.ideal(quatalg_disc)
+        DB = quatalg_disc
     quaternionic = ( DB != 1 )
     if use_ps_dists is None:
         use_ps_dists = False if quaternionic else True
@@ -129,10 +133,18 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     if input_data is None:
         if quaternionic:
             # Define the S-arithmetic group
-            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB).invariants(),Np,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db)
+            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB).invariants(),Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
-            cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,hecke_smoothen = True,outfile = outfile)
+            try:
+                cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,hecke_smoothen = True,outfile = outfile)
+            except ValueError:
+                print 'ValueError occurred when constructing homology cycle. Returning the S-arithmetic group.'
+                return G
+            except AssertionError as e:
+                print 'Assertion occurred when constructing homology cycle. Returning the S-arithmetic group.'
+                print e
+                return G
             smoothen_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,smoothen_constant),outfile)
             fwrite('exponent = %s'%nn,outfile)
@@ -262,8 +274,8 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                     verbose('candidate = %s'%candidate)
                     Ptsmall = E.change_ring(HCF)(candidate)
                     fwrite('twopow = %s'%twopow,outfile)
-                    assert smoothen_constant * nn * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
-                    fwrite('Computed point:  %s * %s * %s'%(twopow,smoothen_constant * nn,Ptsmall),outfile)
+                    assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
+                    fwrite('Computed point:  %s * %s * %s'%(twopow,known_multiple,Ptsmall),outfile)
                     fwrite('(first factor is not understood, second factor is)',outfile)
                     # if ppow != 1:
                     #     fwrite('Took the %s-power %s out also'%(p,ppow),outfile)
@@ -278,8 +290,8 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             else:
                 verbose('candidate = %s'%candidate)
                 fwrite('twopow = %s'%twopow,outfile)
-                assert smoothen_constant * nn * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
-                fwrite('Computed point:  %s * %s * (x,y)'%(twopow,smoothen_constant * nn),outfile)
+                assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
+                fwrite('Computed point:  %s * %s * (x,y)'%(twopow,known_multiple),outfile)
                 fwrite('(first factor is not understood, second factor is)',outfile)
                 try:
                     pols = [HCF(c).relative_minpoly() for c in candidate[:2]]

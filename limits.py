@@ -1,4 +1,3 @@
-from sage.modular.pollack_stevens.fund_domain import M2Z
 from sage.matrix.all import matrix,Matrix
 from itertools import starmap,izip,product,chain
 from operator import mul,itemgetter

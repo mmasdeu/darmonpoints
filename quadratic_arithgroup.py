@@ -77,6 +77,7 @@ class ArithGroup_quadratic_generic(AlgebraicGroup):
         raise NotImplementedError
 
     def _is_in_order(self,x):
+        #return x in self.
         return all([o.is_integral() for o in self._quaternion_to_list(x)])
 
     def _denominator(self,x):
@@ -127,7 +128,7 @@ class ArithGroup_quadratic_generic(AlgebraicGroup):
         return self._gens
 
 
-    def compute_quadratic_embedding(self,K):
+    def compute_quadratic_embedding(self,K,return_generator = False):
         O_magma = self._O_magma
         F_magma = self._F_magma
 
@@ -149,30 +150,37 @@ class ArithGroup_quadratic_generic(AlgebraicGroup):
             print 'O_magma =',O_magma
             raise RuntimeError
         verbose('Calling magma Embed function done!')
+        wm = K_magma(OK_magma.Basis()[2])
+        w = K(magma_F_elt_to_sage(self.F,wm[1]) + magma_F_elt_to_sage(self.F,wm[2]) * b)
         ans = magma_integral_quaternion_to_sage(self.B,O_magma,F_magma,iota.Image(OK_magma(K_magma.gen(1))))
         # ans = magma_quaternion_to_sage(self.B,self._B_magma(iota.Image(OK_magma(K_magma.gen(1)))))
         assert ans.reduced_norm() == K.gen().norm(self.F) and ans.reduced_trace() == K.gen().trace(self.F)
-        return ans
+        ans = self.B(ans)
+        if return_generator:
+            verbose('w = %s, minpoly = %s'%(w,w.minpoly()))
+            assert w in K.maximal_order()
+            return ans,w
+        else:
+            return ans
 
     def embed_order(self,p,K,prec,zero_deg = True,outfile = None,return_all = False):
         r'''
         '''
         verbose('Computing quadratic embedding to precision %s'%prec)
-        mu = self.compute_quadratic_embedding(K)
+        mu = self.compute_quadratic_embedding(K,return_generator = False)
         verbose('Finding module generators')
         w = module_generators(K)[1]
         verbose('Done')
-        w_minpoly = PolynomialRing(Qp(p,prec),names = 'x')([self._F_to_Qp(o) for o in w.minpoly().list()])
+        w_minpoly = PolynomialRing(Qp(p,prec),names = 'x')([self._F_to_Qp(o) for o in w.minpoly().coeffs()])
         verbose('w_minpoly = %s'%w_minpoly)
         Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
         verbose('Cp is %s'%Cp)
-        g = Cp.gen()
-        assert len(w.list()) == 2
         wl = w.list()
+        assert len(wl) == 2
         r0 = -wl[0]/wl[1]
         r1 = 1/wl[1]
         assert r0+r1*w == K.gen()
-        padic_Kgen = Cp(self._F_to_Qp(r0))+Cp(self._F_to_Qp(r1))*g
+        padic_Kgen = Cp(self._F_to_Qp(r0))+Cp(self._F_to_Qp(r1))*Cp.gen()
         try:
             fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
         except NotImplementedError: pass
@@ -189,8 +197,20 @@ class ArithGroup_quadratic_generic(AlgebraicGroup):
         assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
 
         found = False
-        gammalst = find_the_unit_of(self.F,K).list()
-        gamma = self(self.B(gammalst[0]) + self.B(gammalst[1]) * mu)
+        u = find_the_unit_of(self.F,K)
+        assert u.is_integral() and (1/u).is_integral()
+        gammalst = u.list()
+        assert len(gammalst) == 2
+        gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
+        verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.reduced_trace(),gammaquatrep.reduced_norm()))
+        assert gammaquatrep.reduced_trace() == u.trace(self.F) and gammaquatrep.reduced_norm() == u.norm(self.F)
+        gammaq = gammaquatrep
+        while True:
+            try:
+                gamma = self(gammaq)
+                break
+            except ValueError:
+                gammaq *= gammaquatrep
         fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
         fwrite('gamma_psi = %s'%gamma,outfile)
         fwrite('tau_psi = %s'%tau1,outfile)
@@ -211,17 +231,16 @@ class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
 
         self.B = QuaternionAlgebra(self.F,self.a,self.b)
 
-        # assert len(self.F.ideal(self.B.discriminant()).factor()) % 2 == 0
-        tmpObasis = [magma_quaternion_to_sage(self.B,o) for o in self._O_magma.ZBasis()]
-
+        magma_ZBasis = self._O_magma.ZBasis()
+        #wm = self._F_magma(self._F_magma.MaximalOrder().Basis()[2])
+        tmpObasis = [magma_quaternion_to_sage(self.B,o) for o in magma_ZBasis]
         self.Obasis = tmpObasis
-        Obasis = [u for elt in tmpObasis for o in elt.coefficient_tuple() for u in o.list()]
+        Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
         self.basis_invmat = matrix(QQ,4*self.F.degree(),4*self.F.degree(),Obasis).transpose().inverse()
 
-        tmpObasis = [magma_quaternion_to_sage(self.B,o) for o in self._O_magma.Basis()]
-
-        Obasis = [u  for elt in tmpObasis for o in elt.coefficient_tuple() for u in o.list()]
-        self.Fbasis_mat = matrix(QQ,4,4*self.F.degree(),Obasis).transpose()
+        #tmpObasis = [magma_quaternion_to_sage(self.B,o) for o in self._O_magma.Basis()]
+        #Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
+        #self.Fbasis_mat = matrix(QQ,4,4*self.F.degree(),Obasis).transpose()
 
         self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant())
         verbose('Computing normalized basis')
@@ -431,7 +450,7 @@ class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
         return Gab,V,free_idx
 
 class ArithGroupQuadraticElement(MultiplicativeGroupElement):
-    def __init__(self,parent, word_rep = None, quaternion_rep = None, check = True):
+    def __init__(self,parent, word_rep = None, quaternion_rep = None, check = False):
         r'''
         Initialize.
 
@@ -452,6 +471,8 @@ class ArithGroupQuadraticElement(MultiplicativeGroupElement):
         if quaternion_rep is not None:
             if not parent._is_in_order(quaternion_rep):
                 print quaternion_rep
+                print [o for o in parent._quaternion_to_list(quaternion_rep)]
+                print [o.is_integral()  for o in parent._quaternion_to_list(quaternion_rep)]
                 raise ValueError,'Quaternion must be in order'
             if check:
                 rednrm = quaternion_rep.reduced_norm()
@@ -513,7 +534,7 @@ class ArithGroupQuadraticElement(MultiplicativeGroupElement):
         else:
             return 0
 
-    def _reduce_word(self, check = True):
+    def _reduce_word(self, check = False):
         if not self.has_word_rep:
             return
         if check:
@@ -529,7 +550,7 @@ class ArithGroupQuadraticElement(MultiplicativeGroupElement):
         '''
         tmp = self.parent().get_word_rep(self.quaternion_rep)
         self.has_word_rep = True
-        self.check_consistency(self.quaternion_rep,tmp,txt = '3')
+        # self.check_consistency(self.quaternion_rep,tmp,txt = '3')
         return tmp
 
     @lazy_attribute

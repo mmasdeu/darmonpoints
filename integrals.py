@@ -18,6 +18,8 @@ from limits import num_evals,find_center
 from sage.parallel.decorate import fork,parallel
 import os
 
+oo = Infinity
+
 def double_integral_zero_infty(Phi,tau1,tau2):
     p = Phi.parent().prime()
     K = tau1.parent()

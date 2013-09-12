@@ -123,8 +123,6 @@ class BigArithGroup_class(AlgebraicGroup):
             raise ValueError, 'p ( = %s) must be prime'%self.p
         self.discriminant = Fideal(discriminant) if self.F.degree() > 1 else ZZ(discriminant)
         self.level = Fideal(level) if self.F.degree() > 1 else ZZ(level)
-        # if len(self.discriminant.factor()) % 2 != 0:
-        #     raise ValueError, 'Discriminant must contain an even number of primes'
         verbose('Initializing arithmetic group G(n)...')
         self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level)
         self.Gn.get_embedding = self.get_embedding

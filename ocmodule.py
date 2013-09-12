@@ -19,6 +19,9 @@ from sage.rings.rational_field import QQ
 from sage.rings.integer_ring import ZZ
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.categories.pushout import pushout
+from sage.rings.infinity import Infinity
+
+oo = Infinity
 
 class OCVnElement(ModuleElement):
     r"""
@@ -229,7 +232,7 @@ class OCVnElement(ModuleElement):
         if not self._parent.base_ring().is_exact():
             return [self._val[ii,0].precision_absolute() for ii in range(self._depth)]
         else:
-            return Infinity
+            return oo
 
     def precision(self):
         r"""
@@ -245,7 +248,7 @@ class OCVnElement(ModuleElement):
         if not self._parent.base_ring().is_exact():
             return min([self._val[ii,0].precision_absolute() for ii in range(self._depth)])
         else:
-            return Infinity
+            return oo
 
     def precision_relative(self):
         r"""
@@ -260,7 +263,7 @@ class OCVnElement(ModuleElement):
         if not self._parent.base_ring().is_exact():
             return min([self._val[ii,0].precision_relative() for ii in range(self._depth)])
         else:
-            return Infinity
+            return oo
 
     def _repr_(self):
         r"""

@@ -14,6 +14,8 @@ from sage.libs.pari.gen import pari
 from sage.rings.infinity import Infinity
 from sage.sets.primes import Primes
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing,Zmod
+from sage.misc.cachefunc import cached_function
+from sage.rings.big_oh import O
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
@@ -257,39 +259,44 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     un = u * qE**(-(u.valuation()/qE.valuation()).floor())
     return un
 
-
 def our_algdep(z,degree,prec = None):
-    try: return algdep(z,degree)
-    except PariError: pass
     if prec is None:
         prec = z.precision_relative()
     field_deg = z.parent().degree()
     p = z.parent().prime()
-    R = PolynomialRing(ZZ,names = 'x')
-    x = R.gen()
-    n = degree+1
-    zval = z.valuation()
-    ptozval = p**zval
-    z /= ptozval
-    assert z.valuation() == 0
-    pn = p**prec
-    r = 1
-    M = matrix(ZZ, n+field_deg, field_deg)
-    M[0,-1] = 1 # Encodes 1
-    for k in range(1, degree+1):
-        r *= z
+    try:
+        ans = algdep(z,degree)
+    except PariError:
+        R = PolynomialRing(ZZ,names = 'x')
+        x = R.gen()
+        n = degree+1
+        zval = z.valuation()
+        ptozval = p**zval
+        z /= ptozval
+        assert z.valuation() == 0
+        pn = p**prec
+        r = 1
+        M = matrix(ZZ, n+field_deg, field_deg)
+        M[0,-1] = 1 # Encodes 1
+        for k in range(1, degree+1):
+            r *= z
+            for i in range(field_deg):
+                M[k,-1-i] = ZZ(r._ntl_rep()[i])
         for i in range(field_deg):
-            M[k,-1-i] = ZZ(r._ntl_rep()[i])
-    for i in range(field_deg):
-        M[n+i,-1-i] = pn
-    verb_lev = get_verbose()
-    set_verbose(0)
-    tmp = M.left_kernel().matrix().change_ring(ZZ).LLL().row(0)
-    set_verbose(verb_lev)
-    f = R(list(tmp[:n]))(x/ptozval)
-    if f.leading_coefficient() < 0:
-        f = -f
-    return R(f.denominator() * f)
+            M[n+i,-1-i] = pn
+        verb_lev = get_verbose()
+        set_verbose(0)
+        tmp = M.left_kernel().matrix().change_ring(ZZ).LLL().row(0)
+        set_verbose(verb_lev)
+        f = R(list(tmp[:n]))(x/ptozval)
+        if f.leading_coefficient() < 0:
+            f = -f
+        ans = R(f.denominator() * f)
+    return ans
+    for fact,_ in ans.factor():
+        if R(fact)(z) == O(p**prec):
+            return fact
+    return ans
 
 
 def lift_padic_splitting(a,b,II0,JJ0,p,prec):
@@ -359,7 +366,7 @@ def recognize_point(x,y,E,F,prec = None,HCF = None):
       else:
           candidate_x = our_algdep(x,E.base_ring().degree()*2*hF,prec)
           pol_height = sum((RR(o).abs().log() for o in candidate_x.coeffs()))/RR(p).log()
-          if pol_height < .7 * prec: # .8 is quite arbitrary...
+          if pol_height < .8 * prec: # .8 is quite arbitrary...
               list_candidate_x = [rt for rt,pw in candidate_x.change_ring(HCF).roots()]
           else:
               list_candidate_x = []
@@ -544,6 +551,25 @@ def fwrite(string, outfile):
         fout.write(string + '\n')
     return
 
+@cached_function
+def module_generators_new(K):
+    F = K.base_field()
+    if F == QQ:
+        return [1,K.maximal_order().ring_generators()[0]]
+    OK = K.maximal_order()
+    OF = F.maximal_order()
+    r = OF.ring_generators()[0]
+    w = OK.ring_generators()[0]
+    OKbasis = OK.basis()
+    A = matrix([w.coordinates_in_terms_of_powers()(o) for o in OKbasis])
+    det1 = A.determinant().abs()
+    for coeffs in sorted(product(range(-10,10),repeat = 4),key = lambda x:max(ZZ(o).abs() for o in x)):
+        g = sum((c*wi for c,wi in zip(coeffs,OKbasis)),K(1))
+        det = matrix([w.coordinates_in_terms_of_powers()(o) for o in [1,r,g,K(r)*g]]).determinant().abs()
+        if det1 == det:
+            return [1,g]
+
+@cached_function
 def module_generators(K):
     x=var('x')
     y=var('y')
@@ -577,6 +603,7 @@ def module_generators(K):
 def find_the_unit_of(F,K):
     found = False
     GK = K.unit_group()
+    OK = K.maximal_order()
     for uK in GK.fundamental_units():
         is_square,rootNuK = uK.norm(F).is_square(root=True)
         if uK not in F:
@@ -584,12 +611,14 @@ def find_the_unit_of(F,K):
         if is_square and uK not in F:
             ans = uK/rootNuK
             if ans not in F and ans.multiplicative_order() == Infinity and ans.norm(F) == 1:
-                return ans
+                ans_inv = OK(1/ans) #just for testing
+                return OK(ans)
     # Not found so far..
     norm = unit_not_in_F.norm(F)
     ans = unit_not_in_F**2/norm
     assert ans not in F and ans.multiplicative_order() == Infinity and ans.norm(F) == 1
-    return ans
+    ans_inv = OK(1/ans) # just for testing
+    return OK(ans)
 
 def conjugate_quaternion_over_base(q):
     v = q.coefficient_tuple()
