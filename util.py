@@ -155,18 +155,19 @@ def tate_parameter(E,R):
     qE =  (1/j).power_series().reversion()(R(1/jE))
     return qE
 
-def getcoords(E,u,prec=20,R = None):
+def getcoords(E,u,prec=20,R = None,qE = None):
     if R is None:
         R = u.parent()
         u = R(u)
     p = R.prime()
-    jE = E.j_invariant()
+    if qE is None:
+        jE = E.j_invariant()
 
-    # Calculate the Tate parameter
-    E4 = EisensteinForms(weight=4).basis()[0]
-    Delta = CuspForms(weight=12).basis()[0]
-    j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reversion()(R(1/jE))
+        # Calculate the Tate parameter
+        E4 = EisensteinForms(weight=4).basis()[0]
+        Delta = CuspForms(weight=12).basis()[0]
+        j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
+        qE =  (1/j).power_series().reversion()(R(1/jE))
 
     # Normalize the period by appropriate powers of qE
     un = u * qE**(-(u.valuation()/qE.valuation()).floor())
