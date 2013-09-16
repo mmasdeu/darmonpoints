@@ -265,8 +265,9 @@ def our_algdep(z,degree,prec = None):
         prec = z.precision_relative()
     field_deg = z.parent().degree()
     p = z.parent().prime()
+    pn = p**prec
     try:
-        ans = algdep(z,degree)
+        ans = algdep(z + O(pn),degree)
     except PariError:
         R = PolynomialRing(ZZ,names = 'x')
         x = R.gen()
@@ -275,14 +276,13 @@ def our_algdep(z,degree,prec = None):
         ptozval = p**zval
         z /= ptozval
         assert z.valuation() == 0
-        pn = p**prec
         r = 1
         M = matrix(ZZ, n+field_deg, field_deg)
         M[0,-1] = 1 # Encodes 1
         for k in range(1, degree+1):
             r *= z
             for i in range(field_deg):
-                M[k,-1-i] = ZZ(r._ntl_rep()[i])
+                M[k,-1-i] = ZZ(r._ntl_rep()[i]) % pn
         for i in range(field_deg):
             M[n+i,-1-i] = pn
         verb_lev = get_verbose()
@@ -293,11 +293,11 @@ def our_algdep(z,degree,prec = None):
         if f.leading_coefficient() < 0:
             f = -f
         ans = R(f.denominator() * f)
-    return ans
+    #ans = ans/ans.content()
     for fact,_ in ans.factor():
         if R(fact)(z) == O(p**prec):
-            return fact
-    return ans
+            return fact/fact.content()
+    return ans/ans.content()
 
 
 def lift_padic_splitting(a,b,II0,JJ0,p,prec):

@@ -4,7 +4,7 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
 from util import *
-import os
+import os,datetime
 from quatarithgp import BigArithGroup
 from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
 from homology import construct_homology_cycle
@@ -116,7 +116,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
             assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
             return candidate,twopow,J1
     assert not success
-    return None,None
+    return None,None,None
 
 
 def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = None, input_data = None,quatalg_disc = None,parallelize = False):
@@ -179,6 +179,10 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     print E
     if use_sage_db:
         print "Moments will be stored in database as %s"%(fname)
+
+    if outfile is None:
+        outfile = 'log_darmonpoint_%s_%s_%s_%s_%s_%s_%s.sobj'%(P,Ename,K,dK,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+
     fwrite("Starting computation of the Darmon point",outfile)
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
     fwrite('Np = %s'%Np,outfile)
@@ -268,7 +272,6 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 J *= newJ
     else: # input_data is not None
         Phi,J = input_data[1:3]
-    #return J,emblist
     fwrite('J_psi = %s'%J,outfile)
     #return J,emblist
     #Try to recognize a generator
