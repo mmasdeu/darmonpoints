@@ -12,9 +12,14 @@ from integrals import integrate_H1,double_integral_zero_infty,indef_integral
 from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 from sage.misc.persist import db,db_save
 
-# ROOT = /home/float/GitProjects/darmonpoints
 
-magma.attach_spec(ROOT+'/KleinianGroups-1.0/klngpspec')
+try:
+    page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+except NameError:
+    ROOT = '/home/float/GitProjects/darmonpoints' # The default, for development purposes
+    page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+
+magma.attach_spec(page_path)
 
 sys.setrecursionlimit(10**6)
 
@@ -192,7 +197,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
     fwrite('Elliptic curve %s: %s'%(Ename,E),outfile)
     if outfile is not None:
-        print "Partial results will be saved in %s/%s"%outfile
+        print "Partial results will be saved in %s"%outfile
     print "=================================================="
 
     if input_data is None:

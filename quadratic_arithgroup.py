@@ -232,7 +232,6 @@ class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
         self.B = QuaternionAlgebra(self.F,self.a,self.b)
 
         magma_ZBasis = self._O_magma.ZBasis()
-        #wm = self._F_magma(self._F_magma.MaximalOrder().Basis()[2])
         tmpObasis = [magma_quaternion_to_sage(self.B,o) for o in magma_ZBasis]
         self.Obasis = tmpObasis
         Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
@@ -373,7 +372,8 @@ class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
         if use_magma:
             assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,N))
-            candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1]) for m in range(4)])
+            elt_magma_vector = elt_magma.Vector()
+            candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma_vector[m+1]) for m in range(4)])
             self._element_of_norm[N.gens_two()] = candidate
             return candidate
         else:
