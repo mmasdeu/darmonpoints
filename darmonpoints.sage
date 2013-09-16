@@ -183,7 +183,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
         print "Moments will be stored in database as %s"%(fname)
 
     if outfile is None:
-        outfile = 'log_darmonpoint_%s_%s_%s_%s_%s_%s_%s.sobj'%(P,Ename,K,dK,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+        outfile = 'log_darmonpoint_%s_%s_%s_%s_%s_%s.sobj'%(P,Ename,dK,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
     fwrite("Starting computation of the Darmon point",outfile)
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
