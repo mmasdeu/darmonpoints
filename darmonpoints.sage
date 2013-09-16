@@ -121,7 +121,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     return None,None,None
 
 
-def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = None, input_data = None,quatalg_disc = None,parallelize = False):
+def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False):
     F = E.base_ring()
     beta = F(beta)
     DB,Np = get_heegner_params(P,E,beta)
