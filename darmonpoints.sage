@@ -183,7 +183,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
         print "Moments will be stored in database as %s"%(fname)
 
     if outfile is None:
-        outfile = 'log_darmonpoint_%s_%s_%s_%s_%s_%s.sobj'%(P,Ename,dK,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+        outfile = '/tmp/darmonpoint_%s_%s_%s_%s_%s_%s.log'%(P,Ename,dK,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
     fwrite("Starting computation of the Darmon point",outfile)
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
@@ -192,7 +192,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
     fwrite('Elliptic curve %s: %s'%(Ename,E),outfile)
     if outfile is not None:
-        print "Partial results will be saved in %s/%s"%(os.getcwd(),outfile)
+        print "Partial results will be saved in %s/%s"%outfile
     print "=================================================="
 
     if input_data is None:
