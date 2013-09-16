@@ -12,7 +12,9 @@ from integrals import integrate_H1,double_integral_zero_infty,indef_integral
 from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 from sage.misc.persist import db,db_save
 
-magma.attach_spec('KleinianGroups-1.0/klngpspec')
+# ROOT = /home/float/GitProjects/darmonpoints
+
+magma.attach_spec(ROOT+'/KleinianGroups-1.0/klngpspec')
 
 sys.setrecursionlimit(10**6)
 
