@@ -23,7 +23,7 @@ magma.attach_spec(page_path)
 
 sys.setrecursionlimit(10**6)
 
-def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False):
+def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     if use_ps_dists == False:
@@ -47,7 +47,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
     phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0
     verb_level = get_verbose()
     set_verbose(1)
-    Phi = phi0.lift(p,M = prec,algorithm = 'stevens',eigensymbol = True)
+    Phi = phi0.lift(p,M = prec,algorithm = 'stevens',eigensymbol = True,parallel = parallelize)
     set_verbose(verb_level)
     Phi.db(fname)
     return Phi
@@ -74,8 +74,9 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     if local_embedding is None:
         local_embedding = QQp
     hK = K.class_number()
+    Eloc = E.change_ring(local_embedding)
     # Tate parameter
-    qE = tate_parameter(E.change_ring(local_embedding),QQp)
+    qE = tate_parameter(Eloc,QQp)
 
     valqE = QQ(qE.valuation())
     numqE,denqE = valqE.numerator(),valqE.denominator()
@@ -88,31 +89,44 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     if twopowlist is None:
         twopowlist = [2, 1, 1/2]
     HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
+    # Precalculate powers of qE
+    qEpows = [Cp(1)]
+    precp = max((prec/valqE).floor() + 4, ((prec+4)/valqE).floor() + 2)
+    for i in range(precp):
+        qEpows.append( qE * qEpows[-1])
+
+    CEloc = get_Csquare(E,qEpows,Cp,precp)
+    EH = E.change_ring(HCF)
     for twopow in twopowlist:
         addpart = addpart0 / twopow
         success = False
-        for a,b in product(range(p),repeat = 2):
+
+        for a,b in product(range(p),repeat = 2) if twopow * known_multiple != 1 else [(1,0)]:
             if a == 0 and b == 0:
                 continue
-            try:
-                J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
-            except ValueError: continue
+            if twopow * known_multiple != 1:
+                try:
+                    J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
+                except ValueError: continue
+            else:
+                J1 = J
             if J1 == Cp(1):
                 candidate = E.change_ring(HCF)(0)
                 verbose('Recognized the point, it is zero!')
                 success = True
                 break
             else:
-                pt = getcoords(E.change_ring(local_embedding),J1,prec,qE = qE)
-                if pt is Infinity:
-                    continue
-                else:
+                pt = getcoords(Eloc,J1,prec,qEpows = qEpows,C = CEloc)
+                try:
                     x,y = pt
+                except TypeError:
+                    assert pt is Infinity
+                    continue
                 success = False
                 prec0 = prec
-                while not success and prec0 > 2/3 * prec:
+                while not success and prec0 > max([2/3 * prec,prec - 5]):
                     verbose('Trying to recognize point with precision %s'%prec0, level = 2)
-                    candidate,success = recognize_point(x,y,E,K,prec = prec0,HCF = HCF)
+                    candidate,success = recognize_point(x,y,E,K,prec = prec0,HCF = HCF,E_over_HCF = EH)
                     prec0 -= 1
 
                 if success:
@@ -218,7 +232,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             smoothen_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,smoothen_constant),outfile)
             fwrite('exponent = %s'%nn,outfile)
-            Phi = get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db)
+            Phi = get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize)
             # Integration with moments
             tot_time = walltime()
             J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec,parallelize = parallelize)
@@ -239,7 +253,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             Cp = Qp(p,working_prec).extension(w.minpoly(),names = 'g')
             v0 = K.hom([r0+r1*Cp.gen()])
 
-            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db)
+            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = False)
 
             # Optimal embeddings of level one
             print "Computing optimal embeddings of level one..."
@@ -279,12 +293,13 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 J *= newJ
     else: # input_data is not None
         Phi,J = input_data[1:3]
+    print 'Integral done. Now trying to recognize the point'
     fwrite('J_psi = %s'%J,outfile)
     #return J,emblist
     #Try to recognize a generator
     if quaternionic:
         local_embedding = G.base_ring_local_embedding(working_prec)
-        twopowlist = [8, 4, 3, 2, 1, 1/2, 3/2, 1/3, 2/3, 1/4, 3/4, 5/2, 4/3, 5/3]
+        twopowlist = [4, 3, 2, 1, 1/2, 3/2, 1/3, 2/3, 1/4, 3/4, 5/2, 4/3]
     else:
         local_embedding = Qp(p,working_prec)
         twopowlist = [2, 1, 1/2]
@@ -309,6 +324,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 #     fwrite('Took the %s-power %s out also'%(p,ppow),outfile)
                 fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
                 fwrite('================================================',outfile)
+                print 'Point found: %s'%Ptsmall
                 if return_all_data == True:
                     return Ptsmall, Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
                 else:
@@ -327,6 +343,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             fwrite('Where x satisfies %s'%pols[0],outfile)
             fwrite('and y satisfies %s'%pols[1],outfile)
             fwrite('================================================',outfile)
+            print 'Point found: %s'%candidate
             if return_all_data == True:
                 return candidate, Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
             else:

@@ -155,40 +155,78 @@ def tate_parameter(E,R):
     qE =  (1/j).power_series().reversion()(R(1/jE))
     return qE
 
-def getcoords(E,u,prec=20,R = None,qE = None):
+def get_Csquare(E,qEpows,R,prec):
+    sk3 = sk5 = 0
+    n2 = n3 = 0
+    for n in range(1,prec):
+        rn = 1/(1-qEpows[n]) - 1
+        n2 += 2*n - 1
+        n3 += 3*n2 - 3*n + 1
+        newsk3 = n3 * rn
+        sk3 += newsk3
+        sk5 += n2 * newsk3
+    tate_a4 = -5  * sk3
+    tate_a6 = (tate_a4 - 7 * sk5 )/12
+    Eqc4, Eqc6 = 1-48*tate_a4, -1 + 72 * tate_a4 - 864 * tate_a6
+    C2 = (Eqc4 * R(E.c6())) / (Eqc6 * R(E.c4()))
+    return our_sqrt(R(C2),R) #.square_root()
+
+def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
     if R is None:
         R = u.parent()
         u = R(u)
     p = R.prime()
     if qE is None:
-        jE = E.j_invariant()
+        if qEpows is not None:
+            qE = qEpows[1]
+        else:
+            jE = E.j_invariant()
 
-        # Calculate the Tate parameter
-        E4 = EisensteinForms(weight=4).basis()[0]
-        Delta = CuspForms(weight=12).basis()[0]
-        j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-        qE =  (1/j).power_series().reversion()(R(1/jE))
+            # Calculate the Tate parameter
+            E4 = EisensteinForms(weight=4).basis()[0]
+            Delta = CuspForms(weight=12).basis()[0]
+            j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
+            qE =  (1/j).power_series().reversion()(R(1/jE))
+
+    qEval = qE.valuation()
+
+    precn = (prec/qEval).floor() + 4
+    precp = ((prec+4)/qEval).floor() + 2
+
+    if qEpows is None:
+        qEpows =[R(1)]
+        for i in range(max([precn,precp + 1])):
+            qEpows.append(qE * qEpows[-1])
 
     # Normalize the period by appropriate powers of qE
-    un = u * qE**(-(u.valuation()/qE.valuation()).floor())
+    un = u * qEpows[(u.valuation()/qEval).floor()]**-1
 
     if un == 1:
-        return 0,Infinity
+        return Infinity
 
-    precn = (prec/qE.valuation()).floor() + 4
     # formulas in Silverman II (Advanced Topics in the Arithmetic of Elliptic curves, p. 425)
-    xx = un/(1-un)**2 + sum( [qE**n*un/(1-qE**n*un)**2 + qE**n/un/(1-qE**n/un)**2-2*qE**n/(1-qE**n)**2 for n in range(1,precn) ])
-    yy = un**2/(1-un)**3 + sum( [qE**(2*n)*un**2/(1-qE**n*un)**3 - qE**n/un/(1-qE**n/un)**3+qE**n/(1-qE**n)**2 for n in range(1,precn) ])
-    
+    xx = un/(1-un)**2
+    yy = xx**2 * (1-un) # = un**2/(1-un)**3
+    for n in range(1,precn):
+        qEn = qEpows[n]
+        qEn_times_un = qEn * un
+        first_sum = qEn_times_un/(1-qEn_times_un)**2
+        second_sum = first_sum**2 * (1 - qEn_times_un)
+        den_un = 1- qEn/un
+        den_un_2 = den_un ** 2
+        qEn_over_un_den_un_2 = qEn/(un * den_un_2)
+        rat = qEn/(1-qEn)**2
+        xx += first_sum + qEn_over_un_den_un_2 - 2 * rat
+        yy += second_sum - qEn_over_un_den_un_2/den_un + rat
 
-    sk = lambda q,k,pprec: sum( [n**k*q**n/(1-q**n) for n in range(1,pprec+1)] )
-    n = qE.valuation()
-    precp = ((prec+4)/n).floor() + 2;
-    tate_a4 = -5  * sk(qE,3,precp)
-    tate_a6 = (tate_a4 - 7 * sk(qE,5,precp) )/12
-    Eq = EllipticCurve([R(1),R(0),R(0),tate_a4,tate_a6])
-    C2 = (Eq.c4() * R(E.c6())) / (Eq.c6() * R(E.c4()))
-    C = our_sqrt(R(C2),R) #.square_root()
+    # xx = un/(1-un)**2 + sum( [qEpows[n]*un/(1-qEpows[n]*un)**2 + qEpows[n]/un/(1-qEpows[n]/un)**2-2*qEpows[n]/(1-qEpows[n])**2 for n in range(1,precn) ])
+    # yy = un**2/(1-un)**3 + sum( [(qEpows[n]*un)**2/(1-qEpows[n]*un)**3 - qEpows[n]/un/(1-qEpows[n]/un)**3+qEpows[n]/(1-qEpows[n])**2 for n in range(1,precn) ])
+
+    if C is None:
+        C2 = get_Csquare(E,qEpows,R,precp + 1)
+        C = our_sqrt(R(C2),R)
+    else:
+        C2 = C**2
     s = (C - R(E.a1()))/R(2)
     r = (s*(C-s) - R(E.a2())) / 3
     t =  (r*(2*s-C)-R(E.a3())) / 2
@@ -240,11 +278,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     t = (C**3*R(E.a3()) - r)/R(2)
     xx = r + C**2 * K_to_Cp(P[0])
     yy = t + s * C**2 * K_to_Cp(P[0]) + C**3 * K_to_Cp(P[1])
-    # try:
-    #     EqCp = Eq.change_ring(yy.parent())
-    #     Pq = EqCp([xx,yy])
-    # except TypeError:
-    #     raise RuntimeError, "Bug : Point %s does not lie on the curve "%[xx,yy]
+
     tt = -xx/yy
     if tt.valuation(p) <= 0:
         raise  ValueError , "The point must lie in the formal group."
@@ -334,7 +368,7 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
             raise RuntimeError,'Hensel iteration does not seem to converge'
     return newII,newJJ
 
-def recognize_point(x,y,E,F,prec = None,HCF = None):
+def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   hF = F.class_number()
   if HCF is None:
       if hF > 1:
@@ -352,32 +386,37 @@ def recognize_point(x,y,E,F,prec = None,HCF = None):
   if x == 0 and y == 0:
       list_candidate_x = [0]
   elif (1/x).valuation() > prec and (1/y).valuation() > prec:
-      return E.change_ring(HCF)(0),True
-  else:
-      if E.base_ring() == QQ and hF == 1:
-          assert w.minpoly()(Cp.gen()) == 0
-          x1 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[0]))).add_bigoh(prec)
-          x2 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[1]))).add_bigoh(prec)
-          try:
-              x1 = algdep(x1,1).roots(QQ)[0][0]
-              x2 = algdep(x2,1).roots(QQ)[0][0]
-          except IndexError:
-              return x,False
-          list_candidate_x = [x1+x2*w]
+      if E_over_HCF is not None:
+          return E_over_HCF(0),True
       else:
-          candidate_x = our_algdep(x,E.base_ring().degree()*2*hF,prec)
-          pol_height = sum((RR(o).abs().log() for o in candidate_x.coeffs()))/RR(p).log()
-          if pol_height < .8 * prec: # .8 is quite arbitrary...
-              list_candidate_x = [rt for rt,pw in candidate_x.change_ring(HCF).roots()]
-          else:
-              list_candidate_x = []
-  for candidate_x in list_candidate_x:
+          return E.change_ring(HCF)(0),True
+  elif E.base_ring() == QQ and hF == 1:
+      assert w.minpoly()(Cp.gen()) == 0
+      x1 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[0]))).add_bigoh(prec)
+      x2 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[1]))).add_bigoh(prec)
       try:
-          Pt = E.change_ring(HCF).lift_x(candidate_x)
-          verbose('Point is in curve: %s'%Pt,level=2)
-          return Pt,True
-      except ValueError:
-          verbose('Point does not appear to lie on curve...',level=2)
+          x1 = algdep(x1,1).roots(QQ)[0][0]
+          x2 = algdep(x2,1).roots(QQ)[0][0]
+      except IndexError:
+          return x,False
+      list_candidate_x = [x1+x2*w]
+  else:
+      candidate_x = our_algdep(x,E.base_ring().degree()*2*hF,prec)
+      pol_height = sum((RR(o).abs().log() for o in candidate_x.coeffs()))/RR(p).log()
+      if pol_height < .7 * prec: # .7 is quite arbitrary...
+          list_candidate_x = [rt for rt,pw in candidate_x.change_ring(HCF).roots()]
+      else:
+          list_candidate_x = []
+  if len(list_candidate_x) > 0:
+      if E_over_HCF is None:
+          E_over_HCF = E.change_ring(HCF)
+      for candidate_x in list_candidate_x:
+          try:
+              Pt = E_over_HCF.lift_x(candidate_x)
+              verbose('Point is in curve: %s'%Pt,level=2)
+              return Pt,True
+          except ValueError:
+              verbose('Point does not appear to lie on curve...',level=2)
   return candidate_x,False
 
 def our_sqrt(x,K):

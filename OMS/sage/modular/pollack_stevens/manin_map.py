@@ -390,11 +390,11 @@ class ManinMap(object):
             sage: len(f._dict)
             38
         """
-        verbose('Computing full data...')
+        # verbose('Computing full data...')
         for B in self._manin.reps():
             if not self._dict.has_key(B):
                 self._dict[B] = self._compute_image_from_gens(B)
-        verbose('Done')
+        # verbose('Done')
 
     def __add__(self, right):
         r"""
@@ -826,7 +826,7 @@ class ManinMap(object):
             sage: phi.Tq_eigenvalue(7,7,10)
             -2
         """
-        verbose('parallel = %s'%_parallel)
+        # verbose('parallel = %s'%_parallel)
         self.compute_full_data() # Why?
         self.normalize() # Why?
         M = self._manin

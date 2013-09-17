@@ -22,10 +22,11 @@ import os
 from ocmodule import OCVn
 from sage.misc.persist import db,db_save
 from sage.schemes.plane_curves.constructor import Curve
+from sage.parallel.decorate import fork,parallel
 
 oo = Infinity
 
-def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False):
+def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -68,7 +69,7 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
         Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.small_group().gens()])
     apsign = ZZ(E.ap(p)) if E.base_ring() == QQ else ZZ(Pnorm + 1 - Curve(E.defining_polynomial().change_ring(F.residue_field(P))).count_points(1)[0])
     assert apsign.abs() == 1
-    Phi = Phi.improve(prec = prec,sign = apsign)
+    Phi = Phi.improve(prec = prec,sign = apsign,parallelize = True)
     if use_sage_db:
         db_save(Phi._val,fname)
     verbose('Done.')
@@ -200,7 +201,7 @@ class CohomologyElement(ModuleElement):
             else:
                 return self._evaluate_word(tuple(word[:pivot])) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(G.embed(gamma,prec))
 
-    def improve(self,prec = None,sign = 1):
+    def improve(self,prec = None,sign = 1,parallelize = False):
         r"""
         Repeatedly applies U_p.
 
@@ -213,19 +214,18 @@ class CohomologyElement(ModuleElement):
         if prec is None:
             prec = U.precision_cap()
         reps = group.get_Up_reps()
-        h2 = self.parent().apply_hecke_operator(self,p, hecke_reps = reps,group = group,scale = sign)
-        verbose('%s'%h2,level = 2)
+        h2 = self.parent().apply_hecke_operator(self,p, hecke_reps = reps,group = group,scale = sign,parallelize = parallelize)
+        #verbose('%s'%h2,level = 2)
         verbose("Applied Up once")
         ii = 0
-        current_val = min([(h2._val[i] - self._val[i]).valuation() for i in range(len(h2._val))])
+        current_val = min([(u-v).valuation() for u,v in zip(h2._val,self._val)])
         old_val = -oo
         while current_val < prec and current_val > old_val:
             h1 = h2
             old_val = current_val
             ii += 1
-            h2 = self.parent().apply_hecke_operator(h1,p, hecke_reps = reps,group = group,scale = sign)
-            verbose('%s'%h2,level = 2)
-            current_val = min([(h2._val[i] - h1._val[i]).valuation() for i in range(len(h2._val))])
+            h2 = self.parent().apply_hecke_operator(h1,p, hecke_reps = reps,group = group,scale = sign,parallelize = parallelize)
+            current_val = min([(u-v).valuation() for u,v in zip(h2._val,h1._val)])
             verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
         self._val = h2._val
         verbose('Final precision of %s digits'%current_val)
@@ -380,7 +380,7 @@ class CohomologyGroup(Parent):
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
-    def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1):
+    def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,parallelize = False):
         r"""
         Apply the l-th Hecke operator operator to ``c``.
 
@@ -411,20 +411,34 @@ class CohomologyGroup(Parent):
         else:
             gammas = Gpn.gens()
 
+        if self._use_ps_dists:
+            S0 = self.Sigma0()
+        else:
+            S0 = lambda x:x
+        vals = [V(0) for gamma in gammas]
+        input_vector = []
         for j,gamma in enumerate(gammas):
-            newval = V(0)
-            for gk1 in hecke_reps:
-                tig = group.get_hecke_ti(gk1,gamma.quaternion_rep,l,reps = hecke_reps)
-                val0 = c.evaluate(tig)
-                if padic:
-                    if self._use_ps_dists:
-                        newval += self.Sigma0()(Gpn.embed(gk1,prec)) * val0
-                    else:
-                        newval += val0.l_act_by(Gpn.embed(gk1,prec))
-                else:
-                    newval += val0
-            vals.append(scale * newval)
-        return self(vals)
+            input_vector.extend([(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,j) for g in hecke_reps])
+        if parallelize:
+            f = parallel(_calculate_hecke_contribution)
+            for inp,outp in f(input_vector):
+                vals[inp[0][-1]] += outp
+        else:
+            for inp in input_vector:
+                outp = _calculate_hecke_contribution(*inp)
+                vals[inp[-1]] += outp #_calculate_hecke_contribution(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists)
+        return scale * self(vals)
+
+def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dists,num_gamma = 0):
+    tig = G.get_hecke_ti(g,gamma,l,reps = hecke_reps)
+    val0 = c.evaluate(tig)
+    if padic:
+        if use_ps_dists:
+            return gloc * val0
+        else:
+            return val0.l_act_by(gloc)
+    else:
+        return val0
 
 class ShapiroImage(SageObject):
     def __init__(self,G,cocycle):

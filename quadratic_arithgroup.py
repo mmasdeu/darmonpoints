@@ -500,8 +500,8 @@ class ArithGroupQuadraticElement(MultiplicativeGroupElement):
     def _mul_(left,right):
         word_rep = None
         quaternion_rep = None
-        # if left.has_word_rep and right.has_word_rep:
-        #     word_rep = left.word_rep + right.word_rep
+        if left.has_word_rep and right.has_word_rep:
+            word_rep = left.word_rep + right.word_rep
         if (left.has_quaternion_rep and right.has_quaternion_rep) or word_rep is None:
             quaternion_rep = left.quaternion_rep * right.quaternion_rep
         return ArithGroupQuadraticElement(left.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
