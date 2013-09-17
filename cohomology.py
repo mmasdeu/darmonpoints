@@ -69,7 +69,7 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
         Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.small_group().gens()])
     apsign = ZZ(E.ap(p)) if E.base_ring() == QQ else ZZ(Pnorm + 1 - Curve(E.defining_polynomial().change_ring(F.residue_field(P))).count_points(1)[0])
     assert apsign.abs() == 1
-    Phi = Phi.improve(prec = prec,sign = apsign,parallelize = True)
+    Phi = Phi.improve(prec = prec,sign = apsign,parallelize = parallelize)
     if use_sage_db:
         db_save(Phi._val,fname)
     verbose('Done.')

@@ -155,7 +155,7 @@ def tate_parameter(E,R):
     qE =  (1/j).power_series().reversion()(R(1/jE))
     return qE
 
-def get_Csquare(E,qEpows,R,prec):
+def get_C_and_C2(E,qEpows,R,prec):
     sk3 = sk5 = 0
     n2 = n3 = 0
     for n in range(1,prec):
@@ -169,7 +169,7 @@ def get_Csquare(E,qEpows,R,prec):
     tate_a6 = (tate_a4 - 7 * sk5 )/12
     Eqc4, Eqc6 = 1-48*tate_a4, -1 + 72 * tate_a4 - 864 * tate_a6
     C2 = (Eqc4 * R(E.c6())) / (Eqc6 * R(E.c4()))
-    return our_sqrt(R(C2),R) #.square_root()
+    return our_sqrt(R(C2),R),C2
 
 def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
     if R is None:
@@ -199,7 +199,11 @@ def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
             qEpows.append(qE * qEpows[-1])
 
     # Normalize the period by appropriate powers of qE
-    un = u * qEpows[(u.valuation()/qEval).floor()]**-1
+    qpow = -(u.valuation()/qEval).floor()
+    if qpow >= 0:
+        un = u * qEpows[qpow]
+    else:
+        un = u * qEpows[-qpow]**-1
 
     if un == 1:
         return Infinity
@@ -219,19 +223,16 @@ def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
         xx += first_sum + qEn_over_un_den_un_2 - 2 * rat
         yy += second_sum - qEn_over_un_den_un_2/den_un + rat
 
-    # xx = un/(1-un)**2 + sum( [qEpows[n]*un/(1-qEpows[n]*un)**2 + qEpows[n]/un/(1-qEpows[n]/un)**2-2*qEpows[n]/(1-qEpows[n])**2 for n in range(1,precn) ])
-    # yy = un**2/(1-un)**3 + sum( [(qEpows[n]*un)**2/(1-qEpows[n]*un)**3 - qEpows[n]/un/(1-qEpows[n]/un)**3+qEpows[n]/(1-qEpows[n])**2 for n in range(1,precn) ])
 
     if C is None:
-        C2 = get_Csquare(E,qEpows,R,precp + 1)
-        C = our_sqrt(R(C2),R)
+        C,C2 = get_C_and_C2(E,qEpows,R,precp + 1)
     else:
         C2 = C**2
+
     s = (C - R(E.a1()))/R(2)
     r = (s*(C-s) - R(E.a2())) / 3
     t =  (r*(2*s-C)-R(E.a3())) / 2
     return  ( r + C2 * xx, t + s * C2 * xx + C * C2 * yy )
-
 
 def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     r"""
