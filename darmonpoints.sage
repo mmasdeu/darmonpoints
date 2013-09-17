@@ -310,7 +310,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             Cp = Qp(p,working_prec).extension(w.minpoly(),names = 'g')
             v0 = K.hom([r0+r1*Cp.gen()])
 
-            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = False)
+            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize)
 
             # Optimal embeddings of level one
             print "Computing optimal embeddings of level one..."

@@ -55,23 +55,20 @@ from sage.structure.sage_object import load
 def fast_dist_act(v,g,acting_matrix = None):
     if g is not None and g == 1:
         ans = v._moments
-    try:
-        if acting_matrix is None:
-            ans = v._moments.apply_map(methodcaller('lift')) * v.parent().acting_matrix(g,len(v._moments))
-        else:
-            ans = v._moments.apply_map(methodcaller('lift')) * acting_matrix
-    except AttributeError, TypeError:
-        ans = (v * g)._moments
+    else:
+        try:
+            if acting_matrix is None:
+                ans = v._moments.apply_map(methodcaller('lift')) * v.parent().acting_matrix(g,len(v._moments))
+            else:
+                ans = v._moments.apply_map(methodcaller('lift')) * acting_matrix
+        except AttributeError, TypeError:
+            ans = (v * g)._moments
     if len(v._moments) > 0:
         assert len(ans) > 0
     return ans
 
-@parallel
-def f_par(mmap,v,g):
-    try:
-        return sum((fast_dist_act(mmap[h],A) for h,A in v))
-    except TypeError:
-        return sum((mmap[h] * A for h,A in v))
+def f_par(w,z0,g):
+    return sum((fast_dist_act(o,None,actmat) for o,actmat in w),z0)
 
 
 def unimod_matrices_to_infty(r, s):
@@ -830,16 +827,17 @@ class ManinMap(object):
         self.compute_full_data() # Why?
         self.normalize() # Why?
         M = self._manin
-
         if algorithm == 'prep':
             ## psi will denote self | T_ell
             psi = {}
-            if _parallel:
-                input_vector = [(self,list(M.prep_hecke_on_gen_list(ell,g)),g) for g in M.gens()]
-                par_vector = f_par(input_vector)
-                for inp,outp in par_vector:
-                    psi[inp[0][2]] = self._codomain(outp)
-                    psi[inp[0][2]].normalize()
+
+            if _parallel: # Does work much slower for now, should understand why
+                prec = len(self._codomain(0)._moments)
+                input_vector = [([(self._codomain(self[h]),self._codomain.acting_matrix(A,prec)) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],self._codomain(0)._moments,g) for g in M.gens()]
+                for inp,outp in parallel(f_par)(input_vector):
+                    g = inp[0][-1]
+                    psi[g] = self._codomain(outp)
+                    psi[g].normalize()
             elif fname is not None:
                 import cPickle as pickle
                 for i in range(ell):
@@ -866,10 +864,12 @@ class ManinMap(object):
                         psi[g].normalize()
             else: # The default, which should be used for most settings which do not strain memory.
                 for g in M.gens():
-                    try:
-                        psi_g = self._codomain(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0)._moments))
-                    except TypeError:
-                        psi_g = sum((self[h] * A for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0))
+                    psi_g = self._codomain(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0)._moments))
+                    # try:
+                    #     psi_g = self._codomain(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0)._moments))
+                    # except TypeError:
+                    #     verbose('TypeError!')
+                    #     psi_g = sum((self[h] * A for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0))
                     psi_g.normalize()
                     psi[g] = psi_g
             return self.__class__(self._codomain, self._manin, psi, check=False)
