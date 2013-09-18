@@ -831,7 +831,7 @@ class ManinMap(object):
             ## psi will denote self | T_ell
             psi = {}
 
-            if _parallel: # Does work much slower for now, should understand why
+            if _parallel:
                 prec = len(self._codomain(0)._moments)
                 input_vector = [([(self._codomain(self[h]),self._codomain.acting_matrix(A,prec)) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],self._codomain(0)._moments,g) for g in M.gens()]
                 for inp,outp in parallel(f_par)(input_vector):
