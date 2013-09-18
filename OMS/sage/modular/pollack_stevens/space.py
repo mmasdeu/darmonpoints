@@ -839,7 +839,13 @@ def ps_modsym_from_elliptic_curve(E):
     val = {}
     for g in manin.gens():
         ac, bd = cusps_from_mat(g)
-        val[g] = D([plus_sym(ac) + minus_sym(ac) - plus_sym(bd) - minus_sym(bd)])
+        tmp1 = [plus_sym(ac) + minus_sym(ac) - plus_sym(bd) - minus_sym(bd)]
+        try:
+            tmp = D(tmp)
+        except TypeError:
+            tmp = D.element_class(tmp1,D)
+        val[g] = tmp
+        # val[g] = D([plus_sym(ac) + minus_sym(ac) - plus_sym(bd) - minus_sym(bd)])
     return V(val)
 
 def ps_modsym_from_simple_modsym_space(A, name="alpha"):
