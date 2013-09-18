@@ -841,7 +841,7 @@ def ps_modsym_from_elliptic_curve(E):
         ac, bd = cusps_from_mat(g)
         tmp1 = [plus_sym(ac) + minus_sym(ac) - plus_sym(bd) - minus_sym(bd)]
         try:
-            tmp = D(tmp)
+            tmp = D(tmp1)
         except TypeError:
             tmp = D.element_class(tmp1,D)
         val[g] = tmp
