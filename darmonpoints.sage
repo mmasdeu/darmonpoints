@@ -47,7 +47,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
     phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0
     verb_level = get_verbose()
     set_verbose(1)
-    Phi = phi0.lift(p,M = prec,algorithm = 'stevens',eigensymbol = True,parallel = parallelize)
+    Phi = phi0.lift(p,M = prec,algorithm = 'stevens',eigensymbol = True,parallelize = parallelize)
     set_verbose(verb_level)
     Phi.db(fname)
     return Phi
@@ -66,66 +66,6 @@ def precompute_magma_embeddings(quat_disc,max_dK):
     db_save(all_embs,'quadratic_embeddings_%s_%s.sobj'%(quat_disc,level))
     print 'All done'
     return
-
-
-# def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,outfile = None):
-#     p = J.parent().prime()
-#     prec = J.parent().precision_cap()
-#     QQp = Qp(p,prec)
-#     if local_embedding is None:
-#         local_embedding = QQp
-#     hK = K.class_number()
-#     # Tate parameter
-#     qE = tate_parameter(E.change_ring(local_embedding),QQp)
-# 
-#     valqE = QQ(qE.valuation())
-#     numqE,denqE = valqE.numerator(),valqE.denominator()
-# 
-#     ulog = 1/numqE * (ZZ(p)**numqE/qE**denqE).log()
-#     Jlog = J.log(p_branch = ulog)
-#     Cp = Jlog.parent()
-#     addpart0 = Jlog/known_multiple
-#     candidate = None
-#     if twopowlist is None:
-#         twopowlist = [2, 1, 1/2]
-#     HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
-#     for twopow in twopowlist:
-#         addpart = addpart0 / twopow
-#         success = False
-#         for a,b in product(range(p),repeat = 2):
-#             if a == 0 and b == 0:
-#                 continue
-#             try:
-#                 J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
-#             except ValueError: continue
-#             if J1 == Cp(1):
-#                 candidate = E.change_ring(HCF)(0)
-#                 verbose('Recognized the point, it is zero!')
-#                 success = True
-#                 break
-#             else:
-#                 pt = getcoords(E.change_ring(local_embedding),J1,prec,qE = qE)
-#                 if pt is Infinity:
-#                     continue
-#                 else:
-#                     x,y = pt
-#                 success = False
-#                 prec0 = prec
-#                 while not success and prec0 > 2/3 * prec:
-#                     verbose('Trying to recognize point with precision %s'%prec0, level = 2)
-#                     candidate,success = recognize_point(x,y,E,K,prec = prec0,HCF = HCF)
-#                     prec0 -= 1
-# 
-#                 if success:
-#                     verbose('Recognized the point!')
-#                     fwrite('x,y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
-#                     break
-#         if success:
-#             assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
-#             return candidate,twopow,J1
-#     assert not success
-#     return None,None,None
-
 
 def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,outfile = None):
     p = J.parent().prime()

@@ -791,7 +791,7 @@ class ManinMap(object):
             D[ky] = val.specialize(*args)
         return self.__class__(self._codomain.specialize(*args), self._manin, D, check=False)
 
-    def hecke(self, ell, algorithm = 'prep', _parallel = False, fname = None):
+    def hecke(self, ell, algorithm = 'prep', parallelize = False, fname = None, acting_matrices = None):
         r"""
         Return the image of this Manin map under the Hecke operator `T_{\ell}`.
 
@@ -823,20 +823,30 @@ class ManinMap(object):
             sage: phi.Tq_eigenvalue(7,7,10)
             -2
         """
-        # verbose('parallel = %s'%_parallel)
+        # verbose('parallel = %s'%parallelize)
         self.compute_full_data() # Why?
         self.normalize() # Why?
         M = self._manin
+        V = self._codomain
+
         if algorithm == 'prep':
             ## psi will denote self | T_ell
             psi = {}
-
-            if _parallel:
-                prec = len(self._codomain(0)._moments)
-                input_vector = [([(self._codomain(self[h]),self._codomain.acting_matrix(A,prec)) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],self._codomain(0)._moments,g) for g in M.gens()]
+            if parallelize:
+                prec = len(V(0)._moments)
+                if acting_matrices is not None:
+                    input_vector = []
+                    for g in M.gens():
+                        v = []
+                        for h,A in list(M.prep_hecke_on_gen_list(ell,g)):
+                            actmat = acting_matrices[A]
+                            v.append( (V(self[h]),actmat) )
+                        input_vector.append( (v,V(0)._moments,g) )
+                else:
+                    input_vector = [([(V(self[h]),V.acting_matrix(A,prec)) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],V(0)._moments,g) for g in M.gens()]
                 for inp,outp in parallel(f_par)(input_vector):
                     g = inp[0][-1]
-                    psi[g] = self._codomain(outp)
+                    psi[g] = V(outp)
                     psi[g].normalize()
             elif fname is not None:
                 import cPickle as pickle
@@ -855,8 +865,8 @@ class ManinMap(object):
                         psi_g = fast_dist_act( self[h],None,actmat )
                         for h,actmat in mprep[1:]:
                             psi_g += fast_dist_act( self[h], None,actmat )
-                        psi_g = self._codomain(psi_g)
-                        #psi_g = self._codomain(sum((fast_dist_act(self[h], A,actmat) for h,A,actmat in mprep),self._codomain(0)._moments))
+                        psi_g = V(psi_g)
+                        #psi_g = V(sum((fast_dist_act(self[h], A,actmat) for h,A,actmat in mprep),V(0)._moments))
                         try:
                             psi[g] += psi_g
                         except KeyError:
@@ -864,15 +874,15 @@ class ManinMap(object):
                         psi[g].normalize()
             else: # The default, which should be used for most settings which do not strain memory.
                 for g in M.gens():
-                    psi_g = self._codomain(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0)._moments))
+                    psi_g = V(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0)._moments))
                     # try:
-                    #     psi_g = self._codomain(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0)._moments))
+                    #     psi_g = V(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0)._moments))
                     # except TypeError:
                     #     verbose('TypeError!')
-                    #     psi_g = sum((self[h] * A for h,A in M.prep_hecke_on_gen_list(ell,g)),self._codomain(0))
+                    #     psi_g = sum((self[h] * A for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0))
                     psi_g.normalize()
                     psi[g] = psi_g
-            return self.__class__(self._codomain, self._manin, psi, check=False)
+            return self.__class__(V, self._manin, psi, check=False)
         elif algorithm == 'naive':
             S0N = Sigma0(self._manin.level())
             psi = self._right_action(S0N([1,0,0,ell]))

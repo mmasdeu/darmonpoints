@@ -267,6 +267,9 @@ class Sigma0Element(MonoidElement):
         """
         return self._mat
 
+    def list(self):
+        return self._mat.list()
+
     def inverse(self):
         r"""
         Return the inverse of self. This will raise an error if the result is not in the monoid.

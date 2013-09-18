@@ -28,10 +28,13 @@ from padic_lseries import pAdicLseries
 from sigma0 import Sigma0
 from sage.modular.pollack_stevens.distributions import Distributions
 from sage.misc.misc import walltime
-from sage.parallel.decorate import fork
+from sage.parallel.decorate import fork,parallel
+from sage.sets.set import Set
 
 minusproj = [1,0,0,-1]
 
+def comp_act_mat(Phi,g,prec):
+    return Phi._map._codomain._act._compute_acting_matrix(g,prec)
 
 class PSModSymAction(Action):
     def __init__(self, actor, MSspace):
@@ -330,7 +333,7 @@ class PSModularSymbolElement(ModuleElement):
         S0N = Sigma0(self.parent().level())
         return self - self * S0N(minusproj)
 
-    def hecke(self, ell, algorithm="prep", parallel = False,precomp_data = None):
+    def hecke(self, ell, algorithm="prep", parallelize = False,precomp_data = None,acting_matrices = None):
         r"""
         Returns self | `T_{\ell}` by making use of the precomputations in
         self.prep_hecke()
@@ -377,9 +380,9 @@ class PSModularSymbolElement(ModuleElement):
             True
         """
         if precomp_data is not None:
-            return self.__class__(fork(self._map.hecke)(ell, algorithm, _parallel = parallel,fname = precomp_data), self.parent(), construct=True)
+            return self.__class__(fork(self._map.hecke)(ell, algorithm, parallelize = parallelize,fname = precomp_data,acting_matrices = acting_matrices), self.parent(), construct=True)
         else:
-            return self.__class__(self._map.hecke(ell, algorithm, _parallel = parallel), self.parent(), construct=True)
+            return self.__class__(self._map.hecke(ell, algorithm, parallelize = parallelize,acting_matrices = acting_matrices), self.parent(), construct=True)
 
     def valuation(self, p=None):
         r"""
@@ -958,7 +961,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 ans.append((embedded_sym,psi))
             return ans
 
-    def lift(self, p=None, M=None, alpha=None, new_base_ring=None, algorithm='stevens', eigensymbol=False, check=True, parallel = False,precomp_data = None):
+    def lift(self, p=None, M=None, alpha=None, new_base_ring=None, algorithm='stevens', eigensymbol=False, check=True, parallelize = False,precomp_data = None):
         r"""
         Returns a (`p`-adic) overconvergent modular symbol with
         `M` moments which lifts self up to an Eisenstein error
@@ -1041,7 +1044,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
                 if alpha is None:
                     alpha = self.Tq_eigenvalue(p, check=check)
                 newM, eisenloss, q, aq = self._find_extraprec(p, M, alpha, check)
-                return self._lift_to_OMS_eigen(p, M, new_base_ring, alpha, newM, eisenloss, q, aq, check, parallel = parallel,precomp_data = precomp_data)
+                return self._lift_to_OMS_eigen(p, M, new_base_ring, alpha, newM, eisenloss, q, aq, check, parallelize = parallelize,precomp_data = precomp_data)
             else:
                 return self._lift_to_OMS(p, M, new_base_ring, check)
         elif algorithm == 'greenberg':
@@ -1115,7 +1118,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         Phi1bad = MSnew(D)
 
         #fix the lift by applying a hecke operator
-        Phi1 = aqinv * Phi1bad.hecke(p, parallel = parallel)
+        Phi1 = aqinv * Phi1bad.hecke(p, parallelize = parallelize)
         #if you don't want to compute with good accuracy, stop
         if M<=2:
             return Phi1
@@ -1137,7 +1140,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             for j in range(len(gens)):
                 D2[ gens[j]] = CMnew( newvalues[j] ).lift(M = min([M,r]))
             Phi2 = MSnew(D2)
-            Phi2 = aqinv * Phi2.hecke(p, parallel = parallel)
+            Phi2 = aqinv * Phi2.hecke(p, parallelize = parallelize)
             verbose('Error = O(p^%s)'%(Phi1-Phi2).valuation())
             Phi1 = Phi2
         for j,adist in enumerate(Phi1.values()):
@@ -1319,7 +1322,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
             newM += -s
         return newM, eisenloss, q, aq
 
-    def _lift_to_OMS_eigen(self, p, M, new_base_ring, ap, newM, eisenloss, q, aq, check, parallel = False,precomp_data = None):
+    def _lift_to_OMS_eigen(self, p, M, new_base_ring, ap, newM, eisenloss, q, aq, check, parallelize = False,precomp_data = None):
         r"""
         Returns Hecke-eigensymbol OMS lifting self -- self must be a
         `p`-ordinary eigensymbol
@@ -1369,16 +1372,23 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         # for g in self._map._manin.gens():
         #     input_vector.append(([(se,A) for h,A in M.prep_hecke_on_gen_list(p,g)],g))
 
-        # verbose("Computing acting matrices")
-        # acting_matrices = {}
-        # for g in Phi._map._manin.gens():
-        #     acting_matrices[g] = Phi._map._codomain.acting_matrix(g,Phi._map._codomain.precision_cap())
+        if parallelize and precomp_data is None:
+            verbose("Computing acting matrices")
+            acting_matrices = {}
+            comp_par = parallel(comp_act_mat)
+            prec = Phi._map._codomain.precision_cap()
+            input_set = Set([A for g in Phi._map._manin.gens() for h,A in Phi._map._manin.prep_hecke_on_gen_list(p,g)])
+            input_vector = [(Phi,A,prec) for A in list(input_set)]
+            for inp,outp in comp_par(input_vector):
+                acting_matrices[inp[0][1]] = outp
+        else:
+            acting_matrices = None
 
         verbose("Applying Hecke")
 
         apinv = ~ap
         t_start = walltime()
-        Phi = apinv * Phi.hecke(p, parallel = parallel,precomp_data = precomp_data)
+        Phi = apinv * Phi.hecke(p, parallelize = parallelize,precomp_data = precomp_data,acting_matrices = acting_matrices)
         t_end = walltime(t_start)
         # Estimate the total time to complete
         eta = (t_end * (newM + 1))/(60*60)
@@ -1388,13 +1398,13 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         verbose("Killing eisenstein part with q = %s"%(q))
 
         k = self.parent().weight()
-        Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q, parallel = parallel))
+        Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q, parallelize = parallelize,precomp_data = precomp_data))
         #verbose(Phi._show_malformed_dist("Eisenstein killed"), level=2)
 
         ## Iterating U_p
         verbose("Iterating U_p")
         t_start = walltime()
-        Psi = apinv * Phi.hecke(p, parallel = parallel,precomp_data = precomp_data)
+        Psi = apinv * Phi.hecke(p, parallelize = parallelize,precomp_data = precomp_data,acting_matrices = acting_matrices)
         t_end = walltime(t_start)
         # Estimate the total time to complete
         eta = (t_end * (newM + 1))/(60*60)
@@ -1405,7 +1415,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         while (Phi != Psi) and (attempts < 2*newM):
             verbose("%s attempt"%(attempts+1))
             Phi = Psi
-            Psi = Phi.hecke(p, parallel = parallel,precomp_data = precomp_data) * apinv
+            Psi = Phi.hecke(p, parallelize = parallelize,precomp_data = precomp_data,acting_matrices = acting_matrices) * apinv
             attempts += 1
         if attempts >= 2*newM:
             raise RuntimeError("Precision problem in lifting -- applied U_p many times without success")
@@ -1414,7 +1424,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         return Phi.reduce_precision(M)
         
     def p_stabilize_and_lift(self, p=None, M=None, alpha=None, ap=None, new_base_ring=None, \
-                               ordinary=True, algorithm=None, eigensymbol=False, check=True, parallel = False):
+                               ordinary=True, algorithm=None, eigensymbol=False, check=True, parallelize = False):
         """
         `p`-stabilizes and lifts self
 
@@ -1472,7 +1482,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         # Now we can stabilize
         self = self.p_stabilize(p=p, alpha=alpha,ap=ap, M=newM, new_base_ring = new_base_ring, check=check)
         # And use the standard lifting function for eigensymbols
-        return self._lift_to_OMS_eigen(p=p, M=M, new_base_ring=new_base_ring, ap=alpha, newM=newM, eisenloss=eisenloss, q=q, aq=aq, check=check, parallel = parallel)
+        return self._lift_to_OMS_eigen(p=p, M=M, new_base_ring=new_base_ring, ap=alpha, newM=newM, eisenloss=eisenloss, q=q, aq=aq, check=check, parallelize = parallelize)
 
 class PSModularSymbolElement_dist(PSModularSymbolElement):
 
