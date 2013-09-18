@@ -249,6 +249,9 @@ class Distributions_abstract(Module):
 
         self._populate_coercion_lists_(action_list=[self._act])
 
+    def _element_constructor(self,x):
+        return self.Element(self,x)
+
     def _coerce_map_from_(self, other):
         """
         Determine if self has a coerce map from other.
