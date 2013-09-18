@@ -627,7 +627,7 @@ cdef class Dist_vector(Dist):
 
         sage: from sage.modular.pollack_stevens.distributions import Distributions
     """
-    def __init__(self, moments, parent, ordp=0, check=True):
+    def __init__(self, parent, moments, ordp=0, check=True):
         """
         Initialization.
 
@@ -1031,7 +1031,7 @@ cdef class Dist_long(Dist):
 
         sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
     """
-    def __init__(self, moments, parent, ordp = 0, check = True):
+    def __init__(self, parent, moments, ordp = 0, check = True):
         """
         Initialization.
 
