@@ -301,11 +301,11 @@ def our_algdep(z,degree,prec = None):
     field_deg = z.parent().degree()
     p = z.parent().prime()
     pn = p**prec
+    R = PolynomialRing(ZZ,names = 'x')
+    x = R.gen()
     try:
         ans = algdep(z + O(pn),degree)
     except PariError:
-        R = PolynomialRing(ZZ,names = 'x')
-        x = R.gen()
         n = degree+1
         zval = z.valuation()
         ptozval = p**zval
