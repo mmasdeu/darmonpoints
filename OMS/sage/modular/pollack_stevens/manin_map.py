@@ -47,10 +47,12 @@ from fund_domain import t00, t10, t01, t11, Id, basic_hecke_matrix, M2Z
 from sage.matrix.matrix_space import MatrixSpace
 from sage.rings.integer_ring import ZZ
 from sage.parallel.decorate import fork,parallel
+from sage.parallel.ncpus import ncpus
 from sage.modular.pollack_stevens.distributions import Distributions
 from sys import stdout
 from operator import methodcaller
 from sage.structure.sage_object import load
+from exceptions import TypeError
 
 def fast_dist_act(v,g,acting_matrix = None):
     if g is not None and g == 1:
@@ -65,10 +67,15 @@ def fast_dist_act(v,g,acting_matrix = None):
             ans = (v * g)._moments
     if len(v._moments) > 0:
         assert len(ans) > 0
-    return ans
+    return v.parent()(ans)
 
-def f_par(w,z0,g):
-    return sum((fast_dist_act(o,None,actmat) for o,actmat in w),z0)
+@parallel
+def f_par(inp_list):
+    ans = []
+    for v in inp_list:
+        w,z0,g = v
+        ans.append( sum((fast_dist_act(o,None,actmat) for o,actmat in w),z0) )
+    return ans
 
 
 def unimod_matrices_to_infty(r, s):
@@ -300,7 +307,7 @@ class ManinMap(object):
                 mrep = self._manin.reps(g)
                 val = self._dict[mrep]
                 try:
-                    g1 = self._codomain(fast_dist_act(val),A)
+                    g1 = fast_dist_act(val,A)
                 except TypeError:
                     g1 = val * A
 
@@ -309,7 +316,7 @@ class ManinMap(object):
             t = g1 * c
             for c, A, g in L[1:]:
                 try:
-                    g1 = self._codomain(fast_dist_act(self._dict[self._manin.reps(g)],A))
+                    g1 = fast_dist_act(self._dict[self._manin.reps(g)],A)
                 except TypeError:
                     g1 = self._dict[self._manin.reps(g)] * A
                 t += g1 * c
@@ -835,19 +842,19 @@ class ManinMap(object):
             if parallelize:
                 prec = len(V(0)._moments)
                 if acting_matrices is not None:
-                    input_vector = []
-                    for g in M.gens():
-                        v = []
-                        for h,A in list(M.prep_hecke_on_gen_list(ell,g)):
-                            actmat = acting_matrices[A]
-                            v.append( (V(self[h]),actmat) )
-                        input_vector.append( (v,V(0)._moments,g) )
+                    input_vector0 = [([(self[h],acting_matrices[A]) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],V(0),g) for g in M.gens()]
                 else:
-                    input_vector = [([(V(self[h]),V.acting_matrix(A,prec)) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],V(0)._moments,g) for g in M.gens()]
-                for inp,outp in parallel(f_par)(input_vector):
-                    g = inp[0][-1]
-                    psi[g] = V(outp)
-                    psi[g].normalize()
+                    input_vector0 = [([(self[h],V.acting_matrix(A,prec)) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],V(0),g) for g in M.gens()]
+                n_cpus = ncpus()
+                input_vector = [[] for i in range(n_cpus)]
+                for i,v in enumerate(input_vector0):
+                    input_vector[i % n_cpus].append(v)
+
+                for inp_vec,outp_vec in f_par(input_vector):
+                    for inp,outp in zip(inp_vec[0][0],outp_vec):
+                        g = inp[-1]
+                        psi[g] = outp
+                        psi[g].normalize()
             elif fname is not None:
                 import cPickle as pickle
                 for i in range(ell):
@@ -874,7 +881,7 @@ class ManinMap(object):
                         psi[g].normalize()
             else: # The default, which should be used for most settings which do not strain memory.
                 for g in M.gens():
-                    psi_g = V(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0)._moments))
+                    psi_g = sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0))
                     # try:
                     #     psi_g = V(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0)._moments))
                     # except TypeError:

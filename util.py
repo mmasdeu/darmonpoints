@@ -192,14 +192,14 @@ def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
 
     precn = (prec/qEval).floor() + 4
     precp = ((prec+4)/qEval).floor() + 2
+    qpow = -(u.valuation()/qEval).floor()
 
     if qEpows is None:
         qEpows =[R(1)]
-        for i in range(max([precn,precp + 1])):
+        for i in range(max([precn,precp + 1,qpow.abs()])):
             qEpows.append(qE * qEpows[-1])
 
     # Normalize the period by appropriate powers of qE
-    qpow = -(u.valuation()/qEval).floor()
     if qpow >= 0:
         un = u * qEpows[qpow]
     else:

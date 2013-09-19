@@ -23,6 +23,7 @@ from sage.matrix.all import matrix
 from sage.misc.prandom import random
 from sage.functions.other import floor
 from sage.structure.element cimport RingElement, Element
+from sage.structure.parent import Parent
 import operator
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.rings.padics.padic_capped_absolute_element cimport pAdicCappedAbsoluteElement
@@ -32,7 +33,6 @@ from sage.rings.integer cimport Integer
 from sage.rings.rational cimport Rational
 from sage.misc.misc import verbose, cputime
 from sage.rings.infinity import Infinity
-
 include "sage/ext/cdefs.pxi"
 include "sage/ext/interrupt.pxi"
 include "sage/libs/flint/fmpz_poly.pxi"
@@ -638,6 +638,9 @@ cdef class Dist_vector(Dist):
             (0, 0, 0, 0, 0)
             
         """
+        if not isinstance(parent,Parent):
+            parent,moments = moments,parent
+
         Dist.__init__(self, parent)
         if check:
             # case 1: input is a distribution already
@@ -1039,11 +1042,13 @@ cdef class Dist_long(Dist):
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
+        if not isinstance(parent,Parent):
+            parent,moments = moments,parent
+
         Dist.__init__(self, parent)
         p = parent._p
         cdef int i
         if check:
-            
             # case 1: input is a distribution already
             if PY_TYPE_CHECK(moments, Dist):
                 M = len(moments)

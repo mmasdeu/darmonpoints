@@ -29,12 +29,85 @@ from sigma0 import Sigma0
 from sage.modular.pollack_stevens.distributions import Distributions
 from sage.misc.misc import walltime
 from sage.parallel.decorate import fork,parallel
+from sage.parallel.ncpus import ncpus
 from sage.sets.set import Set
+from sage.rings.power_series_ring import PowerSeriesRing
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing,Zmod
+from sage.matrix.constructor import matrix,Matrix
 
 minusproj = [1,0,0,-1]
 
-def comp_act_mat(Phi,g,prec):
-    return Phi._map._codomain._act._compute_acting_matrix(g,prec)
+
+
+def compute_acting_matrix(g,p,M,QQp,adjuster,character, dettwist):
+    a, b, c, d = adjuster(g)
+    assert g.parent().base_ring() is ZZ
+    base_ring = Zmod(p**M)
+    B = matrix(base_ring,M,M)
+    if M == 0:
+        return B.change_ring(QQp)
+    R = PowerSeriesRing(base_ring, 'y', default_prec = M)
+    y = R.gen()
+    #tim = verbose("Checked, made R",tim)
+    # special case for small precision, large weight
+    scale = (b+d*y)/(a+c*y)
+    #tim = verbose("Made matrix",tim)
+    t = R(1)
+    for col in range(M):
+        for row in range(M):
+            B[row,col] = t[row]
+        t *= scale
+    #verbose("Finished loop",tim)
+    # the changering here is annoying, but otherwise we have to change ring each time we multiply
+    B = B.change_ring(QQp)
+    if character is not None:
+        B *= character(a)
+    if dettwist is not None:
+        B *= (a*d - b*c)**dettwist
+    try:
+        B = B.apply_map(operator.methodcaller('lift'))
+    except AttributeError: pass
+    return B
+
+@parallel
+def comp_par(inp_list):
+    ans = []
+    for v in inp_list:
+        g,p,M,QQp,adjuster,character,dettwist = v
+        a, b, c, d = adjuster(g)
+        assert g.parent().base_ring() is ZZ
+        base_ring = Zmod(p**M)
+        B = matrix(base_ring,M,M)
+        if M == 0:
+            ans.append( B.change_ring(QQp))
+            continue
+        R = PowerSeriesRing(base_ring, 'y', default_prec = M)
+        y = R.gen()
+        #tim = verbose("Checked, made R",tim)
+        # special case for small precision, large weight
+        scale = (b+d*y)/(a+c*y)
+        #tim = verbose("Made matrix",tim)
+        t = R(1)
+        for col in range(M):
+            for row in range(M):
+                B[row,col] = t[row]
+            t *= scale
+        #verbose("Finished loop",tim)
+        # the changering here is annoying, but otherwise we have to change ring each time we multiply
+        B = B.change_ring(QQp)
+        if character is not None:
+            B *= character(a)
+        if dettwist is not None:
+            B *= (a*d - b*c)**dettwist
+        try:
+            B = B.apply_map(operator.methodcaller('lift'))
+        except AttributeError: pass
+        ans.append(B)
+    return ans
+
+
+# def comp_act_mat(g,p,prec,QQp,adjuster,character,dettwist):
+#     return compute_acting_matrix(g,p,prec,QQp,adjuster,character,dettwist)
 
 class PSModSymAction(Action):
     def __init__(self, actor, MSspace):
@@ -1372,17 +1445,32 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         # for g in self._map._manin.gens():
         #     input_vector.append(([(se,A) for h,A in M.prep_hecke_on_gen_list(p,g)],g))
 
-        if parallelize and precomp_data is None:
+        if precomp_data is None:
             verbose("Computing acting matrices")
             acting_matrices = {}
-            comp_par = parallel(comp_act_mat)
+            #comp_par = parallel(compute_acting_matrix)
             prec = Phi._map._codomain.precision_cap()
+            QQp = Qp(p,prec)
+            adjuster = Phi._map._codomain._act._adjuster
+            character = Phi._map._codomain._act._character
+            dettwist = Phi._map._codomain._act._dettwist
+            #compute_acting_matrix(g,p,M,QQp,adjuster,character, dettwist):
             input_set = Set([A for g in Phi._map._manin.gens() for h,A in Phi._map._manin.prep_hecke_on_gen_list(p,g)])
-            input_vector = [(Phi,A,prec) for A in list(input_set)]
-            for inp,outp in comp_par(input_vector):
-                acting_matrices[inp[0][1]] = outp
+            if parallelize:
+                n_cpus = ncpus()
+                input_vector = [[] for i in range(n_cpus)]
+                for i,A in enumerate(list(input_set)):
+                    input_vector[i % n_cpus].append( (A,p,prec,QQp,adjuster,character,dettwist) )
+                assert len(input_vector) == n_cpus
+                for inp_vec,outp_vec in comp_par(input_vector):
+                    for inp,outp in zip(inp_vec[0][0],outp_vec):
+                        acting_matrices[inp[0]] = outp
+            else:
+                input_vector = [(A,p,prec,QQp,adjuster,character,dettwist) for A in list(input_set)]
+                for inp in input_vector:
+                    acting_matrices[inp[0]] = compute_acting_matrix(*inp)
         else:
-            acting_matrices = None
+            acting_matrices = precomp_data
 
         verbose("Applying Hecke")
 
@@ -1398,7 +1486,7 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         verbose("Killing eisenstein part with q = %s"%(q))
 
         k = self.parent().weight()
-        Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q, parallelize = parallelize,precomp_data = precomp_data))
+        Phi = ((q**(k+1) + 1) * Phi - Phi.hecke(q, parallelize = None,precomp_data = None))
         #verbose(Phi._show_malformed_dist("Eisenstein killed"), level=2)
 
         ## Iterating U_p

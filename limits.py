@@ -321,7 +321,7 @@ def find_optimal_embeddings(F,use_magma = False,extra_conductor = 1):
     w=F.maximal_order().ring_generators()[0]
     D = F.discriminant()
     ## this matrix gives an optimal embedding of conductor 1
-    if use_magma == True:
+    if use_magma == True or extra_conductor != 1:
         tmp = magma.ReducedForms(str(D*extra_conductor**2),nvals = 1)
         G = [[tmp[i+1][j]._sage_() for j in [1,2,3]] for i in range(len(tmp))]
     elif F.class_number() == 1:
@@ -341,9 +341,8 @@ def find_optimal_embeddings(F,use_magma = False,extra_conductor = 1):
             b = ZZ((alpha+beta).norm()/nrm) - a - c
             G.append((a,b,c))
     delta = extra_conductor * F.gen() if D%4 == 1 else 2*extra_conductor * F.gen() # delta = sqrt{discriminant}
-    r,s = delta.coordinates_in_terms_of_powers()(w) # w = r + s*delta
-    #return [Matrix(QQ,2,2,[r+s*B,-2*s*C,2*s*A,r-s*B]) for A,B,C in G] # Bad (By Juan Restrepo's suggestion)
-    return [Matrix(QQ,2,2,[r-s*B,-2*s*C,2*s*A,r+s*B]) for A,B,C in G] # Good
+    r,s = delta.coordinates_in_terms_of_powers()(w) # w = r + s*delta 
+    return [Matrix(QQ,2,2,[r-s*B,-2*s*C,2*s*A,r+s*B]) for A,B,C in G] # There's a typo in Darmon-Pollack pg.12, fixed by Juan Restrepo
 
 def _find_limits_manin_trick(tau,gtau):
     if gtau[0,0] == 0:

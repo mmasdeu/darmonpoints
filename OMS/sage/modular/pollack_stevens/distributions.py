@@ -250,7 +250,7 @@ class Distributions_abstract(Module):
         self._populate_coercion_lists_(action_list=[self._act])
 
     def _element_constructor_(self,x):
-        return self.Element(self,x)
+        return self.Element(moments = x, parent = self)
 
     def _coerce_map_from_(self, other):
         """
