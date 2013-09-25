@@ -324,15 +324,15 @@ def our_algdep(z,degree,prec = None):
         set_verbose(0)
         tmp = M.left_kernel().matrix().change_ring(ZZ).LLL().row(0)
         set_verbose(verb_lev)
-        f = R(list(tmp[:n]))(x/ptozval)
+        f = R(R(list(tmp[:n]))(x/ptozval))
         if f.leading_coefficient() < 0:
             f = -f
         ans = R(f.denominator() * f)
     #ans = ans/ans.content()
     for fact,_ in ans.factor():
         if R(fact)(z) == O(p**prec):
-            return fact/fact.content()
-    return ans/ans.content()
+            return R(fact/fact.content())
+    return R(ans/ans.content())
 
 
 def lift_padic_splitting(a,b,II0,JJ0,p,prec):
@@ -573,12 +573,13 @@ def _get_heegner_params_rational(p,N,beta):
     Np = 1
     num_inert_primes = 0
     for ell,r in N1.factor():
-        if kronecker_symbol(beta,ell) == -1: # inert
+        ks = kronecker_symbol(beta,ell)
+        if ks == -1: # inert
             if r != 1:
                 raise ValueError,'The inert prime l = %s divides too much the conductor.'%ell
             num_inert_primes += 1
             DB *= ell
-        else:
+        else: #split or ramified
             Np *= ell**r
     assert N == p * DB * Np
     if num_inert_primes % 2 != 0:

@@ -406,7 +406,7 @@ class PSModularSymbolElement(ModuleElement):
         S0N = Sigma0(self.parent().level())
         return self - self * S0N(minusproj)
 
-    def hecke(self, ell, algorithm="prep", parallelize = False,precomp_data = None,acting_matrices = None):
+    def hecke(self, ell, algorithm="prep", parallelize = False,precomp_data = None,acting_matrices = None,num_iterations = 1,scaling = 1):
         r"""
         Returns self | `T_{\ell}` by making use of the precomputations in
         self.prep_hecke()
@@ -453,9 +453,9 @@ class PSModularSymbolElement(ModuleElement):
             True
         """
         if precomp_data is not None:
-            return self.__class__(fork(self._map.hecke)(ell, algorithm, parallelize = parallelize,fname = precomp_data,acting_matrices = acting_matrices), self.parent(), construct=True)
+            return self.__class__(fork(self._map.hecke)(ell, algorithm, parallelize = parallelize,fname = precomp_data,acting_matrices = acting_matrices,num_iterations = num_iterations,scaling = scaling), self.parent(), construct=True)
         else:
-            return self.__class__(self._map.hecke(ell, algorithm, parallelize = parallelize,acting_matrices = acting_matrices), self.parent(), construct=True)
+            return self.__class__(self._map.hecke(ell, algorithm, parallelize = parallelize,acting_matrices = acting_matrices,num_iterations = num_iterations,scaling = scaling), self.parent(), construct=True)
 
     def valuation(self, p=None):
         r"""
@@ -1498,12 +1498,13 @@ class PSModularSymbolElement_symk(PSModularSymbolElement):
         eta = (t_end * (newM + 1))/(60*60)
         verbose("Estimated time to complete (second estimate): %s hours"%eta)
 
-
-        attempts = 0
+        # We do the first newM attempts at once, to speed things up
+        Psi = Phi.hecke(p, parallelize = parallelize,precomp_data = precomp_data,acting_matrices = acting_matrices,num_iterations = M,scaling = apinv)
+        attempts = M
         while (Phi != Psi) and (attempts < 2*newM):
             verbose("%s attempt"%(attempts+1))
             Phi = Psi
-            Psi = Phi.hecke(p, parallelize = parallelize,precomp_data = precomp_data,acting_matrices = acting_matrices) * apinv
+            Psi = Phi.hecke(p, parallelize = parallelize,precomp_data = precomp_data,acting_matrices = acting_matrices,scaling = apinv)# * apinv
             attempts += 1
         if attempts >= 2*newM:
             raise RuntimeError("Precision problem in lifting -- applied U_p many times without success")

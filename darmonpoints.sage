@@ -104,9 +104,12 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
         for a,b in product(range(p),repeat = 2) if twopow * known_multiple != 1 else [(1,0)]:
             if a == 0 and b == 0:
                 continue
-            try:
-                J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
-            except ValueError: continue
+            if twopow * known_multiple != 1:
+                try:
+                    J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
+                except ValueError: continue
+            else:
+                J1 = J
             if J1 == Cp(1):
                 candidate = E.change_ring(HCF)(0)
                 verbose('Recognized the point, it is zero!')
@@ -161,6 +164,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
         assert ZZ(extra_conductor_sq).is_square()
         extra_conductor = extra_conductor_sq.sqrt()
         dK = dK / extra_conductor_sq
+        assert dK == fundamental_discriminant(dK)
         if dK % 4 == 0:
             dK = ZZ(dK/4)
         beta = dK
@@ -250,8 +254,6 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             Cp = Qp(p,working_prec).extension(w.minpoly(),names = 'g')
             v0 = K.hom([r0+r1*Cp.gen()])
 
-            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize)
-
             # Optimal embeddings of level one
             print "Computing optimal embeddings of level one..."
             Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor)
@@ -272,6 +274,9 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             else:
                 print "Using orientation = %s"%orients[idx_orientation]
                 chosen_orientation = orients[idx_orientation]
+
+            # Get the cohomology class from E
+            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize)
 
             J = 1
             Jlist = []

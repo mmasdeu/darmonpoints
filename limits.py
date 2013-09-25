@@ -167,7 +167,7 @@ def order_and_unit(F,conductor):
     #     u0 = 1/u0
     D = F.discriminant() * conductor**2
     sqrtD = conductor * F.gen()
-    if D % 4 == 0:
+    if F.discriminant() % 4 == 0:
         sqrtD *= 2
     assert sqrtD**2 == D
     delta = sqrtD/2 if D % 4 == 0 else (1+sqrtD)/2

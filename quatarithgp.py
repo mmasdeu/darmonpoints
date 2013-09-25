@@ -58,7 +58,7 @@ def BigArithGroup(p,quat_data,level,base = None, seed = None,use_sage_db = True,
             a,b = quat_data
             if base is None:
                 base = a.parent()
-                fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level) # Fix this name
+            fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level) # Fix this name
         if base != QQ:
             use_sage_db = False # This is not implemented yet
 

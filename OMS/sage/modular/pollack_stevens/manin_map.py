@@ -74,7 +74,7 @@ def f_par(inp_list):
     ans = []
     for v in inp_list:
         w,z0,g = v
-        ans.append( sum((fast_dist_act(o,None,actmat) for o,actmat in w),z0) )
+        ans.append( sum((fast_dist_act(ww[0],None,ww[1]) for ww in w),z0) )
     return ans
 
 
@@ -275,7 +275,7 @@ class ManinMap(object):
             new_dict[g] = new_codomain(self._dict[g])
         return ManinMap(new_codomain, self._manin, new_dict, check)
 
-    def _compute_image_from_gens(self, B):  
+    def _compute_image_from_gens(self, B, custom_dict = None):  
         r"""
         Compute image of ``B`` under ``self``.
 
@@ -297,6 +297,8 @@ class ManinMap(object):
             sage: f._compute_image_from_gens(MR.reps()[1])
             (10 + 10*11 + O(11^2), 8 + O(11))
         """
+        if custom_dict is None:
+            custom_dict = self._dict
         L = self._manin.relations(B)
         # could raise KeyError if B is not a generator
         if len(L) == 0:
@@ -305,7 +307,7 @@ class ManinMap(object):
             c, A, g = L[0]
             try:
                 mrep = self._manin.reps(g)
-                val = self._dict[mrep]
+                val = custom_dict[mrep]
                 try:
                     g1 = fast_dist_act(val,A)
                 except TypeError:
@@ -316,9 +318,9 @@ class ManinMap(object):
             t = g1 * c
             for c, A, g in L[1:]:
                 try:
-                    g1 = fast_dist_act(self._dict[self._manin.reps(g)],A)
+                    g1 = fast_dist_act(custom_dict[self._manin.reps(g)],A)
                 except TypeError:
-                    g1 = self._dict[self._manin.reps(g)] * A
+                    g1 = custom_dict[self._manin.reps(g)] * A
                 t += g1 * c
         return t
 
@@ -798,7 +800,7 @@ class ManinMap(object):
             D[ky] = val.specialize(*args)
         return self.__class__(self._codomain.specialize(*args), self._manin, D, check=False)
 
-    def hecke(self, ell, algorithm = 'prep', parallelize = False, fname = None, acting_matrices = None):
+    def hecke(self, ell, algorithm = 'prep', parallelize = False, fname = None, acting_matrices = None,num_iterations = 1,scaling = 1):
         r"""
         Return the image of this Manin map under the Hecke operator `T_{\ell}`.
 
@@ -833,70 +835,94 @@ class ManinMap(object):
         # verbose('parallel = %s'%parallelize)
         self.compute_full_data() # Why?
         self.normalize() # Why?
-        M = self._manin
         V = self._codomain
-
+        M = self._manin
+        prec = len(V(0)._moments)
         if algorithm == 'prep':
-            ## psi will denote self | T_ell
-            psi = {}
+            old_psi = self
+            n_cpus = ncpus()
             if parallelize:
-                prec = len(V(0)._moments)
-                if acting_matrices is not None:
-                    input_vector0 = [([(self[h],acting_matrices[A]) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],V(0),g) for g in M.gens()]
-                else:
-                    input_vector0 = [([(self[h],V.acting_matrix(A,prec)) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],V(0),g) for g in M.gens()]
-                n_cpus = ncpus()
+                def get_acting_matrix(A,acting_matrices):
+                    if acting_matrices is not None:
+                        try:
+                            return acting_matrices[A]
+                        except KeyError:
+                            pass
+                    return V.acting_matrix(A,prec)
+                input_vector0 = [([[old_psi[h],get_acting_matrix(A,acting_matrices),h] for h,A in list(M.prep_hecke_on_gen_list(ell,g))],V(0),g) for g in M.gens()]
                 input_vector = [[] for i in range(n_cpus)]
                 for i,v in enumerate(input_vector0):
-                    input_vector[i % n_cpus].append(v)
+                     input_vector[i % n_cpus].append(v)
 
-                for inp_vec,outp_vec in f_par(input_vector):
-                    for inp,outp in zip(inp_vec[0][0],outp_vec):
-                        g = inp[-1]
-                        psi[g] = outp
-                        psi[g].normalize()
-            elif fname is not None:
-                import cPickle as pickle
-                for i in range(ell):
-                    try:
-                        print 'Loading %s/%s'%(i,ell)
-                        data = pickle.load( open(fname+'_%s.sobj'%i) )
-                        #data load(fname + '_%s.sobj'%i)
-                        print 'Done!!'
-                    except MemoryError:
-                        verbose('Memory error while loading file!')
-                        raise MemoryError
-                    for g in M.gens():
-                        mprep = data[g] #M.prep_hecke_on_gen_list(ell,g)
-                        h,actmat = mprep[0]
-                        psi_g = fast_dist_act( self[h],None,actmat )
-                        for h,actmat in mprep[1:]:
-                            psi_g += fast_dist_act( self[h], None,actmat )
-                        psi_g = V(psi_g)
-                        #psi_g = V(sum((fast_dist_act(self[h], A,actmat) for h,A,actmat in mprep),V(0)._moments))
+            for n_iter in range(num_iterations):
+                if n_iter > 1:
+                    verbose('Iteration %s'%n_iter)
+                ## psi will denote self | T_ell
+                psi = {}
+                if parallelize:
+                    if n_iter > 1:
+                        for inp in input_vector:
+                            for v in inp:
+                                for vv in v[0]:
+                                    vv[0] = old_psi[vv[2]]
+
+                    # input_vector0 = [([(old_psi[h],get_acting_matrix(A,acting_matrices)) for h,A in list(M.prep_hecke_on_gen_list(ell,g))],V(0),g) for g in M.gens()]
+                    # input_vector = [[] for i in range(n_cpus)]
+                    # for i,v in enumerate(input_vector0):
+                    #     input_vector[i % n_cpus].append(v)
+
+                    for inp_vec,outp_vec in f_par(input_vector):
+                        for inp,outp in zip(inp_vec[0][0],outp_vec):
+                            g = inp[-1]
+                            psi[g] = outp
+                            psi[g].normalize()
+                elif fname is not None:
+                    import cPickle as pickle
+                    for i in range(ell):
                         try:
-                            psi[g] += psi_g
-                        except KeyError:
-                            psi[g] = psi_g
-                        psi[g].normalize()
-            else: # The default, which should be used for most settings which do not strain memory.
-                for g in M.gens():
-                    psi_g = sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0))
-                    # try:
-                    #     psi_g = V(sum((fast_dist_act(self[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0)._moments))
-                    # except TypeError:
-                    #     verbose('TypeError!')
-                    #     psi_g = sum((self[h] * A for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0))
-                    psi_g.normalize()
-                    psi[g] = psi_g
+                            print 'Loading %s/%s'%(i,ell)
+                            data = pickle.load( open(fname+'_%s.sobj'%i) )
+                            #data load(fname + '_%s.sobj'%i)
+                            print 'Done!!'
+                        except MemoryError:
+                            verbose('Memory error while loading file!')
+                            raise MemoryError
+                        for g in M.gens():
+                            mprep = data[g] #M.prep_hecke_on_gen_list(ell,g)
+                            h,actmat = mprep[0]
+                            psi_g = fast_dist_act( old_psi[h],None,actmat )
+                            for h,actmat in mprep[1:]:
+                                psi_g += fast_dist_act( old_psi[h], None,actmat )
+                            psi_g = V(psi_g)
+                            #psi_g = V(sum((fast_dist_act(old_psi[h], A,actmat) for h,A,actmat in mprep),V(0)._moments))
+                            try:
+                                psi[g] += psi_g
+                            except KeyError:
+                                psi[g] = psi_g
+                            psi[g].normalize()
+                else: # The default, which should be used for most settings which do not strain memory.
+                    for g in M.gens():
+                        psi_g = sum((fast_dist_act(old_psi[h], A) for h,A in M.prep_hecke_on_gen_list(ell,g)),V(0))
+                        psi_g.normalize()
+                        psi[g] = psi_g
+                for B in M.reps():
+                    if not psi.has_key(B):
+                        psi[B] = self._compute_image_from_gens(B,custom_dict = psi)
+                for g in psi:
+                    psi[g] = scaling * psi[g]
+                old_psi = psi
             return self.__class__(V, self._manin, psi, check=False)
         elif algorithm == 'naive':
+            old_psi = self
             S0N = Sigma0(self._manin.level())
-            psi = self._right_action(S0N([1,0,0,ell]))
-            for a in range(1, ell):
-                psi += self._right_action(S0N([1,a,0,ell]))
-            if self._manin.level() % ell != 0:
-                psi += self._right_action(S0N([ell,0,0,1]))
+            for n_iter in range(num_iterations):
+                psi = old_psi._right_action(S0N([1,0,0,ell]))
+                for a in range(1, ell):
+                    psi += old_psi._right_action(S0N([1,a,0,ell]))
+                if self._manin.level() % ell != 0:
+                    psi += old_psi._right_action(S0N([ell,0,0,1]))
+                psi = scaling * psi
+                old_psi = psi
             return psi.normalize()
         else:
             raise ValueError,'Algorithm must be either "naive" or "prep"'
