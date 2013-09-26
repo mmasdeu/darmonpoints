@@ -174,6 +174,7 @@ def order_and_unit(F,conductor):
     verbose('delta = %s'%delta)
     u = u0
     O_D = F.order(delta)
+    assert O_D.discriminant() == D
     i = 1
     while u not in O_D:
         u *= u0
@@ -218,11 +219,12 @@ def _find_initial_embedding_list(v0,M,W,orientation,OD,u):
     verbose("Found %s initial embeddings."%len(emblist))
     return emblist
 
-def _explode_embedding_list(v0,M,emblist):
+def _explode_embedding_list(v0,M,emblist,power = 1):
     p = v0.codomain().base_ring().prime()
     list_embeddings = []
     for tau0,gtau_orig in emblist:
-        gtau = gtau_orig
+        gtau = gtau_orig**power
+        print gtau.list()
         verbose('gtau = %s'%gtau)
         ## First method
         for u1 in is_represented_by_unit(M,ZZ(gtau[0,0]),p):
@@ -271,6 +273,7 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
     wD = OD.ring_generators()[0]
     wDvec = w.coordinates_in_terms_of_powers()(wD)
     WD = wDvec[0] + wDvec[1]*W
+    assert all([o.is_integral() for o in WD.list()])
     assert WD.minpoly() == wD.minpoly()
     #assert F.real_embeddings()[0](u) > 1
     if algorithm == 'darmon_pollack':
@@ -283,8 +286,14 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
     elif algorithm == 'guitart_masdeu':
         # We seek for an optimal embedding of conductor M
         emblist = [emb for sgn in [+1,-1] for emb in _find_initial_embedding_list(v0,M,WD,orientation,OD,sgn * u)]
-        list_embeddings = _explode_embedding_list(v0,M,emblist)
+        print 'Before exploding, have %s embeddings'%len(emblist)
+        power = 0
+        list_embeddings = []
+        while len(list_embeddings) == 0:
+            power += 1
+            list_embeddings = _explode_embedding_list(v0,M,emblist,power = power)
 
+        print 'We have now %s embeddings'%len(list_embeddings)
         # Now choose the best
         opt_evals = None
         opt_tau = None

@@ -121,7 +121,16 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
                     x,y = pt
                 except TypeError:
                     assert pt is Infinity
-                    continue
+                    candidate = E.change_ring(HCF)(0)
+                    verbose('Recognized the point, it is zero!')
+                    success = True
+                    break
+                if x.valuation() < -(prec - 2) and y.valuation() < -(prec - 2):
+                    pt = Infinity
+                    candidate = E.change_ring(HCF)(0)
+                    verbose('Recognized the point, it is zero!')
+                    success = True
+                    break
                 success = False
                 prec0 = prec
                 while not success and prec0 > 2/3 * prec:
@@ -140,7 +149,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     return None,None,None
 
 
-def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False):
+def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False,Wlist = None):
     F = E.base_ring()
     beta = F(beta)
     DB,Np = get_heegner_params(P,E,beta)
@@ -255,9 +264,10 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             v0 = K.hom([r0+r1*Cp.gen()])
 
             # Optimal embeddings of level one
-            print "Computing optimal embeddings of level one..."
-            Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor)
-            print "Found %s such embeddings."%len(Wlist)
+            if Wlist is None:
+                print "Computing optimal embeddings of level one..."
+                Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor)
+                print "Found %s such embeddings."%len(Wlist)
             if idx_embedding is not None:
                 if idx_embedding >= len(Wlist):
                     print 'There are not enough embeddings. Taking the index modulo %s'%len(Wlist)
@@ -275,20 +285,24 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 print "Using orientation = %s"%orients[idx_orientation]
                 chosen_orientation = orients[idx_orientation]
 
+            emblist = []
+            for i,W in enumerate(Wlist):
+                tau, gtau,sign,limits = find_tau0_and_gtau(v0,Np,W,algorithm = algorithm,orientation = chosen_orientation,extra_conductor = extra_conductor)
+                print 'n_evals = ', sum((num_evals(t1,t2) for t1,t2 in limits))
+                emblist.append((tau,gtau,sign,limits))
+
             # Get the cohomology class from E
             Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize)
 
             J = 1
             Jlist = []
-            emblist = []
-            for i,W in enumerate(Wlist):
-                print i, " Computing period attached to the embedding: %s"%W.list()
-                tau, gtau,sign,limits = find_tau0_and_gtau(v0,Np,W,algorithm = algorithm,orientation = chosen_orientation,extra_conductor = extra_conductor)
+            for i,emb in enumerate(emblist):
+                print i, " Computing period attached to the embedding: %s"%Wlist[i].list()
+                tau, gtau,sign,limits = emb
                 #print 'tau = %s'%tau
                 #print 'gtau = %s'%gtau.list()
-                emblist.append((tau,gtau,sign,limits))
                 n_evals = sum((num_evals(t1,t2) for t1,t2 in limits))
-                print "Embedding found, now computing the period...(total of %s evaluations)"%n_evals
+                print "Computing one period...(total of %s evaluations)"%n_evals
                 newJ = prod((double_integral_zero_infty(Phi,t1,t2) for t1,t2 in limits))**ZZ(sign)
                 #newJ = indef_integral(Phi,tau,gtau,limits = limits)**ZZ(sign)
                 Jlist.append(newJ)
