@@ -400,6 +400,8 @@ class CohomologyGroup(Parent):
         group = Gpn
         if padic:
             prec = V.base_ring().precision_cap()
+        else:
+            prec = None
         vals = []
         R = V.base_ring()
         if hasattr(V,'is_full'): # This should be more robust

@@ -375,6 +375,8 @@ class BigArithGroup_class(AlgebraicGroup):
         return iota
 
     def embed(self,q,prec):
+        if prec is None:
+            return None
         if self.discriminant == 1:
             return q.change_ring(Qp(self.p,prec))
         else:
