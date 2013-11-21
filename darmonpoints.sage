@@ -95,7 +95,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     for i in range(precp):
         qEpows.append( qE * qEpows[-1])
 
-    CEloc,_ = get_C_and_C2(E,qEpows,Cp,precp)
+    CEloc,_ = get_C_and_C2(Eloc,qEpows,Cp,precp)
     EH = E.change_ring(HCF)
     for twopow in twopowlist:
         addpart = addpart0 / twopow

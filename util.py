@@ -168,7 +168,7 @@ def get_C_and_C2(E,qEpows,R,prec):
     tate_a4 = -5  * sk3
     tate_a6 = (tate_a4 - 7 * sk5 )/12
     Eqc4, Eqc6 = 1-48*tate_a4, -1 + 72 * tate_a4 - 864 * tate_a6
-    C2 = (Eqc4 * R(E.c6())) / (Eqc6 * R(E.c4()))
+    C2 = (R(Eqc4) * R(E.c6())) / (R(Eqc6) * R(E.c4()))
     return our_sqrt(R(C2),R),C2
 
 def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
@@ -302,6 +302,7 @@ def our_algdep(z,degree,prec = None):
     p = z.parent().prime()
     pn = p**prec
     R = PolynomialRing(ZZ,names = 'x')
+    RQ = PolynomialRing(QQ,names ='y')
     x = R.gen()
     try:
         ans = algdep(z + O(pn),degree)
@@ -324,7 +325,7 @@ def our_algdep(z,degree,prec = None):
         set_verbose(0)
         tmp = M.left_kernel().matrix().change_ring(ZZ).LLL().row(0)
         set_verbose(verb_lev)
-        f = R(R(list(tmp[:n]))(x/ptozval))
+        f = RQ(list(tmp[:n]))(x/ptozval)
         if f.leading_coefficient() < 0:
             f = -f
         ans = R(f.denominator() * f)
