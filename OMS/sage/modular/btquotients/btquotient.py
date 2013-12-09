@@ -25,6 +25,7 @@ from sage.structure.unique_representation import UniqueRepresentation
 from sage.misc.cachefunc import cached_method
 from sage.rings.arith import gcd,xgcd,kronecker_symbol
 from sage.rings.padics.all import Qp,Zp
+from sage.rings.finite_rings.constructor import FiniteField,GF
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.quadratic_forms.all import QuadraticForm
 from sage.graphs.all import Graph
