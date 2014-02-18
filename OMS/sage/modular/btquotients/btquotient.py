@@ -40,6 +40,7 @@ from sage.modular.dirichlet import DirichletGroup
 from sage.modular.arithgroup.congroup_gammaH import GammaH_class
 from sage.rings.arith import fundamental_discriminant
 from sage.misc.misc import verbose, cputime
+from utility import enumerate_words
 
 class DoubleCosetReduction(SageObject):
     r"""
@@ -240,7 +241,7 @@ class DoubleCosetReduction(SageObject):
 
         OUTPUT:
 
-            - ``cached_igamma`` - a 2x2 matrix with p-adic entries
+            - a 2x2 matrix with p-adic entries
               encoding the image of self under the local splitting
 
         EXAMPLES::
@@ -265,9 +266,9 @@ class DoubleCosetReduction(SageObject):
             except TypeError:
                 # The user knows what she is doing, so let it go
                 return embedding(self.gamma,scale = scale)
-        if prec > self._igamma_prec:
+        if True: #prec > self._igamma_prec:
             self._igamma_prec = prec
-            self._cached_igamma = Y.embed_quaternion(self.gamma,exact = False, prec = prec)
+            self._cached_igamma = Y.embed_quaternion(self.gamma,exact = False, prec = max(40,prec))
         return scale * self._cached_igamma
 
     def t(self, prec = None):
@@ -548,7 +549,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
 
         OUTPUT:
 
-        - ``newM`` - 2x2 integer matrix
+        - a 2x2 integer matrix
 
         EXAMPLES::
             sage: from sage.modular.btquotients.btquotient import BruhatTitsTree
@@ -963,7 +964,7 @@ class BruhatTitsTree(SageObject, UniqueRepresentation):
 
         OUTPUT:
 
-          ordered list of 2x2 integer matrices representing edges
+          An ordered list of 2x2 integer matrices representing edges
 
         EXAMPLES::
 
@@ -1363,7 +1364,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
         Nplus=Integer(Nplus)
         p=Integer(p)
         lev=p*Nminus
-
+        self._order_is_initialized = False
         if character is not None:
             extra_level = character.conductor()
             if not extra_level.is_squarefree():
@@ -1426,6 +1427,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
             self._extra_level = []
         else:
             self._extra_level = [ff[0] for ff in extra_level.factor()]
+            self.get_extra_embedding_matrices()
         self._character = character
         self._Xv=[self._Mat_22([1,0,0,0]),self._Mat_22([0,1,0,0]),self._Mat_22([0,0,1,0]),self._Mat_22([0,0,0,1])]
         self._Xe=[self._Mat_22([1,0,0,0]),self._Mat_22([0,1,0,0]),self._Mat_22([0,0,self._p,0]),self._Mat_22([0,0,0,1])]
@@ -2138,7 +2140,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
                 try: return Matrix(Zmod(self._pN),4,4,self._cached_Iota0_matrix)
                 except AttributeError: pass
 
-            Ord = self.get_eichler_order(magma = True, force_computation = force_computation)
+            Ord = self.get_eichler_order(magma = True) #, force_computation = force_computation)
             OrdMax = self.get_maximal_order(magma = True)
 
             OBasis = Ord.Basis()
@@ -2198,6 +2200,8 @@ class BTQuotient(SageObject, UniqueRepresentation):
                             self._magma.quit()
                             self._magma = magma
                             self._magma.function_call('SetSeed',n_iters,nvals=0)
+                            self._order_is_initialized = False
+                            self._init_order()
                             self._compute_embedding_matrix(self._prec, force_computation = True)
                             Ord = self.get_eichler_order(magma = True)
                             OrdMax = self.get_maximal_order(magma = True)
@@ -2863,24 +2867,7 @@ class BTQuotient(SageObject, UniqueRepresentation):
             sage: len(X._get_hecke_data(5))
             2
         """
-        # print 'Getting hecke data for prime ',l,'...'
-        def enumerate_words(v):
-            n=[]
-            while True:
-                add_new = True
-                for jj in range(len(n)):
-                    n[jj] += 1
-                    if n[jj] != len(v):
-                        add_new = False
-                        break
-                    else:
-                        n[jj] = 0
-                if add_new:
-                    n.append(0)
-                yield prod([v[x] for x in n])
-
         E=self.get_edge_list()
-        # self._increase_precision(20)
         if (self.level()*self.Nplus())%l == 0:
             Sset=[]
         else:
@@ -2890,22 +2877,23 @@ class BTQuotient(SageObject, UniqueRepresentation):
         T=[]
         T0=[]
         V=[]
-        nninc=-2
+        nninc = 0
         while len(V) == 0:
-            nninc+=2
             V = filter(lambda g:prod([self._character(ZZ((v*Matrix(ZZ,4,1,g))[0,0]))/self._character((p**ZZ(nninc/2))) for v in self.get_extra_embedding_matrices()]) == 1, self._find_elements_in_order(l*p**nninc))
+            if len(V) == 0:
+                nninc +=2
 
         alpha1 = V[0]
         alpha0 = self._conv(alpha1)
 
         alpha = Matrix(QQ,4,1,alpha1)
-        alphamat = self.embed_quaternion(alpha)
+        alphamat = self.embed_quaternion(alpha,prec = max(self._prec,40),exact = False)
         letters = self.get_generators() + filter(lambda g:prod([self._character(ZZ((v*Matrix(ZZ,4,1,g))[0,0]))/self._character((p**ZZ(nninc/2))) for v in self.get_extra_embedding_matrices()]) == 1, self._find_elements_in_order(1))
         I=enumerate_words([self._conv(x) for x in letters])
         n_iters = 0
-        while len(T)<l+1: # or n_iters < 200:
+        while len(T) < l + 1:
             n_iters += 1
-            v = I.next()
+            v = prod(I.next())
             v0 = v*alpha0
             vinv = self.get_quaternion_algebra()(v0**(-1))
             new = True
@@ -2920,15 +2908,14 @@ class BTQuotient(SageObject, UniqueRepresentation):
                 success = False
                 while not success:
                     try:
-                        x = self.embed_quaternion(v1)*alphamat
+                        x = self.embed_quaternion(v1,prec = max(self._prec,40),exact = False) * alphamat
                         nn = x.determinant().valuation()
                         T.append([v1,[DoubleCosetReduction(self,x.adjoint()*e.rep,extrapow=nn) for e in E]])
                         success = True
                     except (PrecisionError,NotImplementedError):
                         self._increase_precision(10)
-                        alphamat = self.embed_quaternion(alpha)
+                        alphamat = self.embed_quaternion(alpha,prec = max(self._prec,40),exact = False)
                 T0.append(v0)
-        assert len(T) == l+1
         return T,alpha
 
     def _find_equivalent_vertex(self,v0,V=None,valuation=None):
@@ -3051,17 +3038,23 @@ class BTQuotient(SageObject, UniqueRepresentation):
             Vertex of BT-tree for p = 3
         """
         try:
-            tmp=self._cached_paths[v1]
+            tmp = self._cached_paths[v1]
             return tmp
         except KeyError: pass
         # print 'v1=',v1
-        chain,v=self._BT.find_path(v1,self.get_vertex_dict())
+        chain,v = self._BT.find_path(v1,self.get_vertex_dict())
         # print 'chain =', chain
-        while(len(chain)>0):
-            v0=chain.pop()
-            g,v=self._find_equivalent_vertex(v0,V=[e.target for e in v.leaving_edges])
-            assert not v is None
-            self._cached_paths[v0]=v
+        while len(chain) > 0:
+            v0 = chain.pop()
+            V = [e.target for e in v.leaving_edges]
+            g,v = self._find_equivalent_vertex(v0,V)
+            if v is None:
+                print 'Given vertex: %s'%v0
+                print 'Not equivalent to any existing vertex in the list:'
+                if V is not None:
+                    print [v.label for v in V]
+                assert 0
+            self._cached_paths[v0] = v
         return v
 
     def _find_lattice(self,v1,v2,as_edges,m):
@@ -3210,13 +3203,14 @@ class BTQuotient(SageObject, UniqueRepresentation):
         mat = pari('qfminim(%s,0,%s,flag = %s)'%(A._pari_(),1000,flag))[2].python().transpose()
         n_vecs = mat.nrows()
         p = self._p
+        pinv = Zmod(self._character.modulus())(p)**-1
         for jj in range(n_vecs):
             vect = mat.row(jj).row()
             vec = vect.transpose()
             nrd = Integer((vect*A*vec)[0,0]/2)
             if nrd == p**twom:
                 g = E*vec
-                if prod([self._character(ZZ((v*g)[0,0]))/self._character(p**m) for v in self.get_extra_embedding_matrices()]) == 1:
+                if prod([self._character(ZZ(pinv**m * (v*g)[0,0])) for v in self.get_extra_embedding_matrices()]) == 1:
                     return g, True
         return None, False
 
@@ -3312,21 +3306,15 @@ class BTQuotient(SageObject, UniqueRepresentation):
             sage: X = BTQuotient(3,23,use_magma = True) # optional - magma
             sage: X._compute_exact_splitting() # optional - magma
         """
-
-        self._init_order()
-        self._magma.eval('f:=MatrixRepresentation(R)')
-        f=self._magma.function_call('MatrixRepresentation',args=[self._OMaxmagma],nvals=1)
+        A = self.get_quaternion_algebra()
+        R = self._OMaxmagma
+        f = R.MatrixRepresentation()
         self._FF=NumberField(f.Codomain().BaseRing().DefiningPolynomial().sage(),'a')
         allmats=[]
         for kk in range(4):
-           self._magma.eval('x:=f(R.%s)'%(kk+1))
+           xseq = self._magma('%s(%s)'%(f.name(),R.gen(kk+1).name())).ElementToSequence()
            all_str=[]
-           for ii in range(2):
-               for jj in range(2):
-                   self._magma.eval('v%s%s:=[Sage(z) : z in Eltseq(x[%s,%s])]'%(ii,jj,ii+1,jj+1))
-           v=[self._FF(self._magma.eval('Sprint(v%s)'%tt)) for tt in ['00','01','10','11']]
-           allmats.append(Matrix(self._FF,2,2,v))
-        #print [(x.determinant(),x.trace()) for x in allmats]
+           allmats.append(Matrix(self._FF,2,2,[self._FF([QQ(xseq[ii+1][jj+1]) for jj in range(2)]) for ii in range(4)]))
         self._Iota_exact=Matrix(self._FF,4,4,[self._FF(allmats[kk][ii,jj]) for ii in range(2) for jj in range(2) for kk in range(4) ])
 
     def _init_order(self):
@@ -3339,16 +3327,15 @@ class BTQuotient(SageObject, UniqueRepresentation):
             sage: X = BTQuotient(3,23)
             sage: X._init_order()
         """
+        if self._order_is_initialized:
+            return
         if self._use_magma == True:
             A=self._magma.QuaternionAlgebra(self._Nminus)
-            self._magma.eval('A:=QuaternionAlgebra(%s)'%(self._Nminus))
-            self._magma.eval('Rmax:=QuaternionOrder(A,1)')
-            self._magma.eval('R:=Order(Rmax,%s)'%(self._Nplus))
             g=A.gens()
             # We store the order because we need to split it
             OMaxmagma = A.QuaternionOrder(1)
-            Omagma=OMaxmagma.Order(self._Nplus)
-            OBasis=Omagma.Basis()
+            Omagma = OMaxmagma.Order(self._Nplus)
+            OBasis = Omagma.Basis()
             self._A = QuaternionAlgebra((g[0]**2).sage(),(g[1]**2).sage())
             i,j,k = self._A.gens()
             v=[1]+self._A.gens()
@@ -3364,12 +3351,14 @@ class BTQuotient(SageObject, UniqueRepresentation):
             v=[1]+self._A.gens()
             self._O=self._A.maximal_order()
             self._OMax = self._O
-            OBasis=self._O.basis()
+            OBasis = self._O.basis()
             self._B=[self._A(OBasis[tt]) for tt in range(4)]
 
         self._OQuadForm=QuadraticForm(self._Mat_44([(self._B[ii]*self._B[jj].conjugate()).reduced_trace() for ii in range(4) for jj in range(4)]))
         self._OM=self._OQuadForm.matrix()
         self._BB=Matrix(QQ,4,4,[[self._B[ii][jj] for ii in range(4)] for jj in range(4)]).inverse()
+        self._order_is_initialized = True
+        return
 
     def B_one(self):
         r"""
@@ -3508,7 +3497,6 @@ class BTQuotient(SageObject, UniqueRepresentation):
         genus=self.genus()
         num_verts=0
         num_edges=0
-        self.get_extra_embedding_matrices()
         self.get_embedding_matrix(prec = 3)
         p=self._p
         v0=Vertex(p,num_verts,self._Mat_22([1,0,0,1]),determinant = 1,valuation = 0)
@@ -3602,3 +3590,28 @@ class BTQuotient(SageObject, UniqueRepresentation):
         self._num_edges = num_edges
         self._S = S
         self._Sfun = Sfun
+
+    def harmonic_cocycle_from_elliptic_curve(self,E,prec = None):
+        from pautomorphicform import HarmonicCocycles
+        M = HarmonicCocycles(self,2,prec = prec)
+        q = ZZ(1)
+        F = M.base_field() #E.base_field()
+        try:
+            N = E.conductor().norm()
+        except ValueError:
+            N = E.conductor().norm(QQ)
+        N1 = self.level() * self.Nplus()
+        K = F**M.dimension()
+        while K.dimension() != 1:
+            q = q.next_prime()
+            if N % q == 0 or N1 % q == 0:
+                continue
+            if F == QQ:
+                Eap = E.ap(q)
+            else:
+                Q = F(q).factor()[0][0]
+                Eap = ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
+            K1 = (M.hecke_matrix(q) - Eap).right_kernel()
+            K = K.intersection(K1)
+        col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
+        return sum([a*M.gen(i) for i,a in enumerate(col) if a != 0],M(0))

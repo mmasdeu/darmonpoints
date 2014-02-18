@@ -452,6 +452,7 @@ def our_sqrt(x,K):
     y1 = y0
     y = 0
     while y != y1:
+        verbose('Valuation = %s'%(y-y1).valuation())
         y = y1
         y1 = (y**2+x)/(2*y)
     return K.uniformizer()**(ZZ(valpi/2)) * y
@@ -741,5 +742,3 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                     if B.discriminant() == disc:
                         assert all((si * sigma(a) > 0 for si,sigma in zip(ramification_at_infinity,F.embeddings(RR))))
                         return B
-
-

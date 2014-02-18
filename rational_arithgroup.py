@@ -236,7 +236,10 @@ class ArithGroup_generic(AlgebraicGroup):
         Cp = Qp(p,prec).extension(w.minpoly(),names = 'g')
         r0,r1 = w.coordinates_in_terms_of_powers()(K.gen())
         v0 = K.hom([Cp(r0)+Cp(r1)*Cp.gen()])
-        phi = K.hom([mu])
+        try:
+            phi = K.hom([mu])
+        except TypeError:
+            phi = K.hom([mu/2])
         fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
         fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
         assert self._is_in_order(phi(w))

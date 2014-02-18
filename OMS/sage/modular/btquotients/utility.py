@@ -26,6 +26,22 @@ def getcoords(E,u,prec=20):
     return ( r + C2 * xx, t + s * C2 * xx + C * C2 * yy )
 
 
+def enumerate_words(v, n = None):
+    if n is None:
+        n = []
+    while True:
+        add_new = True
+        for jj in range(len(n)):
+            n[jj] += 1
+            if n[jj] != len(v):
+                add_new = False
+                break
+            else:
+                n[jj] = 0
+        if add_new:
+            n.append(0)
+        yield [v[x] for x in n]
+
 def our_sqrt(x,K):
     if(x==0):
         return x

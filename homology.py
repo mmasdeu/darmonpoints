@@ -18,7 +18,7 @@ import os
 from ocmodule import *
 import operator
 
-def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False):
+def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False,max_n = None):
     t = PolynomialRing(G.F,names = 't').gen()
     K = G.F.extension(t**2 - D,names = 'beta')
     if G.F.degree() == 1:
@@ -43,12 +43,16 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
     gamman = gamma
     found = False
     n = 1
+    verbose('Trying with n = %s...'%n)
     while not found:
         try:
             tmp = H1(dict([(gamman,D1)])).zero_degree_equivalent()
             found = True
         except ValueError:
             n += 1
+            if max_n is not None and n > max_n:
+                raise ValueError,'Reached maximum allowed power (%s)'%max_n
+            verbose('Trying with n = %s...'%n)
             gamman *= gamma
     if hecke_smoothen:
         q = ZZ(2)
