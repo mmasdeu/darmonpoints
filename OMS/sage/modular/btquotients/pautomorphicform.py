@@ -678,7 +678,6 @@ class HarmonicCocycles(AmbientHeckeModule,UniqueRepresentation):
             prec = base_field.precision_cap()
 
         if prec is None:
-            self._prec = None # Be careful!
             if base_field is None:
                 try:
                     self._R =  X.get_splitting_field()
@@ -1043,7 +1042,7 @@ class HarmonicCocycles(AmbientHeckeModule,UniqueRepresentation):
         """
         return lambda x:x
 
-    def embed_quaternion(self,g,scale = 1,exact = None):
+    def embed_quaternion(self,g,scale = 1):
         r"""
         Embed the quaternion element ``g`` into the matrix algebra.
 
@@ -1064,12 +1063,10 @@ class HarmonicCocycles(AmbientHeckeModule,UniqueRepresentation):
             [4 + 5*7 + 3*7^2 + 5*7^3 + 2*7^4 + O(7^5)     1 + 7 + 3*7^2 + 7^3 + 4*7^4 + O(7^5)]
             [        7 + 3*7^2 + 7^3 + 4*7^4 + O(7^5)     2 + 7 + 3*7^2 + 7^3 + 4*7^4 + O(7^5)]
         """
-        if exact is None:
-            exact = self._R.is_exact()
         if use_ps_dists:
-            return  self._Sigma0(scale * self._X.embed_quaternion(g,exact = exact, prec = self._prec), check = False)
+            return  self._Sigma0(scale * self._X.embed_quaternion(g,exact = self._R.is_exact(), prec = self._prec), check = False)
         else:
-            return  scale * self._X.embed_quaternion(g,exact = exact, prec = self._prec)
+            return  scale * self._X.embed_quaternion(g,exact = self._R.is_exact(), prec = self._prec)
 
     def basis_matrix(self):
         r"""
@@ -1139,7 +1136,7 @@ class HarmonicCocycles(AmbientHeckeModule,UniqueRepresentation):
         if x1.nrows() !=  self.rank():
             raise RuntimeError, 'The computed dimension does not agree with the expectation. Consider increasing precision!'
 
-        K = [c.list() for c in x1.rows()]
+        K = [c for c in x1.rows()]
 
         if not self._R.is_exact():
             for ii in range(len(K)):
@@ -1197,10 +1194,7 @@ class HarmonicCocycles(AmbientHeckeModule,UniqueRepresentation):
 
         return self(tmp)
 
-    def apply_hecke_op(self,l,f,heckedata = None):
-        return self.__apply_hecke_operator(l,f,heckedata)
-
-    def __apply_hecke_operator(self,l,f,heckedata = None):
+    def __apply_hecke_operator(self,l,f):
         r"""
         This function applies a Hecke operator to a harmonic cocycle.
 
@@ -1225,10 +1219,7 @@ class HarmonicCocycles(AmbientHeckeModule,UniqueRepresentation):
 
         """
         R = self._R
-        if heckedata is not None:
-            HeckeData,alpha = heckedata
-        else:
-            HeckeData,alpha = self._X._get_hecke_data(l)
+        HeckeData,alpha = self._X._get_hecke_data(l)
         if(self.level()%l == 0):
             factor = QQ(l**(Integer((self._k-2)/2))/(l+1))
         else:
@@ -1236,8 +1227,9 @@ class HarmonicCocycles(AmbientHeckeModule,UniqueRepresentation):
         p = self._X._p
         alphamat = self.embed_quaternion(alpha)
         tmp = [self._U(0) for jj in range(len(self._E))]
-        for d0,d1 in HeckeData:
-            mga = self.embed_quaternion(d0)*alphamat
+        for ii in range(len(HeckeData)):
+            d1 = HeckeData[ii][1]
+            mga = self.embed_quaternion(HeckeData[ii][0])*alphamat
             nE = len(self._E)
             for jj in range(nE):
                 t = d1[jj]
@@ -2529,8 +2521,9 @@ class pAutomorphicForms(Module,UniqueRepresentation):
         Tf = []
         for jj in range(len(self._list)):
             tmp = self._U(0)
-            for gg,edge_list in HeckeData:
-                u = edge_list[jj]
+            for d in HeckeData:
+                gg = d[0] # acter
+                u = d[1][jj] # edge_list[jj]
                 r = (self._p**(-(u.power)) * (u.t(self._U.base_ring().precision_cap() + 2*u.power + 1)*gg))
                 if use_ps_dists:
                     tmp +=  self._Sigma0(r.adjoint(),check = False) * f._value[u.label]  # Warning: should activate check...
