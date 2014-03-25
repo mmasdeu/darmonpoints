@@ -1136,7 +1136,7 @@ class HarmonicCocycles(AmbientHeckeModule,UniqueRepresentation):
         if x1.nrows() !=  self.rank():
             raise RuntimeError, 'The computed dimension does not agree with the expectation. Consider increasing precision!'
 
-        K = [c for c in x1.rows()]
+        K = [c.list() for c in x1.rows()]
 
         if not self._R.is_exact():
             for ii in range(len(K)):

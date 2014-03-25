@@ -10,7 +10,7 @@ from sage.misc.misc import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
 from sage.rings.arith import next_prime
 from sage.interfaces.gp import gp
-from sage.libs.pari.gen import pari
+from sage.libs.pari.pari_instance import pari
 from sage.rings.infinity import Infinity
 from sage.sets.primes import Primes
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing,Zmod

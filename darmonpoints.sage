@@ -38,16 +38,16 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
         except IOError: pass
     print 'Computing the moments...'
     from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-    #phi0 = ps_modsym_from_elliptic_curve(E,use_ps_dists = use_ps_dists)
-    phi0 = E.PS_modular_symbol()
+    phi0 = ps_modsym_from_elliptic_curve(E) #,use_ps_dists = use_ps_dists)
+    #phi0 = E.PS_modular_symbol()
     if sign_at_infinity == 1:
         phi0 = phi0.plus_part()
     else:
         phi0 = phi0.minus_part()
-    phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0
+    phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0 # DEBUG
     verb_level = get_verbose()
     set_verbose(1)
-    Phi = phi0.lift(p,M = prec,algorithm = 'stevens',eigensymbol = True,parallelize = parallelize)
+    Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True,parallel = parallelize)
     set_verbose(verb_level)
     Phi.db(fname)
     return Phi
