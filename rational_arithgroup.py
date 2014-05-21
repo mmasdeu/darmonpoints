@@ -25,6 +25,8 @@ from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 
+
+
 class ArithGroup_generic(AlgebraicGroup):
     def __init__(self):
         raise NotImplementedError
@@ -265,6 +267,28 @@ class ArithGroup_generic(AlgebraicGroup):
         else:
             return gamma, tau1
 
+    @cached_method
+    def hecke_matrix(self,l):
+        Gab, V, free_idx = self.abelianization()
+        gens = self.gens()
+        freegens = [prod(self.gen(i)**n for i,n in enumerate(Gab.gen(idx).lift().list())) for idx in free_idx]
+
+        dim = len(freegens)
+        M = matrix(ZZ,dim,dim,0)
+        for j,g in enumerate(freegens):
+            # Construct column j of the matrix
+            newcol = self.act_by_hecke(l,g)
+            M.set_column(j,newcol.list())
+        return M
+
+    def act_by_hecke(self,l,g):
+        r'''
+           - l:  a prime
+           - g: an element of the arithmetic group
+        '''
+        Gab, V, free_idx = self.abelianization()
+        hecke_reps = self.get_hecke_reps(l)
+        return sum(self.image_in_abelianized(self.get_hecke_ti(gk1,g.quaternion_rep,l,reps=hecke_reps)) for gk1 in hecke_reps)
 
 
 class ArithGroup_rationalquaternion(ArithGroup_generic):
@@ -876,6 +900,45 @@ class ArithGroupElement(MultiplicativeGroupElement):
 
     def is_trivial_in_abelianization(self):
         return self.get_weight_vector() in self.parent().get_relation_matrix().image()
+
+    def decompose_into_commutators(self):
+        oldword = self._calculate_weight_zero_word()
+        G = self.parent()
+        # At this point oldword has weight vector 0
+        # We use the identity:
+        # C W0 g^a W1 = C [W0,g^a] g^a W0 W1
+        commutator_list = []
+        for i in range(len(G.gens())):
+            while True:
+                # Find the first occurence of generator i
+                try:
+                    idx = [x[0] for x in oldword[1:]].index(i) + 1
+                except ValueError:
+                    break
+                w0 = ArithGroupElement(G,word_rep = oldword[:idx])
+                gatmp = [oldword[idx]]
+                ga = ArithGroupElement(G,word_rep = gatmp)
+                oldword = reduce_word(gatmp + oldword[:idx] + oldword[idx+1:])
+                w0q = w0.quaternion_rep
+                gaq = ga.quaternion_rep
+                commute = w0q*gaq*w0q**-1*gaq**-1
+                if commute != 1:
+                    commutator_list.append((w0,ga))
+        assert len(oldword) == 0
+        return commutator_list
+
+    def find_bounding_cycle(self,G):
+        g = self.quaternion_rep
+        commutator_list = G.Gn(g).decompose_into_commutators()
+        gprime = G.Gn(g)
+        ans = []
+        for a,b in commutator_list:
+            commab = a*b*a**-1*b**-1
+            gprime = commab**-1 * gprime
+            ans.extend([(-1,commab,gprime),(1,a,a**-1),(1,b,b**-1),(-1,a,b*a**-1*b**-1),(-1,b,a**-1*b**-1),(-1,a**-1,b**-1),(2,G.Gn([]),G.Gn([]))])
+        if gprime.quaternion_rep != 1:
+            verbose('gprime = %s'%gprime)
+        return ans
 
     def _calculate_weight_zero_word(self):
         if not self.is_trivial_in_abelianization():

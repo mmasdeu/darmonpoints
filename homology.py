@@ -13,6 +13,7 @@ from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.structure.parent import Parent
 from sage.categories.action import Action
+from sage.rings.padics.factory import Qq
 from util import *
 import os
 from ocmodule import *
@@ -69,6 +70,36 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
             q1 = G.F.ideal(q).factor()[0][0]
             tmp = tmp.hecke_smoothen(q1,prec = prec)
     return tmp,n,q1
+
+
+def lattice_homology_cycle(G,elt,prec,outfile = None):
+    p = G.prime()
+    Cp = Qq(p**2,prec,names = 'g')
+    tau1 = Cp.gen()
+    Div = Divisors(Cp)
+    D1 = Div(tau1)
+    H1 = Homology(G.large_group(),Div)
+    V1 = []
+    V2 = []
+    found = False
+    eltn = elt
+    while not found:
+        try:
+            W1 = eltn.find_bounding_cycle(G)
+            found = True
+        except ValueError:
+            eltn *= elt
+    for n,x,y in W1:
+        a,b,c,d = G.embed(x.quaternion_rep**-1,prec).list()
+        V1.append((y,n*(Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))) - Div(tau1))))
+    eltn_twisted = G.Gn(G.wp * eltn.quaternion_rep * G.wp**-1)
+    W2 = eltn_twisted.find_bounding_cycle(G)
+    for n,x,y in W2:
+        a,b,c,d = G.embed(G.wp**-1 * x.quaternion_rep**-1 * G.wp,prec).list()
+        V2.append((y,n*(Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))) - Div(tau1))))
+    # Note that the second class will need to be integrated in a twisted way.
+    # That is, the quaternion elements need to be conjugated by wp before being integrated.
+    return (H1(dict(V1)), H1(dict(V2)))
 
 class Divisors(Parent):
     def __init__(self,field):

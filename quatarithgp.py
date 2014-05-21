@@ -448,7 +448,7 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None):
                 return ArithGroup_rationalquaternion(discriminant,level,info_magma)
     else:
         a,b = abtuple
-        from quadratic_arithgroup import  ArithGroup_quadratic_quaternion
-        return ArithGroup_quadratic_quaternion(base,a,b,level,info_magma)
+        from nf_arithgroup import  ArithGroup_nf_quaternion
+        return ArithGroup_nf_quaternion(base,a,b,level,info_magma)
 
 

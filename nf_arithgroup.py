@@ -29,7 +29,7 @@ from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 
 
-class ArithGroup_quadratic_generic(AlgebraicGroup):
+class ArithGroup_nf_generic(AlgebraicGroup):
     def __init__(self):
         raise NotImplementedError
 
@@ -49,19 +49,19 @@ class ArithGroup_quadratic_generic(AlgebraicGroup):
         return self._relation_matrix
 
     def one(self):
-        return ArithGroupQuadraticElement(self,word_rep = [])
+        return ArithGroupNumFieldElement(self,word_rep = [])
 
     def _element_constructor_(self,x):
         if isinstance(x,list):
-            return ArithGroupQuadraticElement(self, word_rep = x)
+            return ArithGroupNumFieldElement(self, word_rep = x)
         elif x.parent() is self.quaternion_algebra():
-            return ArithGroupQuadraticElement(self, quaternion_rep = x)
+            return ArithGroupNumFieldElement(self, quaternion_rep = x)
         elif isinstance(x.parent(),FreeModule_generic):
             Ga, V, free_idx = self.abelianization()
             indices_vec = [Ga.gen(o).lift() for o in free_idx]
-            return ArithGroupQuadraticElement(self,word_rep = [(idx,n) for indices in indices_vec for idx,n in zip(indices,x)])
+            return ArithGroupNumFieldElement(self,word_rep = [(idx,n) for indices in indices_vec for idx,n in zip(indices,x)])
         else:
-            return ArithGroupQuadraticElement(self, quaternion_rep = x)
+            return ArithGroupNumFieldElement(self, quaternion_rep = x)
 
     def _coerce_map_from_(self,S):
         r"""
@@ -221,7 +221,7 @@ class ArithGroup_quadratic_generic(AlgebraicGroup):
             return gamma, tau1
 
 
-class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
+class ArithGroup_nf_quaternion(ArithGroup_nf_generic):
     def __init__(self,base,a,b,level,info_magma = None):
         self.F = base
         #self.discriminant = base(discriminant)
@@ -236,10 +236,6 @@ class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
         self.Obasis = tmpObasis
         Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
         self.basis_invmat = matrix(QQ,4*self.F.degree(),4*self.F.degree(),Obasis).transpose().inverse()
-
-        #tmpObasis = [magma_quaternion_to_sage(self.B,o) for o in self._O_magma.Basis()]
-        #Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
-        #self.Fbasis_mat = matrix(QQ,4,4*self.F.degree(),Obasis).transpose()
 
         self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant())
         verbose('Computing normalized basis')
@@ -262,8 +258,7 @@ class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
             self.Ugens.append(self.B(self.F(u)))
 
         verbose('Initializing generators')
-        #self.Ugens = [magma_quaternion_to_sage(self.B,gens[i+1]) for i in range(len(g))]
-        self._gens = [ ArithGroupQuadraticElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
+        self._gens = [ ArithGroupNumFieldElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
 
         verbose('Initializing relations')
         temp_relation_words = [shorten_word(self._H_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(self._H_magma.Relations()))] + [[(self.F_unit_offset + i,u.multiplicative_order())] for i,u in enumerate(self.F_units.gens()) if u.multiplicative_order() != Infinity]
@@ -287,7 +282,7 @@ class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
         Parent.__init__(self)
 
     def _repr_(self):
-        return 'Quadratic Arithmetic Group attached to rational quaternion algebra with a = %s, b = %s and level = %s'%(self.a,self.b,self.level)
+        return 'Arithmetic Group attached to quaternion algebra with a = %s, b = %s and level = %s'%(self.a,self.b,self.level)
 
     def __init_magma_objects(self,info_magma = None):
         wtime = walltime()
@@ -368,7 +363,7 @@ class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
 
         if not hasattr(self,'_element_of_norm'):
             self._element_of_norm  = dict([])
- 
+
         if use_magma:
             assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,N))
@@ -449,7 +444,8 @@ class ArithGroup_quadratic_quaternion(ArithGroup_quadratic_generic):
                 free_idx.append(i)
         return Gab,V,free_idx
 
-class ArithGroupQuadraticElement(MultiplicativeGroupElement):
+
+class ArithGroupNumFieldElement(MultiplicativeGroupElement):
     def __init__(self,parent, word_rep = None, quaternion_rep = None, check = False):
         r'''
         Initialize.
@@ -504,7 +500,7 @@ class ArithGroupQuadraticElement(MultiplicativeGroupElement):
             word_rep = left.word_rep + right.word_rep
         if (left.has_quaternion_rep and right.has_quaternion_rep) or word_rep is None:
             quaternion_rep = left.quaternion_rep * right.quaternion_rep
-        return ArithGroupQuadraticElement(left.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
+        return ArithGroupNumFieldElement(left.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
 
     def is_one(self):
         quatrep = self.quaternion_rep
@@ -517,7 +513,7 @@ class ArithGroupQuadraticElement(MultiplicativeGroupElement):
             word_rep = [(g,-i) for g,i in reversed(self.word_rep)]
         if self.has_quaternion_rep:
             quaternion_rep = self.quaternion_rep**(-1)
-        return ArithGroupQuadraticElement(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
+        return ArithGroupNumFieldElement(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
 
     def __cmp__(self,right):
         selfquatrep = self.quaternion_rep
@@ -582,19 +578,6 @@ class ArithGroupQuadraticElement(MultiplicativeGroupElement):
             print q * q1**-1
             raise RuntimeError,'Word and quaternion are inconsistent! (%s)'%txt
         return
-        # F = q.parent().base_ring()
-        # try: tmp = F(q/q1)
-        # except TypeError:
-        #     print q
-        #     print q1
-        #     print q * q1**-1
-        #     raise RuntimeError,'Word and quaternion are inconsistent! (%s)'%txt
-        # if not tmp.is_integral() or not (1/tmp).is_integral():
-        #     print q
-        #     print q1
-        #     print q * q1**-1
-        #     raise RuntimeError,'Word and quaternion are inconsistent! (%s)'%txt
-        # return
 
     def get_weight_vector(self):
         gens = self.parent().gens()

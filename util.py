@@ -171,6 +171,21 @@ def get_C_and_C2(E,qEpows,R,prec):
     C2 = (R(Eqc4) * R(E.c6())) / (R(Eqc6) * R(E.c4()))
     return our_sqrt(R(C2),R),C2
 
+def get_c4_and_c6(qE,prec):
+    sk3 = sk5 = 0
+    n2 = n3 = 0
+    for n in range(1,prec):
+        rn = 1/(1-qE**n) - 1
+        n2 += 2*n - 1
+        n3 += 3*n2 - 3*n + 1
+        newsk3 = n3 * rn
+        sk3 += newsk3
+        sk5 += n2 * newsk3
+    tate_a4 = -5  * sk3
+    tate_a6 = (tate_a4 - 7 * sk5 )/12
+    Eqc4, Eqc6 = 1-48*tate_a4, -1 + 72 * tate_a4 - 864 * tate_a6
+    return Eqc4, Eqc6
+
 def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
     if R is None:
         R = u.parent()

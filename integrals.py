@@ -84,18 +84,18 @@ def double_integral_zero_infty(Phi,tau1,tau2):
 
 ##----------------------------------------------------------------------------
 ##  double_integral(tau1,tau2,r,s)
-##  
-## Input:  
-##    tau1,tau2: Elements of the ``standard affinoid" in H_p consisting 
-##               of elements in PP_1(C_p) whose natural image in 
-##               P_1(F_p-bar) does not belong to P_1(F_p). 
+##
+## Input:
+##    tau1,tau2: Elements of the ``standard affinoid" in H_p consisting
+##               of elements in PP_1(C_p) whose natural image in
+##               P_1(F_p-bar) does not belong to P_1(F_p).
 ##    r,s:       Elements of P_1(Q). The cusp r=a/b is
 ##               represented in the form r=[a,b], with a and b relatively
 ##               prime integers, and b>=0. By convention infty=[1,0].
 ##    omega:     The modular form on Gamma_0(p), represented as above.
 ##
 ## Output:
-##    The ``multiplicative double integral" defined in [Da]. 
+##    The ``multiplicative double integral" defined in [Da].
 ##----------------------------------------------------------
 def double_integral(Phi,tau1,tau2,r,s):
    if r == [0,0] or s == [0,0]:
@@ -125,18 +125,18 @@ def double_integral(Phi,tau1,tau2,r,s):
 
 ##----------------------------------------------------------------------------
 ##  indef_integral(tau,r,s)
-##  
-## Input:  
-##    tau:       Elements of the ``standard affinoid" in H_p consisting 
-##               of elements in PP_1(C_p) whose natural image in 
-##               P_1(F_p-bar) does not belong to P_1(F_p). 
+##
+## Input:
+##    tau:       Elements of the ``standard affinoid" in H_p consisting
+##               of elements in PP_1(C_p) whose natural image in
+##               P_1(F_p-bar) does not belong to P_1(F_p).
 ##    r,s:       Elements of P_1(Q). The cusp r=a/b is
 ##               represented in the form r=[a,b], with a and b relatively
 ##               prime integers, and b>=0. By convention infty=[1,0].
 ##    omega:     The modular form on Gamma_0(p), represented as above.
 ##
 ## Output:
-##    The indefinite ``multiplicative double integral" defined in [Da]. 
+##    The indefinite ``multiplicative double integral" defined in [Da].
 ##----------------------------------------------------------
 def indef_integral(Phi,tau,r,s  = None,limits = None):
     p = Phi._map._codomain().parent().base_ring().prime()
@@ -171,8 +171,7 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False):
-    res = 1
+def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist = False):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
@@ -192,21 +191,22 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         verbose('Integral %s/%s...'%(jj,total_integrals))
         if divisor.degree() != 0:
             raise ValueError,'Divisor must be of degree 0'
-        #assert all((is_in_principal_affinoid(G.p,P) for P,n in divisor))
         divhat = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
         ghat = G.wp * g.quaternion_rep * G.wp**-1
-        if not parallelize:
-            res *= integrate_H0(G,divhat,cocycle,depth,ghat,prec)
-        else:
-            input_vec.append((G,divhat,cocycle,depth,ghat,prec))
-        #verbose('%s/%s'%(res.precision_relative(),res.precision_absolute()))
+
+        if twist:
+            ghat = G.wp**-1 * g.quaternion_rep * G.wp # Back to the original, actually
+
+        input_vec.append((G,divhat,cocycle,depth,ghat,prec))
     if parallelize:
-        integrate_parallel = parallel(integrate_H0)
         i = 0
-        for _,outp in integrate_parallel(input_vec):
+        res = Cp(1)
+        for _,outp in parallel(integrate_H0)(input_vec):
             i += 1
             verbose('Done %s/%s'%(i,len(input_vec)))
             res *= outp
+    else:
+        res = prod(integrate_H0(*o) for o in input_vec)
     return res
 
 
@@ -283,36 +283,37 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
     phi = R0(prod(((t - P)**ZZ(n) for P,n in divisor if n > 0))/prod(((t - P)**ZZ(-n) for P,n in divisor if n < 0)))
     resadd = ZZ(0)
     resmul = ZZ(1)
-    for _,h in G.get_covering(1):
-        a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
-        hexp = (a*r1+b)/(c*r1+d)
-        #y0 = prod([(hexp - P)**ZZ(n) for P,n in divisor if n > 0],R1(1))/prod([(hexp - P)**ZZ(-n) for P,n in divisor if n < 0],R1(1))
-        y0 = phi(hexp)
-        val = y0(y0.parent().base_ring()(0))
-        #verbose('val has precision = %s/%s'%(val.precision_absolute(),val.precision_relative()))
-        assert all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()])
-        pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
-        #verbose('pol_err = %s'%(max([o2 - o.valuation() for o,o2 in zip(pol.coefficients(),pol.exponents())])))
-        mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
-        #verbose('mu_e = %s'%mu_e)
-        if HOC._use_ps_dists:
-            nmoments = len(mu_e._moments)
-            #verbose('mom_vals = %s'%[(a.precision_absolute(),i,mu_e.moment(i).valuation()) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments])
-            newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < nmoments)
-        else:
-            newresadd = mu_e.evaluate_at_poly(pol)
-        #verbose('newresadd = %s'%newresadd)
-        resadd += newresadd
-        try:
-            resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
-        except IndexError: pass
-    #print resmul
-    #print resadd
+    edgelist = [(1,o) for o in G.get_covering(1)]
+    while len(edgelist) > 0:
+        verbose('Remaining %s edges'%len(edgelist))
+        newedgelist = []
+        for htup in edgelist:
+            parity, edge = htup
+            _, h = edge
+            a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
+            hexp = (a*r1+b)/(c*r1+d)
+            y0 = phi(hexp)
+            val = y0(y0.parent().base_ring()(0))
+            if not all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()]):
+                verbose('Subdividing...')
+                newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],1-parity,1)])
+                continue
+            pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
+            mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
+            #verbose('mu_e = %s'%mu_e)
+            if HOC._use_ps_dists:
+                newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
+            else:
+                newresadd = mu_e.evaluate_at_poly(pol)
+            resadd += newresadd
+            try:
+                resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
+            except IndexError: pass
+        edgelist = newedgelist
     resmul = resmul**power
     resadd *= power
     val =  resmul.valuation(p)
     tmp = p**val * K.teichmuller(p**(-val)*resmul)
     if resadd != 0:
         tmp *= resadd.exp()
-    #print tmp
     return tmp

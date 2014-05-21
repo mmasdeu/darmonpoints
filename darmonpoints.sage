@@ -342,7 +342,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 fwrite('================================================',outfile)
                 print 'Point found: %s'%Ptsmall
                 if return_all_data == True:
-                    return Ptsmall, Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
+                    return (Ptsmall, Phi, J, getcoords(E.base_extend(local_embedding),J,prec))
                 else:
                     return Ptsmall
             except (TypeError,ValueError):
@@ -361,12 +361,13 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             fwrite('================================================',outfile)
             print 'Point found: %s'%candidate
             if return_all_data == True:
-                return candidate, Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
+                return (candidate, Phi, J, getcoords(E.base_extend(local_embedding),J,prec))
             else:
                 return candidate
     else:
         fwrite('================================================',outfile)
         if return_all_data == True:
-            return [], Phi, J, getcoords(E.base_extend(local_embedding),J,prec)
+            return ([], Phi, J, getcoords(E.base_extend(local_embedding),J,prec))
         else:
             return []
+
