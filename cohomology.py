@@ -364,18 +364,25 @@ class CohomologyGroup(Parent):
         except AttributeError:
             N = ZZ(discnorm)
 
+        if hasattr(E,'conductor'):
+            def getap(q):
+                if F == QQ:
+                    return E.ap(q)
+                else:
+                    Q = F(q).factor()[0][0]
+                    return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
+        else:
+            def getap(q):
+                return E(q)
+
         q = ZZ(1)
         while K.dimension() != 1:
             q = q.next_prime()
             if N % q == 0:
                 continue
-            if F == QQ:
-                Eap = E.ap(q)
-            else:
-                Q = F(q).factor()[0][0]
-                Eap = ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
+            ap = getap(q)
 
-            K1 = (self.hecke_matrix(q)-Eap).right_kernel()
+            K1 = (self.hecke_matrix(q)-ap).right_kernel()
             K = K.intersection(K1)
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))

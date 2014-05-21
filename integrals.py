@@ -171,7 +171,7 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist = False):
+def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
@@ -194,9 +194,6 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         divhat = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
         ghat = G.wp * g.quaternion_rep * G.wp**-1
 
-        if twist:
-            ghat = G.wp**-1 * g.quaternion_rep * G.wp # Back to the original, actually
-
         input_vec.append((G,divhat,cocycle,depth,ghat,prec))
     if parallelize:
         i = 0
@@ -209,6 +206,47 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         res = prod(integrate_H0(*o) for o in input_vec)
     return res
 
+
+r'''
+Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
+and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
+Note that it is a multiplicative integral.
+'''
+def integrate_H1_new(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist=False):
+    if prec is None:
+        prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
+    verbose('precision = %s'%prec)
+    Cp = cycle.parent().coefficient_module().base_field()
+    R = PolynomialRing(Cp,names = 't')
+    t = R.gen()
+    if method == 'moments':
+        integrate_H0 = integrate_H0_moments
+    else:
+        assert method == 'riemann'
+        integrate_H0 = integrate_H0_riemann
+    jj = 0
+    total_integrals = cycle.size_of_support()
+    input_vec = []
+    for g,divisor in cycle.get_data():
+        jj += 1
+        verbose('Integral %s/%s...'%(jj,total_integrals))
+        if divisor.degree() != 0:
+            raise ValueError,'Divisor must be of degree 0'
+        #divhat = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
+        gq = g.quaternion_rep
+        if twist:
+            gq = G.wp**-1 * gq * G.wp
+        input_vec.append((G,divisor,cocycle,depth,gq,prec))
+    if parallelize:
+        i = 0
+        res = Cp(1)
+        for _,outp in parallel(integrate_H0)(input_vec):
+            i += 1
+            verbose('Done %s/%s'%(i,len(input_vec)))
+            res *= outp
+    else:
+        res = prod(integrate_H0(*o) for o in input_vec)
+    return res
 
 def sample_point(G,e,prec = 20):
     r'''
@@ -296,7 +334,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
             val = y0(y0.parent().base_ring()(0))
             if not all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()]):
                 verbose('Subdividing...')
-                newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],1-parity,1)])
+                newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],1-parity,2)])
                 continue
             pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
             mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
