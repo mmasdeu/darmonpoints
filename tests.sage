@@ -42,14 +42,14 @@ g =  G.Gpn.gen(1)
 from homology import Homology
 W = (g**3).find_bounding_cycle(G)
 HomGn = Homology(G.Gn,ZZ)
-ans = HomGn(g**-3)
+ans = HomGn(dict())
 for n,x,y in W:
     if n == 1:
         ans = ans + HomGn(x) + HomGn(y) - HomGn(x*y)
     else:
         assert n == -1
         ans = ans - HomGn(x) - HomGn(y) + HomGn(x*y)
-
+ans = ans - HomGn(g**3)
 
 assert E.ap(11) * G.Gpn.image_in_abelianized(g) == G.Gpn.act_by_hecke(11,g)
 xi1,xi2 = lattice_homology_cycle(G,g,prec,outfile)
