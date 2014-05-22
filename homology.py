@@ -91,21 +91,25 @@ def lattice_homology_cycle(G,elt,prec,outfile = None):
             eltn *= elt
     for n,x,y in W1:
         a,b,c,d = G.embed(x.quaternion_rep**-1,prec).list()
+        tau2 = (Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))
         if n == 1:
-            V1.append((y,Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))) - Div(tau1)))
+            D = Div(tau2) - Div(tau1)
         else:
             assert n == -1
-            V1.append((y,Div(tau1)-Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d)))))
-
-    eltn_twisted = G.Gn(G.wp * eltn.quaternion_rep * G.wp**-1)
+            D = Div(tau1) - Div(tau2)
+        V1.append((y,D))
+    eltn_twisted = G.Gn(G.wp**-1 * eltn.quaternion_rep * G.wp)
     W2 = eltn_twisted.find_bounding_cycle(G)
     for n,x,y in W2:
-        a,b,c,d = G.embed(G.wp**-1 * x.quaternion_rep**-1 * G.wp,prec).list()
+        a,b,c,d = G.embed(G.wp * x.quaternion_rep**-1 * G.wp**-1,prec).list()
+        #a,b,c,d = G.embed(x.quaternion_rep**-1,prec).list()
+        tau2 = (Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))
         if n == 1:
-            V2.append((y,Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))) - Div(tau1)))
+            D = Div(tau2) - Div(tau1)
         else:
             assert n == -1
-            V2.append((y,Div(tau1)-Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d)))))
+            D = Div(tau1) - Div(tau2)
+        V2.append((y,D.left_act_by_matrix(G.embed(G.wp**-1,prec).change_ring(Cp))))
 
     # Note that the second class will need to be integrated in a twisted way.
     # That is, the quaternion elements need to be conjugated by wp before being integrated.
@@ -317,7 +321,10 @@ class Homology(Parent):
         return self._coeffmodule
 
     def _element_constructor_(self,data):
-        return HomologyClass(self,data)
+        if isinstance(data,dict):
+            return HomologyClass(self,data)
+        else:
+            return HomologyClass(self,dict([(data,ZZ(1))]))
 
     def _coerce_map_from_(self,S):
         if isinstance(S,Homology):

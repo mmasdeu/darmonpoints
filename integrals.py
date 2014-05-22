@@ -171,7 +171,7 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False):
+def integrate_H1_old(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
@@ -212,7 +212,7 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1_new(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist=False):
+def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist=False):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
@@ -229,13 +229,14 @@ def integrate_H1_new(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime
     input_vec = []
     for g,divisor in cycle.get_data():
         jj += 1
-        verbose('Integral %s/%s...'%(jj,total_integrals))
         if divisor.degree() != 0:
             raise ValueError,'Divisor must be of degree 0'
         gq = g.quaternion_rep
         if twist:
-            gq = G.wp**-1 * gq * G.wp
-        input_vec.append((G,divisor,cocycle,depth,gq,prec))
+            divisor = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
+            gq = G.wp * gq * G.wp**-1
+        input_vec.append((G,divisor,cocycle,depth,gq,prec,(jj,total_integrals)))
+
     if parallelize:
         i = 0
         res = Cp(1)
@@ -292,7 +293,9 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
             res += phi(K(te)) * hce
     return res
 
-def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,power = 1):
+def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,power = 1,counter = None):
+    if counter is not None:
+        verbose('Integral %s/%s...'%counter)
     HOC = hc.parent()
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
@@ -304,7 +307,9 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,power = 1):
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
     return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = True)**power
 
-def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
+def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1,counter = None):
+    if counter is not None:
+        verbose('Integral %s/%s...'%counter)
     p = G.p
     HOC = hc.parent()
     if prec is None:

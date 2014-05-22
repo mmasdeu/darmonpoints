@@ -38,7 +38,7 @@ PhiElift = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use
 
 # Integration with moments
 tot_time = walltime()
-J = integrate_H1(G,cycleGn,PhiElift,1,method = 'moments') # do not smoothen
+J = integrate_H1(G,cycleGn,PhiElift,1,method = 'moments',twist=True) # do not smoothen
 verbose('integration tot_time = %s'%walltime(tot_time))
 x,y = getcoords(E,J,prec)
 
