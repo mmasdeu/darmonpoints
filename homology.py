@@ -91,12 +91,22 @@ def lattice_homology_cycle(G,elt,prec,outfile = None):
             eltn *= elt
     for n,x,y in W1:
         a,b,c,d = G.embed(x.quaternion_rep**-1,prec).list()
-        V1.append((y,n*(Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))) - Div(tau1))))
+        if n == 1:
+            V1.append((y,Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))) - Div(tau1)))
+        else:
+            assert n == -1
+            V1.append((y,Div(tau1)-Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d)))))
+
     eltn_twisted = G.Gn(G.wp * eltn.quaternion_rep * G.wp**-1)
     W2 = eltn_twisted.find_bounding_cycle(G)
     for n,x,y in W2:
         a,b,c,d = G.embed(G.wp**-1 * x.quaternion_rep**-1 * G.wp,prec).list()
-        V2.append((y,n*(Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))) - Div(tau1))))
+        if n == 1:
+            V2.append((y,Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))) - Div(tau1)))
+        else:
+            assert n == -1
+            V2.append((y,Div(tau1)-Div((Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d)))))
+
     # Note that the second class will need to be integrated in a twisted way.
     # That is, the quaternion elements need to be conjugated by wp before being integrated.
     return (H1(dict(V1)), H1(dict(V2)))

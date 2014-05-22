@@ -927,7 +927,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         assert len(oldword) == 0
         return commutator_list
 
-    def find_bounding_cycle(self,G):
+    def find_bounding_cycle_old(self,G):
         g = self.quaternion_rep
         commutator_list = G.Gn(g).decompose_into_commutators()
         gprime = G.Gn(g)
@@ -938,6 +938,33 @@ class ArithGroupElement(MultiplicativeGroupElement):
             ans.extend([(-1,commab,gprime),(1,a,a**-1),(1,b,b**-1),(-1,a,b*a**-1*b**-1),(-1,b,a**-1*b**-1),(-1,a**-1,b**-1),(2,G.Gn([]),G.Gn([]))])
         if gprime.quaternion_rep != 1:
             verbose('gprime = %s'%gprime)
+        return ans
+
+    def find_bounding_cycle(self,G):
+        r'''
+        Use recursively that:
+        - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))
+        - x^(-a) g = -a x + g + del(1|1) + del(x^(a)|(x^-a)) - del(x^(-a)|g) + del(x|(x + x^2 + ... + x^(a-1)))
+        '''
+        g = self.quaternion_rep
+        word_list = G.Gn(g)._calculate_weight_zero_word()
+        gprime = G.Gn(g)
+        ans = []
+        gword = G.Gn(g)._calculate_weight_zero_word()
+        for i,a in gword:
+            g = G.Gn.gen(i)
+            ga = g**a
+            gprime = ga**-1 * gprime
+            ans.append((-1,ga,gprime))
+            if a > 0:
+                sign = 1
+            else:
+                ans.append((1,G.Gn([]),G.Gn([])))
+                ans.append((1,ga**-1,ga))
+                sign = -1
+            for j in range(1,sign*a):
+                ans.append((sign,g,g**j))
+        assert gprime.quaternion_rep == 1
         return ans
 
     def _calculate_weight_zero_word(self):

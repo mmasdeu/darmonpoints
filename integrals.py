@@ -232,7 +232,6 @@ def integrate_H1_new(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime
         verbose('Integral %s/%s...'%(jj,total_integrals))
         if divisor.degree() != 0:
             raise ValueError,'Divisor must be of degree 0'
-        #divhat = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
         gq = g.quaternion_rep
         if twist:
             gq = G.wp**-1 * gq * G.wp
@@ -325,8 +324,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
-        for htup in edgelist:
-            parity, edge = htup
+        for parity, edge in edgelist:
             _, h = edge
             a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
             hexp = (a*r1+b)/(c*r1+d)
@@ -334,7 +332,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
             val = y0(y0.parent().base_ring()(0))
             if not all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()]):
                 verbose('Subdividing...')
-                newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],1-parity,2)])
+                newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
                 continue
             pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
             mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
