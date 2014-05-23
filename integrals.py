@@ -10,7 +10,7 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
 from sigma0 import Sigma0,Sigma0ActionAdjuster
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Infinity
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing,lcm, Infinity
 from sage.all import prod
 from operator import mul
 from util import *
@@ -20,12 +20,28 @@ import os
 
 oo = Infinity
 
+def act_on_polynomial(P,num,den,N = None):
+    if N is None:
+        N = P.degree()
+    R = num.parent()
+    ans = R(0)
+    numvec = [R(1)]
+    denvec = [R(1)]
+    for i in range(N):
+        numvec.append(num*numvec[-1])
+        denvec.append(den*denvec[-1])
+    Plist = P.list()
+    for i in range(N+1):
+        ai = Plist[i]
+        ans += ai*numvec[i]*denvec[N-i]
+    return ans
+
 def double_integral_zero_infty(Phi,tau1,tau2):
     p = Phi.parent().prime()
     K = tau1.parent()
     R = PolynomialRing(K,'x')
     x = R.gen()
-    R1 = LaurentSeriesRing(K,'r1')
+    R1 = PowerSeriesRing(K,'r1')
     r1 = R1.gen()
     R1.set_default_prec(Phi.precision_absolute())
     level = Phi._map._manin.level()
@@ -171,47 +187,6 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1_old(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False):
-    if prec is None:
-        prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
-    verbose('precision = %s'%prec)
-    Cp = cycle.parent().coefficient_module().base_field()
-    R = PolynomialRing(Cp,names = 't')
-    t = R.gen()
-    if method == 'moments':
-        integrate_H0 = integrate_H0_moments
-    else:
-        assert method == 'riemann'
-        integrate_H0 = integrate_H0_riemann
-    jj = 0
-    total_integrals = cycle.size_of_support()
-    input_vec = []
-    for g,divisor in cycle.get_data():
-        jj += 1
-        verbose('Integral %s/%s...'%(jj,total_integrals))
-        if divisor.degree() != 0:
-            raise ValueError,'Divisor must be of degree 0'
-        divhat = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
-        ghat = G.wp * g.quaternion_rep * G.wp**-1
-
-        input_vec.append((G,divhat,cocycle,depth,ghat,prec))
-    if parallelize:
-        i = 0
-        res = Cp(1)
-        for _,outp in parallel(integrate_H0)(input_vec):
-            i += 1
-            verbose('Done %s/%s'%(i,len(input_vec)))
-            res *= outp
-    else:
-        res = prod(integrate_H0(*o) for o in input_vec)
-    return res
-
-
-r'''
-Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
-and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
-Note that it is a multiplicative integral.
-'''
 def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist=False):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
@@ -226,6 +201,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         integrate_H0 = integrate_H0_riemann
     jj = 0
     total_integrals = cycle.size_of_support()
+    verbose('Will do %s integrals'%total_integrals)
     input_vec = []
     for g,divisor in cycle.get_data():
         jj += 1
@@ -235,14 +211,14 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
             gq = G.wp * gq * G.wp**-1
-        input_vec.append((G,divisor,cocycle,depth,gq,prec,(jj,total_integrals)))
+        input_vec.append((G,divisor,cocycle,depth,gq,prec))
 
     if parallelize:
         i = 0
         res = Cp(1)
         for _,outp in parallel(integrate_H0)(input_vec):
             i += 1
-            verbose('Done %s/%s'%(i,len(input_vec)))
+            #verbose('Done %s/%s'%(i,len(input_vec)))
             res *= outp
     else:
         res = prod(integrate_H0(*o) for o in input_vec)
@@ -293,9 +269,9 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
             res += phi(K(te)) * hce
     return res
 
-def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,power = 1,counter = None):
-    if counter is not None:
-        verbose('Integral %s/%s...'%counter)
+def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,power = 1):
+    # if counter is not None:
+    #     verbose('Integral %s/%s...'%counter)
     HOC = hc.parent()
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
@@ -307,9 +283,9 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,power = 1,counter = None)
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
     return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = True)**power
 
-def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1,counter = None):
-    if counter is not None:
-        verbose('Integral %s/%s...'%counter)
+def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
+    # if counter is not None:
+    #     verbose('Integral %s/%s...'%counter)
     p = G.p
     HOC = hc.parent()
     if prec is None:
@@ -321,8 +297,11 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1,counter = None)
 
     R0 = PolynomialRing(K,'t')
     t = R0.gen()
-    R0 = R0.fraction_field()
-    phi = R0(prod(((t - P)**ZZ(n) for P,n in divisor if n > 0))/prod(((t - P)**ZZ(-n) for P,n in divisor if n < 0)))
+    # R0 = R0.fraction_field()
+    #phinum = prod(((t - P)**ZZ(n) for P,n in divisor if n > 0))
+    #phiden = prod(((t - P)**ZZ(-n) for P,n in divisor if n < 0))
+    #assert phinum.degree() == phiden.degree()
+    #phi = phinum/phiden
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o) for o in G.get_covering(1)]
@@ -332,9 +311,37 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1,counter = None)
         for parity, edge in edgelist:
             _, h = edge
             a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
-            hexp = (a*r1+b)/(c*r1+d)
-            y0 = phi(hexp)
+            # y0old = phi((a*r1+b)/(c*r1+d))
+
+            # Does not work
+            # atpb = a*t + b
+            # ctpd = c*t + d
+            # y0 = R1(act_on_polynomial(phinum,atpb,ctpd,prec+1)/act_on_polynomial(phiden,atpb,ctpd,prec+1))
+            # if y0 != y0old:
+            #     print y0-y0old
+            #     assert 0
+
+            # Does not work
+            # hm = G.embed(h,prec).change_ring(K)
+            # a,b,c,d = hm.list()
+            # val = prod(((-b-a*P)/(a*P))**n for P,n in divisor)
+            # divhm = divisor.left_act_by_matrix(hm)
+            # y0 = R1(prod(((r1 - P)**ZZ(n) for P,n in divhm if n > 0))/prod(((r1 - P)**ZZ(-n) for P,n in divhm if n < 0)))
+
+            y0num = R1(1)
+            y0den = R1(1)
+            for P,n in divisor:
+                if n > 0:
+                    y0num *= ((a-P*c)*r1+(b-d*P))**ZZ(n)
+                    y0num = y0num.add_bigoh(prec)
+                else:
+                    y0den *= ((a-P*c)*r1+(b-d*P))**ZZ(-n)
+                    y0den = y0den.add_bigoh(prec)
+
+            y0 = y0num/y0den
+            # y0 = prod(((a-P*c)*r1+(b-d*P))**ZZ(n) for P,n in divisor if n > 0)/prod(((a-P*c)*r1+(b-d*P))**ZZ(-n) for P,n in divisor if n < 0)
             val = y0(y0.parent().base_ring()(0))
+
             if not all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()]):
                 verbose('Subdividing...')
                 newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])

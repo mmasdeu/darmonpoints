@@ -72,7 +72,7 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
     return tmp,n,q1
 
 
-def lattice_homology_cycle(G,elt,prec,outfile = None):
+def lattice_homology_cycle(G,elt,prec,hecke_smoothen = True,outfile = None):
     p = G.prime()
     Cp = Qq(p**2,prec,names = 'g')
     tau1 = Cp.gen()
@@ -113,7 +113,24 @@ def lattice_homology_cycle(G,elt,prec,outfile = None):
 
     # Note that the second class will need to be integrated in a twisted way.
     # That is, the quaternion elements need to be conjugated by wp before being integrated.
-    return (H1(dict(V1)), H1(dict(V2)))
+    xi1, xi2 = H1(dict(V1)), H1(dict(V2))
+    if hecke_smoothen:
+        q = ZZ(2)
+        D = G.prime() * G.discriminant * G.level
+        try:
+            D = D.norm()
+        except AttributeError: pass
+        while D % q == 0:
+            q = q.next_prime()
+        if G.F.degree() == 1:
+            q1 = q
+            xi1 = xi1.hecke_smoothen(q,prec = prec)
+            xi2 = xi1.hecke_smoothen(q,prec = prec,twist = G.wp)
+        else:
+            q1 = G.F.ideal(q).factor()[0][0]
+            xi1 = xi1.hecke_smoothen(q1,prec = prec)
+            xi2 = xi1.hecke_smoothen(q1,prec = prec,twist = G.wp)
+    return xi1,xi2
 
 class Divisors(Parent):
     def __init__(self,field):
@@ -414,7 +431,7 @@ class HomologyClass(ModuleElement):
                     oldv = (g**-1) * oldv
         return HomologyClass(self.parent(),newdict)
 
-    def factor_into_generators(self):
+    def factor_into_generators(self,prec,twist = 1):
         r'''
         Use the relations:
             * gh|v = g|v + h|g^-1 v
@@ -430,17 +447,18 @@ class HomologyClass(ModuleElement):
             newv = v
             for i,a in gword:
                 g = G.gen(i)
+                gq = G.B(twist) * g.quaternion_rep * G.B(twist)**-1
                 oldv = newv
-                newv = (g**-a) * oldv
+                newv = oldv.left_act_by_matrix(G.embed(gq**-a,prec))
                 if a < 0:
                     a = -a
-                    oldv = (g**a) * oldv
+                    oldv = oldv.left_act_by_matrix(G.embed(gq**a,prec))
                     sign = -1
                 else:
                     sign = 1
                 for j in range(a):
                     newdict[g] += sign * oldv
-                    oldv = (g**-1) * oldv
+                    oldv = oldv.left_act_by_matrix(G.embed(gq**-1,prec))
         return HomologyClass(self.parent(),newdict)
 
     def _add_(self,right):
@@ -465,14 +483,14 @@ class HomologyClass(ModuleElement):
                 newdict[g] = -v
         return HomologyClass(self.parent(),newdict)
 
-    def act_by_hecke(self,l,prec):
+    def act_by_hecke(self,l,prec,twist = 1):
         newdict = dict()
         G = self.parent().group()
         hecke_reps = G.get_hecke_reps(l)
         for gk1 in hecke_reps:
             for g,v in self._data.iteritems():
                 ti = G.get_hecke_ti(gk1,g.quaternion_rep,l,reps = hecke_reps)
-                newv = v.left_act_by_matrix(G.embed(gk1**-1,prec))
+                newv = v.left_act_by_matrix(G.embed(G.B(twist) * gk1**-1 * G.B(twist)**-1,prec))
                 try:
                     newdict[ti] += newv
                     if newdict[ti].is_zero():
@@ -493,12 +511,12 @@ class HomologyClass(ModuleElement):
     def mult_by(self,a):
         return self.__rmul__(a)
 
-    def hecke_smoothen(self,r,prec = 20):
+    def hecke_smoothen(self,r,prec = 20,twist = 1):
         rnorm = r
         try:
             rnorm = r.norm()
         except AttributeError: pass
-        return self.act_by_hecke(r,prec = prec) - self.mult_by(ZZ(rnorm+1))
+        return self.act_by_hecke(r,prec = prec,twist = twist) - self.mult_by(ZZ(rnorm+1))
 
     def __rmul__(self,a):
         newdict = dict(((g,a*v) for g,v in self._data.iteritems())) if a != 0 else dict([])

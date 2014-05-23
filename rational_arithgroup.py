@@ -950,12 +950,18 @@ class ArithGroupElement(MultiplicativeGroupElement):
         gprime = G.Gn(g)
         ans = []
         gword = G.Gn(g)._calculate_weight_zero_word()
+        num_terms = len(gword)
+        jj = 0
         for i,a in gword:
+            jj += 1
             g = G.Gn.gen(i)
             ga = g**a
             gprime = ga**-1 * gprime
-            if gprime.quaternion_rep != 1:
+            if jj < num_terms:
                 ans.append((-1,ga,gprime))
+            else:
+                verbose('Last term!')
+
             if a > 0:
                 sign = 1
             else:

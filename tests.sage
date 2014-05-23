@@ -9,7 +9,7 @@ p = 13 # The prime
 D = 2 * 3 # Discriminant of the quaternion algebra (even number of primes)
 Np = 1 # Conductor of order.
 sign_at_infinity = 1 # Sign at infinity, can be +1 or -1
-prec = 20 # Precision to which result is desired
+prec = 10 # Precision to which result is desired
 outfile = 'points_%s_%s.txt'%(p,D)
 
 verb_level = 1 # Set to 0 to remove output
@@ -49,15 +49,23 @@ for n,x,y in W:
     else:
         assert n == -1
         ans = ans - HomGn(x) - HomGn(y) + HomGn(x*y)
-ans = ans - HomGn(g**3)
+ans = ans - HomGn(G.Gn(g.quaternion_rep)**3)
+
+
 
 assert E.ap(11) * G.Gpn.image_in_abelianized(g) == G.Gpn.act_by_hecke(11,g)
-xi1,xi2 = lattice_homology_cycle(G,g,prec,outfile)
+xi1, xi2 = lattice_homology_cycle(G,g,prec,outfile)
+
+# xi1 = xi1.factor_into_generators(prec)
+# xi2 = xi2.factor_into_generators(prec,G.wp)
 
 PhiElift = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists)
 
-qE1 = integrate_H1(G,xi1,PhiElift,1,method = 'moments')
-qE2 = integrate_H1(G,xi2,PhiElift,1,method = 'moments',twist= True)
+#qE1 = integrate_H1(G,xi1,PhiElift,1,method = 'moments')
+#qE2 = integrate_H1(G,xi2,PhiElift,1,method = 'moments',twist= True)
+qE1 = integrate_H1(G,xi1,PhiElift,1,method = 'riemann')
+qE2 = integrate_H1(G,xi2,PhiElift,1,method = 'riemann',twist= True)
+
 qE = qE1/qE2
 from util import get_c4_and_c6
 c4, c6 = get_c4_and_c6(qE,prec)
