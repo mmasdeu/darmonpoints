@@ -528,16 +528,22 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             self._element_of_norm[N.gens_two()] = candidate
             return candidate
         else:
-            v = self.Obasis
+            v = list(self.Obasis)
             verbose('Doing long enumeration...')
             M = 0
             if return_all:
                 all_candidates = []
             while M != radius:
                 M += 1
+                assert M < 9
                 verbose('M = %s,radius = %s'%(M,radius))
-                for a0,an in product(range(M),product(range(-M+1,M),repeat = len(v)-1)):
-                    candidate = self.B(sum(ai*vi for ai,vi in  zip([a0]+list(an),v)))
+                verbose('v = %s'%list(v))
+                #for a0,an in product(range(M),product(range(-M,M+1),repeat = len(v)-1)):
+                for an in product(range(-M,M+1), repeat = len(v)):
+                    # candidate = sum((ZZ(ai) * vi for ai,vi in  zip([a0]+list(an),v)),self.B(0))
+                    candidate = sum((ZZ(ai) * vi for ai,vi in  zip(an,v)),self.B(0))
+                    # verbose('lincomb = %s'%([a0]+list(an)))
+                    # verbose('candidate = %s'%candidate)
                     if candidate.reduced_norm() == N:
                         if not return_all:
                             self._element_of_norm[N] = candidate
@@ -592,6 +598,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         sage: G = ArithGroup(6,5)
         sage: reps = G.get_hecke_reps(11)
         '''
+        verbose('Finding hecke reps for l = %s'%l)
         g0 = self.element_of_norm(l,use_magma = False)
         assert g0.reduced_norm() == l
         reps = [g0]
@@ -926,19 +933,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
                     commutator_list.append((w0,ga))
         assert len(oldword) == 0
         return commutator_list
-
-    def find_bounding_cycle_old(self,G):
-        g = self.quaternion_rep
-        commutator_list = G.Gn(g).decompose_into_commutators()
-        gprime = G.Gn(g)
-        ans = []
-        for a,b in commutator_list:
-            commab = a*b*a**-1*b**-1
-            gprime = commab**-1 * gprime
-            ans.extend([(-1,commab,gprime),(1,a,a**-1),(1,b,b**-1),(-1,a,b*a**-1*b**-1),(-1,b,a**-1*b**-1),(-1,a**-1,b**-1),(2,G.Gn([]),G.Gn([]))])
-        if gprime.quaternion_rep != 1:
-            verbose('gprime = %s'%gprime)
-        return ans
 
     def find_bounding_cycle(self,G):
         r'''

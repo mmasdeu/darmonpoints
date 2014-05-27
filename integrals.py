@@ -211,7 +211,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
             gq = G.wp * gq * G.wp**-1
-        input_vec.append((G,divisor,cocycle,depth,gq,prec))
+        input_vec.append((G,divisor,cocycle,depth,gq,prec,jj,total_integrals))
 
     if parallelize:
         i = 0
@@ -269,9 +269,8 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
             res += phi(K(te)) * hce
     return res
 
-def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,power = 1):
-    # if counter is not None:
-    #     verbose('Integral %s/%s...'%counter)
+def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter):
+    verbose('Integral %s/%s...'%(counter,total_counter))
     HOC = hc.parent()
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
@@ -281,11 +280,10 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,power = 1):
     R = PolynomialRing(K,names = 't').fraction_field()
     t = R.gen()
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
-    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = True)**power
+    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = True)
 
-def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
-    # if counter is not None:
-    #     verbose('Integral %s/%s...'%counter)
+def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
+    verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
     HOC = hc.parent()
     if prec is None:
@@ -296,12 +294,10 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
     R1.set_default_prec(prec)
 
     R0 = PolynomialRing(K,'t')
+    R0 = R0.fraction_field()
     t = R0.gen()
-    # R0 = R0.fraction_field()
-    #phinum = prod(((t - P)**ZZ(n) for P,n in divisor if n > 0))
-    #phiden = prod(((t - P)**ZZ(-n) for P,n in divisor if n < 0))
-    #assert phinum.degree() == phiden.degree()
-    #phi = phinum/phiden
+
+#    phi = R0(prod(((t - P)**ZZ(n) for P,n in divisor if n > 0)))/R0(prod(((t - P)**ZZ(-n) for P,n in divisor if n < 0)))
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o) for o in G.get_covering(1)]
@@ -311,22 +307,10 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
         for parity, edge in edgelist:
             _, h = edge
             a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
-            # y0old = phi((a*r1+b)/(c*r1+d))
 
-            # Does not work
-            # atpb = a*t + b
-            # ctpd = c*t + d
-            # y0 = R1(act_on_polynomial(phinum,atpb,ctpd,prec+1)/act_on_polynomial(phiden,atpb,ctpd,prec+1))
-            # if y0 != y0old:
-            #     print y0-y0old
-            #     assert 0
 
-            # Does not work
-            # hm = G.embed(h,prec).change_ring(K)
-            # a,b,c,d = hm.list()
-            # val = prod(((-b-a*P)/(a*P))**n for P,n in divisor)
-            # divhm = divisor.left_act_by_matrix(hm)
-            # y0 = R1(prod(((r1 - P)**ZZ(n) for P,n in divhm if n > 0))/prod(((r1 - P)**ZZ(-n) for P,n in divhm if n < 0)))
+            # hexp = (a*r1+b)/(c*r1+d)
+            # y0 = phi(hexp)
 
             y0num = R1(1)
             y0den = R1(1)
@@ -337,12 +321,11 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
                 else:
                     y0den *= ((a-P*c)*r1+(b-d*P))**ZZ(-n)
                     y0den = y0den.add_bigoh(prec)
-
             y0 = y0num/y0den
-            # y0 = prod(((a-P*c)*r1+(b-d*P))**ZZ(n) for P,n in divisor if n > 0)/prod(((a-P*c)*r1+(b-d*P))**ZZ(-n) for P,n in divisor if n < 0)
+
             val = y0(y0.parent().base_ring()(0))
 
-            if not all([xx.valuation(p) > 0 for xx in (y0/val - 1).list()]):
+            if val == 0 or not all([o.valuation(p) >= 0 for o in (y0(r1/p)/val - 1).list()]):
                 verbose('Subdividing...')
                 newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
                 continue
@@ -358,9 +341,9 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,power = 1):
                 resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
             except IndexError: pass
         edgelist = newedgelist
-    resmul = resmul**power
-    resadd *= power
     val =  resmul.valuation(p)
+    if val != 0:
+        verbose('val = %s'%val)
     tmp = p**val * K.teichmuller(p**(-val)*resmul)
     if resadd != 0:
         tmp *= resadd.exp()

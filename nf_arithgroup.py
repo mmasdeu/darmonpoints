@@ -127,6 +127,29 @@ class ArithGroup_nf_generic(AlgebraicGroup):
     def gens(self):
         return self._gens
 
+    def act_by_hecke(self,l,g):
+        r'''
+           - l:  a prime
+           - g: an element of the arithmetic group
+        '''
+        Gab, V, free_idx = self.abelianization()
+        hecke_reps = self.get_hecke_reps(l)
+        return sum(self.image_in_abelianized(self.get_hecke_ti(gk1,g.quaternion_rep,l,reps=hecke_reps)) for gk1 in hecke_reps)
+
+
+    @cached_method
+    def hecke_matrix(self,l):
+        Gab, V, free_idx = self.abelianization()
+        gens = self.gens()
+        freegens = [prod(self.gen(i)**n for i,n in enumerate(Gab.gen(idx).lift().list())) for idx in free_idx]
+
+        dim = len(freegens)
+        M = matrix(ZZ,dim,dim,0)
+        for j,g in enumerate(freegens):
+            # Construct column j of the matrix
+            newcol = self.act_by_hecke(l,g)
+            M.set_column(j,newcol.list())
+        return M
 
     def compute_quadratic_embedding(self,K,return_generator = False):
         O_magma = self._O_magma
@@ -620,3 +643,37 @@ class ArithGroupNumFieldElement(MultiplicativeGroupElement):
         tmp = reduce_word(oldword)
         assert self.parent()(tmp).get_weight_vector() == 0
         return tmp
+
+    def find_bounding_cycle(self,G):
+        r'''
+        Use recursively that:
+        - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))
+        - x^(-a) g = -a x + g + del(1|1) + del(x^(a)|(x^-a)) - del(x^(-a)|g) + del(x|(x + x^2 + ... + x^(a-1)))
+        '''
+        g = self.quaternion_rep
+        gprime = G.Gn(g)
+        ans = []
+        gword = G.Gn(g)._calculate_weight_zero_word()
+        num_terms = len(gword)
+        jj = 0
+        for i,a in gword:
+            jj += 1
+            g = G.Gn.gen(i)
+            ga = g**a
+            gprime = ga**-1 * gprime
+            if jj < num_terms:
+                ans.append((-1,ga,gprime))
+            else:
+                verbose('Last term!')
+
+            if a > 0:
+                sign = 1
+            else:
+                ans.append((1,G.Gn([]),G.Gn([])))
+                ans.append((1,ga**-1,ga))
+                sign = -1
+            for j in range(1,sign*a):
+                ans.append((-sign,g,g**j))
+        if gprime.quaternion_rep != 1:
+            verbose('WARNING!!! Left over = %s !!!'%gprime.quaternion_rep)
+        return ans

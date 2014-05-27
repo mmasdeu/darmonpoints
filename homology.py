@@ -14,12 +14,13 @@ from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.structure.parent import Parent
 from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
+from sage.sets.set import Set
 from util import *
 import os
 from ocmodule import *
 import operator
 
-def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False,max_n = None):
+def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False,max_n = None,artificial_multiple = 1):
     t = PolynomialRing(G.F,names = 't').gen()
     K = G.F.extension(t**2 - D,names = 'beta')
     if G.F.degree() == 1:
@@ -55,6 +56,8 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
                 raise ValueError,'Reached maximum allowed power (%s)'%max_n
             verbose('Trying with n = %s...'%n)
             gamman *= gamma
+    if artificial_multiple != 1:
+        tmp = H1(dict([(gamman**artificial_multiple,D1)])).zero_degree_equivalent()
     if hecke_smoothen:
         q = ZZ(2)
         D = G.prime() * G.discriminant * G.level
@@ -75,46 +78,69 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
 def lattice_homology_cycle(G,elt,prec,hecke_smoothen = True,outfile = None):
     p = G.prime()
     Cp = Qq(p**2,prec,names = 'g')
-    tau1 = Cp.gen()
+    tau1 = Cp.gen() +3
     Div = Divisors(Cp)
     D1 = Div(tau1)
     H1 = Homology(G.large_group(),Div)
+    xi1 = H1({})
+    xi2 = H1({})
     V1 = []
     V2 = []
     found = False
     eltn = elt
+    wp = G.wp
     while not found:
         try:
             W1 = eltn.find_bounding_cycle(G)
             found = True
         except ValueError:
             eltn *= elt
+    HomGn = Homology(G.Gn.B,ZZ)
+    ans = HomGn(dict([]))
     for n,x,y in W1:
-        a,b,c,d = G.embed(x.quaternion_rep**-1,prec).list()
-        tau2 = (Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))
+        xh = x.quaternion_rep
+        yh = y.quaternion_rep
+        mat = G.embed(x.quaternion_rep**-1,prec)
+        #a,b,c,d = mat.list()
+        #tau2 = (Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))
+        D2 = D1.left_act_by_matrix(mat)
         if n == 1:
-            D = Div(tau2) - Div(tau1)
+            D = D2 - D1 #Div(tau2) - Div(tau1)
+            ans = ans + (HomGn(xh) + HomGn(yh) - HomGn(xh*yh))
         else:
             assert n == -1
-            D = Div(tau1) - Div(tau2)
+            D = D1 - D2 #Div(tau1) - Div(tau2)
+            ans = ans - (HomGn(xh) + HomGn(yh) - HomGn(xh*yh))
+        xi1 += H1(dict([(y,D)]))
         V1.append((y,D))
-    eltn_twisted = G.Gn(G.wp**-1 * eltn.quaternion_rep * G.wp)
+    verbose('First part done')
+    eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
     W2 = eltn_twisted.find_bounding_cycle(G)
     for n,x,y in W2:
-        a,b,c,d = G.embed(G.wp * x.quaternion_rep**-1 * G.wp**-1,prec).list()
-        #a,b,c,d = G.embed(x.quaternion_rep**-1,prec).list()
-        tau2 = (Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))
+        xh = wp * x.quaternion_rep * wp**-1
+        yh = wp * y.quaternion_rep * wp**-1
+        mat = G.embed(xh**-1,prec)
+        #a,b,c,d = mat.list()
+        #tau2 = (Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))
+        D2 = D1.left_act_by_matrix(mat)
         if n == 1:
-            D = Div(tau2) - Div(tau1)
+            D = D2 - D1 #Div(tau2) - Div(tau1)
+            ans = ans -( HomGn(xh) + HomGn(yh) - HomGn(xh*yh))
         else:
             assert n == -1
-            D = Div(tau1) - Div(tau2)
-        V2.append((y,D.left_act_by_matrix(G.embed(G.wp**-1,prec).change_ring(Cp))))
-
+            D = D1 - D2 #Div(tau1) - Div(tau2)
+            ans = ans +( HomGn(xh) + HomGn(yh) - HomGn(xh*yh))
+        D = D.left_act_by_matrix(G.embed(wp**-1,prec).change_ring(Cp))
+        xi2 += H1(dict([(y,D)]))
+        V2.append((y,D))
+    #assert str(ans) == '0'
+    return xi1, xi2
     # Note that the second class will need to be integrated in a twisted way.
     # That is, the quaternion elements need to be conjugated by wp before being integrated.
+    verbose('Second part done')
     xi1, xi2 = H1(dict(V1)), H1(dict(V2))
     if hecke_smoothen:
+        verbose('Smoothening...')
         q = ZZ(2)
         D = G.prime() * G.discriminant * G.level
         try:
@@ -125,11 +151,11 @@ def lattice_homology_cycle(G,elt,prec,hecke_smoothen = True,outfile = None):
         if G.F.degree() == 1:
             q1 = q
             xi1 = xi1.hecke_smoothen(q,prec = prec)
-            xi2 = xi1.hecke_smoothen(q,prec = prec,twist = G.wp)
+            xi2 = xi2.hecke_smoothen(q,prec = prec)
         else:
             q1 = G.F.ideal(q).factor()[0][0]
             xi1 = xi1.hecke_smoothen(q1,prec = prec)
-            xi2 = xi1.hecke_smoothen(q1,prec = prec,twist = G.wp)
+            xi2 = xi2.hecke_smoothen(q1,prec = prec)
     return xi1,xi2
 
 class Divisors(Parent):
@@ -163,7 +189,11 @@ def _hash(x):
     # ans = x._ntl_rep_abs()
     # tmp = (ZZ(ans[0][0]),ZZ(ans[0][1]))
     # return hash((tmp,ans[1]))
-    return hash((x.trace(),x.norm()))
+    # return hash((x.trace(),x.norm()))
+    ans = [x.valuation()]
+    for tup in x.list()[:10]:
+        ans.extend(tup)
+    return tuple(ans)
 
 
 class Divisor_element(ModuleElement):
@@ -192,12 +222,12 @@ class Divisor_element(ModuleElement):
                     continue
                 hP = _hash(P)
                 self._data[hP] += n
+                self._ptdict[hP] = P
                 if self._data[hP] == 0:
                     del self._data[hP]
                     del self._ptdict[hP]
-                else:
-                    self._ptdict[hP] = P
-        elif isinstance(data,dict) and ptdata is not None:
+        elif isinstance(data,dict):
+            assert ptdata is not None
             self._data.update(data)
             self._ptdict.update(ptdata)
         else:
@@ -217,12 +247,12 @@ class Divisor_element(ModuleElement):
             return '0'
         is_first = True
         mystr = ''
-        for P,n in self._data.iteritems():
+        for hP,n in self._data.iteritems():
             if not is_first:
                 mystr += ' + '
             else:
                 is_first = False
-            mystr += '%s*(%s)'%(n,self._ptdict[P])
+            mystr += '%s*(%s)'%(n,self._ptdict[hP])
         return mystr
 
     def __cmp__(self,right):
@@ -236,35 +266,42 @@ class Divisor_element(ModuleElement):
         newdict.update(self._data)
         newptdata = {}
         newptdata.update(self._ptdict)
-        for P,n in right._data.iteritems():
-            newdict[P] += n
-            if newdict[P] == 0:
-                del newdict[P]
-                del newptdata[P]
+        newptdata.update(right._ptdict)
+        for hP,n in right._data.iteritems():
+            newdict[hP] += n
+            if newdict[hP] == 0:
+                del newdict[hP]
+                del newptdata[hP]
             else:
-                newptdata[P] = right._ptdict[P]
+                newptdata[hP] = right._ptdict[hP]
         return self.__class__(self.parent(),newdict,ptdata = newptdata)
+
+    def radius(self):
+        ans = 0
+        for P,n in self:
+            ans = max(ans,point_radius(P))
+        return ans
 
     def _sub_(self,right):
         newdict = defaultdict(ZZ)
         newdict.update(self._data)
         newptdata = {}
         newptdata.update(self._ptdict)
-        for P,n in right._data.iteritems():
-            newdict[P] -= n
-            if newdict[P] == 0:
-                del newdict[P]
-                del newptdata[P]
+        newptdata.update(right._ptdict)
+        for hP,n in right._data.iteritems():
+            newdict[hP] -= n
+            if newdict[hP] == 0:
+                del newdict[hP]
+                del newptdata[hP]
             else:
-                newptdata[P] = right._ptdict[P]
+                newptdata[hP] = right._ptdict[hP]
         return self.__class__(self.parent(),newdict,ptdata = newptdata)
 
     def _neg_(self):
         newdict = defaultdict(ZZ)
-        newdict.update(self._data)
         newptdata = {}
         newptdata.update(self._ptdict)
-        for P,n in newdict.iteritems():
+        for P,n in self._data.iteritems():
             newdict[P] = -n
         return self.__class__(self.parent(),newdict,ptdata = newptdata)
 
@@ -272,13 +309,18 @@ class Divisor_element(ModuleElement):
         a,b,c,d = g.list()
         gp = self.parent()
         K = self.parent().base_ring()
-        newdict = {}
+        newdict = defaultdict(ZZ)
         newptdata = {}
         for P,n in self:
             newpt = (K(a)*P+K(b))/(K(c)*P+K(d))
             hnewpt = _hash(newpt)
-            newdict[hnewpt] = n
+            newdict[hnewpt] += n
             newptdata[hnewpt] = newpt
+            if newdict[hnewpt] == 0:
+                del newdict[hnewpt]
+                del newptdata[hnewpt]
+            else:
+                newptdata[hnewpt] = newpt
         return self.__class__(gp,newdict,ptdata = newptdata)
 
     @cached_method
@@ -292,13 +334,17 @@ class Divisor_element(ModuleElement):
     def support(self):
         return [self._ptdict[P] for P in Set([d for d in self._data])]
 
-
 class ArithGroupAction(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
     def _call_(self,g,v):
         K = v.parent().base_ring()
+        if K is ZZ:
+            try:
+                return v.parent()(v._data,v._ptdata)
+            except AttributeError:
+                return v.parent()(v)
         prec = K.precision_cap()
         G = g.parent()
         a,b,c,d = G.embed(g.quaternion_rep,prec).change_ring(K).list()
@@ -309,6 +355,9 @@ class ArithGroupAction(Action):
             hp = _hash(newpt)
             newdict[hp] += n #K0(a)*P+K0(b))/(K0(c)*P+K0(d))] += n
             newpts[hp] = newpt
+            if newdict[hp] == 0:
+                del newdict[hp]
+                del newpts[hp]
         return v.parent()(newdict,newpts)
 
 class Homology(Parent):
@@ -402,6 +451,9 @@ class HomologyClass(ModuleElement):
     def short_rep(self):
         return [(len(g.word_rep),v.degree(),v.size()) for g,v in self._data.iteritems()]
 
+    def radius(self):
+        return max([0] + [v.radius() for g,v in self._data.iteritems()])
+
     def zero_degree_equivalent(self):
         r'''
         Use the relations:
@@ -438,7 +490,6 @@ class HomologyClass(ModuleElement):
             * g^a|v = g|(v + g^-1v + ... + g^-(a-1)v)
             * g^(-a)|v = - g^a|g^av
         '''
-
         V = self.parent().coefficient_module()
         G = self.parent().group()
         newdict = defaultdict(V)
@@ -483,14 +534,14 @@ class HomologyClass(ModuleElement):
                 newdict[g] = -v
         return HomologyClass(self.parent(),newdict)
 
-    def act_by_hecke(self,l,prec,twist = 1):
+    def act_by_hecke(self,l,prec):
         newdict = dict()
         G = self.parent().group()
         hecke_reps = G.get_hecke_reps(l)
         for gk1 in hecke_reps:
             for g,v in self._data.iteritems():
                 ti = G.get_hecke_ti(gk1,g.quaternion_rep,l,reps = hecke_reps)
-                newv = v.left_act_by_matrix(G.embed(G.B(twist) * gk1**-1 * G.B(twist)**-1,prec))
+                newv = v.left_act_by_matrix(G.embed(gk1**-1,prec))
                 try:
                     newdict[ti] += newv
                     if newdict[ti].is_zero():
@@ -499,24 +550,25 @@ class HomologyClass(ModuleElement):
                     newdict[ti] = newv
         return HomologyClass(self.parent(),newdict)#.factor_into_generators()
 
-    def _check_cycle_condition(self):
+    def _check_cycle_condition(self,return_residue = False):
         res = self.parent().coefficient_module()(0)
         for g,v in self._data.iteritems():
             res += (g**-1) * v - v
         if res.is_zero():
-            return True
+            ans = True
         else:
-            return False
+            ans = False
+        return ans if return_residue == False else (ans,res)
 
     def mult_by(self,a):
         return self.__rmul__(a)
 
-    def hecke_smoothen(self,r,prec = 20,twist = 1):
+    def hecke_smoothen(self,r,prec = 20):
         rnorm = r
         try:
             rnorm = r.norm()
         except AttributeError: pass
-        return self.act_by_hecke(r,prec = prec,twist = twist) - self.mult_by(ZZ(rnorm+1))
+        return self.act_by_hecke(r,prec = prec) - self.mult_by(ZZ(rnorm+1))
 
     def __rmul__(self,a):
         newdict = dict(((g,a*v) for g,v in self._data.iteritems())) if a != 0 else dict([])

@@ -16,6 +16,7 @@ from sage.sets.primes import Primes
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing,Zmod
 from sage.misc.cachefunc import cached_function
 from sage.rings.big_oh import O
+from sage.schemes.elliptic_curves.constructor import EllipticCurve_from_c4c6
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
@@ -75,6 +76,38 @@ def find_containing_affinoid(p,z,level = 1):
                 a += pn*L[n][0]
         pn*=p
     return M2Z([pn,a,0,1])
+
+def point_radius(z,level = 1):
+    r"""
+    Returns the vertex corresponding to the affinoid in 
+    the `p`-adic upper half plane that a given (unramified!) point reduces to.
+
+    INPUT:
+
+      - ``z`` - an element of an unramified extension of `\QQ_p` that is not contained
+        in `\QQ_p`.
+
+    OUTPUT:
+
+    """
+    p = z.parent().prime()
+    #Assume z belongs to some extension of QQp.
+    if(z.valuation(p)<0):
+        return 1 + point_radius(1/(p*z))
+    a=0
+    pn=1
+    ans = 0
+    val=z.valuation(p)
+    L=[0]*val+z.unit_part().list()
+    for n in range(len(L)):
+        if L[n] != 0:
+            if len(L[n]) > 1:
+                break
+            if len(L[n]) > 0:
+                a += pn*L[n][0]
+        pn*=p
+        ans += 1
+    return ans
 
 def find_center(p,level,t1,t2):
     r"""
@@ -185,6 +218,12 @@ def get_c4_and_c6(qE,prec):
     tate_a6 = (tate_a4 - 7 * sk5 )/12
     Eqc4, Eqc6 = 1-48*tate_a4, -1 + 72 * tate_a4 - 864 * tate_a6
     return Eqc4, Eqc6
+
+def get_j_invariant(qE,prec):
+    E4 = EisensteinForms(weight=4).basis()[0]
+    Delta = CuspForms(weight=12).basis()[0]
+    j = ((E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7))
+    return j(qE)
 
 def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
     if R is None:
@@ -448,7 +487,7 @@ def our_sqrt(x,K):
         eK = 1
     valpi = eK * valp
     if valpi % 2 != 0:
-        raise RuntimeError,'Not a square'
+        raise ValueError,'Not a square'
     x = p**(-valp) * x
     z = K.gen()
     deg = K.degree()
@@ -459,18 +498,55 @@ def our_sqrt(x,K):
         y0 = avec[0]
         for a in avec[1:]:
             y0 = y0*z + a
-        if (y0**2-x).valuation() >= minval:
+        if (y0**2-x).valuation(p) >= minval:
             found = True
             break
     if found == False:
-        raise RuntimeError,'Not a square'
+        raise ValueError,'Not a square'
     y1 = y0
     y = 0
     while y != y1:
-        verbose('Valuation = %s'%(y-y1).valuation())
+        verbose('Valuation = %s'%(y-y1).valuation(p))
         y = y1
         y1 = (y**2+x)/(2*y)
     return K.uniformizer()**(ZZ(valpi/2)) * y
+
+def our_cuberoot(x,K):
+    if x==0:
+        return x
+    x=K(x)
+    p=K.base_ring().prime()
+    valp = x.valuation(p)
+    try:
+        eK = K.ramification_index()
+    except AttributeError:
+        eK = 1
+    valpi = eK * valp
+    if valpi % 3 != 0:
+        raise ValueError,'Not a cube'
+    x = p**(-valp) * x
+    z = K.gen()
+    deg = K.degree()
+    found = False
+    ppow = p if p != 3 else 9
+    minval = 1 if p != 3 else 2
+    for avec in product(range(ppow),repeat=deg):
+        y0 = avec[0]
+        for a in avec[1:]:
+            y0 = y0*z + a
+        if (y0**3-x).valuation(p) >= minval:
+            found = True
+            break
+    if found == False:
+        raise ValueError,'Not a cube'
+    y1 = y0
+    y = 0
+    while y != y1:
+        verbose('Valuation = %s'%(y-y1).valuation(p))
+        y = y1
+        y2 = y**2
+        y1 = (2*y*y2+x)/(3*y2)
+    return K.uniformizer()**(ZZ(valpi/3)) * y
 
 def enumerate_words(v, n = None):
     if n is None:
@@ -757,3 +833,37 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                     if B.discriminant() == disc:
                         assert all((si * sigma(a) > 0 for si,sigma in zip(ramification_at_infinity,F.embeddings(RR))))
                         return B
+
+
+
+def discover_equation(qE,emb,conductor,prec):
+    #from util import get_j_invariant
+    F = emb.domain()
+    deg = F.degree()
+    jE = get_j_invariant(qE,prec)
+    Kp = jE.parent()
+    primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
+    for exps in product(range(1,5),repeat = len(primedivisors)):
+        for u in [F(o) for o in F.unit_group().gens()]:
+            Delta = Kp(emb(u * prod(l**a for l,a in zip(primedivisors,exps))))
+            c4cubed = Kp(Delta * jE)
+            try:
+                c4 = our_cuberoot(c4cubed,Kp)
+                c6 = our_sqrt(c4cubed-Kp(1728*Delta),Kp)
+            except ValueError:
+                continue
+            try:
+                c4ex = algdep(c4,deg).roots(F)[0][0]
+                c6ex = algdep(c6,deg).roots(F)[0][0]
+            except IndexError:
+                try:
+                    c4ex = algdep(c4,deg).roots(F)[0][0]
+                    c6ex = algdep(-c6,deg).roots(F)[0][0]
+                except IndexError:
+                    continue
+            E = EllipticCurve_from_c4c6(c4ex,c6ex)
+            if F.ideal(E.conductor()) == F.ideal(NE):
+                verbose('Success!')
+                return E
+    verbose('Curve not recognized')
+    return None

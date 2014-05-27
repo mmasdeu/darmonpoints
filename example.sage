@@ -1,19 +1,21 @@
 load 'darmonpoints.sage'
+from util import quaternion_algebra_from_discriminant
 ######################
 # Parameters         #
 ######################
 use_ps_dists = False
-p = 13 # The prime
+p = 5 # The prime
 D = 2 * 3 # Discriminant of the quaternion algebra (even number of primes)
 Np = 1 # Conductor of order.
 sign_at_infinity = 1 # Sign at infinity, can be +1 or -1
 prec = 20 # Precision to which result is desired
+working_prec = 50
 outfile = 'points_%s_%s.txt'%(p,D)
 
 verb_level = 1 # Set to 0 to remove output
 
 # We will find points on the elliptic curve of conductor p*D*Np
-dK = 5
+dK = 53
 #####################
 # DO NOT EDIT BELOW #
 #####################
@@ -25,20 +27,20 @@ set_verbose(verb_level)
 E = EllipticCurve(str(p*D*Np))
 
 # Define the S-arithmetic group
-G = BigArithGroup(p,D,Np,use_sage_db = False)
+G = BigArithGroup(p,quaternion_algebra_from_discriminant(QQ,D).invariants(),Np,use_sage_db = False)
 
 # Define PhiE, the cohomology class associated to the curve E.
 Coh = CohomologyGroup(G.Gpn)
 PhiE = Coh.get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
 
 # Define the cycle ( in H_1(G,Div^0 Hp) )
-cycleGn,nn,ell = construct_homology_cycle(G,dK,prec,hecke_smoothen = True)
+cycleGn,nn,ell = construct_homology_cycle(G,dK,working_prec,hecke_smoothen = True)
 
 PhiElift = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists)
 
 # Integration with moments
 tot_time = walltime()
-J = integrate_H1(G,cycleGn,PhiElift,1,method = 'moments',twist=True) # do not smoothen
+J = integrate_H1(G,cycleGn,PhiElift,1,method = 'moments',twist=True)
 verbose('integration tot_time = %s'%walltime(tot_time))
 x,y = getcoords(E,J,prec)
 
@@ -63,8 +65,8 @@ for a,b in product(range(p),repeat = 2):
         verbose('Recognized the point, it is zero!')
         break
     else:
-        x,y = getcoords(E,J1,prec)
         success = False
+        x,y = getcoords(E,J1,prec)
         prec0 = prec
         while not success and 2 * prec0 > prec:
             verbose('Trying to recognize point with precision %s'%prec0, level = 2)

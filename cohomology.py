@@ -26,7 +26,7 @@ from sage.parallel.decorate import fork,parallel
 
 oo = Infinity
 
-def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False):
+def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -48,8 +48,10 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
     dist_type = 'ps' if use_ps_dists == True else 'fm'
     if hasattr(E,'cremona_label'):
         Ename = E.cremona_label()
-    else:
+    elif hasattr(E,'ainvs'):
         Ename = E.ainvs()
+    else:
+        Ename = 'unknown'
     fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,Ename,sgninfty,prec,dist_type)
     if use_sage_db:
         try:
@@ -67,7 +69,8 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
         Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group().gens()])
     else:
         Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.small_group().gens()])
-    apsign = ZZ(E.ap(p)) if E.base_ring() == QQ else ZZ(Pnorm + 1 - Curve(E.defining_polynomial().change_ring(F.residue_field(P))).count_points(1)[0])
+    if apsign is None:
+        apsign = ZZ(E.ap(p)) if E.base_ring() == QQ else ZZ(Pnorm + 1 - Curve(E.defining_polynomial().change_ring(F.residue_field(P))).count_points(1)[0])
     assert apsign.abs() == 1
     Phi = Phi.improve(prec = prec,sign = apsign,parallelize = parallelize)
     if use_sage_db:
