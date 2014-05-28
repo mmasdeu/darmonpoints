@@ -8,7 +8,7 @@ from sage.libs.pari.gen import PariError
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
-from sage.rings.arith import next_prime
+from sage.rings.arith import next_prime,divisors
 from sage.interfaces.gp import gp
 from sage.libs.pari.pari_instance import pari
 from sage.rings.infinity import Infinity
@@ -17,6 +17,8 @@ from sage.rings.finite_rings.integer_mod_ring import IntegerModRing,Zmod
 from sage.misc.cachefunc import cached_function
 from sage.rings.big_oh import O
 from sage.schemes.elliptic_curves.constructor import EllipticCurve_from_c4c6
+from sage.misc.functional import cyclotomic_polynomial
+from sage.misc.misc_c import prod
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
@@ -475,7 +477,7 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
               verbose('Point does not appear to lie on curve...',level=2)
   return candidate_x,False
 
-def our_sqrt(x,K):
+def our_sqrt(x,K,return_all = False):
     if x==0:
         return x
     x=K(x)
@@ -506,12 +508,15 @@ def our_sqrt(x,K):
     y1 = y0
     y = 0
     while y != y1:
-        verbose('Valuation = %s'%(y-y1).valuation(p))
         y = y1
         y1 = (y**2+x)/(2*y)
-    return K.uniformizer()**(ZZ(valpi/2)) * y
 
-def our_cuberoot(x,K):
+    ans = K.uniformizer()**(ZZ(valpi/2)) * y
+    if return_all:
+        ans = [ans, -ans]
+    return ans
+
+def our_cuberoot(x,K,return_all = False):
     if x==0:
         return x
     x=K(x)
@@ -542,11 +547,62 @@ def our_cuberoot(x,K):
     y1 = y0
     y = 0
     while y != y1:
-        verbose('Valuation = %s'%(y-y1).valuation(p))
         y = y1
         y2 = y**2
         y1 = (2*y*y2+x)/(3*y2)
-    return K.uniformizer()**(ZZ(valpi/3)) * y
+    ans = K.uniformizer()**(ZZ(valpi/3)) * y
+    if return_all:
+        t = PolynomialRing(QQ,'t').gen()
+        ans = [K(o[0])*ans for o in (t**3-1).roots(K)]
+    return ans
+
+
+def our_nroot(x,n,K,return_all = False):
+    if x == 0:
+        return x
+    if n == 1:
+        return x
+    x=K(x)
+    x_orig = x
+    p=K.base_ring().prime()
+    valp = x.valuation(p)
+    try:
+        eK = K.ramification_index()
+    except AttributeError:
+        eK = 1
+    valpi = eK * valp
+    if valpi % n != 0:
+        raise ValueError,'Not an n-th power'
+    x = p**(-valp) * x
+    z = K.gen()
+    deg = K.degree()
+    found = False
+    if n % p == 0:
+        minval = 3 if p == 2 else 2
+    else:
+        minval = 1
+    ppow = p**minval
+    for avec in product(range(ppow),repeat=deg):
+        y0 = avec[0]
+        for a in avec[1:]:
+            y0 = y0*z + a
+        if (y0**n-x).valuation(p) >= minval:
+            found = True
+            break
+    if found == False:
+        raise ValueError,'Not an n-th power'
+    y1 = y0
+    y = 0
+    while y != y1:
+        y = y1
+        yn = y**n
+        y1 = ((n-1)*yn+x)*y/(n*yn)
+    ans = K.uniformizer()**ZZ(valpi/n) * y
+    assert ans**n == x_orig, 'ans**n/x_orig = %s'%(ans**n/x_orig)
+    if return_all:
+        t = PolynomialRing(QQ,'t').gen()
+        ans = [K(o[0])*ans for o in (t**n-1).roots(K)]
+    return ans
 
 def enumerate_words(v, n = None):
     if n is None:
@@ -834,36 +890,48 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                         assert all((si * sigma(a) > 0 for si,sigma in zip(ramification_at_infinity,F.embeddings(RR))))
                         return B
 
-
-
 def discover_equation(qE,emb,conductor,prec):
     #from util import get_j_invariant
+    qE = qE**2
     F = emb.domain()
+    Kp = emb.codomain()
     deg = F.degree()
-    jE = get_j_invariant(qE,prec)
-    Kp = jE.parent()
-    primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
-    for exps in product(range(1,5),repeat = len(primedivisors)):
-        for u in [F(o) for o in F.unit_group().gens()]:
-            Delta = Kp(emb(u * prod(l**a for l,a in zip(primedivisors,exps))))
-            c4cubed = Kp(Delta * jE)
-            try:
-                c4 = our_cuberoot(c4cubed,Kp)
-                c6 = our_sqrt(c4cubed-Kp(1728*Delta),Kp)
-            except ValueError:
-                continue
-            try:
-                c4ex = algdep(c4,deg).roots(F)[0][0]
-                c6ex = algdep(c6,deg).roots(F)[0][0]
-            except IndexError:
+    qval = qE.valuation()
+    p = qE.parent().prime()
+    try:
+        Funits = [F(F.unit_group().torsnion_generator())**i for i in range(F.unit_group().torsion_generator().order())]
+    except AttributeError:
+        Funits = [-1, +1]
+    try:
+        primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
+    except AttributeError:
+        primedivisors = [o[0] for o in conductor.factor()]
+    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,6),repeat = len(primedivisors)))]
+    for guessed_pow in reversed(divisors(qval)):
+        try:
+            qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True) if guessed_pow > 1 else [qE]
+        except ValueError:
+            continue
+        for qEroot in qErlist:
+            jE = get_j_invariant(qEroot,prec)
+            Kp = jE.parent()
+            for D in Deltalist:
+                Deltap = Kp(emb(D))
+                c4cubed = Kp(Deltap * jE)
                 try:
-                    c4ex = algdep(c4,deg).roots(F)[0][0]
-                    c6ex = algdep(-c6,deg).roots(F)[0][0]
-                except IndexError:
+                    c4list = our_cuberoot(c4cubed,Kp,return_all = True)
+                except ValueError:
                     continue
-            E = EllipticCurve_from_c4c6(c4ex,c6ex)
-            if F.ideal(E.conductor()) == F.ideal(NE):
-                verbose('Success!')
-                return E
+                for c4 in c4list:
+                    for c4ex in [o[0] for o in our_algdep(c4,deg).roots(F)]:
+                        c6squared = F(c4ex**3 - 1728*D)
+                        if not c6squared.is_square():
+                            continue
+                        for c6ex in c6squared.sqrt(extend = False, all=True):
+                            E = EllipticCurve_from_c4c6(c4ex,c6ex)
+                            if E.conductor() == conductor:
+                                assert E.discriminant() == D
+                                verbose('Success!')
+                                return E
     verbose('Curve not recognized')
     return None

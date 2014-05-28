@@ -816,6 +816,10 @@ class ArithGroupElement(MultiplicativeGroupElement):
             raise ValueError,'Must pass either quaternion_rep or word_rep'
         self._reduce_word(check = check)
 
+    @cached_method
+    def __hash__(self):
+        return self.quaternion_rep.__hash__()
+
     def _repr_(self):
         return str(self.quaternion_rep)
 
@@ -977,11 +981,9 @@ class ArithGroupElement(MultiplicativeGroupElement):
         num_rels = len(relwords)
         f= (ZZ**num_rels).hom(relmat.rows())
         linear_combination = f.lift(wt)
-        verbose('linear combination = %s'%linear_combination)
         oldword = copy(self.word_rep)
         for i,lam in enumerate(linear_combination):
             relation = relwords[i]
-            verbose('lam = %s'%lam)
             if lam == 0:
                 continue
             elif lam < 0:

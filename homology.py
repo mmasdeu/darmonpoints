@@ -20,7 +20,7 @@ import os
 from ocmodule import *
 import operator
 
-def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False,max_n = None,artificial_multiple = 1):
+def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False,max_n = None):
     t = PolynomialRing(G.F,names = 't').gen()
     K = G.F.extension(t**2 - D,names = 'beta')
     if G.F.degree() == 1:
@@ -37,27 +37,26 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
     else:
         gamma, tau1 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = False)
     Div = Divisors(tau1.parent())
+    H1 = Homology(G.large_group(),Div)
+    n = 1
     if trace_down:
         D1 = Div(tau1) - Div(tau2)
+        tmp = H1(dict([(gamma,D1)]))
     else:
         D1 = Div(tau1)
-    H1 = Homology(G.large_group(),Div)
-    gamman = gamma
-    found = False
-    n = 1
-    verbose('Trying with n = %s...'%n)
-    while not found:
-        try:
-            tmp = H1(dict([(gamman,D1)])).zero_degree_equivalent()
-            found = True
-        except ValueError:
-            n += 1
-            if max_n is not None and n > max_n:
-                raise ValueError,'Reached maximum allowed power (%s)'%max_n
-            verbose('Trying with n = %s...'%n)
-            gamman *= gamma
-    if artificial_multiple != 1:
-        tmp = H1(dict([(gamman**artificial_multiple,D1)])).zero_degree_equivalent()
+        gamman = gamma
+        found = False
+        verbose('Trying with n = %s...'%n)
+        while not found:
+            try:
+                tmp = H1(dict([(gamman,D1)])).zero_degree_equivalent()
+                found = True
+            except ValueError:
+                n += 1
+                if max_n is not None and n > max_n:
+                    raise ValueError,'Reached maximum allowed power (%s)'%max_n
+                verbose('Trying with n = %s...'%n)
+                gamman *= gamma
     if hecke_smoothen:
         q = ZZ(2)
         D = G.prime() * G.discriminant * G.level
@@ -75,17 +74,18 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
     return tmp,n,q1
 
 
-def lattice_homology_cycle(G,elt,prec,hecke_smoothen = True,outfile = None):
+def lattice_homology_cycle(G,elt,prec,outfile = None):
+    r''' Note that the second class will need to be integrated in a twisted way.
+    That is, the quaternion elements need to be conjugated by wp before being integrated.
+    '''
     p = G.prime()
     Cp = Qq(p**2,prec,names = 'g')
-    tau1 = Cp.gen() +3
+    tau1 = Cp.gen()
     Div = Divisors(Cp)
     D1 = Div(tau1)
     H1 = Homology(G.large_group(),Div)
     xi1 = H1({})
     xi2 = H1({})
-    V1 = []
-    V2 = []
     found = False
     eltn = elt
     wp = G.wp
@@ -96,66 +96,22 @@ def lattice_homology_cycle(G,elt,prec,hecke_smoothen = True,outfile = None):
         except ValueError:
             eltn *= elt
     HomGn = Homology(G.Gn.B,ZZ)
-    ans = HomGn(dict([]))
     for n,x,y in W1:
         xh = x.quaternion_rep
         yh = y.quaternion_rep
         mat = G.embed(x.quaternion_rep**-1,prec)
-        #a,b,c,d = mat.list()
-        #tau2 = (Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))
         D2 = D1.left_act_by_matrix(mat)
-        if n == 1:
-            D = D2 - D1 #Div(tau2) - Div(tau1)
-            ans = ans + (HomGn(xh) + HomGn(yh) - HomGn(xh*yh))
-        else:
-            assert n == -1
-            D = D1 - D2 #Div(tau1) - Div(tau2)
-            ans = ans - (HomGn(xh) + HomGn(yh) - HomGn(xh*yh))
+        D = n * (D2 - D1)
         xi1 += H1(dict([(y,D)]))
-        V1.append((y,D))
-    verbose('First part done')
     eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
     W2 = eltn_twisted.find_bounding_cycle(G)
     for n,x,y in W2:
         xh = wp * x.quaternion_rep * wp**-1
         yh = wp * y.quaternion_rep * wp**-1
         mat = G.embed(xh**-1,prec)
-        #a,b,c,d = mat.list()
-        #tau2 = (Cp(a)*tau1+Cp(b))/(Cp(c)*tau1+Cp(d))
         D2 = D1.left_act_by_matrix(mat)
-        if n == 1:
-            D = D2 - D1 #Div(tau2) - Div(tau1)
-            ans = ans -( HomGn(xh) + HomGn(yh) - HomGn(xh*yh))
-        else:
-            assert n == -1
-            D = D1 - D2 #Div(tau1) - Div(tau2)
-            ans = ans +( HomGn(xh) + HomGn(yh) - HomGn(xh*yh))
-        D = D.left_act_by_matrix(G.embed(wp**-1,prec).change_ring(Cp))
+        D = n * (D2 - D1).left_act_by_matrix(G.embed(wp**-1,prec).change_ring(Cp))
         xi2 += H1(dict([(y,D)]))
-        V2.append((y,D))
-    #assert str(ans) == '0'
-    return xi1, xi2
-    # Note that the second class will need to be integrated in a twisted way.
-    # That is, the quaternion elements need to be conjugated by wp before being integrated.
-    verbose('Second part done')
-    xi1, xi2 = H1(dict(V1)), H1(dict(V2))
-    if hecke_smoothen:
-        verbose('Smoothening...')
-        q = ZZ(2)
-        D = G.prime() * G.discriminant * G.level
-        try:
-            D = D.norm()
-        except AttributeError: pass
-        while D % q == 0:
-            q = q.next_prime()
-        if G.F.degree() == 1:
-            q1 = q
-            xi1 = xi1.hecke_smoothen(q,prec = prec)
-            xi2 = xi2.hecke_smoothen(q,prec = prec)
-        else:
-            q1 = G.F.ideal(q).factor()[0][0]
-            xi1 = xi1.hecke_smoothen(q1,prec = prec)
-            xi2 = xi2.hecke_smoothen(q1,prec = prec)
     return xi1,xi2
 
 class Divisors(Parent):
@@ -191,7 +147,7 @@ def _hash(x):
     # return hash((tmp,ans[1]))
     # return hash((x.trace(),x.norm()))
     ans = [x.valuation()]
-    for tup in x.list()[:10]:
+    for tup in x.list()[:20]:
         ans.extend(tup)
     return tuple(ans)
 

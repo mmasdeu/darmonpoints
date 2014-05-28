@@ -293,11 +293,6 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
     r1 = R1.gen()
     R1.set_default_prec(prec)
 
-    R0 = PolynomialRing(K,'t')
-    R0 = R0.fraction_field()
-    t = R0.gen()
-
-#    phi = R0(prod(((t - P)**ZZ(n) for P,n in divisor if n > 0)))/R0(prod(((t - P)**ZZ(-n) for P,n in divisor if n < 0)))
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o) for o in G.get_covering(1)]
@@ -305,21 +300,18 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
         for parity, edge in edgelist:
-            _, h = edge
+            rev, h = edge
             a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
-
-
-            # hexp = (a*r1+b)/(c*r1+d)
-            # y0 = phi(hexp)
 
             y0num = R1(1)
             y0den = R1(1)
             for P,n in divisor:
+                hP = (a-P*c)*r1+(b-d*P)
                 if n > 0:
-                    y0num *= ((a-P*c)*r1+(b-d*P))**ZZ(n)
+                    y0num *= hP**ZZ(n)
                     y0num = y0num.add_bigoh(prec)
                 else:
-                    y0den *= ((a-P*c)*r1+(b-d*P))**ZZ(-n)
+                    y0den *= hP**ZZ(-n)
                     y0den = y0den.add_bigoh(prec)
             y0 = y0num/y0den
 
@@ -327,10 +319,14 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
 
             if val == 0 or not all([o.valuation(p) >= 0 for o in (y0(r1/p)/val - 1).list()]):
                 verbose('Subdividing...')
-                newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
+                # newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
+                newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])
                 continue
             pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
-            mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
+            if not rev:
+                mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
+            else:
+                mu_e = hc.evaluate(G.wp**-1 * G.reduce_in_amalgam(h * gamma) * G.wp)
             #verbose('mu_e = %s'%mu_e)
             if HOC._use_ps_dists:
                 newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))

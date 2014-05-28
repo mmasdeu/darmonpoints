@@ -191,14 +191,14 @@ class OCVnElement(ModuleElement):
         ::
 
         """
-        R=self._parent._R
-        if(self._parent.base_ring().is_exact()):
-            factor=1
+        R = self._parent._R
+        if self._parent.base_ring().is_exact():
+            factor = 1
         else:
-            t=min([R(x).valuation() for x in [a,b,c,d] if x!=0])
-            factor=R.prime()**(-t)
+            t = min([R(x).valuation() for x in [a,b,c,d] if x!=0])
+            factor = R.prime()**(-t)
         try:
-            x=self._parent._powers[(factor*a,factor*b,factor*c,factor*d)]
+            x = self._parent._powers[(factor*a,factor*b,factor*c,factor*d)]
             return self.__class__(self._parent,(extrafactor*factor**(-self._n))*(x*self._val), check = False)
         except KeyError:
             tmp = self._parent._get_powers_and_mult(factor*a,factor*b,factor*c,factor*d,extrafactor*factor**(-self._n),self._val)

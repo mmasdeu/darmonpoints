@@ -513,6 +513,10 @@ class ArithGroupNumFieldElement(MultiplicativeGroupElement):
             raise ValueError,'Must pass either quaternion_rep or word_rep'
         self._reduce_word(check = check)
 
+    @cached_method
+    def __hash__(self):
+        return self.quaternion_rep.__hash__()
+
     def _repr_(self):
         return str(self.quaternion_rep)
 
@@ -629,7 +633,6 @@ class ArithGroupNumFieldElement(MultiplicativeGroupElement):
         num_rels = len(relwords)
         f= (ZZ**num_rels).hom(relmat.rows())
         linear_combination = f.lift(wt)
-        verbose('linear combination = %s'%linear_combination)
         oldword = copy(self.word_rep)
         for i,lam in enumerate(linear_combination):
             relation = relwords[i]
@@ -663,17 +666,15 @@ class ArithGroupNumFieldElement(MultiplicativeGroupElement):
             gprime = ga**-1 * gprime
             if jj < num_terms:
                 ans.append((-1,ga,gprime))
-            else:
-                verbose('Last term!')
-
             if a > 0:
                 sign = 1
             else:
-                ans.append((1,G.Gn([]),G.Gn([])))
-                ans.append((1,ga**-1,ga))
+                ans.extend([(1,G.Gn([]),G.Gn([])),(1,ga**-1,ga)])
                 sign = -1
+            gj = G.Gn([])
             for j in range(1,sign*a):
-                ans.append((-sign,g,g**j))
+                gj *= g
+                ans.append((-sign,g,gj))
         if gprime.quaternion_rep != 1:
             verbose('WARNING!!! Left over = %s !!!'%gprime.quaternion_rep)
         return ans
