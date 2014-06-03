@@ -19,6 +19,7 @@ from util import *
 import os
 from ocmodule import *
 import operator
+from sage.rings.arith import GCD
 
 def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False,max_n = None):
     t = PolynomialRing(G.F,names = 't').gen()
@@ -74,7 +75,7 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
     return tmp,n,q1
 
 
-def lattice_homology_cycle(G,elt,prec,outfile = None):
+def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check = False):
     r''' Note that the second class will need to be integrated in a twisted way.
     That is, the quaternion elements need to be conjugated by wp before being integrated.
     '''
@@ -86,32 +87,30 @@ def lattice_homology_cycle(G,elt,prec,outfile = None):
     H1 = Homology(G.large_group(),Div)
     xi1 = H1({})
     xi2 = H1({})
-    found = False
-    eltn = elt
     wp = G.wp
-    while not found:
-        try:
-            W1 = eltn.find_bounding_cycle(G)
-            found = True
-        except ValueError:
-            eltn *= elt
-    HomGn = Homology(G.Gn.B,ZZ)
-    for n,x,y in W1:
-        xh = x.quaternion_rep
-        yh = y.quaternion_rep
-        mat = G.embed(x.quaternion_rep**-1,prec)
-        D2 = D1.left_act_by_matrix(mat)
-        D = n * (D2 - D1)
-        xi1 += H1(dict([(y,D)]))
+    # We calculate npow
+    npow0 = 1
+    vec = G.Gn.get_weight_vector(eltn.word_rep)
+    while npow0 * vec not in G.Gn.get_relation_matrix().image():
+        npow0 += 1
+    verbose('n = %s'%npow0)
     eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
-    W2 = eltn_twisted.find_bounding_cycle(G)
-    for n,x,y in W2:
-        xh = wp * x.quaternion_rep * wp**-1
-        yh = wp * y.quaternion_rep * wp**-1
-        mat = G.embed(xh**-1,prec)
-        D2 = D1.left_act_by_matrix(mat)
-        D = n * (D2 - D1).left_act_by_matrix(G.embed(wp**-1,prec).change_ring(Cp))
-        xi2 += H1(dict([(y,D)]))
+    vec = G.Gn.get_weight_vector(eltn_twisted.word_rep)
+    npow = npow0
+    while npow * vec not in G.Gn.get_relation_matrix().image():
+        npow += npow0
+    verbose('needed power = %s'%npow)
+    for n,xlist,y in eltn.find_bounding_cycle(G,method = method,npow = npow,check = check):
+        if y.is_scalar():
+            continue
+        D = sum((D1.left_act_by_matrix(G.embed(x**-1,prec)) - D1 for x in xlist if x != 1),Div(0))
+        xi1 += H1(dict([(y,n*D)]))
+    for n,xlist,y in eltn_twisted.find_bounding_cycle(G,method = method,npow = npow,check = check):
+        if y.is_scalar():
+            continue
+        D = sum((D1.left_act_by_matrix(G.embed(wp * x**-1 * wp**-1,prec)) - D1 for x in xlist if x != 1),Div(0))
+        D = D.left_act_by_matrix(G.embed(wp**-1,prec).change_ring(Cp))
+        xi2 += H1(dict([(y,n*D)]))
     return xi1,xi2
 
 class Divisors(Parent):
@@ -216,6 +215,9 @@ class Divisor_element(ModuleElement):
 
     def is_zero(self):
         return all((n == 0 for n in self._data.itervalues()))
+
+    def gcd(self):
+        return GCD([n for n in self._data.itervalues()])
 
     def _add_(self,right):
         newdict = defaultdict(ZZ)
@@ -401,7 +403,7 @@ class HomologyClass(ModuleElement):
                 mystr += ' + '
             else:
                 is_first = False
-            mystr += '{%s}|(%s)'%(g.quaternion_rep,v)
+            mystr += '{%s}|(%s)'%(str(g),v)
         return mystr
 
     def short_rep(self):
@@ -422,7 +424,7 @@ class HomologyClass(ModuleElement):
         G = self.parent().group()
         newdict = defaultdict(V)
         for oldg,v in self._data.iteritems():
-            gword = oldg._calculate_weight_zero_word()
+            gword = G.calculate_weight_zero_word(oldg)
             newv = v
             for i,a in gword:
                 g = G.gen(i)
@@ -439,7 +441,7 @@ class HomologyClass(ModuleElement):
                     oldv = (g**-1) * oldv
         return HomologyClass(self.parent(),newdict)
 
-    def factor_into_generators(self,prec,twist = 1):
+    def factor_into_generators(self,prec):
         r'''
         Use the relations:
             * gh|v = g|v + h|g^-1 v
@@ -454,7 +456,7 @@ class HomologyClass(ModuleElement):
             newv = v
             for i,a in gword:
                 g = G.gen(i)
-                gq = G.B(twist) * g.quaternion_rep * G.B(twist)**-1
+                gq = g.quaternion_rep
                 oldv = newv
                 newv = oldv.left_act_by_matrix(G.embed(gq**-a,prec))
                 if a < 0:

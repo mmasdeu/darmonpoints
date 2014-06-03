@@ -221,7 +221,9 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
             #verbose('Done %s/%s'%(i,len(input_vec)))
             res *= outp
     else:
-        res = prod(integrate_H0(*o) for o in input_vec)
+        res = Cp(1)
+        for o in input_vec:
+            res *= integrate_H0(*o)
     return res
 
 def sample_point(G,e,prec = 20):
@@ -293,9 +295,15 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
     r1 = R1.gen()
     R1.set_default_prec(prec)
 
+    # R0 = PolynomialRing(K,'t')
+    # t = R0.gen()
+    # R0 = R0.fraction_field()
+    # phi = R0(prod((t-P)**ZZ(n) for P,n in divisor if n > 0))/R0(prod((t-P)**ZZ(-n) for P,n in divisor if n < 0))
+
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o) for o in G.get_covering(1)]
+    common_div = divisor.gcd()
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
@@ -308,22 +316,29 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
             for P,n in divisor:
                 hP = (a-P*c)*r1+(b-d*P)
                 if n > 0:
-                    y0num *= hP**ZZ(n)
-                    y0num = y0num.add_bigoh(prec)
+                    y0num *= hP**ZZ(n) #/common_div)
+                    # y0num = y0num.add_bigoh(prec)
                 else:
-                    y0den *= hP**ZZ(-n)
-                    y0den = y0den.add_bigoh(prec)
+                    y0den *= hP**ZZ(-n) #/common_div)
+                    # y0den = y0den.add_bigoh(prec)
             y0 = y0num/y0den
+
+            # y0 = phi((a*r1+b)/(c*r1+d))
 
             val = y0(y0.parent().base_ring()(0))
 
             if val == 0 or not all([o.valuation(p) >= 0 for o in (y0(r1/p)/val - 1).list()]):
-                verbose('Subdividing...')
-                # newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
-                newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])
+                verbose('Subdividing...(%s %s)'%(val == 0, [o.valuation(p) for o in (y0(r1/p)/val - 1).list()]))
+                newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
+                assert not rev
+                # newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])
                 continue
             pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
             if not rev:
+                # g0, gi = G.reduce_in_amalgam(gamma,True)
+                # g0h = g0.conjugate_by(h**-1) * G.reduce_in_amalgam(h * gi)
+                # assert g0h.quaternion_rep == G.reduce_in_amalgam(h * gamma).quaternion_rep
+                #mu_e = hc.evaluate(g0h)
                 mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
             else:
                 mu_e = hc.evaluate(G.wp**-1 * G.reduce_in_amalgam(h * gamma) * G.wp)
@@ -343,4 +358,4 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
     tmp = p**val * K.teichmuller(p**(-val)*resmul)
     if resadd != 0:
         tmp *= resadd.exp()
-    return tmp
+    return tmp #**common_div

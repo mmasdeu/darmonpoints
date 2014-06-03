@@ -27,67 +27,141 @@ from sage.structure.sage_object import save,load
 from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
+from rational_arithgroup import ArithGroupElement,ArithGroup_generic
 
+class ArithGroup_nf_quaternion(ArithGroup_generic):
+    Element = ArithGroupElement
+    def __init__(self,base,a,b,level,info_magma = None):
+        self.F = base
+        #self.discriminant = base(discriminant)
+        self.level = base.ideal(level)
+        self.a,self.b = base(a),base(b)
+        self.__init_magma_objects(info_magma)
 
-class ArithGroup_nf_generic(AlgebraicGroup):
-    def __init__(self):
-        raise NotImplementedError
+        self.B = QuaternionAlgebra(self.F,self.a,self.b)
 
-    def base_field(self):
-        return self.F
+        magma_ZBasis = self._O_magma.ZBasis()
+        tmpObasis = [magma_quaternion_to_sage(self.B,o) for o in magma_ZBasis]
+        self.Obasis = tmpObasis
+        Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
+        self.basis_invmat = matrix(QQ,4*self.F.degree(),4*self.F.degree(),Obasis).transpose().inverse()
 
-    def base_ring(self):
-        return self.F
+        self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant())
+        verbose('Computing normalized basis')
+        _,f,e = self._O_magma.NormalizedBasis(nvals = 3)
+        verbose('Computing presentation')
+        G,gens = f.Presentation(e,self._O_magma,nvals = 2)
+        verbose('Done with presentation')
+        self._facerels_magma = f
+        self._G_magma = G
+        self._H_magma,self._GtoH_magma = magma.ReduceGenerators(G,nvals = 2)
+        self.Ugens = []
+        for h in self._H_magma.gens():
+            newgen = self.B(1)
+            for i,ai in shorten_word(G(h).ElementToSequence()._sage_()):
+                newgen = newgen * magma_quaternion_to_sage(self.B,gens[i+1])**ai
+            self.Ugens.append(newgen)
+        self.F_units = self.F.unit_group()
+        self.F_unit_offset = len(self.Ugens)
+        for u in self.F_units.gens():
+            self.Ugens.append(self.B(self.F(u)))
 
-    def _an_element_(self):
-        return self.gen(0)
+        verbose('Initializing generators')
+        self._gens = [ ArithGroupElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
 
-    def get_relation_words(self):
-        return self._relation_words
+        verbose('Initializing relations')
+        temp_relation_words = [shorten_word(self._H_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(self._H_magma.Relations()))] + [[(self.F_unit_offset + i,u.multiplicative_order())] for i,u in enumerate(self.F_units.gens()) if u.multiplicative_order() != Infinity]
 
-    def get_relation_matrix(self):
-        return self._relation_matrix
+        self._relation_words = []
+        for rel in temp_relation_words:
+            remaining_unit = self.F_units(self.F(prod((self._gens[g].quaternion_rep**a for g,a in rel), z = self.B(1))))
+            assert remaining_unit.multiplicative_order() != Infinity
+            ulist = remaining_unit.exponents()
+            newrel = rel + [(self.F_unit_offset + i,a) for i,a in enumerate(ulist) if a != 0 ]
+            sign = ZZ(prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1)))
+            assert sign == 1
+            self._relation_words.append(newrel)
 
-    def one(self):
-        return ArithGroupNumFieldElement(self,word_rep = [])
+        verbose('Initializing abmatrix')
+        # Define the (abelian) relation matrix
+        self._relation_matrix = matrix(ZZ,len(self._relation_words),len(self._gens),0)
+        for i,rel in enumerate(self._relation_words):
+            for j,k in rel:
+                self._relation_matrix[i,j] += k
+        Parent.__init__(self)
 
-    def _element_constructor_(self,x):
-        if isinstance(x,list):
-            return ArithGroupNumFieldElement(self, word_rep = x)
-        elif x.parent() is self.quaternion_algebra():
-            return ArithGroupNumFieldElement(self, quaternion_rep = x)
-        elif isinstance(x.parent(),FreeModule_generic):
-            Ga, V, free_idx = self.abelianization()
-            indices_vec = [Ga.gen(o).lift() for o in free_idx]
-            return ArithGroupNumFieldElement(self,word_rep = [(idx,n) for indices in indices_vec for idx,n in zip(indices,x)])
+    def _repr_(self):
+        return 'Arithmetic Group attached to quaternion algebra with a = %s, b = %s and level = %s'%(self.a,self.b,self.level)
+
+    def __init_magma_objects(self,info_magma = None):
+        wtime = walltime()
+        verbose('Calling _init_magma_objects...')
+        if info_magma is None:
+            Qx_magma = magma.PolynomialRing(magma.Rationals())
+            xm = Qx_magma.gen(1)
+            f = self.F.gen().minpoly()
+            FF_magma = magma.NumberField(sum([magma(c)*xm**i for c,i in zip(f.coefficients(),f.exponents())]))
+            self._F_magma = FF_magma
+            OF_magma = FF_magma.Integers()
+            am, bm = sage_F_elt_to_magma(self._F_magma,self.a),sage_F_elt_to_magma(self._F_magma,self.b)
+            self._B_magma = magma.QuaternionAlgebra(FF_magma,am,bm)
+
+            self._Omax_magma = self._B_magma.MaximalOrder()
+            self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
         else:
-            return ArithGroupNumFieldElement(self, quaternion_rep = x)
-
-    def _coerce_map_from_(self,S):
-        r"""
-        The only things that coerce into this group are:
-        - lists
-        - elements in the quaternion algebra, of reduced norm 1
-        """
-        if isinstance(S,list):
-            return True
-        return False
+            self._F_magma = info_magma._F_magma
+            OF_magma = info_magma._F_magma.Integers()
+            self._B_magma = info_magma._B_magma
+            self._Omax_magma = info_magma._B_magma.MaximalOrder()
+            self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
+        verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
 
     def _quaternion_to_list(self,x):
-        raise NotImplementedError
+        xlist = [u for o in x.coefficient_tuple() for u in o.list()]
+        tmp = (self.basis_invmat * matrix(QQ,4 * self.F.degree() ,1,xlist)).list()
+        return tmp
+
+    @cached_method
+    def get_word_rep(self,delta):
+        if not self._is_in_order(delta):
+            raise RuntimeError,'delta (= %s) is not in order!'%delta
+        c = self.__magma_word_problem(delta)
+        tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)]
+        delta1 =  prod((self.Ugens[g]**a for g,a in tmp))
+        quo = delta/delta1
+        assert quo.is_constant()
+        quo = quo.coefficient_tuple()[0]
+        exps = self.F_units(quo).exponents()
+        tmp.extend([(self.F_unit_offset + i,a) for i,a in enumerate(exps) if a != 0])
+        delta1 =  prod((self.Ugens[g]**a for g,a in tmp))
+        quo = ZZ(delta1/delta)
+        assert quo == 1
+        return tmp
+
+    def __magma_word_problem(self,x):
+        r'''
+        Given a quaternion x, finds its decomposition in terms of the generators
+
+        INPUT: x can be a list/vector of integers (giving the quaternion in terms of the basis for the order,
+        or x can be a quaternion, in which case the conversion is done in the function.
+
+        OUTPUT: A list representing a word in the generators
+
+        EXAMPLES:
+
+        sage: G = ArithGroup(7,15,1)
+        sage: G.__magma_word_problem(G.Ugens[2]*G.Ugens[1]) == [2,1]
+        '''
+        wtime = walltime()
+        # If x is a quaternion, find the expression in the generators.
+        xm = sage_quaternion_to_magma(self._B_magma,self.B(x))
+        V = self._GtoH_magma.Image(magma.Word(xm,self._facerels_magma,self._G_magma)).ElementToSequence()._sage_()
+        verbose('Just spent %s seconds in Magma (x = %s)'%(walltime(wtime),x))
+        return V
+
 
     def _is_in_order(self,x):
-        #return x in self.
         return all([o.is_integral() for o in self._quaternion_to_list(x)])
-
-    def _denominator(self,x):
-        return lcm([ZZ(o.denominator()) for o in self._quaternion_to_list(x)])
-
-    def _denominator_valuation(self,x,l):
-        return max((o.denominator().valuation(l) for o in self._quaternion_to_list(x)))
-
-    def quaternion_algebra(self):
-        return self.B
 
     def enumerate_elements(self,max_length = None):
         ngens = self.F_unit_offset #len(self.gens())
@@ -96,60 +170,6 @@ class ArithGroup_nf_generic(AlgebraicGroup):
                 raise StopIteration
             else:
                 yield prod([self.Ugens[i] for i in v])
-
-
-    def get_hecke_ti(self,gk1,gamma,l, reps = None):
-        r"""
-
-        INPUT:
-
-        - gk1 - a quaternion element of norm l
-        - gamma - an element of G
-
-        OUTPUT:
-
-        - t_{gk1}(gamma)
-
-        """
-        elt = gk1**-1 * gamma
-        found = False
-        if reps is None:
-            reps = self.get_hecke_reps(l)
-        for gk2 in reps:
-            ti = elt * gk2
-            if self._is_in_order(ti):
-                return self(ti)
-        assert 0
-
-    def gen(self,i):
-        return self._gens[i]
-
-    def gens(self):
-        return self._gens
-
-    def act_by_hecke(self,l,g):
-        r'''
-           - l:  a prime
-           - g: an element of the arithmetic group
-        '''
-        Gab, V, free_idx = self.abelianization()
-        hecke_reps = self.get_hecke_reps(l)
-        return sum(self.image_in_abelianized(self.get_hecke_ti(gk1,g.quaternion_rep,l,reps=hecke_reps)) for gk1 in hecke_reps)
-
-
-    @cached_method
-    def hecke_matrix(self,l):
-        Gab, V, free_idx = self.abelianization()
-        gens = self.gens()
-        freegens = [prod(self.gen(i)**n for i,n in enumerate(Gab.gen(idx).lift().list())) for idx in free_idx]
-
-        dim = len(freegens)
-        M = matrix(ZZ,dim,dim,0)
-        for j,g in enumerate(freegens):
-            # Construct column j of the matrix
-            newcol = self.act_by_hecke(l,g)
-            M.set_column(j,newcol.list())
-        return M
 
     def compute_quadratic_embedding(self,K,return_generator = False):
         O_magma = self._O_magma
@@ -242,136 +262,6 @@ class ArithGroup_nf_generic(AlgebraicGroup):
             return gamma, tau1, tau2
         else:
             return gamma, tau1
-
-
-class ArithGroup_nf_quaternion(ArithGroup_nf_generic):
-    def __init__(self,base,a,b,level,info_magma = None):
-        self.F = base
-        #self.discriminant = base(discriminant)
-        self.level = base.ideal(level)
-        self.a,self.b = base(a),base(b)
-        self.__init_magma_objects(info_magma)
-
-        self.B = QuaternionAlgebra(self.F,self.a,self.b)
-
-        magma_ZBasis = self._O_magma.ZBasis()
-        tmpObasis = [magma_quaternion_to_sage(self.B,o) for o in magma_ZBasis]
-        self.Obasis = tmpObasis
-        Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
-        self.basis_invmat = matrix(QQ,4*self.F.degree(),4*self.F.degree(),Obasis).transpose().inverse()
-
-        self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant())
-        verbose('Computing normalized basis')
-        _,f,e = self._O_magma.NormalizedBasis(nvals = 3)
-        verbose('Computing presentation')
-        G,gens = f.Presentation(e,self._O_magma,nvals = 2)
-        verbose('Done with presentation')
-        self._facerels_magma = f
-        self._G_magma = G
-        self._H_magma,self._GtoH_magma = magma.ReduceGenerators(G,nvals = 2)
-        self.Ugens = []
-        for h in self._H_magma.gens():
-            newgen = self.B(1)
-            for i,ai in shorten_word(G(h).ElementToSequence()._sage_()):
-                newgen = newgen * magma_quaternion_to_sage(self.B,gens[i+1])**ai
-            self.Ugens.append(newgen)
-        self.F_units = self.F.unit_group()
-        self.F_unit_offset = len(self.Ugens)
-        for u in self.F_units.gens():
-            self.Ugens.append(self.B(self.F(u)))
-
-        verbose('Initializing generators')
-        self._gens = [ ArithGroupNumFieldElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
-
-        verbose('Initializing relations')
-        temp_relation_words = [shorten_word(self._H_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(self._H_magma.Relations()))] + [[(self.F_unit_offset + i,u.multiplicative_order())] for i,u in enumerate(self.F_units.gens()) if u.multiplicative_order() != Infinity]
-
-        self._relation_words = []
-        for rel in temp_relation_words:
-            remaining_unit = self.F_units(self.F(prod((self._gens[g].quaternion_rep**a for g,a in rel), z = self.B(1))))
-            assert remaining_unit.multiplicative_order() != Infinity
-            ulist = remaining_unit.exponents()
-            newrel = rel + [(self.F_unit_offset + i,a) for i,a in enumerate(ulist) if a != 0 ]
-            sign = ZZ(prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1)))
-            assert sign == 1
-            self._relation_words.append(newrel)
-
-        verbose('Initializing abmatrix')
-        # Define the (abelian) relation matrix
-        self._relation_matrix = matrix(ZZ,len(self._relation_words),len(self._gens),0)
-        for i,rel in enumerate(self._relation_words):
-            for j,k in rel:
-                self._relation_matrix[i,j] += k
-        Parent.__init__(self)
-
-    def _repr_(self):
-        return 'Arithmetic Group attached to quaternion algebra with a = %s, b = %s and level = %s'%(self.a,self.b,self.level)
-
-    def __init_magma_objects(self,info_magma = None):
-        wtime = walltime()
-        verbose('Calling _init_magma_objects...')
-        if info_magma is None:
-            Qx_magma = magma.PolynomialRing(magma.Rationals())
-            xm = Qx_magma.gen(1)
-            f = self.F.gen().minpoly()
-            FF_magma = magma.NumberField(sum([magma(c)*xm**i for c,i in zip(f.coefficients(),f.exponents())]))
-            self._F_magma = FF_magma
-            OF_magma = FF_magma.Integers()
-            am, bm = sage_F_elt_to_magma(self._F_magma,self.a),sage_F_elt_to_magma(self._F_magma,self.b)
-            self._B_magma = magma.QuaternionAlgebra(FF_magma,am,bm)
-
-            self._Omax_magma = self._B_magma.MaximalOrder()
-            self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
-        else:
-            self._F_magma = info_magma._F_magma
-            OF_magma = info_magma._F_magma.Integers()
-            self._B_magma = info_magma._B_magma
-            self._Omax_magma = info_magma._B_magma.MaximalOrder()
-            self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
-        verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
-
-    def _quaternion_to_list(self,x):
-        xlist = [u for o in x.coefficient_tuple() for u in o.list()]
-        tmp = (self.basis_invmat * matrix(QQ,4 * self.F.degree() ,1,xlist)).list()
-        return tmp
-
-    @cached_method
-    def get_word_rep(self,delta):
-        if not self._is_in_order(delta):
-            raise RuntimeError,'delta (= %s) is not in order!'%delta
-        c = self.__magma_word_problem(delta)
-        tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)]
-        delta1 =  prod((self.Ugens[g]**a for g,a in tmp))
-        quo = delta/delta1
-        assert quo.is_constant()
-        quo = quo.coefficient_tuple()[0]
-        exps = self.F_units(quo).exponents()
-        tmp.extend([(self.F_unit_offset + i,a) for i,a in enumerate(exps) if a != 0])
-        delta1 =  prod((self.Ugens[g]**a for g,a in tmp))
-        quo = ZZ(delta1/delta)
-        assert quo == 1
-        return tmp
-
-    def __magma_word_problem(self,x):
-        r'''
-        Given a quaternion x, finds its decomposition in terms of the generators
-
-        INPUT: x can be a list/vector of integers (giving the quaternion in terms of the basis for the order,
-        or x can be a quaternion, in which case the conversion is done in the function.
-
-        OUTPUT: A list representing a word in the generators
-
-        EXAMPLES:
-
-        sage: G = ArithGroup(7,15,1)
-        sage: G.__magma_word_problem(G.Ugens[2]*G.Ugens[1]) == [2,1]
-        '''
-        wtime = walltime()
-        # If x is a quaternion, find the expression in the generators.
-        xm = sage_quaternion_to_magma(self._B_magma,self.B(x))
-        V = self._GtoH_magma.Image(magma.Word(xm,self._facerels_magma,self._G_magma)).ElementToSequence()._sage_()
-        return V
-
 
     def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1):
         N = self.F.ideal(N)
@@ -466,215 +356,3 @@ class ArithGroup_nf_quaternion(ArithGroup_nf_generic):
             if Gab.invariants()[i] == 0:
                 free_idx.append(i)
         return Gab,V,free_idx
-
-
-class ArithGroupNumFieldElement(MultiplicativeGroupElement):
-    def __init__(self,parent, word_rep = None, quaternion_rep = None, check = False):
-        r'''
-        Initialize.
-
-            INPUT:
-
-            - a list of the form [(g1,a1),(g2,a2),...,(gn,an)] where the gi are indices
-            refering to fixed generators, and the ai are integers, or
-            an element of the quaternion algebra ``self.parent().quaternion_algebra()``
-        '''
-        MultiplicativeGroupElement.__init__(self, parent)
-        init_data = False
-        self.has_word_rep = False
-        self.has_quaternion_rep = False
-        if word_rep is not None:
-            self.word_rep = word_rep
-            self.has_word_rep = True
-            init_data = True
-        if quaternion_rep is not None:
-            if not parent._is_in_order(quaternion_rep):
-                print quaternion_rep
-                print [o for o in parent._quaternion_to_list(quaternion_rep)]
-                print [o.is_integral()  for o in parent._quaternion_to_list(quaternion_rep)]
-                raise ValueError,'Quaternion must be in order'
-            if check:
-                rednrm = quaternion_rep.reduced_norm()
-                if not rednrm.is_integral() or not (1/rednrm).is_integral():
-                    print quaternion_rep
-                    raise ValueError,'Quaternion must be of unit norm'
-            if check and not parent._is_in_order(quaternion_rep):
-                    print quaternion_rep
-                    raise ValueError,'Quaternion must be in order'
-            self.quaternion_rep = set_immutable(quaternion_rep)
-            self.has_quaternion_rep = True
-            if word_rep is None:
-                try:
-                    self.word_rep = self._word_rep() # debug
-                    self.has_word_rep = True
-                except ValueError: pass
-            init_data = True
-        if init_data is False:
-            raise ValueError,'Must pass either quaternion_rep or word_rep'
-        self._reduce_word(check = check)
-
-    @cached_method
-    def __hash__(self):
-        return self.quaternion_rep.__hash__()
-
-    def _repr_(self):
-        return str(self.quaternion_rep)
-
-    def _mul_(left,right):
-        word_rep = None
-        quaternion_rep = None
-        if left.has_word_rep and right.has_word_rep:
-            word_rep = left.word_rep + right.word_rep
-        if (left.has_quaternion_rep and right.has_quaternion_rep) or word_rep is None:
-            quaternion_rep = left.quaternion_rep * right.quaternion_rep
-        return ArithGroupNumFieldElement(left.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
-
-    def is_one(self):
-        quatrep = self.quaternion_rep
-        return quatrep == 1
-
-    def __invert__(self):
-        word_rep = None
-        quaternion_rep = None
-        if self.has_word_rep:
-            word_rep = [(g,-i) for g,i in reversed(self.word_rep)]
-        if self.has_quaternion_rep:
-            quaternion_rep = self.quaternion_rep**(-1)
-        return ArithGroupNumFieldElement(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
-
-    def __cmp__(self,right):
-        selfquatrep = self.quaternion_rep
-        rightquatrep = right.quaternion_rep
-        tmp = selfquatrep/rightquatrep
-        try:
-            tmp = self.parent().F(tmp)
-        except TypeError:
-            return 2
-        if not tmp.is_integral():
-            return -1
-        elif not (1/tmp).is_integral():
-            return 1
-        else:
-            return 0
-
-    def _reduce_word(self, check = False):
-        if not self.has_word_rep:
-            return
-        if check:
-            self.check_consistency(txt = '1')
-        self.word_rep = reduce_word(self.word_rep)
-        if check:
-            self.check_consistency(txt = '2')
-
-    #@lazy_attribute
-    def _word_rep(self):
-        r'''
-        Returns a word in the generators of `\Gamma` representing the given quaternion `x`.
-        '''
-        tmp = self.parent().get_word_rep(self.quaternion_rep)
-        self.has_word_rep = True
-        # self.check_consistency(self.quaternion_rep,tmp,txt = '3')
-        return tmp
-
-    @lazy_attribute
-    def quaternion_rep(self):
-        r'''
-        Returns the quaternion representation.
-        '''
-        Gamma = self.parent()
-        self.has_quaternion_rep = True
-        return prod((Gamma.gen(g).quaternion_rep**a for g,a in self.word_rep), z = Gamma.B(1))
-
-    def check_consistency(self, q = None, wd = None,txt = ''):
-        if q is None and wd is None:
-            if not self.has_quaternion_rep or not self.has_word_rep:
-                return
-        if q is None:
-            q = self.quaternion_rep
-        if wd is None:
-            wd = self.word_rep
-        Gamma = self.parent()
-        q1 = prod(Gamma.Ugens[g]**a for g,a in wd)
-        try:
-            quo = ZZ(q * q1**-1)
-        except TypeError:
-            quo = q * q1**-1
-        if quo != 1:
-            print q
-            print q1
-            print q * q1**-1
-            raise RuntimeError,'Word and quaternion are inconsistent! (%s)'%txt
-        return
-
-    def get_weight_vector(self):
-        gens = self.parent().gens()
-        weight_vector = vector(ZZ,[0 for g in gens])
-        for i,a in self.word_rep:
-            weight_vector[i] += a
-        return weight_vector
-
-    def __getitem__(self,n):
-        r'''
-        Returns the nth letter of the form g^a
-        '''
-        g,a = self.word_rep[n]
-        return self.parent().gen(g)**a
-
-    def is_trivial_in_abelianization(self):
-        return self.get_weight_vector() in self.parent().get_relation_matrix().image()
-
-    def _calculate_weight_zero_word(self):
-        if not self.is_trivial_in_abelianization():
-            raise ValueError,'Element must be trivial in the abelianization'
-        G = self.parent()
-        wt = self.get_weight_vector()
-        relmat = G.get_relation_matrix()
-        relwords = G.get_relation_words()
-        num_rels = len(relwords)
-        f= (ZZ**num_rels).hom(relmat.rows())
-        linear_combination = f.lift(wt)
-        oldword = copy(self.word_rep)
-        for i,lam in enumerate(linear_combination):
-            relation = relwords[i]
-            verbose('lam = %s'%lam)
-            if lam == 0:
-                continue
-            elif lam < 0:
-                oldword += ZZ((-lam))*relation
-            else: #lam > 0
-                oldword += ZZ(lam)*[(g,-j) for g,j in reversed(relation)]
-        tmp = reduce_word(oldword)
-        assert self.parent()(tmp).get_weight_vector() == 0
-        return tmp
-
-    def find_bounding_cycle(self,G):
-        r'''
-        Use recursively that:
-        - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))
-        - x^(-a) g = -a x + g + del(1|1) + del(x^(a)|(x^-a)) - del(x^(-a)|g) + del(x|(x + x^2 + ... + x^(a-1)))
-        '''
-        g = self.quaternion_rep
-        gprime = G.Gn(g)
-        ans = []
-        gword = G.Gn(g)._calculate_weight_zero_word()
-        num_terms = len(gword)
-        jj = 0
-        for i,a in gword:
-            jj += 1
-            g = G.Gn.gen(i)
-            ga = g**a
-            gprime = ga**-1 * gprime
-            if jj < num_terms:
-                ans.append((-1,ga,gprime))
-            if a > 0:
-                sign = 1
-            else:
-                ans.extend([(1,G.Gn([]),G.Gn([])),(1,ga**-1,ga)])
-                sign = -1
-            gj = G.Gn([])
-            for j in range(1,sign*a):
-                gj *= g
-                ans.append((-sign,g,gj))
-        if gprime.quaternion_rep != 1:
-            verbose('WARNING!!! Left over = %s !!!'%gprime.quaternion_rep)
-        return ans

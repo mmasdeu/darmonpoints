@@ -9,8 +9,8 @@ p = 5 # The prime
 D = 2 * 3 # Discriminant of the quaternion algebra (even number of primes)
 Np = 1 # Conductor of order.
 sign_at_infinity = 1 # Sign at infinity, can be +1 or -1
-prec = 30 # Precision to which result is desired
-working_prec = 70
+prec = 12 # Precision to which result is desired
+working_prec = 40
 outfile = 'points_%s_%s.txt'%(p,D)
 
 verb_level = 1 # Set to 0 to remove output
@@ -28,9 +28,10 @@ E = EllipticCurve(str(p*D*Np))
 G = BigArithGroup(p,quaternion_algebra_from_discriminant(QQ,D).invariants(),Np,use_sage_db = False)
 
 # This has been found by hand
-g =  G.Gpn.gen(1)
+g =  G.Gn(G.Gpn.gen(1).quaternion_rep)
 
-xi1, xi2 = lattice_homology_cycle(G,g,working_prec, outfile = outfile)
+xi1, xi2 = lattice_homology_cycle(G,g,working_prec, outfile = outfile,method = 'short')
+print xi1.size_of_support(),xi2.size_of_support()
 
 PhiElift = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists)
 

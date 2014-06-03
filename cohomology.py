@@ -147,44 +147,12 @@ class CohomologyElement(ModuleElement):
         coeff_module = self.parent().coefficient_module()
         tmp = Gab(V0.gen(j))
         gablist = [tmp[i] for i in free_idx]
-        # assert sum(1 if a0 != 0 else 0 for a0 in gablist) <= 1
+        assert sum(1 if a0 != 0 else 0 for a0 in gablist) <= 1
         cvals = [coeff_module(o) for o in self._val]
         val0 = sum((ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0),coeff_module(0))
         return val0
 
     @cached_method
-    def _evaluate_letter(self,g,a):
-        G = self.parent().group()
-        V = self.parent().coefficient_module()
-        prec = V.base_ring().precision_cap()
-        Sigma0 = self.parent().Sigma0()
-        if a == 0:
-            return V(0)
-        elif a == -1:
-            gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
-            if self.parent()._use_ps_dists:
-                return -(Sigma0(gmat_inv) * self._val[g])
-            else:
-                return  -self._val[g].l_act_by(gmat_inv)
-        elif a < 0:
-            gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
-            if self.parent()._use_ps_dists:
-                return -(Sigma0(gmat_inv**-a) * self._evaluate_letter(g,-a))
-            else:
-                return -self._evaluate_letter(g,-a).l_act_by(gmat_inv**-a)
-        elif a == 1:
-            return self._val[g]
-        else:
-            gmat = G.embed(G.gen(g).quaternion_rep,prec)
-            phig = self._val[g]
-            tmp = V(phig)
-            for i in range(a-1):
-                if self.parent()._use_ps_dists:
-                    tmp = phig + Sigma0(gmat) * tmp
-                else:
-                    tmp = phig + tmp.l_act_by(gmat)
-            return tmp
-
     def _evaluate_word(self,word):
         r''' Evaluate recursively, using cocycle condition:
         self(gh) = self(g) + g*self(h)
@@ -200,7 +168,34 @@ class CohomologyElement(ModuleElement):
             return V(0)
         # verbose('word = %s'%list(word))
         if len(word) == 1:
-            return self._evaluate_letter(word[0][0],word[0][1])
+            g,a = word[0]
+            if a == 0:
+                return V(0)
+            elif a == -1:
+                gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
+                if self.parent()._use_ps_dists:
+                    return -(Sigma0(gmat_inv) * self._val[g])
+                else:
+                    return  -self._val[g].l_act_by(gmat_inv)
+            elif a < 0:
+                gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
+                if self.parent()._use_ps_dists:
+                    return -(Sigma0(gmat_inv**-a) * self._evaluate_word(tuple([(g,-a)])))
+                else:
+                    return -self._evaluate_word(tuple([(g,-a)])).l_act_by(gmat_inv**-a)
+
+            elif a == 1:
+                return self._val[g]
+            else:
+                gmat = G.embed(G.gen(g).quaternion_rep,prec)
+                phig = self._val[g]
+                tmp = V(phig)
+                for i in range(a-1):
+                    if self.parent()._use_ps_dists:
+                        tmp = phig + Sigma0(gmat) * tmp
+                    else:
+                        tmp = phig + tmp.l_act_by(gmat)
+                return tmp
         else:
             pivot = len(word) // 2
             gamma = prod([G.gen(g).quaternion_rep**a for g,a in word[:pivot]],G.B(1))

@@ -892,6 +892,9 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
 
 def discover_equation(qE,emb,conductor,prec):
     #from util import get_j_invariant
+    if qE.valuation() < 0:
+        qE = 1/qE
+    assert qE.valuation() > 0, 'Assert that qE has positive valuation'
     qE = qE**2
     F = emb.domain()
     Kp = emb.codomain()
@@ -927,7 +930,7 @@ def discover_equation(qE,emb,conductor,prec):
                         c6squared = F(c4ex**3 - 1728*D)
                         if not c6squared.is_square():
                             continue
-                        for c6ex in c6squared.sqrt(extend = False, all=True):
+                        for c6ex in c6squared.sqrt(all=True):
                             E = EllipticCurve_from_c4c6(c4ex,c6ex)
                             if E.conductor() == conductor:
                                 assert E.discriminant() == D

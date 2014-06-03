@@ -80,7 +80,7 @@ def BigArithGroup(p,quat_data,level,base = None, seed = None,use_sage_db = True,
 
 class BigArithGroup_class(AlgebraicGroup):
     r'''
-    This class hold information about the group `\Gamma`: a finite
+    This class holds information about the group `\Gamma`: a finite
     presentation for it, a solution to the word problem,...
 
     Initializes the group attached to a `\ZZ[1/p]`-order of the rational quaternion algebra of
@@ -224,19 +224,6 @@ class BigArithGroup_class(AlgebraicGroup):
             return self._II,self._JJ,self._KK
         self._II,self._JJ,self._KK = self._compute_padic_splitting(prec)
 
-        # The code below does not work as of now
-        # a,b = self.Gn.B.invariants()
-        # self._II,self._JJ = lift_padic_splitting(a,b,self._II,self._JJ,self.p,prec)
-        # self._prec = prec
-        # self._KK = self._II * self._JJ
-        # # Test splitting
-        # QQp = Qp(self.p,prec)
-        # mats = [matrix(QQp,2,2,[1,0,0,1]),self._II,self._JJ,self._KK]
-        # for g in self.Gpn.Obasis:
-        #     tup = g.coefficient_tuple()
-        #     mat = sum(self._F_to_Qp(a)*b for a,b in zip(tup,mats))
-        #     assert is_in_Gamma0loc(mat,det_condition = False)
-
         return self._II, self._JJ, self._KK
 
     def save_to_db(self):
@@ -312,26 +299,6 @@ class BigArithGroup_class(AlgebraicGroup):
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             pfacts = self.F.maximal_order().ideal(self.p).factor() if self.F.degree() > 1 else ZZ(self.p).factor()
 
-            # all_elts = []
-            # all_elts0 = [self.Gpn.element_of_norm(Q,use_magma = False,return_all = True, radius = -1,max_elements = 1) for Q,r in pfacts]
-            # for tup in product(*all_elts0):
-            #     tmp = prod(tup)
-            #     try:
-            #         rednrm = ZZ(tmp.reduced_norm())
-            #     except TypeError: continue
-            #     if rednrm == self.p:
-            #         all_elts.append(tmp)
-
-            # elts1 = self.Gpn.element_of_norm(pfacts[0][0],use_magma = False,return_all = True, radius = 2)
-            # elts2 = self.Gpn.element_of_norm(pfacts[1][0],use_magma = False,return_all = True, radius = 2)
-            # for elt1 in elts1:
-            #     for elt2 in elts2:
-            #         tmp = elt1*elt2
-            #         if ZZ(tmp.reduced_norm()) == self.p:
-            #             break
-            # all_elts = [tmp]
-
-
             all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True, radius = 5,max_elements = 1) #FIXME
             found = False
             all_initial = all_elts
@@ -339,13 +306,17 @@ class BigArithGroup_class(AlgebraicGroup):
                 raise RuntimeError
             verbose('Found %s initial candidates for wp'%len(all_initial))
             i = 0
+            try:
+                pgen = self.ideal_p.gen(0)
+            except AttributeError:
+                pgen = self.ideal_p
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
                 if i % 1000 == 0:
                     verbose('Done %s iterations'%i)
                 i += 1
                 for tmp in all_initial:
                     new_candidate =  v2 * tmp * v1
-                    if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # FIXME  and self.Gpn._is_in_order(new_candidate**2/self.ideal_p.gen(0))
+                    if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate) and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
                         return new_candidate
             raise RuntimeError
 
@@ -448,7 +419,6 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None):
                 return ArithGroup_rationalquaternion(discriminant,level,info_magma)
     else:
         a,b = abtuple
-        from nf_arithgroup import  ArithGroup_nf_quaternion
+        from nf_arithgroup import ArithGroup_nf_quaternion
         return ArithGroup_nf_quaternion(base,a,b,level,info_magma)
-
 

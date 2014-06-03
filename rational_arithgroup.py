@@ -24,8 +24,7 @@ from sage.structure.sage_object import save,load
 from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
-
-
+from sage.functions.generalized import sgn
 
 class ArithGroup_generic(AlgebraicGroup):
     def __init__(self):
@@ -76,19 +75,19 @@ class ArithGroup_generic(AlgebraicGroup):
         return self._relation_matrix
 
     def one(self):
-        return ArithGroupElement(self,word_rep = [])
+        return self.element_class(self,word_rep = [],quaternion_rep = self.B(1),check = False)
 
     def _element_constructor_(self,x):
         if isinstance(x,list):
-            return ArithGroupElement(self, word_rep = x)
+            return self.element_class(self, word_rep = x,check = False)
         elif x.parent() is self.quaternion_algebra():
-            return ArithGroupElement(self, quaternion_rep = x)
+            return self.element_class(self, quaternion_rep = x,check = False)
         elif isinstance(x.parent(),FreeModule_generic):
             Ga, V, free_idx = self.abelianization()
             indices_vec = [Ga.gen(o).lift() for o in free_idx]
-            return ArithGroupElement(self,word_rep = [(idx,n) for indices in indices_vec for idx,n in zip(indices,x)])
+            return self.element_class(self,word_rep = [(idx,n) for indices in indices_vec for idx,n in zip(indices,x)],check = False)
         else:
-            return ArithGroupElement(self, quaternion_rep = x)
+            return self.element_class(self, quaternion_rep = x,check = False)
 
     def _coerce_map_from_(self,S):
         r"""
@@ -291,7 +290,322 @@ class ArithGroup_generic(AlgebraicGroup):
         return sum(self.image_in_abelianized(self.get_hecke_ti(gk1,g.quaternion_rep,l,reps=hecke_reps)) for gk1 in hecke_reps)
 
 
+    def _calculate_relation(self,wt,separated = False):
+        relmat = self.get_relation_matrix()
+        relwords = self.get_relation_words()
+        num_rels = len(relwords)
+        f= (ZZ**num_rels).hom(relmat.rows())
+        linear_combination = f.lift(wt)
+        ans = []
+        for i,lam in enumerate(linear_combination):
+            relation = relwords[i]
+            if lam == 0:
+                continue
+            else:
+                if separated:
+                    if lam < 0:
+                        ans.append((ZZ(-lam),relation))
+                    else:
+                        ans.append((ZZ(lam),[(g,-j) for g,j in reversed(relation)]))
+                else:
+                    if lam < 0:
+                        ans += ZZ((-lam))*relation
+                    else: #lam > 0
+                        ans += ZZ(lam)*[(g,-j) for g,j in reversed(relation)]
+        if separated:
+            return ans
+        else:
+            return reduce_word(ans)
+
+    def get_weight_vector(self,wd):
+        gens = self.gens()
+        weight_vector = vector(ZZ,[0 for g in gens])
+        for i,a in wd:
+            weight_vector[i] += a
+        return weight_vector
+
+    def calculate_weight_zero_word(self,x):
+        if not x.is_trivial_in_abelianization():
+            raise ValueError,'Element must be trivial in the abelianization'
+        oldword = copy(x.word_rep)
+        oldword += self._calculate_relation(self.get_weight_vector(oldword))
+        tmp = reduce_word(oldword)
+        return tmp
+
+    def decompose_into_commutators(self,x):
+        oldword = self.calculate_weight_zero_word(x)
+        # At this point oldword has weight vector 0
+        # We use the identity:
+        # C W0 g^a W1 = C [W0,g^a] g^a W0 W1
+        commutator_list = []
+        for i in range(len(self.gens())):
+            while True:
+                # Find the first occurence of generator i
+                try:
+                    idx = [x[0] for x in oldword[1:]].index(i) + 1
+                except ValueError:
+                    break
+                w0 = self._element_constructor_(oldword[:idx])
+                gatmp = [oldword[idx]]
+                ga = self._element_constructor_(gatmp)
+                oldword = reduce_word(gatmp + oldword[:idx] + oldword[idx+1:])
+                w0q = w0.quaternion_rep
+                gaq = ga.quaternion_rep
+                commute = w0q*gaq*w0q**-1*gaq**-1
+                if commute != 1:
+                    commutator_list.append((w0,ga))
+        assert len(oldword) == 0
+        return commutator_list
+
+
+class ArithGroupElement(MultiplicativeGroupElement):
+    def __init__(self,parent, word_rep = None, quaternion_rep = None, check = True):
+        r'''
+        Initialize.
+
+            INPUT:
+
+            - a list of the form [(g1,a1),(g2,a2),...,(gn,an)] where the gi are indices
+            refering to fixed generators, and the ai are integers, or
+            an element of the quaternion algebra ``self.parent().quaternion_algebra()``
+        '''
+        MultiplicativeGroupElement.__init__(self, parent)
+        init_data = False
+        self.has_word_rep = False
+        self.has_quaternion_rep = False
+        if word_rep is not None:
+            self.word_rep = word_rep
+            self.has_word_rep = True
+            init_data = True
+        if quaternion_rep is not None:
+            if not parent._is_in_order(quaternion_rep):
+                raise ValueError,'Quaternion must be in order'
+            if check:
+                if parent.base_field() == QQ:
+                    rednrm = quaternion_rep.reduced_norm() if self.parent().discriminant != 1 else quaternion_rep.determinant()
+                    if rednrm != 1:
+                        raise ValueError,'Quaternion must be of norm 1'
+                else:
+                    rednrm = quaternion_rep.reduced_norm()
+                    if not rednrm.is_integral() or not (1/rednrm).is_integral():
+                        raise ValueError,'Quaternion must be of unit norm'
+            if check and not parent._is_in_order(quaternion_rep):
+                    raise ValueError,'Quaternion must be in order'
+            self.quaternion_rep = set_immutable(quaternion_rep)
+            self.has_quaternion_rep = True
+            init_data = True
+        if init_data is False:
+            raise ValueError,'Must pass either quaternion_rep or word_rep'
+        if not self.has_quaternion_rep:
+            self.quaternion_rep = self.quaternion_rep
+        assert self.has_quaternion_rep
+        self._reduce_word(check = check)
+
+    @cached_method
+    def __hash__(self):
+        return self.quaternion_rep.__hash__()
+
+    def _repr_(self):
+        return str(self.quaternion_rep)
+
+    def is_scalar(self):
+        try:
+            self.parent().base_field()(self.quaternion_rep)
+            return True
+        except TypeError:
+            return False
+
+    def _mul_(left,right):
+        word_rep = None
+        quaternion_rep = None
+        if left.has_word_rep and right.has_word_rep:
+            word_rep = left.word_rep + right.word_rep
+        if (left.has_quaternion_rep and right.has_quaternion_rep) or word_rep is None:
+            quaternion_rep = left.quaternion_rep * right.quaternion_rep
+        return left.__class__(left.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
+
+    def is_one(self):
+        quatrep = self.quaternion_rep
+        return quatrep == 1
+
+    def __invert__(self):
+        word_rep = None
+        quaternion_rep = None
+        if self.has_word_rep:
+            word_rep = [(g,-i) for g,i in reversed(self.word_rep)]
+        if self.has_quaternion_rep:
+            quaternion_rep = self.quaternion_rep**(-1)
+        return self.__class__(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
+
+    def __cmp__(self,right):
+        selfquatrep = self.quaternion_rep
+        rightquatrep = right.quaternion_rep
+        tmp = selfquatrep/rightquatrep
+        try:
+            tmp = self.parent().F(tmp)
+        except TypeError:
+            return 2
+        if not tmp.is_integral():
+            return -1
+        elif not (1/tmp).is_integral():
+            return 1
+        else:
+            return 0
+
+    def _reduce_word(self, check = False):
+        if not self.has_word_rep:
+            return
+        if check:
+            self.check_consistency(txt = '1')
+        self.word_rep = reduce_word(self.word_rep)
+        if check:
+            self.check_consistency(txt = '2')
+
+    @lazy_attribute
+    def word_rep(self):
+        r'''
+        Returns a word in the generators of `\Gamma` representing the given quaternion `x`.
+        '''
+        tmp = self.parent().get_word_rep(self.quaternion_rep)
+        self.has_word_rep = True
+        # self.check_consistency(self.quaternion_rep,tmp,txt = '3')
+        return tmp
+
+    @lazy_attribute
+    def quaternion_rep(self):
+        r'''
+        Returns the quaternion representation.
+        '''
+        Gamma = self.parent()
+        self.has_quaternion_rep = True
+        return prod((Gamma.gen(g).quaternion_rep**a for g,a in self.word_rep), z = Gamma.B(1))
+
+    def check_consistency(self, q = None, wd = None,txt = ''):
+        if q is None and wd is None:
+            if not self.has_quaternion_rep or not self.has_word_rep:
+                return
+        if q is None:
+            q = self.quaternion_rep
+        if wd is None:
+            wd = self.word_rep
+        Gamma = self.parent()
+        q1 = prod(Gamma.Ugens[g]**a for g,a in wd)
+        try:
+            quo = ZZ(q * q1**-1)
+        except TypeError:
+            quo = q * q1**-1
+        if quo != 1:
+            print q
+            print q1
+            print q * q1**-1
+            raise RuntimeError,'Word and quaternion are inconsistent! (%s)'%txt
+        return
+
+    def __getitem__(self,n):
+        r'''
+        Returns the nth letter of the form g^a
+        '''
+        g,a = self.word_rep[n]
+        return self.parent().gen(g)**a
+
+    def is_trivial_in_abelianization(self):
+        return self.parent().get_weight_vector(self.word_rep) in self.parent().get_relation_matrix().image()
+
+
+    def find_bounding_cycle(self,G,method = 'original',npow = 1,check = False):
+        if method == 'original':
+            ans = self.find_bounding_cycle_original(G,npow = npow)
+        elif method == 'short':
+            ans = self.find_bounding_cycle_short(G,npow = npow)
+        else:
+            raise ValueError
+        if check:
+            # DEBUG
+            from homology import Homology
+            Coh = Homology(G.Gn.B,ZZ)
+            tmp = Coh(dict([(self.quaternion_rep**npow,ZZ(1))]))
+            for m,xlist,y in ans:
+                for x in xlist:
+                    tmp -= Coh(dict([(x,ZZ(m))])) + Coh(dict([(y.quaternion_rep,ZZ(m))])) - Coh(dict([(x*y.quaternion_rep,ZZ(m))]))
+            if tmp.size_of_support() !=0:
+                verbose('Leftover of %s'%tmp)
+        return ans
+
+    def find_bounding_cycle_short(self,G,npow = 1):
+        r'''
+        Use recursively that:
+        - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))
+        - x^(-a) g = -a x + g + del(1|1) + del(x^(a)|(x^-a)) - del(x^(-a)|g) + del(x|(x + x^2 + ... + x^(a-1)))
+        '''
+        B = G.Gn.B
+        gprimeq = self.quaternion_rep
+        gprime = G.Gn(gprimeq)
+        gword = gprime.word_rep
+        rels = G.Gn._calculate_relation(G.Gn.get_weight_vector(gword * npow),separated = True)
+        # If npow > 1 then add the boundary relating self^npow with npow*self
+        ans = [(-1,[gprimeq**j for j in range(1,npow)],gprime)] if npow > 1 else []
+
+        num_terms = len(gword)
+        jj = 0
+        for i,a in gword:
+            jj += 1
+            # Decompose gword as g^a*gprime, where g is a generator
+            g = G.Gn.gen(i)
+            gq = g.quaternion_rep
+            gaq = gq**a
+            ga = g**a
+            # Add the boundary relating g^a*gprime with g^a + gprime (unless we are in the last step)
+            ans.extend([(-npow,[gaq],G.Gn(gword[jj:]))] if jj < num_terms else [])
+            # If a < 0 use the relation g^a = -g^(-a) + del(g^a|g^(-a))
+            ans.extend([(npow,[gaq**-1],ga)] if a < 0 else [])
+            # By the above line we have to deal with g^a with -g^abs(a) if a <0
+            # We add the corresponding boundaries, which we will substract if a > 0 and add if a < 0
+            ans.extend([(-sgn(a)*npow,[gq**j for j in range(1,abs(a))],g)] if abs(a) > 1 else [])
+        for m,rel in rels:
+            # we deal with the relation rel^m
+            # it is equivalent to deal with m*rel, because these two differ by a boundary that integrates to 1
+            assert m > 0
+            num_terms = len(rel)
+            jj = 0
+            for i,a in rel:
+                jj += 1
+                # we deal with a part of the relation of the form g*g'
+                g = G.Gn.gen(i)
+                gq = g.quaternion_rep
+                ga = g**a
+                gaq = gq**a
+                # add the boundary relating g and g'
+                ans.extend([(-m,[gaq],G.Gn(rel[jj:]))] if jj < num_terms else [])
+                # If a < 0 use the relation g^a = -g^(-a) + del(g^a|g^(-a))
+                ans.extend([(m,[gaq**-1],ga)] if a < 0 else [])
+                # add the boundaries of g^abs(a)
+                ans.extend([(-sgn(a)*m,[gq**j for j in range(1,abs(a))],g)] if abs(a) > 1 else [])
+        return ans
+
+    def find_bounding_cycle_original(self,G,npow = 1):
+        r'''
+        Use recursively that:
+        - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))
+        - x^(-a) g = -a x + g + del(1|1) + del(x^(a)|(x^-a)) - del(x^(-a)|g) + del(x|(x + x^2 + ... + x^(a-1)))
+        '''
+        ans = []
+        gword = G.Gn.calculate_weight_zero_word(G.Gn(self.quaternion_rep**npow))
+        num_terms = len(gword)
+        jj = 0
+        for i,a in gword:
+            jj += 1
+            g = G.Gn.gen(i)
+            gq = g.quaternion_rep
+            ga = g**a
+            gaq = gq**a
+            ans.extend([(-1,[gaq],G.Gn(gword[jj:]))] if jj < num_terms else [])
+            ans.extend([(1,[G.Gn.B(1)],G.Gn([])),(1,[gaq**-1],ga)] if a < 0 else [])
+            ans.append((-sgn(a),[gq**j for j in range(1,abs(a))],g))
+        return ans
+
+
 class ArithGroup_rationalquaternion(ArithGroup_generic):
+    Element = ArithGroupElement
     def __init__(self,discriminant,level,info_magma = None):
         self.F = QQ
         if isinstance(discriminant,list) or isinstance(discriminant,tuple):
@@ -344,7 +658,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
         self.translate = [None] + [self.__magma_word_problem(g**-1) for g in self.gquats[1:]]
 
-        self._gens = [ ArithGroupElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
+        self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
 
         temp_relation_words = [shorten_word(self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(self._U_magma.Relations()))] + [[(len(self.Ugens)-1,2)]]
 
@@ -638,6 +952,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
 
 class ArithGroup_rationalmatrix(ArithGroup_generic):
+    Element = Matrix
     def __init__(self,level,info_magma = None):
         self.F = QQ
         self.discriminant = ZZ(1)
@@ -649,7 +964,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         self.B = MatrixSpace(QQ,2,2)
         self.Obasis = [matrix(ZZ,2,2,v) for v in [[1,0,0,0],[0,1,0,0],[0,0,self.level,0],[0,0,0,1]]]
         self.Ugens = [self.B([1,1,0,1]), self.B([1,0,level,1])]
-        self._gens = [ArithGroupElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens)]
+        self._gens = [self.element_class(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens)]
         if self.level == 1:
             temp_relation_words = [6*[(0,-1),(1,1)],4*[(0,1),(1,-1),(0,1)]]
         else:
@@ -773,223 +1088,3 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             if Gab.invariants()[i] == 0:
                 free_idx.append(i)
         return Gab,V,free_idx
-
-class ArithGroupElement(MultiplicativeGroupElement):
-    def __init__(self,parent, word_rep = None, quaternion_rep = None, check = True):
-        r'''
-        Initialize.
-
-            INPUT:
-
-            - a list of the form [(g1,a1),(g2,a2),...,(gn,an)] where the gi are indices
-            refering to fixed generators, and the ai are integers, or
-            an element of the quaternion algebra ``self.parent().quaternion_algebra()``
-        '''
-        MultiplicativeGroupElement.__init__(self, parent)
-        init_data = False
-        self.has_word_rep = False
-        self.has_quaternion_rep = False
-        if word_rep is not None:
-            self.word_rep = word_rep
-            self.has_word_rep = True
-            init_data = True
-        if quaternion_rep is not None:
-            if not parent._is_in_order(quaternion_rep):
-                raise ValueError,'Quaternion must be in order'
-            if check:
-                rednrm = quaternion_rep.reduced_norm() if self.parent().discriminant != 1 else quaternion_rep.determinant()
-                if rednrm != 1:
-                    print quaternion_rep
-                    raise ValueError,'Quaternion must be of norm 1'
-            if check and not parent._is_in_order(quaternion_rep):
-                    print quaternion_rep
-                    raise ValueError,'Quaternion must be in order'
-            self.quaternion_rep = set_immutable(quaternion_rep)
-            self.has_quaternion_rep = True
-            if word_rep is None:
-                try:
-                    self.word_rep = self._word_rep() # debug
-                    self.has_word_rep = True
-                except ValueError: pass
-            init_data = True
-        if init_data is False:
-            raise ValueError,'Must pass either quaternion_rep or word_rep'
-        self._reduce_word(check = check)
-
-    @cached_method
-    def __hash__(self):
-        return self.quaternion_rep.__hash__()
-
-    def _repr_(self):
-        return str(self.quaternion_rep)
-
-    def _mul_(left,right):
-        word_rep = None
-        quaternion_rep = None
-        # if left.has_word_rep and right.has_word_rep:
-        #     word_rep = left.word_rep + right.word_rep
-        if (left.has_quaternion_rep and right.has_quaternion_rep) or word_rep is None:
-            quaternion_rep = left.quaternion_rep * right.quaternion_rep
-        return ArithGroupElement(left.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
-
-    def is_one(self):
-        quatrep = self.quaternion_rep
-        return quatrep == 1
-
-    def __invert__(self):
-        word_rep = None
-        quaternion_rep = None
-        # if self.has_word_rep:
-        #     word_rep = [(g,-i) for g,i in reversed(self.word_rep)]
-        if self.has_quaternion_rep:
-            quaternion_rep = self.quaternion_rep**(-1)
-        return ArithGroupElement(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
-
-    def __cmp__(self,right):
-        selfquatrep = self.quaternion_rep
-        rightquatrep = right.quaternion_rep
-        return selfquatrep.__cmp__(rightquatrep)
-
-    def _reduce_word(self, check = True):
-        if not self.has_word_rep:
-            return
-        if check:
-            self.check_consistency(txt = '1')
-        self.word_rep = reduce_word(self.word_rep)
-        if check:
-            self.check_consistency(txt = '2')
-
-    #@lazy_attribute
-    def _word_rep(self):
-        r'''
-        Returns a word in the generators of `\Gamma` representing the given quaternion `x`.
-        '''
-        tmp = self.parent().get_word_rep(self.quaternion_rep)
-        self.has_word_rep = True
-        self.check_consistency(self.quaternion_rep,tmp,txt = '3')
-        return tmp
-
-    @lazy_attribute
-    def quaternion_rep(self):
-        r'''
-        Returns the quaternion representation.
-        '''
-        Gamma = self.parent()
-        self.has_quaternion_rep = True
-        return prod((Gamma.gen(g).quaternion_rep**a for g,a in self.word_rep), z = Gamma.B(1))
-
-    def check_consistency(self, q = None, wd = None,txt = ''):
-        if q is None and wd is None:
-            if not self.has_quaternion_rep or not self.has_word_rep:
-                return
-        if q is None:
-            q = self.quaternion_rep
-        if wd is None:
-            wd = self.word_rep
-        Gamma = self.parent()
-        q1 = prod(Gamma.Ugens[g]**a for g,a in wd)
-        if q != q1:
-            print q
-            print q1
-            print q * q1**-1
-            raise RuntimeError,'Word and quaternion are inconsistent! (%s)'%txt
-        return
-
-    def get_weight_vector(self):
-        gens = self.parent().gens()
-        weight_vector = vector(ZZ,[0 for g in gens])
-        for i,a in self.word_rep:
-            weight_vector[i] += a
-        return weight_vector
-
-    def __getitem__(self,n):
-        r'''
-        Returns the nth letter of the form g^a
-        '''
-        g,a = self.word_rep[n]
-        return self.parent().gen(g)**a
-
-    def is_trivial_in_abelianization(self):
-        return self.get_weight_vector() in self.parent().get_relation_matrix().image()
-
-    def decompose_into_commutators(self):
-        oldword = self._calculate_weight_zero_word()
-        G = self.parent()
-        # At this point oldword has weight vector 0
-        # We use the identity:
-        # C W0 g^a W1 = C [W0,g^a] g^a W0 W1
-        commutator_list = []
-        for i in range(len(G.gens())):
-            while True:
-                # Find the first occurence of generator i
-                try:
-                    idx = [x[0] for x in oldword[1:]].index(i) + 1
-                except ValueError:
-                    break
-                w0 = ArithGroupElement(G,word_rep = oldword[:idx])
-                gatmp = [oldword[idx]]
-                ga = ArithGroupElement(G,word_rep = gatmp)
-                oldword = reduce_word(gatmp + oldword[:idx] + oldword[idx+1:])
-                w0q = w0.quaternion_rep
-                gaq = ga.quaternion_rep
-                commute = w0q*gaq*w0q**-1*gaq**-1
-                if commute != 1:
-                    commutator_list.append((w0,ga))
-        assert len(oldword) == 0
-        return commutator_list
-
-    def find_bounding_cycle(self,G):
-        r'''
-        Use recursively that:
-        - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))
-        - x^(-a) g = -a x + g + del(1|1) + del(x^(a)|(x^-a)) - del(x^(-a)|g) + del(x|(x + x^2 + ... + x^(a-1)))
-        '''
-        g = self.quaternion_rep
-        gprime = G.Gn(g)
-        ans = []
-        gword = G.Gn(g)._calculate_weight_zero_word()
-        num_terms = len(gword)
-        jj = 0
-        for i,a in gword:
-            jj += 1
-            g = G.Gn.gen(i)
-            ga = g**a
-            gprime = ga**-1 * gprime
-            if jj < num_terms:
-                ans.append((-1,ga,gprime))
-            else:
-                verbose('Last term!')
-
-            if a > 0:
-                sign = 1
-            else:
-                ans.append((1,G.Gn([]),G.Gn([])))
-                ans.append((1,ga**-1,ga))
-                sign = -1
-            for j in range(1,sign*a):
-                ans.append((-sign,g,g**j))
-        assert gprime.quaternion_rep == 1
-        return ans
-
-    def _calculate_weight_zero_word(self):
-        if not self.is_trivial_in_abelianization():
-            raise ValueError,'Element must be trivial in the abelianization'
-        G = self.parent()
-        wt = self.get_weight_vector()
-        relmat = G.get_relation_matrix()
-        relwords = G.get_relation_words()
-        num_rels = len(relwords)
-        f= (ZZ**num_rels).hom(relmat.rows())
-        linear_combination = f.lift(wt)
-        oldword = copy(self.word_rep)
-        for i,lam in enumerate(linear_combination):
-            relation = relwords[i]
-            if lam == 0:
-                continue
-            elif lam < 0:
-                oldword += ZZ((-lam))*relation
-            else: #lam > 0
-                oldword += ZZ(lam)*[(g,-j) for g,j in reversed(relation)]
-        tmp = reduce_word(oldword)
-        assert self.parent()(tmp).get_weight_vector() == 0
-        return tmp
