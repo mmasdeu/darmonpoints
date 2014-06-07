@@ -103,11 +103,6 @@ class BigArithGroup_class(AlgebraicGroup):
         Element in Arithmetic Group attached to data p = 7, disc = 15, level = 1
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
-        sage: x = G((a*b).quaternion_rep)
-        sage: x.word_rep
-        [(1, -1), (0, 3), (2, -1)]
-        sage: (a*b).word_rep
-        [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
     def __init__(self,base,p,discriminant,abtuple = None,level = 1,seed = 0,outfile = None):
         self.seed = seed
@@ -409,16 +404,16 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None):
     if base == QQ:
         discriminant = ZZ(discriminant)
         if discriminant == 1:
-            from rational_arithgroup import ArithGroup_rationalmatrix
+            from arithgroup import ArithGroup_rationalmatrix
             return ArithGroup_rationalmatrix(level,info_magma)
         else:
-            from rational_arithgroup import ArithGroup_rationalquaternion
+            from arithgroup import ArithGroup_rationalquaternion
             if abtuple is not None:
                 return ArithGroup_rationalquaternion(abtuple,level,info_magma)
             else:
                 return ArithGroup_rationalquaternion(discriminant,level,info_magma)
     else:
         a,b = abtuple
-        from nf_arithgroup import ArithGroup_nf_quaternion
+        from arithgroup import ArithGroup_nf_quaternion
         return ArithGroup_nf_quaternion(base,a,b,level,info_magma)
 
