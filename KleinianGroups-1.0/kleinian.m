@@ -25,6 +25,7 @@ declare attributes AlgQuat : KlnI, KlnH, KlnV;
 
 declare verbose Kleinian, 3;
 
+
 /*
     INPUT
     B : a quaternion algebra over a number field

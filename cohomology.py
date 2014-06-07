@@ -134,7 +134,10 @@ class CohomologyElement(ModuleElement):
         return ShapiroImage(G,self)
 
     def evaluate(self,x):
-        word = tuple(self.parent().group()(x).word_rep)
+        if hasattr(x,'quaternion_rep'):
+            word = tuple(x.word_rep)
+        else:
+            word = tuple(self.parent().group().get_word_rep(x))
         if self.parent().is_overconvergent:
             return self._evaluate_word(word)
         else:

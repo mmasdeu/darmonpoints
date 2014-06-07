@@ -328,7 +328,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
             val = y0(y0.parent().base_ring()(0))
 
             if val == 0 or not all([o.valuation(p) >= 0 for o in (y0(r1/p)/val - 1).list()]):
-                verbose('Subdividing...(%s %s)'%(val == 0, [o.valuation(p) for o in (y0(r1/p)/val - 1).list()]))
+                # verbose('Subdividing...(%s %s)'%(val == 0, [o.valuation(p) for o in (y0(r1/p)/val - 1).list()]))
                 newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
                 assert not rev
                 # newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])

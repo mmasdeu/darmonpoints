@@ -90,12 +90,12 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check 
     wp = G.wp
     # We calculate npow
     npow0 = 1
-    vec = G.Gn.get_weight_vector(eltn.word_rep)
+    vec = G.Gn.get_weight_vector(eltn)
     while npow0 * vec not in G.Gn.get_relation_matrix().image():
         npow0 += 1
     verbose('n = %s'%npow0)
     eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
-    vec = G.Gn.get_weight_vector(eltn_twisted.word_rep)
+    vec = G.Gn.get_weight_vector(eltn_twisted)
     npow = npow0
     while npow * vec not in G.Gn.get_relation_matrix().image():
         npow += npow0

@@ -14,9 +14,34 @@ KleinianGroups is distributed in the hope that it will be useful, but WITHOUT AN
 You should have received a copy of the GNU General Public License along with KleinianGroups, in the file COPYING.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-import "../geometry/basics.m" : Delta, action, sqrnorm;
+import "../geometry/basics.m" : Delta, action, sqrnorm, JtoP;
 import "../aux.m" : epsilon;
 import "../kleinian.m" : kleinianmatrix, epsdef;
+
+intrinsic GetMatrixList(Boundary :: SeqEnum) -> SeqEnum
+{
+Returns the list of matrices in a way that is usable by Sage
+}
+    n := #Boundary;
+    newlist := [];
+    for i := 1 to n do
+        mat := Boundary[i]`Matrix;
+        Append(~newlist, [mat[1,1],mat[1,2],mat[2,1],mat[2,2]]);
+    end for;
+    return newlist;
+end intrinsic;
+
+intrinsic GetPandPinv(B :: AlgQuat ) -> AlgMatElt,AlgMatElt
+{
+Returns the P and Pinv matrices
+}
+    H := B`KlnH;
+    pr := Precision(BaseField(H));
+    Center := H.2;
+    M:=MatrixRing(ComplexField(pr),2);
+    return JtoP(Center,M);
+
+end intrinsic;
 
 intrinsic ReducePoint(z :: AlgQuatElt, Boundary :: SeqEnum : eps12 := epsdef, DontUse := {}, Word := true, Evaluate := true) -> AlgQuatElt,SeqEnum,AlgQuatElt, RngIntElt
 {
@@ -35,7 +60,7 @@ intrinsic ReducePoint(z :: AlgQuatElt, Boundary :: SeqEnum : eps12 := epsdef, Do
 	delta := B!1;
 	
 	while not reduced do
-	
+	    print z;
 		i0 := 0;
         d := R!1;
 		for i := 1 to n do

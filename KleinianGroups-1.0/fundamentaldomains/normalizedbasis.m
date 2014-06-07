@@ -254,7 +254,7 @@ procedure AddNB(g, ~F, ~FE, ~IE, ~G, eps12, eps13, eps110)
     UpdateExteriorDomain(~F,~FE,~IE, s, 0, ~nbdel, eps12, eps13, eps110);
 end procedure;
 
-intrinsic NormalizedBasis(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodEnum := 100, Level := 1, BoundPrimes := -1, PairingMethod := "Reduction", GroupType := "NormOne", EnumMethod := "SmallBalls", Maple := false, zetas := [], zK2 := 0, Center := "Auto", index := 1, pr := DefaultPrecision) -> SeqEnum, SeqEnum, SeqEnum, SeqEnum, FldReElt, SeqEnum, SeqEnum, FldReElt, FldReElt, FldReElt, RngIntElt, RngIntElt
+intrinsic NormalizedBasis(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodEnum := 100, Level := 1, BoundPrimes := -1, PairingMethod := "Reduction", GroupType := "NormOne", EnumMethod := "SmallBalls", Maple := false, zetas := [], zK2 := 0, Center := "Auto", index := 1, pr := DefaultPrecision) -> SeqEnum, SeqEnum, SeqEnum, SeqEnum, FldReElt, SeqEnum, SeqEnum, FldReElt, FldReElt, FldReElt, RngIntElt, RngIntElt, AlgQuatElt
 {
     Computes a fundamental domain for the Kleinian group attached to the order O.
 
@@ -457,7 +457,7 @@ if EnumMethod eq "BigBall" then
     randomized := false;
     InitializeLattice(O, ~Lat, ~TZB, ~nzb, pr, factor, ~HGM, ~basismat : Balance := balance);
     if TZB eq [] then
-        return [],[],[],[],0,[],[],0,0,0,0,0,0;
+        return [],[],[],[],0,[],[],0,0,0,0,0,0,0;
     end if;
 end if;
 
@@ -569,7 +569,7 @@ repeat
                 end if;
                 InitializeLattice(randid, ~Lat, ~TZB, ~nzb, pr, factor, ~HGM, ~basismat : Center1 := enumcenter, Balance := balance);
                 if TZB eq [] then
-                    return [],[],[],[],0,[],[],0,0,0,0,0,0;
+                    return [],[],[],[],0,[],[],0,0,0,0,0,0,0;
                 end if;
                 u := 0;
             end if;
@@ -716,5 +716,5 @@ if Maple then
     MapleFile(MapleDraw(MapleExteriorDomain([],FE,IE : Caption := true) : view := 1.), "FinalFDomC");
 end if;
 
-return NormalizedBoundary(F),F,FE,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor);
+return NormalizedBoundary(F),F,FE,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
 end intrinsic;
