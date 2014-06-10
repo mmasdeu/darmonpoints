@@ -75,7 +75,7 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
     return tmp,n,q1
 
 
-def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check = False):
+def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check = False,few_integrals = False):
     r''' Note that the second class will need to be integrated in a twisted way.
     That is, the quaternion elements need to be conjugated by wp before being integrated.
     '''
@@ -111,6 +111,9 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check 
         D = sum((D1.left_act_by_matrix(G.embed(wp * x**-1 * wp**-1,prec)) - D1 for x in xlist if x != 1),Div(0))
         D = D.left_act_by_matrix(G.embed(wp**-1,prec).change_ring(Cp))
         xi2 += H1(dict([(y,n*D)]))
+    if few_integrals:
+        xi1 = xi1.factor_into_generators(prec)
+        xi2 = xi2.factor_into_generators(prec)
     return xi1,xi2
 
 class Divisors(Parent):

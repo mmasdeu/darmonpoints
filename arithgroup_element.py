@@ -26,6 +26,7 @@ from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
+from sage.groups.finitely_presented import FinitelyPresentedGroup,FinitelyPresentedGroupElement
 
 class ArithGroupElement(MultiplicativeGroupElement):
     def __init__(self,parent, word_rep = None, quaternion_rep = None, check = True):
@@ -62,14 +63,13 @@ class ArithGroupElement(MultiplicativeGroupElement):
                     raise ValueError,'Quaternion must be in order'
             self.quaternion_rep = set_immutable(quaternion_rep)
             self.has_quaternion_rep = True
-            self.word_rep = self._compute_word_rep()
             init_data = True
         if init_data is False:
             raise ValueError,'Must pass either quaternion_rep or word_rep'
         if not self.has_quaternion_rep:
             self.quaternion_rep = self.quaternion_rep
         assert self.has_quaternion_rep
-        self._reduce_word(check = check)
+        self._reduce_word()
 
     @cached_method
     def __hash__(self):
@@ -122,23 +122,18 @@ class ArithGroupElement(MultiplicativeGroupElement):
         else:
             return 0
 
-    def _reduce_word(self, check = False):
+    def _reduce_word(self):
         if not self.has_word_rep:
             return
-        if check:
-            self.check_consistency(txt = '1')
         self.word_rep = reduce_word(self.word_rep)
-        if check:
-            self.check_consistency(txt = '2')
 
-    #@lazy_attribute
-    def _compute_word_rep(self):
+    @lazy_attribute
+    def word_rep(self):
         r'''
         Returns a word in the generators of `\Gamma` representing the given quaternion `x`.
         '''
         tmp = self.parent().get_word_rep(self.quaternion_rep)
         self.has_word_rep = True
-        # self.check_consistency(self.quaternion_rep,tmp,txt = '3')
         return tmp
 
     @lazy_attribute
@@ -148,7 +143,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         '''
         Gamma = self.parent()
         self.has_quaternion_rep = True
-        return prod((Gamma.gen(g).quaternion_rep**a for g,a in self.word_rep), z = Gamma.B(1))
+        return prod((Gamma.Ugens[g]**a for g,a in self.word_rep), z = Gamma.B(1))
 
     def check_consistency(self, q = None, wd = None,txt = ''):
         if q is None and wd is None:
@@ -159,7 +154,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         if wd is None:
             wd = self.word_rep
         Gamma = self.parent()
-        q1 = prod(Gamma.Ugens[g]**a for g,a in wd)
+        q1 = prod(Gamma.gen(g).quaternion_rep**a for g,a in wd)
         try:
             quo = ZZ(q * q1**-1)
         except TypeError:

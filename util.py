@@ -19,6 +19,7 @@ from sage.rings.big_oh import O
 from sage.schemes.elliptic_curves.constructor import EllipticCurve_from_c4c6
 from sage.misc.functional import cyclotomic_polynomial
 from sage.misc.misc_c import prod
+from sage.functions.generalized import sgn
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
@@ -652,6 +653,12 @@ def shorten_word(longword):
     '''
     return [(a-1,len(list(g))) if a > 0 else (-a-1,-len(list(g))) for a,g in groupby(longword)]
 
+def tietze_to_syllables(wd):
+    return shorten_word(wd)
+
+def syllables_to_tietze(wd):
+    return [sgn(a)*(i + 1) for i,a in wd for _ in range(abs(a))]
+
 def reduce_word(word):
     r'''
     Simplifies the given word by cancelling out [g^a, g^b] -> [g^(a+b)],
@@ -826,6 +833,10 @@ def conjugate_quaternion_over_base(q):
 def sage_F_elt_to_magma(F_magma,x):
     return F_magma(x.list())
 
+def quaternion_to_magma_quaternion(Bmagma,x):
+    v = list(x)
+    return Bmagma(v[0]) + sum(v[i+1] * Bmagma.gen(i+1) for i in range(3))
+
 def magma_F_elt_to_sage(F_sage,x):
     return F_sage([QQ(x[i+1]) for i in range(F_sage.degree())])
 
@@ -938,3 +949,51 @@ def discover_equation(qE,emb,conductor,prec):
                                 return E
     verbose('Curve not recognized')
     return None
+
+
+def simplification_isomorphism(G,return_inverse = False):
+    """
+    Return an isomorphism from ``self`` to a finitely presented group with
+    a (hopefully) simpler presentation.
+
+    EXAMPLES::
+
+        sage: G.<a,b,c> = FreeGroup()
+        sage: H = G / [a*b*c, a*b^2, c*b/c^2]
+        sage: I = H.simplification_isomorphism()
+        sage: I
+        Generic morphism:
+          From: Finitely presented group < a, b, c | a*b*c, a*b^2, c*b*c^-2 >
+          To:   Finitely presented group < b |  >
+        sage: I(a)
+        b^-2
+        sage: I(b)
+        b
+        sage: I(c)
+        b
+
+    TESTS::
+
+        sage: F = FreeGroup(1)
+        sage: G = F.quotient([F.0])
+        sage: G.simplification_isomorphism()
+        Generic morphism:
+          From: Finitely presented group < x | x >
+          To:   Finitely presented group <  |  >
+
+    ALGORITM:
+
+    Uses GAP.
+    """
+    from sage.groups.finitely_presented import wrap_FpGroup
+    I = G.gap().IsomorphismSimplifiedFpGroup()
+    domain = G
+    codomain = wrap_FpGroup(I.Range())
+    phi = lambda x: codomain(I.ImageElm(x.gap()))
+    ans = G.hom(phi, codomain)
+    if return_inverse:
+        Iinv = I.InverseGeneralMapping()
+        phi_inv = lambda x: domain(Iinv.ImageElm(x.gap()))
+        return ans,codomain.hom(phi_inv,G)
+    else:
+        return ans

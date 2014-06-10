@@ -5,7 +5,7 @@ from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
 from util import *
 import os,datetime
-from squatarithgp import BigArithGroup
+from sarithgroup import BigArithGroup
 from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
 from homology import construct_homology_cycle
 from integrals import integrate_H1,double_integral_zero_infty,indef_integral

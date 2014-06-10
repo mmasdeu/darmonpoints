@@ -3,8 +3,6 @@
 ##  INTEGRATION     ##
 ##                  ##
 ######################
-from sage.groups.group import AlgebraicGroup
-from sage.structure.element import MultiplicativeGroupElement
 import itertools
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
@@ -295,11 +293,6 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
     r1 = R1.gen()
     R1.set_default_prec(prec)
 
-    # R0 = PolynomialRing(K,'t')
-    # t = R0.gen()
-    # R0 = R0.fraction_field()
-    # phi = R0(prod((t-P)**ZZ(n) for P,n in divisor if n > 0))/R0(prod((t-P)**ZZ(-n) for P,n in divisor if n < 0))
-
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o) for o in G.get_covering(1)]
@@ -314,16 +307,14 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
             y0num = R1(1)
             y0den = R1(1)
             for P,n in divisor:
-                hP = (a-P*c)*r1+(b-d*P)
+                hP = R1(a-P*c)*r1 + R1(b-d*P)
                 if n > 0:
-                    y0num *= hP**ZZ(n) #/common_div)
-                    # y0num = y0num.add_bigoh(prec)
+                    y0num *= hP**ZZ(n)
+                    y0num = y0num.add_bigoh(prec)
                 else:
-                    y0den *= hP**ZZ(-n) #/common_div)
-                    # y0den = y0den.add_bigoh(prec)
+                    y0den *= hP**ZZ(-n)
+                    y0den = y0den.add_bigoh(prec)
             y0 = y0num/y0den
-
-            # y0 = phi((a*r1+b)/(c*r1+d))
 
             val = y0(y0.parent().base_ring()(0))
 
@@ -335,10 +326,6 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
                 continue
             pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
             if not rev:
-                # g0, gi = G.reduce_in_amalgam(gamma,True)
-                # g0h = g0.conjugate_by(h**-1) * G.reduce_in_amalgam(h * gi)
-                # assert g0h.quaternion_rep == G.reduce_in_amalgam(h * gamma).quaternion_rep
-                #mu_e = hc.evaluate(g0h)
                 mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
             else:
                 mu_e = hc.evaluate(G.wp**-1 * G.reduce_in_amalgam(h * gamma) * G.wp)

@@ -134,10 +134,10 @@ class CohomologyElement(ModuleElement):
         return ShapiroImage(G,self)
 
     def evaluate(self,x):
-        if hasattr(x,'quaternion_rep'):
+        try:
             word = tuple(x.word_rep)
-        else:
-            word = tuple(self.parent().group().get_word_rep(x))
+        except AttributeError:
+            word = tuple(self.parent().group()(x).word_rep)
         if self.parent().is_overconvergent:
             return self._evaluate_word(word)
         else:
@@ -156,6 +156,39 @@ class CohomologyElement(ModuleElement):
         return val0
 
     @cached_method
+    def _evaluate_syllable(self,g,a):
+        G = self.parent().group()
+        V = self.parent().coefficient_module()
+        prec = V.base_ring().precision_cap()
+        Sigma0 = self.parent().Sigma0()
+        if a == 0:
+            return V(0)
+        elif a == -1:
+            gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
+            if self.parent()._use_ps_dists:
+                return -(Sigma0(gmat_inv) * self._val[g])
+            else:
+                return  -self._val[g].l_act_by(gmat_inv)
+        elif a < 0:
+            gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
+            if self.parent()._use_ps_dists:
+                return -(Sigma0(gmat_inv**-a) * self._evaluate_syllable(g,-a))
+            else:
+                return -self._evaluate_syllable(g,-a).l_act_by(gmat_inv**-a)
+        elif a == 1:
+            return self._val[g]
+        else:
+            gmat = G.embed(G.gen(g).quaternion_rep,prec)
+            phig = self._val[g]
+            tmp = V(phig)
+            for i in range(a-1):
+                if self.parent()._use_ps_dists:
+                    tmp = phig + Sigma0(gmat) * tmp
+                else:
+                    tmp = phig + tmp.l_act_by(gmat)
+            return tmp
+
+    @cached_method
     def _evaluate_word(self,word):
         r''' Evaluate recursively, using cocycle condition:
         self(gh) = self(g) + g*self(h)
@@ -169,43 +202,17 @@ class CohomologyElement(ModuleElement):
         Sigma0 = self.parent().Sigma0()
         if len(word) == 0:
             return V(0)
-        # verbose('word = %s'%list(word))
-        if len(word) == 1:
-            g,a = word[0]
-            if a == 0:
-                return V(0)
-            elif a == -1:
-                gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
-                if self.parent()._use_ps_dists:
-                    return -(Sigma0(gmat_inv) * self._val[g])
-                else:
-                    return  -self._val[g].l_act_by(gmat_inv)
-            elif a < 0:
-                gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
-                if self.parent()._use_ps_dists:
-                    return -(Sigma0(gmat_inv**-a) * self._evaluate_word(tuple([(g,-a)])))
-                else:
-                    return -self._evaluate_word(tuple([(g,-a)])).l_act_by(gmat_inv**-a)
-
-            elif a == 1:
-                return self._val[g]
-            else:
-                gmat = G.embed(G.gen(g).quaternion_rep,prec)
-                phig = self._val[g]
-                tmp = V(phig)
-                for i in range(a-1):
-                    if self.parent()._use_ps_dists:
-                        tmp = phig + Sigma0(gmat) * tmp
-                    else:
-                        tmp = phig + tmp.l_act_by(gmat)
-                return tmp
+        elif len(word) == 1:
+            return self._evaluate_syllable(*word[0])
         else:
             pivot = len(word) // 2
-            gamma = prod([G.gen(g).quaternion_rep**a for g,a in word[:pivot]],G.B(1))
+            word_prefix = word[:pivot]
+            # gamma = prod([G.Ugens[g]**a for g,a in word_prefix],G.B(1))
+            gamma = G(word_prefix).quaternion_rep
             if self.parent()._use_ps_dists:
-                return self._evaluate_word(tuple(word[:pivot])) + Sigma0(G.embed(gamma,prec)) *  self._evaluate_word(tuple(word[pivot:]))
+                return self._evaluate_word(tuple(word_prefix)) + Sigma0(G.embed(gamma,prec)) *  self._evaluate_word(tuple(word[pivot:]))
             else:
-                return self._evaluate_word(tuple(word[:pivot])) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(G.embed(gamma,prec))
+                return self._evaluate_word(tuple(word_prefix)) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(G.embed(gamma,prec))
 
     def improve(self,prec = None,sign = 1,parallelize = False):
         r"""
