@@ -208,7 +208,7 @@ class CohomologyElement(ModuleElement):
             pivot = len(word) // 2
             word_prefix = word[:pivot]
             # gamma = prod([G.Ugens[g]**a for g,a in word_prefix],G.B(1))
-            gamma = G(word_prefix).quaternion_rep
+            gamma = G(list(word_prefix)).quaternion_rep
             if self.parent()._use_ps_dists:
                 return self._evaluate_word(tuple(word_prefix)) + Sigma0(G.embed(gamma,prec)) *  self._evaluate_word(tuple(word[pivot:]))
             else:
@@ -341,7 +341,7 @@ class CohomologyGroup(Parent):
         return [self.gen(i) for i in range(self.dimension())]
 
     @cached_method
-    def hecke_matrix(self,l):
+    def hecke_matrix(self,l,use_magma = False):
         if self.coefficient_module().dimension() > 1:
             raise NotImplementedError
         dim = self.dimension()
@@ -349,7 +349,7 @@ class CohomologyGroup(Parent):
         M = matrix(R,dim,dim,0)
         for j,cocycle in enumerate(self.gens()):
             # Construct column j of the matrix
-            M.set_column(j,[o[0] for o in self.apply_hecke_operator(cocycle,l).values()])
+            M.set_column(j,[o[0] for o in self.apply_hecke_operator(cocycle,l,use_magma = use_magma).values()])
         return M
 
     @cached_method
@@ -400,7 +400,7 @@ class CohomologyGroup(Parent):
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
-    def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,parallelize = False):
+    def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = False,parallelize = False):
         r"""
         Apply the l-th Hecke operator operator to ``c``.
 
@@ -408,7 +408,7 @@ class CohomologyGroup(Parent):
 
         """
         if hecke_reps is None:
-            hecke_reps = self.group().get_hecke_reps(l) # Assume l != p here!
+            hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma) # Assume l != p here!
             # if self.group().O.discriminant() % l == 0:
             #     hecke_reps = self.group().get_Up_reps()
             # else:

@@ -238,16 +238,19 @@ class BigArithGroup_class(AlgebraicGroup):
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in range(self.p)]
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)
-            for idx,o1 in enumerate(matrices):
-                i,mat = o1
-                tmp = emb(elt) * mat
-                if is_in_Gamma0loc(tmp) and (emb(elt)[0,0]-1).valuation() > 0 and all([not self.Gpn._is_in_order(o * new_inv) for o in reps if o is not None]):
-                    reps[i] = set_immutable(elt)
-                    del matrices[idx]
-                    verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
-                    if len(matrices) == 0:
-                        return reps
-                    break
+            if all([not self.Gpn._is_in_order(o * new_inv) for o in reps if o is not None]):
+                for idx,o1 in enumerate(matrices):
+                    i,mat = o1
+                    embelt = emb(elt)
+                    if (embelt[0,0]-1).valuation() > 0:
+                        tmp = embelt * mat
+                        if is_in_Gamma0loc(tmp):
+                            reps[i] = set_immutable(elt)
+                            del matrices[idx]
+                            verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
+                            if len(matrices) == 0:
+                                return reps
+                            break
 
     def do_tilde(self,g):
         # lam = -self.p
@@ -311,7 +314,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 i += 1
                 for tmp in all_initial:
                     new_candidate =  v2 * tmp * v1
-                    if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate) and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
+                    if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
                         return new_candidate
             raise RuntimeError
 
