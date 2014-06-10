@@ -859,13 +859,17 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         verbose('Done with presentation')
         self._init_aurel_data(f)
         Hm,GtoHm = magma.ReduceGenerators(G,nvals = 2)
-        self._simplification_iso = [GtoHm.Image(G.gen(i+1)).ElementToSequence()._sage_() for i in range(len(gens))]
+        self._simplification_iso = []
+        tmp_quaternions = []
+        for i in range(len(gens)):
+            self._simplification_iso.append(GtoHm.Image(G.gen(i+1)).ElementToSequence()._sage_())
+            tmp_quaternions.append(magma_quaternion_to_sage(self.B,gens[i+1]))
 
         self.Ugens = []
         for h in Hm.gens():
             newgen = self.B(1)
             for i,ai in shorten_word(G(h).ElementToSequence()._sage_()):
-                newgen = newgen * magma_quaternion_to_sage(self.B,gens[i+1])**ai
+                newgen = newgen * tmp_quaternions[i]**ai # FIXME
             self.Ugens.append(newgen)
 
         verbose('Initializing relations')
