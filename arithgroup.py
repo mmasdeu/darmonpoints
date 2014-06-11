@@ -474,13 +474,19 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 self._B_magma = magma.QuaternionAlgebra('%s*%s'%(self.discriminant,ZZ_magma.name()))
 
             self._Omax_magma = self._B_magma.MaximalOrder()
-            self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,ZZ_magma.name()))
+            if self.level != ZZ(1):
+                self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,ZZ_magma.name()))
+            else:
+                self._O_magma = self._Omax_magma
             self._D_magma = magma.UnitDisc(Precision = 300)
         else:
             ZZ_magma = info_magma._B_magma.BaseRing().Integers()
             self._B_magma = info_magma._B_magma
             self._Omax_magma = info_magma._B_magma.MaximalOrder()
-            self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,ZZ_magma.name()))
+            if self.level != ZZ(1):
+                self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,ZZ_magma.name()))
+            else:
+                self._O_magma = self._Omax_magma
             self._D_magma = info_magma._D_magma
         self._G_magma = magma.FuchsianGroup(self._O_magma.name())
         FDom_magma = self._G_magma.FundamentalDomain(self._D_magma.name())
@@ -741,7 +747,10 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             ZZ_magma = magma.Integers()
             self._B_magma = magma.QuaternionAlgebra(magma.Rationals(),1,1)
             self._Omax_magma = self._B_magma.MaximalOrder()
-            self._O_magma = self._Omax_magma.Order('%s'%self.level)
+            if self.level != ZZ(1):
+                self._O_magma = self._Omax_magma.Order('%s'%self.level)
+            else:
+                self._O_magma = self._Omax_magma
         else:
             ZZ_magma = info_magma._B_magma.BaseRing().Integers()
             self._B_magma = info_magma._B_magma

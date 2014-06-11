@@ -16,8 +16,9 @@ from sage.misc.persist import db,db_save
 try:
     page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
 except NameError:
-    ROOT = '/home/float/GitProjects/darmonpoints' # The default, for development purposes
-    page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+    print 'Must ROOT variable to the path where the files are located (e.g. ROOT = "/home/float/GitProjects/darmonpoints") '
+    # ROOT = '/home/float/GitProjects/darmonpoints' # The default, for development purposes
+    # page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
 
 magma.attach_spec(page_path)
 
