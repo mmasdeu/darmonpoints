@@ -19,6 +19,7 @@ from sage.interfaces.magma import magma
 from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
+from arithgroup import ArithGroup_nf_quaternion,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 from homology import Divisors, Homology
@@ -44,8 +45,8 @@ class BTEdge(SageObject):
         return iter([self.reverse,self.gamma])
 
 def BigArithGroup(p,quat_data,level,base = None, seed = None,use_sage_db = True,outfile = None):
-        if seed is None:
-            seed = 1000
+        # if seed is None:
+        #     seed = 1000
         try:
             discriminant = ZZ(quat_data)
             if base is not None:
@@ -104,10 +105,11 @@ class BigArithGroup_class(AlgebraicGroup):
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,seed = 0,outfile = None):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,seed = None,outfile = None):
         self.seed = seed
-        verbose('Setting Magma seed to %s'%seed)
-        magma.eval('SetSeed(%s)'%seed)
+        if seed is not None:
+            verbose('Setting Magma seed to %s'%seed)
+            magma.eval('SetSeed(%s)'%seed)
         self.F = base
         if self.F.degree() > 1:
             Fideal = self.F.maximal_order().ideal
@@ -165,7 +167,8 @@ class BigArithGroup_class(AlgebraicGroup):
     def _compute_padic_splitting(self,prec):
         verbose('Entering compute_padic_splitting')
         prime = self.p
-        magma.eval('SetSeed(%s)'%self.seed)
+        if self.seed is not None:
+            magma.eval('SetSeed(%s)'%self.seed)
         QQp = Qp(prime,prec)
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
@@ -407,16 +410,12 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None):
     if base == QQ:
         discriminant = ZZ(discriminant)
         if discriminant == 1:
-            from arithgroup import ArithGroup_rationalmatrix
             return ArithGroup_rationalmatrix(level,info_magma)
         else:
-            from arithgroup import ArithGroup_rationalquaternion
             if abtuple is not None:
                 return ArithGroup_rationalquaternion(abtuple,level,info_magma)
             else:
                 return ArithGroup_rationalquaternion(discriminant,level,info_magma)
     else:
         a,b = abtuple
-        from arithgroup import ArithGroup_nf_quaternion
         return ArithGroup_nf_quaternion(base,a,b,level,info_magma)
-

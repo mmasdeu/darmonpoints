@@ -20,7 +20,7 @@ from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.structure.sage_object import save,load
-from sage.groups.finitely_presented import FinitelyPresentedGroup,FinitelyPresentedGroupElement
+#from sage.groups.finitely_presented import FinitelyPresentedGroup,FinitelyPresentedGroupElement
 from sage.groups.free_group import FreeGroup
 from copy import copy
 from sage.misc.persist import db
@@ -933,7 +933,9 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             Qx_magma = magma.PolynomialRing(magma.Rationals())
             xm = Qx_magma.gen(1)
             f = self.F.gen().minpoly()
-            FF_magma = magma.NumberField(sum([magma(c)*xm**i for c,i in zip(f.coefficients(),f.exponents())]))
+            fmagma = sum([magma(c)*xm**i for c,i in zip(f.coefficients(),f.exponents())])
+            print 'fmagma = ',fmagma
+            FF_magma = magma.NumberField(fmagma)
             self._F_magma = FF_magma
             OF_magma = FF_magma.Integers()
             am, bm = sage_F_elt_to_magma(self._F_magma,self.a),sage_F_elt_to_magma(self._F_magma,self.b)
@@ -981,7 +983,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 if d >= (1+eps)*d1:
                     d = d1
                     i0 = i
-                    break # This might yield longer words, but should be faster!
+                    # break # This might yield longer words, but should be faster!
             if i0 is None:
                 break
             gammaz = act_H3(boundary[i0].mat,gammaz)
