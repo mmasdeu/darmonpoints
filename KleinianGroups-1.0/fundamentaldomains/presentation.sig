@@ -1,3 +1,0 @@
-143,0
-S,Presentation,Computes a finite presentation for the subgroup of B* / Z(B)* with fundamental domain having faces F and edges FE. Returns a finitely presented group G and a list of elements of B* corresponding to the generators of G,0,3,0,0,0,0,0,0,0,435,,0,0,82,,0,0,82,,121,82,-38,-38,-38
-S,LiftPresentation,Lifts a presentation of a finitely generated subgroup G of B* from a presentation Pres and generators Gens for G/Z(G). G is the norm one group (normone=true) or the unit group (normone=false) of the order O. Returns a finitely presented group G and a list of elements of B* corresponding to the generators of G,0,4,0,0,0,0,0,0,0,36,,0,0,435,,0,0,82,,0,0,121,,121,82,-38,-38,-38
