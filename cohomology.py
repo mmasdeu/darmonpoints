@@ -370,7 +370,8 @@ class CohomologyGroup(Parent):
 
     def get_cocycle_from_elliptic_curve(self,E,sign = 1):
         K = (self.involution_at_infinity_matrix()-sign).right_kernel()
-        discnorm = self.group()._O_discriminant.norm()
+        disc = self.group()._O_discriminant
+        discnorm = disc.norm()
         F = self.group().base_ring()
         try:
             N = ZZ(discnorm.gen())
@@ -389,14 +390,17 @@ class CohomologyGroup(Parent):
                 return E(q)
 
         q = ZZ(1)
-        while K.dimension() != 1:
+        while K.dimension() > 1:
             q = q.next_prime()
-            if N % q == 0:
-                continue
-            ap = getap(q)
-
-            K1 = (self.hecke_matrix(q)-ap).right_kernel()
-            K = K.intersection(K1)
+            for qq,e in F.ideal(q).factor():
+                if  ZZ(qq.norm()).is_prime() and not qq.divides(disc):
+                    try:
+                        ap = getap(qq)
+                    except (ValueError,ArithmeticError):
+                        continue
+                    K1 = (self.hecke_matrix(qq)-ap).right_kernel()
+                    K = K.intersection(K1)
+        assert K.dimension() == 1
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 

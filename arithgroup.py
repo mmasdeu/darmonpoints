@@ -863,22 +863,31 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         _,f,e = self._O_magma.NormalizedBasis(nvals = 3)
         verbose('Computing presentation')
         G,gens = f.Presentation(e,self._O_magma,nvals = 2)
-        verbose('Done with presentation')
+        verbose('Done presentation')
+        verbose('Calling init_aurel_data')
         self._init_aurel_data(f)
+        verbose('Done init_aurel_data')
+        verbose('Calling ReduceGenerators')
         Hm,GtoHm = magma.ReduceGenerators(G,nvals = 2)
+        verbose('Done ReduceGenerators')
+
         self._simplification_iso = []
         tmp_quaternions = []
+        verbose('Calculating inverse isomorphism for %s generators'%len(gens))
         for i in range(len(gens)):
+            verbose('i = %s'%i)
             self._simplification_iso.append(GtoHm.Image(G.gen(i+1)).ElementToSequence()._sage_())
             tmp_quaternions.append(magma_quaternion_to_sage(self.B,gens[i+1]))
-
+        verbose('Done inverse isomorphism'%len(gens))
+        verbose('Calculating Ugens for %s generators'%len(Hm.gens())
         self.Ugens = []
-        for h in Hm.gens():
+        for i,h in enumerate(Hm.gens()):
+            verbose('i = %s'%i)
             newgen = self.B(1)
-            for i,ai in shorten_word(G(h).ElementToSequence()._sage_()):
-                newgen = newgen * tmp_quaternions[i]**ai # FIXME
+            for j,aj in shorten_word(G(h).ElementToSequence()._sage_()):
+                newgen = newgen * tmp_quaternions[j]**aj
             self.Ugens.append(newgen)
-
+        verbose('Done calculating Ugens')
         verbose('Initializing relations')
         if work_with_SL2:
             self.F_units = self.F.unit_group()
@@ -897,11 +906,12 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
         else:
             self._relation_words = [shorten_word(Hm.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(Hm.Relations()))]
-
+        verbose('Done initializing relations')
+        verbose('Initializing generators')
         self._gens = []
         for i,g in enumerate(self.Ugens):
             self._gens.append(ArithGroupElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False))
-
+        verbose('Done initializing generators')
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
 
@@ -1222,8 +1232,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
     @cached_method
     def abelianization(self):
-        # print 'Warning!! Loading W.sobj from disk, could be anything!'
-        # return load('abelianized.sobj')
         V = ZZ**len(self.gens())
         W = V.span([sum(a*v for a,v in zip(V.gens(),rel)) for rel in self.get_relation_matrix().rows()])
         Gab = V/W
