@@ -951,13 +951,20 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self._B_magma = magma.QuaternionAlgebra(FF_magma,am,bm)
 
             self._Omax_magma = self._B_magma.MaximalOrder()
-            self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
+            if self.level != self.F.ideal(1):
+                self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
+            else:
+                self._O_magma = self._Omax_magma
+
         else:
             self._F_magma = info_magma._F_magma
             OF_magma = info_magma._F_magma.Integers()
             self._B_magma = info_magma._B_magma
             self._Omax_magma = info_magma._B_magma.MaximalOrder()
-            self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
+            if self.level != self.F.ideal(1):
+                self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
+            else:
+                self._O_magma = self._Omax_magma
 
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
 
