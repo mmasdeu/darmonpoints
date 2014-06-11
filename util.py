@@ -841,7 +841,8 @@ def magma_F_elt_to_sage(F_sage,x):
     return F_sage([QQ(x[i+1]) for i in range(F_sage.degree())])
 
 def magma_quaternion_to_sage(B_sage,x):
-    return B_sage([magma_F_elt_to_sage(B_sage.base_ring(),x.Vector()[m+1]) for m in range(4)])
+    xvec = x.Vector()
+    return B_sage([magma_F_elt_to_sage(B_sage.base_ring(),xvec[m+1]) for m in range(4)])
 
 def magma_integral_quaternion_to_sage(B_sage,O_magma,F_magma,x):
     F = B_sage.base_ring()

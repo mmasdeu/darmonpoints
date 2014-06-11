@@ -943,7 +943,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             xm = Qx_magma.gen(1)
             f = self.F.gen().minpoly()
             fmagma = sum([magma(c)*xm**i for c,i in zip(f.coefficients(),f.exponents())])
-            print 'fmagma = ',fmagma
             FF_magma = magma.NumberField(fmagma)
             self._F_magma = FF_magma
             OF_magma = FF_magma.Integers()
@@ -1076,7 +1075,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         wm = K_magma(OK_magma.Basis()[2])
         w = K(magma_F_elt_to_sage(self.F,wm[1]) + magma_F_elt_to_sage(self.F,wm[2]) * b)
         ans = magma_integral_quaternion_to_sage(self.B,O_magma,F_magma,iota.Image(OK_magma(K_magma.gen(1))))
-        # ans = magma_quaternion_to_sage(self.B,self._B_magma(iota.Image(OK_magma(K_magma.gen(1)))))
         assert ans.reduced_norm() == K.gen().norm(self.F) and ans.reduced_trace() == K.gen().trace(self.F)
         ans = self.B(ans)
         if return_generator:
