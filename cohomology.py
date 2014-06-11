@@ -150,7 +150,7 @@ class CohomologyElement(ModuleElement):
         coeff_module = self.parent().coefficient_module()
         tmp = Gab(V0.gen(j))
         gablist = [tmp[i] for i in free_idx]
-        assert sum(1 if a0 != 0 else 0 for a0 in gablist) <= 1
+        #assert sum(1 if a0 != 0 else 0 for a0 in gablist) <= 1
         cvals = [coeff_module(o) for o in self._val]
         val0 = sum((ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0),coeff_module(0))
         return val0

@@ -20,7 +20,7 @@ from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.structure.sage_object import save,load
-#from sage.groups.finitely_presented import FinitelyPresentedGroup,FinitelyPresentedGroupElement
+from sage.groups.finitely_presented import FinitelyPresentedGroupElement
 from sage.groups.free_group import FreeGroup
 from copy import copy
 from sage.misc.persist import db
@@ -107,8 +107,6 @@ class ArithGroup_generic(AlgebraicGroup):
     def _element_constructor_(self,x):
         if isinstance(x,list):
             return self.element_class(self, word_rep = x,check = False)
-        elif isinstance(x,FinitelyPresentedGroupElement):
-            return self.element_class(self, word_rep = x, check = False)
         elif x.parent() is self.quaternion_algebra():
             return self.element_class(self, quaternion_rep = x,check = False)
         elif isinstance(x.parent(),FreeModule_generic):
