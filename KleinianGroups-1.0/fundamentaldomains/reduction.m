@@ -60,7 +60,6 @@ intrinsic ReducePoint(z :: AlgQuatElt, Boundary :: SeqEnum : eps12 := epsdef, Do
 	delta := B!1;
 	
 	while not reduced do
-	    print z;
 		i0 := 0;
         d := R!1;
 		for i := 1 to n do

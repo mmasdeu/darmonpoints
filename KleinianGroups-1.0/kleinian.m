@@ -23,7 +23,7 @@ Hdef<Idef,Jdef,Kdef> := QuaternionAlgebra<Rdef | -1,-1>;
 
 declare attributes AlgQuat : KlnI, KlnH, KlnV;
 
-declare verbose Kleinian, 3;
+declare verbose Kleinian, 1;
 
 
 /*
