@@ -70,7 +70,7 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
     else:
         Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in range(VOC._depth - 1)])) for g in G.small_group().gens()])
     if apsign is None:
-        apsign = ZZ(E.ap(p)) if E.base_ring() == QQ else ZZ(Pnorm + 1 - Curve(E.defining_polynomial().change_ring(F.residue_field(P))).count_points(1)[0])
+        apsign = ZZ(E.ap(p)) if F == QQ else ZZ(Pnorm + 1 - Curve(E.defining_polynomial().change_ring(F.residue_field(P))).count_points(1)[0])
     assert apsign.abs() == 1
     Phi = Phi.improve(prec = prec,sign = apsign,parallelize = parallelize)
     if use_sage_db:
@@ -103,11 +103,8 @@ class CohomologyElement(ModuleElement):
         V = parent.coefficient_module()
         if isinstance(data,list):
             self._val = [V(0) if o.is_zero() else V(o) for o in data]
-        elif parent.is_overconvergent:
+        else:
             self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
-        elif not parent.is_overconvergent:
-            self._val = [V(data.evaluate(b)) for b in parent._space.domain().basis()]
-
         ModuleElement.__init__(self,parent)
 
     def values(self):
@@ -142,18 +139,16 @@ class CohomologyElement(ModuleElement):
             return self._evaluate_word(word)
         else:
             V = self.parent().coefficient_module()
-            return sum([a*self._evaluate_at_group_generator(g) for g,a in word],V(0))
+            return sum([a*self._evaluate_at_group_generator(j) for j,a in word],V(0))
 
     @cached_method
     def _evaluate_at_group_generator(self,j): # j is the index in Gpn.gens()
-        Gab, V0,free_idx = self.parent().group().abelianization()
+        G = self.parent().group()
+        Gab = G.abelianization()
         coeff_module = self.parent().coefficient_module()
-        tmp = Gab(V0.gen(j))
-        gablist = [tmp[i] for i in free_idx]
-        #assert sum(1 if a0 != 0 else 0 for a0 in gablist) <= 1
+        gablist = list(Gab.G_to_ab_free(G.gen(j)))
         cvals = [coeff_module(o) for o in self._val]
-        val0 = sum((ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0),coeff_module(0))
-        return val0
+        return sum((ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0),coeff_module(0))
 
     @cached_method
     def _evaluate_syllable(self,g,a):
@@ -279,8 +274,9 @@ class CohomologyGroup(Parent):
         else:
             self.is_overconvergent = False
             self._coeffmodule = base**1
-            self._Ga,self._V,self._free_idx = G.abelianization()
-            self._num_abgens = len(self._free_idx)
+            self._Ga = G.abelianization()
+            self._V = self._Ga.ambient()
+            self._num_abgens = len(self._Ga.free_gens())
             self._F = QQ**self._num_abgens
             self._space = Hom(self._F,self._coeffmodule)
         Parent.__init__(self)
@@ -313,11 +309,13 @@ class CohomologyGroup(Parent):
             G = self.group()
             V = self.coefficient_module()
             if data.parent().is_overconvergent:
-                tmp = []
-                for i in self._free_idx:
-                    idxlist = list(self._Ga.gen(i).lift())
-                    tmp.append(sum([a*data.evaluate(t).moment(0).rational_reconstruction() for a,t in zip(idxlist,gens)]))
-                return self.element_class(self,tmp)
+                # tmp = []
+                # Ga = self._Ga
+                # for i in self._free_idx:
+                #     idxlist = list(Ga.gen(i).lift())
+                #     tmp.append(sum([a*data.evaluate(t).moment(0).rational_reconstruction() for a,t in zip(idxlist,gens)]))
+                # return self.element_class(self,tmp)
+                return self.element_class(self,[V(data.evaluate(g).moment(0).rational_reconstruction()) for g in G.gens()])
             else:
                 return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
         else:
@@ -358,15 +356,16 @@ class CohomologyGroup(Parent):
             raise NotImplementedError
         H = self._space
         Gpn = self.group()
+        Gab = self._Ga
         x = Gpn.element_of_norm(-1)
         dim = self.dimension()
         M = matrix(QQ,dim,dim,0)
-        for j,c in enumerate(self.gens()):
+        assert len(self.gens()) == len(Gab.free_gens())
+        for j,g0 in enumerate(Gab.free_gens()):
             # Construct column j of the matrix
-            for i in range(dim):
-                ti = Gpn(x**-1 * prod([Gpn.gen(idx)**a for idx,a in zip(range(len(Gpn.gens())),list(self._Ga.gen(self._free_idx[i]).lift()))]).quaternion_rep * x)
-                M[i,j] = c.evaluate(ti)[0]
-        return M
+            g = Gpn(x**-1 * Gab.ab_to_G(g0).quaternion_rep * x)
+            M.set_column(j,list(Gab.G_to_ab_free(g)))
+        return M.transpose()
 
     def get_cocycle_from_elliptic_curve(self,E,sign = 1):
         K = (self.involution_at_infinity_matrix()-sign).right_kernel()
@@ -383,7 +382,7 @@ class CohomologyGroup(Parent):
                 if F == QQ:
                     return E.ap(q)
                 else:
-                    Q = F(q).factor()[0][0]
+                    Q = F.ideal(q).factor()[0][0]
                     return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
         else:
             def getap(q):
@@ -429,11 +428,8 @@ class CohomologyGroup(Parent):
         vals = []
         R = V.base_ring()
         if hasattr(V,'is_full'): # This should be more robust
-            gammas = []
-            Gab,Vmod,free_idx = Gpn.abelianization()
-            for i in free_idx:
-                idxlist = list(Gab.gen(i).lift())
-                gammas.append(prod([t**a for a,t in zip(idxlist,Gpn.gens()) if a != 0]))
+            Gab = Gpn.abelianization()
+            gammas = [Gab.ab_to_G(o) for o in Gab.free_gens()]
         else:
             gammas = Gpn.gens()
 
@@ -452,7 +448,7 @@ class CohomologyGroup(Parent):
         else:
             for inp in input_vector:
                 outp = _calculate_hecke_contribution(*inp)
-                vals[inp[-1]] += outp #_calculate_hecke_contribution(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists)
+                vals[inp[-1]] += outp
         return scale * self(vals)
 
 def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dists,num_gamma = 0):

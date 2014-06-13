@@ -5,6 +5,7 @@ from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
 from sage.libs.pari.gen import PariError
+from sage.misc.sage_eval import sage_eval
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
@@ -20,6 +21,7 @@ from sage.schemes.elliptic_curves.constructor import EllipticCurve_from_c4c6
 from sage.misc.functional import cyclotomic_polynomial
 from sage.misc.misc_c import prod
 from sage.functions.generalized import sgn
+from sage.interfaces.magma import magma
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
@@ -838,7 +840,10 @@ def quaternion_to_magma_quaternion(Bmagma,x):
     return Bmagma(v[0]) + sum(v[i+1] * Bmagma.gen(i+1) for i in range(3))
 
 def magma_F_elt_to_sage(F_sage,x):
-    return F_sage([QQ(x[i+1]) for i in range(F_sage.degree())])
+    ans =  F_sage(sage_eval(magma.eval('[%s[i] : i in [1..%s]]'%(x.name(),F_sage.degree()))))
+    # ans2 = F_sage([QQ(x[i+1]) for i in range(F_sage.degree())]) # DEBUG
+    # assert ans == ans2,'x = %s, ans = %s, ans2 = %s'%(xv,ans,ans2)
+    return ans
 
 def magma_quaternion_to_sage(B_sage,x):
     xvec = x.Vector()

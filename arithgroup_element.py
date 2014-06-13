@@ -174,8 +174,8 @@ class ArithGroupElement(MultiplicativeGroupElement):
         return self.parent().gen(g)**a
 
     def is_trivial_in_abelianization(self):
-        return self.parent().get_weight_vector(self) in self.parent().get_relation_matrix().image()
-
+        #return self.parent().get_weight_vector(self) in self.parent().get_relation_matrix().image()
+        return self.parent().abelianization()(self) == 0
 
     def find_bounding_cycle(self,G,method = 'original',npow = 1,check = False):
         if method == 'original':
