@@ -298,6 +298,20 @@ class ArithGroup_generic(AlgebraicGroup):
     @cached_method
     def hecke_matrix(self,l,use_magma = None):
         Gab = self.abelianization()
+        gens = Gab.gens()
+        dim = len(gens)
+        M = matrix(ZZ,dim,dim,0)
+        hecke_reps = self.get_hecke_reps(l,use_magma = use_magma)
+        V = QQ**len(gens)
+        for j,g in enumerate(gens):
+            # Construct column j of the matrix
+            newcol = sum([V(list(Gab.G_to_ab(self.get_hecke_ti(gk1,Gab.ab_to_G(g).quaternion_rep,l,reps=hecke_reps,use_magma = use_magma)))) for gk1 in hecke_reps],V(0))
+            M.set_column(j,list(newcol))
+        return M
+
+    @cached_method
+    def hecke_matrix_freepart(self,l,use_magma = None):
+        Gab = self.abelianization()
         freegens = Gab.free_gens()
         dim = len(freegens)
         M = matrix(ZZ,dim,dim,0)
@@ -305,7 +319,9 @@ class ArithGroup_generic(AlgebraicGroup):
         V = QQ**len(freegens)
         for j,g in enumerate(freegens):
             # Construct column j of the matrix
-            newcol = sum([V(list(Gab.G_to_ab_free(self.get_hecke_ti(gk1,Gab.ab_to_G(g).quaternion_rep,l,reps=hecke_reps,use_magma = use_magma)))) for gk1 in hecke_reps],V(0))
+            glift = Gab.ab_to_G(g).quaternion_rep
+            # newcol = sum([V(list(Gab.G_to_ab_free(self.get_hecke_ti(gk1,glift,l,reps=hecke_reps,use_magma = use_magma)))) for gk1 in hecke_reps],V(0))
+            newcol = V(list(Gab.G_to_abfree(prod([self.get_hecke_ti(gk1,glift,l,reps = hecke_reps, use_magma = use_magma) for gk1 in hecke_reps],self([])))))
             M.set_column(j,list(newcol))
         return M
 
@@ -601,7 +617,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         N = ZZ(N)
         if return_all == False:
             try:
-                return self._element_of_norm[N.gens_two()]
+                return self._element_of_norm[N]
             except (AttributeError,KeyError):
                 pass
         if not hasattr(self,'_element_of_norm'):
@@ -611,7 +627,8 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,N))
             candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1]) for m in range(4)])
-            self._element_of_norm[N.gens_two()] = candidate
+            assert candidate.reduced_norm() == N
+            self._element_of_norm[N] = candidate
             return candidate
         else:
             v = list(self.Obasis)
@@ -673,7 +690,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             if not any([self._is_in_order(new_inv * old) for old in reps]):
                 reps.append(new_candidate)
         return reps
-
 
 
 class ArithGroup_rationalmatrix(ArithGroup_generic):
@@ -1140,11 +1156,23 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         else:
             return gamma, tau1
 
+    def _fix_sign(self,x,N):
+        if self.F.signature()[0] > 1:
+            raise NotImplementedError
+        emb = self.F.real_places()[0]
+        if emb(x.reduced_norm()).sign() != emb(N).sign():
+            x = x * self.element_of_norm(-1,use_magma = False)
+        assert emb(x.reduced_norm()).sign() == emb(N).sign()
+        return x
+
     def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1):
-        N = self.F.ideal(N)
+        Nideal = self.F.ideal(N)
         if return_all == False:
             try:
-                return self._element_of_norm[N.gens_two()]
+                if use_magma:
+                    return self._fix_sign(self._element_of_norm[Nideal.gens_two()],N)
+                else:
+                    return self._element_of_norm[N]
             except (AttributeError,KeyError):
                 pass
         else:
@@ -1156,11 +1184,11 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
         if use_magma:
             assert return_all == False
-            elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,N))
+            elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,Nideal))
             elt_magma_vector = elt_magma.Vector()
             candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma_vector[m+1]) for m in range(4)])
-            self._element_of_norm[N.gens_two()] = candidate
-            return candidate
+            self._element_of_norm[Nideal.gens_two()] = candidate
+            return self._fix_sign(candidate,N)
         else:
             v = self.Obasis
             verbose('Doing long enumeration...')
@@ -1172,7 +1200,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 verbose('M = %s,radius = %s'%(M,radius))
                 for a0,an in product(range(M),product(range(-M+1,M),repeat = len(v)-1)):
                     candidate = self.B(sum(ai*vi for ai,vi in  zip([a0]+list(an),v)))
-                    if self.F.ideal(candidate.reduced_norm()) == N:
+                    if candidate.reduced_norm() == N:
                         if not return_all:
                             self._element_of_norm[N] = candidate
                             return candidate
@@ -1197,12 +1225,12 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         sage: G = ArithGroup(6,5)
         sage: reps = G.get_hecke_reps(11)
         '''
-        l = self.F.ideal(l)
         g0 = self.element_of_norm(l,use_magma = use_magma)
         reps = [g0]
         I = self.enumerate_elements()
         n_iters = ZZ(0)
-        num_reps = l.norm() if l.divides(self._O_discriminant) else l.norm() + 1
+        lnorm = self.F.ideal(l).norm()
+        num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
         while len(reps) < num_reps:
             n_iters += 1
             if n_iters % 50 == 0:

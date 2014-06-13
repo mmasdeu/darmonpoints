@@ -357,7 +357,7 @@ class CohomologyGroup(Parent):
         H = self._space
         Gpn = self.group()
         Gab = self._Ga
-        x = Gpn.element_of_norm(-1)
+        x = Gpn.element_of_norm(-1,use_magma = False)
         dim = self.dimension()
         M = matrix(QQ,dim,dim,0)
         assert len(self.gens()) == len(Gab.free_gens())
