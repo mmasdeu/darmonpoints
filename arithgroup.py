@@ -197,7 +197,7 @@ class ArithGroup_generic(AlgebraicGroup):
             else:
                 yield prod([self.Ugens[i] for i in v])
 
-    def get_hecke_ti(self,gk1,gamma,l, reps = None):
+    def get_hecke_ti(self,gk1,gamma,l, reps = None,use_magma = None):
         r"""
 
         INPUT:
@@ -213,11 +213,15 @@ class ArithGroup_generic(AlgebraicGroup):
         elt = gk1**-1 * gamma
         found = False
         if reps is None:
-            reps = self.get_hecke_reps(l)
+            reps = self.get_hecke_reps(l,use_magma = use_magma)
+        found = None
         for gk2 in reps:
             ti = elt * gk2
             if self._is_in_order(ti):
-                return self(ti)
+                assert found is None, 'Too many matches!'
+                found = self(ti) # DEBUG
+        assert found is not None,'No match found!'
+        return found
 
     def gen(self,i):
         return self._gens[i]
@@ -292,16 +296,16 @@ class ArithGroup_generic(AlgebraicGroup):
             return gamma, tau1
 
     @cached_method
-    def hecke_matrix(self,l):
+    def hecke_matrix(self,l,use_magma = None):
         Gab = self.abelianization()
         freegens = Gab.free_gens()
         dim = len(freegens)
         M = matrix(ZZ,dim,dim,0)
-        hecke_reps = self.get_hecke_reps(l)
+        hecke_reps = self.get_hecke_reps(l,use_magma = use_magma)
         V = QQ**len(freegens)
         for j,g in enumerate(freegens):
             # Construct column j of the matrix
-            newcol = sum([V(list(Gab.G_to_ab_free(self.get_hecke_ti(gk1,Gab.ab_to_G(g).quaternion_rep,l,reps=hecke_reps)))) for gk1 in hecke_reps],V(0))
+            newcol = sum([V(list(Gab.G_to_ab_free(self.get_hecke_ti(gk1,Gab.ab_to_G(g).quaternion_rep,l,reps=hecke_reps,use_magma = use_magma)))) for gk1 in hecke_reps],V(0))
             M.set_column(j,list(newcol))
         return M
 
