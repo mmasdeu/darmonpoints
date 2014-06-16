@@ -938,12 +938,12 @@ def discover_equation(qE,emb,conductor,prec):
         u = F.units()[0]
         if len(F.units()) > 1:
             raise NotImplementedError
-        Funits = [u0*u**i for u0,i in zip(Funits,range(12))]
+        Funits = [u0*u**i for u0,i in product(Funits,range(-12,13))]
     try:
         primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
     except AttributeError:
         primedivisors = [o[0] for o in conductor.factor()]
-    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(12),repeat = len(primedivisors)))]
+    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,7),repeat = len(primedivisors)))]
     for guessed_pow in reversed(divisors(qval)):
         try:
             qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True) if guessed_pow > 1 else [qE]
@@ -960,7 +960,7 @@ def discover_equation(qE,emb,conductor,prec):
                 except ValueError:
                     continue
                 for c4 in c4list:
-                    for c4ex in [o[0] for o in algdep(c4.trace()/2,deg).roots(F)]: # FIXME
+                    for c4ex in [o[0] for o in our_algdep(c4,deg).roots(F)]:
                         c6squared = F(c4ex**3 - 1728*D)
                         if not c6squared.is_square():
                             continue
