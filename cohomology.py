@@ -339,7 +339,7 @@ class CohomologyGroup(Parent):
         return [self.gen(i) for i in range(self.dimension())]
 
     @cached_method
-    def hecke_matrix(self,l,use_magma = False):
+    def hecke_matrix(self,l,use_magma = True):
         if self.coefficient_module().dimension() > 1:
             raise NotImplementedError
         dim = self.dimension()
@@ -357,7 +357,8 @@ class CohomologyGroup(Parent):
         H = self._space
         Gpn = self.group()
         Gab = self._Ga
-        x = Gpn.element_of_norm(-1,use_magma = False)
+        # x = Gpn.element_of_norm(-1,use_magma = False)
+        x = Gpn.non_positive_unit()
         dim = self.dimension()
         M = matrix(QQ,dim,dim,0)
         assert len(self.gens()) == len(Gab.free_gens())
@@ -367,11 +368,15 @@ class CohomologyGroup(Parent):
             M.set_column(j,list(Gab.G_to_ab_free(g)))
         return M.transpose()
 
-    def get_cocycle_from_elliptic_curve(self,E,sign = 1):
-        K = (self.involution_at_infinity_matrix()-sign).right_kernel()
+    def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = False):
+        F = self.group().base_ring()
+        if F.signature()[0] == 0:
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+        else:
+            K = (self.involution_at_infinity_matrix()-sign).right_kernel()
+
         disc = self.group()._O_discriminant
         discnorm = disc.norm()
-        F = self.group().base_ring()
         try:
             N = ZZ(discnorm.gen())
         except AttributeError:

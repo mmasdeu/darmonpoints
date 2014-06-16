@@ -482,7 +482,10 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
 
 def our_sqrt(x,K,return_all = False):
     if x==0:
-        return x
+        if return_all:
+            return [x]
+        else:
+            return x
     x=K(x)
     p=K.base_ring().prime()
     valp = x.valuation(p)
@@ -520,8 +523,11 @@ def our_sqrt(x,K,return_all = False):
     return ans
 
 def our_cuberoot(x,K,return_all = False):
-    if x==0:
-        return x
+    if x == 0:
+        if return_all:
+            return [x]
+        else:
+            return x
     x=K(x)
     p=K.base_ring().prime()
     valp = x.valuation(p)
@@ -562,9 +568,15 @@ def our_cuberoot(x,K,return_all = False):
 
 def our_nroot(x,n,K,return_all = False):
     if x == 0:
-        return x
+        if return_all:
+            return [x]
+        else:
+            return x
     if n == 1:
-        return x
+        if return_all:
+            return [x]
+        else:
+            return x
     x=K(x)
     x_orig = x
     p=K.base_ring().prime()
@@ -919,14 +931,19 @@ def discover_equation(qE,emb,conductor,prec):
     qval = qE.valuation()
     p = qE.parent().prime()
     try:
-        Funits = [F(F.unit_group().torsnion_generator())**i for i in range(F.unit_group().torsion_generator().order())]
+        Funits = [F(F.unit_group().torsion_generator())**i for i in range(F.unit_group().torsion_generator().order())]
     except AttributeError:
         Funits = [-1, +1]
+    if len(F.units()) > 0:
+        u = F.units()[0]
+        if len(F.units()) > 1:
+            raise NotImplementedError
+        Funits = [u0*u**i for u0,i in zip(Funits,range(12))]
     try:
         primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
     except AttributeError:
         primedivisors = [o[0] for o in conductor.factor()]
-    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,6),repeat = len(primedivisors)))]
+    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(12),repeat = len(primedivisors)))]
     for guessed_pow in reversed(divisors(qval)):
         try:
             qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True) if guessed_pow > 1 else [qE]
@@ -943,12 +960,17 @@ def discover_equation(qE,emb,conductor,prec):
                 except ValueError:
                     continue
                 for c4 in c4list:
-                    for c4ex in [o[0] for o in our_algdep(c4,deg).roots(F)]:
+                    for c4ex in [o[0] for o in algdep(c4.trace()/2,deg).roots(F)]: # FIXME
                         c6squared = F(c4ex**3 - 1728*D)
                         if not c6squared.is_square():
                             continue
                         for c6ex in c6squared.sqrt(all=True):
-                            E = EllipticCurve_from_c4c6(c4ex,c6ex)
+                            if c4ex != 0 or c6ex != 0:
+                                print [c4ex,c6ex]
+                            try:
+                                E = EllipticCurve_from_c4c6(c4ex,c6ex)
+                            except ArithmeticError:
+                                continue
                             if E.conductor() == conductor:
                                 assert E.discriminant() == D
                                 verbose('Success!')

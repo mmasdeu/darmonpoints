@@ -321,7 +321,7 @@ class ArithGroup_generic(AlgebraicGroup):
             # Construct column j of the matrix
             glift = Gab.ab_to_G(g).quaternion_rep
             # newcol = sum([V(list(Gab.G_to_ab_free(self.get_hecke_ti(gk1,glift,l,reps=hecke_reps,use_magma = use_magma)))) for gk1 in hecke_reps],V(0))
-            newcol = V(list(Gab.G_to_abfree(prod([self.get_hecke_ti(gk1,glift,l,reps = hecke_reps, use_magma = use_magma) for gk1 in hecke_reps],self([])))))
+            newcol = V(list(Gab.G_to_ab_free(prod([self.get_hecke_ti(gk1,glift,l,reps = hecke_reps, use_magma = use_magma) for gk1 in hecke_reps],self([])))))
             M.set_column(j,list(newcol))
         return M
 
@@ -465,8 +465,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                     self._relation_words.append(newrel)
                 else:
                     self._relation_words.append(rel)
-
-        self.GG = FreeGroup(len(self.gens())) / [syllables_to_tietze(rel) for rel in self.get_relation_words()]
 
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
@@ -638,15 +636,11 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 all_candidates = []
             while M != radius:
                 M += 1
-                assert M < 9
                 verbose('M = %s,radius = %s'%(M,radius))
                 verbose('v = %s'%list(v))
-                #for a0,an in product(range(M),product(range(-M,M+1),repeat = len(v)-1)):
-                for an in product(range(-M,M+1), repeat = len(v)):
-                    # candidate = sum((ZZ(ai) * vi for ai,vi in  zip([a0]+list(an),v)),self.B(0))
-                    candidate = sum((ZZ(ai) * vi for ai,vi in  zip(an,v)),self.B(0))
-                    # verbose('lincomb = %s'%([a0]+list(an)))
-                    # verbose('candidate = %s'%candidate)
+                for a0,an in product(range(M),product(range(-M,M+1),repeat = len(v)-1)):
+                    candidate = sum((ZZ(ai) * vi for ai,vi in  zip([a0]+list(an),v)),self.B(0))
+                    #candidate = sum((ZZ(ai) * vi for ai,vi in  zip(an,v)),self.B(0))
                     if candidate.reduced_norm() == N:
                         if not return_all:
                             self._element_of_norm[N] = candidate
@@ -727,7 +721,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                 else:
                     self._relation_words.append(rel)
 
-        self.GG = FreeGroup(len(self.gens())) / [syllables_to_tietze(rel) for rel in self.get_relation_words()]
 
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
@@ -920,11 +913,17 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self._facerels_magma = f
         self._facerels = []
         self._RR = RR = RealField((len(str(f[1].Radius)) * RealField(20)(10).log()/RealField(20)(2).log()).ceil()-10)
-        CC = ComplexField(RR.precision())
-        vC = self.F.embeddings(CC)[0]
-        tmp = magma.InfinitePlaces(self._F_magma)[1]
+        prec = RR.precision()
+        CC = ComplexField(prec)
+        all_complex_embs = [o for o in self.F.embeddings(CC) if o(self.F.gen()).imag() != 0]
+        assert len(all_complex_embs) == 2
+        vC = all_complex_embs[0]
+        tmp = magma.InfinitePlaces(self._F_magma)[1 + self.F.signature()[0]]
+	#oo = magma.InfinitePlaces(self._F_magma).SequenceToSet()
+	#ooR = magma.RealPlaces(self._F_magma).SequenceToSet()
+        #tmp = magma.eval('SetToSequence(%s diff %s)[1]'%(oo.name(),ooR.name()))
         if (vC(self.F.gen(0)).imag() * self._F_magma.gen(1).Evaluate(tmp).Im()._sage_()) < 0:
-            vC = self.F.embeddings(CC)[1]
+            vC = all_complex_embs[1]
             assert (vC(self.F.gen(0)).imag() * self._F_magma.gen(1).Evaluate(tmp).Im()._sage_()) > 0
         self._vC = vC
         self._HH = QuaternionAlgebra(RR,-1,-1)
@@ -1023,7 +1022,13 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             print min(deltaword)-1,max(deltaword)-1,len(self._simplification_iso)
             raise RuntimeError
         tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)]
-        return reduce_word(tmp)
+        ans = reduce_word(tmp)
+        # newquat = prod([self.Ugens[i]**a for i,a in ans])
+        # if  list((newquat/gamma).coefficient_tuple())[1:] != [0,0,0]:
+        #     verbose('gamma1  = %s'%gamma)
+        #     verbose('gamma2 = %s'%newquat)
+        #     verbose('!!!!!!!!!!! quo = %s !!!!!!!!!'%(newquat/gamma))
+        return ans
 
     @cached_method
     def _kleinianmatrix(self,gamma):
@@ -1157,7 +1162,9 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             return gamma, tau1
 
     def _fix_sign(self,x,N):
-        if self.F.signature()[0] > 1:
+        if self.F.signature()[0] == 0:
+            return x
+        elif self.F.signature()[0] > 1:
             raise NotImplementedError
         emb = self.F.real_places()[0]
         if emb(x.reduced_norm()).sign() != emb(N).sign():
@@ -1216,6 +1223,24 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             else:
                 raise RuntimeError,'Not found'
 
+    def non_positive_unit(self,radius = -1):
+        try:
+            return self._non_positive_unit
+        except AttributeError:
+            pass
+        v = self.Obasis
+        verbose('Doing long enumeration...')
+        M = 0
+        ideal_one = self.F.ideal(1)
+        while M != radius:
+            M += 1
+            verbose('M = %s,radius = %s'%(M,radius))
+            for a0,an in product(range(M),product(range(-M+1,M),repeat = len(v)-1)):
+                candidate = self.B(sum(ai*vi for ai,vi in  zip([a0]+list(an),v)))
+                if self.F.ideal(candidate.reduced_norm()) == ideal_one and candidate.reduced_norm() != 1:
+                    self._non_positive_unit = candidate
+                    return candidate
+
     @cached_method
     def get_hecke_reps(self,l,use_magma = True):
         r'''
@@ -1245,7 +1270,7 @@ class Abelianization(Parent):
     Element = FGP_Module
     def __init__(self,G):
         V = ZZ**len(G.gens())
-        W = V.span([sum(a*v for a,v in zip(V.gens(),rel)) for rel in G.get_relation_matrix().rows()])
+        W = V.span([sum([a*v for a,v in zip(rel,V.gens())],V(0)) for rel in G.get_relation_matrix().rows()])
         self._G = G
         self._Gab = V/W
         self._ambient = V
@@ -1288,7 +1313,6 @@ class Abelianization(Parent):
         return sum([ZZ(a) * self._Gab(V.gen(i)) for i,a in x.word_rep],self._Gab(0))
 
     def G_to_ab_free(self,x):
-        V = self.ambient()
         return tuple((o for i,o in enumerate(list(self.G_to_ab(x))) if self.abelian_invariants()[i] == 0))
 
     def ab_to_G(self,x):
