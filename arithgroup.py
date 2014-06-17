@@ -508,7 +508,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
     def _quaternion_to_list(self,x):
         return (self.basis_invmat * matrix(QQ,4,1,x.coefficient_tuple())).list()
 
-    @cached_method
     def get_word_rep(self,delta):
         if not self._is_in_order(delta):
             raise RuntimeError,'delta (= %s) is not in order!'%delta
@@ -526,7 +525,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 assert delta1 == delta
         return tmp
 
-    @cached_method
     def _get_word_recursive(self,delta,oldji,depth = 0):
         if depth > 1000:
             raise RuntimeError
@@ -750,7 +748,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         a,b,c,d = x.list()
         return [a, b, QQ(c)/self.level, d]
 
-    @cached_method
     def get_word_rep(self,delta):
         level = self.level
         if level != 1:
@@ -981,7 +978,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         xlist = [u for o in x.coefficient_tuple() for u in o.list()]
         return (self.basis_invmat * matrix(QQ,4 * self.F.degree() ,1,xlist)).list()
 
-    @cached_method
     def get_word_rep(self,gamma):
         # if not self._is_in_order(gamma):
         #     raise RuntimeError,'gamma (= %s) is not in order!'%gamma
@@ -1030,7 +1026,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         #     verbose('!!!!!!!!!!! quo = %s !!!!!!!!!'%(newquat/gamma))
         return ans
 
-    @cached_method
     def _kleinianmatrix(self,gamma):
         B = gamma.parent()
         K = gamma.parent().base_ring()

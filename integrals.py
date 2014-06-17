@@ -185,7 +185,7 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist=False):
+def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist=False,progress_bar = False):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
@@ -209,7 +209,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
             gq = G.wp * gq * G.wp**-1
-        input_vec.append((G,divisor,cocycle,depth,gq,prec,jj,total_integrals))
+        input_vec.append((G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar))
 
     if parallelize:
         i = 0
@@ -269,7 +269,7 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
             res += phi(K(te)) * hce
     return res
 
-def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter):
+def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar):
     verbose('Integral %s/%s...'%(counter,total_counter))
     HOC = hc.parent()
     if prec is None:
@@ -282,7 +282,7 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter):
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
     return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = True)
 
-def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
+def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar = False):
     verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
     HOC = hc.parent()
@@ -293,6 +293,11 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
     r1 = R1.gen()
     R1.set_default_prec(prec)
 
+    R0 = PolynomialRing(K,'t')
+    t = R0.gen()
+    R0f = R0.fraction_field()
+    phi = R0f(prod([(t - P)**ZZ(n) for P,n in divisor if n > 0],R0(1)))/R0f(prod([(t - P)**ZZ(-n) for P,n in divisor if n < 0],R0(1)))
+
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o) for o in G.get_covering(1)]
@@ -300,26 +305,34 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter):
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
+        ii = 0
         for parity, edge in edgelist:
+            ii += 1
+            if progress_bar:
+                update_progress(float(ii)/float(len(edgelist)))
+
             rev, h = edge
             a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
 
-            y0num = R1(1)
-            y0den = R1(1)
-            for P,n in divisor:
-                hP = R1(a-P*c)*r1 + R1(b-d*P)
-                if n > 0:
-                    y0num *= hP**ZZ(n)
-                    y0num = y0num.add_bigoh(prec)
-                else:
-                    y0den *= hP**ZZ(-n)
-                    y0den = y0den.add_bigoh(prec)
-            y0 = y0num/y0den
+            hexp = (a*r1+b)/(c*r1+d)
+            y0 = phi(hexp)
 
-            val = y0(y0.parent().base_ring()(0))
+            # y0num = R1(1)
+            # y0den = R1(1)
+            # for P,n in divisor:
+            #     assert P.valuation() >= -1
+            #     hP = R1(a-P*c)*r1 + R1(b-d*P)
+            #     if n > 0:
+            #         y0num *= hP**ZZ(n)
+            #         y0num = y0num.add_bigoh(prec)
+            #     else:
+            #         y0den *= hP**ZZ(-n)
+            #         y0den = y0den.add_bigoh(prec)
+            # y0 = y0num/y0den
+
+            val = y0(K(0))
 
             if val == 0 or not all([o.valuation(p) >= 0 for o in (y0(r1/p)/val - 1).list()]):
-                # verbose('Subdividing...(%s %s)'%(val == 0, [o.valuation(p) for o in (y0(r1/p)/val - 1).list()]))
                 newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
                 assert not rev
                 # newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])

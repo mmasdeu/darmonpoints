@@ -26,7 +26,7 @@ from sage.parallel.decorate import fork,parallel
 
 oo = Infinity
 
-def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None):
+def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -72,7 +72,12 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
     if apsign is None:
         apsign = ZZ(E.ap(p)) if F == QQ else ZZ(Pnorm + 1 - Curve(E.defining_polynomial().change_ring(F.residue_field(P))).count_points(1)[0])
     assert apsign.abs() == 1
-    Phi = Phi.improve(prec = prec,sign = apsign,parallelize = parallelize)
+    if progress_bar:
+        verb_level = get_verbose()
+        set_verbose(0)
+    Phi = Phi.improve(prec = prec,sign = apsign,parallelize = parallelize,progress_bar = progress_bar)
+    if progress_bar:
+        set_verbose(verb_level)
     if use_sage_db:
         db_save(Phi._val,fname)
     verbose('Done.')
@@ -183,7 +188,6 @@ class CohomologyElement(ModuleElement):
                     tmp = phig + tmp.l_act_by(gmat)
             return tmp
 
-    @cached_method
     def _evaluate_word(self,word):
         r''' Evaluate recursively, using cocycle condition:
         self(gh) = self(g) + g*self(h)
@@ -209,7 +213,7 @@ class CohomologyElement(ModuleElement):
             else:
                 return self._evaluate_word(tuple(word_prefix)) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(G.embed(gamma,prec))
 
-    def improve(self,prec = None,sign = 1,parallelize = False):
+    def improve(self,prec = None,sign = 1,parallelize = False,progress_bar = False):
         r"""
         Repeatedly applies U_p.
 
@@ -224,6 +228,8 @@ class CohomologyElement(ModuleElement):
         reps = group.get_Up_reps()
         h2 = self.parent().apply_hecke_operator(self,p, hecke_reps = reps,group = group,scale = sign,parallelize = parallelize)
         #verbose('%s'%h2,level = 2)
+        if progress_bar:
+            update_progress(1.0/float(prec))
         verbose("Applied Up once")
         ii = 0
         current_val = min([(u-v).valuation() for u,v in zip(h2._val,self._val)])
@@ -233,6 +239,8 @@ class CohomologyElement(ModuleElement):
             old_val = current_val
             ii += 1
             h2 = self.parent().apply_hecke_operator(h1,p, hecke_reps = reps,group = group,scale = sign,parallelize = parallelize)
+            if progress_bar:
+                update_progress(float(ii+1)/float(prec))
             current_val = min([(u-v).valuation() for u,v in zip(h2._val,h1._val)])
             verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
         self._val = h2._val
@@ -368,7 +376,7 @@ class CohomologyGroup(Parent):
             M.set_column(j,list(Gab.G_to_ab_free(g)))
         return M.transpose()
 
-    def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = False):
+    def get_cocycle_from_elliptic_curve(self,E = None,sign = 1,use_magma = False):
         F = self.group().base_ring()
         if F.signature()[0] == 0:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
@@ -398,10 +406,14 @@ class CohomologyGroup(Parent):
             q = q.next_prime()
             for qq,e in F.ideal(q).factor():
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(disc):
-                    try:
-                        ap = getap(qq)
-                    except (ValueError,ArithmeticError):
-                        continue
+                    if getap is not None:
+                        try:
+                            ap = getap(qq)
+                        except (ValueError,ArithmeticError):
+                            continue
+                    else:
+                        ap = self.hecke_matrix(qq).eigenvalues(extend = False)[0]
+                        verbose('Found aq = %s'%ap)
                     K1 = (self.hecke_matrix(qq)-ap).right_kernel()
                     K = K.intersection(K1)
         assert K.dimension() == 1

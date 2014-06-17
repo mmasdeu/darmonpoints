@@ -370,7 +370,6 @@ class BigArithGroup_class(AlgebraicGroup):
         else:
             return a
 
-    @cached_method
     def _reduce_in_amalgam(self,x):
         x0 = x
         p = self.p
