@@ -29,7 +29,7 @@ from sage.functions.generalized import sgn
 from sage.groups.finitely_presented import FinitelyPresentedGroup,FinitelyPresentedGroupElement
 
 class ArithGroupElement(MultiplicativeGroupElement):
-    def __init__(self,parent, word_rep = None, quaternion_rep = None, check = True):
+    def __init__(self,parent, word_rep = None, quaternion_rep = None, check = False):
         r'''
         Initialize.
 
@@ -175,29 +175,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
 
     @cached_method
     def embed(self,prec):
-        G = self.parent()
-        if self.has_word_rep:
-            return prod([G.embed(G.Ugens[i],prec)**a for i,a in self.word_rep])
-        else:
-            return G.embed(self.quaternion_rep,prec)
-
-    @cached_method
-    def total_fox_derivative(self):
-        G = self.parent()
-        ans = [defaultdict(ZZ) for o in G.gens()]
-        h = self.quaternion_rep
-        for i,a in reversed(self.word_rep):
-            if a > 0:
-                ginv = G.Ugens[i]**-1
-                for j in range(a):
-                    h = h * ginv
-                    ans[i][h] += 1
-            else:
-                g = G.Ugens[i]
-                for j in range(-a):
-                    ans[i][h] -= 1
-                    h = h * g
-        return ans
+        return self.parent().embed(self.quaternion_rep,prec)
 
     def is_trivial_in_abelianization(self):
         #return self.parent().get_weight_vector(self) in self.parent().get_relation_matrix().image()

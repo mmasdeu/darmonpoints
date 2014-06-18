@@ -346,7 +346,6 @@ class BigArithGroup_class(AlgebraicGroup):
                 return sum(self._F_to_Qp(a)*b for a,b in zip(q,mats))
         return iota
 
-    @cached_method
     def embed(self,q,prec):
         if prec is None:
             return None

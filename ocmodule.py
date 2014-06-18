@@ -158,35 +158,20 @@ class OCVnElement(ModuleElement):
         return self.__class__(self._parent,val, check = False)
 
     def l_act_by_many(self,xlist):
+        assert self._n == 0
+        is_exact = self._parent.base_ring().is_exact()
         R = self._parent._R
         if len(xlist) == 0:
             return self._parent(0)
-        if self._n == 0 or self._parent.base_ring().is_exact():
-            factor = 1
-        else:
-            t = min([R(o).valuation() for o in xlist[0][1].list() if o!=0])
-            factor = R.prime()**(t * self._n)
-        y = (xlist[0][1].determinant()**(-self._nhalf) * factor) * xlist[0][0] * self._parent._get_powers(*xlist[0][1].list())
+        n,x = xlist[0]
+        factor = 1 if is_exact else R.prime()**(-min([R(o).valuation() for o in x.list() if o!=0]))
+        a,b,c,d = x.list()
+        y =  n * self._parent._get_powers(factor*a,factor*b,factor*c,factor*d)
         for n,x in xlist[1:]:
-            extrafactor=x.determinant()**(-self._nhalf) * n
-            if self._n == 0 or self._parent.base_ring().is_exact():
-                factor = 1
-            else:
-                t = min([R(o).valuation() for o in x.list() if o!=0])
-                factor = R.prime()**(t * self.n)
-            y += (extrafactor * factor) * self._parent._get_powers(*x.list())
+            factor = 1 if is_exact else R.prime()**(-min([R(o).valuation() for o in x.list() if o!=0]))
+            a,b,c,d = x.list()
+            y += n * self._parent._get_powers(factor*a,factor*b,factor*c,factor*d)
         return self.__class__(self._parent, (y * self._val),check = False)
-
-    def l_act_by(self,x):
-        r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-        """
-        return self._l_act_by(x[0,0],x[0,1],x[1,0],x[1,1],extrafactor=x.determinant()**(-self._nhalf))
 
     def r_act_by(self,x):
         r"""
@@ -198,9 +183,9 @@ class OCVnElement(ModuleElement):
         ::
         """
         #assert(x.nrows()==2 and x.ncols()==2) #An element of GL2
-        return self._l_act_by(x[1,1],-x[0,1],-x[1,0],x[0,0],extrafactor=x.determinant()**(-self._nhalf))
+        return self._l_act_by(x.adjoint())
 
-    def _l_act_by(self,a,b,c,d,extrafactor=1):
+    def l_act_by(self,x):
         r"""
 
         EXAMPLES:
@@ -211,13 +196,23 @@ class OCVnElement(ModuleElement):
 
         """
         R = self._parent._R
-        if self._parent.base_ring().is_exact():
+        xdet = x.determinant()
+        if  self._parent.base_ring().is_exact():
             factor = 1
         else:
-            t = min([R(x).valuation() for x in [a,b,c,d] if x!=0])
-            factor = R.prime()**(-t)
-        x = self._parent._get_powers(factor*a,factor*b,factor*c,factor*d)
-        return self.__class__(self._parent,(extrafactor*factor**(-self._n))* (x * self._val),check = False)
+            t = min([R(o).valuation() for o in x.list() if o != 0])
+            if t != 0:
+                factor = R.prime()**-t
+            else:
+                factor = 1
+
+        a,b,c,d = x.list()
+        tmp = self._parent._get_powers(factor*a,factor*b,factor*c,factor*d) * self._val
+        if self._nhalf == 0:
+            return self.__class__(self._parent, tmp,check = False)
+        else:
+            lam = xdet * factor**2
+            return self.__class__(self._parent,lam**(-self._nhalf) * tmp,check = False)
 
     def _rmul_(self,a):
         r"""

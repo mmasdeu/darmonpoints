@@ -20,7 +20,6 @@ from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.structure.sage_object import save,load
-from sage.groups.finitely_presented import FinitelyPresentedGroupElement
 from sage.groups.free_group import FreeGroup
 from copy import copy
 from sage.misc.persist import db
@@ -69,6 +68,31 @@ class ArithGroup_generic(AlgebraicGroup):
                 self._relation_matrix[i,j] += k
         self._evaluate_stats = [ZZ(0) for o in range(100)]
         self._free_group = FreeGroup(len(self.gens()))
+
+    def fox_gradient(self,x,word = None):
+        ans = [defaultdict(int) for o in self.gens()]
+        h = self.B(x)
+        if word is None:
+            word = self.get_word_rep(x)
+        for i,a in reversed(word):
+            ansi = ans[i]
+            g = self.Ugens[i]
+            if a > 0:
+                ginv = g**-1
+                for j in range(a):
+                    h = h * ginv
+                    if ansi[h] == -1:
+                        del ansi[h]
+                    else:
+                        ansi[h] += 1
+            else:
+                for j in range(-a):
+                    if ansi[h] == 1:
+                        del ansi[h]
+                    else:
+                        ansi[h] -= 1
+                    h = h * g
+        return ans
 
     def free_group(self):
         return self._free_group
@@ -818,7 +842,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             verbose("Warning: asked to use Magma to get hecke reps, but trivial to do without!")
         return [self.B([l,i,0,1]) for i in range(l)] + [self.B([1,0,0,l])]
 
-    @cached_method
     def image_in_abelianized(self, x):
         r''' Given an element x in Gamma, returns its image in the abelianized group'''
         Gab,V,free_idx = self.abelianization()
@@ -1041,11 +1064,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             raise RuntimeError
         tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)]
         ans = reduce_word(tmp)
-        # newquat = prod([self.Ugens[i]**a for i,a in ans])
-        # if  list((newquat/gamma).coefficient_tuple())[1:] != [0,0,0]:
-        #     verbose('gamma1  = %s'%gamma)
-        #     verbose('gamma2 = %s'%newquat)
-        #     verbose('!!!!!!!!!!! quo = %s !!!!!!!!!'%(newquat/gamma))
         return ans
 
     def _kleinianmatrix(self,gamma):

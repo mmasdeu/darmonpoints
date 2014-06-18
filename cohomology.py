@@ -110,6 +110,10 @@ class CohomologyElement(ModuleElement):
             self._val = [V(0) if o.is_zero() else V(o) for o in data]
         else:
             self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
+        if parent.is_overconvergent:
+            self.evaluate = self.evaluate_oc
+        else:
+            self.evaluate = self.evaluate_triv
         ModuleElement.__init__(self,parent)
 
     def values(self):
@@ -135,58 +139,61 @@ class CohomologyElement(ModuleElement):
             raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
-    def evaluate_new(self,x):
-        if self.parent().is_overconvergent:
-            G = self.parent().group()
-            V = self.parent().coefficient_module()
-            prec = V.base_ring().precision_cap()
-            Sigma0 = self.parent().Sigma0()
+    def evaluate_oc(self,x):
+        G = self.parent().group()
+        V = self.parent().coefficient_module()
+        prec = V.base_ring().precision_cap()
+        Sigma0 = self.parent().Sigma0()
+        if hasattr(x,'word_rep'):
+            wd  = x.word_rep
+            h = x.quaternion_rep
+        else:
+            wd = G.get_word_rep(x)
+            h = x
+        if len(wd) == 0:
+            return V(0)
+        elif len(wd) == 1:
+            return self._evaluate_syllable(*wd[0])
 
-            try:
-                totalfd = x.total_fox_derivative()
-            except AttributeError:
-                totalfd = G(x).total_fox_derivative()
+        grad = G.fox_gradient(h,word = wd)
 
-            ans = V(0)
+        ans = V(0)
+        if self.parent()._use_ps_dists:
             for i,phig in enumerate(self._val):
-                fd = totalfd[i]
+                fd = grad[i]
+                for gamma,n in fd.iteritems():
+                    ans += Sigma0(G.embed(gamma,prec)) * (n * phig)
+        else:
+            for i,phig in enumerate(self._val):
+                fd = grad[i]
                 matlist = []
                 for gamma,n in fd.iteritems():
-                    if n == 0:
-                        continue
                     gmat = G.embed(gamma,prec)
-                    if self.parent()._use_ps_dists:
-                        ans += Sigma0(gmat) * (n * phig)
-                    else:
-                        gmat.set_immutable()
-                        matlist.append((n,gmat))
-                ans = phig.l_act_by_many(matlist)
-            return ans
-        else:
-            try:
-                word = tuple(x.word_rep)
-            except AttributeError:
-                word = tuple(self.parent().group()(x).word_rep)
-            V = self.parent().coefficient_module()
-            return sum([a*self._evaluate_at_group_generator(j) for j,a in word],V(0))
+                    gmat.set_immutable()
+                    matlist.append((n,gmat))
+                ans += phig.l_act_by_many(matlist)
+        return ans
 
-
-    def evaluate(self,x):
+    def evaluate_triv(self,x):
         try:
             word = tuple(x.word_rep)
         except AttributeError:
             word = tuple(self.parent().group()(x).word_rep)
-        if self.parent().is_overconvergent:
-            V = self.parent().coefficient_module()
-            if len(word) == 0:
-                return V(0)
-            elif len(word) == 1:
-                return self._evaluate_syllable(*word[0])
-            else:
-                return self._evaluate_word(word)
+        V = self.parent().coefficient_module()
+        return sum([a*self._evaluate_at_group_generator(j) for j,a in word],V(0))
+
+    def evaluate_oc_naive(self,x):
+        try:
+            word = tuple(x.word_rep)
+        except AttributeError:
+            word = tuple(self.parent().group()(x).word_rep)
+        V = self.parent().coefficient_module()
+        if len(word) == 0:
+            return V(0)
+        elif len(word) == 1:
+            return self._evaluate_syllable(*word[0])
         else:
-            V = self.parent().coefficient_module()
-            return sum([a*self._evaluate_at_group_generator(j) for j,a in word],V(0))
+            return self._evaluate_word(word)
 
     @cached_method
     def _evaluate_at_group_generator(self,j): # j is the index in Gpn.gens()
@@ -254,15 +261,6 @@ class CohomologyElement(ModuleElement):
 
         lenword = len(word)
         if lenword > 3:
-            # ans = self._evaluate_syllable(*word[-1])
-            # for g,a in reversed(word[:-1]):
-            #     gammamat = G.embed(G.Ugens[g]**a,prec)
-            #     if self.parent()._use_ps_dists:
-            #         ans = Sigma0(gammamat) * ans
-            #     else:
-            #         ans = ans.l_act_by(gammamat)
-            #     ans += self._evaluate_syllable(g,a)
-            # return ans
             pivot = ZZ(lenword) // ZZ(2)
             word_prefix = word[:pivot]
             gammamat = G.embed(prod([G.Ugens[g]**a for g,a in word_prefix],G.B(1)),prec)
