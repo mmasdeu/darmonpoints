@@ -346,6 +346,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 return sum(self._F_to_Qp(a)*b for a,b in zip(q,mats))
         return iota
 
+    @cached_method
     def embed(self,q,prec):
         if prec is None:
             return None
@@ -353,8 +354,8 @@ class BigArithGroup_class(AlgebraicGroup):
             return q.change_ring(Qp(self.p,prec))
         else:
             I,J,K = self._local_splitting(prec)
-            mats = [1,I,J,K]
             R=I.parent()
+            mats = [R(1),I,J,K]
             try:
                 q = q.coefficient_tuple()
             except AttributeError: pass

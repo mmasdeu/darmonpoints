@@ -5,7 +5,7 @@
 #
 #                  http://www.gnu.org/licenses/
 #########################################################################
-
+from sage.misc.cachefunc import cached_method
 from sage.structure.element import ModuleElement
 from sage.modules.module import Module
 from sage.matrix.constructor import Matrix
@@ -157,6 +157,26 @@ class OCVnElement(ModuleElement):
         val=self._val-y._val
         return self.__class__(self._parent,val, check = False)
 
+    def l_act_by_many(self,xlist):
+        R = self._parent._R
+        if len(xlist) == 0:
+            return self._parent(0)
+        if self._n == 0 or self._parent.base_ring().is_exact():
+            factor = 1
+        else:
+            t = min([R(o).valuation() for o in xlist[0][1].list() if o!=0])
+            factor = R.prime()**(t * self._n)
+        y = (xlist[0][1].determinant()**(-self._nhalf) * factor) * xlist[0][0] * self._parent._get_powers(*xlist[0][1].list())
+        for n,x in xlist[1:]:
+            extrafactor=x.determinant()**(-self._nhalf) * n
+            if self._n == 0 or self._parent.base_ring().is_exact():
+                factor = 1
+            else:
+                t = min([R(o).valuation() for o in x.list() if o!=0])
+                factor = R.prime()**(t * self.n)
+            y += (extrafactor * factor) * self._parent._get_powers(*x.list())
+        return self.__class__(self._parent, (y * self._val),check = False)
+
     def l_act_by(self,x):
         r"""
 
@@ -166,7 +186,6 @@ class OCVnElement(ModuleElement):
 
         ::
         """
-        #assert(x.nrows()==2 and x.ncols()==2) #An element of GL2
         return self._l_act_by(x[0,0],x[0,1],x[1,0],x[1,1],extrafactor=x.determinant()**(-self._nhalf))
 
     def r_act_by(self,x):
@@ -197,13 +216,8 @@ class OCVnElement(ModuleElement):
         else:
             t = min([R(x).valuation() for x in [a,b,c,d] if x!=0])
             factor = R.prime()**(-t)
-        try:
-            x = self._parent._powers[(factor*a,factor*b,factor*c,factor*d)]
-            return self.__class__(self._parent,(extrafactor*factor**(-self._n))*(x*self._val), check = False)
-        except KeyError:
-            tmp = self._parent._get_powers_and_mult(factor*a,factor*b,factor*c,factor*d,extrafactor*factor**(-self._n),self._val)
-
-            return self.__class__(self._parent,tmp)
+        x = self._parent._get_powers(factor*a,factor*b,factor*c,factor*d)
+        return self.__class__(self._parent,(extrafactor*factor**(-self._n))* (x * self._val),check = False)
 
     def _rmul_(self,a):
         r"""
@@ -384,7 +398,7 @@ class OCVn(Module,UniqueRepresentation):
             if R.is_exact(): raise ValueError, "Trying to construct an over-convergent module with exact coefficients, how do you store p-adics ??"
         self._depth=depth
         self._PowerSeries=PowerSeriesRing(self._Rmod,default_prec=self._depth,name='z')
-        self._powers=dict()
+        #self._powers=dict()
         self._populate_coercion_lists_()
 
     def is_overconvergent(self):
@@ -416,7 +430,8 @@ class OCVn(Module,UniqueRepresentation):
         #Admissible values of x?
         return OCVnElement(self,x,check)
 
-    def _get_powers_and_mult(self,a,b,c,d,lambd,vect):
+    @cached_method
+    def _get_powers(self,a,b,c,d):
         r"""
         Compute the action of a matrix on the basis elements.
 
@@ -455,8 +470,8 @@ class OCVn(Module,UniqueRepresentation):
         else:
             xnew=x.change_ring(self._R.base_ring())
             xnew=xnew.change_ring(self._R)
-        self._powers[(a,b,c,d)]=xnew
-        return self._R(lambd) * xnew * vect
+        # self._powers[(a,b,c,d)]=xnew
+        return xnew
 
     def _repr_(self):
         r"""

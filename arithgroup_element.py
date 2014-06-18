@@ -143,7 +143,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         '''
         Gamma = self.parent()
         self.has_quaternion_rep = True
-        return prod((Gamma.Ugens[g]**a for g,a in self.word_rep), z = Gamma.B(1))
+        return prod([Gamma.Ugens[g]**a for g,a in self.word_rep], z = Gamma.B(1))
 
     def check_consistency(self, q = None, wd = None,txt = ''):
         if q is None and wd is None:
@@ -172,6 +172,32 @@ class ArithGroupElement(MultiplicativeGroupElement):
         '''
         g,a = self.word_rep[n]
         return self.parent().gen(g)**a
+
+    @cached_method
+    def embed(self,prec):
+        G = self.parent()
+        if self.has_word_rep:
+            return prod([G.embed(G.Ugens[i],prec)**a for i,a in self.word_rep])
+        else:
+            return G.embed(self.quaternion_rep,prec)
+
+    @cached_method
+    def total_fox_derivative(self):
+        G = self.parent()
+        ans = [defaultdict(ZZ) for o in G.gens()]
+        h = self.quaternion_rep
+        for i,a in reversed(self.word_rep):
+            if a > 0:
+                ginv = G.Ugens[i]**-1
+                for j in range(a):
+                    h = h * ginv
+                    ans[i][h] += 1
+            else:
+                g = G.Ugens[i]
+                for j in range(-a):
+                    ans[i][h] -= 1
+                    h = h * g
+        return ans
 
     def is_trivial_in_abelianization(self):
         #return self.parent().get_weight_vector(self) in self.parent().get_relation_matrix().image()

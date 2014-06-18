@@ -135,13 +135,55 @@ class CohomologyElement(ModuleElement):
             raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
+    def evaluate_new(self,x):
+        if self.parent().is_overconvergent:
+            G = self.parent().group()
+            V = self.parent().coefficient_module()
+            prec = V.base_ring().precision_cap()
+            Sigma0 = self.parent().Sigma0()
+
+            try:
+                totalfd = x.total_fox_derivative()
+            except AttributeError:
+                totalfd = G(x).total_fox_derivative()
+
+            ans = V(0)
+            for i,phig in enumerate(self._val):
+                fd = totalfd[i]
+                matlist = []
+                for gamma,n in fd.iteritems():
+                    if n == 0:
+                        continue
+                    gmat = G.embed(gamma,prec)
+                    if self.parent()._use_ps_dists:
+                        ans += Sigma0(gmat) * (n * phig)
+                    else:
+                        gmat.set_immutable()
+                        matlist.append((n,gmat))
+                ans = phig.l_act_by_many(matlist)
+            return ans
+        else:
+            try:
+                word = tuple(x.word_rep)
+            except AttributeError:
+                word = tuple(self.parent().group()(x).word_rep)
+            V = self.parent().coefficient_module()
+            return sum([a*self._evaluate_at_group_generator(j) for j,a in word],V(0))
+
+
     def evaluate(self,x):
         try:
             word = tuple(x.word_rep)
         except AttributeError:
             word = tuple(self.parent().group()(x).word_rep)
         if self.parent().is_overconvergent:
-            return self._evaluate_word(word)
+            V = self.parent().coefficient_module()
+            if len(word) == 0:
+                return V(0)
+            elif len(word) == 1:
+                return self._evaluate_syllable(*word[0])
+            else:
+                return self._evaluate_word(word)
         else:
             V = self.parent().coefficient_module()
             return sum([a*self._evaluate_at_group_generator(j) for j,a in word],V(0))
@@ -153,7 +195,7 @@ class CohomologyElement(ModuleElement):
         coeff_module = self.parent().coefficient_module()
         gablist = list(Gab.G_to_ab_free(G.gen(j)))
         cvals = [coeff_module(o) for o in self._val]
-        return sum((ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0),coeff_module(0))
+        return sum([ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0],coeff_module(0))
 
     @cached_method
     def _evaluate_syllable(self,g,a):
@@ -161,30 +203,40 @@ class CohomologyElement(ModuleElement):
         V = self.parent().coefficient_module()
         prec = V.base_ring().precision_cap()
         Sigma0 = self.parent().Sigma0()
-        if a == 0:
+        #G._evaluate_stats[ZZ(a).abs()] += 1
+        if a == 1:
+            return self._val[g]
+        elif a == 0:
             return V(0)
         elif a == -1:
-            gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
+            # gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
+            gmat_inv = G.gen(g).embed(prec).adjoint() # G.gen(g).embed(prec)**-1
             if self.parent()._use_ps_dists:
                 return -(Sigma0(gmat_inv) * self._val[g])
             else:
                 return  -self._val[g].l_act_by(gmat_inv)
         elif a < 0:
-            gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
-            if self.parent()._use_ps_dists:
-                return -(Sigma0(gmat_inv**-a) * self._evaluate_syllable(g,-a))
-            else:
-                return -self._evaluate_syllable(g,-a).l_act_by(gmat_inv**-a)
-        elif a == 1:
-            return self._val[g]
-        else:
-            gmat = G.embed(G.gen(g).quaternion_rep,prec)
+            gmat = G.gen(g).embed(prec) # G.embed(G.gen(g).quaternion_rep,prec)
+            gmat_inv = gmat.adjoint() #gmat**-1
             phig = self._val[g]
             tmp = V(phig)
-            for i in range(a-1):
-                if self.parent()._use_ps_dists:
+            if self.parent()._use_ps_dists:
+                for i in range(-a-1):
                     tmp = phig + Sigma0(gmat) * tmp
-                else:
+                return -(Sigma0(gmat_inv**-a) * tmp)
+            else:
+                for i in range(-a-1):
+                    tmp = phig + tmp.l_act_by(gmat)
+                return -(tmp.l_act_by(gmat_inv**-a))
+        else:
+            gmat = G.gen(g).embed(prec) #G.embed(G.gen(g).quaternion_rep,prec)
+            phig = self._val[g]
+            tmp = V(phig)
+            if self.parent()._use_ps_dists:
+                for i in range(a-1):
+                    tmp = phig + Sigma0(gmat) * tmp
+            else:
+                for i in range(a-1):
                     tmp = phig + tmp.l_act_by(gmat)
             return tmp
 
@@ -199,19 +251,48 @@ class CohomologyElement(ModuleElement):
         V = self.parent().coefficient_module()
         prec = V.base_ring().precision_cap()
         Sigma0 = self.parent().Sigma0()
-        if len(word) == 0:
-            return V(0)
-        elif len(word) == 1:
-            return self._evaluate_syllable(*word[0])
-        else:
-            pivot = len(word) // 2
+
+        lenword = len(word)
+        if lenword > 3:
+            # ans = self._evaluate_syllable(*word[-1])
+            # for g,a in reversed(word[:-1]):
+            #     gammamat = G.embed(G.Ugens[g]**a,prec)
+            #     if self.parent()._use_ps_dists:
+            #         ans = Sigma0(gammamat) * ans
+            #     else:
+            #         ans = ans.l_act_by(gammamat)
+            #     ans += self._evaluate_syllable(g,a)
+            # return ans
+            pivot = ZZ(lenword) // ZZ(2)
             word_prefix = word[:pivot]
-            # gamma = prod([G.Ugens[g]**a for g,a in word_prefix],G.B(1))
-            gamma = G(list(word_prefix)).quaternion_rep
+            gammamat = G.embed(prod([G.Ugens[g]**a for g,a in word_prefix],G.B(1)),prec)
             if self.parent()._use_ps_dists:
-                return self._evaluate_word(tuple(word_prefix)) + Sigma0(G.embed(gamma,prec)) *  self._evaluate_word(tuple(word[pivot:]))
+                return self._evaluate_word(tuple(word_prefix)) + Sigma0(gammamat) *  self._evaluate_word(tuple(word[pivot:]))
             else:
-                return self._evaluate_word(tuple(word_prefix)) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(G.embed(gamma,prec))
+                return self._evaluate_word(tuple(word_prefix)) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(gammamat)
+
+        if lenword == 2:
+            g,a = word[0]
+            gammamat = G.embed(G.Ugens[g]**a,prec)
+            if self.parent()._use_ps_dists:
+                return self._evaluate_syllable(g,a) + Sigma0(gammamat) *  self._evaluate_syllable(*word[1])
+            else:
+                return self._evaluate_syllable(g,a) +  self._evaluate_syllable(*word[1]).l_act_by(gammamat)
+        if lenword == 3:
+            g,a = word[0]
+            ga = G.embed(G.Ugens[g]**a,prec)
+            h,b = word[1]
+            hb = G.embed(G.Ugens[g]**b,prec)
+            if self.parent()._use_ps_dists:
+                return self._evaluate_syllable(g,a) + Sigma0(ga) *  (self._evaluate_syllable(h,b) + Sigma0(hb) * self._evaluate_syllable(*word[2]))
+            else:
+                return self._evaluate_syllable(g,a) +  (self._evaluate_syllable(h,b) + self._evaluate_syllable(*word[2]).l_act_by(hb)).l_act_by(ga)
+
+        if lenword == 0:
+            return V(0)
+
+        if lenword == 1:
+            return self._evaluate_syllable(*word[0])
 
     def improve(self,prec = None,sign = 1,parallelize = False,progress_bar = False):
         r"""
@@ -412,7 +493,7 @@ class CohomologyGroup(Parent):
                         except (ValueError,ArithmeticError):
                             continue
                     else:
-                        ap = self.hecke_matrix(qq).eigenvalues(extend = False)[0]
+                        ap = self.hecke_matrix(qq.gens_reduced()[0]).eigenvalues(extend = False)[0]
                         verbose('Found aq = %s'%ap)
                     K1 = (self.hecke_matrix(qq)-ap).right_kernel()
                     K = K.intersection(K1)

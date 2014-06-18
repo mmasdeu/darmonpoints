@@ -933,13 +933,13 @@ def discover_equation(qE,emb,conductor,prec):
     p = qE.parent().prime()
     try:
         Funits = [F(F.unit_group().torsion_generator())**i for i in range(F.unit_group().torsion_generator().order())]
+        if len(F.units()) > 0:
+            u = F.units()[0]
+            if len(F.units()) > 1:
+                raise NotImplementedError
+            Funits = [u0*u**i for u0,i in product(Funits,range(-12,13))]
     except AttributeError:
         Funits = [-1, +1]
-    if len(F.units()) > 0:
-        u = F.units()[0]
-        if len(F.units()) > 1:
-            raise NotImplementedError
-        Funits = [u0*u**i for u0,i in product(Funits,range(-12,13))]
     try:
         primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
     except AttributeError:
@@ -966,8 +966,6 @@ def discover_equation(qE,emb,conductor,prec):
                         if not c6squared.is_square():
                             continue
                         for c6ex in c6squared.sqrt(all=True):
-                            if c4ex != 0 or c6ex != 0:
-                                print [c4ex,c6ex]
                             try:
                                 E = EllipticCurve_from_c4c6(c4ex,c6ex)
                             except ArithmeticError:
@@ -1042,6 +1040,6 @@ def update_progress(progress):
         progress = 1
         status = "Done...\r\n"
     block = int(round(barLength*progress))
-    text = "\rPercent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
+    text = "\rPercent: [{0}] {1:.2f}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
     sys.stdout.write(text)
     sys.stdout.flush()

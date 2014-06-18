@@ -32,7 +32,7 @@ from arithgroup_element import ArithGroupElement
 from sage.misc.sage_eval import sage_eval
 from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
-
+from sage.groups.free_group import FreeGroup
 
 work_with_SL2 = False # If False, works in PGL2 instead
 
@@ -67,6 +67,11 @@ class ArithGroup_generic(AlgebraicGroup):
         for i,rel in enumerate(self.get_relation_words()):
             for j,k in rel:
                 self._relation_matrix[i,j] += k
+        self._evaluate_stats = [ZZ(0) for o in range(100)]
+        self._free_group = FreeGroup(len(self.gens()))
+
+    def free_group(self):
+        return self._free_group
 
     def base_field(self):
         return self.F
@@ -454,10 +459,10 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         self._relation_words = []
         for rel in temp_relation_words:
             sign = ZZ(prod((self.Ugens[g]**a for g,a in rel), z = self.B(1)))
+            assert sign.abs() == 1
             if sign == 1:
                 self._relation_words.append(rel)
             else:
-                assert sign == -1
                 if work_with_SL2:
                     newrel = rel + self.minus_one
                     sign = ZZ(prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)))
@@ -654,6 +659,23 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 return all_candidates
             else:
                 raise RuntimeError,'Not found'
+
+    def non_positive_unit(self,radius = -1):
+        try:
+            return self._non_positive_unit
+        except AttributeError:
+            pass
+        v = self.Obasis
+        verbose('Doing long enumeration...')
+        M = 0
+        while M != radius:
+            M += 1
+            verbose('M = %s,radius = %s'%(M,radius))
+            for a0,an in product(range(M),product(range(-M+1,M),repeat = len(v)-1)):
+                candidate = self.B(sum(ai*vi for ai,vi in  zip([a0]+list(an),v)))
+                if candidate.reduced_norm() == -1:
+                    self._non_positive_unit = candidate
+                    return candidate
 
     @cached_method
     def get_hecke_reps(self,l,use_magma = True):

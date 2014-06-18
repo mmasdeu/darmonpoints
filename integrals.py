@@ -289,55 +289,55 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
-    R1 = LaurentSeriesRing(K,'r1')
+    R1 = PowerSeriesRing(K,'r1')
     r1 = R1.gen()
     R1.set_default_prec(prec)
-
-    R0 = PolynomialRing(K,'t')
-    t = R0.gen()
-    R0f = R0.fraction_field()
-    phi = R0f(prod([(t - P)**ZZ(n) for P,n in divisor if n > 0],R0(1)))/R0f(prod([(t - P)**ZZ(-n) for P,n in divisor if n < 0],R0(1)))
+    divisor_list = [(P,n) for P,n in divisor]
+    # R0 = PolynomialRing(K,'t')
+    # t = R0.gen()
+    # R0f = R0.fraction_field()
+    # phi = R0f(prod([(t - P)**ZZ(n) for P,n in divisor if n > 0],R0(1)))/R0f(prod([(t - P)**ZZ(-n) for P,n in divisor if n < 0],R0(1)))
 
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o) for o in G.get_covering(1)]
-    common_div = divisor.gcd()
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
         ii = 0
         for parity, edge in edgelist:
             ii += 1
+            rev, h = edge
+            # a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
+            a,b,c,d = G.embed(h,prec).adjoint().change_ring(K).list()
+            # hexp = (a*r1+b)/(c*r1+d)
+            # y0 = phi(hexp)
+
+            y0num = R1(1)
+            y0den = R1(1)
+            for P,n in divisor_list:
+                hP = R1([b-d*P,a-P*c])
+                if n > 0:
+                    y0num *= hP**ZZ(n)
+                    y0num = y0num.add_bigoh(prec)
+                elif n < 0:
+                    y0den *= hP**ZZ(-n)
+                    y0den = y0den.add_bigoh(prec)
             if progress_bar:
                 update_progress(float(ii)/float(len(edgelist)))
 
-            rev, h = edge
-            a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
-
-            hexp = (a*r1+b)/(c*r1+d)
-            y0 = phi(hexp)
-
-            # y0num = R1(1)
-            # y0den = R1(1)
-            # for P,n in divisor:
-            #     assert P.valuation() >= -1
-            #     hP = R1(a-P*c)*r1 + R1(b-d*P)
-            #     if n > 0:
-            #         y0num *= hP**ZZ(n)
-            #         y0num = y0num.add_bigoh(prec)
-            #     else:
-            #         y0den *= hP**ZZ(-n)
-            #         y0den = y0den.add_bigoh(prec)
-            # y0 = y0num/y0den
-
-            val = y0(K(0))
-
-            if val == 0 or not all([o.valuation(p) >= 0 for o in (y0(r1/p)/val - 1).list()]):
+            assert y0num.valuation() == y0den.valuation()
+            y0 = y0num/y0den
+            c0 = y0(K(0))
+            assert c0 != 0
+            c0val = c0.valuation()
+            if not all([o.valuation() >= 0 for o in (y0(r1/p)/c0).list() if o != 0]):
+            #if not all([o.valuation() >= e + c0val for o,e in zip(y0.coefficients(),y0.exponents())]):
                 newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
                 assert not rev
                 # newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])
                 continue
-            pol = val.log(p_branch = 0) + (y0.derivative()/y0).integral()
+            pol = c0.log(p_branch = 0) + (y0.derivative()/y0).integral()
             if not rev:
                 mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
             else:
@@ -349,13 +349,14 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 newresadd = mu_e.evaluate_at_poly(pol)
             resadd += newresadd
             try:
-                resmul *= val**ZZ(mu_e.moment(0).rational_reconstruction())
+                resmul *= c0**ZZ(mu_e.moment(0).rational_reconstruction())
             except IndexError: pass
         edgelist = newedgelist
+
     val =  resmul.valuation(p)
     if val != 0:
         verbose('val = %s'%val)
     tmp = p**val * K.teichmuller(p**(-val)*resmul)
     if resadd != 0:
         tmp *= resadd.exp()
-    return tmp #**common_div
+    return tmp
