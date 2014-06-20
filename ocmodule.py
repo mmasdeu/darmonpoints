@@ -74,7 +74,7 @@ class OCVnElement(ModuleElement):
         Returns the value of ``self`` on the polynomial `x^r`.
 
         INPUT:
-          - ``r`` - an integer. The power of `x`. 
+          - ``r`` - an integer. The power of `x`.
 
         EXAMPLES:
 
@@ -103,7 +103,7 @@ class OCVnElement(ModuleElement):
 
         ::
         """
-        tmp=self.matrix_rep()
+        tmp = self.matrix_rep()
         return [tmp[ii,0] for ii in range(tmp.nrows())]
 
     def list(self):
@@ -127,8 +127,8 @@ class OCVnElement(ModuleElement):
 
         """
         #Express the element in terms of the basis B
-        if(B is None):
-            B=self._parent.basis()
+        if B is None:
+            B = self._parent.basis()
         A=Matrix(self._parent._R,self._parent.dimension(),self._parent.dimension(),[[b._val[ii,0] for b in B] for ii in range(self._depth)])
         tmp=A.solve_right(self._val)
         return tmp
@@ -157,25 +157,11 @@ class OCVnElement(ModuleElement):
         val=self._val-y._val
         return self.__class__(self._parent,val, check = False)
 
-    def _get_action_matrix(self,xlist):
-        assert self._n == 0
-        par = self.parent()
-        y = Matrix(par._Rmod,par._depth,par._depth,0)
-        MatSp = y.parent()
-        for n,x in xlist:
-            a,b,c,d = x.list()
-            try:
-                y += n * self._parent._cache_powers[(a,b,c,d)]
-                self._parent._hits += 1
-            except KeyError:
-                y += n * self._parent._get_powers(a,b,c,d)
-                self._parent._misses += 1
-        return y
-
     def l_act_by_many(self,xlist):
         if len(xlist) == 0:
             return self._parent(0)
-        y = (self._get_action_matrix(xlist) * self._val).change_ring(self._parent._R)
+        y = self._parent._get_action_matrix(xlist) * self._val
+        # y = y.change_ring(self._parent._R)
         return self.__class__(self._parent, y)
 
     def r_act_by(self,x):
@@ -203,14 +189,9 @@ class OCVnElement(ModuleElement):
         R = self._parent._R
         xdet = x.determinant()
 
-        a,b,c,d = x.list()
-        try:
-            tmp = (self._parent._cache_powers[(a,b,c,d)] * self._val).change_ring(R)
-            self._parent._hits += 1
-        except KeyError:
-            tmp = (self._parent._get_powers(a,b,c,d) * self._val).change_ring(R)
-            self._parent._misses += 1
-
+        x.set_immutable()
+        tmp = self._parent._get_powers(x) * self._val
+        # tmp = tmp.change_ring(R)
         if self._nhalf == 0:
             return self.__class__(self._parent, tmp,check = False)
         else:
@@ -397,6 +378,7 @@ class OCVn(Module,UniqueRepresentation):
         self._depth=depth
         self._PowerSeries=PowerSeriesRing(self._Rmod,default_prec=self._depth,name='z')
         self._cache_powers = dict()
+        #self._cache_powers_stats = dict()
         self._hits = 0
         self._misses = 0
         self._populate_coercion_lists_()
@@ -434,7 +416,7 @@ class OCVn(Module,UniqueRepresentation):
         #Admissible values of x?
         return OCVnElement(self,x,check)
 
-    def _get_powers(self,a,b,c,d):
+    def _get_powers(self,abcd,emb = None):
         r"""
         Compute the action of a matrix on the basis elements.
 
@@ -443,6 +425,13 @@ class OCVn(Module,UniqueRepresentation):
         ::
 
         """
+        try:
+            return self._cache_powers[abcd]
+        except KeyError:
+            if emb is None:
+                a,b,c,d = abcd.list()
+            else:
+                a,b,c,d = emb(abcd).list()
         R=self._PowerSeries
         r=R([b,a])
         s=R([d,c])
@@ -468,14 +457,8 @@ class OCVn(Module,UniqueRepresentation):
                 y *= ratio
                 for jj in range(self._depth):
                     x[ii,jj] = y[jj]
-        # if self._Rmod is self._R:
-        #     xnew = x
-        # else:
-        #     xnew = x.change_ring(self._R.base_ring())
-        #     xnew = xnew.change_ring(self._R)
-        #x = x.lift()
-        self._cache_powers[(a,b,c,d)] = x # xnew
-        return x # xnew
+        self._cache_powers[abcd] = x
+        return x
 
     def _repr_(self):
         r"""
@@ -563,6 +546,16 @@ class OCVn(Module,UniqueRepresentation):
         Returns the cohomological weight of the automorphic form.
         """
         return self._n
+
+    def _get_action_matrix(self,xlist,emb = None):
+        assert self._n == 0
+        MatSp = MatrixSpace(self._Rmod,self._depth,self._depth)
+        y = MatSp(0)
+        for n,x in xlist:
+            if emb is None:
+                x.set_immutable()
+            y += n * self._get_powers(x,emb)
+        return y
 
     def acting_matrix(self,g,d,B=None):
         r"""

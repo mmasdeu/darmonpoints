@@ -212,18 +212,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
             gq = G.wp * gq * G.wp**-1
-        if not parallelize:
-            res *= integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,False)
-        else:
-            input_vec.extend(integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,True))
-    if parallelize:
-        verbose('Need to evaluate at %s places'%len(input_vec))
-        res = Cp(1)
-        i = 0
-        for _,outp in parallel(evaluate_parallel)(input_vec):
-            i += 1
-            verbose('Done %s/%s'%(i,len(input_vec)))
-            res *= outp
+        res *= integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,parallelize)
     return res
 
 def evaluate_parallel(hc,gamma,pol,c0):
@@ -293,7 +282,7 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
             res += phi(K(te)) * hce
     return res
 
-def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar):
+def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize):
     verbose('Integral %s/%s...'%(counter,total_counter))
     HOC = hc.parent()
     if prec is None:
@@ -306,13 +295,13 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
     return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = True)
 
-def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,dry_run = False):
+def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize):
     verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
-    if not dry_run:
-        HOC = hc.parent()
+    HOC = hc.parent()
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
+    depth = HOC.coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
     R1 = PowerSeriesRing(K,'r1')
     r1 = R1.gen()
@@ -321,8 +310,6 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o) for o in G.get_covering(1)]
-    if dry_run:
-        gammas = []
     mem0 = get_memory_usage()
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
@@ -337,9 +324,8 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             if mem_usage > float(8 * 1000):
                 verbose('Clearing caches! (mem_usage = %s)'%(mem_usage-mem0))
                 G.clear_cache()
-                if not dry_run:
-                    V = HOC.coefficient_module()
-                    V.clear_cache()
+                V = HOC.coefficient_module()
+                V.clear_cache()
                 verbose('Done. New mem_usage = %s'%(get_memory_usage()-mem0))
             rev, h = edge
             a,b,c,d = G.embed(h,prec).adjoint().change_ring(K).list()
@@ -369,27 +355,22 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 newgamma = G.reduce_in_amalgam(h * gamma)
             else:
                 newgamma = G.wp**-1 * G.reduce_in_amalgam(h * gamma) * G.wp
-            if dry_run:
-                gammas.append((hc,newgamma,pol,c0))
+            mu_e = hc.evaluate(newgamma,parallelize)
+            if HOC._use_ps_dists:
+                newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                mu_e = hc.evaluate(newgamma)
-                if HOC._use_ps_dists:
-                    newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
-                else:
-                    newresadd = mu_e.evaluate_at_poly(pol)
-                resadd += newresadd
-                try:
-                    resmul *= c0**ZZ(mu_e.moment(0).rational_reconstruction())
-                except IndexError: pass
+                # newresadd = sum([(mu_e._val[ii,0])*pol[ii] for ii in xrange(1+min([depth,pol.degree()]))])
+                newresadd = mu_e.evaluate_at_poly(pol)
+            resadd += newresadd
+            try:
+                resmul *= c0**ZZ(mu_e.moment(0).rational_reconstruction())
+            except IndexError: pass
         edgelist = newedgelist
 
-    if dry_run:
-        return gammas
-    else:
-        val =  resmul.valuation(p)
-        if val != 0:
-            verbose('val = %s'%val)
-        tmp = p**val * K.teichmuller(p**(-val)*resmul)
-        if resadd != 0:
-            tmp *= resadd.exp()
-        return tmp
+    val =  resmul.valuation()
+    if val != 0:
+        verbose('val = %s'%val)
+    tmp = p**val * K.teichmuller(p**(-val)*resmul)
+    if resadd != 0:
+        tmp *= resadd.exp()
+    return tmp

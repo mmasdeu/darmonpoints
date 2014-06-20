@@ -23,7 +23,7 @@ from ocmodule import OCVn
 from sage.misc.persist import db,db_save
 from sage.schemes.plane_curves.constructor import Curve
 from sage.parallel.decorate import fork,parallel
-
+from sage.parallel.ncpus import ncpus
 oo = Infinity
 
 def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False):
@@ -139,11 +139,12 @@ class CohomologyElement(ModuleElement):
             raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
-    def evaluate_oc(self,x):
-        G = self.parent().group()
-        V = self.parent().coefficient_module()
+    def evaluate_oc(self,x,parallelize = False):
+        H = self.parent()
+        G = H.group()
+        V = H.coefficient_module()
         prec = V.base_ring().precision_cap()
-        Sigma0 = self.parent().Sigma0()
+        Sigma0 = H.Sigma0()
         if hasattr(x,'word_rep'):
             wd  = x.word_rep
         else:
@@ -151,31 +152,56 @@ class CohomologyElement(ModuleElement):
             wd = x.word_rep
         if len(wd) == 0:
             return V(0)
-        elif len(wd) == 1:
-            return self._evaluate_syllable(*wd[0])
-        elif len(wd) == 2:
-            return self._evaluate_word(wd)
+        # elif len(wd) == 1:
+        #     return self._evaluate_syllable(*wd[0])
+        # elif len(wd) == 2:
+        #     return self._evaluate_word(wd)
 
-        h = x.quaternion_rep
-        grad = G.fox_gradient(h,tuple(wd))
-        ans = V(0)
+        #h = x.quaternion_rep
+        #ans = V(0)
+        ans = Matrix(V._R,V.dimension(),1)
+        emb = lambda x:G.embed(x,prec)
         if self.parent()._use_ps_dists:
+            raise NotImplementedError
+            grad = self.parent().fox_gradient(wd)
             for i,phig in enumerate(self._val):
                 fd = grad[i]
                 for gamma,n in fd.iteritems():
-                    ans += Sigma0(G.embed(gamma,prec)) * (n * phig)
+                    if n != 0:
+                        ans += Sigma0(G.embed(gamma,prec)) * (n * phig)
         else:
-            for i,phig in enumerate(self._val):
-                fd = grad[i]
-                matlist = []
-                for gamma,n in fd.iteritems():
-                    gmat = G.embed(gamma,prec)
-                    matlist.append((n,gmat))
-                if len(matlist) > 0:
-                    ans += phig.l_act_by_many(matlist)
+            W = self._val[0]._val.parent()
+            ans = W(0)
+            # h = ZZ(1)
+            # for i,a in wd:
+            #     ans += h * (H.get_fox_term(i,a) * self._val[i]._val)
+            #     h = h * H.get_gen_pow(i,a)
+            i,a = wd[-1]
+            ans = H.get_fox_term(i,a) * self._val[i]._val
+            for i,a in reversed(wd[:-1]):
+                ans = H.get_fox_term(i,a) * self._val[i]._val + H.get_gen_pow(i,a) * ans
+            ans = V(ans)
+
+            # input_vec = []
+            # for i,phig in enumerate(self._val):
+            #     fd = grad[i]
+            #     matlist = []
+            #     for gamma,n in fd.iteritems():
+            #         if n != 0:
+            #             matlist.append((n,gamma)) # gmat
+            #     if len(matlist) > 0:
+            #         input_vec.append((V._get_action_matrix(matlist,emb),phig._val))
+            # if parallelize:
+            #     chunk_length = (QQ(len(input_vec))/QQ(ncpus())).ceil()
+            #     chunks=[input_vec[i:i+chunk_length] for i in xrange(len(input_vec), chunk_length)]
+            #     for _,outp in parallel(lambda xv,yv: sum([x._mul_(y) for x,y in zip(xv,yv)]))(chunks):
+            #         ansvec += outp
+            #     ans = V(ansvec)
+            # else:
+            #     ans = V(sum([x*y for x,y in input_vec]))
         return ans
 
-    def evaluate_triv(self,x):
+    def evaluate_triv(self,x,parallelize = False):
         try:
             word = tuple(x.word_rep)
         except AttributeError:
@@ -359,6 +385,14 @@ class CohomologyGroup(Parent):
             else:
                 self._coeffmodule = OCVn(0,base,1+base.precision_cap())
             self._num_abgens = len(self._group.gens())
+            self._gen_pows = []
+            self._gen_pows_neg = []
+            for i,g in enumerate(self._group.gens()):
+                gmat = self.group().embed(self._group.Ugens[i],1+base.precision_cap())
+                gmat.set_immutable()
+                A = self._coeffmodule._get_powers(gmat)
+                self._gen_pows.append([1,A])
+                self._gen_pows_neg.append([1,A**-1])
         else:
             self.is_overconvergent = False
             self._coeffmodule = base**1
@@ -408,6 +442,40 @@ class CohomologyGroup(Parent):
                 return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
         else:
             return self.element_class(self,[self._coeffmodule(data) for g in range(self._num_abgens)])
+
+
+
+    def fox_gradient(self,word):
+        ans = [ZZ(0) for o in self.group().Ugens]
+        h = ZZ(1)
+        for i,a in word:
+            ans[i] += h * self.get_fox_term(i,a)
+            h = h * self.get_gen_pow(i,a)
+        return ans
+
+    def get_gen_pow(self,i,a):
+        if a == 0:
+            return self._gen_pows[0][0]
+        elif a > 0:
+            genpows = self._gen_pows[i]
+            while len(genpows) <= a:
+                genpows.append(genpows[1] * genpows[-1])
+            return genpows[a]
+        else:
+            genpows = self._gen_pows_neg[i]
+            while len(genpows) <= -a:
+                genpows.append(genpows[1] * genpows[-1])
+            return genpows[-a]
+
+    @cached_method
+    def get_fox_term(self,i,a):
+        if a >= 0:
+            self.get_gen_pow(i,a-1)
+            return sum([self._gen_pows[i][o] for o in range(a)],0)
+        else:
+            self.get_gen_pow(i,a)
+            return -sum([self._gen_pows_neg[i][o] for o in range(1,-a+1)])
+
 
     def dimension(self):
         raise NotImplementedError

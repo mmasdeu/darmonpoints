@@ -68,38 +68,34 @@ class ArithGroup_generic(AlgebraicGroup):
                 self._relation_matrix[i,j] += k
         self._evaluate_stats = [ZZ(0) for o in range(100)]
         self._free_group = FreeGroup(len(self.gens()))
-        self._cache_fox_gradient = dict({tuple([]):[defaultdict(int) for o in self.gens()]})
+        self._cache_fox_gradient = dict()
         self._cache_hecke_reps = dict()
 
     def clear_cache(self):
         return
 
-    def fox_gradient(self,h,word):
-        try:
-            return self._cache_fox_gradient[word]
-        except KeyError: pass
-        ans = [defaultdict(int) for o in self.gens()]
-        for i,a in reversed(word):
-            ansi = ans[i]
-            g = self.Ugens[i]
-            if a == int(1):
-                h = h * g**-1
-                ansi[h] += int(1)
-            elif a == int(-1):
-                ansi[h] -= int(1)
-                h = h * g
-            elif a > int(1):
-                ginv = g**-1
-                for j in range(a):
-                    h = h * ginv
-                    ansi[h] += int(1)
-            else:
-                assert a < int(-1)
-                for j in range(-a):
-                    ansi[h] -= int(1)
-                    h = h * g
-        self._cache_fox_gradient[word] = ans
-        return ans
+    # def fox_gradient(self,h,word):
+    #     tword = tuple(word)
+    #     try:
+    #         return self._cache_fox_gradient[tword]
+    #     except KeyError: pass
+    #     ans = [defaultdict(int) for o in self.gens()]
+    #     #while len(word) > 0:
+    #     for i,a in reversed(word):
+    #         #i,a = word.pop()
+    #         ansi = ans[i]
+    #         g = self.Ugens[i]
+    #         if a > 0:
+    #             ginv = g**-1
+    #             for j in range(a):
+    #                 h = h * ginv
+    #                 ansi[h] += 1
+    #         else:
+    #             for j in range(-a):
+    #                 ansi[h] -= 1
+    #                 h = h * g
+    #     self._cache_fox_gradient[tword] = ans
+    #     return ans
 
     def free_group(self):
         return self._free_group
