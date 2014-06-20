@@ -5,14 +5,14 @@
 #
 #                  http://www.gnu.org/licenses/
 #########################################################################
-from sage.misc.cachefunc import cached_method
+#from sage.misc.cachefunc import cached_method
 from sage.structure.element import ModuleElement
 from sage.modules.module import Module
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
 from copy import copy
 from sage.rings.finite_rings.integer_mod_ring import Zmod
-from sage.rings.all import Integer
+from sage.rings.all import Integer,Zp
 from sage.rings.power_series_ring import PowerSeriesRing
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.rings.rational_field import QQ
@@ -157,21 +157,24 @@ class OCVnElement(ModuleElement):
         val=self._val-y._val
         return self.__class__(self._parent,val, check = False)
 
-    def l_act_by_many(self,xlist):
+    def _get_action_matrix(self,xlist):
         assert self._n == 0
-        is_exact = self._parent.base_ring().is_exact()
-        R = self._parent._R
+        par = self.parent()
+        y = Matrix(par._Rmod,par._depth,par._depth,0)
+        MatSp = y.parent()
+        for n,x in xlist:
+            a,b,c,d = x.list()
+            try:
+                y += n * self._parent._cache_powers[(a,b,c,d)]
+            except KeyError:
+                y += n * self._parent._get_powers(a,b,c,d)
+        return y
+
+    def l_act_by_many(self,xlist):
         if len(xlist) == 0:
             return self._parent(0)
-        n,x = xlist[0]
-        factor = 1 if is_exact else R.prime()**(-min([R(o).valuation() for o in x.list() if o!=0]))
-        a,b,c,d = x.list()
-        y =  n * self._parent._get_powers(factor*a,factor*b,factor*c,factor*d)
-        for n,x in xlist[1:]:
-            factor = 1 if is_exact else R.prime()**(-min([R(o).valuation() for o in x.list() if o!=0]))
-            a,b,c,d = x.list()
-            y += n * self._parent._get_powers(factor*a,factor*b,factor*c,factor*d)
-        return self.__class__(self._parent, (y * self._val),check = False)
+        y = (self._get_action_matrix(xlist) * self._val).change_ring(self._parent._R)
+        return self.__class__(self._parent, y)
 
     def r_act_by(self,x):
         r"""
@@ -197,21 +200,17 @@ class OCVnElement(ModuleElement):
         """
         R = self._parent._R
         xdet = x.determinant()
-        if  self._parent.base_ring().is_exact():
-            factor = 1
-        else:
-            t = min([R(o).valuation() for o in x.list() if o != 0])
-            if t != 0:
-                factor = R.prime()**-t
-            else:
-                factor = 1
 
         a,b,c,d = x.list()
-        tmp = self._parent._get_powers(factor*a,factor*b,factor*c,factor*d) * self._val
+        try:
+            tmp = (self._parent._cache_powers[(a,b,c,d)] * self._val).change_ring(R)
+        except KeyError:
+            tmp = (self._parent._get_powers(a,b,c,d) * self._val).change_ring(R)
+
         if self._nhalf == 0:
             return self.__class__(self._parent, tmp,check = False)
         else:
-            lam = xdet * factor**2
+            lam = xdet # * factor**2
             return self.__class__(self._parent,lam**(-self._nhalf) * tmp,check = False)
 
     def _rmul_(self,a):
@@ -385,7 +384,7 @@ class OCVn(Module,UniqueRepresentation):
         if R.is_exact():
             self._Rmod=self._R
         else:
-            self._Rmod=Zmod(self._R.prime()**(self._R.precision_cap()))
+            self._Rmod=Zp(self._R.prime(),self._R.precision_cap())
 
         if depth is None:
             depth=n+1
@@ -393,8 +392,12 @@ class OCVn(Module,UniqueRepresentation):
             if R.is_exact(): raise ValueError, "Trying to construct an over-convergent module with exact coefficients, how do you store p-adics ??"
         self._depth=depth
         self._PowerSeries=PowerSeriesRing(self._Rmod,default_prec=self._depth,name='z')
-        #self._powers=dict()
+        self._cache_powers = dict()
         self._populate_coercion_lists_()
+
+    def clear_cache(self):
+        del self._cache_powers
+        self._cache_powers = dict()
 
     def is_overconvergent(self):
         return self._depth != self._n+1
@@ -425,7 +428,6 @@ class OCVn(Module,UniqueRepresentation):
         #Admissible values of x?
         return OCVnElement(self,x,check)
 
-    @cached_method
     def _get_powers(self,a,b,c,d):
         r"""
         Compute the action of a matrix on the basis elements.
@@ -439,34 +441,35 @@ class OCVn(Module,UniqueRepresentation):
         r=R([b,a])
         s=R([d,c])
         n=self._n
-        if(self._depth==n+1):
+        if self._depth == n+1:
             rpows=[R(1)]
             spows=[R(1)]
             for ii in range(n):
-                rpows.append(r*rpows[ii])
-                spows.append(s*spows[ii])
+                rpows.append(r*rpows[-1])
+                spows.append(s*spows[-1])
             x=Matrix(self._Rmod,n+1,n+1,0)
             for ii in range(n+1):
-                y=rpows[ii]*spows[n-ii]
+                y = rpows[ii] * spows[n-ii]
                 for jj in range(self._depth):
                     x[ii,jj]=y[jj]
         else:
-            ratio=r*(s**(-1))
-            y=s**n
-            x=Matrix(self._Rmod,self._depth,self._depth,0)
+            ratio = r * s**-1
+            y = s**n
+            x = Matrix(self._Rmod,self._depth,self._depth,0)
             for jj in range(self._depth):
-                x[0,jj]=y[jj]
+                x[0,jj] = y[jj]
             for ii in range(1,self._depth):
-                y*=ratio
+                y *= ratio
                 for jj in range(self._depth):
-                    x[ii,jj]=y[jj]
-        if self._Rmod is self._R:
-            xnew=x
-        else:
-            xnew=x.change_ring(self._R.base_ring())
-            xnew=xnew.change_ring(self._R)
-        # self._powers[(a,b,c,d)]=xnew
-        return xnew
+                    x[ii,jj] = y[jj]
+        # if self._Rmod is self._R:
+        #     xnew = x
+        # else:
+        #     xnew = x.change_ring(self._R.base_ring())
+        #     xnew = xnew.change_ring(self._R)
+        #x = x.lift()
+        self._cache_powers[(a,b,c,d)] = x # xnew
+        return x # xnew
 
     def _repr_(self):
         r"""

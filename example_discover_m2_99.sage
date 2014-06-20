@@ -13,7 +13,7 @@ P = F.ideal(r+1)
 D = F.ideal(NE/P)
 Np = 1
 sign_at_infinity = 1 # Sign at infinity, can be +1 or -1
-prec = 30 # Precision to which result is desired
+prec = 10 # Precision to which result is desired
 working_prec = 80
 outfile = 'points_%s_%s.txt'%(P,D)
 
@@ -44,13 +44,17 @@ G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D).invariants(),Np,us
 Coh = CohomologyGroup(G.Gpn)
 PhiE = Coh.get_cocycle_from_elliptic_curve(get_ap,sign = sign_at_infinity)
 
-g = G.Gn(G.Gpn.gen(3).quaternion_rep)
+i = 0
+g = G.Gpn.gen(i)
+while PhiE.evaluate(g) == 0:
+    i+=1
+    g = G.Gpn.gen(i)
 xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile,method = 'short',few_integrals = True)
 
-PhiElift = get_overconvergent_class_quaternionic(P,get_ap,G,prec,sign_at_infinity,use_ps_dists,apsign = get_ap(P))
+PhiElift = get_overconvergent_class_quaternionic(P,get_ap,G,prec,sign_at_infinity,use_ps_dists,apsign = get_ap(P),progress_bar = True)
 
-qE1 = integrate_H1(G,xi1,PhiElift,1,method = 'moments',prec = working_prec, twist = False)
-qE2 = integrate_H1(G,xi2,PhiElift,1,method = 'moments',prec = working_prec, twist = True)
+qE1 = integrate_H1(G,xi1,PhiElift,1,method = 'moments',prec = working_prec, twist = False,progress_bar = True)
+qE2 = integrate_H1(G,xi2,PhiElift,1,method = 'moments',prec = working_prec, twist = True,progress_bar = True)
 qE = qE1/qE2
 
-curve = discover_equation(qE,G._F_to_Qp,NE,prec).global_minimal_model()
+curve = discover_equation(qE,G._F_to_local,NE,prec).global_minimal_model()

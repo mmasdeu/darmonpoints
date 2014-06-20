@@ -12,7 +12,7 @@ from sage.matrix.constructor import Matrix,matrix
 from sage.misc.cachefunc import cached_method
 from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Qp
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Qp,Zp,Zmod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sigma0 import Sigma0,Sigma0ActionAdjuster
@@ -37,9 +37,9 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
         F = P.number_field()
 
     if Pnorm != p:
-        raise NotImplementedError,'For now I can only work over Qp'
+        raise NotImplementedError,'For now I can only work over totally split'
 
-    base_field = Qp(p,prec)
+    base_ring = Zp(p,prec) #Qp(p,prec)
 
     # Define phiE, the cohomology class associated to the curve E.
     Coh = CohomologyGroup(G.small_group())
@@ -56,14 +56,14 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
     if use_sage_db:
         try:
             Phivals = db(fname)
-            CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = base_field,use_ps_dists = use_ps_dists)
+            CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
             CohOC._coeff_module = Phivals[0].parent()
             VOC = CohOC.coefficient_module()
             Phi = CohOC([VOC(o) for o in Phivals])
             return Phi
         except IOError: pass
     verbose('Computing moments...')
-    CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = base_field,use_ps_dists = use_ps_dists)
+    CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
     VOC = CohOC.coefficient_module()
     if use_ps_dists:
         Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group().gens()])
@@ -146,17 +146,18 @@ class CohomologyElement(ModuleElement):
         Sigma0 = self.parent().Sigma0()
         if hasattr(x,'word_rep'):
             wd  = x.word_rep
-            h = x.quaternion_rep
         else:
-            wd = G.get_word_rep(x)
-            h = x
+            x = G(x)
+            wd = x.word_rep
         if len(wd) == 0:
             return V(0)
         elif len(wd) == 1:
             return self._evaluate_syllable(*wd[0])
+        elif len(wd) == 2:
+            return self._evaluate_word(wd)
 
-        grad = G.fox_gradient(h,word = wd)
-
+        h = x.quaternion_rep
+        grad = G.fox_gradient(h,tuple(wd))
         ans = V(0)
         if self.parent()._use_ps_dists:
             for i,phig in enumerate(self._val):
@@ -169,9 +170,9 @@ class CohomologyElement(ModuleElement):
                 matlist = []
                 for gamma,n in fd.iteritems():
                     gmat = G.embed(gamma,prec)
-                    gmat.set_immutable()
                     matlist.append((n,gmat))
-                ans += phig.l_act_by_many(matlist)
+                if len(matlist) > 0:
+                    ans += phig.l_act_by_many(matlist)
         return ans
 
     def evaluate_triv(self,x):
@@ -204,7 +205,7 @@ class CohomologyElement(ModuleElement):
         cvals = [coeff_module(o) for o in self._val]
         return sum([ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0],coeff_module(0))
 
-    @cached_method
+    # @cached_method
     def _evaluate_syllable(self,g,a):
         G = self.parent().group()
         V = self.parent().coefficient_module()
@@ -304,8 +305,8 @@ class CohomologyElement(ModuleElement):
         group = self.parent().group()
         if prec is None:
             prec = U.precision_cap()
-        reps = group.get_Up_reps()
-        h2 = self.parent().apply_hecke_operator(self,p, hecke_reps = reps,group = group,scale = sign,parallelize = parallelize)
+        # reps = group.get_Up_reps()
+        h2 = self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize)
         #verbose('%s'%h2,level = 2)
         if progress_bar:
             update_progress(1.0/float(prec))
@@ -317,7 +318,7 @@ class CohomologyElement(ModuleElement):
             h1 = h2
             old_val = current_val
             ii += 1
-            h2 = self.parent().apply_hecke_operator(h1,p, hecke_reps = reps,group = group,scale = sign,parallelize = parallelize)
+            h2 = self.parent().apply_Up(h1,group = group,scale = sign,parallelize = parallelize)
             if progress_bar:
                 update_progress(float(ii+1)/float(prec))
             current_val = min([(u-v).valuation() for u,v in zip(h2._val,h1._val)])
@@ -493,7 +494,7 @@ class CohomologyGroup(Parent):
                     else:
                         ap = self.hecke_matrix(qq.gens_reduced()[0]).eigenvalues(extend = False)[0]
                         verbose('Found aq = %s'%ap)
-                    K1 = (self.hecke_matrix(qq)-ap).right_kernel()
+                    K1 = (self.hecke_matrix(qq.gens_reduced()[0])-ap).right_kernel()
                     K = K.intersection(K1)
         assert K.dimension() == 1
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
@@ -536,7 +537,7 @@ class CohomologyGroup(Parent):
         vals = [V(0) for gamma in gammas]
         input_vector = []
         for j,gamma in enumerate(gammas):
-            input_vector.extend([(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,j) for g in hecke_reps])
+            input_vector.extend([(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,j,use_magma) for g in hecke_reps])
         if parallelize:
             f = parallel(_calculate_hecke_contribution)
             for inp,outp in f(input_vector):
@@ -547,8 +548,59 @@ class CohomologyGroup(Parent):
                 vals[inp[-1]] += outp
         return scale * self(vals)
 
-def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dists,num_gamma = 0):
-    tig = G.get_hecke_ti(g,gamma,l,reps = hecke_reps)
+    def apply_Up(self,c,group = None,scale = 1,parallelize = False):
+        r"""
+        Apply the Up Hecke operator operator to ``c``.
+
+        EXAMPLES::
+
+        """
+        Up_reps = self.group().get_Up_reps()
+        V = self.coefficient_module()
+        padic = not V.base_ring().is_exact()
+        Gpn = self.group()
+        group = Gpn
+        if padic:
+            prec = V.base_ring().precision_cap()
+        else:
+            prec = None
+        vals = []
+        R = V.base_ring()
+        if hasattr(V,'is_full'): # This should be more robust
+            Gab = Gpn.abelianization()
+            gammas = [Gab.ab_to_G(o) for o in Gab.free_gens()]
+        else:
+            gammas = Gpn.gens()
+
+        if self._use_ps_dists:
+            S0 = self.Sigma0()
+        else:
+            S0 = lambda x:x
+        vals = [V(0) for gamma in gammas]
+        input_vector = []
+        for j,gamma in enumerate(gammas):
+            input_vector.extend([(group,g,gamma.quaternion_rep,c,S0(Gpn.embed(g,prec)),self._use_ps_dists,j) for g in Up_reps])
+        if parallelize:
+            f = parallel(_calculate_Up_contribution)
+            for inp,outp in f(input_vector):
+                vals[inp[0][-1]] += outp
+        else:
+            for inp in input_vector:
+                outp = _calculate_Up_contribution(*inp)
+                vals[inp[-1]] += outp
+        return scale * self(vals)
+
+
+def _calculate_Up_contribution(G,g,gamma,c,gloc,use_ps_dists,num_gamma):
+    tig = G.get_Up_ti(g,gamma)
+    val0 = c.evaluate(tig)
+    if use_ps_dists:
+        return gloc * val0
+    else:
+        return val0.l_act_by(gloc)
+
+def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dists,num_gamma,use_magma):
+    tig = G.get_hecke_ti(g,gamma,l,use_magma)
     val0 = c.evaluate(tig)
     if padic:
         if use_ps_dists:

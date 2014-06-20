@@ -173,7 +173,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         g,a = self.word_rep[n]
         return self.parent().gen(g)**a
 
-    @cached_method
+    # @cached_method
     def embed(self,prec):
         return self.parent().embed(self.quaternion_rep,prec)
 

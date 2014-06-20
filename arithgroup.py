@@ -68,12 +68,49 @@ class ArithGroup_generic(AlgebraicGroup):
                 self._relation_matrix[i,j] += k
         self._evaluate_stats = [ZZ(0) for o in range(100)]
         self._free_group = FreeGroup(len(self.gens()))
+        self._cache_fox_gradient = dict()
+        self._cache_hecke_reps = dict()
 
-    def fox_gradient(self,x,word = None):
+    def clear_cache(self):
+        return
+    # def fox_gradient(self,h,word):
+    #     try:
+    #         return self._cache_fox_gradient[word]
+    #     except KeyError: pass
+    #     ans = [defaultdict(int) for o in self.gens()]
+    #     if len(word) == 0:
+    #         return ans
+    #     i,a = word[-1]
+    #     ansi = ans[i]
+    #     g = self.Ugens[i]
+    #     if a > 0:
+    #         ginv = g**-1
+    #         for j in range(a):
+    #             h = h * ginv
+    #             if ansi[h] == -1:
+    #                 del ansi[h]
+    #             else:
+    #                 ansi[h] += 1
+    #     else:
+    #         for j in range(-a):
+    #             if ansi[h] == 1:
+    #                 del ansi[h]
+    #             else:
+    #                 ansi[h] -= 1
+    #             h = h * g
+    #     for i,o in enumerate(self.fox_gradient(h,word[:-1])):
+    #         for k, n in o:
+    #             ans[i][k] += n
+    #             if ans[i][k] == 0:
+    #                 del ans[i][k]
+    #     self._cache_fox_gradient[word] = ans
+    #     return ans
+
+    def fox_gradient(self,h,word):
+        try:
+            return self._cache_fox_gradient[word]
+        except KeyError: pass
         ans = [defaultdict(int) for o in self.gens()]
-        h = self.B(x)
-        if word is None:
-            word = self.get_word_rep(x)
         for i,a in reversed(word):
             ansi = ans[i]
             g = self.Ugens[i]
@@ -92,6 +129,7 @@ class ArithGroup_generic(AlgebraicGroup):
                     else:
                         ansi[h] -= 1
                     h = h * g
+        self._cache_fox_gradient[word] = ans
         return ans
 
     def free_group(self):
@@ -226,7 +264,8 @@ class ArithGroup_generic(AlgebraicGroup):
             else:
                 yield prod([self.Ugens[i] for i in v])
 
-    def get_hecke_ti(self,gk1,gamma,l, reps = None,use_magma = None):
+    @cached_method
+    def get_hecke_ti(self,gk1,gamma,l,use_magma):
         r"""
 
         INPUT:
@@ -240,17 +279,32 @@ class ArithGroup_generic(AlgebraicGroup):
 
         """
         elt = gk1**-1 * gamma
-        found = False
-        if reps is None:
-            reps = self.get_hecke_reps(l,use_magma = use_magma)
-        found = None
+        reps = self.get_hecke_reps(l,use_magma = use_magma)
         for gk2 in reps:
             ti = elt * gk2
             if self._is_in_order(ti):
-                assert found is None, 'Too many matches!'
-                found = self(ti) # DEBUG
-        assert found is not None,'No match found!'
-        return found
+                return self(ti)
+
+    @cached_method
+    def get_Up_ti(self,gk1,gamma):
+        r"""
+
+        INPUT:
+
+        - gk1 - a quaternion element of norm l
+        - gamma - an element of G
+
+        OUTPUT:
+
+        - t_{gk1}(gamma)
+
+        """
+        elt = gk1**-1 * gamma
+        reps = self.get_Up_reps()
+        for gk2 in reps:
+            ti = elt * gk2
+            if self._is_in_order(ti):
+                return self(ti)
 
     def gen(self,i):
         return self._gens[i]
@@ -325,7 +379,7 @@ class ArithGroup_generic(AlgebraicGroup):
             return gamma, tau1
 
     @cached_method
-    def hecke_matrix(self,l,use_magma = None):
+    def hecke_matrix(self,l,use_magma = False):
         Gab = self.abelianization()
         gens = Gab.gens()
         dim = len(gens)
@@ -334,12 +388,12 @@ class ArithGroup_generic(AlgebraicGroup):
         V = QQ**len(gens)
         for j,g in enumerate(gens):
             # Construct column j of the matrix
-            newcol = sum([V(list(Gab.G_to_ab(self.get_hecke_ti(gk1,Gab.ab_to_G(g).quaternion_rep,l,reps=hecke_reps,use_magma = use_magma)))) for gk1 in hecke_reps],V(0))
+            newcol = sum([V(list(Gab.G_to_ab(self.get_hecke_ti(gk1,Gab.ab_to_G(g).quaternion_rep,l,use_magma)))) for gk1 in hecke_reps],V(0))
             M.set_column(j,list(newcol))
         return M
 
     @cached_method
-    def hecke_matrix_freepart(self,l,use_magma = None):
+    def hecke_matrix_freepart(self,l,use_magma = False):
         Gab = self.abelianization()
         freegens = Gab.free_gens()
         dim = len(freegens)
@@ -349,8 +403,7 @@ class ArithGroup_generic(AlgebraicGroup):
         for j,g in enumerate(freegens):
             # Construct column j of the matrix
             glift = Gab.ab_to_G(g).quaternion_rep
-            # newcol = sum([V(list(Gab.G_to_ab_free(self.get_hecke_ti(gk1,glift,l,reps=hecke_reps,use_magma = use_magma)))) for gk1 in hecke_reps],V(0))
-            newcol = V(list(Gab.G_to_ab_free(prod([self.get_hecke_ti(gk1,glift,l,reps = hecke_reps, use_magma = use_magma) for gk1 in hecke_reps],self([])))))
+            newcol = V(list(Gab.G_to_ab_free(prod([self.get_hecke_ti(gk1,glift,l,hecke_reps,use_magma) for gk1 in hecke_reps],self([])))))
             M.set_column(j,list(newcol))
         return M
 
@@ -701,7 +754,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                     self._non_positive_unit = candidate
                     return candidate
 
-    @cached_method
     def get_hecke_reps(self,l,use_magma = True):
         r'''
         TESTS:
@@ -710,6 +762,9 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         sage: G = ArithGroup(6,5)
         sage: reps = G.get_hecke_reps(11)
         '''
+        try:
+            return self._cache_hecke_reps[l]
+        except KeyError: pass
         verbose('Finding hecke reps for l = %s'%l)
         g0 = self.element_of_norm(l,use_magma = use_magma)
         assert g0.reduced_norm() == l
@@ -727,6 +782,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             new_inv = new_candidate**-1
             if not any([self._is_in_order(new_inv * old) for old in reps]):
                 reps.append(new_candidate)
+        self._cache_hecke_reps[l] = reps
         return reps
 
 
@@ -829,7 +885,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         self._element_of_norm[N] = candidate
         return candidate
 
-    @cached_method
     def get_hecke_reps(self,l,use_magma = True):
         r'''
         TESTS:
@@ -838,9 +893,14 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         sage: G = ArithGroup(6,5)
         sage: reps = G.get_hecke_reps(11)
         '''
+        try:
+            return self._cache_hecke_reps[l]
+        except KeyError: pass
         if use_magma:
             verbose("Warning: asked to use Magma to get hecke reps, but trivial to do without!")
-        return [self.B([l,i,0,1]) for i in range(l)] + [self.B([1,0,0,l])]
+        ans = [self.B([l,i,0,1]) for i in range(l)] + [self.B([1,0,0,l])]
+        self._cache_hecke_reps[l] = ans
+        return ans
 
     def image_in_abelianized(self, x):
         r''' Given an element x in Gamma, returns its image in the abelianized group'''
@@ -1147,7 +1207,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         verbose('Finding module generators')
         w = module_generators(K)[1]
         verbose('Done')
-        w_minpoly = PolynomialRing(Qp(p,prec),names = 'x')([self._F_to_Qp(o) for o in w.minpoly().coeffs()])
+        w_minpoly = PolynomialRing(Qp(p,prec),names = 'x')([self._F_to_local(o) for o in w.minpoly().coeffs()])
         verbose('w_minpoly = %s'%w_minpoly)
         Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
         verbose('Cp is %s'%Cp)
@@ -1156,7 +1216,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         r0 = -wl[0]/wl[1]
         r1 = 1/wl[1]
         assert r0+r1*w == K.gen()
-        padic_Kgen = Cp(self._F_to_Qp(r0))+Cp(self._F_to_Qp(r1))*Cp.gen()
+        padic_Kgen = Cp(self._F_to_local(r0))+Cp(self._F_to_local(r1))*Cp.gen()
         try:
             fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
         except NotImplementedError: pass
@@ -1276,7 +1336,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                     self._non_positive_unit = candidate
                     return candidate
 
-    @cached_method
     def get_hecke_reps(self,l,use_magma = True):
         r'''
         TESTS:
@@ -1285,6 +1344,9 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         sage: G = ArithGroup(6,5)
         sage: reps = G.get_hecke_reps(11)
         '''
+        try:
+            return self._cache_hecke_reps[l]
+        except KeyError: pass
         g0 = self.element_of_norm(l,use_magma = use_magma)
         reps = [g0]
         I = self.enumerate_elements()
@@ -1299,6 +1361,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             new_inv = new_candidate**-1
             if not any([self._is_in_order(new_inv * old) for old in reps]):
                 reps.append(new_candidate)
+        self._cache_hecke_reps[l] = reps
         return reps
 
 class Abelianization(Parent):

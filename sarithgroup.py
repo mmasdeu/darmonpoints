@@ -13,7 +13,7 @@ from sage.structure.parent import Parent
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ,ZZ,Qp
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ,ZZ,Qp,Zmod
 from sage.functions.trig import arctan
 from sage.interfaces.magma import magma
 from sage.misc.misc_c import prod
@@ -152,6 +152,9 @@ class BigArithGroup_class(AlgebraicGroup):
 
         verbose('Done initialization of BigArithmeticGroup')
 
+    def clear_cache(self):
+        self.Gn.clear_cache()
+        self.Gpn.clear_cache()
 
     def _repr_(self):
        return 'S-Arithmetic Rational Group attached to data p = %s,  disc = %s, level = %s'%(self.p,self.discriminant,self.level)
@@ -162,36 +165,36 @@ class BigArithGroup_class(AlgebraicGroup):
     def base_ring_local_embedding(self,prec):
         if prec > self._prec:
             self._compute_padic_splitting(prec)
-        return self._F_to_Qp
+        return self._F_to_local
 
     def _compute_padic_splitting(self,prec):
         verbose('Entering compute_padic_splitting')
         prime = self.p
         if self.seed is not None:
             magma.eval('SetSeed(%s)'%self.seed)
-        QQp = Qp(prime,prec)
+        R = Qp(prime,prec) #Zmod(prime**prec) #
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
         if self.F == QQ:
             M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
-            self._F_to_Qp = lambda x:QQp(x)
+            self._F_to_local = QQ.hom([R(1)])
         else:
             M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),nvals = 3)
-            self._F_to_Qp = self.F.hom([QQp(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())])
-        self.Gn._F_to_Qp = self._F_to_Qp
-        self.Gpn._F_to_Qp = self._F_to_Qp
+            self._F_to_local = self.F.hom([R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())])
+        self.Gn._F_to_local = self._F_to_local
+        self.Gpn._F_to_local = self._F_to_local
         verbose('Initializing II,JJ,KK')
         v = f.Image(B_magma.gen(1)).Vector()
-        self._II = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        self._II = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         v = f.Image(B_magma.gen(2)).Vector()
-        self._JJ = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         v = f.Image(B_magma.gen(3)).Vector()
-        self._KK = matrix(QQp,2,2,[v[i+1]._sage_() for i in range(4)])
+        self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         # Test splitting
-        mats = [matrix(QQp,2,2,[1,0,0,1]),self._II,self._JJ,self._KK]
+        mats = [matrix(R,2,2,[1,0,0,1]),self._II,self._JJ,self._KK]
         for g in self.Gpn.Obasis:
             tup = g.coefficient_tuple()
-            mat = sum(self._F_to_Qp(a)*b for a,b in zip(tup,mats))
+            mat = sum([self._F_to_local(a) * b for a,b in zip(tup,mats)])
             assert is_in_Gamma0loc(mat,det_condition = False)
         self._prec = prec
         return self._II, self._JJ, self._KK
@@ -343,22 +346,22 @@ class BigArithGroup_class(AlgebraicGroup):
                 try:
                     q = q.coefficient_tuple()
                 except AttributeError: pass
-                return sum(self._F_to_Qp(a)*b for a,b in zip(q,mats))
+                return sum(self._F_to_local(a)*b for a,b in zip(q,mats))
         return iota
 
+    @cached_method
     def embed(self,q,prec):
         if prec is None:
             return None
         if self.discriminant == 1:
             return q.change_ring(Qp(self.p,prec))
         else:
-            I,J,K = self._local_splitting(prec)
-            R=I.parent()
-            mats = [R(1),I,J,K]
             try:
                 q = q.coefficient_tuple()
             except AttributeError: pass
-            return sum(self._F_to_Qp(a)*b for a,b in zip(q,mats))
+            I,J,K = self._local_splitting(prec)
+            f = self._F_to_local
+            return f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K
 
     def reduce_in_amalgam(self,x,return_word = False):
         rednrm = x.reduced_norm() if self.discriminant != 1 else x.determinant()

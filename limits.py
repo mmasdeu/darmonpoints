@@ -126,7 +126,7 @@ def compute_tau0(v0,gamma,wD,return_exact = False):
     r'''
     INPUT:
 
-     - v0: F->QQp
+     - v0: F -> its localization at p
      - gamma: the image of wD (the generator for an order of F) under an optimal embedding
 
     OUTPUT:
@@ -263,8 +263,7 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
     F = v0.domain()
     r = F.gen()
     Cp = v0.codomain()
-    QQp = Cp.base_ring()
-    p = QQp.prime()
+    p = Cp.base_ring().prime()
     if F.degree() != 2 or len(F.ideal(p).factor()) > 1 or gcd(p,F.disc()) !=1:
         raise ValueError,'Not a valid field'
     w=F.maximal_order().ring_generators()[0]

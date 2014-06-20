@@ -56,5 +56,5 @@ qE1 = integrate_H1(G,xi1,PhiElift,1,method = 'moments',prec = working_prec, twis
 qE2 = integrate_H1(G,xi2,PhiElift,1,method = 'moments',prec = working_prec, twist = True,progress_bar = True)
 qE = qE1/qE2
 
-curve = discover_equation(qE,G._F_to_Qp,NE,prec).global_minimal_model()
+curve = discover_equation(qE,G._F_to_local,NE,prec).global_minimal_model()
 

@@ -8,12 +8,13 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
 from sigma0 import Sigma0,Sigma0ActionAdjuster
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing,lcm, Infinity
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing,lcm, Infinity,Zmod
 from sage.all import prod
 from operator import mul
 from util import *
 from limits import num_evals,find_center
 from sage.parallel.decorate import fork,parallel
+from sage.misc.getusage import get_memory_usage
 import os
 
 oo = Infinity
@@ -180,6 +181,7 @@ def indef_integral(Phi,tau,r,s  = None,limits = None):
     return I
 
 
+
 r'''
 Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
@@ -201,6 +203,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
     total_integrals = cycle.size_of_support()
     verbose('Will do %s integrals'%total_integrals)
     input_vec = []
+    res = Cp(1)
     for g,divisor in cycle.get_data():
         jj += 1
         if divisor.degree() != 0:
@@ -209,20 +212,41 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
             gq = G.wp * gq * G.wp**-1
-        input_vec.append((G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar))
-
+        if not parallelize:
+            res *= integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,False)
+        else:
+            input_vec.extend(integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,True))
     if parallelize:
+        verbose('Need to evaluate at %s places'%len(input_vec))
+        res = Cp(1)
         i = 0
-        res = Cp(1)
-        for _,outp in parallel(integrate_H0)(input_vec):
+        for _,outp in parallel(evaluate_parallel)(input_vec):
             i += 1
-            #verbose('Done %s/%s'%(i,len(input_vec)))
+            verbose('Done %s/%s'%(i,len(input_vec)))
             res *= outp
-    else:
-        res = Cp(1)
-        for o in input_vec:
-            res *= integrate_H0(*o)
     return res
+
+def evaluate_parallel(hc,gamma,pol,c0):
+    HOC = hc.parent()
+    mu_e = hc.evaluate(gamma)
+    resadd = ZZ(0)
+    resmul = ZZ(1)
+    K = pol.parent().base_ring()
+    p = K.prime()
+    if HOC._use_ps_dists:
+        newresadd = sum([a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments)])
+    else:
+        newresadd = mu_e.evaluate_at_poly(pol)
+    resadd += newresadd
+    try:
+        resmul *= c0**ZZ(mu_e.moment(0).rational_reconstruction())
+    except IndexError: pass
+
+    val =  resmul.valuation(p)
+    tmp = p**val * K.teichmuller(p**(-val)*resmul)
+    if resadd != 0:
+        tmp *= resadd.exp()
+    return tmp
 
 def sample_point(G,e,prec = 20):
     r'''
@@ -282,10 +306,11 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
     return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = True)
 
-def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar = False):
+def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,dry_run = False):
     verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
-    HOC = hc.parent()
+    if not dry_run:
+        HOC = hc.parent()
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
@@ -293,26 +318,30 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     r1 = R1.gen()
     R1.set_default_prec(prec)
     divisor_list = [(P,n) for P,n in divisor]
-    # R0 = PolynomialRing(K,'t')
-    # t = R0.gen()
-    # R0f = R0.fraction_field()
-    # phi = R0f(prod([(t - P)**ZZ(n) for P,n in divisor if n > 0],R0(1)))/R0f(prod([(t - P)**ZZ(-n) for P,n in divisor if n < 0],R0(1)))
-
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o) for o in G.get_covering(1)]
+    if dry_run:
+        gammas = []
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
         ii = 0
         for parity, edge in edgelist:
             ii += 1
+            if progress_bar:
+                update_progress(float(ii)/float(len(edgelist)))
+            mem_usage = get_memory_usage()
+            verbose('mem = %s'%mem_usage)
+            if mem_usage > float(8 * 1000):
+                verbose('Clearing caches! (mem_usage = %s)'%mem_usage)
+                G.clear_cache()
+                if not dry_run:
+                    V = HOC.coefficient_module()
+                    V.clear_cache()
+                verbose('Done. New mem_usage = %s'%get_memory_usage())
             rev, h = edge
-            # a,b,c,d = G.embed(h**-1,prec).change_ring(K).list()
             a,b,c,d = G.embed(h,prec).adjoint().change_ring(K).list()
-            # hexp = (a*r1+b)/(c*r1+d)
-            # y0 = phi(hexp)
-
             y0num = R1(1)
             y0den = R1(1)
             for P,n in divisor_list:
@@ -323,8 +352,6 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 elif n < 0:
                     y0den *= hP**ZZ(-n)
                     y0den = y0den.add_bigoh(prec)
-            if progress_bar:
-                update_progress(float(ii)/float(len(edgelist)))
 
             assert y0num.valuation() == y0den.valuation()
             y0 = y0num/y0den
@@ -335,28 +362,33 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             #if not all([o.valuation() >= e + c0val for o,e in zip(y0.coefficients(),y0.exponents())]):
                 newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
                 assert not rev
-                # newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])
                 continue
             pol = c0.log(p_branch = 0) + (y0.derivative()/y0).integral()
             if not rev:
-                mu_e = hc.evaluate(G.reduce_in_amalgam(h * gamma))
+                newgamma = G.reduce_in_amalgam(h * gamma)
             else:
-                mu_e = hc.evaluate(G.wp**-1 * G.reduce_in_amalgam(h * gamma) * G.wp)
-            #verbose('mu_e = %s'%mu_e)
-            if HOC._use_ps_dists:
-                newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
+                newgamma = G.wp**-1 * G.reduce_in_amalgam(h * gamma) * G.wp
+            if dry_run:
+                gammas.append((hc,newgamma,pol,c0))
             else:
-                newresadd = mu_e.evaluate_at_poly(pol)
-            resadd += newresadd
-            try:
-                resmul *= c0**ZZ(mu_e.moment(0).rational_reconstruction())
-            except IndexError: pass
+                mu_e = hc.evaluate(newgamma)
+                if HOC._use_ps_dists:
+                    newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
+                else:
+                    newresadd = mu_e.evaluate_at_poly(pol)
+                resadd += newresadd
+                try:
+                    resmul *= c0**ZZ(mu_e.moment(0).rational_reconstruction())
+                except IndexError: pass
         edgelist = newedgelist
 
-    val =  resmul.valuation(p)
-    if val != 0:
-        verbose('val = %s'%val)
-    tmp = p**val * K.teichmuller(p**(-val)*resmul)
-    if resadd != 0:
-        tmp *= resadd.exp()
-    return tmp
+    if dry_run:
+        return gammas
+    else:
+        val =  resmul.valuation(p)
+        if val != 0:
+            verbose('val = %s'%val)
+        tmp = p**val * K.teichmuller(p**(-val)*resmul)
+        if resadd != 0:
+            tmp *= resadd.exp()
+        return tmp

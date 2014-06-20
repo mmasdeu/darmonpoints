@@ -67,7 +67,7 @@ def find_containing_affinoid(p,z,level = 1):
         sage: gz.valuation() == 0
         True
     """
-    #Assume z belongs to some extension of QQp.
+    #Assume z belongs to some extension of the padics.
     if(z.valuation(p)<0):
         return M2Z([0,1,p*level,0])*find_containing_affinoid(p,1/(p*z))
     a=0
@@ -97,7 +97,7 @@ def point_radius(z,level = 1):
 
     """
     p = z.parent().prime()
-    #Assume z belongs to some extension of QQp.
+    #Assume z belongs to some extension of the padics.
     if(z.valuation(p)<0):
         return 1 + point_radius(1/(p*z))
     a=0
@@ -312,7 +312,6 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     #     u = R(u)
     # p = R.prime()
 
-    #R = Qp(p,prec)
     p = R.prime()
 
     jE = E.j_invariant()
@@ -441,10 +440,10 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   s = F.gen()
   w = F.maximal_order().ring_generators()[0]
   #assert w.minpoly()(Cp.gen()) == 0
-  QQp = Cp.base_ring()
+  Floc = Cp.base_ring()
   p = Cp.prime()
   if prec is None:
-      prec = QQp.precision_cap()
+      prec = Floc.precision_cap()
   if x == 0 and y == 0:
       list_candidate_x = [0]
   elif (1/x).valuation() > prec and (1/y).valuation() > prec:
@@ -454,8 +453,8 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
           return E.change_ring(HCF)(0),True
   elif E.base_ring() == QQ and hF == 1:
       assert w.minpoly()(Cp.gen()) == 0
-      x1 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[0]))).add_bigoh(prec)
-      x2 = (p**(x.valuation())*QQp(ZZ(x._ntl_rep()[1]))).add_bigoh(prec)
+      x1 = (p**(x.valuation())*Floc(ZZ(x._ntl_rep()[0]))).add_bigoh(prec)
+      x2 = (p**(x.valuation())*Floc(ZZ(x._ntl_rep()[1]))).add_bigoh(prec)
       try:
           x1 = algdep(x1,1).roots(QQ)[0][0]
           x2 = algdep(x2,1).roots(QQ)[0][0]
@@ -927,7 +926,6 @@ def discover_equation(qE,emb,conductor,prec):
     assert qE.valuation() > 0, 'Assert that qE has positive valuation'
     qE = qE**2
     F = emb.domain()
-    Kp = emb.codomain()
     deg = F.degree()
     qval = qE.valuation()
     p = qE.parent().prime()
