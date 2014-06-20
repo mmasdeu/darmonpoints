@@ -323,6 +323,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     edgelist = [(1,o) for o in G.get_covering(1)]
     if dry_run:
         gammas = []
+    mem0 = get_memory_usage()
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
@@ -331,15 +332,15 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             ii += 1
             if progress_bar:
                 update_progress(float(ii)/float(len(edgelist)))
-            mem_usage = get_memory_usage()
-            verbose('mem = %s'%mem_usage)
+            mem_usage = get_memory_usage() - mem0
+            # verbose('mem = %s'%mem_usage)
             if mem_usage > float(8 * 1000):
-                verbose('Clearing caches! (mem_usage = %s)'%mem_usage)
+                verbose('Clearing caches! (mem_usage = %s)'%(mem_usage-mem0))
                 G.clear_cache()
                 if not dry_run:
                     V = HOC.coefficient_module()
                     V.clear_cache()
-                verbose('Done. New mem_usage = %s'%get_memory_usage())
+                verbose('Done. New mem_usage = %s'%(get_memory_usage()-mem0))
             rev, h = edge
             a,b,c,d = G.embed(h,prec).adjoint().change_ring(K).list()
             y0num = R1(1)

@@ -166,8 +166,10 @@ class OCVnElement(ModuleElement):
             a,b,c,d = x.list()
             try:
                 y += n * self._parent._cache_powers[(a,b,c,d)]
+                self._parent._hits += 1
             except KeyError:
                 y += n * self._parent._get_powers(a,b,c,d)
+                self._parent._misses += 1
         return y
 
     def l_act_by_many(self,xlist):
@@ -204,8 +206,10 @@ class OCVnElement(ModuleElement):
         a,b,c,d = x.list()
         try:
             tmp = (self._parent._cache_powers[(a,b,c,d)] * self._val).change_ring(R)
+            self._parent._hits += 1
         except KeyError:
             tmp = (self._parent._get_powers(a,b,c,d) * self._val).change_ring(R)
+            self._parent._misses += 1
 
         if self._nhalf == 0:
             return self.__class__(self._parent, tmp,check = False)
@@ -393,6 +397,8 @@ class OCVn(Module,UniqueRepresentation):
         self._depth=depth
         self._PowerSeries=PowerSeriesRing(self._Rmod,default_prec=self._depth,name='z')
         self._cache_powers = dict()
+        self._hits = 0
+        self._misses = 0
         self._populate_coercion_lists_()
 
     def clear_cache(self):

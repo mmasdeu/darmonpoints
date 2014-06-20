@@ -68,43 +68,11 @@ class ArithGroup_generic(AlgebraicGroup):
                 self._relation_matrix[i,j] += k
         self._evaluate_stats = [ZZ(0) for o in range(100)]
         self._free_group = FreeGroup(len(self.gens()))
-        self._cache_fox_gradient = dict()
+        self._cache_fox_gradient = dict({tuple([]):[defaultdict(int) for o in self.gens()]})
         self._cache_hecke_reps = dict()
 
     def clear_cache(self):
         return
-    # def fox_gradient(self,h,word):
-    #     try:
-    #         return self._cache_fox_gradient[word]
-    #     except KeyError: pass
-    #     ans = [defaultdict(int) for o in self.gens()]
-    #     if len(word) == 0:
-    #         return ans
-    #     i,a = word[-1]
-    #     ansi = ans[i]
-    #     g = self.Ugens[i]
-    #     if a > 0:
-    #         ginv = g**-1
-    #         for j in range(a):
-    #             h = h * ginv
-    #             if ansi[h] == -1:
-    #                 del ansi[h]
-    #             else:
-    #                 ansi[h] += 1
-    #     else:
-    #         for j in range(-a):
-    #             if ansi[h] == 1:
-    #                 del ansi[h]
-    #             else:
-    #                 ansi[h] -= 1
-    #             h = h * g
-    #     for i,o in enumerate(self.fox_gradient(h,word[:-1])):
-    #         for k, n in o:
-    #             ans[i][k] += n
-    #             if ans[i][k] == 0:
-    #                 del ans[i][k]
-    #     self._cache_fox_gradient[word] = ans
-    #     return ans
 
     def fox_gradient(self,h,word):
         try:
@@ -114,20 +82,21 @@ class ArithGroup_generic(AlgebraicGroup):
         for i,a in reversed(word):
             ansi = ans[i]
             g = self.Ugens[i]
-            if a > 0:
+            if a == int(1):
+                h = h * g**-1
+                ansi[h] += int(1)
+            elif a == int(-1):
+                ansi[h] -= int(1)
+                h = h * g
+            elif a > int(1):
                 ginv = g**-1
                 for j in range(a):
                     h = h * ginv
-                    if ansi[h] == -1:
-                        del ansi[h]
-                    else:
-                        ansi[h] += 1
+                    ansi[h] += int(1)
             else:
+                assert a < int(-1)
                 for j in range(-a):
-                    if ansi[h] == 1:
-                        del ansi[h]
-                    else:
-                        ansi[h] -= 1
+                    ansi[h] -= int(1)
                     h = h * g
         self._cache_fox_gradient[word] = ans
         return ans
