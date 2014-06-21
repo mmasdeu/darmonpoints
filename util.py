@@ -919,59 +919,56 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                         assert all((si * sigma(a) > 0 for si,sigma in zip(ramification_at_infinity,F.embeddings(RR))))
                         return B
 
-def discover_equation(qE,emb,conductor,prec):
-    #from util import get_j_invariant
+def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = False):
     if qE.valuation() < 0:
         qE = 1/qE
     assert qE.valuation() > 0, 'Assert that qE has positive valuation'
     qE = qE**2
-    F = emb.domain()
+    F = field if field is not None else emb.domain()
     deg = F.degree()
     qval = qE.valuation()
     p = qE.parent().prime()
     try:
-        Funits = [F(F.unit_group().torsion_generator())**i for i in range(F.unit_group().torsion_generator().order())]
+        Ftors = F.unit_group().torsion_generator()
+        Funits = [F(Ftors)**i for i in range(Ftors.order())]
         if len(F.units()) > 0:
             u = F.units()[0]
             if len(F.units()) > 1:
                 raise NotImplementedError
-            Funits = [u0*u**i for u0,i in product(Funits,range(-12,13))]
+            Funits = [u0*u**i for u0,i in product(Funits,range(-6,7))]
     except AttributeError:
         Funits = [-1, +1]
     try:
         primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
     except AttributeError:
         primedivisors = [o[0] for o in conductor.factor()]
-    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,7),repeat = len(primedivisors)))]
+    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,13),repeat = len(primedivisors)))]
     for guessed_pow in reversed(divisors(qval)):
         try:
             qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True) if guessed_pow > 1 else [qE]
         except ValueError:
             continue
-        for qEroot in qErlist:
+        for qEroot,D in product(qErlist,Deltalist):
             jE = get_j_invariant(qEroot,prec)
             Kp = jE.parent()
-            for D in Deltalist:
-                Deltap = Kp(emb(D))
-                c4cubed = Kp(Deltap * jE)
-                try:
-                    c4list = our_cuberoot(c4cubed,Kp,return_all = True)
-                except ValueError:
+            Deltap = Kp(emb(D))
+            c4cubed = Kp(Deltap * jE)
+            try:
+                c4list = our_cuberoot(c4cubed,Kp,return_all = True)
+            except ValueError:
+                continue
+            for c4ex in [o[0] for c4 in c4list for o in our_algdep(c4,deg).roots(F)]:
+                c6squared = F(c4ex**3 - 1728*D)
+                if not c6squared.is_square():
                     continue
-                for c4 in c4list:
-                    for c4ex in [o[0] for o in our_algdep(c4,deg).roots(F)]:
-                        c6squared = F(c4ex**3 - 1728*D)
-                        if not c6squared.is_square():
-                            continue
-                        for c6ex in c6squared.sqrt(all=True):
-                            try:
-                                E = EllipticCurve_from_c4c6(c4ex,c6ex)
-                            except ArithmeticError:
-                                continue
-                            if E.conductor() == conductor:
-                                assert E.discriminant() == D
-                                verbose('Success!')
-                                return E
+                for c6ex in c6squared.sqrt(all=True):
+                    try:
+                        E = EllipticCurve_from_c4c6(c4ex,c6ex)
+                    except ArithmeticError: continue
+                    if not check_conductor or E.conductor() == conductor:
+                        #assert E.discriminant() == D
+                        verbose('Success!')
+                        return E
     verbose('Curve not recognized')
     return None
 

@@ -176,10 +176,10 @@ class BigArithGroup_class(AlgebraicGroup):
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
         if self.F == QQ:
-            M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),nvals = 3)
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),Precision = prec,nvals = 2)
             self._F_to_local = QQ.hom([R(1)])
         else:
-            M,f,_ = magma.pMatrixRing(self.Gn._Omax_magma.name(),sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),nvals = 3)
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma.name(),sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = prec,nvals = 2)
             self._F_to_local = self.F.hom([R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())])
         self.Gn._F_to_local = self._F_to_local
         self.Gpn._F_to_local = self._F_to_local
