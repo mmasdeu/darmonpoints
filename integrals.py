@@ -328,7 +328,8 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 V.clear_cache()
                 verbose('Done. New mem_usage = %s'%(get_memory_usage()-mem0))
             rev, h = edge
-            a,b,c,d = G.embed(h,prec).adjoint().change_ring(K).list()
+            a,b,c,d = G.embed(h,prec).list()
+            a,b,c,d = K(d),K(-b),K(-c),K(a)
             y0num = R1(1)
             y0den = R1(1)
             for P,n in divisor_list:

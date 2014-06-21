@@ -9,8 +9,8 @@ p = 5 # The prime
 D = 2 * 3 # Discriminant of the quaternion algebra (even number of primes)
 Np = 1 # Conductor of order.
 sign_at_infinity = 1 # Sign at infinity, can be +1 or -1
-prec = 100 # Precision to which result is desired
-working_prec = 200
+prec = 70 # Precision to which result is desired
+working_prec = 100
 outfile = 'points_%s_%s.txt'%(p,D)
 
 verb_level = 1 # Set to 0 to remove output

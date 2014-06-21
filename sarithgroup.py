@@ -138,7 +138,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
         # self._prec = -1
-        self._II,self._JJ,self._KK = self._compute_padic_splitting(60)
+        self._II,self._JJ,self._KK = self._compute_padic_splitting(200)
 
         self.wp = self._compute_wp()
         self.get_Up_reps()
@@ -176,10 +176,10 @@ class BigArithGroup_class(AlgebraicGroup):
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
         if self.F == QQ:
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma.name(),prime*self.Gn._Omax_magma.BaseRing(),Precision = prec,nvals = 2)
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma,prime*self.Gn._Omax_magma.BaseRing(),Precision = prec,nvals = 2)
             self._F_to_local = QQ.hom([R(1)])
         else:
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma.name(),sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = prec,nvals = 2)
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = prec,nvals = 2)
             self._F_to_local = self.F.hom([R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())])
         self.Gn._F_to_local = self._F_to_local
         self.Gpn._F_to_local = self._F_to_local
@@ -190,12 +190,12 @@ class BigArithGroup_class(AlgebraicGroup):
         self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         v = f.Image(B_magma.gen(3)).Vector()
         self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
-        # Test splitting
-        mats = [matrix(R,2,2,[1,0,0,1]),self._II,self._JJ,self._KK]
-        for g in self.Gpn.Obasis:
-            tup = g.coefficient_tuple()
-            mat = sum([self._F_to_local(a) * b for a,b in zip(tup,mats)])
-            assert is_in_Gamma0loc(mat,det_condition = False)
+        # # Test splitting
+        # mats = [matrix(R,2,2,[1,0,0,1]),self._II,self._JJ,self._KK]
+        # for g in self.Gpn.Obasis:
+        #     tup = g.coefficient_tuple()
+        #     mat = sum([self._F_to_local(a) * b for a,b in zip(tup,mats)])
+        #     assert is_in_Gamma0loc(mat,det_condition = False)
         self._prec = prec
         return self._II, self._JJ, self._KK
 
@@ -223,9 +223,7 @@ class BigArithGroup_class(AlgebraicGroup):
         """
         if prec <= self._prec:
             return self._II,self._JJ,self._KK
-        self._II,self._JJ,self._KK = self._compute_padic_splitting(prec)
-
-        return self._II, self._JJ, self._KK
+        return self._compute_padic_splitting(prec)
 
     def save_to_db(self):
         fname = 'arithgroup%s_%s_%s_%s.sobj'%(self.seed,self.p,self.discriminant,self.level)
@@ -240,7 +238,7 @@ class BigArithGroup_class(AlgebraicGroup):
     @cached_method
     def get_BT_reps(self):
         reps = [self.Gn.B(1)] + [None for i in range(self.p)]
-        emb = self.get_embedding(5)
+        emb = self.get_embedding(200)
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in range(self.p)]
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)

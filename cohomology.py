@@ -152,17 +152,11 @@ class CohomologyElement(ModuleElement):
             wd = x.word_rep
         if len(wd) == 0:
             return V(0)
-        # elif len(wd) == 1:
-        #     return self._evaluate_syllable(*wd[0])
-        # elif len(wd) == 2:
-        #     return self._evaluate_word(wd)
 
-        #h = x.quaternion_rep
-        #ans = V(0)
         ans = Matrix(V._R,V.dimension(),1)
         emb = lambda x:G.embed(x,prec)
         if self.parent()._use_ps_dists:
-            raise NotImplementedError
+            ans = V(0)
             grad = self.parent().fox_gradient(wd)
             for i,phig in enumerate(self._val):
                 fd = grad[i]
@@ -172,34 +166,17 @@ class CohomologyElement(ModuleElement):
         else:
             W = self._val[0]._val.parent()
             ans = W(0)
-            # h = ZZ(1)
-            # for i,a in wd:
-            #     ans += h * (H.get_fox_term(i,a) * self._val[i]._val)
-            #     h = h * H.get_gen_pow(i,a)
             i,a = wd[-1]
-            ans = H.get_fox_term(i,a) * self._val[i]._val
+            # ans = H.get_fox_term(i,a) * self._val[i]._val
+            ans = self.fox_term_times_value(i,a)
             for i,a in reversed(wd[:-1]):
-                ans = H.get_fox_term(i,a) * self._val[i]._val + H.get_gen_pow(i,a) * ans
+                ans = self.fox_term_times_value(i,a) + H.get_gen_pow(i,a) * ans
             ans = V(ans)
-
-            # input_vec = []
-            # for i,phig in enumerate(self._val):
-            #     fd = grad[i]
-            #     matlist = []
-            #     for gamma,n in fd.iteritems():
-            #         if n != 0:
-            #             matlist.append((n,gamma)) # gmat
-            #     if len(matlist) > 0:
-            #         input_vec.append((V._get_action_matrix(matlist,emb),phig._val))
-            # if parallelize:
-            #     chunk_length = (QQ(len(input_vec))/QQ(ncpus())).ceil()
-            #     chunks=[input_vec[i:i+chunk_length] for i in xrange(len(input_vec), chunk_length)]
-            #     for _,outp in parallel(lambda xv,yv: sum([x._mul_(y) for x,y in zip(xv,yv)]))(chunks):
-            #         ansvec += outp
-            #     ans = V(ansvec)
-            # else:
-            #     ans = V(sum([x*y for x,y in input_vec]))
         return ans
+
+    @cached_method
+    def fox_term_times_value(self,i,a):
+        return self.parent().get_fox_term(i,a) * self._val[i]._val
 
     def evaluate_triv(self,x,parallelize = False):
         try:
