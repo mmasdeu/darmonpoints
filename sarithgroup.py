@@ -176,6 +176,7 @@ class BigArithGroup_class(AlgebraicGroup):
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
         if self.F == QQ:
+            #M, f, rho = magma.function_call('pMatrixRing', args=[self.Gn._Omax_magma, prime * self.Gn._Omax_magma.BaseRing()], params={'Precision': prec}, nvals=3)
             M,f = magma.pMatrixRing(self.Gn._Omax_magma,prime*self.Gn._Omax_magma.BaseRing(),Precision = prec,nvals = 2)
             self._F_to_local = QQ.hom([R(1)])
         else:

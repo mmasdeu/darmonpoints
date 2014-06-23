@@ -919,10 +919,10 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                         assert all((si * sigma(a) > 0 for si,sigma in zip(ramification_at_infinity,F.embeddings(RR))))
                         return B
 
-def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = False):
+def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True):
+    assert qE.valuation() != 0, 'qE should not have zero valuation'
     if qE.valuation() < 0:
         qE = 1/qE
-    assert qE.valuation() > 0, 'Assert that qE has positive valuation'
     qE = qE**2
     F = field if field is not None else emb.domain()
     deg = F.degree()
