@@ -87,7 +87,7 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check 
     H1 = Homology(G.large_group(),Div)
     xi1 = H1({})
     xi2 = H1({})
-    wp = G.wp
+    wp = G.wp()
     # We calculate npow
     npow0 = 1
     vec = G.Gn.get_weight_vector(eltn)

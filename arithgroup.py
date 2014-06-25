@@ -33,8 +33,6 @@ from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.groups.free_group import FreeGroup
 
-work_with_SL2 = False # If False, works in PGL2 instead
-
 def JtoP(H,MR,p = None):
     CC = MR.base_ring()
     RR = H.base_ring()
@@ -66,39 +64,11 @@ class ArithGroup_generic(AlgebraicGroup):
         for i,rel in enumerate(self.get_relation_words()):
             for j,k in rel:
                 self._relation_matrix[i,j] += k
-        self._evaluate_stats = [ZZ(0) for o in range(100)]
-        self._free_group = FreeGroup(len(self.gens()))
         self._cache_fox_gradient = dict()
         self._cache_hecke_reps = dict()
 
     def clear_cache(self):
         return
-
-    # def fox_gradient(self,h,word):
-    #     tword = tuple(word)
-    #     try:
-    #         return self._cache_fox_gradient[tword]
-    #     except KeyError: pass
-    #     ans = [defaultdict(int) for o in self.gens()]
-    #     #while len(word) > 0:
-    #     for i,a in reversed(word):
-    #         #i,a = word.pop()
-    #         ansi = ans[i]
-    #         g = self.Ugens[i]
-    #         if a > 0:
-    #             ginv = g**-1
-    #             for j in range(a):
-    #                 h = h * ginv
-    #                 ansi[h] += 1
-    #         else:
-    #             for j in range(-a):
-    #                 ansi[h] -= 1
-    #                 h = h * g
-    #     self._cache_fox_gradient[tword] = ans
-    #     return ans
-
-    def free_group(self):
-        return self._free_group
 
     def base_field(self):
         return self.F
@@ -444,7 +414,10 @@ class ArithGroup_generic(AlgebraicGroup):
 
 class ArithGroup_rationalquaternion(ArithGroup_generic):
     Element = ArithGroupElement
-    def __init__(self,discriminant,level,info_magma = None):
+    def __init__(self,discriminant,level,info_magma = None,grouptype = 'PSL2'):
+        assert grouptype in ['SL2','PSL2']
+        self._grouptype = grouptype
+
         self.F = QQ
         if isinstance(discriminant,list) or isinstance(discriminant,tuple):
             tmp = QuaternionAlgebra(discriminant[0],discriminant[1])
@@ -487,9 +460,8 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         self.findex = [ZZ(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimGroupSidepairsIndex')]
         self.fdargs = [RealField(300)(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimFDArgs')]
 
-        if work_with_SL2:
-            self.minus_one_long = [ len(self.Ugens) + 1 ]
-            self.minus_one = shorten_word(self.minus_one_long)
+        self.minus_one_long = [ len(self.Ugens) + 1 ]
+        self.minus_one = shorten_word(self.minus_one_long)
         self.Ugens.append(self.B(-1))
 
         self.translate = [None] + [self.__magma_word_problem(g**-1) for g in self.gquats[1:]]
@@ -505,14 +477,13 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             if sign == 1:
                 self._relation_words.append(rel)
             else:
-                if work_with_SL2:
+                if 'P' not in grouptype:
                     newrel = rel + self.minus_one
                     sign = ZZ(prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)))
                     assert sign == 1
                     self._relation_words.append(newrel)
                 else:
                     self._relation_words.append(rel)
-
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
 
@@ -546,6 +517,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             else:
                 self._O_magma = self._Omax_magma
             self._D_magma = info_magma._D_magma
+        self._F_magma = self._B_magma.BaseRing()
         self._G_magma = magma.FuchsianGroup(self._O_magma.name())
         FDom_magma = self._G_magma.FundamentalDomain(self._D_magma.name())
         self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
@@ -564,7 +536,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             verbose('!! Resorted to Magma, indicates a bug (delta = %s,norm = %s)!!'%(delta,delta.reduced_norm()))
             c = self.__magma_word_problem(delta)
         tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)] # shorten_word(c)
-        if work_with_SL2:
+        if 'P' not in self._grouptype:
             delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
             if delta1 != delta:
                 tmp.extend(self.minus_one)
@@ -579,7 +551,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         if delta == B(1):
             return []
         elif delta == B(-1):
-            if work_with_SL2:
+            if 'P' not in self._grouptype:
                 return self.minus_one_long
             else:
                 return []
@@ -652,11 +624,18 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         delta1 = self.B(1)
         for v in V:
             delta1 = delta1 * self.Ugens[v - 1] if v > 0 else delta1 * self.Ugens[-v - 1]
-        if delta1 != x0 and work_with_SL2:
+        if delta1 != x0 and 'P' not in self._grouptype:
             V.extend(self.minus_one_long)
         return V
 
-    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1):
+    def _fix_sign(self,x,N):
+        emb = self.F.embeddings(RealField(100))[0]
+        if emb(x.reduced_norm()).sign() != emb(N).sign():
+            x = x * self.element_of_norm(-1,use_magma = False)
+        assert emb(x.reduced_norm()).sign() == emb(N).sign()
+        return x
+
+    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1): # in rationalquaternion
         N = ZZ(N)
         if return_all == False:
             try:
@@ -667,12 +646,15 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             self._element_of_norm  = dict([])
 
         if use_magma:
-            assert return_all == False
-            elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,N))
+            # assert return_all == False
+            elt_magma = self._O_magma.ElementOfNorm(N*self._F_magma.Integers())
             candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1]) for m in range(4)])
-            assert candidate.reduced_norm() == N
-            self._element_of_norm[N] = candidate
-            return candidate
+
+            self._element_of_norm[N] = self._fix_sign(candidate,N)
+            if return_all:
+                return [candidate]
+            else:
+                return candidate
         else:
             v = list(self.Obasis)
             verbose('Doing long enumeration...')
@@ -753,7 +735,10 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
 class ArithGroup_rationalmatrix(ArithGroup_generic):
     Element = Matrix
-    def __init__(self,level,info_magma = None):
+    def __init__(self,level,info_magma = None,grouptype = 'PSL2'):
+        assert grouptype in ['SL2','PSL2']
+        self._grouptype = grouptype
+
         self.F = QQ
         self.discriminant = ZZ(1)
         self.level = ZZ(level)
@@ -778,14 +763,13 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                 self._relation_words.append(rel)
             else:
                 assert sign == -1
-                if work_with_SL2:
+                if 'P' not in grouptype:
                     newrel = rel + self.minus_one
                     sign = ZZ(prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1)))
                     assert sign == 1
                     self._relation_words.append(newrel)
                 else:
                     self._relation_words.append(rel)
-
 
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
@@ -835,11 +819,11 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         if not (( T[0,0] == 1 and T[1,1] == 1 and T[1,0] == 0) or ( T[0,0] == -1 and T[1,1] == -1 and T[1,0] == 0)):
             raise RuntimeError,'Entries of T (= %s) not correct'%T
         tmp.append((0,T[0,0]*T[0,1]))
-        if T[0,0] == -1 and work_with_SL2:
+        if T[0,0] == -1 and 'P' not in self._grouptype:
             tmp.extend(self.minus_one)
         return tmp
 
-    def element_of_norm(self,N,use_magma = False,local_condition = None):
+    def element_of_norm(self,N,use_magma = False,local_condition = None): # in rationalmatrix
         try:
             return self._element_of_norm[N]
         except (AttributeError,KeyError):
@@ -900,7 +884,10 @@ class FaceRel(SageObject):
 
 class ArithGroup_nf_quaternion(ArithGroup_generic):
     Element = ArithGroupElement
-    def __init__(self,base,a,b,level,info_magma = None):
+    def __init__(self,base,a,b,level,info_magma = None,grouptype =  'PSL2'):
+        assert grouptype in ['SL2','PSL2','GL2','PGL2']
+        self._grouptype = grouptype
+
         self.F = base
         self.level = base.ideal(level)
         self.a,self.b = base(a),base(b)
@@ -916,15 +903,18 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
         self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant())
         verbose('Computing normalized basis')
-        _,f,e = self._O_magma.NormalizedBasis(nvals = 3)
+        if 'GL' in grouptype:
+            raise NotImplementedError,'This implementation has bugs'
+            _,f,e = self._O_magma.NormalizedBasis(GroupType = '"Units"', nvals = 3)
+        else:
+            assert 'SL' in grouptype
+            _,f,e = self._O_magma.NormalizedBasis(nvals = 3)
         verbose('Computing presentation')
         G,gens = f.Presentation(e,self._O_magma,nvals = 2)
         verbose('Done presentation. Now calling init_aurel_data')
         self._init_aurel_data(f)
         verbose('Done init_aurel_data. Now calling ReduceGenerators')
         Hm,GtoHm = magma.ReduceGenerators(G,nvals = 2)
-        self._debug_Hm = Hm
-        self._debug_Gm = G
         r = self.F.gen()
         i,j,k = self.B.gens()
         chunk_length = 20
@@ -947,11 +937,11 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         wrds = sage_eval(magma.eval('[ElementToSequence(%s!(%s.i)) : i in [1..%s]]'%(G.name(),Hm.name(),len(Hm.gens()))))
         for wd in wrds:
             newgen = self.B(1)
-            for j,aj in shorten_word(wd): #G(h).ElementToSequence()._sage_()):
+            for j,aj in shorten_word(wd):
                 newgen = newgen * tmp_quaternions[j]**aj
             self.Ugens.append(newgen)
         verbose('Done calculating Ugens. Now initializing relations')
-        if work_with_SL2:
+        if 'P' not in grouptype:
             self.F_units = self.F.unit_group()
             self.F_unit_offset = len(self.Ugens)
             self.Ugens.extend([self.B(self.F(u)) for u in self.F_units.gens()])
@@ -973,6 +963,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         for i,g in enumerate(self.Ugens):
             self._gens.append(ArithGroupElement(self,quaternion_rep = g, word_rep = [(i,1)],check = False))
         verbose('Done initializing generators')
+
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
 
@@ -1120,7 +1111,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         return all([o.is_integral() for o in self._quaternion_to_list(x)])
 
     def enumerate_elements(self,max_length = None):
-        if work_with_SL2:
+        if 'P' not in self._grouptype:
             ngens = self.F_unit_offset
         else:
             ngens = len(self.gens())
@@ -1232,7 +1223,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         assert emb(x.reduced_norm()).sign() == emb(N).sign()
         return x
 
-    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1):
+    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1): # in nf_quaternion
         Nideal = self.F.ideal(N)
         if return_all == False:
             try:
@@ -1250,12 +1241,15 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self._element_of_norm  = dict([])
 
         if use_magma:
-            assert return_all == False
+            # assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,Nideal))
             elt_magma_vector = elt_magma.Vector()
             candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma_vector[m+1]) for m in range(4)])
             self._element_of_norm[Nideal.gens_two()] = candidate
-            return self._fix_sign(candidate,N)
+            if return_all:
+                return [self._fix_sign(candidate,N)]
+            else:
+                return self._fix_sign(candidate,N)
         else:
             v = self.Obasis
             verbose('Doing long enumeration...')

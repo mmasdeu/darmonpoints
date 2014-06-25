@@ -210,8 +210,8 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
             raise ValueError,'Divisor must be of degree 0'
         gq = g.quaternion_rep
         if twist:
-            divisor = divisor.left_act_by_matrix(G.embed(G.wp,prec).change_ring(Cp))
-            gq = G.wp * gq * G.wp**-1
+            divisor = divisor.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
+            gq = G.wp() * gq * G.wp()**-1
         res *= integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,parallelize)
     return res
 
@@ -243,7 +243,7 @@ def sample_point(G,e,prec = 20):
     '''
     rev, h = e
     hemb = G.embed(h**-1,prec)
-    wploc = G.embed(G.wp,prec)
+    wploc = G.embed(G.wp(),prec)
     if rev == True:
         hemb = hemb * wploc
     a,b,c,d = hemb.list()
@@ -355,7 +355,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             if not rev:
                 newgamma = G.reduce_in_amalgam(h * gamma)
             else:
-                newgamma = G.wp**-1 * G.reduce_in_amalgam(h * gamma) * G.wp
+                newgamma = G.wp()**-1 * G.reduce_in_amalgam(h * gamma) * G.wp()
             mu_e = hc.evaluate(newgamma,parallelize)
             if HOC._use_ps_dists:
                 newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))

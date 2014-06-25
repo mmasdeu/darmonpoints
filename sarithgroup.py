@@ -44,7 +44,7 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, seed = None,use_sage_db = True,outfile = None):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = 'PSL2',seed = None,use_sage_db = True,outfile = None):
         # if seed is None:
         #     seed = 1000
         try:
@@ -68,14 +68,14 @@ def BigArithGroup(p,quat_data,level,base = None, seed = None,use_sage_db = True,
                 newobj = db(fname)
             except IOError:
                 verbose('Group not found in database. Computing from scratch.')
-                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile)
+                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype)
                 newobj.save_to_db()
         else:
             if discriminant is None:
                 discriminant = QuaternionAlgebra(base,a,b).discriminant()
-                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile)
+                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype)
             else:
-                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile)
+                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype)
         return newobj
 
 
@@ -105,7 +105,7 @@ class BigArithGroup_class(AlgebraicGroup):
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,seed = None,outfile = None):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = 'PSL2',seed = None,outfile = None):
         self.seed = seed
         if seed is not None:
             verbose('Setting Magma seed to %s'%seed)
@@ -121,11 +121,11 @@ class BigArithGroup_class(AlgebraicGroup):
         self.discriminant = Fideal(discriminant) if self.F.degree() > 1 else ZZ(discriminant)
         self.level = Fideal(level) if self.F.degree() > 1 else ZZ(level)
         verbose('Initializing arithmetic group G(n)...')
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level)
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,grouptype = grouptype)
         self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
         verbose('Initializing arithmetic group G(pn)...')
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,info_magma = self.Gn)
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,info_magma = self.Gn,grouptype = grouptype)
         fwrite('B = Q<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gn.B.gens()[0]**2,self.Gn.B.gens()[1]**2),outfile)
         try:
             basis_data_1 = list(self.Gn.Obasis)
@@ -137,18 +137,17 @@ class BigArithGroup_class(AlgebraicGroup):
         fwrite('R(p) with basis %s'%basis_data_p,outfile)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
-        # self._prec = -1
+        self._prec = 200
         self._II,self._JJ,self._KK = self._compute_padic_splitting(200)
-
-        self.wp = self._compute_wp()
-        self.get_Up_reps()
+        # self.wpold = self.wp()
+        # self.get_Up_reps()
         verbose('Done initializing arithmetic groups')
         self.Gpn.get_Up_reps = self.get_Up_reps
 
-        try:
-            self.Gn._ArithGroup_generic__delete_unused_attributes()
-            self.Gpn._ArithGroup_generic__delete_unused_attributes()
-        except AttributeError: pass
+        # try:
+        #     self.Gn._ArithGroup_generic__delete_unused_attributes()
+        #     self.Gpn._ArithGroup_generic__delete_unused_attributes()
+        # except AttributeError: pass
 
         verbose('Done initialization of BigArithmeticGroup')
 
@@ -249,7 +248,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     embelt = emb(elt)
                     if (embelt[0,0]-1).valuation() > 0:
                         tmp = embelt * mat
-                        if is_in_Gamma0loc(tmp):
+                        if is_in_Gamma0loc(tmp, det_condition = False):
                             reps[i] = set_immutable(elt)
                             del matrices[idx]
                             verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
@@ -259,9 +258,9 @@ class BigArithGroup_class(AlgebraicGroup):
 
     def do_tilde(self,g):
         # lam = -self.p
-        lam = -self.wp.reduced_norm()
+        lam = -self.wp().reduced_norm()
         # lam = -self.F(self.ideal_p.gen(0)) if self.F.degree() > 1 else -self.p
-        return 1/lam * self.wp * g * self.wp # FIXME
+        return 1/lam * self.wp() * g * self.wp() # FIXME
 
     @cached_method
     def get_BT_reps_twisted(self):
@@ -270,9 +269,9 @@ class BigArithGroup_class(AlgebraicGroup):
     @cached_method
     def get_Up_reps(self):
         # lam = -self.p
-        lam = -self.wp.reduced_norm()
+        lam = -self.wp().reduced_norm()
         # lam = -self.F(self.ideal_p.gen(0)) if self.F.degree() > 1 else -self.p
-        tmp = [ lam * o**-1 * self.wp**-1 for o in self.get_BT_reps()[1:]] #FIXME
+        tmp = [ lam * o**-1 * self.wp()**-1 for o in self.get_BT_reps()[1:]] #FIXME
         return tmp
 
     def get_covering(self,depth):
@@ -294,7 +293,8 @@ class BigArithGroup_class(AlgebraicGroup):
         return self.subdivide(newEgood,1-parity,depth - 1)
 
     #@lazy_attribute
-    def _compute_wp(self):
+    @cached_method
+    def wp(self):
         verbose('Finding a suitable wp...')
         if self.discriminant == 1:
             return matrix(QQ,2,2,[0,-1,self.p,0])
@@ -302,7 +302,8 @@ class BigArithGroup_class(AlgebraicGroup):
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             pfacts = self.F.maximal_order().ideal(self.p).factor() if self.F.degree() > 1 else ZZ(self.p).factor()
 
-            all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True, radius = 5,max_elements = 1) #FIXME
+            # all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True, radius = 5,max_elements = 1) #FIXME
+            all_elts = self.Gn.element_of_norm(self.ideal_p,use_magma = True,return_all = True,radius = 1, max_elements = 1)
             found = False
             all_initial = all_elts
             if len(all_initial) == 0:
@@ -407,16 +408,16 @@ class BigArithGroup_class(AlgebraicGroup):
             return a, wd + [wd1,wd0]
 
 
-def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None):
+def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = 'PSL2'):
     if base == QQ:
         discriminant = ZZ(discriminant)
         if discriminant == 1:
-            return ArithGroup_rationalmatrix(level,info_magma)
+            return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype)
         else:
             if abtuple is not None:
-                return ArithGroup_rationalquaternion(abtuple,level,info_magma)
+                return ArithGroup_rationalquaternion(abtuple,level,info_magma,grouptype = grouptype)
             else:
-                return ArithGroup_rationalquaternion(discriminant,level,info_magma)
+                return ArithGroup_rationalquaternion(discriminant,level,info_magma,grouptype = grouptype)
     else:
         a,b = abtuple
-        return ArithGroup_nf_quaternion(base,a,b,level,info_magma)
+        return ArithGroup_nf_quaternion(base,a,b,level,info_magma,grouptype = grouptype)

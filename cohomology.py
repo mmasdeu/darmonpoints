@@ -25,8 +25,46 @@ from sage.schemes.plane_curves.constructor import Curve
 from sage.parallel.decorate import fork,parallel
 from sage.parallel.ncpus import ncpus
 oo = Infinity
+from sage.matrix.constructor import block_matrix
 
-def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False):
+# def matmul(a,b): # with prec = 20 takes 10.2s. prec = 40 -> 1min40s
+#     return a*b
+
+def matmul(a,b): # with prec = 20 takes 11.1s. prec = 40 -> 1min26s
+    return a._multiply_strassen(b,cutoff = 16)
+
+def take_power(a,n):
+    aa = matmul(a,a)
+
+    # since we've computed a^2, let's start squaring there
+    # so, let's keep the least-significant bit around, just
+    # in case.
+    m = n & 1
+    n = n >> 1
+
+    # One multiplication can be saved by starting with
+    # the second-smallest power needed rather than with 1
+    # we've already squared a, so let's start there.
+    apow = aa
+    while n&1 == 0:
+        apow = matmul(apow,apow)
+        n = n >> 1
+    power = apow
+    n = n >> 1
+
+    # now multiply that least-significant bit in...
+    if m:
+        power = matmul(power,a)
+
+    # and this is straight from the book.
+    while n != 0:
+        apow = matmul(apow,apow)
+        if n&1 != 0:
+            power = matmul(power,apow)
+        n = n >> 1
+    return power
+
+def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = 'naive'):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -74,10 +112,11 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
     assert apsign.abs() == 1
     if progress_bar:
         verb_level = get_verbose()
-        set_verbose(0)
-    Phi = Phi.improve(prec = prec,sign = apsign,parallelize = parallelize,progress_bar = progress_bar)
+        # set_verbose(0)
+    Phi = Phi.improve(prec = prec,sign = apsign,parallelize = parallelize,progress_bar = progress_bar,method = method)
     if progress_bar:
-        set_verbose(verb_level)
+        # set_verbose(verb_level)
+        pass
     if use_sage_db:
         db_save(Phi._val,fname)
     verbose('Done.')
@@ -139,7 +178,7 @@ class CohomologyElement(ModuleElement):
             raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
-    def evaluate_oc(self,x,parallelize = False):
+    def evaluate_oc(self,x,parallelize = False,extramul = None):
         H = self.parent()
         G = H.group()
         V = H.coefficient_module()
@@ -153,7 +192,6 @@ class CohomologyElement(ModuleElement):
         if len(wd) == 0:
             return V(0)
 
-        ans = Matrix(V._R,V.dimension(),1)
         emb = lambda x:G.embed(x,prec)
         if self.parent()._use_ps_dists:
             ans = V(0)
@@ -163,14 +201,15 @@ class CohomologyElement(ModuleElement):
                 for gamma,n in fd.iteritems():
                     if n != 0:
                         ans += Sigma0(G.embed(gamma,prec)) * (n * phig)
+            if extramul is not None:
+                ans = extramul * ans
         else:
             W = self._val[0]._val.parent()
-            ans = W(0)
-            i,a = wd[-1]
-            # ans = H.get_fox_term(i,a) * self._val[i]._val
-            ans = self.fox_term_times_value(i,a)
+            ans = self.fox_term_times_value(*wd[-1])
             for i,a in reversed(wd[:-1]):
                 ans = self.fox_term_times_value(i,a) + H.get_gen_pow(i,a) * ans
+            if extramul is not None:
+                ans = extramul * ans
             ans = V(ans)
         return ans
 
@@ -178,7 +217,7 @@ class CohomologyElement(ModuleElement):
     def fox_term_times_value(self,i,a):
         return self.parent().get_fox_term(i,a) * self._val[i]._val
 
-    def evaluate_triv(self,x,parallelize = False):
+    def evaluate_triv(self,x,parallelize = False,extramul = None):
         try:
             word = tuple(x.word_rep)
         except AttributeError:
@@ -186,7 +225,7 @@ class CohomologyElement(ModuleElement):
         V = self.parent().coefficient_module()
         return sum([a*self._evaluate_at_group_generator(j) for j,a in word],V(0))
 
-    def evaluate_oc_naive(self,x):
+    def evaluate_oc_naive(self,x,extramul = None):
         try:
             word = tuple(x.word_rep)
         except AttributeError:
@@ -264,7 +303,7 @@ class CohomologyElement(ModuleElement):
         Sigma0 = self.parent().Sigma0()
 
         lenword = len(word)
-        if lenword > 3:
+        if lenword > 1:
             pivot = ZZ(lenword) // ZZ(2)
             word_prefix = word[:pivot]
             gammamat = G.embed(prod([G.Ugens[g]**a for g,a in word_prefix],G.B(1)),prec)
@@ -273,30 +312,13 @@ class CohomologyElement(ModuleElement):
             else:
                 return self._evaluate_word(tuple(word_prefix)) +  self._evaluate_word(tuple(word[pivot:])).l_act_by(gammamat)
 
-        if lenword == 2:
-            g,a = word[0]
-            gammamat = G.embed(G.Ugens[g]**a,prec)
-            if self.parent()._use_ps_dists:
-                return self._evaluate_syllable(g,a) + Sigma0(gammamat) *  self._evaluate_syllable(*word[1])
-            else:
-                return self._evaluate_syllable(g,a) +  self._evaluate_syllable(*word[1]).l_act_by(gammamat)
-        if lenword == 3:
-            g,a = word[0]
-            ga = G.embed(G.Ugens[g]**a,prec)
-            h,b = word[1]
-            hb = G.embed(G.Ugens[g]**b,prec)
-            if self.parent()._use_ps_dists:
-                return self._evaluate_syllable(g,a) + Sigma0(ga) *  (self._evaluate_syllable(h,b) + Sigma0(hb) * self._evaluate_syllable(*word[2]))
-            else:
-                return self._evaluate_syllable(g,a) +  (self._evaluate_syllable(h,b) + self._evaluate_syllable(*word[2]).l_act_by(hb)).l_act_by(ga)
-
         if lenword == 0:
             return V(0)
 
         if lenword == 1:
             return self._evaluate_syllable(*word[0])
 
-    def improve(self,prec = None,sign = 1,parallelize = False,progress_bar = False):
+    def improve(self,prec = None,sign = 1,parallelize = False,progress_bar = False,method = 'naive'):
         r"""
         Repeatedly applies U_p.
 
@@ -309,26 +331,33 @@ class CohomologyElement(ModuleElement):
         if prec is None:
             prec = U.precision_cap()
         # reps = group.get_Up_reps()
-        h2 = self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize)
-        #verbose('%s'%h2,level = 2)
-        if progress_bar:
-            update_progress(1.0/float(prec))
-        verbose("Applied Up once")
-        ii = 0
-        current_val = min([(u-v).valuation() for u,v in zip(h2._val,self._val)])
-        old_val = -oo
-        while current_val < prec and current_val > old_val:
-            h1 = h2
-            old_val = current_val
-            ii += 1
-            h2 = self.parent().apply_Up(h1,group = group,scale = sign,parallelize = parallelize)
+        if method == 'naive':
             if progress_bar:
-                update_progress(float(ii+1)/float(prec))
-            current_val = min([(u-v).valuation() for u,v in zip(h2._val,h1._val)])
-            verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
-        self._val = h2._val
-        verbose('Final precision of %s digits'%current_val)
-        return h2
+                update_progress(0.0)
+            h2 = self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,method = method)
+            if progress_bar:
+                update_progress(1.0/float(prec))
+            else:
+                verbose("Applied Up once")
+            ii = 0
+            current_val = min([(u-v).valuation() for u,v in zip(h2._val,self._val)])
+            old_val = -oo
+            while current_val < prec and current_val > old_val:
+                h1 = h2
+                old_val = current_val
+                ii += 1
+                h2 = self.parent().apply_Up(h1,group = group,scale = sign,parallelize = parallelize,method = method)
+                current_val = min([(u-v).valuation() for u,v in zip(h2._val,h1._val)])
+                if progress_bar:
+                    update_progress(float(ii+1)/float(prec))
+                else:
+                    verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
+            self._val = h2._val
+            # verbose('Final precision of %s digits'%current_val)
+            return h2
+        else:
+            return self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,times = prec,progress_bar = progress_bar,method = method)
+
 
 class _our_adjuster(Sigma0ActionAdjuster):
     """
@@ -349,6 +378,7 @@ class CohomologyGroup(Parent):
     Element = CohomologyElement
     def __init__(self,G,overconvergent = False,base = None,use_ps_dists = False):
         self._group = G
+        self._Up_prec = -1
         self._use_ps_dists = use_ps_dists
         if overconvergent and base is None:
             raise ValueError, 'Must give base if overconvergent'
@@ -368,8 +398,8 @@ class CohomologyGroup(Parent):
                 gmat = self.group().embed(self._group.Ugens[i],1+base.precision_cap())
                 gmat.set_immutable()
                 A = self._coeffmodule._get_powers(gmat)
-                self._gen_pows.append([1,A])
-                self._gen_pows_neg.append([1,A**-1])
+                self._gen_pows.append([A.new_matrix(entries = 1),A])
+                self._gen_pows_neg.append([A.new_matrix(entries = 1),A**-1])
         else:
             self.is_overconvergent = False
             self._coeffmodule = base**1
@@ -420,11 +450,10 @@ class CohomologyGroup(Parent):
         else:
             return self.element_class(self,[self._coeffmodule(data) for g in range(self._num_abgens)])
 
-
-
+    @cached_method
     def fox_gradient(self,word):
         ans = [ZZ(0) for o in self.group().Ugens]
-        h = ZZ(1)
+        h = self.get_gen_pow(0,0)
         for i,a in word:
             ans[i] += h * self.get_fox_term(i,a)
             h = h * self.get_gen_pow(i,a)
@@ -522,9 +551,11 @@ class CohomologyGroup(Parent):
                 else:
                     Q = F.ideal(q).factor()[0][0]
                     return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
-        else:
+        elif E is not None:
             def getap(q):
                 return E(q)
+        else:
+            getap = None
 
         q = ZZ(1)
         while K.dimension() > 1:
@@ -593,7 +624,56 @@ class CohomologyGroup(Parent):
                 vals[inp[-1]] += outp
         return scale * self(vals)
 
-    def apply_Up(self,c,group = None,scale = 1,parallelize = False):
+    def get_Up_reps_local(self,prec):
+        if prec <= self._Up_prec:
+            return self._Up_reps_local
+        else:
+            Gpn = self.group()
+            if self._use_ps_dists:
+                self._Up_reps_local = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
+            else:
+                glocs = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
+                for o in glocs:
+                    o.set_immutable()
+                self._Up_reps_local = [self._coeffmodule._get_powers(o) for o in glocs]
+            self._Up_prec = prec
+            return self._Up_reps_local
+
+    @cached_method
+    def get_Up_matrices(self,prec,bigmatrix = False,progress_bar = False):
+        r'''
+        Return a lists of lists W, such that:
+        W[i][j] = \sum_k s_k \frac{\partial t_k(g_i)}{\partial g_j}
+
+        This allows one to compute the Up action as:
+        c_i <- \sum_j W[i][j] * c_j
+        '''
+        verbose('Getting Up matrices...')
+        V = self.coefficient_module()
+        R = V.base_ring()
+        N = V.precision_cap()
+        Gpn = self.group()
+        Up_reps = Gpn.get_Up_reps()
+        ngens = len(Gpn.gens())
+        nreps = len(Up_reps)
+        glocs = self.get_Up_reps_local(prec)
+        ans = [[] for o in Gpn.gens()]
+        for i,gi in enumerate(Gpn.gens()):
+            giquat = gi.quaternion_rep
+            fox_gradients = [self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep)) for sk in Up_reps]
+
+            for j,gj in enumerate(Gpn.gens()):
+                ans[i].append(sum([glocs[k] * fox_gradients[k][j] for k in range(nreps)]))
+            if progress_bar:
+                update_progress(float(i+1)/float(ngens))
+
+        if bigmatrix:
+            return block_matrix(ans)
+
+        verbose('Done getting Up matrices')
+        return ans
+
+    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 1,progress_bar = False,method = 'naive'):
         r"""
         Apply the Up Hecke operator operator to ``c``.
 
@@ -609,7 +689,6 @@ class CohomologyGroup(Parent):
             prec = V.base_ring().precision_cap()
         else:
             prec = None
-        vals = []
         R = V.base_ring()
         if hasattr(V,'is_full'): # This should be more robust
             Gab = Gpn.abelianization()
@@ -621,28 +700,49 @@ class CohomologyGroup(Parent):
             S0 = self.Sigma0()
         else:
             S0 = lambda x:x
-        vals = [V(0) for gamma in gammas]
-        input_vector = []
-        for j,gamma in enumerate(gammas):
-            input_vector.extend([(group,g,gamma.quaternion_rep,c,S0(Gpn.embed(g,prec)),self._use_ps_dists,j) for g in Up_reps])
-        if parallelize:
-            f = parallel(_calculate_Up_contribution)
-            for inp,outp in f(input_vector):
-                vals[inp[0][-1]] += outp
+
+        if method == 'naive':
+            assert times == 1
+            vals = [V(0) for gamma in gammas]
+            glocs = self.get_Up_reps_local(prec)
+            input_vector = []
+            for j,gamma in enumerate(gammas):
+                if self._use_ps_dists:
+                    input_vector.extend([(group,g,gamma.quaternion_rep,c,glocs[k],self._use_ps_dists,j) for k,g in enumerate(Up_reps)])
+                else:
+                    input_vector.extend([(group,g,gamma.quaternion_rep,c,glocs[k],self._use_ps_dists,j) for k,g in enumerate(Up_reps)])
+            if parallelize:
+                f = parallel(_calculate_Up_contribution)
+                for inp,outp in f(input_vector):
+                    vals[inp[0][-1]] += outp
+            else:
+                for inp in input_vector:
+                    outp = _calculate_Up_contribution(*inp)
+                    vals[inp[-1]] += outp
+            return scale * self(vals)
         else:
-            for inp in input_vector:
-                outp = _calculate_Up_contribution(*inp)
-                vals[inp[-1]] += outp
-        return scale * self(vals)
+            A = scale * self.get_Up_matrices(prec,bigmatrix = True,progress_bar = progress_bar)
+            if times != 1:
+                verbose('Computing %s-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
+                A = take_power(A,times)
+                verbose('Done computing %s-th power'%times)
+            valmat = A * Matrix(R,A.nrows(),1, [o for b in c._val for o in b._val.list() ])
+            depth = V.precision_cap()
+            return self([V(valmat.submatrix(row=i,nrows = depth)) for i in range(0,A.nrows(),depth)])
+
+            # A = self.get_Up_matrices(prec)
+            # for i in range(len(vals)):
+            #     Ai = A[i]
+            #     vals[i] = sum([a * b._val for a,b in zip(Ai,c._val)])
+            # return scale * self(vals)
 
 
 def _calculate_Up_contribution(G,g,gamma,c,gloc,use_ps_dists,num_gamma):
     tig = G.get_Up_ti(g,gamma)
-    val0 = c.evaluate(tig)
     if use_ps_dists:
-        return gloc * val0
+        return gloc * c.evaluate(tig)
     else:
-        return val0.l_act_by(gloc)
+        return c.evaluate(tig,extramul = gloc)
 
 def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dists,num_gamma,use_magma):
     tig = G.get_hecke_ti(g,gamma,l,use_magma)
