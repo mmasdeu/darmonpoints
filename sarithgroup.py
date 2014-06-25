@@ -179,11 +179,11 @@ class BigArithGroup_class(AlgebraicGroup):
             self._F_to_local = QQ.hom([R(1)])
         else:
             M,f = magma.pMatrixRing(self.Gn._Omax_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 10,nvals = 2)
-            goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
+            self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
             self._F_to_local = None
             for o in self.F.gen().minpoly().change_ring(R).roots():
-                if (o[0][0] - goodroot).valuation() > 5:
-                    self._F_to_local = self.F.hom([o[0][0]])
+                if (o[0] - self._goodroot).valuation() > 5:
+                    self._F_to_local = self.F.hom([o[0]])
                     break
             assert self._F_to_local is not None
         self.Gn._F_to_local = self._F_to_local
@@ -312,7 +312,7 @@ class BigArithGroup_class(AlgebraicGroup):
             pfacts = self.F.maximal_order().ideal(self.p).factor() if self.F.degree() > 1 else ZZ(self.p).factor()
 
             # all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True, radius = 5,max_elements = 1) #FIXME
-            all_elts = self.Gn.element_of_norm(self.ideal_p,use_magma = True,return_all = True,radius = 1, max_elements = 1)
+            all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = 1, max_elements = 1)
             found = False
             all_initial = all_elts
             if len(all_initial) == 0:

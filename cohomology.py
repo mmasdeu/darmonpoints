@@ -35,9 +35,10 @@ def matmul(a,b): # with prec = 20 takes 11.1s. prec = 40 -> 1min26s
 
 def take_2n_power(a,n):
     R = a.parent().base_ring()
-    a = a.lift()
     for i in range(n):
+        a = a.change_ring(R).lift()
         a = a*a
+        update_progress(float(i)/float(n))
     return a.change_ring(R)
 
 def take_power(a,n):
@@ -404,9 +405,9 @@ class CohomologyGroup(Parent):
             for i,g in enumerate(self._group.gens()):
                 gmat = self.group().embed(self._group.Ugens[i],1+base.precision_cap())
                 gmat.set_immutable()
-                A = self._coeffmodule._get_powers(gmat).lift()
-                self._gen_pows.append([A.new_matrix(entries = 1),A])
-                self._gen_pows_neg.append([A.new_matrix(entries = 1),A**-1])
+                A = self._coeffmodule._get_powers(gmat)
+                self._gen_pows.append([A.new_matrix(entries = 1).lift(),A.lift()])
+                self._gen_pows_neg.append([A.new_matrix(entries = 1).lift(),(A**-1]).lift())
         else:
             self.is_overconvergent = False
             self._coeffmodule = base**1
@@ -472,12 +473,12 @@ class CohomologyGroup(Parent):
         elif a > 0:
             genpows = self._gen_pows[i]
             while len(genpows) <= a:
-                genpows.append(genpows[1] * genpows[-1])
+                genpows.append((genpows[1] * genpows[-1]).change_ring(self.coefficient_module().base_ring()).lift())
             return genpows[a]
         else:
             genpows = self._gen_pows_neg[i]
             while len(genpows) <= -a:
-                genpows.append(genpows[1] * genpows[-1])
+                genpows.append((genpows[1] * genpows[-1]).change_ring(self.coefficient_module().base_ring()).lift())
             return genpows[-a]
 
     @cached_method
