@@ -33,6 +33,13 @@ from sage.matrix.constructor import block_matrix
 def matmul(a,b): # with prec = 20 takes 11.1s. prec = 40 -> 1min26s
     return a._multiply_strassen(b,cutoff = 16)
 
+def take_2n_power(a,n):
+    R = a.parent().base_ring()
+    a = a.lift()
+    for i in range(n):
+        a = a*a
+    return a.change_ring(R)
+
 def take_power(a,n):
     aa = matmul(a,a)
 
@@ -356,7 +363,7 @@ class CohomologyElement(ModuleElement):
             # verbose('Final precision of %s digits'%current_val)
             return h2
         else:
-            return self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,times = prec,progress_bar = progress_bar,method = method)
+            return self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,times = len(ZZ(prec-1).bits()),progress_bar = progress_bar,method = method)
 
 
 class _our_adjuster(Sigma0ActionAdjuster):
@@ -397,7 +404,7 @@ class CohomologyGroup(Parent):
             for i,g in enumerate(self._group.gens()):
                 gmat = self.group().embed(self._group.Ugens[i],1+base.precision_cap())
                 gmat.set_immutable()
-                A = self._coeffmodule._get_powers(gmat)
+                A = self._coeffmodule._get_powers(gmat).lift()
                 self._gen_pows.append([A.new_matrix(entries = 1),A])
                 self._gen_pows_neg.append([A.new_matrix(entries = 1),A**-1])
         else:
@@ -660,20 +667,26 @@ class CohomologyGroup(Parent):
         ans = [[] for o in Gpn.gens()]
         for i,gi in enumerate(Gpn.gens()):
             giquat = gi.quaternion_rep
-            fox_gradients = [self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep)) for sk in Up_reps]
+            verbose('Getting Fox gradients %s'%i)
+            fox_gradients = []
+            for k,sk in enumerate(Up_reps):
+                fox_gradients.append(self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep)))
+                update_progress(float(k+1)/nreps)
+            verbose('Done getting Fox gradients %s'%i)
 
+            verbose('Getting matrix step 2')
             for j,gj in enumerate(Gpn.gens()):
                 ans[i].append(sum([glocs[k] * fox_gradients[k][j] for k in range(nreps)]))
-            if progress_bar:
-                update_progress(float(i+1)/float(ngens))
-
+                if progress_bar:
+                    update_progress(float((i+1)*(j+1))/(float(ngens*nreps)))
+            verbose('Done step 2')
         if bigmatrix:
             return block_matrix(ans)
 
         verbose('Done getting Up matrices')
         return ans
 
-    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 1,progress_bar = False,method = 'naive'):
+    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive'):
         r"""
         Apply the Up Hecke operator operator to ``c``.
 
@@ -702,7 +715,7 @@ class CohomologyGroup(Parent):
             S0 = lambda x:x
 
         if method == 'naive':
-            assert times == 1
+            assert times == 0
             vals = [V(0) for gamma in gammas]
             glocs = self.get_Up_reps_local(prec)
             input_vector = []
@@ -722,10 +735,10 @@ class CohomologyGroup(Parent):
             return scale * self(vals)
         else:
             A = scale * self.get_Up_matrices(prec,bigmatrix = True,progress_bar = progress_bar)
-            if times != 1:
-                verbose('Computing %s-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
-                A = take_power(A,times)
-                verbose('Done computing %s-th power'%times)
+            if times != 0:
+                verbose('Computing 2^(%s)-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
+                A = take_2n_power(A,times)
+                verbose('Done computing 2^(%s)-th power'%times)
             valmat = A * Matrix(R,A.nrows(),1, [o for b in c._val for o in b._val.list() ])
             depth = V.precision_cap()
             return self([V(valmat.submatrix(row=i,nrows = depth)) for i in range(0,A.nrows(),depth)])

@@ -175,12 +175,17 @@ class BigArithGroup_class(AlgebraicGroup):
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
         if self.F == QQ:
-            #M, f, rho = magma.function_call('pMatrixRing', args=[self.Gn._Omax_magma, prime * self.Gn._Omax_magma.BaseRing()], params={'Precision': prec}, nvals=3)
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma,prime*self.Gn._Omax_magma.BaseRing(),Precision = prec,nvals = 2)
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma,prime*self.Gn._Omax_magma.BaseRing(),Precision = 10,nvals = 2)
             self._F_to_local = QQ.hom([R(1)])
         else:
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = prec,nvals = 2)
-            self._F_to_local = self.F.hom([R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())])
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 10,nvals = 2)
+            goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
+            self._F_to_local = None
+            for o in self.F.gen().minpoly().change_ring(R).roots():
+                if (o[0][0] - goodroot).valuation() > 5:
+                    self._F_to_local = self.F.hom([o[0][0]])
+                    break
+            assert self._F_to_local is not None
         self.Gn._F_to_local = self._F_to_local
         self.Gpn._F_to_local = self._F_to_local
         verbose('Initializing II,JJ,KK')
@@ -190,6 +195,10 @@ class BigArithGroup_class(AlgebraicGroup):
         self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         v = f.Image(B_magma.gen(3)).Vector()
         self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
+
+        a,b = self.Gn.B.invariants()
+        self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
+        self._KK = self._II * self._JJ
         # # Test splitting
         # mats = [matrix(R,2,2,[1,0,0,1]),self._II,self._JJ,self._KK]
         # for g in self.Gpn.Obasis:
