@@ -407,7 +407,7 @@ class CohomologyGroup(Parent):
                 gmat.set_immutable()
                 A = self._coeffmodule._get_powers(gmat)
                 self._gen_pows.append([A.new_matrix(entries = 1).lift(),A.lift()])
-                self._gen_pows_neg.append([A.new_matrix(entries = 1).lift(),(A**-1]).lift())
+                self._gen_pows_neg.append([A.new_matrix(entries = 1).lift(),(A**-1).lift()])
         else:
             self.is_overconvergent = False
             self._coeffmodule = base**1
@@ -485,10 +485,10 @@ class CohomologyGroup(Parent):
     def get_fox_term(self,i,a):
         if a >= 0:
             self.get_gen_pow(i,a-1)
-            return sum([self._gen_pows[i][o] for o in range(a)],0)
+            return sum([self._gen_pows[i][o] for o in range(a)],0).change_ring(self.coefficient_module().base_ring())
         else:
             self.get_gen_pow(i,a)
-            return -sum([self._gen_pows_neg[i][o] for o in range(1,-a+1)])
+            return (-sum([self._gen_pows_neg[i][o] for o in range(1,-a+1)])).change_ring(self.coefficient_module().base_ring())
 
 
     def dimension(self):
