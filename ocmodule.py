@@ -5,7 +5,6 @@
 #
 #                  http://www.gnu.org/licenses/
 #########################################################################
-#from sage.misc.cachefunc import cached_method
 from sage.structure.element import ModuleElement
 from sage.modules.module import Module
 from sage.matrix.constructor import Matrix
@@ -297,7 +296,7 @@ class OCVnElement(ModuleElement):
         """
         return self._val!=0
 
-    def evaluate_at_poly(self,P):
+    def evaluate_at_poly(self,P,R = None):
         r"""
 
         EXAMPLES:
@@ -308,10 +307,11 @@ class OCVnElement(ModuleElement):
 
         """
         p = self._parent._R.prime()
-        try:
-            R = pushout(P.parent().base_ring(),self.parent().base_ring())
-        except AttributeError:
-            R = self.parent().base_ring()
+        if R is None:
+            try:
+                R = pushout(P.parent().base_ring(),self.parent().base_ring())
+            except AttributeError:
+                R = self.parent().base_ring()
 
         if hasattr(P,'degree'):
             try:
@@ -378,9 +378,6 @@ class OCVn(Module,UniqueRepresentation):
         self._depth=depth
         self._PowerSeries=PowerSeriesRing(self._Rmod,default_prec=self._depth,name='z')
         self._cache_powers = dict()
-        #self._cache_powers_stats = dict()
-        self._hits = 0
-        self._misses = 0
         self._populate_coercion_lists_()
 
     def clear_cache(self):
@@ -432,6 +429,7 @@ class OCVn(Module,UniqueRepresentation):
                 a,b,c,d = abcd.list()
             else:
                 a,b,c,d = emb(abcd).list()
+        #a,b,c,d = a.lift(),b.lift(),c.lift(),d.lift()
         R=self._PowerSeries
         r=R([b,a])
         s=R([d,c])

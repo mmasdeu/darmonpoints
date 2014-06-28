@@ -303,6 +303,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
         prec = HOC.coefficient_module().precision_cap()
     depth = HOC.coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
+    QQp = Qp(p,prec)
     R1 = PowerSeriesRing(K,'r1')
     r1 = R1.gen()
     R1.set_default_prec(prec)
@@ -356,15 +357,18 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 newgamma = G.reduce_in_amalgam(h * gamma)
             else:
                 newgamma = G.wp()**-1 * G.reduce_in_amalgam(h * gamma) * G.wp()
-            mu_e = hc.evaluate(newgamma,parallelize)
             if HOC._use_ps_dists:
+                mu_e = hc.evaluate(newgamma,parallelize)
                 newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                # newresadd = sum([(mu_e._val[ii,0])*pol[ii] for ii in xrange(1+min([depth,pol.degree()]))])
-                newresadd = mu_e.evaluate_at_poly(pol)
+                # mu_e = hc.evaluate(newgamma,parallelize)
+                # newresadd = mu_e.evaluate_at_poly(pol)
+                newresadd = hc.evaluate(newgamma,parallelize,dotprod = pol)
             resadd += newresadd
             try:
-                resmul *= c0**ZZ(mu_e.moment(0).rational_reconstruction())
+                # resmul *= c0**ZZ(QQp(mu_e.moment(0)).add_bigoh(prec).rational_reconstruction())
+                # resmul *= c0**ZZ(QQp(mu_e.moment(0)).rational_reconstruction())
+                resmul *= c0**ZZ(hc._liftee.evaluate(newgamma)[0])
             except IndexError: pass
         edgelist = newedgelist
 

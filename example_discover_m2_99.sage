@@ -51,7 +51,7 @@ while PhiE.evaluate(g) == 0:
     g = G.Gpn.gen(i)
 xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile,method = 'short',few_integrals = True)
 
-PhiElift = get_overconvergent_class_quaternionic(P,get_ap,G,prec,sign_at_infinity,use_ps_dists,apsign = get_ap(P),progress_bar = True,method = 'new')
+PhiElift = get_overconvergent_class_quaternionic(P,get_ap,G,prec,sign_at_infinity,use_ps_dists,apsign = get_ap(P),progress_bar = True)
 
 qE1 = integrate_H1(G,xi1,PhiElift,1,method = 'moments',prec = working_prec, twist = False,progress_bar = True)
 qE2 = integrate_H1(G,xi2,PhiElift,1,method = 'moments',prec = working_prec, twist = True,progress_bar = True)

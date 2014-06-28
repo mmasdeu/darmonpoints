@@ -174,11 +174,12 @@ class BigArithGroup_class(AlgebraicGroup):
         R = Qp(prime,prec) #Zmod(prime**prec) #
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
+        self.Gn._Omax_magma.set_magma_attribute('pMatrixRings',[])
         if self.F == QQ:
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma,prime*self.Gn._Omax_magma.BaseRing(),Precision = 10,nvals = 2)
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma,prime*self.Gn._Omax_magma.BaseRing(),Precision = prec,nvals = 2)
             self._F_to_local = QQ.hom([R(1)])
         else:
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 10,nvals = 2)
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = prec,nvals = 2)
             self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
             self._F_to_local = None
             for o in self.F.gen().minpoly().change_ring(R).roots():
@@ -197,8 +198,8 @@ class BigArithGroup_class(AlgebraicGroup):
         self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
 
         a,b = self.Gn.B.invariants()
-        self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
-        self._KK = self._II * self._JJ
+        # self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
+        # self._KK = self._II * self._JJ
         # # Test splitting
         # mats = [matrix(R,2,2,[1,0,0,1]),self._II,self._JJ,self._KK]
         # for g in self.Gpn.Obasis:
@@ -311,8 +312,13 @@ class BigArithGroup_class(AlgebraicGroup):
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             pfacts = self.F.maximal_order().ideal(self.p).factor() if self.F.degree() > 1 else ZZ(self.p).factor()
 
-            # all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True, radius = 5,max_elements = 1) #FIXME
-            all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = 1, max_elements = 1)
+            try:
+                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,max_elements = 1) #,radius = 5, max_elements = -1)
+                # all_elts = self.Gpn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = False,return_all = True,radius = 5, max_elements = -1)
+            except AttributeError:
+                # all_elts = self.Gn.element_of_norm(self.p,use_magma = True,return_all = True,max_elements = 1) #,radius = 5, max_elements = -1)
+                all_elts = self.Gpn.element_of_norm(self.p,use_magma = False,return_all = True,radius = 5,max_elements = 1)
+
             found = False
             all_initial = all_elts
             if len(all_initial) == 0:
@@ -324,7 +330,7 @@ class BigArithGroup_class(AlgebraicGroup):
             except AttributeError:
                 pgen = self.ideal_p
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
-                if i % 1000 == 0:
+                if i % 50000 == 0:
                     verbose('Done %s iterations'%i)
                 i += 1
                 for tmp in all_initial:

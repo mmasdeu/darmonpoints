@@ -27,52 +27,27 @@ from sage.parallel.ncpus import ncpus
 oo = Infinity
 from sage.matrix.constructor import block_matrix
 
-# def matmul(a,b): # with prec = 20 takes 10.2s. prec = 40 -> 1min40s
-#     return a*b
+load('fmpz_mat.pyx')
 
-def matmul(a,b): # with prec = 20 takes 11.1s. prec = 40 -> 1min26s
-    return a._multiply_strassen(b,cutoff = 16)
-
-def take_2n_power(a,n):
+def take_super_power(a,n,N):
     R = a.parent().base_ring()
+    aflint = Fmpz_mat(a)
     for i in range(n):
-        a = a.change_ring(R).lift()
-        a = a*a
-        update_progress(float(i)/float(n))
-    return a.change_ring(R)
+        aflint.square_inplace()
+        if N != 0:
+            aflint.modreduce(N)
+        update_progress(float(i+1)/float(n))
+    return aflint._sage_()
 
-def take_power(a,n):
-    aa = matmul(a,a)
+def flint_matmul(a,b,N):
+    aflint = Fmpz_mat(a)
+    bflint = Fmpz_mat(b)
+    cflint = aflint * bflint
+    if N != 0:
+        cflint.modreduce(N)
+    return cflint._sage_()
 
-    # since we've computed a^2, let's start squaring there
-    # so, let's keep the least-significant bit around, just
-    # in case.
-    m = n & 1
-    n = n >> 1
-
-    # One multiplication can be saved by starting with
-    # the second-smallest power needed rather than with 1
-    # we've already squared a, so let's start there.
-    apow = aa
-    while n&1 == 0:
-        apow = matmul(apow,apow)
-        n = n >> 1
-    power = apow
-    n = n >> 1
-
-    # now multiply that least-significant bit in...
-    if m:
-        power = matmul(power,a)
-
-    # and this is straight from the book.
-    while n != 0:
-        apow = matmul(apow,apow)
-        if n&1 != 0:
-            power = matmul(power,apow)
-        n = n >> 1
-    return power
-
-def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = 'naive'):
+def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -82,6 +57,11 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
         Pnorm = ZZ(P.norm())
         F = P.number_field()
 
+    if method is None:
+        method = 'bigmatrix'
+    else:
+        if method != 'naive' and method != 'bigmatrix':
+            raise ValueError,'method shouldbe either "naive" or "bigmatrix"'
     if Pnorm != p:
         raise NotImplementedError,'For now I can only work over totally split'
 
@@ -122,12 +102,10 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
         verb_level = get_verbose()
         # set_verbose(0)
     Phi = Phi.improve(prec = prec,sign = apsign,parallelize = parallelize,progress_bar = progress_bar,method = method)
-    if progress_bar:
-        # set_verbose(verb_level)
-        pass
     if use_sage_db:
         db_save(Phi._val,fname)
     verbose('Done.')
+    Phi._liftee = phiE
     return Phi
 
 
@@ -186,7 +164,7 @@ class CohomologyElement(ModuleElement):
             raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
-    def evaluate_oc(self,x,parallelize = False,extramul = None):
+    def evaluate_oc(self,x,parallelize = False,extramul = None,dotprod = None):
         H = self.parent()
         G = H.group()
         V = H.coefficient_module()
@@ -211,19 +189,28 @@ class CohomologyElement(ModuleElement):
                         ans += Sigma0(G.embed(gamma,prec)) * (n * phig)
             if extramul is not None:
                 ans = extramul * ans
+            return ans
         else:
             W = self._val[0]._val.parent()
             ans = self.fox_term_times_value(*wd[-1])
             for i,a in reversed(wd[:-1]):
+                # ans = Fmpz_mat(self.fox_term_times_value(i,a)) + Fmpz_mat(H.get_gen_pow(i,a)) * ans
                 ans = self.fox_term_times_value(i,a) + H.get_gen_pow(i,a) * ans
             if extramul is not None:
-                ans = extramul * ans
-            ans = V(ans)
-        return ans
+                ans = Fmpz_mat(extramul) * ans
+            if dotprod is not None:
+                nrows = ans.nrows()
+                v = dotprod.list()[:nrows]
+                R  = dotprod.parent().base_ring()
+                if len(v) < nrows:
+                    v.extend([0 for i in range(nrows-len(v))])
+                ans = vec_dot_vec(ans,v,R)
+                # ans = (Fmpz_mat(Matrix(ZZ,1,ans.ncols(),v)) * ans)._sage_()[0,0]
+            ans = V(ans._sage_())
+            return ans
 
-    @cached_method
     def fox_term_times_value(self,i,a):
-        return self.parent().get_fox_term(i,a) * self._val[i]._val
+        return self.parent().get_fox_term(i,a) * Fmpz_mat(self._val[i]._val)
 
     def evaluate_triv(self,x,parallelize = False,extramul = None):
         try:
@@ -255,7 +242,6 @@ class CohomologyElement(ModuleElement):
         cvals = [coeff_module(o) for o in self._val]
         return sum([ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0],coeff_module(0))
 
-    # @cached_method
     def _evaluate_syllable(self,g,a):
         G = self.parent().group()
         V = self.parent().coefficient_module()
@@ -326,7 +312,7 @@ class CohomologyElement(ModuleElement):
         if lenword == 1:
             return self._evaluate_syllable(*word[0])
 
-    def improve(self,prec = None,sign = 1,parallelize = False,progress_bar = False,method = 'naive'):
+    def improve(self,prec = None,sign = 1,parallelize = False,progress_bar = False,method = 'bigmatrix'):
         r"""
         Repeatedly applies U_p.
 
@@ -340,9 +326,7 @@ class CohomologyElement(ModuleElement):
             prec = U.precision_cap()
         # reps = group.get_Up_reps()
         if method == 'naive':
-            if progress_bar:
-                update_progress(0.0)
-            h2 = self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,method = method)
+            h2 = self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,method = 'naive')
             if progress_bar:
                 update_progress(1.0/float(prec))
             else:
@@ -354,7 +338,7 @@ class CohomologyElement(ModuleElement):
                 h1 = h2
                 old_val = current_val
                 ii += 1
-                h2 = self.parent().apply_Up(h1,group = group,scale = sign,parallelize = parallelize,method = method)
+                h2 = self.parent().apply_Up(h1,group = group,scale = sign,parallelize = parallelize,method = 'naive')
                 current_val = min([(u-v).valuation() for u,v in zip(h2._val,h1._val)])
                 if progress_bar:
                     update_progress(float(ii+1)/float(prec))
@@ -364,6 +348,7 @@ class CohomologyElement(ModuleElement):
             # verbose('Final precision of %s digits'%current_val)
             return h2
         else:
+            assert method == 'bigmatrix'
             return self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,times = len(ZZ(prec-1).bits()),progress_bar = progress_bar,method = method)
 
 
@@ -386,7 +371,6 @@ class CohomologyGroup(Parent):
     Element = CohomologyElement
     def __init__(self,G,overconvergent = False,base = None,use_ps_dists = False):
         self._group = G
-        self._Up_prec = -1
         self._use_ps_dists = use_ps_dists
         if overconvergent and base is None:
             raise ValueError, 'Must give base if overconvergent'
@@ -405,10 +389,17 @@ class CohomologyGroup(Parent):
             for i,g in enumerate(self._group.gens()):
                 gmat = self.group().embed(self._group.Ugens[i],1+base.precision_cap())
                 gmat.set_immutable()
-                A = self._coeffmodule._get_powers(gmat)
-                self._gen_pows.append([A.new_matrix(entries = 1).lift(),A.lift()])
-                self._gen_pows_neg.append([A.new_matrix(entries = 1).lift(),(A**-1).lift()])
+                A = Fmpz_mat(self._coeffmodule._get_powers(gmat))
+                self._gen_pows.append([A.identitymatrix(),A])
+                gmatinv = gmat**-1
+                gmatinv.set_immutable()
+                Ainv = Fmpz_mat(self._coeffmodule._get_powers(gmatinv))
+                self._gen_pows_neg.append([A.identitymatrix(),Ainv])
+
+            self._pN = self._coeffmodule.base_ring().prime()**base.precision_cap()
+
         else:
+            self._pN = 0
             self.is_overconvergent = False
             self._coeffmodule = base**1
             self._Ga = G.abelianization()
@@ -446,12 +437,6 @@ class CohomologyGroup(Parent):
             G = self.group()
             V = self.coefficient_module()
             if data.parent().is_overconvergent:
-                # tmp = []
-                # Ga = self._Ga
-                # for i in self._free_idx:
-                #     idxlist = list(Ga.gen(i).lift())
-                #     tmp.append(sum([a*data.evaluate(t).moment(0).rational_reconstruction() for a,t in zip(idxlist,gens)]))
-                # return self.element_class(self,tmp)
                 return self.element_class(self,[V(data.evaluate(g).moment(0).rational_reconstruction()) for g in G.gens()])
             else:
                 return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
@@ -460,12 +445,15 @@ class CohomologyGroup(Parent):
 
     @cached_method
     def fox_gradient(self,word):
-        ans = [ZZ(0) for o in self.group().Ugens]
         h = self.get_gen_pow(0,0)
+        ans = [h.zeromatrix() for o in self.group().gens()]
         for i,a in word:
-            ans[i] += h * self.get_fox_term(i,a)
+            ans[i] += h  * self.get_fox_term(i,a)
             h = h * self.get_gen_pow(i,a)
-        return ans
+            h.modreduce(self._pN)
+        for o in ans:
+            o.modreduce(self._pN)
+        return [o._sage_() for o in ans]
 
     def get_gen_pow(self,i,a):
         if a == 0:
@@ -473,22 +461,24 @@ class CohomologyGroup(Parent):
         elif a > 0:
             genpows = self._gen_pows[i]
             while len(genpows) <= a:
-                genpows.append((genpows[1] * genpows[-1]).change_ring(self.coefficient_module().base_ring()).lift())
+                genpows.append(genpows[1] * genpows[-1])
+                genpows[-1].modreduce(self._pN)
             return genpows[a]
         else:
             genpows = self._gen_pows_neg[i]
             while len(genpows) <= -a:
-                genpows.append((genpows[1] * genpows[-1]).change_ring(self.coefficient_module().base_ring()).lift())
+                genpows.append(genpows[1] * genpows[-1])
+                genpows[-1].modreduce(self._pN)
             return genpows[-a]
 
     @cached_method
     def get_fox_term(self,i,a):
         if a >= 0:
             self.get_gen_pow(i,a-1)
-            return sum([self._gen_pows[i][o] for o in range(a)],0).change_ring(self.coefficient_module().base_ring())
+            return (reduce(lambda x,y:x+y,[self._gen_pows[i][o] for o in range(a)]))#.change_ring(self.coefficient_module().base_ring())
         else:
             self.get_gen_pow(i,a)
-            return (-sum([self._gen_pows_neg[i][o] for o in range(1,-a+1)])).change_ring(self.coefficient_module().base_ring())
+            return (-reduce(lambda x,y:x+y,[self._gen_pows_neg[i][o] for o in range(1,-a+1)]))#.change_ring(self.coefficient_module().base_ring())
 
 
     def dimension(self):
@@ -632,23 +622,20 @@ class CohomologyGroup(Parent):
                 vals[inp[-1]] += outp
         return scale * self(vals)
 
+    @cached_method
     def get_Up_reps_local(self,prec):
-        if prec <= self._Up_prec:
-            return self._Up_reps_local
+        Gpn = self.group()
+        if self._use_ps_dists:
+            self._Up_reps_local = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
         else:
-            Gpn = self.group()
-            if self._use_ps_dists:
-                self._Up_reps_local = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
-            else:
-                glocs = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
-                for o in glocs:
-                    o.set_immutable()
-                self._Up_reps_local = [self._coeffmodule._get_powers(o) for o in glocs]
-            self._Up_prec = prec
-            return self._Up_reps_local
+            glocs = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
+            for o in glocs:
+                o.set_immutable()
+            self._Up_reps_local = [self._coeffmodule._get_powers(o) for o in glocs]
+        return self._Up_reps_local
 
     @cached_method
-    def get_Up_matrices(self,prec,bigmatrix = False,progress_bar = False):
+    def get_Up_matrix(self,prec,progress_bar = False):
         r'''
         Return a lists of lists W, such that:
         W[i][j] = \sum_k s_k \frac{\partial t_k(g_i)}{\partial g_j}
@@ -665,29 +652,26 @@ class CohomologyGroup(Parent):
         ngens = len(Gpn.gens())
         nreps = len(Up_reps)
         glocs = self.get_Up_reps_local(prec)
-        ans = [[] for o in Gpn.gens()]
+        ans = [[None for u in Gpn.gens()] for o in Gpn.gens()]
+        total_counter = ngens*(nreps+ngens)
+        counter = 0
         for i,gi in enumerate(Gpn.gens()):
             giquat = gi.quaternion_rep
-            verbose('Getting Fox gradients %s'%i)
-            fox_gradients = []
+            fox_gradients = [None for o in Up_reps]
             for k,sk in enumerate(Up_reps):
-                fox_gradients.append(self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep)))
-                update_progress(float(k+1)/nreps)
-            verbose('Done getting Fox gradients %s'%i)
-
-            verbose('Getting matrix step 2')
-            for j,gj in enumerate(Gpn.gens()):
-                ans[i].append(sum([glocs[k] * fox_gradients[k][j] for k in range(nreps)]))
+                fox_gradients[k] = self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep))
                 if progress_bar:
-                    update_progress(float((i+1)*(j+1))/(float(ngens*nreps)))
-            verbose('Done step 2')
-        if bigmatrix:
-            return block_matrix(ans)
+                    counter +=1
+                    update_progress(float(counter)/float(total_counter))
 
-        verbose('Done getting Up matrices')
-        return ans
+            for j,gj in enumerate(Gpn.gens()):
+                ans[i][j] = sum([flint_matmul(glocs[k] , fox_gradients[k][j],self._pN) for k in range(nreps)])
+                if progress_bar:
+                    counter +=1
+                    update_progress(float(counter)/float(total_counter))
+        return block_matrix(ans)
 
-    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive'):
+    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'bigmatrix'):
         r"""
         Apply the Up Hecke operator operator to ``c``.
 
@@ -735,20 +719,18 @@ class CohomologyGroup(Parent):
                     vals[inp[-1]] += outp
             return scale * self(vals)
         else:
-            A = scale * self.get_Up_matrices(prec,bigmatrix = True,progress_bar = progress_bar)
+            assert method == 'bigmatrix'
+            A = scale * self.get_Up_matrix(prec,progress_bar = progress_bar)
             if times != 0:
                 verbose('Computing 2^(%s)-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
-                A = take_2n_power(A,times)
+                A = take_super_power(A,times,self._pN)
                 verbose('Done computing 2^(%s)-th power'%times)
-            valmat = A * Matrix(R,A.nrows(),1, [o for b in c._val for o in b._val.list() ])
+            valvec = [o for b in c._val for o in b._val.list() ]
+            valmat = A * Matrix(R,A.nrows(),1, valvec)
             depth = V.precision_cap()
+            assert len(valvec) == A.nrows()
+            assert depth * len(Gpn.gens()) == A.nrows()
             return self([V(valmat.submatrix(row=i,nrows = depth)) for i in range(0,A.nrows(),depth)])
-
-            # A = self.get_Up_matrices(prec)
-            # for i in range(len(vals)):
-            #     Ai = A[i]
-            #     vals[i] = sum([a * b._val for a,b in zip(Ai,c._val)])
-            # return scale * self(vals)
 
 
 def _calculate_Up_contribution(G,g,gamma,c,gloc,use_ps_dists,num_gamma):

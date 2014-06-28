@@ -29,26 +29,38 @@ from sage.rings.integer cimport Integer
 from sage.matrix.matrix_generic_dense cimport Matrix_generic_dense
 from sage.matrix.constructor import Matrix,matrix
 
+cdef vec_dot_vec(Fmpz_mat mtx, vec,R):
+    cdef unsigned long p = R.prime()
+    cdef unsigned long i
+    ans = R(0)
+    for i from 0 <= i < mtx.nrows():
+        ans += vec[i] * mtx[i,0]
+    return ans
+
 cdef class Fmpz_mat(SageObject):
     cdef fmpz_mat_t mat
+    #cdef fmpz_t _mod
     cdef unsigned long _nrows
     cdef unsigned long _ncols
 
     def __cinit__(self):#,unsigned long nrows,unsigned long ncols):
         fmpz_mat_init(self.mat,self._nrows,self._ncols)
-        #fmpz_mat_clear(self.mat)
+
+    def __dealloc__(self):
+        r"""
+        """
+        fmpz_mat_clear(self.mat)
 
     def __init__(self,  x, check=True,
-            construct=False):
+                 construct=False):
         r"""
         EXAMPLES::
 
         """
+        cdef long i,j
+
         self._nrows = x.nrows()
         self._ncols = x.ncols()
-
-        cdef long i
-        cdef long j
 
         fmpz_mat_init(self.mat,self._nrows,self._ncols)
 
@@ -91,7 +103,7 @@ cdef class Fmpz_mat(SageObject):
             return z
 
     def square_inplace(self):
-        fmpz_mat_mul(self.mat,self.mat,self.mat)
+        fmpz_mat_sqr(self.mat , self.mat)
 
     def __add__(Fmpz_mat self,Fmpz_mat right):
         cdef Fmpz_mat res = <Fmpz_mat>PY_NEW(Fmpz_mat)
@@ -103,7 +115,38 @@ cdef class Fmpz_mat(SageObject):
         sig_off()
         return res
 
+    def __neg__(Fmpz_mat self):
+        cdef Fmpz_mat res = <Fmpz_mat>PY_NEW(Fmpz_mat)
+        cdef long minus_one = <long>(-1)
+        res._nrows = self._nrows
+        res._ncols = self._ncols
+        sig_on()
+        fmpz_mat_init(res.mat,res._nrows,res._ncols)
+        fmpz_mat_scalar_mul_si(res.mat,self.mat,minus_one)
+        sig_off()
+        return res
 
+    def zeromatrix(Fmpz_mat self):
+        cdef Fmpz_mat res = <Fmpz_mat>PY_NEW(Fmpz_mat)
+        res._nrows = self._nrows
+        res._ncols = self._ncols
+        sig_on()
+        fmpz_mat_init(res.mat,res._nrows,res._ncols)
+        fmpz_mat_zero(res.mat)
+        sig_off()
+        return res
+
+    def identitymatrix(Fmpz_mat self):
+        cdef Fmpz_mat res = <Fmpz_mat>PY_NEW(Fmpz_mat)
+        res._nrows = self._nrows
+        res._ncols = self._ncols
+        sig_on()
+        fmpz_mat_init(res.mat,res._nrows,res._ncols)
+        fmpz_mat_one(res.mat)
+        sig_off()
+        return res
+
+    
     def __sub__(Fmpz_mat self,Fmpz_mat right):
         cdef Fmpz_mat res = <Fmpz_mat>PY_NEW(Fmpz_mat)
         res._nrows = self._nrows
@@ -127,7 +170,6 @@ cdef class Fmpz_mat(SageObject):
 
     def __pow__(Fmpz_mat self,unsigned long n,dummy):
         cdef Fmpz_mat res = <Fmpz_mat>PY_NEW(Fmpz_mat)
-        cdef fmpz_t den
         res._nrows = self._nrows
         res._ncols = self._ncols
         sig_on()
@@ -136,6 +178,17 @@ cdef class Fmpz_mat(SageObject):
         sig_off()
         return res
 
+    def modreduce(Fmpz_mat self,modulus):
+        cdef long i,j
+        cdef fmpz_t tmp
+        cdef fmpz_t modf
+        fmpz_init(modf)
+        fmpz_set_mpz(modf,(<Integer>modulus).value)
+        for i from 0 <= i < self._nrows:
+            for j from 0 <= j < self._ncols:
+                fmpz_init_set(tmp,fmpz_mat_entry(self.mat, i, j))
+                fmpz_fdiv_r(tmp,tmp,modf)
+                fmpz_init_set(fmpz_mat_entry(self.mat, i, j),tmp)
 
     def _pretty_print(self):
         fmpz_mat_print_pretty(self.mat)

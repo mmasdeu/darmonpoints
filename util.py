@@ -923,11 +923,11 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True)
     assert qE.valuation() != 0, 'qE should not have zero valuation'
     if qE.valuation() < 0:
         qE = 1/qE
-    qE = qE**2
     F = field if field is not None else emb.domain()
     deg = F.degree()
-    qval = qE.valuation()
     p = qE.parent().prime()
+    qE = qE**(p-1) # Kill the torsion
+    qval = qE.valuation()
     try:
         Ftors = F.unit_group().torsion_generator()
         Funits = [F(Ftors)**i for i in range(Ftors.order())]

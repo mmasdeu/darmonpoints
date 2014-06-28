@@ -27,7 +27,7 @@ E = EllipticCurve(str(p*D*Np))
 # Define the S-arithmetic group
 G = BigArithGroup(p,quaternion_algebra_from_discriminant(QQ,D).invariants(),Np,use_sage_db = False)
 
-PhiElift = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists,progress_bar = True,method = 'new')
+PhiElift = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use_ps_dists,progress_bar = True)
 
 # This has been found by hand
 g =  G.Gn(G.Gpn.gen(1).quaternion_rep)
