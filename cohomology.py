@@ -176,7 +176,10 @@ class CohomologyElement(ModuleElement):
             x = G(x)
             wd = x.word_rep
         if len(wd) == 0:
-            return V(0)
+            if dotprod is None:
+                return V(0)
+            else:
+                return dotprod.parent().base_ring()(0)
 
         emb = lambda x:G.embed(x,prec)
         if self.parent()._use_ps_dists:
