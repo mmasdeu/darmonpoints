@@ -29,7 +29,7 @@ from sage.rings.integer cimport Integer
 from sage.matrix.matrix_generic_dense cimport Matrix_generic_dense
 from sage.matrix.constructor import Matrix,matrix
 
-cdef vec_dot_vec(Fmpz_mat mtx, vec,R):
+def vec_dot_vec(Fmpz_mat mtx, vec,R):
     cdef unsigned long p = R.prime()
     cdef unsigned long i
     ans = R(0)

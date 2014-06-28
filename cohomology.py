@@ -204,7 +204,7 @@ class CohomologyElement(ModuleElement):
                 R  = dotprod.parent().base_ring()
                 if len(v) < nrows:
                     v.extend([0 for i in range(nrows-len(v))])
-                ans = vec_dot_vec(ans,v,R)
+                return vec_dot_vec(ans,v,R)
                 # ans = (Fmpz_mat(Matrix(ZZ,1,ans.ncols(),v)) * ans)._sage_()[0,0]
             ans = V(ans._sage_())
             return ans

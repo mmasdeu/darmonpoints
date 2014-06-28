@@ -317,7 +317,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 # all_elts = self.Gpn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = False,return_all = True,radius = 5, max_elements = -1)
             except AttributeError:
                 # all_elts = self.Gn.element_of_norm(self.p,use_magma = True,return_all = True,max_elements = 1) #,radius = 5, max_elements = -1)
-                all_elts = self.Gpn.element_of_norm(self.p,use_magma = False,return_all = True,radius = 5,max_elements = 1)
+                all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True,radius = 5,max_elements = 1)
 
             found = False
             all_initial = all_elts
