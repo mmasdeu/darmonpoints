@@ -361,9 +361,9 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 mu_e = hc.evaluate(newgamma,parallelize)
                 newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                # mu_e = hc.evaluate(newgamma,parallelize)
-                # newresadd = mu_e.evaluate_at_poly(pol)
-                newresadd = hc.evaluate(newgamma,parallelize,dotprod = pol)
+                mu_e = hc.evaluate(newgamma,parallelize)
+                newresadd = mu_e.evaluate_at_poly(pol)
+                # newresadd = hc.evaluate(newgamma,parallelize,dotprod = pol)
             resadd += newresadd
             try:
                 # resmul *= c0**ZZ(QQp(mu_e.moment(0)).add_bigoh(prec).rational_reconstruction())
