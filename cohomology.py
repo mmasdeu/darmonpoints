@@ -27,7 +27,7 @@ from sage.parallel.ncpus import ncpus
 oo = Infinity
 from sage.matrix.constructor import block_matrix
 
-load('fmpz_mat.pyx')
+load('fmpz_mat.spyx')
 
 def take_super_power(a,n,N):
     R = a.parent().base_ring()

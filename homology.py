@@ -80,14 +80,16 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check 
     That is, the quaternion elements need to be conjugated by wp before being integrated.
     '''
     p = G.prime()
+    wp = G.wp()
     Cp = Qq(p**2,prec,names = 'g')
+    a,b,c,d = G.embed(wp**-1,prec).change_ring(Cp).list()
     tau1 = Cp.gen()
+    tau1 = (a*tau1 + b)/(c*tau1 + d)
     Div = Divisors(Cp)
     D1 = Div(tau1)
     H1 = Homology(G.large_group(),Div)
     xi1 = H1({})
     xi2 = H1({})
-    wp = G.wp()
     # We calculate npow
     npow0 = 1
     vec = G.Gn.get_weight_vector(eltn)

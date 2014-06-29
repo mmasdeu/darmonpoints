@@ -629,13 +629,15 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         return V
 
     def _fix_sign(self,x,N):
+        verbose('Fixing sign...')
         emb = self.F.embeddings(RealField(100))[0]
         if emb(x.reduced_norm()).sign() != emb(N).sign():
             x = x * self.element_of_norm(-1,use_magma = False)
         assert emb(x.reduced_norm()).sign() == emb(N).sign()
+        verbose('Done fixing sign')
         return x
 
-    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1): # in rationalquaternion
+    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1,force_sign = True): # in rationalquaternion
         N = ZZ(N)
         if return_all == False:
             try:
@@ -650,7 +652,9 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             elt_magma = self._O_magma.ElementOfNorm(N*self._F_magma.Integers())
             candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1]) for m in range(4)])
 
-            self._element_of_norm[N] = self._fix_sign(candidate,N)
+            if force_sign:
+                candidate = self._fix_sign(candidate,N)
+            self._element_of_norm[N] = candidate
             if return_all:
                 return [candidate]
             else:
@@ -713,7 +717,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             return self._cache_hecke_reps[l]
         except KeyError: pass
         verbose('Finding hecke reps for l = %s'%l)
-        g0 = self.element_of_norm(l,use_magma = use_magma)
+        g0 = self.element_of_norm(l,use_magma = use_magma,force_sign = False)
         assert g0.reduced_norm() == l
         reps = [g0]
         ngens = len(self.gens())
@@ -823,7 +827,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             tmp.extend(self.minus_one)
         return tmp
 
-    def element_of_norm(self,N,use_magma = False,local_condition = None): # in rationalmatrix
+    def element_of_norm(self,N,use_magma = False,local_condition = None,force_sign = True): # in rationalmatrix
         try:
             return self._element_of_norm[N]
         except (AttributeError,KeyError):
@@ -1223,12 +1227,15 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         assert emb(x.reduced_norm()).sign() == emb(N).sign()
         return x
 
-    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1): # in nf_quaternion
+    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1,force_sign = True): # in nf_quaternion
         Nideal = self.F.ideal(N)
         if return_all == False:
             try:
                 if use_magma:
-                    return self._fix_sign(self._element_of_norm[Nideal.gens_two()],N)
+                    if force_sign:
+                        return self._fix_sign(self._element_of_norm[Nideal.gens_two()],N)
+                    else:
+                        return self._element_of_norm[Nideal.gens_two()]
                 else:
                     return self._element_of_norm[N]
             except (AttributeError,KeyError):
@@ -1246,10 +1253,12 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             elt_magma_vector = elt_magma.Vector()
             candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma_vector[m+1]) for m in range(4)])
             self._element_of_norm[Nideal.gens_two()] = candidate
+            if force_sign:
+                candidate = self._fix_sign(candidate,N)
             if return_all:
-                return [self._fix_sign(candidate,N)]
+                return [candidate]
             else:
-                return self._fix_sign(candidate,N)
+                return candidate
         else:
             v = self.Obasis
             verbose('Doing long enumeration...')

@@ -302,7 +302,6 @@ class BigArithGroup_class(AlgebraicGroup):
                 newEgood.extend([BTEdge(not rev, e * gamma) for e in self.get_BT_reps()[1:]])
         return self.subdivide(newEgood,1-parity,depth - 1)
 
-    #@lazy_attribute
     @cached_method
     def wp(self):
         verbose('Finding a suitable wp...')
@@ -312,12 +311,10 @@ class BigArithGroup_class(AlgebraicGroup):
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             pfacts = self.F.maximal_order().ideal(self.p).factor() if self.F.degree() > 1 else ZZ(self.p).factor()
 
-            try:
-                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,max_elements = 1) #,radius = 5, max_elements = -1)
-                # all_elts = self.Gpn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = False,return_all = True,radius = 5, max_elements = -1)
-            except AttributeError:
-                # all_elts = self.Gn.element_of_norm(self.p,use_magma = True,return_all = True,max_elements = 1) #,radius = 5, max_elements = -1)
-                all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True,radius = 5,max_elements = 1)
+            if self.F == QQ:
+                all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True,radius = 5,max_elements = 1,force_sign = False)
+            else:
+                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,max_elements = 1,force_sign = False)
 
             found = False
             all_initial = all_elts
