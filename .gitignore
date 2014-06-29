@@ -1,0 +1,10 @@
+
+# Magma garbage
+*.mpl
+*.sig
+
+# Python byte compiled files
+*.pyc
+
+# Emacs temp/backup
+\#*\#
