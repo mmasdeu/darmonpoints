@@ -7,7 +7,7 @@ from util import *
 import os,datetime
 from sarithgroup import BigArithGroup
 from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
-from homology import construct_homology_cycle
+from homology import construct_homology_cycle,lattice_homology_cycle
 from integrals import integrate_H1,double_integral_zero_infty,indef_integral
 from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 from sage.misc.persist import db,db_save
@@ -371,3 +371,81 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
         else:
             return []
 
+
+######################################
+#####     Curve Finding           ####
+######################################
+
+def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False):
+    try:
+        F = P.ring()
+    except AttributeError:
+        F = QQ
+        P = ZZ(P)
+    try:
+        Fdisc = F.discriminant()
+    except AttributeError:
+        Fdisc = ZZ(1)
+    Np = NE / (P*DB)
+    if use_ps_dists is None:
+        use_ps_dists = False # More efficient our oun implementation
+    try:
+        p = ZZ(P)
+    except TypeError:
+        p = ZZ(P.norm())
+    if not p.is_prime():
+        raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
+
+    QQp = Qp(p,prec)
+
+    if working_prec is None:
+        working_prec = 2 * prec + 10
+
+    sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
+    fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
+
+    if outfile is None:
+        outfile = '/tmp/findcurve_%s_%s_%s_%s_%s.log'%(P,NE,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+
+    fwrite("Starting computation of the Curve",outfile)
+    fwrite('N_E = %s  %s'%(NE,factor(NE)),outfile)
+    fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
+    fwrite('Np = %s'%Np,outfile)
+    fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
+    if outfile is not None:
+        print "Partial results will be saved in %s"%outfile
+    print "=================================================="
+
+    if input_data is None:
+        # Define the S-arithmetic group
+        G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB).invariants(),Np,use_sage_db = use_sage_db)
+
+        # Define PhiE, the cohomology class associated to the system of eigenvalues.
+        Coh = CohomologyGroup(G.Gpn)
+        PhiE = Coh.get_cocycle_from_elliptic_curve(None,sign = sign_at_infinity)
+        if use_sage_db:
+            G.save_to_db()
+
+        i = 0
+        g = G.Gpn.gen(i)
+        while PhiE.evaluate(g) == 0:
+            i+=1
+            g = G.Gpn.gen(i)
+
+        xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile,method = 'short',few_integrals = True)
+
+        Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = True)
+
+        qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = True)
+        qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = True)
+        qE = qE1/qE2
+    else: # input_data is not None
+        Phi,qE = input_data[1:3]
+    print 'Integral done. Now trying to recognize the curve'
+    fwrite('qE = %s'%qE,outfile)
+    curve = discover_equation(qE,G._F_to_local,NE,prec).global_minimal_model()
+    fwrite('================================================',outfile)
+    if return_all_data == True:
+        return (curve, Phi, qE)
+    else:
+        return curve
