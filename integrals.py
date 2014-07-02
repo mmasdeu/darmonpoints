@@ -363,15 +363,11 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             else:
                 mu_e = hc.evaluate(newgamma,parallelize)
                 newresadd = mu_e.evaluate_at_poly(pol)
-                # newresadd = hc.evaluate(newgamma,parallelize,dotprod = pol)
             resadd += newresadd
             try:
-                # resmul *= c0**ZZ(QQp(mu_e.moment(0)).add_bigoh(prec).rational_reconstruction())
-                # resmul *= c0**ZZ(QQp(mu_e.moment(0)).rational_reconstruction())
-                resmul *= c0**ZZ(hc._liftee.evaluate(newgamma)[0])
+                resmul *= c0**ZZ(hc.get_liftee().evaluate(newgamma)[0])
             except IndexError: pass
         edgelist = newedgelist
-
     val =  resmul.valuation()
     if val != 0:
         verbose('val = %s'%val)
