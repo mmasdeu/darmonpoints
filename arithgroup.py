@@ -415,7 +415,7 @@ class ArithGroup_generic(AlgebraicGroup):
 class ArithGroup_rationalquaternion(ArithGroup_generic):
     Element = ArithGroupElement
     def __init__(self,discriminant,level,info_magma = None,grouptype = 'PSL2'):
-        assert grouptype in ['SL2','PSL2']
+        assert grouptype in ['SL2','PSL2'] # Need to find how to return the other groups with Voight's algorithm
         self._grouptype = grouptype
 
         self.F = QQ
@@ -908,7 +908,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant())
         verbose('Computing normalized basis')
         if 'GL' in grouptype:
-            raise NotImplementedError,'This implementation has bugs'
+            # raise NotImplementedError,'This implementation has bugs'
             _,f,e = self._O_magma.NormalizedBasis(GroupType = '"Units"', nvals = 3)
         else:
             assert 'SL' in grouptype
