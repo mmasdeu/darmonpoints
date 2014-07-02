@@ -105,7 +105,7 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
     if use_sage_db:
         db_save(Phi._val,fname)
     verbose('Done.')
-    Phi._liftee = phiE
+    Phi.set_liftee(phiE)
     return Phi
 
 
@@ -141,6 +141,13 @@ class CohomologyElement(ModuleElement):
             self.evaluate = self.evaluate_triv
         ModuleElement.__init__(self,parent)
 
+    def set_liftee(self,x):
+        self._liftee = x
+    def get_liftee(self):
+        try:
+            return self._liftee
+        except AttributeError:
+            raise RuntimeError,"Don't know what this cocycle is a lift of!"
     def values(self):
         return self._val
 
@@ -197,7 +204,6 @@ class CohomologyElement(ModuleElement):
             W = self._val[0]._val.parent()
             ans = self.fox_term_times_value(*wd[-1])
             for i,a in reversed(wd[:-1]):
-                # ans = Fmpz_mat(self.fox_term_times_value(i,a)) + Fmpz_mat(H.get_gen_pow(i,a)) * ans
                 ans = self.fox_term_times_value(i,a) + H.get_gen_pow(i,a) * ans
             if extramul is not None:
                 ans = Fmpz_mat(extramul) * ans
@@ -208,7 +214,6 @@ class CohomologyElement(ModuleElement):
                 if len(v) < nrows:
                     v.extend([0 for i in range(nrows-len(v))])
                 return vec_dot_vec(ans,v,R)
-                # ans = (Fmpz_mat(Matrix(ZZ,1,ans.ncols(),v)) * ans)._sage_()[0,0]
             ans = V(ans._sage_())
             return ans
 
@@ -440,7 +445,10 @@ class CohomologyGroup(Parent):
             G = self.group()
             V = self.coefficient_module()
             if data.parent().is_overconvergent:
-                return self.element_class(self,[V(data.evaluate(g).moment(0).rational_reconstruction()) for g in G.gens()])
+                try:
+                    return self.element_class(self,[V(data.get_liftee().evaluate(g).moment(0)) for g in G.gens()])
+                except RuntimeError:
+                    return self.element_class(self,[V(data.evaluate(g).moment(0).rational_reconstruction()) for g in G.gens()])
             else:
                 return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
         else:
@@ -533,7 +541,7 @@ class CohomologyGroup(Parent):
 
     def get_cocycle_from_elliptic_curve(self,E = None,sign = 1,use_magma = False):
         F = self.group().base_ring()
-        if F.signature()[0] == 0:
+        if F.signature()[0] == 0 or 'G' in self.group()._grouptype:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
         else:
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
