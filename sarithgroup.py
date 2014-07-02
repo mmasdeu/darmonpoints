@@ -137,9 +137,9 @@ class BigArithGroup_class(AlgebraicGroup):
         fwrite('R(p) with basis %s'%basis_data_p,outfile)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
-        self._prec = 200
-        self._II,self._JJ,self._KK = self._compute_padic_splitting(200)
-        # self.wpold = self.wp()
+        self._prec = -1
+        #self._II,self._JJ,self._KK = self.local_splitting(200)
+        #self.wpold = self.wp()
         # self.get_Up_reps()
         verbose('Done initializing arithmetic groups')
         self.Gpn.get_Up_reps = self.get_Up_reps
@@ -162,8 +162,7 @@ class BigArithGroup_class(AlgebraicGroup):
         return self.p
 
     def base_ring_local_embedding(self,prec):
-        if prec > self._prec:
-            self._compute_padic_splitting(prec)
+        phi = self.local_splitting(prec)
         return self._F_to_local
 
     def _compute_padic_splitting(self,prec):
@@ -209,7 +208,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self._prec = prec
         return self._II, self._JJ, self._KK
 
-    def _local_splitting(self,prec):
+    def local_splitting(self,prec):
         r"""
         Finds an embedding of the definite quaternion algebra
         into the algebra of 2x2 matrices with coefficients in `\QQ_p`.
@@ -225,7 +224,7 @@ class BigArithGroup_class(AlgebraicGroup):
         EXAMPLES::
 
             sage: X = BigArithGroup(13,2*3,1)
-            sage: phi = X._local_splitting(10)
+            sage: phi = X.local_splitting(10)
             sage: B.<i,j,k> = QuaternionAlgebra(3)
             sage: phi(i)**2 == QQ(i**2)*phi(B(1))
             True
@@ -252,19 +251,18 @@ class BigArithGroup_class(AlgebraicGroup):
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in range(self.p)]
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)
-            if all([not self.Gpn._is_in_order(o * new_inv) for o in reps if o is not None]):
+            embelt = emb(elt)
+            if (embelt[0,0]-1).valuation() > 0 and all([not self.Gpn._is_in_order(o * new_inv) for o in reps if o is not None]):
                 for idx,o1 in enumerate(matrices):
                     i,mat = o1
-                    embelt = emb(elt)
-                    if (embelt[0,0]-1).valuation() > 0:
-                        tmp = embelt * mat
-                        if is_in_Gamma0loc(tmp, det_condition = False):
-                            reps[i] = set_immutable(elt)
-                            del matrices[idx]
-                            verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
-                            if len(matrices) == 0:
-                                return reps
-                            break
+                    tmp = embelt * mat
+                    if is_in_Gamma0loc(tmp, det_condition = False):
+                        reps[i] = set_immutable(elt)
+                        del matrices[idx]
+                        verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
+                        if len(matrices) == 0:
+                            return reps
+                        break
 
     def do_tilde(self,g):
         # lam = -self.p
@@ -302,6 +300,43 @@ class BigArithGroup_class(AlgebraicGroup):
                 newEgood.extend([BTEdge(not rev, e * gamma) for e in self.get_BT_reps()[1:]])
         return self.subdivide(newEgood,1-parity,depth - 1)
 
+    # @cached_method
+    # def wp(self):
+    #     verbose('Finding a suitable wp...')
+    #     if self.discriminant == 1:
+    #         return matrix(QQ,2,2,[0,-1,self.p,0])
+    #     else:
+    #         epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
+    #         force_sign = False if 'P' in self.Gn._grouptype else True
+    #         if self.F == QQ:
+    #             #elt = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = False,radius = 5,max_elements = -1,force_sign = False)
+    #             elt = self.Gn.element_of_norm(self.p,use_magma = True,return_all = False,max_elements = 1, force_sign = force_sign)
+    #         else:
+    #             elt = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = False,max_elements = 1, force_sign = force_sign)
+    #         found = False
+    #         i = 0
+    #         try:
+    #             pgen = self.ideal_p.gen(0)
+    #         except AttributeError:
+    #             pgen = self.ideal_p
+    #         for gamma in self.get_BT_reps():
+    #             try:
+    #                 elt = self.Gpn(gamma**-1 * elt)
+    #                 found = True
+    #                 break
+    #             except:
+    #                 pass
+    #         assert found
+    #         elt = elt.quaternion_rep
+    #         for v1,v2 in cantor_diagonal(self.Gpn.enumerate_elements(),self.Gpn.enumerate_elements()):
+    #             if i % 50000 == 0:
+    #                 verbose('Done %s iterations'%i)
+    #             i += 1
+    #             new_candidate =  v1 * elt * v2
+    #             if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)):
+    #                 return new_candidate
+    #         raise RuntimeError
+
     @cached_method
     def wp(self):
         verbose('Finding a suitable wp...')
@@ -309,13 +344,11 @@ class BigArithGroup_class(AlgebraicGroup):
             return matrix(QQ,2,2,[0,-1,self.p,0])
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            pfacts = self.F.maximal_order().ideal(self.p).factor() if self.F.degree() > 1 else ZZ(self.p).factor()
-
             if self.F == QQ:
                 all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True,radius = 5,max_elements = 1,force_sign = False)
             else:
-                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,max_elements = 1,force_sign = False)
-
+                #radius = 3 if self.F.degree() == 2 else 2
+                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,max_elements = 1, force_sign = True)
             found = False
             all_initial = all_elts
             if len(all_initial) == 0:
@@ -327,14 +360,50 @@ class BigArithGroup_class(AlgebraicGroup):
             except AttributeError:
                 pgen = self.ideal_p
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
+            # for v1 in self.Gn.enumerate_elements():
                 if i % 50000 == 0:
                     verbose('Done %s iterations'%i)
                 i += 1
                 for tmp in all_initial:
-                    new_candidate =  v2 * tmp * v1
+                    new_candidate =  v1 * tmp * v2
                     if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
                         return new_candidate
             raise RuntimeError
+
+    # @cached_method
+    # def wp(self):
+    #     verbose('Finding a suitable wp...')
+    #     if self.discriminant == 1:
+    #         return matrix(QQ,2,2,[0,-1,self.p,0])
+    #     else:
+    #         epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
+    #         pfacts = self.F.maximal_order().ideal(self.p).factor() if self.F.degree() > 1 else ZZ(self.p).factor()
+    # 
+    #         if self.F == QQ:
+    #             all_elts = self.Gpn.element_of_norm(self.p,use_magma = False,return_all = True, radius = 5,max_elements = 1) #FIXME
+    #         else:
+    #             all_elts = self.Gpn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = False,return_all = True, radius = 5,max_elements = 1) #FIXME
+    #             # all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,max_elements = 1) #FIXME
+    # 
+    #         found = False
+    #         all_initial = all_elts
+    #         if len(all_initial) == 0:
+    #             raise RuntimeError
+    #         verbose('Found %s initial candidates for wp'%len(all_initial))
+    #         i = 0
+    #         try:
+    #             pgen = self.ideal_p.gen(0)
+    #         except AttributeError:
+    #             pgen = self.ideal_p
+    #         for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
+    #             if i % 1000 == 0:
+    #                 verbose('Done %s iterations'%i)
+    #             i += 1
+    #             for tmp in all_initial:
+    #                 new_candidate =  v2 * tmp * v1
+    #                 if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
+    #                     return new_candidate
+    #         raise RuntimeError
 
     def get_embedding(self,prec):
         r"""
@@ -351,7 +420,7 @@ class BigArithGroup_class(AlgebraicGroup):
             def iota(q):
                 return q.change_ring(R)
         else:
-            I,J,K = self._local_splitting(prec)
+            I,J,K = self.local_splitting(prec)
             mats = [1,I,J,K]
             def iota(q):
                 R=I.parent()
@@ -371,7 +440,7 @@ class BigArithGroup_class(AlgebraicGroup):
             try:
                 q = q.coefficient_tuple()
             except AttributeError: pass
-            I,J,K = self._local_splitting(prec)
+            I,J,K = self.local_splitting(prec)
             f = self._F_to_local
             return f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K
 
