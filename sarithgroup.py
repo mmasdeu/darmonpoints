@@ -44,7 +44,7 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = 'PSL2',seed = None,use_sage_db = True,outfile = None):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = 'PGL2',seed = None,use_sage_db = True,outfile = None):
         # if seed is None:
         #     seed = 1000
         try:
@@ -105,7 +105,7 @@ class BigArithGroup_class(AlgebraicGroup):
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = 'PSL2',seed = None,outfile = None):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = 'PGL2',seed = None,outfile = None):
         self.seed = seed
         if seed is not None:
             verbose('Setting Magma seed to %s'%seed)
@@ -138,7 +138,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
         self._prec = -1
-        #self._II,self._JJ,self._KK = self.local_splitting(200)
+        self._II,self._JJ,self._KK = self.local_splitting(200)
         #self.wpold = self.wp()
         # self.get_Up_reps()
         verbose('Done initializing arithmetic groups')
@@ -173,12 +173,12 @@ class BigArithGroup_class(AlgebraicGroup):
         R = Qp(prime,prec) #Zmod(prime**prec) #
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
-        self.Gn._Omax_magma.set_magma_attribute('pMatrixRings',[])
+        # self.Gn._Omax_magma.set_magma_attribute('pMatrixRings',[])
         if self.F == QQ:
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma,prime*self.Gn._Omax_magma.BaseRing(),Precision = prec,nvals = 2)
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma,prime*self.Gn._Omax_magma.BaseRing(),Precision = 10,nvals = 2)
             self._F_to_local = QQ.hom([R(1)])
         else:
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = prec,nvals = 2)
+            M,f = magma.pMatrixRing(self.Gn._Omax_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 10,nvals = 2)
             self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
             self._F_to_local = None
             for o in self.F.gen().minpoly().change_ring(R).roots():
@@ -197,8 +197,8 @@ class BigArithGroup_class(AlgebraicGroup):
         self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
 
         a,b = self.Gn.B.invariants()
-        # self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
-        # self._KK = self._II * self._JJ
+        self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
+        self._KK = self._II * self._JJ
         # # Test splitting
         # mats = [matrix(R,2,2,[1,0,0,1]),self._II,self._JJ,self._KK]
         # for g in self.Gpn.Obasis:
@@ -300,43 +300,6 @@ class BigArithGroup_class(AlgebraicGroup):
                 newEgood.extend([BTEdge(not rev, e * gamma) for e in self.get_BT_reps()[1:]])
         return self.subdivide(newEgood,1-parity,depth - 1)
 
-    # @cached_method
-    # def wp(self):
-    #     verbose('Finding a suitable wp...')
-    #     if self.discriminant == 1:
-    #         return matrix(QQ,2,2,[0,-1,self.p,0])
-    #     else:
-    #         epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-    #         force_sign = False if 'P' in self.Gn._grouptype else True
-    #         if self.F == QQ:
-    #             #elt = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = False,radius = 5,max_elements = -1,force_sign = False)
-    #             elt = self.Gn.element_of_norm(self.p,use_magma = True,return_all = False,max_elements = 1, force_sign = force_sign)
-    #         else:
-    #             elt = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = False,max_elements = 1, force_sign = force_sign)
-    #         found = False
-    #         i = 0
-    #         try:
-    #             pgen = self.ideal_p.gen(0)
-    #         except AttributeError:
-    #             pgen = self.ideal_p
-    #         for gamma in self.get_BT_reps():
-    #             try:
-    #                 elt = self.Gpn(gamma**-1 * elt)
-    #                 found = True
-    #                 break
-    #             except:
-    #                 pass
-    #         assert found
-    #         elt = elt.quaternion_rep
-    #         for v1,v2 in cantor_diagonal(self.Gpn.enumerate_elements(),self.Gpn.enumerate_elements()):
-    #             if i % 50000 == 0:
-    #                 verbose('Done %s iterations'%i)
-    #             i += 1
-    #             new_candidate =  v1 * elt * v2
-    #             if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)):
-    #                 return new_candidate
-    #         raise RuntimeError
-
     @cached_method
     def wp(self):
         verbose('Finding a suitable wp...')
@@ -344,11 +307,14 @@ class BigArithGroup_class(AlgebraicGroup):
             return matrix(QQ,2,2,[0,-1,self.p,0])
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            if self.F == QQ:
-                all_elts = self.Gpn.element_of_norm(self.ideal_p,use_magma = False,return_all = True,radius = 5,max_elements = 1,force_sign = False)
+            if 'P' in self.Gn._grouptype:
+                force_sign = False
             else:
-                #radius = 3 if self.F.degree() == 2 else 2
-                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,max_elements = 1, force_sign = True)
+                force_sign = True
+            if self.F == QQ:
+                all_elts = self.Gn.element_of_norm(self.ideal_p,use_magma = True,return_all = True,radius = 1, max_elements = 1,force_sign = force_sign)
+            else:
+                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = 1, max_elements = 1,force_sign = force_sign)
             found = False
             all_initial = all_elts
             if len(all_initial) == 0:
@@ -360,7 +326,6 @@ class BigArithGroup_class(AlgebraicGroup):
             except AttributeError:
                 pgen = self.ideal_p
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
-            # for v1 in self.Gn.enumerate_elements():
                 if i % 50000 == 0:
                     verbose('Done %s iterations'%i)
                 i += 1
@@ -369,41 +334,6 @@ class BigArithGroup_class(AlgebraicGroup):
                     if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
                         return new_candidate
             raise RuntimeError
-
-    # @cached_method
-    # def wp(self):
-    #     verbose('Finding a suitable wp...')
-    #     if self.discriminant == 1:
-    #         return matrix(QQ,2,2,[0,-1,self.p,0])
-    #     else:
-    #         epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-    #         pfacts = self.F.maximal_order().ideal(self.p).factor() if self.F.degree() > 1 else ZZ(self.p).factor()
-    # 
-    #         if self.F == QQ:
-    #             all_elts = self.Gpn.element_of_norm(self.p,use_magma = False,return_all = True, radius = 5,max_elements = 1) #FIXME
-    #         else:
-    #             all_elts = self.Gpn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = False,return_all = True, radius = 5,max_elements = 1) #FIXME
-    #             # all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,max_elements = 1) #FIXME
-    # 
-    #         found = False
-    #         all_initial = all_elts
-    #         if len(all_initial) == 0:
-    #             raise RuntimeError
-    #         verbose('Found %s initial candidates for wp'%len(all_initial))
-    #         i = 0
-    #         try:
-    #             pgen = self.ideal_p.gen(0)
-    #         except AttributeError:
-    #             pgen = self.ideal_p
-    #         for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
-    #             if i % 1000 == 0:
-    #                 verbose('Done %s iterations'%i)
-    #             i += 1
-    #             for tmp in all_initial:
-    #                 new_candidate =  v2 * tmp * v1
-    #                 if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
-    #                     return new_candidate
-    #         raise RuntimeError
 
     def get_embedding(self,prec):
         r"""
@@ -489,7 +419,7 @@ class BigArithGroup_class(AlgebraicGroup):
             return a, wd + [wd1,wd0]
 
 
-def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = 'PSL2'):
+def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = 'PGL2'):
     if base == QQ:
         discriminant = ZZ(discriminant)
         if discriminant == 1:
