@@ -376,7 +376,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 #####     Curve Finding           ####
 ######################################
 
-def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False):
+def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None):
     try:
         F = P.ring()
     except AttributeError:
@@ -407,6 +407,16 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     if outfile is None:
         outfile = '/tmp/findcurve_%s_%s_%s_%s_%s.log'%(P,NE,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
+    if F != QQ:
+        if ramification_at_infinity is None:
+            if F.signature()[0] > 1:
+                raise ValueError,'Please specify the ramification at infinity'
+            else:
+                if len(F.ideal(DB).factor()) % 2 == 0:
+                    ramification_at_infinity = [1] # Split
+                else:
+                    ramification_at_infinity = [-1] # Ramified
+
     fwrite("Starting computation of the Curve",outfile)
     fwrite('N_E = %s  %s'%(NE,factor(NE)),outfile)
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
@@ -418,7 +428,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     if input_data is None:
         # Define the S-arithmetic group
-        G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB).invariants(),Np,use_sage_db = use_sage_db)
+        G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db)
 
         # Define PhiE, the cohomology class associated to the system of eigenvalues.
         Coh = CohomologyGroup(G.Gpn)
