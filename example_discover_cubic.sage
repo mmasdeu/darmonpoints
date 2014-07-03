@@ -41,7 +41,7 @@ def get_ap(p):
 set_verbose(verb_level)
 
 # Define the S-arithmetic group
-G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D).invariants(),Np,use_sage_db = False,grouptype = 'PSL2')
+G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D).invariants(),Np,use_sage_db = False)
 
 # Define PhiE, the cohomology class associated to the system of eigenvalues.
 Coh = CohomologyGroup(G.Gpn)

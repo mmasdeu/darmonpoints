@@ -415,7 +415,7 @@ class ArithGroup_generic(AlgebraicGroup):
 class ArithGroup_rationalquaternion(ArithGroup_generic):
     Element = ArithGroupElement
     def __init__(self,discriminant,level,info_magma = None,grouptype = 'PSL2'):
-        assert grouptype in ['SL2','PSL2'] # Need to find how to return the other groups with Voight's algorithm
+        assert grouptype in ['SL2','PSL2','PGL2'] # Need to find how to return the other groups with Voight's algorithm
         self._grouptype = grouptype
 
         self.F = QQ

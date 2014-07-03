@@ -44,7 +44,7 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = 'PGL2',seed = None,use_sage_db = True,outfile = None):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = True,outfile = None):
         # if seed is None:
         #     seed = 1000
         try:
@@ -63,6 +63,8 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = 'PGL2',seed = None,
         if base != QQ:
             use_sage_db = False # This is not implemented yet
 
+        if grouptype is None:
+            grouptype = 'PSL2' if base == QQ else 'PGL2'
         if use_sage_db:
             try:
                 newobj = db(fname)
@@ -303,8 +305,11 @@ class BigArithGroup_class(AlgebraicGroup):
     @cached_method
     def wp(self):
         verbose('Finding a suitable wp...')
-        if self.discriminant == 1:
-            return matrix(QQ,2,2,[0,-1,self.p,0])
+        if self.F == QQ and self.discriminant == 1:
+            try:
+                return matrix(QQ,2,2,[0,-1,self.ideal_p.gens_reduced()[0],0])
+            except AttributeError:
+                return matrix(QQ,2,2,[0,-1,self.ideal_p,0])
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             if 'P' in self.Gn._grouptype:
@@ -345,7 +350,7 @@ class BigArithGroup_class(AlgebraicGroup):
         - prec -- Integer. The precision of the splitting.
 
         """
-        if self.discriminant == 1:
+        if self.F == QQ and self.discriminant == 1:
             R =  Qp(self.p,prec)
             def iota(q):
                 return q.change_ring(R)
@@ -364,7 +369,7 @@ class BigArithGroup_class(AlgebraicGroup):
     def embed(self,q,prec):
         if prec is None:
             return None
-        if self.discriminant == 1:
+        if self.F == QQ and self.discriminant == 1:
             return q.change_ring(Qp(self.p,prec))
         else:
             try:
@@ -375,9 +380,16 @@ class BigArithGroup_class(AlgebraicGroup):
             return f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K
 
     def reduce_in_amalgam(self,x,return_word = False):
-        rednrm = x.reduced_norm() if self.discriminant != 1 else x.determinant()
-        if rednrm != 1:
-            raise ValueError,'x (= %s) must have reduced norm 1'%x
+        if self.F == QQ and self.discriminant == 1:
+            rednrm = x.determinant()
+        else:
+            rednrm = x.reduced_norm()
+        rednrm_Q = rednrm.abs() if self.F == QQ else rednrm.norm().abs()
+        if rednrm_Q != 1:
+            raise ValueError,'x (= %s) must have a unit as reduced norm'%x
+        if 'P' not in self.Gn._grouptype:
+            if rednrm != 1:
+                raise ValueError,'x (= %s) must have reduced norm 1'%x
         a,wd = self._reduce_in_amalgam(set_immutable(x))
         if return_word:
             return a,wd
