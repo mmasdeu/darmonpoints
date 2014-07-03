@@ -619,10 +619,11 @@ def our_nroot(x,n,K,return_all = False):
         ans = [K(o[0])*ans for o in (t**n-1).roots(K)]
     return ans
 
-def enumerate_words(v, n = None):
+def enumerate_words(v, n = None,max_length = -1):
     if n is None:
         n = []
     while True:
+        yield [v[x] for x in n]
         add_new = True
         for jj in range(len(n)):
             n[jj] += 1
@@ -632,8 +633,10 @@ def enumerate_words(v, n = None):
             else:
                 n[jj] = 0
         if add_new:
-            n.append(0)
-        yield [v[x] for x in n]
+            if max_length == -1 or len(n) < max_length:
+                n.append(0)
+            else:
+                raise StopIteration
 
 def cantor_diagonal(iter1,iter2):
     v1 = [iter1.next()]
@@ -898,6 +901,8 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
     disc = F.ideal(disc)
     if not disc.is_principal():
         raise ValueError, 'Discriminant should be principal'
+    # if disc == F.ideal(1) and all([r == ZZ(-1) for r in ramification_at_infinity]):
+    #     return QuaternionAlgebra(F,-1,-1)
     d = disc.gens_reduced()[0]
     vinf = F.embeddings(RR)
     vfin = disc.factor()
@@ -916,8 +921,18 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                     a = sgn1 * pi0
                     B = QuaternionAlgebra(F,a,sgn2 * d)
                     if B.discriminant() == disc:
-                        assert all((si * sigma(a) > 0 for si,sigma in zip(ramification_at_infinity,F.embeddings(RR))))
-                        return B
+                        good_at_infinity = True
+                        for si,sigma in zip(ramification_at_infinity,F.embeddings(RR)):
+                            if si == 1: # Want it split
+                                if sigma(a) < 0 and sigma(sgn2 * d) < 0:
+                                    good_at_infinity = False
+                                    break
+                            else: # si == -1, want it ramified
+                                if sigma(a) > 0 or sigma(sgn2 * d) > 0:
+                                    good_at_infinity = False
+                                    break
+                        if good_at_infinity:
+                            return B
 
 def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True):
     assert qE.valuation() != 0, 'qE should not have zero valuation'
@@ -931,18 +946,20 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True)
     try:
         Ftors = F.unit_group().torsion_generator()
         Funits = [F(Ftors)**i for i in range(Ftors.order())]
-        if len(F.units()) > 0:
-            u = F.units()[0]
-            if len(F.units()) > 1:
-                raise NotImplementedError
-            Funits = [u0*u**i for u0,i in product(Funits,range(-6,7))]
+        for u in F.units():
+            Funits = [u0 * u**i for u0,i in product(Funits,range(-3,4))]
+        # if len(F.units()) > 0:
+        #     u = F.units()[0]
+        #     if len(F.units()) > 1:
+        #         raise NotImplementedError
+        #     Funits = [u0*u**i for u0,i in product(Funits,range(-6,7))]
     except AttributeError:
         Funits = [-1, +1]
     try:
         primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
     except AttributeError:
         primedivisors = [o[0] for o in conductor.factor()]
-    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,13),repeat = len(primedivisors)))]
+    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,7),repeat = len(primedivisors)))]
     for guessed_pow in reversed(divisors(qval)):
         try:
             qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True) if guessed_pow > 1 else [qE]
