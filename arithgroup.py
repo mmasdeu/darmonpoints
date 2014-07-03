@@ -197,7 +197,7 @@ class ArithGroup_generic(AlgebraicGroup):
             if max_length is not None and len(v) > max_length:
                 raise StopIteration
             else:
-                yield prod([self.Ugens[i] for i in v])
+                yield prod([self.Ugens[i] for i in v],self.B(1))
 
     @cached_method
     def get_hecke_ti(self,gk1,gamma,l,use_magma):
@@ -1123,7 +1123,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             if max_length is not None and len(v) > max_length:
                 raise StopIteration
             else:
-                yield prod([self.Ugens[i] for i in v])
+                yield prod([self.Ugens[i] for i in v],self.B(1))
 
     def compute_quadratic_embedding(self,K,return_generator = False):
         O_magma = self._O_magma
