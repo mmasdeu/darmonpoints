@@ -57,14 +57,6 @@ cdef extern from "flint/fmpz_mat.h":
     void fmpz_mat_set(fmpz_mat_t result, fmpz_mat_t mat)
     void fmpz_mat_zero(fmpz_mat_t mat)
 
-def vec_dot_vec(Fmpz_mat mtx, vec,R):
-    cdef unsigned long p = R.prime()
-    cdef unsigned long i
-    ans = R(0)
-    for i from 0 <= i < mtx.nrows():
-        ans += vec[i] * mtx[i,0]
-    return ans
-
 cdef class Fmpz_mat(SageObject):
     cdef fmpz_mat_t mat
     #cdef fmpz_t _mod

@@ -150,6 +150,8 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
 
 
 def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False,Wlist = None,twist = True,artificial_multiple = 1):
+    global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
+
     F = E.base_ring()
     beta = F(beta)
     DB,Np = get_heegner_params(P,E,beta)
@@ -377,6 +379,8 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 ######################################
 
 def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None):
+    global qE, G, Coh, phiE, xi1, xi2, Phi
+
     try:
         F = P.ring()
     except AttributeError:
@@ -411,11 +415,13 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         if ramification_at_infinity is None:
             if F.signature()[0] > 1:
                 raise ValueError,'Please specify the ramification at infinity'
-            else:
+            elif F.signature()[0] == 1:
                 if len(F.ideal(DB).factor()) % 2 == 0:
                     ramification_at_infinity = [1] # Split
                 else:
                     ramification_at_infinity = [-1] # Ramified
+            else:
+                ramification_at_infinity = []
 
     fwrite("Starting computation of the Curve",outfile)
     fwrite('N_E = %s  %s'%(NE,factor(NE)),outfile)
@@ -442,7 +448,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
             i+=1
             g = G.Gpn.gen(i)
 
-        xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile,method = 'short',few_integrals = True)
+        xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
 
         Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = True)
 
@@ -454,6 +460,16 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     print 'Integral done. Now trying to recognize the curve'
     fwrite('qE = %s'%qE,outfile)
     curve = discover_equation(qE,G._F_to_local,NE,prec).global_minimal_model()
+    if curve is None:
+        fwrite('Curve not found with the sought conductor. Will try to find some curve at least',outfile)
+        print 'Curve not found with the sought conductor. Will try to find some curve at least'
+        curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = False)
+        if curve is None:
+            fwrite('Still no luck. Sorry!',outfile)
+            print 'Still no luck. Sorry!'
+        else:
+            fwrite('Found a curve, at least...')
+            print 'Found a curve, at least...'
     fwrite('================================================',outfile)
     if return_all_data == True:
         return (curve, Phi, qE)

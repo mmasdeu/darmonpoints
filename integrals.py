@@ -350,7 +350,8 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             if not all([o.valuation() >= 0 for o in (y0(r1/p)/c0).list() if o != 0]):
             #if not all([o.valuation() >= e + c0val for o,e in zip(y0.coefficients(),y0.exponents())]):
                 newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
-                assert not rev
+                # newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])
+                #assert not rev
                 continue
             pol = c0.log(p_branch = 0) + (y0.derivative()/y0).integral()
             if not rev:

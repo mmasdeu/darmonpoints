@@ -39,14 +39,6 @@ def take_super_power(a,n,N):
         update_progress(float(i+1)/float(n))
     return aflint._sage_()
 
-def flint_matmul(a,b,N):
-    aflint = Fmpz_mat(a)
-    bflint = Fmpz_mat(b)
-    cflint = aflint * bflint
-    if N != 0:
-        cflint.modreduce(N)
-    return cflint._sage_()
-
 def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None):
     try:
         p = ZZ(P)
@@ -171,8 +163,10 @@ class CohomologyElement(ModuleElement):
             raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
-    def evaluate_oc(self,x,parallelize = False,extramul = None,dotprod = None):
+    def evaluate_oc(self,x,parallelize = False,extramul = None):
         H = self.parent()
+        if H._use_ps_dists:
+            return self.evaluate_oc_naive(x,extramul = extramul)
         G = H.group()
         V = H.coefficient_module()
         prec = V.base_ring().precision_cap()
@@ -183,42 +177,24 @@ class CohomologyElement(ModuleElement):
             x = G(x)
             wd = x.word_rep
         if len(wd) == 0:
-            if dotprod is None:
-                return V(0)
-            else:
-                return dotprod.parent().base_ring()(0)
-
+            return V(0)
         emb = lambda x:G.embed(x,prec)
-        if self.parent()._use_ps_dists:
-            ans = V(0)
-            grad = self.parent().fox_gradient(wd)
-            for i,phig in enumerate(self._val):
-                fd = grad[i]
-                for gamma,n in fd.iteritems():
-                    if n != 0:
-                        ans += Sigma0(G.embed(gamma,prec)) * (n * phig)
-            if extramul is not None:
-                ans = extramul * ans
-            return ans
-        else:
-            W = self._val[0]._val.parent()
-            ans = self.fox_term_times_value(*wd[-1])
-            for i,a in reversed(wd[:-1]):
-                ans = self.fox_term_times_value(i,a) + H.get_gen_pow(i,a) * ans
-            if extramul is not None:
-                ans = Fmpz_mat(extramul) * ans
-            if dotprod is not None:
-                nrows = ans.nrows()
-                v = dotprod.list()[:nrows]
-                R  = dotprod.parent().base_ring()
-                if len(v) < nrows:
-                    v.extend([0 for i in range(nrows-len(v))])
-                return vec_dot_vec(ans,v,R)
-            ans = V(ans._sage_())
-            return ans
+        W = self._val[0]._val.parent()
+        i,a = wd[-1]
+        ans = H.get_fox_term(i,a) * self.get_flint_val(i)
+        ans.modreduce(H._pN)
+        for i,a in reversed(wd[:-1]):
+            ans = H.get_fox_term(i,a) * self.get_flint_val(i) + H.get_gen_pow(i,a) * ans
+            ans.modreduce(H._pN)
+        if extramul is not None:
+            ans = extramul * ans
+            ans.modreduce(H._pN)
+        ans = V(ans._sage_())
+        return ans
 
-    def fox_term_times_value(self,i,a):
-        return self.parent().get_fox_term(i,a) * Fmpz_mat(self._val[i]._val)
+    @cached_method
+    def get_flint_val(self,i):
+        return Fmpz_mat(self._val[i]._val)
 
     def evaluate_triv(self,x,parallelize = False,extramul = None):
         try:
@@ -458,13 +434,18 @@ class CohomologyGroup(Parent):
     def fox_gradient(self,word):
         h = self.get_gen_pow(0,0)
         ans = [h.zeromatrix() for o in self.group().gens()]
-        for i,a in word:
+        if len(word) == 0:
+            return ans
+        lenword = len(word)
+        for j in range(lenword):
+            i,a = word[j]
             ans[i] += h  * self.get_fox_term(i,a)
-            h = h * self.get_gen_pow(i,a)
-            h.modreduce(self._pN)
+            if j < lenword -1:
+                h = h * self.get_gen_pow(i,a)
+                h.modreduce(self._pN)
         for o in ans:
             o.modreduce(self._pN)
-        return [o._sage_() for o in ans]
+        return ans
 
     def get_gen_pow(self,i,a):
         if a == 0:
@@ -648,11 +629,11 @@ class CohomologyGroup(Parent):
     @cached_method
     def get_Up_matrix(self,prec,progress_bar = False):
         r'''
-        Return a lists of lists W, such that:
-        W[i][j] = \sum_k s_k \frac{\partial t_k(g_i)}{\partial g_j}
+        Return a block matrix W such that:
+        W[i,j] = \sum_k s_k \frac{\partial t_k(g_i)}{\partial g_j}
 
         This allows one to compute the Up action as:
-        c_i <- \sum_j W[i][j] * c_j
+        c_i <- \sum_j W[i,j] * c_j
         '''
         verbose('Getting Up matrices...')
         V = self.coefficient_module()
@@ -662,21 +643,23 @@ class CohomologyGroup(Parent):
         Up_reps = Gpn.get_Up_reps()
         ngens = len(Gpn.gens())
         nreps = len(Up_reps)
-        glocs = self.get_Up_reps_local(prec)
+        glocs = [Fmpz_mat(o) for o in self.get_Up_reps_local(prec)]
         ans = [[None for u in Gpn.gens()] for o in Gpn.gens()]
         total_counter = ngens*(nreps+ngens)
         counter = 0
         for i,gi in enumerate(Gpn.gens()):
             giquat = gi.quaternion_rep
-            fox_gradients = [None for o in Up_reps]
+            fox_gradients = []
             for k,sk in enumerate(Up_reps):
-                fox_gradients[k] = self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep))
+                fox_gradients.append(self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep)))
                 if progress_bar:
                     counter +=1
                     update_progress(float(counter)/float(total_counter))
 
             for j,gj in enumerate(Gpn.gens()):
-                ans[i][j] = sum([flint_matmul(glocs[k] , fox_gradients[k][j],self._pN) for k in range(nreps)])
+                ansij = sum([glocs[k] * fox_gradients[k][j] for k in range(nreps)],glocs[0].zeromatrix())
+                ansij.modreduce(self._pN)
+                ans[i][j] = ansij._sage_()
                 if progress_bar:
                     counter +=1
                     update_progress(float(counter)/float(total_counter))

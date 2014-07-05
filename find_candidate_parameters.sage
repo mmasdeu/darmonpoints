@@ -8,9 +8,9 @@ x = QQ['x'].gen()
 Nrange = range(5,120) # Conductors to explore
 max_P_norm = 20 # Maximum allowed conductor
 max_F_disc = 3000 # Maximum size of discriminant of base field
-max_waiting_time = 60 # Amount of patience (in seconds)
+max_waiting_time = 100 # Amount of patience (in seconds)
 
-load('fields.sage')
+load('imquad_fields.sage')
 
 outfile = 'field_data.txt'
 from sarithgroup import ArithGroup
