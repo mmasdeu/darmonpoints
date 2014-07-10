@@ -1037,9 +1037,11 @@ def simplification_isomorphism(G,return_inverse = False):
     else:
         return ans
 
-def update_progress(progress):
+def update_progress(progress,msg = ""):
     barLength = 50 # Modify this to change the length of the progress bar
     status = ""
+    if len(msg) > 0:
+        msg = '( %s )'%msg
     if isinstance(progress, int):
         progress = float(progress)
     if not isinstance(progress, float):
@@ -1047,10 +1049,10 @@ def update_progress(progress):
         status = "error: progress var must be float\r\n"
     if progress < 0:
         progress = 0
-        status = "Halt...\r\n"
+        status = "Halt...%s\r\n"%msg
     if progress >= 1:
         progress = 1
-        status = "Done...\r\n"
+        status = "Done...%s\r\n"%msg
     block = int(round(barLength*progress))
     text = "\rPercent: [{0}] {1:.2f}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
     sys.stdout.write(text)
