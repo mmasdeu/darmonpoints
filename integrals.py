@@ -310,16 +310,15 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     divisor_list = [(P,n) for P,n in divisor]
     resadd = ZZ(0)
     resmul = ZZ(1)
-    edgelist = [(1,o) for o in G.get_covering(1)]
+    edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
     mem0 = get_memory_usage()
+    current_progress = QQ(0)
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
         ii = 0
-        for parity, edge in edgelist:
+        for parity, edge, wt in edgelist:
             ii += 1
-            if progress_bar:
-                update_progress(float(ii)/float(len(edgelist)))
             mem_usage = get_memory_usage() - mem0
             # verbose('mem = %s'%mem_usage)
             if mem_usage > float(8 * 1000):
@@ -349,7 +348,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             c0val = c0.valuation()
             if not all([o.valuation() >= 0 for o in (y0(r1/p)/c0).list() if o != 0]):
             #if not all([o.valuation() >= e + c0val for o,e in zip(y0.coefficients(),y0.exponents())]):
-                newedgelist.extend([(parity,o) for o in G.subdivide([edge],parity,2)])
+                newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
                 # newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])
                 #assert not rev
                 continue
@@ -368,6 +367,11 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             try:
                 resmul *= c0**ZZ(hc.get_liftee().evaluate(newgamma)[0])
             except IndexError: pass
+            if progress_bar:
+                current_progress += wt
+                #update_progress(float(ii)/float(len(edgelist)),'Integration %s/%s'%(counter,total_counter))
+                update_progress(float(current_progress),'Integration %s/%s'%(counter,total_counter))
+
         edgelist = newedgelist
     val =  resmul.valuation()
     if val != 0:
