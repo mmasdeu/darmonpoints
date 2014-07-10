@@ -36,7 +36,7 @@ def take_super_power(a,n,N):
         aflint.square_inplace()
         if N != 0:
             aflint.modreduce(N)
-        update_progress(float(i+1)/float(n))
+        update_progress(float(i+1)/float(n),'Exponentiating matrix')
     return aflint._sage_()
 
 def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None):
@@ -312,7 +312,7 @@ class CohomologyElement(ModuleElement):
         if method == 'naive':
             h2 = self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,method = 'naive')
             if progress_bar:
-                update_progress(1.0/float(prec))
+                update_progress(1.0/float(prec),'f|Up')
             else:
                 verbose("Applied Up once")
             ii = 0
@@ -325,7 +325,7 @@ class CohomologyElement(ModuleElement):
                 h2 = self.parent().apply_Up(h1,group = group,scale = sign,parallelize = parallelize,method = 'naive')
                 current_val = min([(u-v).valuation() for u,v in zip(h2._val,h1._val)])
                 if progress_bar:
-                    update_progress(float(ii+1)/float(prec))
+                    update_progress(float(ii+1)/float(prec),'f|Up')
                 else:
                     verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
             self._val = h2._val
@@ -654,7 +654,7 @@ class CohomologyGroup(Parent):
                 fox_gradients.append(self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep)))
                 if progress_bar:
                     counter +=1
-                    update_progress(float(counter)/float(total_counter))
+                    update_progress(float(counter)/float(total_counter),'Up matrix')
 
             for j,gj in enumerate(Gpn.gens()):
                 ansij = sum([glocs[k] * fox_gradients[k][j] for k in range(nreps)],glocs[0].zeromatrix())
@@ -662,7 +662,7 @@ class CohomologyGroup(Parent):
                 ans[i][j] = ansij._sage_()
                 if progress_bar:
                     counter +=1
-                    update_progress(float(counter)/float(total_counter))
+                    update_progress(float(counter)/float(total_counter),'Up matrix')
         return block_matrix(ans)
 
     def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'bigmatrix'):
