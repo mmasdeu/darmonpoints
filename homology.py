@@ -74,7 +74,7 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
             tmp = tmp.hecke_smoothen(q1,prec = prec)
     return tmp,n,q1
 
-def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check = False,few_integrals = False):
+def lattice_homology_cycle_new(G,eltn,prec,outfile = None,method = 'original',check = False,few_integrals = False):
     p = G.prime()
     wp = G.wp()
     Cp = Qq(p**2,prec,names = 'g')
@@ -84,22 +84,24 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check 
     tau1 = (a*tau1 + b)/(c*tau1 + d)
     Div = Divisors(Cp)
     H1 = Homology(G.large_group(),Div)
+    eltn = G.Gn(eltn.quaternion_rep)
+    eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
+
     # We calculate npow
     npow0 = 1
-    eltn = G.Gn(eltn.quaternion_rep)
     vec = G.Gn.get_weight_vector(eltn)
     while npow0 * vec not in G.Gn.get_relation_matrix().image():
         npow0 += 1
     verbose('n = %s'%npow0)
-    eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
     vec = G.Gn.get_weight_vector(eltn_twisted)
     npow = npow0
     while npow * vec not in G.Gn.get_relation_matrix().image():
         npow += npow0
     verbose('needed power = %s'%npow)
+
     eltn = G.Gn(eltn.quaternion_rep**npow)
-    eltn_twisted = G.Gn(eltn_twisted.quaternion_rep**npow)
     xi1 = H1(dict([(eltn,Div(tau1))])).zero_degree_equivalent()
+    eltn_twisted = G.Gn(eltn_twisted.quaternion_rep**npow)
     xi2 = H1(dict([(eltn_twisted,Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
 
     if few_integrals:
@@ -108,7 +110,7 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,method = 'original',check 
     return xi1,xi2
 
 
-def lattice_homology_cycle_old(G,eltn,prec,outfile = None,method = 'original',check = False,few_integrals = False):
+def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integrals = True):
     r''' Note that the second class will need to be integrated in a twisted way.
     That is, the quaternion elements need to be conjugated by wp before being integrated.
     '''
@@ -123,24 +125,28 @@ def lattice_homology_cycle_old(G,eltn,prec,outfile = None,method = 'original',ch
     H1 = Homology(G.large_group(),Div)
     xi1 = H1({})
     xi2 = H1({})
+
+    eltn = G.Gn(eltn.quaternion_rep)
+    eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
+
     # We calculate npow
     npow0 = 1
     vec = G.Gn.get_weight_vector(eltn)
     while npow0 * vec not in G.Gn.get_relation_matrix().image():
         npow0 += 1
     verbose('n = %s'%npow0)
-    eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
     vec = G.Gn.get_weight_vector(eltn_twisted)
     npow = npow0
     while npow * vec not in G.Gn.get_relation_matrix().image():
         npow += npow0
     verbose('needed power = %s'%npow)
-    for n,xlist,y in eltn.find_bounding_cycle(G,method = method,npow = npow,check = check):
+
+    for n,xlist,y in eltn.find_bounding_cycle(G,npow = npow,check = check):
         if y.is_scalar():
             continue
         D = sum((D1.left_act_by_matrix(G.embed(x**-1,prec)) - D1 for x in xlist if x != 1),Div(0))
         xi1 += H1(dict([(y,n*D)]))
-    for n,xlist,y in eltn_twisted.find_bounding_cycle(G,method = method,npow = npow,check = check):
+    for n,xlist,y in eltn_twisted.find_bounding_cycle(G,npow = npow,check = check):
         if y.is_scalar():
             continue
         D = sum((D1.left_act_by_matrix(G.embed(wp * x**-1 * wp**-1,prec)) - D1 for x in xlist if x != 1),Div(0))
