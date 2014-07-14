@@ -45,7 +45,7 @@ Coh = CohomologyGroup(G.Gpn)
 PhiE = Coh.get_cocycle_from_elliptic_curve(get_ap,sign = sign_at_infinity)
 
 g = G.Gn(G.Gpn.gen(2).quaternion_rep)
-xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile,method = 'short',few_integrals = True)
+xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile,few_integrals = True)
 
 PhiElift = get_overconvergent_class_quaternionic(P,get_ap,G,prec,sign_at_infinity,use_ps_dists,apsign = get_ap(P))
 

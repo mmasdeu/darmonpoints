@@ -1,5 +1,5 @@
 load('darmonpoints.sage')
-from homology import lattice_homology_cycle,lattice_homology_cycle_new
+from homology import lattice_homology_cycle
 from integrals import integrate_H1
 ######################
 # Parameters         #
@@ -33,7 +33,7 @@ PhiElift = get_overconvergent_class_quaternionic(p,E,G,prec,sign_at_infinity,use
 g =  G.Gn(G.Gpn.gen(1).quaternion_rep)
 
 #xi1, xi2 = lattice_homology_cycle(G,g,working_prec, outfile = outfile,method = 'short',few_integrals = True)
-xi1,xi2 = lattice_homology_cycle_new(G,g,working_prec)
+xi1,xi2 = lattice_homology_cycle(G,g,working_prec)
 
 qE1 = integrate_H1(G,xi1,PhiElift,1,method = 'moments',twist = False,progress_bar = True)
 qE2 = integrate_H1(G,xi2,PhiElift,1,method = 'moments',twist = True,progress_bar = True)
