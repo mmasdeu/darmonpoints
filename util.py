@@ -22,6 +22,7 @@ from sage.misc.functional import cyclotomic_polynomial
 from sage.misc.misc_c import prod
 from sage.functions.generalized import sgn
 from sage.interfaces.magma import magma
+from sage.misc.functional import cyclotomic_polynomial
 import sys
 
 def M2Z(v):
@@ -616,7 +617,10 @@ def our_nroot(x,n,K,return_all = False):
     assert ans**n == x_orig, 'ans**n/x_orig = %s'%(ans**n/x_orig)
     if return_all:
         t = PolynomialRing(QQ,'t').gen()
-        ans = [K(o[0])*ans for o in (t**n-1).roots(K)]
+        newans = []
+        for d in divisors(n):
+            newans.extend([K(o[0])*ans for o in cyclotomic_polynomial(d).roots(K)])
+        return newans
     return ans
 
 def enumerate_words(v, n = None,max_length = -1):
@@ -938,7 +942,7 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True)
     assert qE.valuation() != 0, 'qE should not have zero valuation'
     if qE.valuation() < 0:
         qE = 1/qE
-    F = field if field is not None else emb.domain()
+    F = emb.domain() if field is None else field
     deg = F.degree()
     p = qE.parent().prime()
     qE = qE**(p-1) # Kill the torsion
@@ -947,12 +951,7 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True)
         Ftors = F.unit_group().torsion_generator()
         Funits = [F(Ftors)**i for i in range(Ftors.order())]
         for u in F.units():
-            Funits = [u0 * u**i for u0,i in product(Funits,range(-3,4))]
-        # if len(F.units()) > 0:
-        #     u = F.units()[0]
-        #     if len(F.units()) > 1:
-        #         raise NotImplementedError
-        #     Funits = [u0*u**i for u0,i in product(Funits,range(-6,7))]
+            Funits = [u0 * u**i for u0,i in product(Funits,range(-6,7))]
     except AttributeError:
         Funits = [-1, +1]
     try:
@@ -960,14 +959,21 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True)
     except AttributeError:
         primedivisors = [o[0] for o in conductor.factor()]
     Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,7),repeat = len(primedivisors)))]
-    for guessed_pow in reversed(divisors(qval)):
+    E4 = EisensteinForms(weight=4).basis()[0]
+    Deltamodform = CuspForms(weight=12).basis()[0]
+    jpowseries = ((E4.q_expansion(prec+7))**3/Deltamodform.q_expansion(prec+7))
+    Kp = qE.parent()
+    revdivs = divisors(qval)
+    verbose('Number of divisors of %s is %s'%(qval,len(revdivs)))
+    for guessed_pow in revdivs:
+        verbose('guessed_pow = %s'%guessed_pow)
         try:
             qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True) if guessed_pow > 1 else [qE]
         except ValueError:
             continue
         for qEroot,D in product(qErlist,Deltalist):
-            jE = get_j_invariant(qEroot,prec)
-            Kp = jE.parent()
+            jE = jpowseries(qEroot) # Get the candidate j invariant
+            # Kp = jE.parent()
             Deltap = Kp(emb(D))
             c4cubed = Kp(Deltap * jE)
             try:
@@ -988,7 +994,6 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True)
                         return E
     verbose('Curve not recognized')
     return None
-
 
 def simplification_isomorphism(G,return_inverse = False):
     """
