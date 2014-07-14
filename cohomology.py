@@ -310,7 +310,8 @@ class CohomologyElement(ModuleElement):
             prec = U.precision_cap()
         # reps = group.get_Up_reps()
         if method == 'naive':
-            h2 = self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,method = 'naive')
+            repslocal = self.get_Up_reps_local(prec)
+            h2 = self.parent().apply_Up(self, group = group,scale = sign,parallelize = parallelize,method = 'naive',repslocal = repslocal)
             if progress_bar:
                 update_progress(1.0/float(prec),'f|Up')
             else:
@@ -322,7 +323,7 @@ class CohomologyElement(ModuleElement):
                 h1 = h2
                 old_val = current_val
                 ii += 1
-                h2 = self.parent().apply_Up(h1,group = group,scale = sign,parallelize = parallelize,method = 'naive')
+                h2 = self.parent().apply_Up(h1,group = group,scale = sign,parallelize = parallelize,method = 'naive',repslocal = repslocal)
                 current_val = min([(u-v).valuation() for u,v in zip(h2._val,h1._val)])
                 if progress_bar:
                     update_progress(float(ii+1)/float(prec),'f|Up')
@@ -430,7 +431,7 @@ class CohomologyGroup(Parent):
         else:
             return self.element_class(self,[self._coeffmodule(data) for g in range(self._num_abgens)])
 
-    @cached_method
+    # @cached_method
     def fox_gradient(self,word):
         h = self.get_gen_pow(0,0)
         ans = [h.zeromatrix() for o in self.group().gens()]
@@ -614,19 +615,16 @@ class CohomologyGroup(Parent):
                 vals[inp[-1]] += outp
         return scale * self(vals)
 
-    @cached_method
     def get_Up_reps_local(self,prec):
         Gpn = self.group()
         if self._use_ps_dists:
-            self._Up_reps_local = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
+            return [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
         else:
             glocs = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
             for o in glocs:
                 o.set_immutable()
-            self._Up_reps_local = [self._coeffmodule._get_powers(o) for o in glocs]
-        return self._Up_reps_local
+            return [self._coeffmodule._get_powers(o) for o in glocs]
 
-    @cached_method
     def get_Up_matrix(self,prec,progress_bar = False):
         r'''
         Return a block matrix W such that:
@@ -665,7 +663,7 @@ class CohomologyGroup(Parent):
                     update_progress(float(counter)/float(total_counter),'Up matrix')
         return block_matrix(ans)
 
-    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'bigmatrix'):
+    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'bigmatrix', repslocal = None):
         r"""
         Apply the Up Hecke operator operator to ``c``.
 
@@ -696,7 +694,8 @@ class CohomologyGroup(Parent):
         if method == 'naive':
             assert times == 0
             vals = [V(0) for gamma in gammas]
-            glocs = self.get_Up_reps_local(prec)
+            if repslocal is None:
+                glocs = self.get_Up_reps_local(prec)
             input_vector = []
             for j,gamma in enumerate(gammas):
                 if self._use_ps_dists:
