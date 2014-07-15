@@ -378,7 +378,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 #####     Curve Finding           ####
 ######################################
 
-def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None):
+def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None,kill_torsion = True):
     global qE, G, Coh, phiE, xi1, xi2, Phi
 
     try:
@@ -411,17 +411,19 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     if outfile is None:
         outfile = '/tmp/findcurve_%s_%s_%s_%s_%s.log'%(P,NE,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
-    if F != QQ:
-        if ramification_at_infinity is None:
-            if F.signature()[0] > 1:
-                raise ValueError,'Please specify the ramification at infinity'
-            elif F.signature()[0] == 1:
-                if len(F.ideal(DB).factor()) % 2 == 0:
-                    ramification_at_infinity = [1] # Split
-                else:
-                    ramification_at_infinity = [-1] # Ramified
+    if F != QQ and ramification_at_infinity is None:
+        if F.signature()[0] > 1:
+            if F.signature()[1] == 1:
+                ramification_at_infinity = [-1 for o in range(F.signature()[0])]
             else:
-                ramification_at_infinity = []
+                raise ValueError,'Please specify the ramification at infinity'
+        elif F.signature()[0] == 1:
+            if len(F.ideal(DB).factor()) % 2 == 0:
+                ramification_at_infinity = [1] # Split
+            else:
+                ramification_at_infinity = [-1] # Ramified
+        else:
+            ramification_at_infinity = []
 
     fwrite("Starting computation of the Curve",outfile)
     fwrite('N_E = %s  %s'%(NE,factor(NE)),outfile)
@@ -459,11 +461,11 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         Phi,qE = input_data[1:3]
     print 'Integral done. Now trying to recognize the curve'
     fwrite('qE = %s'%qE,outfile)
-    curve = discover_equation(qE,G._F_to_local,NE,prec).global_minimal_model()
+    curve = discover_equation(qE,G._F_to_local,NE,prec,kill_torsion = kill_torsion).global_minimal_model()
     if curve is None:
         fwrite('Curve not found with the sought conductor. Will try to find some curve at least',outfile)
         print 'Curve not found with the sought conductor. Will try to find some curve at least'
-        curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = False)
+        curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = False,kill_torsion = kill_torsion)
         if curve is None:
             fwrite('Still no luck. Sorry!',outfile)
             print 'Still no luck. Sorry!'
