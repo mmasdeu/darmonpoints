@@ -74,7 +74,7 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
             tmp = tmp.hecke_smoothen(q1,prec = prec)
     return tmp,n,q1
 
-def lattice_homology_cycle_new(G,eltn,prec,outfile = None,method = 'original',check = False,few_integrals = False):
+def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integrals = False):
     p = G.prime()
     wp = G.wp()
     Cp = Qq(p**2,prec,names = 'g')
@@ -110,7 +110,7 @@ def lattice_homology_cycle_new(G,eltn,prec,outfile = None,method = 'original',ch
     return xi1,xi2
 
 
-def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integrals = True):
+def lattice_homology_cycle_old(G,eltn,prec,outfile = None,check = False,few_integrals = True):
     r''' Note that the second class will need to be integrated in a twisted way.
     That is, the quaternion elements need to be conjugated by wp before being integrated.
     '''
