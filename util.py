@@ -389,7 +389,6 @@ def our_algdep(z,degree,prec = None):
         if f.leading_coefficient() < 0:
             f = -f
         ans = R(f.denominator() * f)
-    #ans = ans/ans.content()
     for fact,_ in ans.factor():
         if R(fact)(z) == O(p**prec):
             return R(fact/fact.content())
@@ -481,15 +480,18 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
               verbose('Point does not appear to lie on curve...',level=2)
   return candidate_x,False
 
-def our_sqrt(x,K,return_all = False):
-    if x==0:
+def our_sqrt(xx,K = None,return_all = False):
+    if K is None:
+        K = xx.parent()
+
+    if xx == 0:
         if return_all:
-            return [x]
+            return [xx]
         else:
-            return x
-    x=K(x)
+            return xx
+    xx=K(xx)
     p=K.base_ring().prime()
-    valp = x.valuation(p)
+    valp = xx.valuation(p)
     try:
         eK = K.ramification_index()
     except AttributeError:
@@ -497,7 +499,7 @@ def our_sqrt(x,K,return_all = False):
     valpi = eK * valp
     if valpi % 2 != 0:
         raise ValueError,'Not a square'
-    x = p**(-valp) * x
+    x = p**(-valp) * xx
     z = K.gen()
     deg = K.degree()
     found = False
@@ -519,19 +521,23 @@ def our_sqrt(x,K,return_all = False):
         y1 = (y**2+x)/(2*y)
 
     ans = K.uniformizer()**(ZZ(valpi/2)) * y
+    assert ans**2 == xx,'ans**2/xx = %s'%(ans**2/xx)
+
     if return_all:
         ans = [ans, -ans]
     return ans
 
-def our_cuberoot(x,K,return_all = False):
-    if x == 0:
+def our_cuberoot(xx,K = None,return_all = False):
+    if K is None:
+        K = xx.parent()
+    if xx == 0:
         if return_all:
-            return [x]
+            return [xx]
         else:
-            return x
-    x=K(x)
+            return xx
+    xx=K(xx)
     p=K.base_ring().prime()
-    valp = x.valuation(p)
+    valp = xx.valuation(p)
     try:
         eK = K.ramification_index()
     except AttributeError:
@@ -539,7 +545,7 @@ def our_cuberoot(x,K,return_all = False):
     valpi = eK * valp
     if valpi % 3 != 0:
         raise ValueError,'Not a cube'
-    x = p**(-valp) * x
+    x = p**(-valp) * xx
     z = K.gen()
     deg = K.degree()
     found = False
@@ -561,27 +567,31 @@ def our_cuberoot(x,K,return_all = False):
         y2 = y**2
         y1 = (2*y*y2+x)/(3*y2)
     ans = K.uniformizer()**(ZZ(valpi/3)) * y
+    assert ans**3 == xx,'ans**3/xx = %s'%(ans**3/xx)
+
     if return_all:
         t = PolynomialRing(QQ,'t').gen()
         ans = [K(o[0])*ans for o in (t**3-1).roots(K)]
     return ans
 
 
-def our_nroot(x,n,K,return_all = False):
-    if x == 0:
+def our_nroot(xx,n,K = None,return_all = False):
+    if K is None:
+        K = xx.parent()
+    if xx == 0:
         if return_all:
-            return [x]
+            return [xx]
         else:
-            return x
+            return xx
     if n == 1:
         if return_all:
-            return [x]
+            return [xx]
         else:
-            return x
-    x=K(x)
-    x_orig = x
+            return xx
+    xx=K(xx)
+    x_orig = xx
     p=K.base_ring().prime()
-    valp = x.valuation(p)
+    valp = xx.valuation(p)
     try:
         eK = K.ramification_index()
     except AttributeError:
@@ -589,7 +599,7 @@ def our_nroot(x,n,K,return_all = False):
     valpi = eK * valp
     if valpi % n != 0:
         raise ValueError,'Not an n-th power'
-    x = p**(-valp) * x
+    x = p**(-valp) * xx
     z = K.gen()
     deg = K.degree()
     found = False
@@ -938,14 +948,15 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                         if good_at_infinity:
                             return B
 
-def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True):
+def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,kill_torsion = True):
     assert qE.valuation() != 0, 'qE should not have zero valuation'
     if qE.valuation() < 0:
         qE = 1/qE
     F = emb.domain() if field is None else field
     deg = F.degree()
     p = qE.parent().prime()
-    qE = qE**(p-1) # Kill the torsion
+    if kill_torsion:
+        qE = qE**(p-1) # Kill the torsion
     qval = qE.valuation()
     try:
         Ftors = F.unit_group().torsion_generator()
@@ -958,21 +969,24 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True)
         primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
     except AttributeError:
         primedivisors = [o[0] for o in conductor.factor()]
-    Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,7),repeat = len(primedivisors)))]
+    S = [o[0] for o in conductor.factor()]
+    #Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,7),repeat = len(primedivisors)))]
     E4 = EisensteinForms(weight=4).basis()[0]
     Deltamodform = CuspForms(weight=12).basis()[0]
-    jpowseries = ((E4.q_expansion(prec+7))**3/Deltamodform.q_expansion(prec+7))
+    jpowseries = E4.q_expansion(prec+7)**3/Deltamodform.q_expansion(prec+7)
+    jpowseries = PolynomialRing(ZZ,names='w')([ZZ(jpowseries[i]) for i in range(prec+1)])
     Kp = qE.parent()
     revdivs = divisors(qval)
     verbose('Number of divisors of %s is %s'%(qval,len(revdivs)))
     for guessed_pow in revdivs:
         verbose('guessed_pow = %s'%guessed_pow)
         try:
-            qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True) if guessed_pow > 1 else [qE]
+            qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True)
         except ValueError:
             continue
-        for qEroot,D in product(qErlist,Deltalist):
-            jE = jpowseries(qEroot) # Get the candidate j invariant
+        for qEroot,D in product(qErlist,selmer_group_iterator(F,S,12)):
+            jE = 1/qEroot + jpowseries(qEroot)
+            # jE = jpowseries(qEroot) # Get the candidate j invariant
             # Kp = jE.parent()
             Deltap = Kp(emb(D))
             c4cubed = Kp(Deltap * jE)
@@ -980,20 +994,27 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True)
                 c4list = our_cuberoot(c4cubed,Kp,return_all = True)
             except ValueError:
                 continue
-            for c4ex in [o[0] for c4 in c4list for o in our_algdep(c4,deg).roots(F)]:
-                c6squared = F(c4ex**3 - 1728*D)
-                if not c6squared.is_square():
+            for c4 in c4list:
+                c4pol = our_algdep(c4,deg,prec = prec)
+                if c4pol.leading_coefficient() not in [1,-1]:
                     continue
-                for c6ex in c6squared.sqrt(all=True):
-                    try:
-                        E = EllipticCurve_from_c4c6(c4ex,c6ex)
-                    except ArithmeticError: continue
-                    if not check_conductor or E.conductor() == conductor:
-                        #assert E.discriminant() == D
-                        verbose('Success!')
-                        return E
+                for c4ex in [o[0] for c4 in c4list for o in c4pol.roots(F)]:
+                    verbose('Candidate c4 = %s'%c4ex)
+                    c6squared = F(c4ex**3 - 1728*D)
+                    if not c6squared.is_square():
+                        continue
+                    for c6ex in c6squared.sqrt(all=True):
+                        try:
+                            E = EllipticCurve_from_c4c6(c4ex,c6ex)
+                        except ArithmeticError: continue
+                        if not check_conductor or E.conductor() == conductor:
+                            #assert E.discriminant() == D
+                            verbose('Success!')
+                            return E
     verbose('Curve not recognized')
     return None
+
+
 
 def simplification_isomorphism(G,return_inverse = False):
     """
@@ -1063,3 +1084,21 @@ def update_progress(progress,msg = ""):
     sys.stdout.write(text)
     sys.stdout.flush()
 
+
+
+
+def selmer_group_iterator(self, S, m, proof=True):
+    r"""
+    Return an iterator through elements of the finite group `K(S,m)`.
+    [1, -1, 13, -13, 11, -11, 143, -143]
+    """
+    if self == QQ:
+        KSgens = [o for o in S] + [QQ(-1)]
+    else:
+        KSgens = self.selmer_group(S=S, m=m, proof=proof)
+    f = lambda o: m if o is Infinity else o.gcd(m)
+    orders = [f(a.multiplicative_order()) for a in KSgens]
+    one = self.one_element()
+    from sage.misc.all import cartesian_product_iterator
+    for ev in cartesian_product_iterator([range(o) for o in orders]):
+        yield prod([p**e for p,e in zip(KSgens,ev)],one)
