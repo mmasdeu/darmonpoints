@@ -521,7 +521,7 @@ def our_sqrt(xx,K = None,return_all = False):
         y1 = (y**2+x)/(2*y)
 
     ans = K.uniformizer()**(ZZ(valpi/2)) * y
-    assert ans**2 == xx,'ans**2/xx = %s'%(ans**2/xx)
+    # assert ans**2 == xx,'ans**2/xx = %s'%(ans**2/xx)
 
     if return_all:
         ans = [ans, -ans]
@@ -567,7 +567,7 @@ def our_cuberoot(xx,K = None,return_all = False):
         y2 = y**2
         y1 = (2*y*y2+x)/(3*y2)
     ans = K.uniformizer()**(ZZ(valpi/3)) * y
-    assert ans**3 == xx,'ans**3/xx = %s'%(ans**3/xx)
+    # assert ans**3 == xx,'ans**3/xx = %s'%(ans**3/xx)
 
     if return_all:
         t = PolynomialRing(QQ,'t').gen()
@@ -624,7 +624,7 @@ def our_nroot(xx,n,K = None,return_all = False):
         yn = y**n
         y1 = ((n-1)*yn+x)*y/(n*yn)
     ans = K.uniformizer()**ZZ(valpi/n) * y
-    assert ans**n == x_orig, 'ans**n/x_orig = %s'%(ans**n/x_orig)
+    # assert ans**n == x_orig, 'ans**n/x_orig = %s'%(ans**n/x_orig)
     if return_all:
         t = PolynomialRing(QQ,'t').gen()
         newans = []
@@ -977,6 +977,7 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
     jpowseries = PolynomialRing(ZZ,names='w')([ZZ(jpowseries[i]) for i in range(prec+1)])
     Kp = qE.parent()
     revdivs = divisors(qval)
+    revdivs.reverse()
     verbose('Number of divisors of %s is %s'%(qval,len(revdivs)))
     for guessed_pow in revdivs:
         verbose('guessed_pow = %s'%guessed_pow)
