@@ -320,13 +320,6 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
         for parity, edge, wt in edgelist:
             ii += 1
             mem_usage = get_memory_usage() - mem0
-            # verbose('mem = %s'%mem_usage)
-            # if mem_usage > float(8 * 1000):
-            #     verbose('Clearing caches! (mem_usage = %s)'%(mem_usage-mem0))
-            #     G.clear_cache()
-            #     V = HOC.coefficient_module()
-            #     V.clear_cache()
-            #     verbose('Done. New mem_usage = %s'%(get_memory_usage()-mem0))
             rev, h = edge
             a,b,c,d = G.embed(h,prec).list()
             a,b,c,d = K(d),K(-b),K(-c),K(a)
