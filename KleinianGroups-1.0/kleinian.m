@@ -63,10 +63,10 @@ function ioo(B,vC,M,MH,center,pr)
 		where B := ( (b+Conjugate(c)+(a-Conjugate(d))*H.2) )/2
 		where C := ( (c+Conjugate(b)+(d-Conjugate(a))*H.2) )/2
 		where D := ( (d+Conjugate(a)+(c-Conjugate(b))*H.2) )/2
-		where a := H!Re(m[1,1]) + H.1*Im(m[1,1])
-		where b := H!Re(m[1,2]) + H.1*Im(m[1,2])
-		where c := H!Re(m[2,1]) + H.1*Im(m[2,1])
-		where d := H!Re(m[2,2]) + H.1*Im(m[2,2]);
+	  where a := H![Re(m[1,1]),0,0,0] + H.1*Im(m[1,1])
+	  where b := H![Re(m[1,2]),0,0,0] + H.1*Im(m[1,2])
+	  where c := H![Re(m[2,1]),0,0,0] + H.1*Im(m[2,1])
+	  where d := H![Re(m[2,2]),0,0,0] + H.1*Im(m[2,2]);
         return mat;
         end function;
 		/*
@@ -105,7 +105,8 @@ if not assigned B`KlnI or Redefine then
 	end if;
 
 	M := MatrixRing(ComplexField(pr),2);
-	MH := MatrixRing(H,2);
+e := H![1,0,0,0];
+MH := Parent(Matrix(2, [H| e, 0, 0, e]));
 	B`KlnI := ioo(B,vC,M,MH,Center,pr);
 	B`KlnH := H;
     B`KlnV := vC;
