@@ -773,11 +773,14 @@ def _get_heegner_params_rational(p,N,beta):
         raise ValueError,'There should an even number of primes different than p which are inert'
     return DB,Np
 
-def fwrite(string, outfile):
+def fwrite(string, outfile,newline = True):
     if outfile is None:
         return
     with open(outfile,"a") as fout:
-        fout.write(string + '\n')
+        if newline:
+            fout.write(string + '\n')
+        else:
+            fout.write(string)
     return
 
 @cached_function
