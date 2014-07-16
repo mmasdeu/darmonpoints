@@ -290,7 +290,7 @@ end if;
 if Center cmpeq "J" then
     Center := H!0;
 elif Center cmpeq "Auto" then
-    Center := 17/5*H.2 - 1/2*H.1 + 1/3*One(H);
+    Center := 17/5*H.2 - 1/2*H.1 + 1/3*H![1,0,0,0];
 end if;
 
 B := Algebra(O);
@@ -319,7 +319,8 @@ end if;
 
 vprint Kleinian: ">>>>>>>>>> NormalizedBasis";
 H := B`KlnH;
-MH := MatrixRing(H,2);
+e := H![1,0,0,0];
+MH := Parent(Matrix(2, [H| e, 0, 0, e]));
 R := BaseField(H);
 pr := Precision(R);
 period := 1;
