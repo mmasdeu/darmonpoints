@@ -100,7 +100,7 @@ function RandomHyperbolicDisc(H,r)
  rh := RadiusDisc(v);
  chrh := Cosh(rh);
  re := Sqrt((chrh-1)/(chrh+1));
- return re*(w[1]*H.2+w[2]*One(H));
+return re*(w[1]*H.2+w[2]*H![1,0,0,0]);
 end function;
 
 /*
@@ -113,7 +113,7 @@ function RandomHyperbolicBall(H,r,eps)
  rh := RadiusBall(v,eps);
  chrh := Cosh(rh);
  re := Sqrt((chrh-1)/(chrh+1));
- return re*(w[1]*H.1+w[2]*H.2+w[3]*One(H));
+return re*(w[1]*H.1+w[2]*H.2+w[3]*H![1,0,0,0]);
 end function;
 
 function RandomQuatIJ( : H := Hdef)
