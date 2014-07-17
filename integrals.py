@@ -204,6 +204,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
     verbose('Will do %s integrals'%total_integrals)
     input_vec = []
     res = Cp(1)
+    resadd = Cp(0)
     for g,divisor in cycle.get_data():
         jj += 1
         if divisor.degree() != 0:
@@ -212,8 +213,13 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
             gq = G.wp() * gq * G.wp()**-1
-        res *= integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,parallelize)
-    return res
+        newres,newresadd = integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,parallelize)
+        res *= newres
+        resadd += newresadd
+    try:
+        return res * resadd.exp()
+    except ValueError:
+        return res**2 * (2*resadd).exp()
 
 def evaluate_parallel(hc,gamma,pol,c0):
     HOC = hc.parent()
@@ -369,6 +375,6 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     if val != 0:
         verbose('val = %s'%val)
     tmp = p**val * K.teichmuller(p**(-val)*resmul)
-    if resadd != 0:
-        tmp *= resadd.exp()
-    return tmp
+    # if resadd != 0:
+    #     tmp *= resadd.exp()
+    return tmp,resadd
