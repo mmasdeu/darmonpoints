@@ -312,14 +312,6 @@ data = [\
 
 @fork(timeout = max_waiting_time)
 def find_abelianization(F,D,level):
-    abtuple = quaternion_algebra_from_discriminant(F,D,[-1 for o in F.real_embeddings()]).invariants()
-    G = ArithGroup(F,D,abtuple,level = level)
-    ngens = len(G.abelianization().free_gens())
-    return ngens
-
-
-@parallel
-def find_candidates(data,Nrange,max_P_norm,max_F_disc,max_waiting_time,outfile):
     from sarithgroup import ArithGroup
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
@@ -330,8 +322,16 @@ def find_candidates(data,Nrange,max_P_norm,max_F_disc,max_waiting_time,outfile):
     magma.attach_spec(page_path)
 
     sys.setrecursionlimit(10**6)
-    from sage.misc.misc import alarm,cancel_alarm
-    from sage.parallel.decorate import parallel
+
+    abtuple = quaternion_algebra_from_discriminant(F,D,[-1 for o in F.real_embeddings()]).invariants()
+    G = ArithGroup(F,D,abtuple,level = level)
+    ngens = len(G.abelianization().free_gens())
+    return ngens
+
+
+@parallel
+def find_candidates(data,Nrange,max_P_norm,max_F_disc,max_waiting_time,outfile):
+    sys.setrecursionlimit(10**6)
     x = QQ['x'].gen()
     fwrite('data = [\\',outfile)
     for N in Nrange:
