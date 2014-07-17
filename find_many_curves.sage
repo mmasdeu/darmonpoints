@@ -6,7 +6,7 @@ from sage.parallel.decorate import parallel,fork
 ######################
 
 x = QQ['x'].gen()
-max_waiting_time = 60 * 60 # Amount of patience (in seconds)
+max_waiting_time = 120 * 60 # Amount of patience (in seconds)
 decimal_prec = 60
 outfile = 'curve_table.txt'
 
@@ -43,6 +43,7 @@ def find_one_curve(inp):
     return out_str
 
 
+x = QQ['x'].gen()
 r = QQ['r'].gen()
 load('all_candidates.sage')
 data = sorted(data,key = lambda x:x[-1])
