@@ -1,18 +1,22 @@
 load('darmonpoints.sage')
 from sage.misc.misc import alarm,cancel_alarm
-from sage.parallel.decorate import parallel
+from sage.parallel.decorate import parallel,fork
 ######################
 # Parameters         #
 ######################
 
 x = QQ['x'].gen()
-Nrange = range(262,1000) # Conductors to explore
-max_P_norm = 50 # Maximum allowed conductor
-max_F_disc = 3000 # Maximum size of discriminant of base field
-max_waiting_time = 10*60 # Amount of patience (in seconds)
+Nrange = range(1,1000) # Conductors to explore
+max_P_norm = 100 # Maximum allowed conductor
+max_F_disc = None # Maximum size of discriminant of base field
+max_waiting_time = 2 * 60 # Amount of patience (in seconds)
+chunk_length = 20
+outfile_base = 'candidates'
 
 
 data = [\
+[x^3 - x^2 + 1, -23, 2, []],\
+[x^3 + x - 1, -31, 2, []],\
 [x^3 - x^2 + x + 1, -44, 2, []],\
 [x^3 + 2*x - 1, -59, 2, []],\
 [x^3 - 2*x - 2, -76, 2, []],\
@@ -306,24 +310,35 @@ data = [\
 [x^4 - x^3 - x^2 - 3*x + 1, -4979, 5, []],\
 [x^4 - 2*x^3 - x^2 - x + 2, -4999, 5, []]]
 
+@fork(timeout = max_waiting_time)
+def find_abelianization(F,D,level):
+    abtuple = quaternion_algebra_from_discriminant(F,D,[-1 for o in F.real_embeddings()]).invariants()
+    G = ArithGroup(F,D,abtuple,level = level)
+    ngens = len(G.abelianization().free_gens())
+    return ngens
 
-
-Nrange = range(262,1000) # Conductors to explore
-max_P_norm = 50 # Maximum allowed conductor
-max_F_disc = 3000 # Maximum size of discriminant of base field
-max_waiting_time = 10*60 # Amount of patience (in seconds)
-
-from sarithgroup import ArithGroup
 
 @parallel
 def find_candidates(data,Nrange,max_P_norm,max_F_disc,max_waiting_time,outfile):
+    from sarithgroup import ArithGroup
+    try:
+        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+    except NameError:
+        ROOT = os.getcwd()
+        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+
+    magma.attach_spec(page_path)
+
+    sys.setrecursionlimit(10**6)
+    from sage.misc.misc import alarm,cancel_alarm
+    from sage.parallel.decorate import parallel
     x = QQ['x'].gen()
     fwrite('data = [\\',outfile)
     for N in Nrange:
         #print 'Field_disc = %s'%datum[1]
         print 'N = %s'%N
         for datum in data:
-            if ZZ(datum[1]).abs() > max_F_disc:
+            if max_F_disc is not None and ZZ(datum[1]).abs() > max_F_disc:
                 break
             pol = datum[0]
             F.<r> = NumberField(pol)
@@ -367,27 +382,22 @@ def find_candidates(data,Nrange,max_P_norm,max_F_disc,max_waiting_time,outfile):
                         NE = P * D * Np
                         assert NE == F.ideal(a)
                         try:
-                            alarm(max_waiting_time)
-                            abtuple = quaternion_algebra_from_discriminant(F,D,[-1 for o in F.real_embeddings()]).invariants()
-                            G = ArithGroup(F,D,abtuple,level = P * Np)
-                            ngens = len(G.abelianization().free_gens())
-                            cancel_alarm()
+                            ngens = ZZ(find_abelianization(F,D,P*Np))
                             if ngens > 0:
                                 print 'Found, p = %s, F = %s, length %s'%(P.norm(),F,ngens)
-                                #fout.write('%s %s %s %s %s %s %s\n'%(F,P,D,Np,P.norm(),(P*D*Np).norm(),ngens))
-                                fwrite('[%s,%s,%s,%s,%s],\\'%(F.defining_polynomial(),P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],P.norm(),(P*D*Np).norm()),outfile)
+                                fwrite('[%s,%s,%s,%s,%s,%s],\\'%(F.defining_polynomial(),P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],P.norm(),(P*D*Np).norm()),outfile)
 
-                        except KeyboardInterrupt:
+                        except TypeError:
                             print 'Skipping, Magma takes too long (p = %s, F = %s, NE = %s)'%(P.norm(),F,NE.norm())
-                        except RuntimeError:
-                            print 'Skipping, might be a bug'
+                        except RuntimeError as e:
+                            print 'Skipping, might be a bug (%s)'%e
 
     fwrite(']',outfile)
 
-chunk_length = 20
+# find_candidates([[x^3-x^2+1,-23]],Nrange,max_P_norm,max_F_disc,max_waiting_time,outfile_base + "%s-%s.sage"%(0,0))
+
 nfields = len(data)
 nchunks = (QQ(nfields)/QQ(chunk_length)).ceil()
-outfile_base = 'candidates'
 inp_vec = []
 for tt in range(nchunks):
     i0 = tt * chunk_length
