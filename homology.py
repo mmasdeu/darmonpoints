@@ -536,10 +536,10 @@ class HomologyClass(ModuleElement):
                 newdict[g] = -v
         return HomologyClass(self.parent(),newdict)
 
-    def act_by_hecke(self,l,prec):
+    def act_by_hecke(self,l,prec,g0 = None):
         newdict = dict()
         G = self.parent().group()
-        hecke_reps = G.get_hecke_reps(l)
+        hecke_reps = G.get_hecke_reps(l,g0 = g0)
         for gk1 in hecke_reps:
             for g,v in self._data.iteritems():
                 ti = G.get_hecke_ti(gk1,g.quaternion_rep,l,True)

@@ -492,7 +492,7 @@ class CohomologyGroup(Parent):
         return [self.gen(i) for i in range(self.dimension())]
 
     @cached_method
-    def hecke_matrix(self,l,use_magma = True):
+    def hecke_matrix(self,l,use_magma = True,g0 = None):
         if self.coefficient_module().dimension() > 1:
             raise NotImplementedError
         dim = self.dimension()
@@ -500,7 +500,7 @@ class CohomologyGroup(Parent):
         M = matrix(R,dim,dim,0)
         for j,cocycle in enumerate(self.gens()):
             # Construct column j of the matrix
-            M.set_column(j,[o[0] for o in self.apply_hecke_operator(cocycle,l,use_magma = use_magma).values()])
+            M.set_column(j,[o[0] for o in self.apply_hecke_operator(cocycle,l,use_magma = use_magma).values()],g0 = g0)
         return M
 
     @cached_method
@@ -550,8 +550,10 @@ class CohomologyGroup(Parent):
 
         q = ZZ(1)
         while K.dimension() > 1:
-            q = q.next_prime()
-            for qq,e in F.ideal(q).factor():
+            #q = q.next_prime()
+            #for qq,e in F.ideal(q).factor():
+            for g0 in self.group().element_of_prime_norm(1000):
+                qq = g0.reduced_norm()
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(disc):
                     if getap is not None:
                         try:
@@ -559,15 +561,15 @@ class CohomologyGroup(Parent):
                         except (ValueError,ArithmeticError):
                             continue
                     else:
-                        ap = self.hecke_matrix(qq.gens_reduced()[0]).eigenvalues(extend = False)[0]
+                        ap = self.hecke_matrix(qq.gens_reduced()[0]).eigenvalues(extend = False,g0 = g0)[0]
                         verbose('Found aq = %s'%ap)
-                    K1 = (self.hecke_matrix(qq.gens_reduced()[0])-ap).right_kernel()
+                    K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)-ap).right_kernel()
                     K = K.intersection(K1)
         assert K.dimension() == 1
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
-    def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = False,parallelize = False):
+    def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,parallelize = False,g0 = None):
         r"""
         Apply the l-th Hecke operator operator to ``c``.
 
@@ -657,10 +659,15 @@ class CohomologyGroup(Parent):
             for j,gj in enumerate(Gpn.gens()):
                 ansij = sum([glocs[k] * fox_gradients[k][j] for k in range(nreps)],glocs[0].zeromatrix())
                 ansij.modreduce(self._pN)
-                ans[i][j] = ansij._sage_()
+                ans[i][j] = ansij #._sage_()
                 if progress_bar:
                     counter +=1
                     update_progress(float(counter)/float(total_counter),'Up matrix')
+        verbose('Translating to Sage')
+        for i in range(ngens):
+            for j in range(ngens):
+                ans[i][j] = ans[i][j]._sage_()
+        verbose('Done translating to Sage')
         return block_matrix(ans)
 
     def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'bigmatrix', repslocal = None):

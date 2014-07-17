@@ -318,12 +318,12 @@ class ArithGroup_generic(AlgebraicGroup):
             return gamma, tau1
 
     @cached_method
-    def hecke_matrix(self,l,use_magma = False):
+    def hecke_matrix(self,l,use_magma = False,g0 = None):
         Gab = self.abelianization()
         gens = Gab.gens()
         dim = len(gens)
         M = matrix(ZZ,dim,dim,0)
-        hecke_reps = self.get_hecke_reps(l,use_magma = use_magma)
+        hecke_reps = self.get_hecke_reps(l,use_magma = use_magma,g0 = g0)
         V = QQ**len(gens)
         for j,g in enumerate(gens):
             # Construct column j of the matrix
@@ -332,12 +332,12 @@ class ArithGroup_generic(AlgebraicGroup):
         return M
 
     @cached_method
-    def hecke_matrix_freepart(self,l,use_magma = False):
+    def hecke_matrix_freepart(self,l,use_magma = False,g0 = None):
         Gab = self.abelianization()
         freegens = Gab.free_gens()
         dim = len(freegens)
         M = matrix(ZZ,dim,dim,0)
-        hecke_reps = self.get_hecke_reps(l,use_magma = use_magma)
+        hecke_reps = self.get_hecke_reps(l,use_magma = use_magma,g0 = g0)
         V = QQ**len(freegens)
         for j,g in enumerate(freegens):
             # Construct column j of the matrix
@@ -709,7 +709,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                     self._non_positive_unit = candidate
                     return candidate
 
-    def get_hecke_reps(self,l,use_magma = True):
+    def get_hecke_reps(self,l,use_magma = False,g0 = None): #rationalquaternion
         r'''
         TESTS:
 
@@ -721,7 +721,8 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             return self._cache_hecke_reps[l]
         except KeyError: pass
         verbose('Finding hecke reps for l = %s'%l)
-        g0 = self.element_of_norm(l,use_magma = use_magma,force_sign = False)
+        if g0 is None:
+            g0 = self.element_of_norm(l,use_magma = use_magma,force_sign = False)
         assert g0.reduced_norm() == l
         reps = [g0]
         ngens = len(self.gens())
@@ -842,7 +843,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         self._element_of_norm[N] = candidate
         return candidate
 
-    def get_hecke_reps(self,l,use_magma = True):
+    def get_hecke_reps(self,l,use_magma = True,g0 = None): # rationalmatrix
         r'''
         TESTS:
 
@@ -905,7 +906,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self._prec_inf = -1
 
         self._grouptype = grouptype
-
+        self._elements_of_prime_norm = []
         self.F = base
         self.level = base.ideal(level)
         self.a,self.b = base(a),base(b)
@@ -1394,6 +1395,23 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         assert emb(x.reduced_norm()).sign() == emb(N).sign()
         return x
 
+    def element_of_prime_norm(self,max_norm,radius = -1):
+        v = self.Obasis
+        verbose('Doing long enumeration...')
+        M = 0
+        F = self.B.base_ring()
+        while M != radius:
+            M += 1
+            verbose('M = %s,radius = %s'%(M,radius))
+            for a0,an in product(range(M),product(range(-M+1,M),repeat = len(v)-1)):
+                candidate = self.B(sum(ai*vi for ai,vi in  zip([a0]+list(an),v)))
+                candidate_norm = F(candidate.reduced_norm())
+                if candidate_norm == 0:
+                    continue
+                if F.ideal(candidate_norm).is_prime() and candidate_norm.norm().abs() < max_norm:
+                    self._elements_of_prime_norm.append(candidate)
+                    yield candidate
+        
     def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1,force_sign = True): # in nf_quaternion
         Nideal = self.F.ideal(N)
         if return_all == False:
@@ -1470,7 +1488,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                     self._non_positive_unit = candidate
                     return candidate
 
-    def get_hecke_reps(self,l,use_magma = True):
+    def get_hecke_reps(self,l,use_magma = True,g0 = None): #nf_quaternion
         r'''
         TESTS:
 
@@ -1481,7 +1499,8 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         try:
             return self._cache_hecke_reps[l]
         except KeyError: pass
-        g0 = self.element_of_norm(l,use_magma = use_magma)
+        if g0 is None:
+            g0 = self.element_of_norm(l,use_magma = use_magma)
         reps = [g0]
         I = self.enumerate_elements()
         n_iters = ZZ(0)
