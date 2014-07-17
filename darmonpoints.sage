@@ -379,7 +379,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 ######################################
 
 def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None,kill_torsion = True):
-    global qE, G, Coh, phiE, xi1, xi2, Phi
+    global qE, G, Coh, phiE, xi1, xi2, Phi, curve
 
     try:
         F = P.ring()

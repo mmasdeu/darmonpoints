@@ -869,7 +869,10 @@ def sage_F_elt_to_magma(F_magma,x):
 
 def quaternion_to_magma_quaternion(Bmagma,x):
     v = list(x)
-    return Bmagma(v[0]) + sum(v[i+1] * Bmagma.gen(i+1) for i in range(3))
+    if v[0].parent() == QQ:
+        return Bmagma(v[0]) + sum(v[i+1] * Bmagma.gen(i+1) for i in range(3))
+    else:
+        return sage_quaternion_to_magma(Bmagma,x)
 
 def magma_F_elt_to_sage(F_sage,x):
     ans =  F_sage(sage_eval(magma.eval('[%s[i] : i in [1..%s]]'%(x.name(),F_sage.degree()))))
