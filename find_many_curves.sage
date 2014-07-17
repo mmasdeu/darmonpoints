@@ -11,7 +11,8 @@ decimal_prec = 60
 outfile = 'curve_table'
 
 @parallel
-def find_one_curve(pol,P,D,Np,Pnorm,Nnorm):
+def find_one_curve(inp):
+    pol,P,D,Np,Pnorm,Nnorm = inp
     F.<r> = NumberField(pol)
     P = F.ideal(P)
     D = F.ideal(D)
