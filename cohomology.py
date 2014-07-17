@@ -549,11 +549,12 @@ class CohomologyGroup(Parent):
             getap = None
 
         q = ZZ(1)
+        g0 = None
         while K.dimension() > 1:
-            #q = q.next_prime()
-            #for qq,e in F.ideal(q).factor():
-            for g0 in self.group().element_of_prime_norm(1000):
-                qq = g0.reduced_norm()
+            q = q.next_prime()
+            for qq,e in F.ideal(q).factor():
+            # for g0 in self.group().element_of_prime_norm(1000):
+                # qq = g0.reduced_norm()
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(disc):
                     if getap is not None:
                         try:
