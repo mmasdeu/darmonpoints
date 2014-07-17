@@ -379,6 +379,27 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 ######################################
 
 def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None,kill_torsion = True):
+
+    from itertools import product,chain,izip,groupby,islice,tee,starmap
+    from util import *
+    import os,datetime
+    from sarithgroup import BigArithGroup
+    from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
+    from homology import construct_homology_cycle,lattice_homology_cycle
+    from integrals import integrate_H1,double_integral_zero_infty,indef_integral
+    from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
+    from sage.misc.persist import db,db_save
+
+    try:
+        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+    except NameError:
+        ROOT = os.getcwd()
+        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+
+    magma.attach_spec(page_path)
+
+    sys.setrecursionlimit(10**6)
+
     global qE, G, Coh, phiE, xi1, xi2, Phi, curve
 
     try:
