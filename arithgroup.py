@@ -1035,7 +1035,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 newgen = newgen * tmp_quaternions[j]**aj
             self.Ugens.append(newgen)
         verbose('Done calculating Ugens. Now initializing relations')
-        if 'P' not in grouptype:
+        if 'P' not in self._grouptype:
             self.F_units = self.F.unit_group()
             self.F_unit_offset = len(self.Ugens)
             self.Ugens.extend([self.B(self.F(u)) for u in self.F_units.gens()])
