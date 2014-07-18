@@ -175,19 +175,19 @@ class BigArithGroup_class(AlgebraicGroup):
         prime = self.p
         if self.seed is not None:
             magma.eval('SetSeed(%s)'%self.seed)
-        R = Qp(prime,prec) #Zmod(prime**prec) #
+        R = Qp(prime,prec+10) #Zmod(prime**prec) #
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
-        # self.Gn._Omax_magma.set_magma_attribute('pMatrixRings',[])
+        # self.Gn._O_magma.set_magma_attribute('pMatrixRings',[])
         if self.F == QQ:
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma,prime*self.Gn._Omax_magma.BaseRing(),Precision = 10,nvals = 2)
+            M,f = magma.pMatrixRing(self.Gn._O_magma,prime*self.Gn._O_magma.BaseRing(),Precision = 20,nvals = 2)
             self._F_to_local = QQ.hom([R(1)])
         else:
-            M,f = magma.pMatrixRing(self.Gn._Omax_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 10,nvals = 2)
+            M,f = magma.pMatrixRing(self.Gn._O_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
             self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
             self._F_to_local = None
             for o in self.F.gen().minpoly().change_ring(R).roots():
-                if (o[0] - self._goodroot).valuation() > 5:
+                if (o[0] - self._goodroot).valuation() > 10:
                     self._F_to_local = self.F.hom([o[0]])
                     break
             assert self._F_to_local is not None
@@ -252,7 +252,7 @@ class BigArithGroup_class(AlgebraicGroup):
     @cached_method
     def get_BT_reps(self):
         reps = [self.Gn.B(1)] + [None for i in range(self.p)]
-        emb = self.get_embedding(200)
+        emb = self.get_embedding(20)
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in range(self.p)]
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)

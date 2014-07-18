@@ -26,7 +26,7 @@ from sage.parallel.decorate import fork,parallel
 from sage.parallel.ncpus import ncpus
 oo = Infinity
 from sage.matrix.constructor import block_matrix
-
+from sage.rings.number_field.number_field import NumberField
 load('fmpz_mat.spyx')
 
 def take_super_power(a,n,N):
@@ -550,6 +550,9 @@ class CohomologyGroup(Parent):
         else:
             getap = None
 
+        if F == QQ:
+            x = QQ['x'].gen()
+            F = NumberField(x,names='a')
         q = ZZ(1)
         g0 = None
         while K.dimension() > 1:
@@ -557,7 +560,7 @@ class CohomologyGroup(Parent):
             for qq,e in F.ideal(q).factor():
             # for g0 in self.group().element_of_prime_norm(1000):
                 # qq = g0.reduced_norm()
-                if  ZZ(qq.norm()).is_prime() and not qq.divides(disc):
+                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
                     if getap is not None:
                         try:
                             ap = getap(qq)

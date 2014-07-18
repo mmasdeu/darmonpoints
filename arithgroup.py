@@ -515,7 +515,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         else:
             ZZ_magma = info_magma._B_magma.BaseRing().Integers()
             self._B_magma = info_magma._B_magma
-            self._Omax_magma = info_magma._B_magma.MaximalOrder()
+            self._Omax_magma = info_magma._Omax_magma
             if self.level != ZZ(1):
                 self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,ZZ_magma.name()))
             else:
