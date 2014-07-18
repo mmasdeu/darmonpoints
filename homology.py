@@ -190,7 +190,7 @@ def _hash(x):
     # return hash((tmp,ans[1]))
     # return hash((x.trace(),x.norm()))
     ans = [x.valuation()]
-    for tup in x.list()[:20]:
+    for tup in x.list()[:60]:
         ans.extend(tup)
     return tuple(ans)
 
