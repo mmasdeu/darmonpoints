@@ -39,7 +39,7 @@ def take_super_power(a,n,N):
         update_progress(float(i+1)/float(n),'Exponentiating matrix')
     return aflint._sage_()
 
-def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None):
+def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None,phiE = None):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -60,8 +60,10 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
     base_ring = Zp(p,prec) #Qp(p,prec)
 
     # Define phiE, the cohomology class associated to the curve E.
-    Coh = CohomologyGroup(G.small_group())
-    phiE = Coh.get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
+
+    if phiE is None:
+        phiE = CohomologyGroup(G.small_group()).get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
+
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
     if hasattr(E,'cremona_label'):
@@ -562,7 +564,7 @@ class CohomologyGroup(Parent):
                         except (ValueError,ArithmeticError):
                             continue
                     else:
-                        ap = self.hecke_matrix(qq.gens_reduced()[0]).eigenvalues(extend = False,g0 = g0)[0]
+                        ap = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).eigenvalues(extend = False)[0]
                         verbose('Found aq = %s'%ap)
                     K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)-ap).right_kernel()
                     K = K.intersection(K1)
