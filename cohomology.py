@@ -500,7 +500,7 @@ class CohomologyGroup(Parent):
         M = matrix(R,dim,dim,0)
         for j,cocycle in enumerate(self.gens()):
             # Construct column j of the matrix
-            M.set_column(j,[o[0] for o in self.apply_hecke_operator(cocycle,l,use_magma = use_magma).values()],g0 = g0)
+            M.set_column(j,[o[0] for o in self.apply_hecke_operator(cocycle,l,use_magma = use_magma,g0 = g0).values()])
         return M
 
     @cached_method
