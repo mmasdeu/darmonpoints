@@ -122,12 +122,17 @@ class BigArithGroup_class(AlgebraicGroup):
             raise ValueError, 'p ( = %s) must be prime'%self.p
         self.discriminant = Fideal(discriminant) if self.F.degree() > 1 else ZZ(discriminant)
         self.level = Fideal(level) if self.F.degree() > 1 else ZZ(level)
+
+        verbose('Initializing arithmetic group G(pn)...')
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype)
+        self.Gpn.get_embedding = self.get_embedding
+        self.Gpn.embed = self.embed
+
         verbose('Initializing arithmetic group G(n)...')
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,grouptype = grouptype)
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,info_magma = self.Gpn,grouptype = grouptype)
         self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
-        verbose('Initializing arithmetic group G(pn)...')
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,info_magma = self.Gn,grouptype = grouptype)
+
         fwrite('B = Q<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gn.B.gens()[0]**2,self.Gn.B.gens()[1]**2),outfile)
         try:
             basis_data_1 = list(self.Gn.Obasis)
@@ -137,8 +142,6 @@ class BigArithGroup_class(AlgebraicGroup):
             basis_data_p = self.Gpn.basis_invmat.inverse().columns()
         fwrite('R with basis %s'%basis_data_1,outfile)
         fwrite('R(p) with basis %s'%basis_data_p,outfile)
-        self.Gpn.get_embedding = self.get_embedding
-        self.Gpn.embed = self.embed
         self._prec = -1
         self._II,self._JJ,self._KK = self.local_splitting(200)
         #self.wpold = self.wp()

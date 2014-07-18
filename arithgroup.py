@@ -1090,9 +1090,10 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self._F_magma = info_magma._F_magma
             OF_magma = info_magma._F_magma.Integers()
             self._B_magma = info_magma._B_magma
-            self._Omax_magma = info_magma._B_magma.MaximalOrder()
+            self._Omax_magma = info_magma._Omax_magma
             if self.level != self.F.ideal(1):
-                self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
+                P = sage_F_ideal_to_magma(self._F_magma,info_magma.level/self.level)
+                self._O_magma = info_magma._O_magma.pMaximalOrder(P)
             else:
                 self._O_magma = self._Omax_magma
             if self.algorithm == 'jv':
