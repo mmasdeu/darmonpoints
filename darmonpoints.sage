@@ -459,21 +459,21 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         # Define the S-arithmetic group
         G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = 'PGL2')
 
-        # Define PhiE, the cohomology class associated to the system of eigenvalues.
+        # Define phiE, the cohomology class associated to the system of eigenvalues.
         Coh = CohomologyGroup(G.Gpn)
-        PhiE = Coh.get_cocycle_from_elliptic_curve(None,sign = sign_at_infinity)
+        phiE = Coh.get_cocycle_from_elliptic_curve(None,sign = sign_at_infinity)
         if use_sage_db:
             G.save_to_db()
 
         i = 0
         g = G.Gpn.gen(i)
-        while PhiE.evaluate(g) == 0:
+        while phiE.evaluate(g) == 0:
             i+=1
             g = G.Gpn.gen(i)
 
         xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
 
-        Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = True)
+        Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = True,phiE = phiE)
 
         qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = True)
         qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = True)
