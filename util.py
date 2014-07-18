@@ -396,7 +396,7 @@ def our_algdep(z,degree,prec = None):
 
 
 def lift_padic_splitting(a,b,II0,JJ0,p,prec):
-    R = Qp(p,prec)
+    R = a.parent() #Qp(p,prec)
     #II0,JJ0,_ = Q.modp_splitting_data(p)
     II0 = II0.apply_map(lambda o:R(o.lift()))
     II0[1,1] = -II0[0,0]
@@ -427,7 +427,8 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
         current_prec = n
         if n_iters > 2 * prec:
             raise RuntimeError,'Hensel iteration does not seem to converge'
-    return newII,newJJ
+    R = Qp(p,prec)
+    return newII.change_ring(R),newJJ.change_ring(R)
 
 def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   hF = F.class_number()
