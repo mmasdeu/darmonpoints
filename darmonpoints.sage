@@ -482,7 +482,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         Phi,qE = input_data[1:3]
     print 'Integral done. Now trying to recognize the curve'
     fwrite('qE = %s'%qE,outfile)
-    curve = discover_equation(qE,G._F_to_local,NE,prec,kill_torsion = kill_torsion).global_minimal_model()
+    curve = discover_equation(qE,G._F_to_local,NE,prec,kill_torsion = kill_torsion)
     if curve is None:
         fwrite('Curve not found with the sought conductor. Will try to find some curve at least',outfile)
         print 'Curve not found with the sought conductor. Will try to find some curve at least'
@@ -491,8 +491,11 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
             fwrite('Still no luck. Sorry!',outfile)
             print 'Still no luck. Sorry!'
         else:
+            curve = curve.global_minimal_model()
             fwrite('Found a curve, at least...')
             print 'Found a curve, at least...'
+    else:
+        curve = curve.global_minimal_model()
     fwrite('================================================',outfile)
     if return_all_data == True:
         return (curve, Phi, qE)
