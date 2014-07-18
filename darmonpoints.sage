@@ -471,7 +471,13 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
             i+=1
             g = G.Gpn.gen(i)
 
-        xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
+	success = False
+	while not success:
+            try:
+                xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
+                success = True
+            except PrecisionError:
+                working_prec *= 2
 
         Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = True,phiE = phiE)
 
