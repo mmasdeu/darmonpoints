@@ -382,7 +382,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
-    from util import *
+    from util import discover_equation
     import os,datetime
     from sarithgroup import BigArithGroup
     from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
@@ -431,7 +431,11 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
 
     if outfile is None:
-        outfile = '/tmp/findcurve_%s_%s_%s_%s_%s.log'%(P,NE,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+        try:
+            NEnrm = NE.norm()
+        except AttributeError:
+            NEnrm = NE
+        outfile = '/tmp/findcurve_%s_%s_%s_%s_%s.log'%(p,NEnrm,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
     if F != QQ and ramification_at_infinity is None:
         if F.signature()[0] > 1:
