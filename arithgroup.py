@@ -342,8 +342,8 @@ class ArithGroup_generic(AlgebraicGroup):
         for j,g in enumerate(freegens):
             # Construct column j of the matrix
             glift = Gab.ab_to_G(g).quaternion_rep
-            newcol = V(list(Gab.G_to_ab_free(prod([self.get_hecke_ti(gk1,glift,l,hecke_reps,use_magma) for gk1 in hecke_reps],self([])))))
-            M.set_column(j,list(newcol))
+            newcol = list(Gab.G_to_ab_free(prod([self.get_hecke_ti(gk1,glift,l,use_magma) for gk1 in hecke_reps],self.one())))
+            M.set_column(j,newcol)
         return M
 
     def _calculate_relation(self,wt,separated = False):
@@ -723,7 +723,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         verbose('Finding hecke reps for l = %s'%l)
         if g0 is None:
             g0 = self.element_of_norm(l,use_magma = use_magma,force_sign = False)
-        assert g0.reduced_norm() == l
+        # assert g0.reduced_norm() == l
         reps = [g0]
         ngens = len(self.gens())
         I = enumerate_words(range(ngens))
