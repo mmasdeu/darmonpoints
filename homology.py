@@ -74,7 +74,7 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
             tmp = tmp.hecke_smoothen(q1,prec = prec)
     return tmp,n,q1
 
-def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integrals = False):
+def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integrals = False,max_n = None):
     p = G.prime()
     wp = G.wp()
     Cp = Qq(p**2,prec,names = 'g')
@@ -87,22 +87,20 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integral
     eltn = G.Gn(eltn.quaternion_rep)
     eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
 
-    # We calculate npow
-    npow0 = 1
-    vec = G.Gn.get_weight_vector(eltn)
-    while npow0 * vec not in G.Gn.get_relation_matrix().image():
-        npow0 += 1
-    verbose('n = %s'%npow0)
-    vec = G.Gn.get_weight_vector(eltn_twisted)
-    npow = npow0
-    while npow * vec not in G.Gn.get_relation_matrix().image():
-        npow += npow0
-    verbose('needed power = %s'%npow)
-
-    eltn = G.Gn(eltn.quaternion_rep**npow)
-    xi1 = H1(dict([(eltn,Div(tau1))])).zero_degree_equivalent()
-    eltn_twisted = G.Gn(eltn_twisted.quaternion_rep**npow)
-    xi2 = H1(dict([(eltn_twisted,Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
+    npow = 1
+    while not found:
+        try:
+            eltn = G.Gn(eltn.quaternion_rep**npow)
+            xi1 = H1(dict([(eltn,Div(tau1))])).zero_degree_equivalent()
+            eltn_twisted = G.Gn(eltn_twisted.quaternion_rep**npow)
+            xi2 = H1(dict([(eltn_twisted,Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
+            found = True
+        except ValueError:
+            if max_n is not None and n > max_n:
+                raise ValueError,'Reached maximum allowed power (%s)'%max_n
+            else:
+                found = False
+                npow += 1
 
     if few_integrals:
         xi1 = xi1.factor_into_generators(prec)
