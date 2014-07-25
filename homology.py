@@ -88,6 +88,7 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integral
     eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
 
     npow = 1
+    found = False
     while not found:
         try:
             eltn = G.Gn(eltn.quaternion_rep**npow)
