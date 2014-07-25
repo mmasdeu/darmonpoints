@@ -13,17 +13,8 @@ from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 from sage.misc.persist import db,db_save
 load('fmpz_mat.spyx')
 
-try:
-    page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
-except NameError:
-    ROOT = os.getcwd()
-    page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
 
-magma.attach_spec(page_path)
-
-sys.setrecursionlimit(10**6)
-
-def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False):
+def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     if use_ps_dists == False:
@@ -37,9 +28,8 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
             return Phi
         except IOError: pass
     print 'Computing the moments...'
-    from sage.modular.pollack_stevens.space import ps_modsym_from_elliptic_curve
-    phi0 = ps_modsym_from_elliptic_curve(E) #,use_ps_dists = use_ps_dists)
-    #phi0 = E.PS_modular_symbol()
+    from pollack_stevens.space import ps_modsym_from_elliptic_curve
+    phi0 = ps_modsym_from_elliptic_curve(E)
     if sign_at_infinity == 1:
         phi0 = phi0.plus_part()
     else:
@@ -47,7 +37,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
     phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0 # DEBUG
     verb_level = get_verbose()
     set_verbose(1)
-    Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True,parallel = parallelize)
+    Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True)
     set_verbose(verb_level)
     Phi.db(fname)
     return Phi
@@ -148,9 +138,16 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     assert not success
     return None,None,None
 
-
-def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False,Wlist = None,twist = True,artificial_multiple = 1):
+def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False,Wlist = None,twist = True, progress_bar = True):
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
+
+    try:
+        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+    except NameError:
+        ROOT = os.getcwd()
+        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+    magma.attach_spec(page_path)
+    sys.setrecursionlimit(10**6)
 
     F = E.base_ring()
     beta = F(beta)
@@ -235,7 +232,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             try:
-                cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,hecke_smoothen = True,outfile = outfile,artificial_multiple = artificial_multiple)
+                cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,hecke_smoothen = True,outfile = outfile)
             except ValueError:
                 print 'ValueError occurred when constructing homology cycle. Returning the S-arithmetic group.'
                 return G
@@ -246,10 +243,10 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             smoothen_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,smoothen_constant),outfile)
             fwrite('exponent = %s'%nn,outfile)
-            Phi = get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize)
+            Phi = get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,progress_bar = progress_bar)
             # Integration with moments
             tot_time = walltime()
-            J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec,parallelize = parallelize,twist = twist)
+            J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec,parallelize = parallelize,twist = twist,progress_bar = progress_bar)
             verbose('integration tot_time = %s'%walltime(tot_time))
             if use_sage_db:
                 G.save_to_db()
@@ -296,7 +293,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 emblist.append((tau,gtau,sign,limits))
 
             # Get the cohomology class from E
-            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize)
+            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,progress_bar = progress_bar)
 
             J = 1
             Jlist = []
@@ -345,10 +342,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
                 fwrite('================================================',outfile)
                 print 'Point found: %s'%Ptsmall
-                if return_all_data == True:
-                    return (Ptsmall, Phi, J, getcoords(E.base_extend(local_embedding),J,prec))
-                else:
-                    return Ptsmall
+                return Ptsmall
             except (TypeError,ValueError):
                 verbose("Could not recognize the point.")
         else:
@@ -364,23 +358,17 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             fwrite('and y satisfies %s'%pols[1],outfile)
             fwrite('================================================',outfile)
             print 'Point found: %s'%candidate
-            if return_all_data == True:
-                return (candidate, Phi, J, getcoords(E.base_extend(local_embedding),J,prec))
-            else:
-                return candidate
+            return candidate
     else:
         fwrite('================================================',outfile)
-        if return_all_data == True:
-            return ([], Phi, J, getcoords(E.base_extend(local_embedding),J,prec))
-        else:
-            return []
+        return []
 
 
 ######################################
 #####     Curve Finding           ####
 ######################################
 
-def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,return_all_data = False,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None):
+def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True):
 
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
@@ -484,10 +472,10 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
             except PrecisionError:
                 working_prec *= 2
 
-        Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = True,phiE = phiE)
+        Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar,phiE = phiE)
 
-        qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = True)
-        qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = True)
+        qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
+        qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
         qE = qE1/qE2
     else: # input_data is not None
         Phi,qE = input_data[1:3]
@@ -508,7 +496,4 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     else:
         curve = curve.global_minimal_model()
     fwrite('================================================',outfile)
-    if return_all_data == True:
-        return (curve, Phi, qE)
-    else:
-        return curve
+    return curve
