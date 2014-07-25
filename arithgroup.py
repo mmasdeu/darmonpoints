@@ -139,10 +139,11 @@ class ArithGroup_generic(AlgebraicGroup):
 
         """
         I,J,K = self._splitting_at_infinity(prec)
+        phi = self.F_into_RR
         def iota(q):
             R=I.parent()
             v=q.coefficient_tuple()
-            return R(v[0] + I*v[1] + J*v[2] + K*v[3])
+            return R(phi(v[0]) + phi(v[1]) * I + phi(v[2]) * J + phi(v[3]) * K)
         return iota
 
     def _splitting_at_infinity(self,prec):
@@ -163,7 +164,7 @@ class ArithGroup_generic(AlgebraicGroup):
             wtime = walltime()
             verbose('Calling MatrixRing...')
             B_magma = self._B_magma
-            f = magma.FuchsianMatrixRepresentation(B_magma.name(),nvals = 1)
+            f = magma.FuchsianMatrixRepresentation(B_magma.name(),Precision = prec,nvals = 1)
             verbose('Spent %s seconds in MatrixRing'%walltime(wtime))
             RR = RealField(prec)
             self._prec_inf=prec
@@ -173,6 +174,14 @@ class ArithGroup_generic(AlgebraicGroup):
             self._JJ_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in range(4)])
             v = f.Image(B_magma.gen(3)).Vector()
             self._KK_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in range(4)])
+            
+            RR = RealField(prec)
+            rimg = f.Image(B_magma(sage_F_elt_to_magma(B_magma.BaseRing(),self.F.gen()))).Vector()
+            rimg_matrix = matrix(RR,2,2,[rimg[i+1]._sage_() for i in range(4)])
+            assert rimg_matrix.is_scalar()
+            rimg = rimg_matrix[0,0]
+            self.F_into_RR = self.F.hom([rimg],check = False)
+            
         return self._II_inf, self._JJ_inf, self._KK_inf
 
     def _quaternion_to_list(self,x):
@@ -476,14 +485,14 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
         self._relation_words = []
         for rel in temp_relation_words:
-            sign = ZZ(prod((self.Ugens[g]**a for g,a in rel), z = self.B(1)))
-            assert sign.abs() == 1
+            sign = prod((self.Ugens[g]**a for g,a in rel), z = self.B(1))
+            #assert sign.abs() == 1
             if sign == 1:
                 self._relation_words.append(rel)
             else:
                 if 'P' not in grouptype:
                     newrel = rel + self.minus_one
-                    sign = ZZ(prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)))
+                    sign = prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1))
                     assert sign == 1
                     self._relation_words.append(newrel)
                 else:
@@ -743,7 +752,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
 
 class ArithGroup_rationalmatrix(ArithGroup_generic):
-    Element = Matrix
+    Element = ArithGroupElement #Matrix
     def __init__(self,level,info_magma = None,grouptype = 'PSL2'):
         assert grouptype in ['SL2','PSL2']
         self._grouptype = grouptype
@@ -767,14 +776,14 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
 
         self._relation_words = []
         for rel in temp_relation_words:
-            sign = ZZ(prod((self._gens[g].quaternion_rep**a for g,a in rel), z = self.B(1)))
+            sign = prod((self._gens[g].quaternion_rep**a for g,a in rel), z = self.B(1))
             if sign == 1:
                 self._relation_words.append(rel)
             else:
                 assert sign == -1
                 if 'P' not in grouptype:
                     newrel = rel + self.minus_one
-                    sign = ZZ(prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1)))
+                    sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1))
                     assert sign == 1
                     self._relation_words.append(newrel)
                 else:
@@ -963,14 +972,14 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
         self._relation_words = []
         for rel in temp_relation_words:
-            sign = ZZ(prod((self.Ugens[g]**a for g,a in rel), z = self.B(1)))
-            assert sign.abs() == 1
+            sign = prod((self.Ugens[g]**a for g,a in rel), z = self.B(1))
+            # assert sign.abs() == 1
             if sign == 1:
                 self._relation_words.append(rel)
             else:
                 if 'P' not in self._grouptype:
                     newrel = rel + self.minus_one
-                    sign = ZZ(prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)))
+                    sign = prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1))
                     assert sign == 1
                     self._relation_words.append(newrel)
                 else:
@@ -1047,7 +1056,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 assert remaining_unit.multiplicative_order() != Infinity
                 ulist = remaining_unit.exponents()
                 newrel = rel + [(self.F_unit_offset + i,a) for i,a in enumerate(ulist) if a != 0 ]
-                sign = ZZ(prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)))
+                sign = prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1))
                 assert sign == 1
                 self._relation_words.append(newrel)
 

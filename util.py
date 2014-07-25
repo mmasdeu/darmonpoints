@@ -876,10 +876,10 @@ def quaternion_to_magma_quaternion(Bmagma,x):
         return sage_quaternion_to_magma(Bmagma,x)
 
 def magma_F_elt_to_sage(F_sage,x):
-    ans =  F_sage(sage_eval(magma.eval('[%s[i] : i in [1..%s]]'%(x.name(),F_sage.degree()))))
-    # ans2 = F_sage([QQ(x[i+1]) for i in range(F_sage.degree())]) # DEBUG
-    # assert ans == ans2,'x = %s, ans = %s, ans2 = %s'%(xv,ans,ans2)
-    return ans
+    if F_sage.degree() > 1:
+        return F_sage(sage_eval(magma.eval('[%s[i] : i in [1..%s]]'%(x.name(),F_sage.degree()))))
+    else:
+        return F_sage(sage_eval(magma.eval('%s'%x.name())))
 
 def magma_quaternion_to_sage(B_sage,x):
     xvec = x.Vector()
