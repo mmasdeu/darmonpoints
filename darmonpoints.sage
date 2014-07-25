@@ -214,7 +214,9 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
         print "Moments will be stored in database as %s"%(fname)
 
     if outfile is None:
-        outfile = '/tmp/darmonpoint_%s_%s_%s_%s_%s_%s.log'%(P,Ename,dK,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+        outfile = '%s_%s_%s_%s_%s_%s.log'%(P,Ename,dK,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+        outfile = outfile.replace('/','div')
+        outfile = '/tmp/darmonpoint_' + outfile
 
     fwrite("Starting computation of the Darmon point",outfile)
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
@@ -431,11 +433,9 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
 
     if outfile is None:
-        try:
-            NEnrm = NE.norm()
-        except AttributeError:
-            NEnrm = NE
-        outfile = '/tmp/findcurve_%s_%s_%s_%s_%s.log'%(p,NEnrm,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+        outfile = '%s_%s_%s_%s_%s.log'%(p,NE,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+        outfile = outfile.replace('/','div')
+        outfile = '/tmp/findcurve_' + outfile
 
     if F != QQ and ramification_at_infinity is None:
         if F.signature()[0] > 1:
