@@ -1,17 +1,12 @@
-##########################################################################
-### Stark-Heegner points for quaternion algebras (following M.Greenberg) #
-##########################################################################
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-#from distributions import Distributions, Symk
-from util import *
+from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
 import os,datetime
-from sarithgroup import BigArithGroup
-from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
-from homology import construct_homology_cycle,lattice_homology_cycle
-from integrals import integrate_H1,double_integral_zero_infty,indef_integral
-from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
-from sage.misc.persist import db,db_save
+from sage.misc.persist import db
 load('fmpz_mat.spyx')
+
+##########################################################################
+### Stark-Heegner points for quaternion algebras                         #
+##########################################################################
 
 
 def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
@@ -35,27 +30,16 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
     else:
         phi0 = phi0.minus_part()
     phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0 # DEBUG
-    verb_level = get_verbose()
-    set_verbose(1)
-    Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True)
-    set_verbose(verb_level)
+    # verb_level = get_verbose()
+    # set_verbose(1)
+    if progress_bar:
+        progress_bar = update_progress
+    else:
+        progress_bar = None
+    Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True,progress_bar = progress_bar)
+    # set_verbose(verb_level)
     Phi.db(fname)
     return Phi
-
-def precompute_magma_embeddings(quat_disc,max_dK):
-    level = 1
-    bG = BigArithGroup(13,quat_disc,level)
-    G = G.Gn
-    all_embs = dict()
-    ell_list = [ell for ell,_ in ZZ(quat_disc).factor()]
-    for dK in range(max_dK):
-        if not is_fundamental_discriminant(dK):
-            continue
-        if all((kronecker_symbol(dK,ell) == -1 for ell in ell_list)):
-            all_embs[dK] = G.compute_quadratic_embedding(dK)
-    db_save(all_embs,'quadratic_embeddings_%s_%s.sobj'%(quat_disc,level))
-    print 'All done'
-    return
 
 def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,outfile = None):
     p = J.parent().prime()
@@ -140,6 +124,11 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
 
 def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False,Wlist = None,twist = True, progress_bar = True):
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
+    from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant
+    from sarithgroup import BigArithGroup
+    from homology import construct_homology_cycle
+    from integrals import double_integral_zero_infty,indef_integral,integrate_H1
+    from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
@@ -227,6 +216,8 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 
     if input_data is None:
         if quaternionic:
+            from cohomology import get_overconvergent_class_quaternionic
+
             # Define the S-arithmetic group
             G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB).invariants(),Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db)
 
@@ -365,7 +356,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 
 
 ######################################
-#####     Curve Finding           ####
+#####     Curve finding           ####
 ######################################
 
 def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True):
@@ -375,12 +366,9 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     from util import discover_equation
     import os,datetime
     from sarithgroup import BigArithGroup
-    from cohomology import CohomologyGroup,get_overconvergent_class_quaternionic
     from homology import construct_homology_cycle,lattice_homology_cycle
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
-    from sage.misc.persist import db,db_save
-
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
     except NameError:
