@@ -609,10 +609,11 @@ class CohomologyGroup(Parent):
             S0 = self.Sigma0()
         else:
             S0 = lambda x:x
+
         vals = [V(0) for gamma in gammas]
         input_vector = []
         for j,gamma in enumerate(gammas):
-            input_vector.extend([(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,j,use_magma) for g in hecke_reps])
+            input_vector.extend([(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,use_magma,j) for g in hecke_reps])
         if parallelize:
             f = parallel(_calculate_hecke_contribution)
             for inp,outp in f(input_vector):
@@ -746,16 +747,15 @@ def _calculate_Up_contribution(G,g,gamma,c,gloc,use_ps_dists,num_gamma):
     else:
         return c.evaluate(tig,extramul = gloc)
 
-def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dists,num_gamma,use_magma):
+def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dists,use_magma,num_gamma):
     tig = G.get_hecke_ti(g,gamma,l,use_magma)
-    val0 = c.evaluate(tig)
     if padic:
         if use_ps_dists:
-            return gloc * val0
+            return gloc *  c.evaluate(tig)
         else:
-            return val0.l_act_by(gloc)
+            return c.evaluate(tig,extramul = gloc)
     else:
-        return val0
+        return c.evaluate(tig)
 
 class ShapiroImage(SageObject):
     def __init__(self,G,cocycle):
