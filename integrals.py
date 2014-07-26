@@ -318,7 +318,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     resmul = ZZ(1)
     edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
     mem0 = get_memory_usage()
-    current_progress = QQ(0)
+    # current_progress = QQ(0)
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
@@ -367,8 +367,8 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 resmul *= c0**ZZ(hc.get_liftee().evaluate(newgamma)[0])
             except IndexError: pass
             if progress_bar:
-                current_progress += wt
-                update_progress(float(current_progress),'Integration %s/%s'%(counter,total_counter))
+                # current_progress += wt
+                update_progress(float(QQ(ii)/QQ(len(edgelist))),'Integration %s/%s'%(counter,total_counter))
 
         edgelist = newedgelist
     val =  resmul.valuation()
