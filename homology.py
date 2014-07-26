@@ -91,13 +91,13 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integral
     found = False
     while not found:
         try:
-            eltn = G.Gn(eltn.quaternion_rep**npow)
-            xi1 = H1(dict([(eltn,Div(tau1))])).zero_degree_equivalent()
-            eltn_twisted = G.Gn(eltn_twisted.quaternion_rep**npow)
-            xi2 = H1(dict([(eltn_twisted,Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
+            y1 = G.Gn(eltn.quaternion_rep**npow)
+            xi1 = H1(dict([(y1,Div(tau1))])).zero_degree_equivalent()
+            y2 = G.Gn(eltn_twisted.quaternion_rep**npow)
+            xi2 = H1(dict([(y2,Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
             found = True
         except ValueError:
-            if max_n is not None and n > max_n:
+            if max_n is not None and npow > max_n:
                 raise ValueError,'Reached maximum allowed power (%s)'%max_n
             else:
                 found = False
