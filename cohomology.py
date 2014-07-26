@@ -567,7 +567,10 @@ class CohomologyGroup(Parent):
                         except (ValueError,ArithmeticError):
                             continue
                     else:
-                        ap = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).eigenvalues(extend = False)[0]
+                        try:
+                            ap = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).eigenvalues(extend = False)[0]
+                        except TypeError:
+                            continue
                         verbose('Found aq = %s'%ap)
                     K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)-ap).right_kernel()
                     K = K.intersection(K1)
