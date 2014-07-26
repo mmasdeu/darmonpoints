@@ -737,7 +737,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         verbose('Finding hecke reps for l = %s'%l)
         if g0 is None:
             g0 = self.element_of_norm(l,use_magma = use_magma,force_sign = False)
-        # assert g0.reduced_norm() == l
+        assert g0.reduced_norm() == l
         reps = [g0]
         ngens = len(self.gens())
         I = enumerate_words(range(ngens))
