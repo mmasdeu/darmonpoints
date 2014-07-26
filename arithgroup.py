@@ -644,8 +644,13 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
     def _fix_sign(self,x,N):
         verbose('Fixing sign...')
         emb = self.F.embeddings(RealField(100))[0]
+        try:
+            N = N.gens_reduced()[0]
+        except AttributeError:
+            pass
         if emb(x.reduced_norm()).sign() != emb(N).sign():
-            x = x * self.element_of_norm(-1,use_magma = False)
+            # x = x * self.element_of_norm(-1,use_magma = False)
+            x = x * self.non_positive_unit()
         assert emb(x.reduced_norm()).sign() == emb(N).sign()
         verbose('Done fixing sign')
         return x
@@ -1399,9 +1404,14 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         elif self.F.signature()[0] > 1:
             # raise NotImplementedError
             return x # FIXME this may not be correct
-        emb = self.F.real_places()[0]
+        emb = self.F.embeddings(RealField(100))[0]
+        try:
+            N = N.gens_reduced()[0]
+        except AttributeError:
+            pass
         if emb(x.reduced_norm()).sign() != emb(N).sign():
-            x = x * self.element_of_norm(-1,use_magma = False)
+            # x = x * self.element_of_norm(-1,use_magma = False)
+            x = x * self.non_positive_unit()
         assert emb(x.reduced_norm()).sign() == emb(N).sign()
         return x
 
@@ -1424,13 +1434,17 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         
     def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1,force_sign = True): # in nf_quaternion
         Nideal = self.F.ideal(N)
+        try:
+            N = N.gens_reduced()[0]
+        except AttributeError:
+            pass
         if return_all == False:
             try:
                 if use_magma:
                     if force_sign:
-                        return self._fix_sign(self._element_of_norm[Nideal.gens_two()],N)
+                        return self._fix_sign(self._element_of_norm[Nideal.gens_reduced()[0]],N)
                     else:
-                        return self._element_of_norm[Nideal.gens_two()]
+                        return self._element_of_norm[Nideal.gens_reduced()[0]]
                 else:
                     return self._element_of_norm[N]
             except (AttributeError,KeyError):
@@ -1446,7 +1460,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             # assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,Nideal))
             candidate = magma_quaternion_to_sage(self.B,elt_magma)
-            self._element_of_norm[Nideal.gens_two()] = candidate
+            self._element_of_norm[Nideal.gens_reduced()[0]] = candidate
             if force_sign:
                 candidate = self._fix_sign(candidate,N)
             if return_all:
