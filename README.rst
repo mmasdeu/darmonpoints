@@ -4,64 +4,49 @@ A package to compute Darmon points
 Installation
 ~~~~~~~~~~~~
 
-Currently (as of version 5.10) Sage does not work with the "Overconvergent modular symbols" of Pollack-Stevens. This is why this package includes a frozen copy of the OMS package. The cutting-edge version can be found at https://github.com/roed314/OMS .
-
-The following are the needed steps to install the *darmonpoints* package. The first 3 steps are needed in order to use the overconvergent modular symbols, and the last step allows the package to be run without having *Magma*, as long as the computations are done with elliptic curves of conductor `pD`, where:
-
-a) `D = 6` and `p < 60`,
-b) `D = 10` and `p < 50`,
-c) `D = 22` and `p < 40`.
-
-1. Patch the Sage library::
-
-     sage -sh
-     cd $SAGE_ROOT/devel/sage
-     hg qimport -P /path/to/OMS/changes_to_sagelib-5.10.patch
-
-2. Copy files:
-
-   - The following should work fine (notice the trailing slash after sage)::
-
-       sage -sh
-       cp -r /path/to/OMS/sage/ $SAGE_ROOT/devel/sage/
-
-   - But if you're worried about overwriting things you can do the following instead::
-
-       sage -sh
-       cd $SAGE_ROOT/devel/sage/sage/modular
-       cp -r /path/to/OMS/sage/modular/btquotients .
-       cp -r /path/to/OMS/sage/modular/pollack_stevens .
-
-3. Build::
-
-     sage -b
-
-#### Precomputed data does not work currently !!! Use with caution.
-
-4. (Optional) Copy precomputed groups to local database::
-
-     cp -r /path/to/precomputed_groups/* $HOME/.sage/db/
+Installation of the *darmonpoints* package has been grealy simplified and is now essentially trivial. For most operations one does need to have *Magma* installed, although we do hope that in the future Sage will include the required functionality.
 
 
 Basic usage
 ~~~~~~~~~~~
 
-Here there is simple example. Look at ``example.sage`` for a more detailed calculation::
+Here there is simple example. The file ``darmonpoints.sage`` contains the high level routines from which it should be clear how to use the package in other ways. Here are some sample calculations that one can try::
 
-    sage: load('darmonpoints.sage')
-    sage: E = EllipticCurve('78a1')
-    sage: p = 13 # Must divide the conductor of E
-    sage: dK = 5 # The discriminant of the real quadratic field.
-    sage: prec = 20 # Precision to which result is desired
-    sage: outfile = 'point_quaternionic.txt' # Optional
-    sage: darmon_point(p,E,dK,prec,outfile = outfile)
+    sage: %runfile 'darmonpoints.sage'
 
-The package is capable of computing the classical Darmon (a.k.a. Stark-Heegner) points::
+1) A classical Darmon (a.k.a. Stark-Heegner) point. The following will perform a `7`-adic calculation to precision `7^20`, to find a point over the real quadratic field of discriminant `41` for the elliptic curve ``35a1``::
 
-    sage: load('darmonpoints.sage')
-    sage: E = EllipticCurve('35a1')
-    sage: p = 7 # Must divide the conductor of E
-    sage: dK = 41 # The discriminant of the real quadratic field.
-    sage: prec = 20 # Precision to which result is desired
-    sage: outfile = 'point_classical.txt' # Optional
-    sage: darmon_point(p,E,dK,prec,outfile = outfile)
+    sage: darmon_point(7,EllipticCurve('35a1'),41,20)
+
+2) A quaternionic Darmon (a.k.a. Greenberg) point::
+
+    sage: darmon_point(13,EllipticCurve('78a1'),5,20)
+
+3) A Darmon point for a curve over a field of mixed signature::
+
+    sage: F.<r> = NumberField(x^3 - x^2 - x + 2)
+    sage: E = EllipticCurve([-r -1, -r, -r - 1,-r - 1, 0])
+    sage: N = E.conductor()
+    sage: P = F.ideal(r^2 - 2*r - 1)
+    sage: beta = -3*r^2 + 9*r - 6
+    sage: darmon_point(P,E,beta,20)
+
+We can also *discover* equations of curves!
+
+1) We first find a curve over the rationals. The following command will find a curve of conductor `30`, using a `5`-adic calculation with precision of `5^20`, and the quaternion algebra of discriminant `6`::
+
+     sage: find_curve(5,6,30,20)
+
+2) Next, a curve over a cubic field of mixed signature::
+
+     sage: F.<r> = NumberField(x^3 -3)
+     sage: P = F.ideal(r-2)
+     sage: D = F.ideal(r-1)
+     sage: find_curve(P,D,P*D,20)
+
+3) Now for a curve defined over a real quadratic field. Note that here we must specify which place will ramify in the quaternion algebra::
+
+     sage: F.<r> = QuadraticField(5)
+     sage: P = F.ideal(3/2*r + 1/2)
+     sage: D = F.ideal(3)
+     sage: find_curve(P,D,P*D,20,ramification_at_infinity=[-1,1])

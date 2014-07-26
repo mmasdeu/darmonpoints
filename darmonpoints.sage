@@ -363,10 +363,13 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation
+    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant
     import os,datetime
+
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
+    from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
+
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
     try:
@@ -409,7 +412,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
 
     if outfile is None:
-        outfile = '%s_%s_%s_%s_%s.log'%(p,NE,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+        outfile = '%s_%s_%s_%s_%s.log'%(P,NE,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
         outfile = outfile.replace('/','div')
         outfile = '/tmp/findcurve_' + outfile
 

@@ -1073,7 +1073,6 @@ def simplification_isomorphism(G,return_inverse = False):
 
 def update_progress(progress,msg = ""):
     barLength = 50 # Modify this to change the length of the progress bar
-    status = ""
     if len(msg) > 0:
         msg = '( %s )'%msg
     if isinstance(progress, int):
@@ -1084,9 +1083,12 @@ def update_progress(progress,msg = ""):
     if progress < 0:
         progress = 0
         status = "Halt...%s\r\n"%msg
-    if progress >= 1:
+    elif progress >= 1:
         progress = 1
         status = "Done...%s\r\n"%msg
+    else:
+        status = msg
+
     block = int(round(barLength*progress))
     text = "\rPercent: [{0}] {1:.2f}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
     sys.stdout.write(text)
