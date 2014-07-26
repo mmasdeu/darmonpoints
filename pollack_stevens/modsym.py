@@ -24,7 +24,6 @@ from sage.rings.padics.precision_error import PrecisionError
 from sage.categories.action import Action
 from fund_domain import Id
 from manin_map import ManinMap, M2Z
-from padic_lseries import pAdicLseries
 from sigma0 import Sigma0
 from pollack_stevens.distributions import Distributions
 from sage.misc.misc import walltime
@@ -1630,15 +1629,3 @@ class PSModularSymbolElement_dist(PSModularSymbolElement):
             new_base_ring = self.base_ring()
         return self.__class__(self._map.specialize(new_base_ring),
                               self.parent()._specialize_parent_space(new_base_ring), construct=True)
-
-    def padic_lseries(self,*args, **kwds):
-        r"""
-        Return the p-adic L-series of this modular symbol.
-
-        EXAMPLE::
-
-            sage: f = Newform("37a")
-            sage: f.PS_modular_symbol().lift(37, M=6, algorithm="stevens").padic_lseries()
-            37-adic L-series of Modular symbol of level 37 with values in Space of 37-adic distributions with k=0 action and precision cap 6
-        """
-        return pAdicLseries(self, *args, **kwds)
