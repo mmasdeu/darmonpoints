@@ -359,11 +359,11 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 #####     Curve finding           ####
 ######################################
 
-def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, input_data = None,parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True):
+def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True):
 
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant
+    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant
     import os,datetime
 
     from sarithgroup import BigArithGroup
@@ -382,7 +382,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     sys.setrecursionlimit(10**6)
 
-    global qE, G, Coh, phiE, xi1, xi2, Phi, curve
+    global qE, Linv, G, Coh, phiE, xi1, xi2, Phi, curve
 
     try:
         F = P.ring()
@@ -439,21 +439,22 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         print "Partial results will be saved in %s"%outfile
     print "=================================================="
 
-    if input_data is None:
-        # Define the S-arithmetic group
-        G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype)
+    # Define the S-arithmetic group
+    G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype)
 
-        # Define phiE, the cohomology class associated to the system of eigenvalues.
-        Coh = CohomologyGroup(G.Gpn)
-        phiE = Coh.get_cocycle_from_elliptic_curve(None,sign = sign_at_infinity)
-        if use_sage_db:
-            G.save_to_db()
+    # Define phiE, the cohomology class associated to the system of eigenvalues.
+    Coh = CohomologyGroup(G.Gpn)
+    phiE = Coh.get_cocycle_from_elliptic_curve(None,sign = sign_at_infinity)
+    if use_sage_db:
+        G.save_to_db()
 
-        i = 0
+    Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar,phiE = phiE)
+
+    i = 0
+    g = G.Gpn.gen(i)
+    while phiE.evaluate(g) == 0:
+        i+=1
         g = G.Gpn.gen(i)
-        while phiE.evaluate(g) == 0:
-            i+=1
-            g = G.Gpn.gen(i)
 
 	success = False
 	while not success:
@@ -463,28 +464,29 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
             except PrecisionError:
                 working_prec *= 2
 
-        Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar,phiE = phiE)
+    qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
+    qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
+    qE = qE1/qE2
+    Linv = qE.log(p_branch = 0)/qE.valuation()
 
-        qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
-        qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
-        qE = qE1/qE2
-    else: # input_data is not None
-        Phi,qE = input_data[1:3]
     print 'Integral done. Now trying to recognize the curve'
     fwrite('qE = %s'%qE,outfile)
-    curve = discover_equation(qE,G._F_to_local,NE,prec,kill_torsion = kill_torsion)
+    fwrite('Linv = %s'%Linv,outfile)
+    curve = discover_equation_from_L_invariant(Linv,G._F_to_local,NE,prec,preferred_valuation = qE.valuation())
     if curve is None:
         fwrite('Curve not found with the sought conductor. Will try to find some curve at least',outfile)
         print 'Curve not found with the sought conductor. Will try to find some curve at least'
-        curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = False,kill_torsion = kill_torsion)
+        curve = discover_equation_from_L_invariant(Linv,G._F_to_local,NE,prec,check_conductor = False,preferred_valuation = qE.valuation())
         if curve is None:
             fwrite('Still no luck. Sorry!',outfile)
             print 'Still no luck. Sorry!'
+            return None
         else:
             curve = curve.global_minimal_model()
-            fwrite('Found a curve, at least...')
+            fwrite('Found a curve, at least...',outfile)
             print 'Found a curve, at least...'
     else:
         curve = curve.global_minimal_model()
+    fwrite('Curve with a-invariants %s'%curve.a_invariants(),outfile)
     fwrite('================================================',outfile)
     return curve
