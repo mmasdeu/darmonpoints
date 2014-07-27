@@ -39,6 +39,36 @@ def take_super_power(a,n,N):
         update_progress(float(i+1)/float(n),'Exponentiating matrix')
     return aflint._sage_()
 
+
+def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
+    # If the moments are pre-calculated, will load them. Otherwise, calculate and
+    # save them to disk.
+    if use_ps_dists == False:
+        raise NotImplementedError, 'Must use distributions from Pollack-Stevens code in the split case'
+    sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
+    dist_type = 'ps' if use_ps_dists == True else 'fm'
+    fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec,dist_type)
+    if use_sage_db:
+        try:
+            Phi = db(fname)
+            return Phi
+        except IOError: pass
+    print 'Computing the moments...'
+    from pollack_stevens.space import ps_modsym_from_elliptic_curve
+    phi0 = ps_modsym_from_elliptic_curve(E)
+    if sign_at_infinity == 1:
+        phi0 = phi0.plus_part()
+    else:
+        phi0 = phi0.minus_part()
+    phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0 # DEBUG
+    if progress_bar:
+        progress_bar = update_progress
+    else:
+        progress_bar = None
+    Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True,progress_bar = progress_bar)
+    Phi.db(fname)
+    return Phi
+
 def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None,phiE = None):
     try:
         p = ZZ(P)

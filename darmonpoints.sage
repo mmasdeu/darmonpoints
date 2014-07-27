@@ -8,39 +8,6 @@ load('fmpz_mat.spyx')
 ### Stark-Heegner points for quaternion algebras                         #
 ##########################################################################
 
-
-def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
-    # If the moments are pre-calculated, will load them. Otherwise, calculate and
-    # save them to disk.
-    if use_ps_dists == False:
-        raise NotImplementedError, 'Must use distributions from Pollack-Stevens code in the split case'
-    sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
-    dist_type = 'ps' if use_ps_dists == True else 'fm'
-    fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec,dist_type)
-    if use_sage_db:
-        try:
-            Phi = db(fname)
-            return Phi
-        except IOError: pass
-    print 'Computing the moments...'
-    from pollack_stevens.space import ps_modsym_from_elliptic_curve
-    phi0 = ps_modsym_from_elliptic_curve(E)
-    if sign_at_infinity == 1:
-        phi0 = phi0.plus_part()
-    else:
-        phi0 = phi0.minus_part()
-    phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0 # DEBUG
-    # verb_level = get_verbose()
-    # set_verbose(1)
-    if progress_bar:
-        progress_bar = update_progress
-    else:
-        progress_bar = None
-    Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True,progress_bar = progress_bar)
-    # set_verbose(verb_level)
-    Phi.db(fname)
-    return Phi
-
 def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,outfile = None):
     p = J.parent().prime()
     prec = J.parent().precision_cap()
@@ -127,6 +94,8 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
+    from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic
+
     from integrals import double_integral_zero_infty,indef_integral,integrate_H1
     from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 
@@ -216,8 +185,6 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 
     if input_data is None:
         if quaternionic:
-            from cohomology import get_overconvergent_class_quaternionic
-
             # Define the S-arithmetic group
             G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB).invariants(),Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db)
 
