@@ -8,90 +8,9 @@ load('fmpz_mat.spyx')
 ### Stark-Heegner points for quaternion algebras                         #
 ##########################################################################
 
-def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,outfile = None):
-    p = J.parent().prime()
-    prec = J.parent().precision_cap()
-    QQp = Qp(p,prec)
-    if local_embedding is None:
-        local_embedding = QQp
-    hK = K.class_number()
-    Eloc = E.change_ring(local_embedding)
-    # Tate parameter
-    qE = tate_parameter(Eloc,QQp)
-
-    valqE = QQ(qE.valuation())
-    numqE,denqE = valqE.numerator(),valqE.denominator()
-
-    ulog = 1/numqE * (ZZ(p)**numqE/qE**denqE).log()
-    Jlog = J.log(p_branch = ulog)
-    Cp = Jlog.parent()
-    addpart0 = Jlog/known_multiple
-    candidate = None
-    if twopowlist is None:
-        twopowlist = [2, 1, 1/2]
-    HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
-    # Precalculate powers of qE
-    qEpows = [Cp(1)]
-    precp = max((prec/valqE).floor() + 4, ((prec+4)/valqE).floor() + 2)
-    for i in range(precp):
-        qEpows.append( qE * qEpows[-1])
-
-    CEloc,_ = get_C_and_C2(Eloc,qEpows,Cp,precp)
-    EH = E.change_ring(HCF)
-    for twopow in twopowlist:
-        addpart = addpart0 / twopow
-        success = False
-
-        for a,b in product(range(p),repeat = 2) if twopow * known_multiple != 1 else [(1,0)]:
-            if a == 0 and b == 0:
-                continue
-            if twopow * known_multiple != 1:
-                try:
-                    J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
-                except ValueError: continue
-            else:
-                J1 = J
-            if J1 == Cp(1):
-                candidate = E.change_ring(HCF)(0)
-                verbose('Recognized the point, it is zero!')
-                success = True
-                break
-            else:
-                pt = getcoords(Eloc,J1,prec,qEpows = qEpows,C = CEloc)
-                try:
-                    x,y = pt
-                except TypeError:
-                    assert pt is Infinity
-                    candidate = E.change_ring(HCF)(0)
-                    verbose('Recognized the point, it is zero!')
-                    success = True
-                    break
-                if x.valuation() < -(prec - 2) and y.valuation() < -(prec - 2):
-                    pt = Infinity
-                    candidate = E.change_ring(HCF)(0)
-                    verbose('Recognized the point, it is zero!')
-                    success = True
-                    break
-                success = False
-                prec0 = prec
-                while not success and prec0 > 2/3 * prec:
-                    verbose('Trying to recognize point with precision %s'%prec0, level = 2)
-                    candidate,success = recognize_point(x,y,E,K,prec = prec0,HCF = HCF,E_over_HCF = EH)
-                    prec0 -= 1
-
-                if success:
-                    verbose('Recognized the point!')
-                    fwrite('x,y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
-                    break
-        if success:
-            assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
-            return candidate,twopow,J1
-    assert not success
-    return None,None,None
-
 def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False,Wlist = None,twist = True, progress_bar = True):
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
-    from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant
+    from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant, recognize_J
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
     from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic
@@ -454,6 +373,6 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
             print 'Found a curve, at least...'
     else:
         curve = curve.global_minimal_model()
-    fwrite('Curve with a-invariants %s'%curve.a_invariants(),outfile)
+    fwrite('Curve with a-invariants %s'%(list(curve.a_invariants())),outfile)
     fwrite('================================================',outfile)
     return curve
