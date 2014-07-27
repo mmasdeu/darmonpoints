@@ -955,7 +955,8 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                         if good_at_infinity:
                             return B
 
-def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,kill_torsion = True):
+def discover_equation(Linv,emb,conductor,prec,field = None,check_conductor = True, kill_torsion = True):
+    
     assert qE.valuation() != 0, 'qE should not have zero valuation'
     if qE.valuation() < 0:
         qE = 1/qE
@@ -977,7 +978,6 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
     except AttributeError:
         primedivisors = [o[0] for o in conductor.factor()]
     S = [o[0] for o in conductor.factor()]
-    #Deltalist = [F(u * prod(l**a for l,a in zip(primedivisors,exps))) for u,exps in product(Funits,product(range(1,7),repeat = len(primedivisors)))]
     E4 = EisensteinForms(weight=4).basis()[0]
     Deltamodform = CuspForms(weight=12).basis()[0]
     jpowseries = E4.q_expansion(prec+7)**3/Deltamodform.q_expansion(prec+7)
@@ -1022,6 +1022,63 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
     verbose('Curve not recognized')
     return None
 
+
+def discover_equation_from_L_invariant(Linv,emb,conductor,prec,field = None,check_conductor = True, max_valuation = 20, preferred_valuation = None):
+    
+    F = emb.domain() if field is None else field
+    deg = F.degree()
+    p = Linv.parent().prime()
+    try:
+        Ftors = F.unit_group().torsion_generator()
+        Funits = [F(Ftors)**i for i in range(Ftors.order())]
+        for u in F.units():
+            Funits = [u0 * u**i for u0,i in product(Funits,range(-6,7))]
+    except AttributeError:
+        Funits = [-1, +1]
+    try:
+        primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
+    except AttributeError:
+        primedivisors = [o[0] for o in conductor.factor()]
+    S = [o[0] for o in conductor.factor()]
+    E4 = EisensteinForms(weight=4).basis()[0]
+    Deltamodform = CuspForms(weight=12).basis()[0]
+    jpowseries = E4.q_expansion(prec+7)**3/Deltamodform.q_expansion(prec+7)
+    jpowseries = PolynomialRing(ZZ,names='w')([ZZ(jpowseries[i]) for i in range(prec+1)])
+    Kp = Linv.parent()
+    qE0 = Linv.exp()
+    roots_of_unity = [Kp.teichmuller(a) for a in range(1,p)]
+    val_range = range(1,max_valuation)
+    if preferred_valuation is not None:
+        val_range = [preferred_valuation] + val_range
+    for guessed_val in val_range:
+        verbose('guessed_val = %s'%guessed_val)
+        qElist = [qE0 * p**guessed_val * zeta for zeta in roots_of_unity]
+        for qE,D in product(qElist,selmer_group_iterator(F,S,12)):
+            jE = 1/qE + jpowseries(qE)
+            Deltap = Kp(emb(D))
+            c4cubed = Kp(Deltap * jE)
+            try:
+                c4list = our_cuberoot(c4cubed,Kp,return_all = True)
+            except ValueError:
+                continue
+            for c4 in c4list:
+                c4pol = our_algdep(c4,deg,prec = prec)
+                if c4pol.leading_coefficient() not in [1,-1]:
+                    continue
+                for c4ex in [o[0] for c4 in c4list for o in c4pol.roots(F)]:
+                    verbose('Candidate c4 = %s'%c4ex)
+                    c6squared = F(c4ex**3 - 1728*D)
+                    if not c6squared.is_square():
+                        continue
+                    for c6ex in c6squared.sqrt(all=True):
+                        try:
+                            E = EllipticCurve_from_c4c6(c4ex,c6ex)
+                        except ArithmeticError: continue
+                        if not check_conductor or E.conductor() == conductor:
+                            verbose('Success!')
+                            return E
+    verbose('Curve not recognized')
+    return None
 
 
 def simplification_isomorphism(G,return_inverse = False):
