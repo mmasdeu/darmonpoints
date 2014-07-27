@@ -4,13 +4,17 @@ A package to compute Darmon points
 Installation
 ~~~~~~~~~~~~
 
-Installation of the *darmonpoints* package has been grealy simplified and is now essentially trivial. For most operations one does need to have *Magma* installed, although we do hope that in the future Sage will include the required functionality.
+Installation of the *darmonpoints* package has been grealy simplified and is now essentially trivial. For most operations one does need to have **Magma** installed, although we do hope that in the future Sage will include the required functionality. We include for convenience the dependencies, which are currently:
+
+1) The package *KleinianGroups*, the original of which can be found at http://www.normalesup.org/~page/Recherche/Logiciels/KleinianGroups/KleinianGroups-1.0.tar.gz.
+
+2) The *overconvergent modular symbols* package (or rather some parts of it). This is currently on *Sage trac*, see  http://trac.sagemath.org/ticket/812 and please review it!
 
 
 Basic usage
 ~~~~~~~~~~~
 
-Here there is simple example. The file ``darmonpoints.sage`` contains the high level routines from which it should be clear how to use the package in other ways. Here are some sample calculations that one can try::
+The file ``darmonpoints.sage`` contains the high level routines from which show how to use the package, although one can use parts of the package in other ways if one feels adventurous. Here are some sample calculations that one can try::
 
     sage: %runfile 'darmonpoints.sage'
 

@@ -1211,7 +1211,7 @@ def simplification_isomorphism(G,return_inverse = False):
         return ans
 
 def update_progress(progress,msg = ""):
-    barLength = 50 # Modify this to change the length of the progress bar
+    barLength = 20 # Modify this to change the length of the progress bar
     if len(msg) > 0:
         msg = '( %s )'%msg
     if isinstance(progress, int):
