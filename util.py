@@ -1037,7 +1037,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     return None,None,None
 
                         
-def discover_equation(Linv,emb,conductor,prec,field = None,check_conductor = True, kill_torsion = True):
+def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True, kill_torsion = True):
     
     assert qE.valuation() != 0, 'qE should not have zero valuation'
     if qE.valuation() < 0:

@@ -344,12 +344,12 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
 	success = False
 	while not success:
-        try:
-            xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
-            success = True
-        except PrecisionError:
-            working_prec *= 2
-            verbose('Increasing working_prec to %s...'%working_prec)
+            try:
+                xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
+                success = True
+            except PrecisionError:
+                working_prec *= 2
+                verbose('Increasing working_prec to %s...'%working_prec)
 
     qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
     qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
@@ -359,11 +359,11 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     print 'Integral done. Now trying to recognize the curve'
     fwrite('qE = %s'%qE,outfile)
     fwrite('Linv = %s'%Linv,outfile)
-    curve = discover_equation_from_L_invariant(Linv,G._F_to_local,NE,prec,preferred_valuation = qE.valuation())
+    curve = discover_equation(qE,G._F_to_local,NE,prec)
     if curve is None:
         fwrite('Curve not found with the sought conductor. Will try to find some curve at least',outfile)
         print 'Curve not found with the sought conductor. Will try to find some curve at least'
-        curve = discover_equation_from_L_invariant(Linv,G._F_to_local,NE,prec,check_conductor = False,preferred_valuation = qE.valuation())
+        curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = False)
         if curve is None:
             fwrite('Still no luck. Sorry!',outfile)
             print 'Still no luck. Sorry!'
