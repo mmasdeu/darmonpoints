@@ -342,14 +342,14 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         i+=1
         g = G.Gpn.gen(i)
 
-	success = False
-	while not success:
-            try:
-                xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
-                success = True
-            except PrecisionError:
-                working_prec *= 2
-                verbose('Increasing working_prec to %s...'%working_prec)
+    success = False
+    while not success:
+        try:
+            xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
+            success = True
+        except PrecisionError:
+            working_prec *= 2
+            verbose('Increasing working_prec to %s...'%working_prec)
 
     qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
     qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
