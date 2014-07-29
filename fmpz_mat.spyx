@@ -61,7 +61,6 @@ cdef extern from "flint/fmpz_mat.h":
 
 cdef class Fmpz_mat(SageObject):
     cdef fmpz_mat_t mat
-    #cdef fmpz_t _mod
     cdef unsigned long _nrows
     cdef unsigned long _ncols
 
@@ -243,7 +242,7 @@ cdef class Fmpz_mat(SageObject):
                 fmpz_fdiv_r(tmp,tmp,modf)
                 fmpz_init_set(fmpz_mat_entry(self.mat, i, j),tmp)
 
-    def _pretty_print(self):
+    def pretty_print(self):
         fmpz_mat_print_pretty(self.mat)
 
     def _repr_(Fmpz_mat self, bint latex=False):
@@ -256,6 +255,7 @@ cdef class Fmpz_mat(SageObject):
         return 'A FLINT Matrix'
 
     def _sage_(Fmpz_mat self):
+        cdef long i,j
         from sage.matrix.constructor import Matrix
         return Matrix(ZZ,self._nrows,self._ncols,[[self[i,j] for j in range(self._ncols)] for i in range(self._nrows)])
 
@@ -267,5 +267,6 @@ cdef class Fmpz_mat(SageObject):
         EXAMPLES::
 
         """
+        cdef long i,j
         return [self[i,j] for i in range(self._nrows) for j in range(self._ncols)]
 

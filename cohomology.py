@@ -29,6 +29,18 @@ from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 load('fmpz_mat.spyx')
 
+@fork
+def find_newans(Coh,glocs,ti):
+    G = Coh.group()
+    newans = [glocs[0].zeromatrix() for u in G.gens()]
+    for gk,tik in zip(glocs,ti):
+        fox_grad_k = Coh.fox_gradient(tik)
+        for j,gj in enumerate(G.gens()):
+            newans[j] += gk * fox_grad_k[j]
+            newans[j].modreduce(Coh._pN)
+    return [o._sage_() for o in newans]
+
+
 def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
@@ -455,7 +467,7 @@ class CohomologyGroup(Parent):
         else:
             return self.element_class(self,[self._coeffmodule(data) for g in xrange(self._num_abgens)])
 
-    def fox_gradient(self,word,mult = None):
+    def fox_gradient(self,word):
         h = self.get_gen_pow(0,0)
         ans = [h.zeromatrix() for o in self.group().gens()]
         if len(word) == 0:
@@ -468,10 +480,6 @@ class CohomologyGroup(Parent):
             if j < lenword -1:
                 h = h * self.get_gen_pow(i,a)
                 h.modreduce(self._pN)
-        for o in ans:
-            if mult is not None:
-                o = mult * o
-            o.modreduce(self._pN)
         return ans
 
     def get_gen_pow(self,i,a):
@@ -675,67 +683,6 @@ class CohomologyGroup(Parent):
                 o.set_immutable()
             return [self._coeffmodule._get_powers(o) for o in glocs]
 
-    def get_Up_matrix(self,prec,progress_bar = False, scale = 1, super_power = 0):
-        r'''
-        Return a block matrix W such that:
-        W[i,j] = \sum_k s_k \frac{\partial t_k(g_i)}{\partial g_j}
-
-        This allows one to compute the Up action as:
-        c_i <- \sum_j W[i,j] * c_j
-        '''
-        verbose('Getting Up matrices...')
-        V = self.coefficient_module()
-        R = V.base_ring()
-        N = V.precision_cap()
-        Gpn = self.group()
-        Up_reps = Gpn.get_Up_reps()
-        ngens = len(Gpn.gens())
-        nreps = len(Up_reps)
-        glocs = [Fmpz_mat(o) for o in self.get_Up_reps_local(prec)]
-        S = glocs[0].nrows()
-
-        NN = ngens * S
-        A = Fmpz_mat(nrows = NN,ncols = NN)
-
-        #ans = [[glocs[0].zeromatrix() for u in Gpn.gens()] for o in Gpn.gens()]
-        #ans = []
-        total_counter = ngens**2 * nreps #ngens*(nreps+ngens*nreps)
-        counter = 0
-        verbose('Starting loop')
-        for i,gi in enumerate(Gpn.gens()):
-            giquat = gi.quaternion_rep
-            newans = [glocs[0].zeromatrix() for u in Gpn.gens()]
-            iS = i*S
-
-            # fox_gradients = []
-            # for k,sk in enumerate(Up_reps):
-            #     fox_gradients.append(self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep)))
-            #     if progress_bar:
-            #         counter +=1
-            #         update_progress(float(counter)/float(total_counter),'Up matrix')
-            for k,sk in enumerate(Up_reps):
-                fox_grad_k = self.fox_gradient(tuple(Gpn.get_Up_ti(sk,giquat).word_rep))
-                for j,gj in enumerate(Gpn.gens()):
-                    newans[j] += glocs[k] * fox_grad_k[j]
-                    newans[j].modreduce(self._pN)
-                    if progress_bar:
-                        counter +=1
-                        update_progress(float(counter)/float(total_counter),'Up matrix')
-            for j in xrange(ngens):
-                jS = j*S
-                A.set_block(iS,jS,newans[j])
-            del newans
-
-        if super_power != 0:
-            verbose('Computing 2^(%s)-th power of a %s x %s matrix'%(super_power,A.nrows(),A.ncols()))
-            for i in xrange(super_power):
-                A.square_inplace()
-                if N != 0:
-                    A.modreduce(self._pN)
-                    update_progress(float(i+1)/float(super_power),'Exponentiating matrix')
-            verbose('Done computing 2^(%s)-th power'%super_power)
-        return ZZ(scale).powermod(2**super_power,self._pN) * A._sage_()
-
     def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'bigmatrix', repslocal = None):
         r"""
         Apply the Up Hecke operator operator to ``c``.
@@ -786,13 +733,47 @@ class CohomologyGroup(Parent):
             return scale * self(vals)
         else:
             assert method == 'bigmatrix'
-            A = self.get_Up_matrix(prec,progress_bar = progress_bar,scale = scale, super_power = times)
-            valvec = [o for b in c._val for o in b._val.list() ]
-            valmat = A * Matrix(R,A.nrows(),1, valvec)
-            depth = V.precision_cap()
-            assert len(valvec) == A.nrows()
-            assert depth * len(Gpn.gens()) == A.nrows()
-            return self([V(valmat.submatrix(row=i,nrows = depth)) for i in xrange(0,A.nrows(),depth)])
+            verbose('Getting Up matrices...')
+            V = self.coefficient_module()
+            R = V.base_ring()
+            N = V.precision_cap()
+
+            Up_reps = self.group().get_Up_reps()
+            nreps = len(Up_reps)
+            ngens = len(self.group().gens())
+
+            glocs = [Fmpz_mat(o) for o in self.get_Up_reps_local(prec)]
+            S = glocs[0].nrows()
+
+            NN = ngens * S
+            A = Fmpz_mat(nrows = NN,ncols = NN)
+
+            total_counter = ngens**2
+            counter = 0
+            verbose('Starting loop')
+            iS = 0
+            for i,gi in enumerate(self.group().gens()):
+                giquat = gi.quaternion_rep
+                ti = [tuple(self.group().get_Up_ti(sk,giquat).word_rep) for sk in Up_reps]
+                jS = 0
+                for ans in find_newans(self,glocs,ti):
+                    A.set_block(iS,jS,Fmpz_mat(ans))
+                    jS += S
+                    if progress_bar:
+                        counter +=1
+                        update_progress(float(counter)/float(total_counter),'Up matrix')
+                iS += S
+
+            verbose('Computing 2^(%s)-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
+            for i in xrange(times):
+                A.square_inplace()
+                if N != 0:
+                    A.modreduce(self._pN)
+                    update_progress(float(i+1)/float(times),'Exponentiating matrix')
+            verbose('Done computing 2^(%s)-th power'%times)
+            valvec = Fmpz_mat(Matrix(R,NN,1,[o for b in c._val for o in b._val.list()]))
+            valmat = ZZ(scale).powermod(2**times,self._pN) * ((A*valvec)._sage_())
+            return self([V(valmat.submatrix(row=i,nrows = N)) for i in xrange(0,valmat.nrows(),N)])
 
 
 def _calculate_Up_contribution(G,g,gamma,c,gloc,use_ps_dists,num_gamma):
