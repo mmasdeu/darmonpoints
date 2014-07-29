@@ -74,7 +74,7 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
             tmp = tmp.hecke_smoothen(q1,prec = prec)
     return tmp,n,q1
 
-def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integrals = False,max_n = None):
+def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,max_n = -1):
     p = G.prime()
     wp = G.wp()
     Cp = Qq(p**2,prec,names = 'g')
@@ -86,28 +86,24 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integral
     H1 = Homology(G.large_group(),Div)
     D1 = Div(tau1)
     D2 = Div(tau1).left_act_by_matrix(wpmat)
-    npow = 1
-    found = False
-    eltn = eltn.quaternion_rep
-    eltn_twisted = wp**-1 * eltn * wp
-    while not found:
+    npow = 0
+    eltn = G.Gn(eltn.quaternion_rep)
+    eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
+    y1 = G.Gn.one()
+    y2 = G.Gn.one()
+    while npow != max_n:
+        npow += 1
+        y1 = y1 * eltn
+        y2 = y2 * eltn_twisted
         try:
-            y1 = G.Gn(eltn**npow)
             xi1 = H1(dict([(y1,D1)])).zero_degree_equivalent()
-            y2 = G.Gn(eltn_twisted**npow)
             xi2 = H1(dict([(y2,D2)])).zero_degree_equivalent()
-            found = True
+            return xi1, xi2
         except ValueError:
-            if max_n is not None and npow > max_n:
-                raise ValueError,'Reached maximum allowed power (%s)'%max_n
-            else:
-                found = False
-                npow += 1
+            continue
 
-    if few_integrals:
-        xi1 = xi1.factor_into_generators(prec)
-        xi2 = xi2.factor_into_generators(prec)
-    return xi1,xi2
+    raise ValueError,'Reached maximum allowed power (%s)'%max_n
+    return
 
 
 def lattice_homology_cycle_old(G,eltn,prec,outfile = None,check = False,few_integrals = True):
