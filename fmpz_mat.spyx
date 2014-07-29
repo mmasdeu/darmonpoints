@@ -38,6 +38,7 @@ cdef extern from "flint/fmpz.h":
     void fmpz_set_mpz(fmpz_t f, const mpz_t val)
     void fmpz_get_mpz(fmpz_t f, const mpz_t val)
     void fmpz_fdiv_r( fmpz_t f , const fmpz_t g , const fmpz_t h )
+    int fmpz_print(fmpz_t x)
 
 cdef extern from "flint/fmpz_mat.h":
     ctypedef void* fmpz_mat_t
@@ -48,6 +49,7 @@ cdef extern from "flint/fmpz_mat.h":
     void fmpz_mat_zero( fmpz_mat_t mat )
     void fmpz_mat_one( fmpz_mat_t mat )
     void fmpz_mat_scalar_mul_si( fmpz_mat_t B , const fmpz_mat_t A , long c )
+    void fmpz_mat_scalar_mul_fmpz( fmpz_mat_t B , const fmpz_mat_t A , const fmpz_t c )
     void fmpz_mat_mul( fmpz_mat_t C , const fmpz_mat_t A , const  fmpz_mat_t B )
     void fmpz_mat_sqr( fmpz_mat_t B , const  fmpz_mat_t A )
     void fmpz_mat_add( fmpz_mat_t C , const fmpz_mat_t A , const  fmpz_mat_t B )
@@ -71,32 +73,37 @@ cdef class Fmpz_mat(SageObject):
         """
         fmpz_mat_clear(self.mat)
 
-    def __init__(self,  x, check=True,
-                 construct=False):
+    def __init__(self,  x = None, nrows = None, ncols = None):
         r"""
         EXAMPLES::
 
         """
         cdef long i,j
-
-        self._nrows = x.nrows()
-        self._ncols = x.ncols()
-
+        if x is not None:
+            self._nrows = x.nrows()
+            self._ncols = x.ncols()
+        else:
+            if nrows is not None:
+                self._nrows = nrows
+            if ncols is not None:
+                self._ncols = ncols
+        
         fmpz_mat_init(self.mat,self._nrows,self._ncols)
 
-        for i from 0 <= i < x.nrows():
-            for j from 0<= j < x.ncols():
-                a = x[i,j]
-                if PY_TYPE_CHECK_EXACT(a, int):
-                    sig_on()
-                    fmpz_set_ui(fmpz_mat_entry(self.mat, i, j),a)
-                    sig_off()
-                else:
-                    if not PY_TYPE_CHECK(a, Integer):
-                        a = ZZ(a)
-                    sig_on()
-                    fmpz_set_mpz(fmpz_mat_entry(self.mat, i, j),(<Integer>a).value)
-                    sig_off()
+        if x is not None:
+            for i from 0 <= i < x.nrows():
+                for j from 0<= j < x.ncols():
+                    a = x[i,j]
+                    if PY_TYPE_CHECK_EXACT(a, int):
+                        sig_on()
+                        fmpz_set_ui(fmpz_mat_entry(self.mat, i, j),a)
+                        sig_off()
+                    else:
+                        if not PY_TYPE_CHECK(a, Integer):
+                            a = ZZ(a)
+                        sig_on()
+                        fmpz_set_mpz(fmpz_mat_entry(self.mat, i, j),(<Integer>a).value)
+                        sig_off()
 
     def nrows(self):
         return self._nrows
@@ -121,6 +128,32 @@ cdef class Fmpz_mat(SageObject):
         else:
             fmpz_get_mpz(z.value,fmpz_mat_entry(self.mat, i, j))
             return z
+
+    def set_block(self,long i,long j,val):
+        cdef long S = val.nrows()
+        cdef long i0,j0
+        sig_on()
+        for i0 from 0 <= i0 < S:
+            for j0 from 0 <= j0 < S:
+                fmpz_set_mpz(fmpz_mat_entry(self.mat,i + i0, j + j0),(<Integer>val[i0,j0]).value)
+        sig_off()
+
+    def __setitem__(self,key,val):
+        cdef long i, j
+        key_tuple = <tuple>key
+        i = <object>PyTuple_GET_ITEM(key_tuple, 0)
+        j = <object>PyTuple_GET_ITEM(key_tuple, 1)
+
+        if PY_TYPE_CHECK_EXACT(val, int):
+            sig_on()
+            fmpz_set_ui(fmpz_mat_entry(self.mat, i, j),val)
+            sig_off()
+        else:
+            if not PY_TYPE_CHECK(val, Integer):
+                val = ZZ(val)
+            sig_on()
+            fmpz_set_mpz(fmpz_mat_entry(self.mat, i, j),(<Integer>val).value)
+            sig_off()
 
     def square_inplace(self):
         fmpz_mat_sqr(self.mat , self.mat)

@@ -83,9 +83,9 @@ class ArithGroup_generic(AlgebraicGroup):
         r'''
         Checks that G gi != G gj for all gi,gj in V
         '''
-        for i in range(len(V)):
+        for i in xrange(len(V)):
             vi_inv = V[i]**-1
-            if any([self._is_in_order(V[j] * vi_inv) for j in range(i)+range(i+1,len(V))]):
+            if any([self._is_in_order(V[j] * vi_inv) for j in xrange(i)+xrange(i+1,len(V))]):
                 return False
         return True
 
@@ -169,15 +169,15 @@ class ArithGroup_generic(AlgebraicGroup):
             RR = RealField(prec)
             self._prec_inf=prec
             v = f.Image(B_magma.gen(1)).Vector()
-            self._II_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in range(4)])
+            self._II_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in xrange(4)])
             v = f.Image(B_magma.gen(2)).Vector()
-            self._JJ_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in range(4)])
+            self._JJ_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in xrange(4)])
             v = f.Image(B_magma.gen(3)).Vector()
-            self._KK_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in range(4)])
+            self._KK_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in xrange(4)])
             
             RR = RealField(prec)
             rimg = f.Image(B_magma(sage_F_elt_to_magma(B_magma.BaseRing(),self.F.gen()))).Vector()
-            rimg_matrix = matrix(RR,2,2,[rimg[i+1]._sage_() for i in range(4)])
+            rimg_matrix = matrix(RR,2,2,[rimg[i+1]._sage_() for i in xrange(4)])
             assert rimg_matrix.is_scalar()
             rimg = rimg_matrix[0,0]
             self.F_into_RR = self.F.hom([rimg],check = False)
@@ -201,12 +201,44 @@ class ArithGroup_generic(AlgebraicGroup):
         return self.B
 
     def enumerate_elements(self,max_length = None):
-        ngens = len(self.gens())
+        if 'P' not in self._grouptype:
+            ngens = self.F_unit_offset
+        else:
+            ngens = len(self.gens())
         for v in enumerate_words(range(ngens)):
             if max_length is not None and len(v) > max_length:
                 raise StopIteration
             else:
                 yield prod([self.Ugens[i] for i in v],self.B(1))
+
+    def get_hecke_reps(self,l,use_magma = True,g0 = None): # generic
+        r'''
+        TESTS:
+
+        sage: magma.eval('SetSeed(2000000)')
+        sage: G = ArithGroup(6,5)
+        sage: reps = G.get_hecke_reps(11)
+        '''
+        try:
+            return self._cache_hecke_reps[l]
+        except KeyError: pass
+        if g0 is None:
+            g0 = self.element_of_norm(l,use_magma = use_magma)
+        reps = [g0]
+        I = self.enumerate_elements()
+        n_iters = ZZ(0)
+        lnorm = self.F.ideal(l).norm()
+        num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
+        while len(reps) < num_reps:
+            n_iters += 1
+            if n_iters % 50 == 0:
+                verbose('%s, len = %s/%s'%(n_iters,len(reps),num_reps))
+            new_candidate = I.next() * g0
+            new_inv = new_candidate**-1
+            if not any([self._is_in_order(new_inv * old) for old in reps]):
+                reps.append(new_candidate)
+        self._cache_hecke_reps[l] = reps
+        return reps
 
     @cached_method
     def get_hecke_ti(self,gk1,gamma,l,use_magma):
@@ -263,7 +295,7 @@ class ArithGroup_generic(AlgebraicGroup):
         Btmp = magma.QuaternionAlgebra(QQmagma,a,b)
         def quat_to_mquat(x):
             v = list(x)
-            return Btmp(v[0]) + sum(v[i+1]*Btmp.gen(i+1) for i in range(3))
+            return Btmp(v[0]) + sum(v[i+1]*Btmp.gen(i+1) for i in xrange(3))
 
         O_magma = magma.QuaternionOrder(ZZmagma,[quat_to_mquat(o) for o in self.Obasis])
 
@@ -277,7 +309,7 @@ class ArithGroup_generic(AlgebraicGroup):
             return magma_quaternion_to_sage(self.B,Btmp(mu_magma))
         else:
             Bgens = [matrix(QQ,2,2,[1,0,0,-1]),matrix(QQ,2,2,[0,1,1,0]),matrix(QQ,2,2,[0,1,-1,0])]
-            return sum(a*b for a,b in zip([self.B(1)]+Bgens,[Btmp(mu_magma).Vector()[m+1].Norm()._sage_() for m in range(4)]))
+            return sum(a*b for a,b in zip([self.B(1)]+Bgens,[Btmp(mu_magma).Vector()[m+1].Norm()._sage_() for m in xrange(4)]))
 
     def embed_order(self,p,K,prec,zero_deg = True,outfile = None,return_all = False):
         r'''
@@ -402,7 +434,7 @@ class ArithGroup_generic(AlgebraicGroup):
         # We use the identity:
         # C W0 g^a W1 = C [W0,g^a] g^a W0 W1
         commutator_list = []
-        for i in range(len(self.gens())):
+        for i in xrange(len(self.gens())):
             while True:
                 # Find the first occurence of generator i
                 try:
@@ -448,11 +480,11 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         if self.B.discriminant() != self.discriminant:
             print 'Error while constructing quaternion algebra...'
             assert 0
-        self.O = self.B.quaternion_order([self.B([QQ(self._O_magma.ZBasis()[n+1].Vector()[m+1]) for m in range(4)]) for n in range(4)])
+        self.O = self.B.quaternion_order([self.B([QQ(self._O_magma.ZBasis()[n+1].Vector()[m+1]) for m in xrange(4)]) for n in xrange(4)])
         self.Obasis = self.O.basis()
         self._O_discriminant = ZZ.ideal(self.O.discriminant())
-        self.basis_invmat = matrix(QQ,4,4,[list(self.O.gen(n)) for n in range(4)]).transpose().inverse()
-        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1)))) for n in range(len(self._U_magma.gens()))]
+        self.basis_invmat = matrix(QQ,4,4,[list(self.O.gen(n)) for n in xrange(4)]).transpose().inverse()
+        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1)))) for n in xrange(len(self._U_magma.gens()))]
 
         Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
         mside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsMap')
@@ -466,7 +498,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         gquats_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsQuats')
         self.ngquats = ZZ(len(gquats_magma[1]))
         emb = self.get_archimedean_embedding(300)
-        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion())) for n in range(len(gquats_magma[i+1]))] for i in range(2)])
+        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion())) for n in xrange(len(gquats_magma[i+1]))] for i in xrange(2)])
         self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
 
         self.pi = 4 * RealField(300)(1).arctan()
@@ -481,7 +513,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
         self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
 
-        temp_relation_words = [shorten_word(self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(self._U_magma.Relations()))] + [[(len(self.Ugens)-1,2)]]
+        temp_relation_words = [shorten_word(self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in xrange(len(self._U_magma.Relations()))] + [[(len(self.Ugens)-1,2)]]
 
         self._relation_words = []
         for rel in temp_relation_words:
@@ -597,7 +629,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             z0 = act_flt_in_disc(embgg,CC(0),P)
             z0abs = z0.abs()
             if ji == -oldji:
-                ji = next((j for j in range(-ngquats,0) + range(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
+                ji = next((j for j in xrange(-ngquats,0) + xrange(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
 
             gg = gammas[ji]
             newcs = self.translate[ji]
@@ -668,7 +700,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         if use_magma:
             # assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(N*self._F_magma.Integers())
-            candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1]) for m in range(4)])
+            candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1]) for m in xrange(4)])
 
             if force_sign:
                 candidate = self._fix_sign(candidate,N)
@@ -722,38 +754,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 if candidate.reduced_norm() == -1:
                     self._non_positive_unit = candidate
                     return candidate
-
-    def get_hecke_reps(self,l,use_magma = False,g0 = None): #rationalquaternion
-        r'''
-        TESTS:
-
-        sage: magma.eval('SetSeed(2000000)')
-        sage: G = ArithGroup(6,5)
-        sage: reps = G.get_hecke_reps(11)
-        '''
-        try:
-            return self._cache_hecke_reps[l]
-        except KeyError: pass
-        verbose('Finding hecke reps for l = %s'%l)
-        if g0 is None:
-            g0 = self.element_of_norm(l,use_magma = use_magma,force_sign = False)
-        assert g0.reduced_norm() == l
-        reps = [g0]
-        ngens = len(self.gens())
-        I = enumerate_words(range(ngens))
-        n_iters = ZZ(0)
-        num_reps = l + 1 if self.O.discriminant() % l !=0 else l
-        while len(reps) < num_reps:
-            n_iters += 1
-            if n_iters % 50 == 0:
-                verbose('%s, len = %s/%s'%(n_iters,len(reps),num_reps))
-            v = I.next()
-            new_candidate = prod([self.gen(i).quaternion_rep for i in v]) * g0
-            new_inv = new_candidate**-1
-            if not any([self._is_in_order(new_inv * old) for old in reps]):
-                reps.append(new_candidate)
-        self._cache_hecke_reps[l] = reps
-        return reps
 
 
 class ArithGroup_rationalmatrix(ArithGroup_generic):
@@ -870,7 +870,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         except KeyError: pass
         if use_magma:
             verbose("Warning: asked to use Magma to get hecke reps, but trivial to do without!")
-        ans = [self.B([l,i,0,1]) for i in range(l)] + [self.B([1,0,0,l])]
+        ans = [self.B([l,i,0,1]) for i in xrange(l)] + [self.B([1,0,0,l])]
         self._cache_hecke_reps[l] = ans
         return ans
 
@@ -894,7 +894,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         W = V.span([])
         Gab = V/W
         free_idx = []
-        for i in range(len(Gab.invariants())):
+        for i in xrange(len(Gab.invariants())):
             if Gab.invariants()[i] == 0:
                 free_idx.append(i)
         return Gab,V,free_idx
@@ -944,7 +944,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         Parent.__init__(self)
 
     def _init_jv_data(self):
-        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1)))) for n in range(len(self._U_magma.gens()))]
+        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1)))) for n in xrange(len(self._U_magma.gens()))]
 
         Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
         mside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsMap')
@@ -958,7 +958,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         gquats_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsQuats')
         self.ngquats = ZZ(len(gquats_magma[1]))
         emb = self.get_archimedean_embedding(300)
-        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion())) for n in range(len(gquats_magma[i+1]))] for i in range(2)])
+        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion())) for n in xrange(len(gquats_magma[i+1]))] for i in xrange(2)])
         self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
 
         self.pi = 4 * RealField(300)(1).arctan()
@@ -973,7 +973,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
         self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
 
-        temp_relation_words = [shorten_word(self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(self._U_magma.Relations()))] + [[(len(self.Ugens)-1,2)]]
+        temp_relation_words = [shorten_word(self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in xrange(len(self._U_magma.Relations()))] + [[(len(self.Ugens)-1,2)]]
 
         self._relation_words = []
         for rel in temp_relation_words:
@@ -1033,7 +1033,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         verbose('Done ReduceGenerators. Now calculating inverse iso for %s generators'%len(gens))
         tmp_quaternions = []
         self._simplification_iso = []
-        for tt in range(nchunks):
+        for tt in xrange(nchunks):
             verbose('... %s/%s ...'%(tt+1,nchunks))
             i0 = tt * chunk_length + 1
             i1 = min((tt+1) * chunk_length,ngens)
@@ -1054,7 +1054,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self.F_units = self.F.unit_group()
             self.F_unit_offset = len(self.Ugens)
             self.Ugens.extend([self.B(self.F(u)) for u in self.F_units.gens()])
-            temp_relation_words = [shorten_word(Hm.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(Hm.Relations()))] + [[(self.F_unit_offset + i,u.multiplicative_order())] for i,u in enumerate(self.F_units.gens()) if u.multiplicative_order() != Infinity]
+            temp_relation_words = [shorten_word(Hm.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in xrange(len(Hm.Relations()))] + [[(self.F_unit_offset + i,u.multiplicative_order())] for i,u in enumerate(self.F_units.gens()) if u.multiplicative_order() != Infinity]
             self._relation_words = []
             for rel in temp_relation_words:
                 remaining_unit = self.F_units(self.F(prod((self.Ugens[g]**a for g,a in rel), z = self.B(1))))
@@ -1066,7 +1066,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 self._relation_words.append(newrel)
 
         else:
-            self._relation_words = [shorten_word(Hm.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in range(len(Hm.Relations()))]
+            self._relation_words = [shorten_word(Hm.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in xrange(len(Hm.Relations()))]
         verbose('Done initializing relations. Now generators...')
         self._gens = []
         for i,g in enumerate(self.Ugens):
@@ -1250,7 +1250,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             z0 = act_flt_in_disc(embgg,CC(0),P)
             z0abs = z0.abs()
             if ji == -oldji:
-                ji = next((j for j in range(-ngquats,0) + range(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
+                ji = next((j for j in xrange(-ngquats,0) + xrange(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
 
             gg = gammas[ji]
             newcs = self.translate[ji]
@@ -1295,17 +1295,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
     def _is_in_order(self,x):
         return all([o.is_integral() for o in self._quaternion_to_list(x)])
-
-    def enumerate_elements(self,max_length = None):
-        if 'P' not in self._grouptype:
-            ngens = self.F_unit_offset
-        else:
-            ngens = len(self.gens())
-        for v in enumerate_words(range(ngens)):
-            if max_length is not None and len(v) > max_length:
-                raise StopIteration
-            else:
-                yield prod([self.Ugens[i] for i in v],self.B(1))
 
     def compute_quadratic_embedding(self,K,return_generator = False):
         O_magma = self._O_magma
@@ -1511,35 +1500,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 if self.F.ideal(candidate.reduced_norm()) == ideal_one and candidate.reduced_norm() != 1:
                     self._non_positive_unit = candidate
                     return candidate
-
-    def get_hecke_reps(self,l,use_magma = True,g0 = None): #nf_quaternion
-        r'''
-        TESTS:
-
-        sage: magma.eval('SetSeed(2000000)')
-        sage: G = ArithGroup(6,5)
-        sage: reps = G.get_hecke_reps(11)
-        '''
-        try:
-            return self._cache_hecke_reps[l]
-        except KeyError: pass
-        if g0 is None:
-            g0 = self.element_of_norm(l,use_magma = use_magma)
-        reps = [g0]
-        I = self.enumerate_elements()
-        n_iters = ZZ(0)
-        lnorm = self.F.ideal(l).norm()
-        num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
-        while len(reps) < num_reps:
-            n_iters += 1
-            if n_iters % 50 == 0:
-                verbose('%s, len = %s/%s'%(n_iters,len(reps),num_reps))
-            new_candidate = I.next() * g0
-            new_inv = new_candidate**-1
-            if not any([self._is_in_order(new_inv * old) for old in reps]):
-                reps.append(new_candidate)
-        self._cache_hecke_reps[l] = reps
-        return reps
 
 class Abelianization(Parent):
     Element = FGP_Module

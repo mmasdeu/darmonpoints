@@ -195,11 +195,11 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn._F_to_local = self._F_to_local
         verbose('Initializing II,JJ,KK')
         v = f.Image(B_magma.gen(1)).Vector()
-        self._II = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
+        self._II = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
         v = f.Image(B_magma.gen(2)).Vector()
-        self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
+        self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
         v = f.Image(B_magma.gen(3)).Vector()
-        self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
+        self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
 
         a,b = self.Gn.B.invariants()
         self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
@@ -251,9 +251,9 @@ class BigArithGroup_class(AlgebraicGroup):
 
     @cached_method
     def get_BT_reps(self):
-        reps = [self.Gn.B(1)] + [None for i in range(self.p)]
+        reps = [self.Gn.B(1)] + [None for i in xrange(self.p)]
         emb = self.get_embedding(20)
-        matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in range(self.p)]
+        matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in xrange(self.p)]
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)
             embelt = emb(elt)

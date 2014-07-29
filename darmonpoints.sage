@@ -336,17 +336,16 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar,phiE = phiE)
 
-    i = 0
-    g = G.Gpn.gen(i)
-    while phiE.evaluate(g) == 0:
-        i+=1
-        g = G.Gpn.gen(i)
+    glist = [g for g in G.Gpn.gens() if phiE.evaluate(g) != 0]
+    assert len(glist) > 0
 
     success = False
     while not success:
         try:
-            xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
-            success = True
+            for g in glist:
+                xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
+                success = True
+                break
         except PrecisionError:
             working_prec *= 2
             verbose('Increasing working_prec to %s...'%working_prec)

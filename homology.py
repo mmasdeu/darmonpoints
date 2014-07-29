@@ -84,17 +84,18 @@ def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,few_integral
     tau1 = (a*tau1 + b)/(c*tau1 + d)
     Div = Divisors(Cp)
     H1 = Homology(G.large_group(),Div)
-    eltn = G.Gn(eltn.quaternion_rep)
-    eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
-
+    D1 = Div(tau1)
+    D2 = Div(tau1).left_act_by_matrix(wpmat)
     npow = 1
     found = False
+    eltn = eltn.quaternion_rep
+    eltn_twisted = wp**-1 * eltn * wp
     while not found:
         try:
-            y1 = G.Gn(eltn.quaternion_rep**npow)
-            xi1 = H1(dict([(y1,Div(tau1))])).zero_degree_equivalent()
-            y2 = G.Gn(eltn_twisted.quaternion_rep**npow)
-            xi2 = H1(dict([(y2,Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
+            y1 = G.Gn(eltn**npow)
+            xi1 = H1(dict([(y1,D1)])).zero_degree_equivalent()
+            y2 = G.Gn(eltn_twisted**npow)
+            xi2 = H1(dict([(y2,D2)])).zero_degree_equivalent()
             found = True
         except ValueError:
             if max_n is not None and npow > max_n:
@@ -126,7 +127,7 @@ def lattice_homology_cycle_old(G,eltn,prec,outfile = None,check = False,few_inte
     xi2 = H1({})
 
     eltn = G.Gn(eltn.quaternion_rep)
-    eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
+    eltn_twisted = G.Gn(wp**-1 * eltn * wp)
 
     # We calculate npow
     npow0 = 1
