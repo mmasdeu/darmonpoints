@@ -750,7 +750,6 @@ class CohomologyGroup(Parent):
 
             total_counter = ngens**2
             counter = 0
-            verbose('Starting loop')
             iS = 0
             for i,gi in enumerate(self.group().gens()):
                 giquat = gi.quaternion_rep
