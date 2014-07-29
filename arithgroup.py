@@ -85,7 +85,7 @@ class ArithGroup_generic(AlgebraicGroup):
         '''
         for i in xrange(len(V)):
             vi_inv = V[i]**-1
-            if any([self._is_in_order(V[j] * vi_inv) for j in xrange(i)+xrange(i+1,len(V))]):
+            if any([self._is_in_order(V[j] * vi_inv) for j in range(i)+range(i+1,len(V))]):
                 return False
         return True
 
@@ -629,7 +629,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             z0 = act_flt_in_disc(embgg,CC(0),P)
             z0abs = z0.abs()
             if ji == -oldji:
-                ji = next((j for j in xrange(-ngquats,0) + xrange(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
+                ji = next((j for j in range(-ngquats,0) + range(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
 
             gg = gammas[ji]
             newcs = self.translate[ji]
@@ -1250,7 +1250,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             z0 = act_flt_in_disc(embgg,CC(0),P)
             z0abs = z0.abs()
             if ji == -oldji:
-                ji = next((j for j in xrange(-ngquats,0) + xrange(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
+                ji = next((j for j in range(-ngquats,0) + range(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
 
             gg = gammas[ji]
             newcs = self.translate[ji]
