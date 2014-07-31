@@ -247,16 +247,14 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 #####     Curve finding           ####
 ######################################
 
-def direct_sum_of_maps(v, codomain = None):
-    V = v[0].domain()
-    if not all(o.domain() is V for o in v[:1]):
-        raise ValueError('Maps should all have the same domain')
+def direct_sum_of_maps(v):
     vv = [o.codomain() for o in v]
     def FGP_V(x): return x.V() if isinstance(x,FGP_Module_class) else x
     def FGP_W(x): return x.W() if isinstance(x,FGP_Module_class) else x.zero_submodule()
     V = (reduce(lambda x,y:FGP_V(x).direct_sum(FGP_V(y)),vv)).ambient_module()
     W = V.submodule(matrix.block_diagonal([FGP_W(o).matrix() for o in vv]))
     codomain = V.quotient(W)
+    V = v[0].domain()
     imgens = [codomain(codomain.V()(sum([f(g).lift().list() for f in v],[]))) for g in V.gens()]
     return V.hom(imgens,codomain = codomain)
 
