@@ -13,6 +13,7 @@ The **darmonpoints** package can also compute equations for some elliptic curves
 
 1) `F` has narrow class number `1`.
 2) if `N` is the conductor of the elliptic curve, it must admit a factorization of the form `N = PDM`, where:
+
    a) `P`, `D` and `M` are relative coprime.
    b) `P` is a prime ideal of `F` of prime norm.
    c) `D` is the discriminant of a quaternion algebra over `F` which is split at only one infinite place.
