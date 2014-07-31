@@ -2,12 +2,12 @@
 A package to compute Darmon points
 ==================================
 ----------------------------------
-Or just p-adically construct curves
+(or just p-adically construct elliptic curves)
 ----------------------------------
 
-What is this
-~~~~~~~~~~~~
-The **darmonpoints** package can compute many different types of what is known as Darmon points. These are known as *Stark-Heegner* points in some literature, and originated in [Darmon]_. Subsequent generalizations were introduced by [Greenberg]_ and [Trifkovic]_. This has been generalized by [GMS]_ to elliptic curves defined over number fields of arbitrary signature. Darmon points are attached to triples `(F,E,K)`, where `F` is a number field, `E/F` is an elliptic curve defined over `F`, and `K/F` is a quadratic extension. These triples must satisfy certain conditions for Darmon points to be attached to them. The article [GMS]_ contains an overview of all of this.
+What is this?
+~~~~~~~~~~~~~
+The **darmonpoints** package can compute many different types of what is known as Darmon points. These are known as *Stark-Heegner* points in some literature, and originated in [Darmon]_. Subsequent generalizations were introduced by [Greenberg]_ and [Trifkovic]_. This has been generalized by [GMS]_ to elliptic curves defined over number fields of arbitrary signature. Darmon points are attached to triples `(F,E,K)`, where `F` is a number field, `E/F` is an elliptic curve defined over `F`, and `K/F` is a quadratic extension. These triples must satisfy certain conditions for Darmon points to be attached to them. The article [GMS] contains an overview of all of this.
 
 The **darmonpoints** package can also compute equations for some elliptic curves `E/F` defined over number fields `F`, as long as certain conditions are satisfied. Namely:
 
@@ -98,7 +98,7 @@ This should return an elliptic curve like this::
 
    y^2 + r*x*y + (r+1)*y = x^3 + (-575*r^2-829*r-1195)*x + (-13327*r^2-19221*r-27721)
 
-.. [Darmon] H.Darmon. ``Integration on Hp x H and arithmetic applications``. Annals of Math.
-.. [GMS] X.Guitart, M.Masdeu, M.H.Sengun. ``Darmon points on elliptic curves over number fields of arbitrary signature``. Preprint.
-.. [Greenberg] M.Greenberg. ``Stark-Heegner points and the cohomology of quaternionic Shimura varieties``. Duke Math.
-.. [Trifkovic] M.Trifkovic. ``Stark-Heegner points on elliptic curves defined over imaginary quadratic fields``. Duke Math.
+.. [Darmon] H.Darmon. *Integration on Hp x H and arithmetic applications*. Annals of Math.
+.. [GMS] X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves over number fields of arbitrary signature*. Preprint.
+.. [Greenberg] M.Greenberg. *Stark-Heegner points and the cohomology of quaternionic Shimura varieties*. Duke Math.
+.. [Trifkovic] M.Trifkovic. *Stark-Heegner points on elliptic curves defined over imaginary quadratic fields*. Duke Math.
