@@ -99,6 +99,6 @@ This should return an elliptic curve like this::
    y^2 + r*x*y + (r+1)*y = x^3 + (-575*r^2-829*r-1195)*x + (-13327*r^2-19221*r-27721)
 
 .. [Darmon] H.Darmon. *Integration on Hp x H and arithmetic applications*. Annals of Math.
-.. [GMS] X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves over number fields of arbitrary signature*. Preprint.
-.. [Greenberg] M.Greenberg. *Stark-Heegner points and the cohomology of quaternionic Shimura varieties*. Duke Math.
-.. [Trifkovic] M.Trifkovic. *Stark-Heegner points on elliptic curves defined over imaginary quadratic fields*. Duke Math.
+   [GMS] X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves over number fields of arbitrary signature*. Preprint.
+   [Greenberg] M.Greenberg. *Stark-Heegner points and the cohomology of quaternionic Shimura varieties*. Duke Math.
+   [Trifkovic] M.Trifkovic. *Stark-Heegner points on elliptic curves defined over imaginary quadratic fields*. Duke Math.
