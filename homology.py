@@ -74,84 +74,17 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
             tmp = tmp.hecke_smoothen(q1,prec = prec)
     return tmp,n,q1
 
-def lattice_homology_cycle(G,eltn,prec,outfile = None,check = False,max_n = -1):
+def lattice_homology_cycle(G,x,wx,prec,outfile = None,check = False):
     p = G.prime()
-    wp = G.wp()
     Cp = Qq(p**2,prec,names = 'g')
-    wpmat = G.embed(wp**-1,prec).change_ring(Cp)
+    wpmat = G.embed(G.wp()**-1,prec).change_ring(Cp)
     a,b,c,d = wpmat.list()
-    tau1 = Cp.gen()
-    tau1 = (a*tau1 + b)/(c*tau1 + d)
+    tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
     H1 = Homology(G.large_group(),Div)
-    D1 = Div(tau1)
-    D2 = Div(tau1).left_act_by_matrix(wpmat)
-    npow = 0
-    eltn = G.Gn(eltn.quaternion_rep)
-    eltn_twisted = G.Gn(wp**-1 * eltn.quaternion_rep * wp)
-    y1 = G.Gn.one()
-    y2 = G.Gn.one()
-    while npow != max_n:
-        npow += 1
-        y1 = y1 * eltn
-        y2 = y2 * eltn_twisted
-        try:
-            xi1 = H1(dict([(y1,D1)])).zero_degree_equivalent()
-            xi2 = H1(dict([(y2,D2)])).zero_degree_equivalent()
-            return xi1, xi2
-        except ValueError:
-            continue
-
-    raise ValueError,'Reached maximum allowed power (%s)'%max_n
-    return
-
-
-def lattice_homology_cycle_old(G,eltn,prec,outfile = None,check = False,few_integrals = True):
-    r''' Note that the second class will need to be integrated in a twisted way.
-    That is, the quaternion elements need to be conjugated by wp before being integrated.
-    '''
-    p = G.prime()
-    wp = G.wp()
-    Cp = Qq(p**2,prec,names = 'g')
-    a,b,c,d = G.embed(wp**-1,prec).change_ring(Cp).list()
-    tau1 = Cp.gen()
-    tau1 = (a*tau1 + b)/(c*tau1 + d)
-    Div = Divisors(Cp)
-    D1 = Div(tau1)
-    H1 = Homology(G.large_group(),Div)
-    xi1 = H1({})
-    xi2 = H1({})
-
-    eltn = G.Gn(eltn.quaternion_rep)
-    eltn_twisted = G.Gn(wp**-1 * eltn * wp)
-
-    # We calculate npow
-    npow0 = 1
-    vec = G.Gn.get_weight_vector(eltn)
-    while npow0 * vec not in G.Gn.get_relation_matrix().image():
-        npow0 += 1
-    verbose('n = %s'%npow0)
-    vec = G.Gn.get_weight_vector(eltn_twisted)
-    npow = npow0
-    while npow * vec not in G.Gn.get_relation_matrix().image():
-        npow += npow0
-    verbose('needed power = %s'%npow)
-
-    for n,xlist,y in eltn.find_bounding_cycle(G,npow = npow,check = check):
-        if y.is_scalar():
-            continue
-        D = sum((D1.left_act_by_matrix(G.embed(x**-1,prec)) - D1 for x in xlist if x != 1),Div(0))
-        xi1 += H1(dict([(y,n*D)]))
-    for n,xlist,y in eltn_twisted.find_bounding_cycle(G,npow = npow,check = check):
-        if y.is_scalar():
-            continue
-        D = sum((D1.left_act_by_matrix(G.embed(wp * x**-1 * wp**-1,prec)) - D1 for x in xlist if x != 1),Div(0))
-        D = D.left_act_by_matrix(G.embed(wp**-1,prec).change_ring(Cp))
-        xi2 += H1(dict([(y,n*D)]))
-    if few_integrals:
-        xi1 = xi1.factor_into_generators(prec)
-        xi2 = xi2.factor_into_generators(prec)
-    return xi1,xi2
+    xi1 = H1(dict([(x,Div(tau1))])).zero_degree_equivalent()
+    xi2 = H1(dict([(wx,Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
+    return xi1, xi2
 
 class Divisors(Parent):
     def __init__(self,field):
@@ -460,11 +393,13 @@ class HomologyClass(ModuleElement):
             * g^(-a)|v = - g^a|g^av
         '''
 
+        verbose('Entering zero_degree_equivalent')
         V = self.parent().coefficient_module()
         G = self.parent().group()
         newdict = defaultdict(V)
         for oldg,v in self._data.iteritems():
             gword = G.calculate_weight_zero_word(oldg)
+            verbose('len(gword) = %s'%len(gword))
             newv = v
             for i,a in gword:
                 g = G.gen(i)
@@ -479,6 +414,7 @@ class HomologyClass(ModuleElement):
                 for j in range(a):
                     newdict[g] += sign * oldv
                     oldv = (g**-1) * oldv
+        verbose('Done zero_degree_equivalent')
         return HomologyClass(self.parent(),newdict)
 
     def factor_into_generators(self,prec):

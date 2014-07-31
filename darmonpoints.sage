@@ -245,6 +245,44 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 #####     Curve finding           ####
 ######################################
 
+
+from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
+from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
+
+
+def FGP_V(x):
+    if isinstance(x,FGP_Module_class):
+        return x.V()
+    else:
+        return x
+
+def FGP_W(x):
+    if isinstance(x,FGP_Module_class):
+        return x.W()
+    else:
+        return x.zero_submodule()
+
+def direct_sum_of_modules(v):
+    v = list(v)
+    V = (reduce(lambda x,y:FGP_V(x).direct_sum(FGP_V(y)),v)).ambient_module()
+    W = V.submodule(matrix.block_diagonal([FGP_W(o).matrix() for o in v]))
+    verbose('V = %s'%V,2)
+    verbose('W = %s'%W,2)
+    return V.quotient(W)
+
+def direct_sum_of_maps(v, codomain = None):
+    v = list(v)
+    V = v[0].domain()
+    if not all(o.domain() is V for o in v[:1]):
+        raise ValueError('Maps should all have the same domain')
+    if codomain is None:
+        codomain = direct_sum_of_modules([o.codomain() for o in v])
+    verbose('W = %s'%codomain,2)
+    imgens = [codomain(codomain.V()(sum([f(g).lift().list() for f in v],[]))) for g in V.gens()]
+    verbose('imgens = %s'%imgens,2)
+    ans =  V.hom(imgens,codomain = codomain)
+    return ans
+
 def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True):
 
     from itertools import product,chain,izip,groupby,islice,tee,starmap
@@ -272,20 +310,23 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     try:
         F = P.ring()
+        Fdisc = F.discriminant()
+        if not (P*DB).divides(NE):
+            raise ValueError,'Conductor (NE) should be divisible by P*DB'
+        p = ZZ(P.norm())
+
     except AttributeError:
         F = QQ
         P = ZZ(P)
-    try:
-        Fdisc = F.discriminant()
-    except AttributeError:
+        p = ZZ(P)
         Fdisc = ZZ(1)
+        if NE % (P*DB) != 0:
+            raise ValueError,'Conductor (NE) should be divisible by P*DB'
+
     Np = NE / (P*DB)
     if use_ps_dists is None:
         use_ps_dists = False # More efficient our oun implementation
-    try:
-        p = ZZ(P)
-    except TypeError:
-        p = ZZ(P.norm())
+
     if not p.is_prime():
         raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
 
@@ -336,20 +377,22 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar,phiE = phiE)
 
-    glist = [g for g in G.Gpn.gens() if phiE.evaluate(g) != 0]
-    assert len(glist) > 0
+    # Find an element x of Gpn for not in the kernel of phiE,
+    # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
+    wp = G.wp()
+    B = G.Gpn.abelianization()
+    C = G.Gn.abelianization()
+    Bab = B.abelian_group()
+    Cab = C.abelian_group()
+    f = Bab.hom([C.G_to_ab(G.Gn(B.ab_to_G(o).quaternion_rep)) for o in Bab.gens()])
+    g = Bab.hom([C.G_to_ab(G.Gn(wp**-1 * B.ab_to_G(o).quaternion_rep * wp)) for o in Bab.gens()])
+    fg = direct_sum_of_maps([f,g])
+    ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in fg.kernel().gens()]
+    ker = [o for o in ker if phiE.evaluate(o) != 0]
+    ker = [(G.Gn(o),G.Gn(wp**-1 * o * wp)) for o in ker]
+    x,wx = min(ker,key = lambda x:sum([ZZ(o).abs() for o in list(C.G_to_ab(x[0]))+ list(C.G_to_ab(x[1]))]))
 
-    success = False
-    while not success:
-        try:
-            for g in glist:
-                xi1, xi2 = lattice_homology_cycle(G,g,working_prec,outfile = outfile)
-                success = True
-                break
-        except PrecisionError:
-            working_prec *= 2
-            verbose('Increasing working_prec to %s...'%working_prec)
-
+    xi1, xi2 = lattice_homology_cycle(G,x,wx,working_prec,outfile = outfile)
     qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
     qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
     qE = qE1/qE2
