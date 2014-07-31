@@ -1,4 +1,6 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
+from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
+from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
 from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
 import os,datetime
 from sage.misc.persist import db
@@ -245,43 +247,18 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 #####     Curve finding           ####
 ######################################
 
-
-from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
-from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
-
-
-def FGP_V(x):
-    if isinstance(x,FGP_Module_class):
-        return x.V()
-    else:
-        return x
-
-def FGP_W(x):
-    if isinstance(x,FGP_Module_class):
-        return x.W()
-    else:
-        return x.zero_submodule()
-
-def direct_sum_of_modules(v):
-    v = list(v)
-    V = (reduce(lambda x,y:FGP_V(x).direct_sum(FGP_V(y)),v)).ambient_module()
-    W = V.submodule(matrix.block_diagonal([FGP_W(o).matrix() for o in v]))
-    verbose('V = %s'%V,2)
-    verbose('W = %s'%W,2)
-    return V.quotient(W)
-
 def direct_sum_of_maps(v, codomain = None):
-    v = list(v)
     V = v[0].domain()
     if not all(o.domain() is V for o in v[:1]):
         raise ValueError('Maps should all have the same domain')
-    if codomain is None:
-        codomain = direct_sum_of_modules([o.codomain() for o in v])
-    verbose('W = %s'%codomain,2)
+    vv = [o.codomain() for o in v]
+    def FGP_V(x): return x.V() if isinstance(x,FGP_Module_class) else x
+    def FGP_W(x): return x.W() if isinstance(x,FGP_Module_class) else x.zero_submodule()
+    V = (reduce(lambda x,y:FGP_V(x).direct_sum(FGP_V(y)),vv)).ambient_module()
+    W = V.submodule(matrix.block_diagonal([FGP_W(o).matrix() for o in vv]))
+    codomain = V.quotient(W)
     imgens = [codomain(codomain.V()(sum([f(g).lift().list() for f in v],[]))) for g in V.gens()]
-    verbose('imgens = %s'%imgens,2)
-    ans =  V.hom(imgens,codomain = codomain)
-    return ans
+    return V.hom(imgens,codomain = codomain)
 
 def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True):
 
