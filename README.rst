@@ -45,18 +45,8 @@ This constructs the curve with equation::
 
      y^2 + x*y + y = x^3 + x + 2
 
-2) Next, a curve over a cubic field of mixed signature::
 
-     sage: F.<r> = NumberField(x^3 -3)
-     sage: P = F.ideal(r-2)
-     sage: D = F.ideal(r-1)
-     sage: find_curve(P,D,P*D,30)
-
-This should return an elliptic curve like this::
-
-   y^2 + r*x*y + (r+1)*y = x^3 + (-575*r^2-829*r-1195)*x + (-13327*r^2-19221*r-27721)
-
-3) Now for a curve defined over a real quadratic field. Note that here we must specify which place will ramify in the quaternion algebra::
+2) Now for a curve defined over a real quadratic field. Note that here we must specify which place will ramify in the quaternion algebra::
 
      sage: F.<r> = QuadraticField(5)
      sage: P = F.ideal(3/2*r + 1/2)
@@ -66,4 +56,28 @@ This should return an elliptic curve like this::
 This returns something like::
 
    y^2 + (1/2*r-1/2)*x*y = x^3 + (1/2*r+1/2)*x^2 + (285/2*r-793/2)*x + (3153/2*r-7689/2)
+
+
+3) A curve over a cubic field of mixed signature::
+
+     sage: F.<r> = NumberField(x^3-x^2-x+2)
+     sage: N = F.ideal(r^2 + 2)
+     sage: P = N.factor()[0][0]
+     sage: D = N/P
+     sage: find_curve(P,D,N,20)
+
+which returns::
+
+  y^2 + x*y + y = x^3 + (r^2-2)*x^2 + (r^2-2)*x + (-r^2-r)
+
+4) Another (more spectacular) curve over a cubic field of mixed signature::
+
+     sage: F.<r> = NumberField(x^3 -3)
+     sage: P = F.ideal(r-2)
+     sage: D = F.ideal(r-1)
+     sage: find_curve(P,D,P*D,30)
+
+This should return an elliptic curve like this::
+
+   y^2 + r*x*y + (r+1)*y = x^3 + (-575*r^2-829*r-1195)*x + (-13327*r^2-19221*r-27721)
 

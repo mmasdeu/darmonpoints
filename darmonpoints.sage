@@ -288,7 +288,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         Fdisc = F.discriminant()
         if not (P*DB).divides(NE):
             raise ValueError,'Conductor (NE) should be divisible by P*DB'
-        p = ZZ(P.norm())
+        p = ZZ(P.norm()).abs()
 
     except AttributeError:
         F = QQ

@@ -17,6 +17,7 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.rings.infinity import Infinity
+from sage.rings.arith import GCD
 from util import *
 import os
 from ocmodule import OCVn
@@ -61,7 +62,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
         phi0 = phi0.plus_part()
     else:
         phi0 = phi0.minus_part()
-    phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0 # DEBUG
+    phi0 = 1/GCD([val.moment(0) for val in phi0.values()]) * phi0
     if progress_bar:
         progress_bar = update_progress
     else:
