@@ -15,7 +15,6 @@ from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ,ZZ,Qp
 from sage.functions.trig import arctan
-from sage.interfaces.magma import magma
 from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
@@ -164,7 +163,7 @@ class ArithGroup_generic(AlgebraicGroup):
             wtime = walltime()
             verbose('Calling MatrixRing...')
             B_magma = self._B_magma
-            f = magma.FuchsianMatrixRepresentation(B_magma.name(),Precision = prec,nvals = 1)
+            f = self.magma.FuchsianMatrixRepresentation(B_magma.name(),Precision = prec,nvals = 1)
             verbose('Spent %s seconds in MatrixRing'%walltime(wtime))
             RR = RealField(prec)
             self._prec_inf=prec
@@ -290,23 +289,23 @@ class ArithGroup_generic(AlgebraicGroup):
 
     def compute_quadratic_embedding(self,K):
         a,b = self.B.invariants() if self.discriminant != 1 else (1,1)
-        QQmagma = magma.Rationals()
-        ZZmagma = magma.Integers()
-        Btmp = magma.QuaternionAlgebra(QQmagma,a,b)
+        QQmagma = self.magma.Rationals()
+        ZZmagma = self.magma.Integers()
+        Btmp = self.magma.QuaternionAlgebra(QQmagma,a,b)
         def quat_to_mquat(x):
             v = list(x)
             return Btmp(v[0]) + sum(v[i+1]*Btmp.gen(i+1) for i in xrange(3))
 
-        O_magma = magma.QuaternionOrder(ZZmagma,[quat_to_mquat(o) for o in self.Obasis])
+        O_magma = self.magma.QuaternionOrder(ZZmagma,[quat_to_mquat(o) for o in self.Obasis])
 
         #QQmagma = self._B_magma.BaseRing()#magma.RationalsAsNumberField()
-        K_magma = magma.RadicalExtension(QQmagma,2,K.discriminant()) #self._B_magma.BaseField()
+        K_magma = self.magma.RadicalExtension(QQmagma,2,K.discriminant()) #self._B_magma.BaseField()
         OK_magma = K_magma.MaximalOrder()
-        _,iota = magma.Embed(OK_magma,O_magma,nvals = 2)
+        _,iota = self.magma.Embed(OK_magma,O_magma,nvals = 2)
         mu_magma = iota.Image(OK_magma(K_magma.gen(1)))
         if self.discriminant != 1:
             Bgens = list(self.B.gens())
-            return magma_quaternion_to_sage(self.B,Btmp(mu_magma))
+            return magma_quaternion_to_sage(self.B,Btmp(mu_magma),self.magma)
         else:
             Bgens = [matrix(QQ,2,2,[1,0,0,-1]),matrix(QQ,2,2,[0,1,1,0]),matrix(QQ,2,2,[0,1,-1,0])]
             return sum(a*b for a,b in zip([self.B(1)]+Bgens,[Btmp(mu_magma).Vector()[m+1].Norm()._sage_() for m in xrange(4)]))
@@ -459,10 +458,10 @@ class ArithGroup_generic(AlgebraicGroup):
 
 class ArithGroup_rationalquaternion(ArithGroup_generic):
     Element = ArithGroupElement
-    def __init__(self,discriminant,level,info_magma = None,grouptype = 'PSL2'):
+    def __init__(self,discriminant,level,info_magma = None,grouptype = 'PSL2',magma = None):
         assert grouptype in ['SL2','PSL2','PGL2'] # Need to find how to return the other groups with Voight's algorithm
         self._grouptype = grouptype
-
+        self.magma = magma
         self.F = QQ
         if isinstance(discriminant,list) or isinstance(discriminant,tuple):
             tmp = QuaternionAlgebra(discriminant[0],discriminant[1])
@@ -484,21 +483,21 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         self.Obasis = self.O.basis()
         self._O_discriminant = ZZ.ideal(self.O.discriminant())
         self.basis_invmat = matrix(QQ,4,4,[list(self.O.gen(n)) for n in xrange(4)]).transpose().inverse()
-        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1)))) for n in xrange(len(self._U_magma.gens()))]
+        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1))),self.magma) for n in xrange(len(self._U_magma.gens()))]
 
         Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
         mside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsMap')
         UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
 
-        self.Uside = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(mside_magma.Image(g)))) for g in Uside_magma.Generators()]
+        self.Uside = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(mside_magma.Image(g))),self.magma) for g in Uside_magma.Generators()]
 
         # We initialize some attributes by calling this function stupidly
-        magma.WordProblem(self._G_magma(1))
+        self.magma.WordProblem(self._G_magma(1))
 
         gquats_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsQuats')
         self.ngquats = ZZ(len(gquats_magma[1]))
         emb = self.get_archimedean_embedding(300)
-        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion())) for n in xrange(len(gquats_magma[i+1]))] for i in xrange(2)])
+        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion()),self.magma) for n in xrange(len(gquats_magma[i+1]))] for i in xrange(2)])
         self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
 
         self.pi = 4 * RealField(300)(1).arctan()
@@ -540,19 +539,19 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
-            QQ_magma = magma.RationalsAsNumberField()
+            QQ_magma = self.magma.RationalsAsNumberField()
             ZZ_magma = QQ_magma.Integers()
             if hasattr(self,'abtuple'):
-                self._B_magma = magma.QuaternionAlgebra('%s'%QQ_magma.name(),self.abtuple[0],self.abtuple[1])
+                self._B_magma = self.magma.QuaternionAlgebra('%s'%QQ_magma.name(),self.abtuple[0],self.abtuple[1])
             else:
-                self._B_magma = magma.QuaternionAlgebra('%s*%s'%(self.discriminant,ZZ_magma.name()))
+                self._B_magma = self.magma.QuaternionAlgebra('%s*%s'%(self.discriminant,ZZ_magma.name()))
 
             self._Omax_magma = self._B_magma.MaximalOrder()
             if self.level != ZZ(1):
                 self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,ZZ_magma.name()))
             else:
                 self._O_magma = self._Omax_magma
-            self._D_magma = magma.UnitDisc(Precision = 300)
+            self._D_magma = self.magma.UnitDisc(Precision = 300)
         else:
             ZZ_magma = info_magma._B_magma.BaseRing().Integers()
             self._B_magma = info_magma._B_magma
@@ -563,7 +562,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 self._O_magma = self._Omax_magma
             self._D_magma = info_magma._D_magma
         self._F_magma = self._B_magma.BaseRing()
-        self._G_magma = magma.FuchsianGroup(self._O_magma.name())
+        self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
         FDom_magma = self._G_magma.FundamentalDomain(self._D_magma.name())
         self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
 
@@ -665,7 +664,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             x = quaternion_to_magma_quaternion(self._B_magma,self.B(sum(a*b for a,b in zip(self.Obasis,x))))
         x_magma = self._G_magma(x)
         #verbose('Calling _magma_word_problem_jv with x = %s'%x)
-        V = magma.WordProblem(x_magma).ElementToSequence()._sage_()
+        V = self.magma.WordProblem(x_magma).ElementToSequence()._sage_()
         delta1 = self.B(1)
         for v in V:
             delta1 = delta1 * self.Ugens[v - 1] if v > 0 else delta1 * self.Ugens[-v - 1]
@@ -700,7 +699,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         if use_magma:
             # assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(N*self._F_magma.Integers())
-            candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1]) for m in xrange(4)])
+            candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1],self.magma) for m in xrange(4)])
 
             if force_sign:
                 candidate = self._fix_sign(candidate,N)
@@ -758,10 +757,10 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
 class ArithGroup_rationalmatrix(ArithGroup_generic):
     Element = ArithGroupElement #Matrix
-    def __init__(self,level,info_magma = None,grouptype = 'PSL2'):
+    def __init__(self,level,info_magma = None,grouptype = 'PSL2',magma = None):
         assert grouptype in ['SL2','PSL2']
         self._grouptype = grouptype
-
+        self.magma = magma
         self.F = QQ
         self.discriminant = ZZ(1)
         self.level = ZZ(level)
@@ -804,8 +803,8 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
-            ZZ_magma = magma.Integers()
-            self._B_magma = magma.QuaternionAlgebra(magma.Rationals(),1,1)
+            ZZ_magma = self.magma.Integers()
+            self._B_magma = self.magma.QuaternionAlgebra(self.magma.Rationals(),1,1)
             self._Omax_magma = self._B_magma.MaximalOrder()
             if self.level != ZZ(1):
                 self._O_magma = self._Omax_magma.Order('%s'%self.level)
@@ -907,7 +906,8 @@ class FaceRel(SageObject):
 
 class ArithGroup_nf_quaternion(ArithGroup_generic):
     Element = ArithGroupElement
-    def __init__(self,base,a,b,level,info_magma = None,grouptype =  'PSL2'):
+    def __init__(self,base,a,b,level,info_magma = None,grouptype =  'PSL2',magma = None):
+        self.magma = magma
         if base.signature()[1] == 0:
             self.algorithm = 'jv'
             self.get_word_rep = self.get_word_rep_jv
@@ -929,12 +929,12 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self.B = QuaternionAlgebra(self.F,self.a,self.b)
 
         magma_ZBasis = self._O_magma.ZBasis()
-        tmpObasis = [magma_quaternion_to_sage(self.B,o) for o in magma_ZBasis]
+        tmpObasis = [magma_quaternion_to_sage(self.B,o,self.magma) for o in magma_ZBasis]
         self.Obasis = tmpObasis
         Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
         self.basis_invmat = matrix(QQ,4*self.F.degree(),4*self.F.degree(),Obasis).transpose().inverse()
 
-        self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant())
+        self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant(),self.magma)
 
         if self.algorithm == 'aurel':
             self._init_aurel_data()
@@ -944,21 +944,21 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         Parent.__init__(self)
 
     def _init_jv_data(self):
-        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1)))) for n in xrange(len(self._U_magma.gens()))]
+        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1))),self.magma) for n in xrange(len(self._U_magma.gens()))]
 
         Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
         mside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsMap')
         UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
 
-        self.Uside = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(mside_magma.Image(g)))) for g in Uside_magma.Generators()]
+        self.Uside = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(mside_magma.Image(g))),self.magma) for g in Uside_magma.Generators()]
 
         # We initialize some attributes by calling this function stupidly
-        magma.WordProblem(self._G_magma(1))
+        self.magma.WordProblem(self._G_magma(1))
 
         gquats_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsQuats')
         self.ngquats = ZZ(len(gquats_magma[1]))
         emb = self.get_archimedean_embedding(300)
-        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion())) for n in xrange(len(gquats_magma[i+1]))] for i in xrange(2)])
+        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion()),self.magma) for n in xrange(len(gquats_magma[i+1]))] for i in xrange(2)])
         self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
 
         self.pi = 4 * RealField(300)(1).arctan()
@@ -1006,7 +1006,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         all_complex_embs = [o for o in self.F.embeddings(CC) if o(self.F.gen()).imag() != 0]
         assert len(all_complex_embs) == 2
         vC = all_complex_embs[0]
-        tmp = magma.InfinitePlaces(self._F_magma)[1 + self.F.signature()[0]]
+        tmp = self.magma.InfinitePlaces(self._F_magma)[1 + self.F.signature()[0]]
         if (vC(self.F.gen(0)).imag() * self._F_magma.gen(1).Evaluate(tmp).Im()._sage_()) < 0:
             vC = all_complex_embs[1]
             assert (vC(self.F.gen(0)).imag() * self._F_magma.gen(1).Evaluate(tmp).Im()._sage_()) > 0
@@ -1014,16 +1014,16 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self._HH = QuaternionAlgebra(RR,-1,-1)
         ih,jh,kh = self._HH.gens()
         self._Pmat, self._Pmatinv = JtoP(self._HH,MatrixSpace(CC,2,2))
-        matlist = magma.GetMatrixList(f)
+        matlist = self.magma.GetMatrixList(f)
         i,j,k  = self.B.gens()
-        centerlist = [self._HH(o) for o in sage_eval(magma.eval('[%s[i]`Center : i in [1..%s]]'%(f.name(),len(f))),{'i': ih, 'j': jh})]
-        radiuslist = [RR(o) for o in sage_eval(magma.eval('[%s[i]`Radius : i in [1..%s]]'%(f.name(),len(f))))]
-        matlist = [Matrix(self._HH,2,2,o) for o in sage_eval(magma.eval('[%s[i] : i in [1..%s]]'%(matlist.name(),len(f))),{'i' : ih, 'j': jh, 'k': kh})]
+        centerlist = [self._HH(o) for o in sage_eval(self.magma.eval('[%s[i]`Center : i in [1..%s]]'%(f.name(),len(f))),{'i': ih, 'j': jh})]
+        radiuslist = [RR(o) for o in sage_eval(self.magma.eval('[%s[i]`Radius : i in [1..%s]]'%(f.name(),len(f))))]
+        matlist = [Matrix(self._HH,2,2,o) for o in sage_eval(self.magma.eval('[%s[i] : i in [1..%s]]'%(matlist.name(),len(f))),{'i' : ih, 'j': jh, 'k': kh})]
         self._facerels = [FaceRel(c,r,m) for c,r,m in zip(centerlist,radiuslist,matlist)]
 
         verbose('Computing presentation')
         G,gens = f.Presentation(e,self._O_magma,nvals = 2)
-        Hm,GtoHm = magma.ReduceGenerators(G,nvals = 2)
+        Hm,GtoHm = self.magma.ReduceGenerators(G,nvals = 2)
         r = self.F.gen()
         i,j,k = self.B.gens()
         chunk_length = 20
@@ -1037,13 +1037,13 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             verbose('... %s/%s ...'%(tt+1,nchunks))
             i0 = tt * chunk_length + 1
             i1 = min((tt+1) * chunk_length,ngens)
-            newvec = sage_eval(magma.eval('[ElementToSequence(Image(%s,%s.i)) : i in [%s..%s]]'%(GtoHm.name(),G.name(),i0,i1)))
+            newvec = sage_eval(self.magma.eval('[ElementToSequence(Image(%s,%s.i)) : i in [%s..%s]]'%(GtoHm.name(),G.name(),i0,i1)))
             self._simplification_iso.extend(newvec)
-            tmp_quaternions.extend(sage_eval(magma.eval('[%s[i] : i in [%s..%s]]'%(gens.name(),i0,i1)).replace('$.1','r'),{'r':r, 'i':i, 'j':j, 'k':k}))
+            tmp_quaternions.extend(sage_eval(self.magma.eval('[%s[i] : i in [%s..%s]]'%(gens.name(),i0,i1)).replace('$.1','r'),{'r':r, 'i':i, 'j':j, 'k':k}))
 
         verbose('Done inverse isomorphism. Now calculating Ugens for %s generators'%len(Hm.gens()))
         self.Ugens = []
-        wrds = sage_eval(magma.eval('[ElementToSequence(%s!(%s.i)) : i in [1..%s]]'%(G.name(),Hm.name(),len(Hm.gens()))))
+        wrds = sage_eval(self.magma.eval('[ElementToSequence(%s!(%s.i)) : i in [1..%s]]'%(G.name(),Hm.name(),len(Hm.gens()))))
         for wd in wrds:
             newgen = self.B(1)
             for j,aj in shorten_word(wd):
@@ -1081,15 +1081,15 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
-            Qx_magma = magma.PolynomialRing(magma.Rationals())
+            Qx_magma = self.magma.PolynomialRing(self.magma.Rationals())
             xm = Qx_magma.gen(1)
             f = self.F.gen().minpoly()
-            fmagma = sum([magma(c)*xm**i for c,i in zip(f.coefficients(),f.exponents())])
-            FF_magma = magma.NumberField(fmagma)
+            fmagma = sum([self.magma(c)*xm**i for c,i in zip(f.coefficients(),f.exponents())])
+            FF_magma = self.magma.NumberField(fmagma)
             self._F_magma = FF_magma
             OF_magma = FF_magma.Integers()
             am, bm = sage_F_elt_to_magma(self._F_magma,self.a),sage_F_elt_to_magma(self._F_magma,self.b)
-            self._B_magma = magma.QuaternionAlgebra(FF_magma,am,bm)
+            self._B_magma = self.magma.QuaternionAlgebra(FF_magma,am,bm)
 
             self._Omax_magma = self._B_magma.MaximalOrder()
             if self.level != self.F.ideal(1):
@@ -1097,7 +1097,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             else:
                 self._O_magma = self._Omax_magma
             if self.algorithm == 'jv':
-                self._D_magma = magma.UnitDisc(Precision = 300)
+                self._D_magma = self.magma.UnitDisc(Precision = 300)
 
 
         else:
@@ -1114,7 +1114,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 self._D_magma = info_magma._D_magma
         if self.algorithm == 'jv':
             self._F_magma = self._B_magma.BaseRing()
-            self._G_magma = magma.FuchsianGroup(self._O_magma.name())
+            self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
             FDom_magma = self._G_magma.FundamentalDomain(self._D_magma.name())
             self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
 
@@ -1285,7 +1285,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             x = quaternion_to_magma_quaternion(self._B_magma,self.B(sum(a*b for a,b in zip(self.Obasis,x))))
         x_magma = self._G_magma(x)
         #verbose('Calling _magma_word_problem_jv with x = %s'%x)
-        V = magma.WordProblem(x_magma).ElementToSequence()._sage_()
+        V = self.magma.WordProblem(x_magma).ElementToSequence()._sage_()
         delta1 = self.B(1)
         for v in V:
             delta1 = delta1 * self.Ugens[v - 1] if v > 0 else delta1 * self.Ugens[-v - 1]
@@ -1301,17 +1301,17 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         F_magma = self._F_magma
 
         assert K.base_field() == self.F
-        Fxmagma = magma.PolynomialRing(F_magma)
+        Fxmagma = self.magma.PolynomialRing(F_magma)
         Fxmagma.assign_names('x')
         xm = Fxmagma.gen(1)
         b = K.gen()
         f = b.minpoly()
         fm = sum([sage_F_elt_to_magma(self._F_magma,c) * xm**i for c,i in zip(f.coefficients(),f.exponents())])
-        K_magma = magma.NumberField(fm)
+        K_magma = self.magma.NumberField(fm)
         OK_magma = K_magma.MaximalOrder()
         verbose('Calling magma Embed function...')
         try:
-            _,iota = magma.Embed(OK_magma,O_magma,nvals = 2)
+            _,iota = self.magma.Embed(OK_magma,O_magma,nvals = 2)
         except RuntimeError:
             print 'An error ocurred!'
             print 'OK_magma = ',OK_magma
@@ -1319,8 +1319,8 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             raise RuntimeError
         verbose('Calling magma Embed function done!')
         wm = K_magma(OK_magma.Basis()[2])
-        w = K(magma_F_elt_to_sage(self.F,wm[1]) + magma_F_elt_to_sage(self.F,wm[2]) * b)
-        ans = magma_integral_quaternion_to_sage(self.B,O_magma,F_magma,iota.Image(OK_magma(K_magma.gen(1))))
+        w = K(magma_F_elt_to_sage(self.F,wm[1],self.magma) + magma_F_elt_to_sage(self.F,wm[2],self.magma) * b)
+        ans = magma_integral_quaternion_to_sage(self.B,O_magma,F_magma,iota.Image(OK_magma(K_magma.gen(1))),self.magma)
         assert ans.reduced_norm() == K.gen().norm(self.F) and ans.reduced_trace() == K.gen().trace(self.F)
         ans = self.B(ans)
         if return_generator:
@@ -1448,7 +1448,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         if use_magma:
             # assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,Nideal))
-            candidate = magma_quaternion_to_sage(self.B,elt_magma)
+            candidate = magma_quaternion_to_sage(self.B,elt_magma,self.magma)
             self._element_of_norm[Nideal.gens_reduced()[0]] = candidate
             if force_sign:
                 candidate = self._fix_sign(candidate,N)

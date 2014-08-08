@@ -15,7 +15,6 @@ from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ,ZZ,Qp,Zmod
 from sage.functions.trig import arctan
-from sage.interfaces.magma import magma
 from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
@@ -44,9 +43,13 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = True,outfile = None):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = True,outfile = None, magma = None):
         # if seed is None:
         #     seed = 1000
+        if magma is None:
+            from sage.interfaces.magma import Magma
+            magma = Magma()
+
         try:
             discriminant = ZZ(quat_data)
             if base is not None:
@@ -70,14 +73,14 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
                 newobj = db(fname)
             except IOError:
                 verbose('Group not found in database. Computing from scratch.')
-                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype)
+                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma)
                 newobj.save_to_db()
         else:
             if discriminant is None:
                 discriminant = QuaternionAlgebra(base,a,b).discriminant()
-                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype)
+                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma)
             else:
-                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype)
+                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma)
         return newobj
 
 
@@ -107,11 +110,12 @@ class BigArithGroup_class(AlgebraicGroup):
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = 'PGL2',seed = None,outfile = None):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = 'PGL2',seed = None,outfile = None,magma = None):
         self.seed = seed
+        self.magma = magma
         if seed is not None:
             verbose('Setting Magma seed to %s'%seed)
-            magma.eval('SetSeed(%s)'%seed)
+            self.magma.eval('SetSeed(%s)'%seed)
         self.F = base
         if self.F.degree() > 1:
             Fideal = self.F.maximal_order().ideal
@@ -124,12 +128,12 @@ class BigArithGroup_class(AlgebraicGroup):
         self.level = Fideal(level) if self.F.degree() > 1 else ZZ(level)
 
         verbose('Initializing arithmetic group G(pn)...')
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype)
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype,magma = magma)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
 
         verbose('Initializing arithmetic group G(n)...')
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,info_magma = self.Gpn,grouptype = grouptype)
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,info_magma = self.Gpn,grouptype = grouptype,magma = magma)
         self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
 
@@ -174,16 +178,16 @@ class BigArithGroup_class(AlgebraicGroup):
         verbose('Entering compute_padic_splitting')
         prime = self.p
         if self.seed is not None:
-            magma.eval('SetSeed(%s)'%self.seed)
+            self.magma.eval('SetSeed(%s)'%self.seed)
         R = Qp(prime,prec+10) #Zmod(prime**prec) #
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
         # self.Gn._O_magma.set_magma_attribute('pMatrixRings',[])
         if self.F == QQ:
-            M,f = magma.pMatrixRing(self.Gn._O_magma,prime*self.Gn._O_magma.BaseRing(),Precision = 20,nvals = 2)
+            M,f = self.magma.pMatrixRing(self.Gn._O_magma,prime*self.Gn._O_magma.BaseRing(),Precision = 20,nvals = 2)
             self._F_to_local = QQ.hom([R(1)])
         else:
-            M,f = magma.pMatrixRing(self.Gn._O_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
+            M,f = self.magma.pMatrixRing(self.Gn._O_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
             self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
             self._F_to_local = None
             for o in self.F.gen().minpoly().change_ring(R).roots():
@@ -434,16 +438,21 @@ class BigArithGroup_class(AlgebraicGroup):
             return a, wd + [wd1,wd0]
 
 
-def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = 'PGL2'):
+def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = 'PGL2',magma = None):
     if base == QQ:
         discriminant = ZZ(discriminant)
         if discriminant == 1:
             return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype)
         else:
+            if magma is None:
+                raise ValueError,'Should specify magma session'
+
             if abtuple is not None:
-                return ArithGroup_rationalquaternion(abtuple,level,info_magma,grouptype = grouptype)
+                return ArithGroup_rationalquaternion(abtuple,level,info_magma,grouptype = grouptype,magma = magma)
             else:
-                return ArithGroup_rationalquaternion(discriminant,level,info_magma,grouptype = grouptype)
+                return ArithGroup_rationalquaternion(discriminant,level,info_magma,grouptype = grouptype,magma = magma)
     else:
         a,b = abtuple
-        return ArithGroup_nf_quaternion(base,a,b,level,info_magma,grouptype = grouptype)
+        if magma is None:
+            raise ValueError,'Should specify magma session'
+        return ArithGroup_nf_quaternion(base,a,b,level,info_magma,grouptype = grouptype,magma = magma)

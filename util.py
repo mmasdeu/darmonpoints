@@ -21,7 +21,6 @@ from sage.schemes.elliptic_curves.constructor import EllipticCurve_from_c4c6
 from sage.misc.functional import cyclotomic_polynomial
 from sage.misc.misc_c import prod
 from sage.functions.generalized import sgn
-from sage.interfaces.magma import magma
 from sage.misc.functional import cyclotomic_polynomial
 import sys
 
@@ -875,22 +874,6 @@ def quaternion_to_magma_quaternion(Bmagma,x):
     else:
         return sage_quaternion_to_magma(Bmagma,x)
 
-def magma_F_elt_to_sage(F_sage,x):
-    if F_sage.degree() > 1:
-        return F_sage(sage_eval(magma.eval('[%s[i] : i in [1..%s]]'%(x.name(),F_sage.degree()))))
-    else:
-        return F_sage(sage_eval(magma.eval('%s'%x.name())))
-
-def magma_quaternion_to_sage(B_sage,x):
-    xvec = x.Vector()
-    return B_sage([magma_F_elt_to_sage(B_sage.base_ring(),xvec[m+1]) for m in range(4)])
-
-def magma_integral_quaternion_to_sage(B_sage,O_magma,F_magma,x):
-    F = B_sage.base_ring()
-    xseq = x.ElementToSequence()
-    basis = O_magma.Basis()
-    return sum(magma_F_elt_to_sage(F,F_magma(xseq[i+1])) * magma_quaternion_to_sage(B_sage,basis[i+1]) for i in range(4))
-
 def sage_quaternion_to_magma(B_magma,x):
     v = list(x.coefficient_tuple())
     return B_magma(sage_F_elt_to_magma(B_magma.BaseRing(),v[0])) + sum(sage_F_elt_to_magma(B_magma.BaseRing(),v[i+1])*B_magma.gen(i+1) for i in range(3))
@@ -900,9 +883,25 @@ def sage_F_ideal_to_magma(F_magma,x):
     gens = x.gens_two()
     return sage_F_elt_to_magma(F_magma,gens[0])*Zm + sage_F_elt_to_magma(F_magma,gens[1])*Zm
 
-def magma_F_ideal_to_sage(F_sage,x):
+def magma_F_elt_to_sage(F_sage,x,magma):
+    if F_sage.degree() > 1:
+        return F_sage(sage_eval(magma.eval('[%s[i] : i in [1..%s]]'%(x.name(),F_sage.degree()))))
+    else:
+        return F_sage(sage_eval(magma.eval('%s'%x.name())))
+
+def magma_quaternion_to_sage(B_sage,x,magma):
+    xvec = x.Vector()
+    return B_sage([magma_F_elt_to_sage(B_sage.base_ring(),xvec[m+1],magma) for m in range(4)])
+
+def magma_integral_quaternion_to_sage(B_sage,O_magma,F_magma,x,magma):
+    F = B_sage.base_ring()
+    xseq = x.ElementToSequence()
+    basis = O_magma.Basis()
+    return sum(magma_F_elt_to_sage(F,F_magma(xseq[i+1]),magma) * magma_quaternion_to_sage(B_sage,basis[i+1],magma) for i in range(4))
+
+def magma_F_ideal_to_sage(F_sage,x,magma):
     gens = x.TwoElement(nvals = 2)
-    return F_sage.ideal([magma_F_elt_to_sage(F_sage,gens[0]),magma_F_elt_to_sage(F_sage,gens[1])])
+    return F_sage.ideal([magma_F_elt_to_sage(F_sage,gens[0],magma),magma_F_elt_to_sage(F_sage,gens[1],magma)])
 
 r'''
 Follows S.Johansson, "A description of quaternion algebras"

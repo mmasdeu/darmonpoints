@@ -10,7 +10,7 @@ max_waiting_time = 120 * 60 # Amount of patience (in seconds)
 decimal_prec = 60
 outfile = 'curve_table_new.sage'
 
-@parallel
+@parallel(ncpus=4)
 def find_one_curve(inp):
     x = QQ['x'].gen()
     # pol,P,D,Np,Pnorm,Nnorm = inp

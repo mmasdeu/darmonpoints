@@ -10,7 +10,7 @@ load('fmpz_mat.spyx')
 ### Stark-Heegner points for quaternion algebras                         #
 ##########################################################################
 
-def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False,Wlist = None,twist = True, progress_bar = True):
+def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False,Wlist = None,twist = True, progress_bar = True, magma = None):
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
     from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant, recognize_J
     from sarithgroup import BigArithGroup
@@ -25,6 +25,9 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     except NameError:
         ROOT = os.getcwd()
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+    if magma is None:
+        from sage.interfaces.magma import Magma
+        magma = Magma()
     magma.attach_spec(page_path)
     sys.setrecursionlimit(10**6)
 
@@ -107,7 +110,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     if input_data is None:
         if quaternionic:
             # Define the S-arithmetic group
-            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB).invariants(),Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db)
+            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB).invariants(),Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             try:
@@ -258,7 +261,7 @@ def direct_sum_of_maps(v):
     imgens = [codomain(codomain.V()(sum([f(g).lift().list() for f in v],[]))) for g in V.gens()]
     return V.hom(imgens,codomain = codomain)
 
-def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True):
+def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None):
 
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
@@ -277,6 +280,9 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         ROOT = os.getcwd()
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
 
+    if magma is None:
+        from sage.interfaces.magma import Magma
+    magma = Magma()
     magma.attach_spec(page_path)
 
     sys.setrecursionlimit(10**6)
@@ -342,7 +348,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     print "=================================================="
 
     # Define the S-arithmetic group
-    G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype)
+    G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma)
 
     # Define phiE, the cohomology class associated to the system of eigenvalues.
     Coh = CohomologyGroup(G.Gpn)

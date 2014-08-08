@@ -5,7 +5,6 @@ from functools import wraps
 import os.path
 import gc,errno,signal,os,types
 from util import *
-from sage.interfaces.magma import magma
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,Zmod,gcd,divisors
 from sage.groups.generic import discrete_log
 from sage.all import prod
@@ -325,11 +324,13 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
     else:
         raise ValueError, 'Algorithm must be either "guitart_masdeu" or "darmon_pollack"'
 
-def find_optimal_embeddings(F,use_magma = False,extra_conductor = 1):
+def find_optimal_embeddings(F,use_magma = False,extra_conductor = 1,magma = None):
     w=F.maximal_order().ring_generators()[0]
     D = F.discriminant()
     ## this matrix gives an optimal embedding of conductor 1
     if use_magma == True or extra_conductor != 1:
+        if magma is None:
+            from sage.interfaces.magma import magma
         tmp = magma.ReducedForms(str(D*extra_conductor**2),nvals = 1)
         G = [[tmp[i+1][j]._sage_() for j in [1,2,3]] for i in range(len(tmp))]
     elif F.class_number() == 1:

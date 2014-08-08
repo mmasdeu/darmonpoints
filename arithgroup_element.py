@@ -16,7 +16,6 @@ from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ,ZZ,Qp
 from sage.functions.trig import arctan
-from sage.interfaces.magma import magma
 from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
