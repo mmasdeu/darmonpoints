@@ -71,7 +71,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
     Phi.db(fname)
     return Phi
 
-def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None,phiE = None):
+def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -90,11 +90,6 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
         raise NotImplementedError,'For now I can only work over totally split'
 
     base_ring = Zp(p,prec) #Qp(p,prec)
-
-    # Define phiE, the cohomology class associated to the curve E.
-
-    if phiE is None:
-        phiE = CohomologyGroup(G.small_group()).get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
@@ -126,7 +121,7 @@ def get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dis
     assert apsign.abs() == 1
     if progress_bar:
         verb_level = get_verbose()
-        # set_verbose(0)
+
     Phi = Phi.improve(prec = prec,sign = apsign,parallelize = parallelize,progress_bar = progress_bar,method = method)
     if use_sage_db:
         db_save(Phi._val,fname)
@@ -570,7 +565,7 @@ class CohomologyGroup(Parent):
             M.set_column(j,list(Gab.G_to_ab_free(g)))
         return M.transpose()
 
-    def get_cocycle_from_elliptic_curve(self,E = None,sign = 1,use_magma = False):
+    def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = False):
         F = self.group().base_ring()
         if F.signature()[0] == 0 or 'G' in self.group()._grouptype:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
@@ -584,18 +579,13 @@ class CohomologyGroup(Parent):
         except AttributeError:
             N = ZZ(discnorm)
 
-        if hasattr(E,'conductor'):
-            def getap(q):
-                if F == QQ:
-                    return E.ap(q)
-                else:
-                    Q = F.ideal(q).factor()[0][0]
-                    return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
-        elif E is not None:
-            def getap(q):
-                return E(q)
-        else:
-            getap = None
+
+        def getap(q):
+            if F == QQ:
+                return E.ap(q)
+            else:
+                Q = F.ideal(q).factor()[0][0]
+                return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
 
         if F == QQ:
             x = QQ['x'].gen()
@@ -605,27 +595,110 @@ class CohomologyGroup(Parent):
         while K.dimension() > 1:
             q = q.next_prime()
             for qq,e in F.ideal(q).factor():
-            # for g0 in self.group().element_of_prime_norm(1000):
-                # qq = g0.reduced_norm()
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
-                    if getap is not None:
-                        try:
-                            ap = getap(qq)
-                        except (ValueError,ArithmeticError):
-                            continue
-                    else:
-                        try:
-                            ap = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).eigenvalues(extend = False)[0]
-                        except TypeError:
-                            continue
-                        verbose('Found aq = %s'%ap)
+                    try:
+                        ap = getap(qq)
+                    except (ValueError,ArithmeticError):
+                        continue
                     K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)-ap).right_kernel()
                     K = K.intersection(K1)
         if K.dimension() != 1:
-            raise ValueError,'Group does not seem to be attached to an elliptic curve'
+            raise ValueError,'Did not obtain a one-dimensional space corresponding to E'
+        col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
+        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
+
+    def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = False):
+        F = self.group().base_ring()
+        if F.signature()[0] == 0 or 'G' in self.group()._grouptype:
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+        else:
+            K = (self.involution_at_infinity_matrix()-sign).right_kernel()
+
+        disc = self.group()._O_discriminant
+        discnorm = disc.norm()
+        try:
+            N = ZZ(discnorm.gen())
+        except AttributeError:
+            N = ZZ(discnorm)
+
+        if F == QQ:
+            x = QQ['x'].gen()
+            F = NumberField(x,names='a')
+        q = ZZ(1)
+        g0 = None
+        while K.dimension() > 1:
+            q = q.next_prime()
+            for qq,e in F.ideal(q).factor():
+                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
+                    try:
+                        ap = getap(qq)
+                    except (ValueError,ArithmeticError):
+                        continue
+                    K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)-ap).right_kernel()
+                    K = K.intersection(K1)
+        if K.dimension() != 1:
+            raise ValueError,'Group does not have the required system of eigenvalues'
 
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
+
+    def get_rational_cocycle(self,sign = 1,use_magma = False,bound = 3, return_all = False):
+        F = self.group().base_ring()
+        if F.signature()[0] == 0 or 'G' in self.group()._grouptype:
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+        else:
+            K = (self.involution_at_infinity_matrix()-sign).right_kernel()
+
+        component_list = [K]
+        good_components = []
+        disc = self.group()._O_discriminant
+        discnorm = disc.norm()
+        try:
+            N = ZZ(discnorm.gen())
+        except AttributeError:
+            N = ZZ(discnorm)
+
+        if F == QQ:
+            x = QQ['x'].gen()
+            F = NumberField(x,names='a')
+        q = ZZ(1)
+        g0 = None
+        num_hecke_operators = 0
+        while len(component_list) > 0 and num_hecke_operators < bound:
+            q = q.next_prime()
+            for qq,e in F.ideal(q).factor():
+                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
+                    num_hecke_operators += 1
+                    old_component_list = component_list
+                    component_list = []
+                    Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)
+                    for U in old_component_list:
+                        for U0,is_irred in Ap.decomposition_of_subspace(U):
+                            if U0.dimension() == 1:
+                                good_components.append(U0)
+                            elif is_irred:
+                                # Bad
+                                pass
+                            else: # U0.dimension() > 1 and not is_irred
+                                component_list.append(U0)
+                    if len(good_components) > 0 and not return_all:
+                        return good_components[0]
+                    if len(component_list) == 0 or num_hecke_operators >= bound:
+                        break
+
+        if len(good_components) == 0:
+            raise ValueError,'Group does not seem to be attached to an elliptic curve'
+        else:
+            if return_all:
+                ans = []
+                for K in good_components:
+                    col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
+                    ans.append( sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0)))
+                    return ans
+            else:
+                K = good_components[0]
+                col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
+                return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,parallelize = False,g0 = None):
         r"""

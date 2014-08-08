@@ -15,7 +15,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant, recognize_J
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
-    from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic
+    from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, CohomologyGroup
 
     from integrals import double_integral_zero_infty,indef_integral,integrate_H1
     from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
@@ -125,7 +125,14 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             smoothen_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,smoothen_constant),outfile)
             fwrite('exponent = %s'%nn,outfile)
-            Phi = get_overconvergent_class_quaternionic(P,E,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,progress_bar = progress_bar)
+            phiE = CohomologyGroup(G.small_group()).get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
+            if hasattr(E,'cremona_label'):
+                Ename = E.cremona_label()
+            elif hasattr(E,'ainvs'):
+                Ename = E.ainvs()
+            else:
+                Ename = 'unknown'
+            Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,progress_bar = progress_bar,Ename = Ename)
             # Integration with moments
             tot_time = walltime()
             J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec,parallelize = parallelize,twist = twist,progress_bar = progress_bar)
@@ -261,7 +268,7 @@ def direct_sum_of_maps(v):
     imgens = [codomain(codomain.V()(sum([f(g).lift().list() for f in v],[]))) for g in V.gens()]
     return V.hom(imgens,codomain = codomain)
 
-def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None):
+def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3):
 
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
@@ -353,17 +360,17 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     # Define phiE, the cohomology class associated to the system of eigenvalues.
     Coh = CohomologyGroup(G.Gpn)
     try:
-        phiE = Coh.get_cocycle_from_elliptic_curve(None,sign = sign_at_infinity)
+        phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound)
     except ValueError:
         return 'Could not find cohomology class'
     if use_sage_db:
         G.save_to_db()
-
+    print 'Cohomology class found'
     try:
-        Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar,phiE = phiE)
+        Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar)
     except (AssertionError,RuntimeError,ValueError):
         return 'Problem when getting overconvergent class'
-
+    print 'Done overconvergent lift'
     # Find an element x of Gpn for not in the kernel of phiE,
     # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
     wp = G.wp()
