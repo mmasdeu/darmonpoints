@@ -6,11 +6,11 @@ from sage.parallel.decorate import parallel,fork
 ######################
 
 x = QQ['x'].gen()
-max_waiting_time = 120 * 60 # Amount of patience (in seconds)
+max_waiting_time = 10 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 60
-outfile = 'curve_table_new.sage'
+outfile = 'curve_table_real_new.sage'
 
-@parallel(ncpus=4)
+@parallel
 def find_one_curve(inp):
     x = QQ['x'].gen()
     # pol,P,D,Np,Pnorm,Nnorm = inp
@@ -49,7 +49,7 @@ def find_one_curve(inp):
 
 x = QQ['x'].gen()
 r = QQ['r'].gen()
-load('curve_table.sage')
+load('curve_table_real.sage')
 data = sorted(data,key = lambda x:x[0])
 
 for inp,out_str in find_one_curve(data):
