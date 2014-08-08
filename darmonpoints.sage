@@ -359,7 +359,10 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     if use_sage_db:
         G.save_to_db()
 
-    Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar,phiE = phiE)
+    try:
+        Phi = get_overconvergent_class_quaternionic(P,None,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar,phiE = phiE)
+    except (AssertionError,RuntimeError,ValueError):
+        return 'Problem when getting overconvergent class'
 
     # Find an element x of Gpn for not in the kernel of phiE,
     # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
@@ -376,7 +379,11 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     ker = [(G.Gn(o),G.Gn(wp**-1 * o * wp)) for o in ker]
     x,wx = min(ker,key = lambda x:sum([ZZ(o).abs() for o in list(C.G_to_ab(x[0]))+ list(C.G_to_ab(x[1]))]))
 
-    xi1, xi2 = lattice_homology_cycle(G,x,wx,working_prec,outfile = outfile)
+    try:
+        xi1, xi2 = lattice_homology_cycle(G,x,wx,working_prec,outfile = outfile)
+    except (AssertionError,RuntimeError,ValueError):
+        return 'Problem when computing homology cycle'
+
     qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
     qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
     qE = qE1/qE2
