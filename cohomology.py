@@ -71,7 +71,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
     Phi.db(fname)
     return Phi
 
-def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None):
+def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,apsign = None,progress_bar = False,method = None,Ename = 'unknown'):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -93,12 +93,6 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
-    if hasattr(E,'cremona_label'):
-        Ename = E.cremona_label()
-    elif hasattr(E,'ainvs'):
-        Ename = E.ainvs()
-    else:
-        Ename = 'unknown'
     fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,Ename,sgninfty,prec,dist_type)
     if use_sage_db:
         try:
