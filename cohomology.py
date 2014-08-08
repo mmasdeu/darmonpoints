@@ -649,8 +649,14 @@ class CohomologyGroup(Parent):
         else:
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
 
-        component_list = [K]
+        
+        component_list = []
         good_components = []
+        if K.dimension() == 1:
+            good_components.append(K)
+        else:
+            component_list.append(K)
+
         disc = self.group()._O_discriminant
         discnorm = disc.norm()
         try:
@@ -673,7 +679,7 @@ class CohomologyGroup(Parent):
                     component_list = []
                     Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)
                     for U in old_component_list:
-                        for U0,is_irred in Ap.decomposition_of_subspace(U):
+                        for U0,is_irred in Aq.decomposition_of_subspace(U):
                             if U0.dimension() == 1:
                                 good_components.append(U0)
                             elif is_irred:

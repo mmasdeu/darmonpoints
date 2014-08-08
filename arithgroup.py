@@ -227,7 +227,10 @@ class ArithGroup_generic(AlgebraicGroup):
         I = self.enumerate_elements()
         n_iters = ZZ(0)
         lnorm = self.F.ideal(l).norm()
-        num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
+        try:
+            num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
+        except TypeError:
+            num_reps = lnorm if ZZ(self._O_discriminant % ZZ(l) == 0 else lnorm + 1
         while len(reps) < num_reps:
             n_iters += 1
             if n_iters % 50 == 0:
