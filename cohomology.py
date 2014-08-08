@@ -621,7 +621,9 @@ class CohomologyGroup(Parent):
                         verbose('Found aq = %s'%ap)
                     K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)-ap).right_kernel()
                     K = K.intersection(K1)
-        assert K.dimension() == 1
+        if K.dimension() != 1:
+            raise ValueError,'Group does not seem to be attached to an elliptic curve'
+
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 

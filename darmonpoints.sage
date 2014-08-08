@@ -352,7 +352,10 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     # Define phiE, the cohomology class associated to the system of eigenvalues.
     Coh = CohomologyGroup(G.Gpn)
-    phiE = Coh.get_cocycle_from_elliptic_curve(None,sign = sign_at_infinity)
+    try:
+        phiE = Coh.get_cocycle_from_elliptic_curve(None,sign = sign_at_infinity)
+    except ValueError:
+        return 'Could not find cohomology class'
     if use_sage_db:
         G.save_to_db()
 
