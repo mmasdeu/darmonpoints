@@ -13,8 +13,8 @@ outfile = 'curve_table_real_new.sage'
 @parallel
 def find_one_curve(inp):
     x = QQ['x'].gen()
-    # pol,P,D,Np,Pnorm,Nnorm = inp
-    Nnorm, _, pol, P, D, Np, curve_message, matching_conductor = inp
+    pol,P,D,Np,Pnorm,Nnorm = inp
+    # Nnorm, _, pol, P, D, Np, curve_message, matching_conductor = inp
     pol = x.parent()(pol)
     F.<r> = NumberField(pol)
     P = F.ideal(P)
@@ -49,7 +49,7 @@ def find_one_curve(inp):
 
 x = QQ['x'].gen()
 r = QQ['r'].gen()
-load('curve_table_real.sage')
+load('real_fields_candidates.sage')
 data = sorted(data,key = lambda x:x[0])
 
 for inp,out_str in find_one_curve(data):
