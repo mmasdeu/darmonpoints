@@ -27,8 +27,8 @@ def find_one_curve(inp):
     prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
     working_prec = min([2 * prec,200])
     out_str = '[%s, %s, %s, %s, %s, %s, {curve}, {right_conductor}],\\'%(NEnorm,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0])
-    if matching_conductor == True:
-        return out_str.format(curve = curve_message, right_conductor = 1)
+    # if matching_conductor == True:
+    #     return out_str.format(curve = curve_message, right_conductor = 1)
     ram_at_inf = [-1 for a in F.real_embeddings()]
     ram_at_inf[0] = 1
     curve = fork(find_curve,timeout = max_waiting_time)(P,D,P*D*Np,prec,working_prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf)
