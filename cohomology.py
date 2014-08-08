@@ -671,7 +671,7 @@ class CohomologyGroup(Parent):
                     num_hecke_operators += 1
                     old_component_list = component_list
                     component_list = []
-                    Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)
+                    Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).change_ring(QQ)
                     for U in old_component_list:
                         for U0,is_irred in Aq.decomposition_of_subspace(U):
                             if U0.dimension() == 1:
