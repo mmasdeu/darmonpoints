@@ -682,7 +682,9 @@ class CohomologyGroup(Parent):
                             else: # U0.dimension() > 1 and not is_irred
                                 component_list.append(U0)
                     if len(good_components) > 0 and not return_all:
-                        return good_components[0]
+                        K = good_components[0]
+                        col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
+                        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
                     if len(component_list) == 0 or num_hecke_operators >= bound:
                         break
 
