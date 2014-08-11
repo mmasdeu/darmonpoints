@@ -31,8 +31,10 @@ def find_one_curve(inp):
     #     return out_str.format(curve = curve_message, right_conductor = 1)
     ram_at_inf = [-1 for a in F.real_embeddings()]
     ram_at_inf[0] = 1
-    curve = fork(find_curve,timeout = max_waiting_time)(P,D,P*D*Np,prec,working_prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf)
-
+    from sage.interfaces.magma import Magma
+    magma = Magma()
+    curve = fork(find_curve,timeout = max_waiting_time)(P,D,P*D*Np,prec,working_prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf,magma = magma)
+    magma.quit()
     if curve is None:
         out_str = out_str.format(curve = 'Not recognized',right_conductor = 'False')
     else:

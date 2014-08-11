@@ -28,6 +28,10 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     if magma is None:
         from sage.interfaces.magma import Magma
         magma = Magma()
+        quit_when_done = True
+    else:
+        quit_when_done = False
+
     magma.attach_spec(page_path)
     sys.setrecursionlimit(10**6)
 
@@ -117,10 +121,14 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,hecke_smoothen = True,outfile = outfile)
             except ValueError:
                 print 'ValueError occurred when constructing homology cycle. Returning the S-arithmetic group.'
+                if quit_when_done:
+                    magma.quit()
                 return G
             except AssertionError as e:
                 print 'Assertion occurred when constructing homology cycle. Returning the S-arithmetic group.'
                 print e
+                if quit_when_done:
+                    magma.quit()
                 return G
             smoothen_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,smoothen_constant),outfile)
@@ -201,7 +209,6 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
         Phi,J = input_data[1:3]
     print 'Integral done. Now trying to recognize the point'
     fwrite('J_psi = %s'%J,outfile)
-    #return J,emblist
     #Try to recognize a generator
     if quaternionic:
         local_embedding = G.base_ring_local_embedding(working_prec)
@@ -231,6 +238,8 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
                 fwrite('================================================',outfile)
                 print 'Point found: %s'%Ptsmall
+                if quit_when_done:
+                    magma.quit()
                 return Ptsmall
             except (TypeError,ValueError):
                 verbose("Could not recognize the point.")
@@ -247,9 +256,13 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
             fwrite('and y satisfies %s'%pols[1],outfile)
             fwrite('================================================',outfile)
             print 'Point found: %s'%candidate
+            if quit_when_done:
+                magma.quit()
             return candidate
     else:
         fwrite('================================================',outfile)
+        if quit_when_done:
+            magma.quit()
         return []
 
 
@@ -289,7 +302,10 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     if magma is None:
         from sage.interfaces.magma import Magma
-    magma = Magma()
+        quit_when_done = True
+        magma = Magma()
+    else:
+        quit_when_done = False
     magma.attach_spec(page_path)
 
     sys.setrecursionlimit(10**6)
@@ -321,7 +337,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     QQp = Qp(p,prec)
 
     if working_prec is None:
-        working_prec = 2 * prec + 10
+        working_prec = max([2 * prec + 10,100])
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
@@ -362,6 +378,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     try:
         phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound)
     except ValueError:
+        if quit_when_done:
+            magma.quit()
         return 'Could not find cohomology class'
     if use_sage_db:
         G.save_to_db()
@@ -369,6 +387,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     try:
         Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar)
     except (AssertionError,RuntimeError,ValueError):
+        if quit_when_done:
+            magma.quit()
         return 'Problem when getting overconvergent class'
     print 'Done overconvergent lift'
     # Find an element x of Gpn for not in the kernel of phiE,
@@ -389,6 +409,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     try:
         xi1, xi2 = lattice_homology_cycle(G,x,wx,working_prec,outfile = outfile)
     except (AssertionError,RuntimeError,ValueError):
+        if quit_when_done:
+            magma.quit()
         return 'Problem when computing homology cycle'
 
     qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
@@ -407,6 +429,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         if curve is None:
             fwrite('Still no luck. Sorry!',outfile)
             print 'Still no luck. Sorry!'
+            if quit_when_done:
+                magma.quit()
             return None
         else:
             curve = curve.global_minimal_model()
@@ -416,4 +440,6 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         curve = curve.global_minimal_model()
     fwrite('Curve with a-invariants %s'%(list(curve.a_invariants())),outfile)
     fwrite('================================================',outfile)
+    if quit_when_done:
+        magma.quit()
     return curve
