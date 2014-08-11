@@ -1405,7 +1405,8 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         if emb(x.reduced_norm()).sign() != emb(N).sign():
             # x = x * self.element_of_norm(-1,use_magma = False)
             x = x * self.non_positive_unit()
-        assert emb(x.reduced_norm()).sign() == emb(N).sign()
+        if emb(x.reduced_norm()).sign() != emb(N).sign():
+            raise RuntimeError
         return x
 
     def element_of_prime_norm(self,max_norm,radius = -1):
