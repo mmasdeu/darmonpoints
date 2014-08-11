@@ -406,12 +406,19 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     ker = [(G.Gn(o),G.Gn(wp**-1 * o * wp)) for o in ker]
     x,wx = min(ker,key = lambda x:sum([ZZ(o).abs() for o in list(C.G_to_ab(x[0]))+ list(C.G_to_ab(x[1]))]))
 
-    try:
-        xi1, xi2 = lattice_homology_cycle(G,x,wx,working_prec,outfile = outfile)
-    except (AssertionError,RuntimeError,ValueError):
-        if quit_when_done:
-            magma.quit()
-        return 'Problem when computing homology cycle'
+    found = False
+    while not found:
+        try:
+            xi1, xi2 = lattice_homology_cycle(G,x,wx,working_prec,outfile = outfile)
+            found = True
+        except (AssertionError,RuntimeError,ValueError):
+            if quit_when_done:
+                magma.quit()
+            return 'Problem when computing homology cycle'
+        except PrecisionError:
+            working_prec  = 2 * working_prec
+            verbose('Setting working_prec to %s'%working_prec)
+
 
     qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
     qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
