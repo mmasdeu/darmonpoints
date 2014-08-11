@@ -230,7 +230,7 @@ class ArithGroup_generic(AlgebraicGroup):
         try:
             num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
         except TypeError:
-            num_reps = lnorm if ZZ(self._O_discriminant.gen()) % ZZ(lnorm) == 0 else lnorm + 1
+            num_reps = lnorm if ZZ(self._O_discriminant.gen()) % ZZ(lnorm.gen()) == 0 else lnorm + 1
 
         while len(reps) < num_reps:
             n_iters += 1
