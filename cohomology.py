@@ -665,16 +665,19 @@ class CohomologyGroup(Parent):
         g0 = None
         num_hecke_operators = 0
         while len(component_list) > 0 and num_hecke_operators < bound:
+            verbose('num_hecke_ops = %s'%num_hecke_operators)
+            verbose('len(components_list) = %s'%len(component_list))
             q = q.next_prime()
             for qq,e in F.ideal(q).factor():
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
-                    num_hecke_operators += 1
-                    old_component_list = component_list
-                    component_list = []
                     try:
                         Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).change_ring(QQ)
-                    except RuntimeError:
+                    except (RuntimeError,TypeError):
                         continue
+                    verbose('Computed hecke matrix at qq = %s'%qq)
+                    old_component_list = component_list
+                    component_list = []
+                    num_hecke_operators += 1
                     for U in old_component_list:
                         for U0,is_irred in Aq.decomposition_of_subspace(U):
                             if U0.dimension() == 1:
