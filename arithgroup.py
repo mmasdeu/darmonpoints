@@ -677,6 +677,8 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         return V
 
     def _fix_sign(self,x,N):
+        if self.F.signature()[1] > 0:
+            return x
         verbose('Fixing sign...')
         emb = self.F.embeddings(RealField(100))[0]
         try:
@@ -1392,7 +1394,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             return gamma, tau1
 
     def _fix_sign(self,x,N):
-        if self.F.signature()[0] == 0:
+        if self.F.signature()[1] == 1 or self.F.signature()[0] == 0:
             return x
         elif self.F.signature()[0] > 1:
             # raise NotImplementedError
