@@ -180,7 +180,7 @@ class ArithGroup_generic(AlgebraicGroup):
             assert rimg_matrix.is_scalar()
             rimg = rimg_matrix[0,0]
             self.F_into_RR = self.F.hom([rimg],check = False)
-            
+
         return self._II_inf, self._JJ_inf, self._KK_inf
 
     def _quaternion_to_list(self,x):
@@ -1425,7 +1425,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 if F.ideal(candidate_norm).is_prime() and candidate_norm.norm().abs() < max_norm:
                     self._elements_of_prime_norm.append(candidate)
                     yield candidate
-        
+
     def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1,force_sign = True): # in nf_quaternion
         Nideal = self.F.ideal(N)
         try:

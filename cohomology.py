@@ -290,7 +290,7 @@ class CohomologyElement(ModuleElement):
                 for i in xrange(a-1):
                     tmp = phig + tmp.l_act_by(gmat)
             return tmp
-            
+
     def _evaluate_word(self,word):
         r''' Evaluate recursively, using cocycle condition:
         self(gh) = self(g) + g*self(h)
@@ -561,10 +561,11 @@ class CohomologyGroup(Parent):
 
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = False):
         F = self.group().base_ring()
-        if F.signature()[0] == 0 or 'G' in self.group()._grouptype:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
-        else:
+        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype:
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
+        else:
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+
 
         disc = self.group()._O_discriminant
         discnorm = disc.norm()
@@ -603,10 +604,10 @@ class CohomologyGroup(Parent):
 
     def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = False):
         F = self.group().base_ring()
-        if F.signature()[0] == 0 or 'G' in self.group()._grouptype:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
-        else:
+        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype:
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
+        else:
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
 
         disc = self.group()._O_discriminant
         discnorm = disc.norm()
@@ -638,12 +639,11 @@ class CohomologyGroup(Parent):
 
     def get_rational_cocycle(self,sign = 1,use_magma = False,bound = 3, return_all = False):
         F = self.group().base_ring()
-        if F.signature()[0] == 0 or 'G' in self.group()._grouptype:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
-        else:
+        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype:
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
+        else:
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
 
-        
         component_list = []
         good_components = []
         if K.dimension() == 1:
