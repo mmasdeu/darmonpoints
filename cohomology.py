@@ -561,7 +561,7 @@ class CohomologyGroup(Parent):
 
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = False):
         F = self.group().base_ring()
-        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype:
+        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
@@ -604,7 +604,7 @@ class CohomologyGroup(Parent):
 
     def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = False):
         F = self.group().base_ring()
-        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype:
+        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
@@ -639,7 +639,7 @@ class CohomologyGroup(Parent):
 
     def get_rational_cocycle(self,sign = 1,use_magma = False,bound = 3, return_all = False):
         F = self.group().base_ring()
-        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype:
+        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
