@@ -173,7 +173,7 @@ class ArithGroup_generic(AlgebraicGroup):
             self._JJ_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in xrange(4)])
             v = f.Image(B_magma.gen(3)).Vector()
             self._KK_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in xrange(4)])
-            
+
             RR = RealField(prec)
             rimg = f.Image(B_magma(sage_F_elt_to_magma(B_magma.BaseRing(),self.F.gen()))).Vector()
             rimg_matrix = matrix(RR,2,2,[rimg[i+1]._sage_() for i in xrange(4)])
@@ -1163,6 +1163,8 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             deltaword.append(i0+1)
             #verbose('deltaword = %s'%deltaword)
             lengthw += 1
+        # verbose('gammaznorm = %s'%(-(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10)))
+        assert -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 10.0
         deltaword.reverse()
         try:
             c = sum((list(self._simplification_iso[o-1]) for o in deltaword),[])
@@ -1509,7 +1511,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                     return candidate
 
 class Abelianization(Parent):
-    Element = FGP_Module
+    # Element = FGP_Module
     def __init__(self,G):
         V = ZZ**len(G.gens())
         W = V.span([sum([a*v for a,v in zip(rel,V.gens())],V(0)) for rel in G.get_relation_matrix().rows()])
@@ -1545,6 +1547,16 @@ class Abelianization(Parent):
         return tuple((o.lift() for o in self._Gab.gens()))
 
     @cached_method
+    def gens_small(self):
+        V = self._Gab.gen(0).lift().parent()
+        VV = V.span_of_basis([o.lift() for o in self._Gab.gens()])
+        self._Gab_LLL = VV.LLL()
+        return [V(o) for o in self._Gab_LLL.rows()]
+
+    def coordinates_in_gens_small(self,x):
+        return self._Gab_LLL.solve_left(x)
+
+    @cached_method
     def free_gens(self):
         return tuple((o.lift() for i,o in enumerate(self._Gab.gens()) if self.abelian_invariants()[i] == 0))
 
@@ -1564,3 +1576,14 @@ class Abelianization(Parent):
             return prod([self.group().gen(i)**ZZ(a) for i,a in enumerate(list(x))],self.group()([]))
         else:
             raise TypeError,"Can't understand the input"
+
+    def hom_from_image_of_gens_small(self,v):
+        imgens = []
+        for g in self.gens():
+            print 'g = ',g
+            coords = self.coordinates_in_gens_small(g)
+            newimg = sum((ZZ(a)*vi for a,vi in zip(coords,v)),0)
+            imgens.append(newimg)
+        return self._Gab.hom(imgens)
+
+

@@ -68,6 +68,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         if not self.has_quaternion_rep:
             self.quaternion_rep = self.quaternion_rep
         assert self.has_quaternion_rep
+        self.word_rep = self._word_rep()
         self._reduce_word()
 
     @cached_method
@@ -126,13 +127,15 @@ class ArithGroupElement(MultiplicativeGroupElement):
             return
         self.word_rep = reduce_word(self.word_rep)
 
-    @lazy_attribute
-    def word_rep(self):
+    #@lazy_attribute
+    def _word_rep(self):
         r'''
         Returns a word in the generators of `\Gamma` representing the given quaternion `x`.
         '''
         tmp = self.parent().get_word_rep(self.quaternion_rep)
         self.has_word_rep = True
+        # DEBUG
+        # self.check_consistency(self.quaternion_rep,tmp)
         return tmp
 
     @lazy_attribute
@@ -153,16 +156,15 @@ class ArithGroupElement(MultiplicativeGroupElement):
         if wd is None:
             wd = self.word_rep
         Gamma = self.parent()
-        q1 = prod(Gamma.gen(g).quaternion_rep**a for g,a in wd)
+        F = Gamma.base_field()
         try:
-            quo = ZZ(q * q1**-1)
-        except TypeError:
-            quo = q * q1**-1
-        if quo != 1:
-            print q
-            print q1
+            q1 = prod([Gamma.Ugens[g]**a for g,a in wd],z = ZZ(1))
+            quo = F(q * q1**-1)
+        except (TypeError,IndexError):
+            #print q
+            #print q1
             print q * q1**-1
-            raise RuntimeError,'Word and quaternion are inconsistent! (%s)'%txt
+            raise AssertionError,'Word and quaternion are inconsistent! (%s)'%txt
         return
 
     def __getitem__(self,n):

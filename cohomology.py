@@ -708,6 +708,84 @@ class CohomologyGroup(Parent):
                 col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
                 return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
+    def _reconstruct_from_abelianization(self,K):
+        col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
+        assert len(col) % 2 == 0
+        n = ZZ(len(col)/2)
+        cocycle = sum([a*self.gen(i) for i,a in enumerate(col[:n]) if a != 0],self(0))
+        Gab = self.group().abelianization()
+        groupelement = Gab.ab_to_G(sum([a*Gab.gens()[i] for i,a in enumerate(col[n:]) if a != 0]))
+        return (groupelement,cocycle)
+
+    def get_rational_cycle_and_cocycle(self,sign = 1,use_magma = False,bound = 3, return_all = False):
+        F = self.group().base_ring()
+        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
+            K1 = (self.involution_at_infinity_matrix()-sign).right_kernel()
+            K2 = (self.group().involution_at_infinity_matrix_freepart()-sign).right_kernel()
+        else:
+            K1 = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+            K2 = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+
+        component_list = []
+        good_components = []
+        K = direct_sum_of_modules([K1,K2])
+        if K.dimension() == 2:
+            good_components.append(K)
+        else:
+            component_list.append(K)
+
+        disc = self.group()._O_discriminant
+        discnorm = disc.norm()
+        try:
+            N = ZZ(discnorm.gen())
+        except AttributeError:
+            N = ZZ(discnorm)
+
+        if F == QQ:
+            x = QQ['x'].gen()
+            F = NumberField(x,names='a')
+        q = ZZ(1)
+        g0 = None
+        num_hecke_operators = 0
+        while len(component_list) > 0 and num_hecke_operators < bound:
+            verbose('num_hecke_ops = %s'%num_hecke_operators)
+            verbose('len(components_list) = %s'%len(component_list))
+            q = q.next_prime()
+            for qq,e in F.ideal(q).factor():
+                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
+                    try:
+                        Aq0 = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).change_ring(QQ)
+                        Aq1 = self.group().hecke_matrix_freepart(qq.gens_reduced()[0],g0=g0)
+                        R = Aq0.parent()
+                        Aq = block_matrix([[Aq0,R(0)],[R(0),Aq1]])
+                    except (RuntimeError,TypeError):
+                        continue
+                    verbose('Computed hecke matrix at qq = %s'%qq)
+                    old_component_list = component_list
+                    component_list = []
+                    num_hecke_operators += 1
+                    for U in old_component_list:
+                        for U0,is_irred in Aq.decomposition_of_subspace(U):
+                            if U0.dimension() == 2:
+                                good_components.append(U0)
+                            elif is_irred:
+                                # Bad
+                                pass
+                            else: # U0.dimension() > 1 and not is_irred
+                                component_list.append(U0)
+                    if len(good_components) > 0 and not return_all:
+                        return self._reconstruct_from_abelianization(good_components[0])
+                    if len(component_list) == 0 or num_hecke_operators >= bound:
+                        break
+
+        if len(good_components) == 0:
+            raise ValueError,'Group does not seem to be attached to an elliptic curve'
+        else:
+            if return_all:
+                return [self._reconstruct_from_abelianization(K) for K in good_components]
+            else:
+                return self._reconstruct_from_abelianization(good_components[0])
+
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,parallelize = False,g0 = None):
         r"""
         Apply the l-th Hecke operator operator to ``c``.

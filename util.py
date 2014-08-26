@@ -22,10 +22,28 @@ from sage.misc.functional import cyclotomic_polynomial
 from sage.misc.misc_c import prod
 from sage.functions.generalized import sgn
 from sage.misc.functional import cyclotomic_polynomial
+from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
 import sys
 
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
+
+def FGP_V(x): return x.V() if isinstance(x,FGP_Module_class) else x
+def FGP_W(x): return x.W() if isinstance(x,FGP_Module_class) else x.zero_submodule()
+
+def direct_sum_of_modules(v):
+    V = (reduce(lambda x,y:FGP_V(x).direct_sum(FGP_V(y)),v)).ambient_module()
+    W = V.submodule(matrix.block_diagonal([FGP_W(o).matrix() for o in v]))
+    return V.quotient(W)
+
+def direct_sum_of_maps(v):
+    vv = [o.codomain() for o in v]
+    V = (reduce(lambda x,y:FGP_V(x).direct_sum(FGP_V(y)),vv)).ambient_module()
+    W = V.submodule(matrix.block_diagonal([FGP_W(o).matrix() for o in vv]))
+    codomain = V.quotient(W)
+    V = v[0].domain()
+    imgens = [codomain(codomain.V()(sum([f(g).lift().list() for f in v],[]))) for g in V.gens()]
+    return V.hom(imgens,codomain = codomain)
 
 def is_in_principal_affinoid(p,z):
     if z.valuation() != 0:
@@ -921,8 +939,6 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
     disc = F.ideal(disc)
     if not disc.is_principal():
         raise ValueError, 'Discriminant should be principal'
-    # if disc == F.ideal(1) and all([r == ZZ(-1) for r in ramification_at_infinity]):
-    #     return QuaternionAlgebra(F,-1,-1)
     d = disc.gens_reduced()[0]
     vinf = F.embeddings(RR)
     vfin = disc.factor()

@@ -270,22 +270,12 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 #####     Curve finding           ####
 ######################################
 
-def direct_sum_of_maps(v):
-    vv = [o.codomain() for o in v]
-    def FGP_V(x): return x.V() if isinstance(x,FGP_Module_class) else x
-    def FGP_W(x): return x.W() if isinstance(x,FGP_Module_class) else x.zero_submodule()
-    V = (reduce(lambda x,y:FGP_V(x).direct_sum(FGP_V(y)),vv)).ambient_module()
-    W = V.submodule(matrix.block_diagonal([FGP_W(o).matrix() for o in vv]))
-    codomain = V.quotient(W)
-    V = v[0].domain()
-    imgens = [codomain(codomain.V()(sum([f(g).lift().list() for f in v],[]))) for g in V.gens()]
-    return V.hom(imgens,codomain = codomain)
 
-def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3):
+def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,compute_group = True):
 
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant
+    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
     import os,datetime
 
     from sarithgroup import BigArithGroup
@@ -310,7 +300,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     sys.setrecursionlimit(10**6)
 
-    global qE, Linv, G, Coh, phiE, xi1, xi2, Phi, curve
+    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, Phi, curve
 
     try:
         F = P.ring()
@@ -371,12 +361,13 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     print "=================================================="
 
     # Define the S-arithmetic group
-    try:
-        G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma)
-    except RuntimeError:
-        if quit_when_done:
-            magma.quit()
-        return 'Runtime Error in BigArithGroup'
+    if compute_group:
+        try:
+            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma)
+        except RuntimeError:
+            if quit_when_done:
+                magma.quit()
+            return 'Runtime Error in BigArithGroup'
 
     # Define phiE, the cohomology class associated to the system of eigenvalues.
     Coh = CohomologyGroup(G.Gpn)
@@ -403,18 +394,21 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     C = G.Gn.abelianization()
     Bab = B.abelian_group()
     Cab = C.abelian_group()
-    f = Bab.hom([C.G_to_ab(G.Gn(B.ab_to_G(o).quaternion_rep)) for o in Bab.gens()])
-    g = Bab.hom([C.G_to_ab(G.Gn(wp**-1 * B.ab_to_G(o).quaternion_rep * wp)) for o in Bab.gens()])
+    f = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(B.ab_to_G(o).quaternion_rep)) for o in B.gens_small()])
+    # f = Bab.hom([C.G_to_ab(G.Gn(B.ab_to_G(o).quaternion_rep)) for o in Bab.gens()])
+    # g = Bab.hom([C.G_to_ab(G.Gn(wp**-1 * B.ab_to_G(o).quaternion_rep * wp)) for o in Bab.gens()])
+    g = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(wp**-1 * B.ab_to_G(o).quaternion_rep * wp)) for o in B.gens_small()])
     fg = direct_sum_of_maps([f,g])
-    ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in fg.kernel().gens()]
+    V = Bab.gen(0).lift().parent()
+    good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
+    ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
     ker = [o for o in ker if phiE.evaluate(o) != 0]
     ker = [(G.Gn(o),G.Gn(wp**-1 * o * wp)) for o in ker]
-    x,wx = min(ker,key = lambda x:sum([ZZ(o).abs() for o in list(C.G_to_ab(x[0]))+ list(C.G_to_ab(x[1]))]))
-
+    xgen,wxgen = min(ker,key = lambda x:sum([ZZ(o).abs() for o in list(C.G_to_ab(x[0]))+ list(C.G_to_ab(x[1]))]))
     found = False
     while not found:
         try:
-            xi1, xi2 = lattice_homology_cycle(G,x,wx,working_prec,outfile = outfile)
+            xi1, xi2 = lattice_homology_cycle(G,xgen,wxgen,working_prec,outfile = outfile)
             found = True
         except (AssertionError,RuntimeError,ValueError):
             if quit_when_done:
