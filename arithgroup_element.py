@@ -68,7 +68,8 @@ class ArithGroupElement(MultiplicativeGroupElement):
         if not self.has_quaternion_rep:
             self.quaternion_rep = self.quaternion_rep
         assert self.has_quaternion_rep
-        self.word_rep = self._word_rep()
+        if not self.has_word_rep:
+            self.word_rep = self._word_rep()
         self._reduce_word()
 
     @cached_method

@@ -300,7 +300,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     sys.setrecursionlimit(10**6)
 
-    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, Phi, curve
+    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, Phi, curve, ker
 
     try:
         F = P.ring()
@@ -394,17 +394,25 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     C = G.Gn.abelianization()
     Bab = B.abelian_group()
     Cab = C.abelian_group()
-    f = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(B.ab_to_G(o).quaternion_rep)) for o in B.gens_small()])
-    # f = Bab.hom([C.G_to_ab(G.Gn(B.ab_to_G(o).quaternion_rep)) for o in Bab.gens()])
-    # g = Bab.hom([C.G_to_ab(G.Gn(wp**-1 * B.ab_to_G(o).quaternion_rep * wp)) for o in Bab.gens()])
-    g = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(wp**-1 * B.ab_to_G(o).quaternion_rep * wp)) for o in B.gens_small()])
+    verbose('Finding f...')
+    fdata = [B.ab_to_G(o).quaternion_rep for o in B.gens_small()]
+    verbose('fdata = %s'%fdata)
+    f = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in fdata])
+    verbose('Finding g...')
+    gdata = [wp**-1 * o * wp for o in fdata]
+    verbose('gdata = %s'%gdata)
+    g = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in gdata])
     fg = direct_sum_of_maps([f,g])
     V = Bab.gen(0).lift().parent()
     good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
     ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
-    ker = [o for o in ker if phiE.evaluate(o) != 0]
-    ker = [(G.Gn(o),G.Gn(wp**-1 * o * wp)) for o in ker]
-    xgen,wxgen = min(ker,key = lambda x:sum([ZZ(o).abs() for o in list(C.G_to_ab(x[0]))+ list(C.G_to_ab(x[1]))]))
+    found = False
+    for o in ker:
+        if phiE.evaluate(o) != 0:
+            found = True
+            break
+    assert found
+    xgen, wxgen = G.Gn(o),G.Gn(wp**-1 * o * wp)
     found = False
     while not found:
         try:
@@ -417,7 +425,6 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         except PrecisionError:
             working_prec  = 2 * working_prec
             verbose('Setting working_prec to %s'%working_prec)
-
 
     qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
     qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)

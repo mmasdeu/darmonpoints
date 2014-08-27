@@ -996,14 +996,17 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 else:
                     self._relation_words.append(rel)
 
-    def _init_aurel_data(self):
+    def _init_aurel_data(self,prec = 500):
         verbose('Computing normalized basis')
         if 'GL' in self._grouptype:
             # raise NotImplementedError,'This implementation has bugs'
-            _,f,e = self._O_magma.NormalizedBasis(GroupType = '"Units"', nvals = 3)
+            grouptype = '"Units"'
         else:
+            grouptype = '"NormOne"'
             assert 'SL' in self._grouptype
-            _,f,e = self._O_magma.NormalizedBasis(nvals = 3)
+        if prec is None:
+            prec = 100
+        _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec)
         self._facerels_magma = f
         self._facerels = []
         self._RR = RR = RealField((len(str(f[1].Radius)) * RealField(20)(10).log()/RealField(20)(2).log()).ceil()-10)
@@ -1138,33 +1141,39 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         boundary = self._facerels
         eps = 2**-(R(HH.base_ring().precision())/R(2))
         #verbose('eps = %s'%eps)
-        z = HH(0)
-        mat_gamma = self._kleinianmatrix(gamma**-1)
-        gammaz = act_H3(mat_gamma,z)
-        if len(boundary) == 0:
-            raise RuntimeError, 'Empty boundary'
+        correct = False
         B = self.B
         deltaword = []
-        lengthw = 0
-        delta = B(1)
-        while True:
-            d = R(1)
-            i0 = None
-            #verbose('gammaz = %s'%gammaz)
-            for i,b in enumerate(boundary):
-                d1 = sum((o**2 for o in (gammaz - b.center).coefficient_tuple()))/b.radius**2
-                if d >= (1+eps)*d1:
-                    d = d1
-                    i0 = i
-                    # break # This might yield longer words, but should be faster!
-            if i0 is None:
-                break
-            gammaz = act_H3(boundary[i0].mat,gammaz)
-            deltaword.append(i0+1)
-            #verbose('deltaword = %s'%deltaword)
-            lengthw += 1
-        # verbose('gammaznorm = %s'%(-(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10)))
-        assert -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 10.0
+        gammainv = gamma**-1
+        while not correct:
+            z = HH(0)
+            mat_gamma = self._kleinianmatrix(gammainv)
+            gammaz = act_H3(mat_gamma,z)
+            if len(boundary) == 0:
+                raise RuntimeError, 'Empty boundary'
+            lengthw = 0
+            delta = B(1)
+            while True:
+                d = R(1)
+                i0 = None
+                #verbose('gammaz = %s'%gammaz)
+                for i,b in enumerate(boundary):
+                    d1 = sum((o**2 for o in (gammaz - b.center).coefficient_tuple()))/b.radius**2
+                    if d >= (1+eps)*d1:
+                        d = d1
+                        i0 = i
+                        # break # This might yield longer words, but should be faster!
+                if i0 is None:
+                    break
+                # gammainv = prod((self.Ugens[o] for o in self._simplification_iso[i0]),1) * gammainv
+                gammaz = act_H3(boundary[i0].mat,gammaz)
+                deltaword.append(i0+1)
+                #verbose('deltaword = %s'%deltaword)
+                lengthw += 1
+            correct = ( -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 10.0)
+            assert correct
+            if not correct:
+                verbose('Trying again with hopefully smaller quaternion!!')
         deltaword.reverse()
         try:
             c = sum((list(self._simplification_iso[o-1]) for o in deltaword),[])
@@ -1548,8 +1557,8 @@ class Abelianization(Parent):
 
     @cached_method
     def gens_small(self):
-        V = self._ambient
-        VV = V.span_of_basis([o.lift() for o in self._Gab.gens()])
+        V = self.ambient()
+        VV = V.span_of_basis([V(o.lift()) for o in self._Gab.gens()])
         self._Gab_LLL = VV.LLL()
         return [V(o) for o in self._Gab_LLL.rows()]
 
@@ -1580,7 +1589,6 @@ class Abelianization(Parent):
     def hom_from_image_of_gens_small(self,v):
         imgens = []
         for g in self.gens():
-            print 'g = ',g
             coords = self.coordinates_in_gens_small(g)
             newimg = sum((ZZ(a)*vi for a,vi in zip(coords,v)),0)
             imgens.append(newimg)
