@@ -1548,7 +1548,7 @@ class Abelianization(Parent):
 
     @cached_method
     def gens_small(self):
-        V = self._Gab.gen(0).lift().parent()
+        V = self._ambient
         VV = V.span_of_basis([o.lift() for o in self._Gab.gens()])
         self._Gab_LLL = VV.LLL()
         return [V(o) for o in self._Gab_LLL.rows()]
