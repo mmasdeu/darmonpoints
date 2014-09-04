@@ -381,31 +381,31 @@ def our_algdep(z,degree,prec = None):
     R = PolynomialRing(ZZ,names = 'x')
     RQ = PolynomialRing(QQ,names ='y')
     x = R.gen()
-    try:
-        ans = algdep(z + O(pn),degree)
-    except PariError:
-        n = degree+1
-        zval = z.valuation()
-        ptozval = p**zval
-        z /= ptozval
-        assert z.valuation() == 0
-        r = 1
-        M = matrix(ZZ, n+field_deg, field_deg)
-        M[0,-1] = 1 # Encodes 1
-        for k in range(1, degree+1):
-            r *= z
+    n = degree+1
+    zval = z.valuation()
+    ptozval = p**zval
+    z /= ptozval
+    assert z.valuation() == 0
+    r = 1
+    M = matrix(ZZ, n+field_deg, field_deg)
+    M[0,-1] = 1 # Encodes 1
+    for k in range(1, degree+1):
+        r *= z
+        if field_deg == 1:
+            M[k,0] = ZZ(r.lift()) % pn
+        else:
             for i in range(field_deg):
                 M[k,-1-i] = ZZ(r._ntl_rep()[i]) % pn
-        for i in range(field_deg):
-            M[n+i,-1-i] = pn
-        verb_lev = get_verbose()
-        set_verbose(0)
-        tmp = M.left_kernel().matrix().change_ring(ZZ).LLL().row(0)
-        set_verbose(verb_lev)
-        f = RQ(list(tmp[:n]))(x/ptozval)
-        if f.leading_coefficient() < 0:
-            f = -f
-        ans = R(f.denominator() * f)
+    for i in range(field_deg):
+        M[n+i,-1-i] = pn
+    verb_lev = get_verbose()
+    set_verbose(0)
+    tmp = M.left_kernel().matrix().change_ring(ZZ).LLL().row(0)
+    set_verbose(verb_lev)
+    f = RQ(list(tmp[:n]))(x/ptozval)
+    if f.leading_coefficient() < 0:
+        f = -f
+    ans = R(f.denominator() * f)
     for fact,_ in ans.factor():
         if R(fact)(z) == O(p**prec):
             return R(fact/fact.content())
@@ -447,6 +447,9 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
     R = Qp(p,prec)
     return newII.change_ring(R),newJJ.change_ring(R)
 
+def height_polynomial(x,base = 10):
+    return sum(((RR(o).abs()+1).log(base) for o in x.coeffs()))
+
 def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   hF = F.class_number()
   if HCF is None:
@@ -481,7 +484,7 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
       list_candidate_x = [x1+x2*w]
   else:
       candidate_x = our_algdep(x,E.base_ring().degree()*2*hF,prec)
-      pol_height = sum((RR(o).abs().log() for o in candidate_x.coeffs()))/RR(p).log()
+      pol_height = height_polynomial(candidate_x,base = p)
       if pol_height < .7 * prec: # .7 is quite arbitrary...
           list_candidate_x = [rt for rt,pw in candidate_x.change_ring(HCF).roots()]
       else:
@@ -1051,9 +1054,8 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     assert not success
     return None,None,None
 
-                        
-def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True, kill_torsion = True):
-    
+
+def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True, kill_torsion = True,height_threshold = .8):
     assert qE.valuation() != 0, 'qE should not have zero valuation'
     if qE.valuation() < 0:
         qE = 1/qE
@@ -1089,7 +1091,7 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
             qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True)
         except ValueError:
             continue
-        for qEroot,D in product(qErlist,selmer_group_iterator(F,S,12)):
+        for qEroot,D in product(qErlist,selmer_group_iterator(F,S,24)):
             jE = 1/qEroot + jpowseries(qEroot)
             # jE = jpowseries(qEroot) # Get the candidate j invariant
             # Kp = jE.parent()
@@ -1101,41 +1103,57 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
                 continue
             for c4 in c4list:
                 c4pol = our_algdep(c4,deg,prec = prec)
-                if c4pol.leading_coefficient() not in [1,-1]:
-                    continue
-                for c4ex in [o[0] for c4 in c4list for o in c4pol.roots(F)]:
-                    verbose('Candidate c4 = %s'%c4ex)
-                    c6squared = F(c4ex**3 - 1728*D)
-                    if not c6squared.is_square():
-                        continue
-                    for c6ex in c6squared.sqrt(all=True):
-                        try:
-                            E = EllipticCurve_from_c4c6(c4ex,c6ex)
-                        except ArithmeticError: continue
-                        if not check_conductor or E.conductor() == conductor:
-                            #assert E.discriminant() == D
-                            verbose('Success!')
-                            return E
+                pol_height = height_polynomial(c4pol,base = p)
+                if pol_height < height_threshold * prec:
+                    verbose('c4pol = %s (height = %s)'%(c4pol,pol_height))
+
+                    # if c4pol.leading_coefficient() not in [1,-1]:
+                    #     continue
+                    for c4ex in [o[0] for c4 in c4list for o in c4pol.roots(F)]:
+                        verbose('Candidate c4 = %s'%c4ex)
+                        c6squared = F(c4ex**3 - 1728*D)
+                        if not c6squared.is_square():
+                            continue
+                        for c6ex in c6squared.sqrt(all=True):
+                            try:
+                                E = EllipticCurve_from_c4c6(c4ex,c6ex)
+                            except ArithmeticError: continue
+                            if not check_conductor or E.conductor() == conductor:
+                                #assert E.discriminant() == D
+                                verbose('Success!')
+                                return E
+            try:
+                c6list = our_sqrt(c4cubed - 1728*Deltap,Kp,return_all = True)
+            except ValueError:
+                continue
+            for c6 in c6list:
+                c6pol = our_algdep(c6,deg,prec = prec)
+                pol_height = height_polynomial(c6pol,base = p)
+                if pol_height < height_threshold * prec:
+                    verbose('c6pol = %s (height = %s)'%(c6pol,pol_height))
+                    # if c6pol.leading_coefficient() not in [1,-1]:
+                    #     continue
+                    for c6ex in [o[0] for c6 in c6list for o in c6pol.roots(F)]:
+                        verbose('Candidate c6 = %s'%c6ex)
+                        T = PolynomialRing(F,names = 'T').gen()
+                        c4cubed_ex = F(c6ex**2 + 1728*D)
+                        for c4ex,_ in (T**3-c4cubed_ex).roots(F):
+                            try:
+                                E = EllipticCurve_from_c4c6(c4ex,c6ex)
+                            except ArithmeticError: continue
+                            if not check_conductor or E.conductor() == conductor:
+                                #assert E.discriminant() == D
+                                verbose('Success!')
+                                return E
+
     verbose('Curve not recognized')
     return None
 
 
 def discover_equation_from_L_invariant(Linv,emb,conductor,prec,field = None,check_conductor = True, max_valuation = 20, preferred_valuation = None):
-    
     F = emb.domain() if field is None else field
     deg = F.degree()
     p = Linv.parent().prime()
-    try:
-        Ftors = F.unit_group().torsion_generator()
-        Funits = [F(Ftors)**i for i in range(Ftors.order())]
-        for u in F.units():
-            Funits = [u0 * u**i for u0,i in product(Funits,range(-6,7))]
-    except AttributeError:
-        Funits = [-1, +1]
-    try:
-        primedivisors = [o[0].gens_reduced()[0] for o in conductor.factor()]
-    except AttributeError:
-        primedivisors = [o[0] for o in conductor.factor()]
     S = [o[0] for o in conductor.factor()]
     E4 = EisensteinForms(weight=4).basis()[0]
     Deltamodform = CuspForms(weight=12).basis()[0]
@@ -1248,9 +1266,6 @@ def update_progress(progress,msg = ""):
     sys.stdout.write(text)
     sys.stdout.flush()
 
-
-
-
 def selmer_group_iterator(self, S, m, proof=True):
     r"""
     Return an iterator through elements of the finite group `K(S,m)`.
@@ -1264,5 +1279,5 @@ def selmer_group_iterator(self, S, m, proof=True):
     orders = [f(a.multiplicative_order()) for a in KSgens]
     one = self.one_element()
     from sage.misc.all import cartesian_product_iterator
-    for ev in cartesian_product_iterator([range(o) for o in orders]):
+    for ev in cartesian_product_iterator([range(-o//2,(1+o)//2) for o in orders]):
         yield prod([p**e for p,e in zip(KSgens,ev)],one)
