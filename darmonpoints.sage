@@ -10,7 +10,7 @@ load('fmpz_mat.spyx')
 ### Stark-Heegner points for quaternion algebras                         #
 ##########################################################################
 
-def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,quatalg_disc = None,parallelize = False,Wlist = None,twist = True, progress_bar = True, magma = None):
+def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,parallelize = False,Wlist = None,twist = True, progress_bar = True, magma = None, Up_method = None):
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
     from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant, recognize_J
     from sarithgroup import BigArithGroup
@@ -38,9 +38,6 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     F = E.base_ring()
     beta = F(beta)
     DB,Np = get_heegner_params(P,E,beta)
-    if quatalg_disc is not None:
-        assert DB == F.ideal(quatalg_disc)
-        DB = quatalg_disc
     quaternionic = ( DB != 1 )
     if use_ps_dists is None:
         use_ps_dists = False if quaternionic else True
@@ -140,7 +137,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
                 Ename = E.ainvs()
             else:
                 Ename = 'unknown'
-            Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,progress_bar = progress_bar,Ename = Ename)
+            Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar,Ename = Ename)
             # Integration with moments
             tot_time = walltime()
             J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec,parallelize = parallelize,twist = twist,progress_bar = progress_bar)
@@ -271,8 +268,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 ######################################
 
 
-def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,compute_group = True):
-
+def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None):
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
@@ -319,7 +315,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
 
     Np = NE / (P*DB)
     if use_ps_dists is None:
-        use_ps_dists = False # More efficient our oun implementation
+        use_ps_dists = False # More efficient our on implementation
 
     if not p.is_prime():
         raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
@@ -361,13 +357,12 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     print "=================================================="
 
     # Define the S-arithmetic group
-    if compute_group:
-        try:
-            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma)
-        except RuntimeError:
-            if quit_when_done:
-                magma.quit()
-            return 'Runtime Error in BigArithGroup'
+    try:
+        G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma)
+    except RuntimeError:
+        if quit_when_done:
+            magma.quit()
+        return 'Runtime Error in BigArithGroup'
 
     # Define phiE, the cohomology class associated to the system of eigenvalues.
     Coh = CohomologyGroup(G.Gpn)
@@ -381,7 +376,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
         G.save_to_db()
     print 'Cohomology class found'
     try:
-        Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists,apsign = apsign,progress_bar = progress_bar)
+        Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists,method = Up_method, progress_bar = progress_bar)
     except (AssertionError,RuntimeError,ValueError):
         if quit_when_done:
             magma.quit()
@@ -396,11 +391,11 @@ def find_curve(P,DB,NE,prec,working_prec = None,apsign = 1,sign_at_infinity = 1,
     Cab = C.abelian_group()
     verbose('Finding f...')
     fdata = [B.ab_to_G(o).quaternion_rep for o in B.gens_small()]
-    verbose('fdata = %s'%fdata)
+    # verbose('fdata = %s'%fdata)
     f = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in fdata])
     verbose('Finding g...')
     gdata = [wp**-1 * o * wp for o in fdata]
-    verbose('gdata = %s'%gdata)
+    # verbose('gdata = %s'%gdata)
     g = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in gdata])
     fg = direct_sum_of_maps([f,g])
     V = Bab.gen(0).lift().parent()

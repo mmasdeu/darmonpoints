@@ -400,7 +400,7 @@ def our_algdep(z,degree,prec = None):
         M[n+i,-1-i] = pn
     verb_lev = get_verbose()
     set_verbose(0)
-    tmp = M.left_kernel().matrix().change_ring(ZZ).LLL().row(0)
+    tmp = M.transpose().right_kernel_matrix().change_ring(ZZ).LLL().row(0)
     set_verbose(verb_lev)
     f = RQ(list(tmp[:n]))(x/ptozval)
     if f.leading_coefficient() < 0:
@@ -410,7 +410,6 @@ def our_algdep(z,degree,prec = None):
         if R(fact)(z) == O(p**prec):
             return R(fact/fact.content())
     return R(ans/ans.content())
-
 
 def lift_padic_splitting(a,b,II0,JJ0,p,prec):
     R = a.parent() #Qp(p,prec)
@@ -542,8 +541,6 @@ def our_sqrt(xx,K = None,return_all = False):
         y1 = (y**2+x)/(2*y)
 
     ans = K.uniformizer()**(ZZ(valpi/2)) * y
-    # assert ans**2 == xx,'ans**2/xx = %s'%(ans**2/xx)
-
     if return_all:
         ans = [ans, -ans]
     return ans
@@ -558,7 +555,7 @@ def our_cuberoot(xx,K = None,return_all = False):
             return xx
     xx=K(xx)
     p=K.base_ring().prime()
-    valp = xx.valuation(p)
+    valp = xx.valuation()
     try:
         eK = K.ramification_index()
     except AttributeError:
@@ -572,27 +569,32 @@ def our_cuberoot(xx,K = None,return_all = False):
     found = False
     ppow = p if p != 3 else 9
     minval = 1 if p != 3 else 2
-    for avec in product(range(ppow),repeat=deg):
-        y0 = avec[0]
-        for a in avec[1:]:
-            y0 = y0*z + a
-        if (y0**3-x).valuation(p) >= minval:
-            found = True
-            break
+    if deg == 1:
+        for y0 in range(ppow):
+            if (K(y0)**3-x).valuation() >= minval:
+                found = True
+                break
+    else:
+        for avec in product(range(ppow),repeat=deg):
+            y0 = K(0)
+            for a in avec:
+                y0 *= z
+                y0 += K(a)
+            if (y0**3-x).valuation() >= minval:
+                found = True
+                break
     if found == False:
         raise ValueError,'Not a cube'
     y1 = y0
-    y = 0
+    y = K(0)
     while y != y1:
         y = y1
         y2 = y**2
         y1 = (2*y*y2+x)/(3*y2)
     ans = K.uniformizer()**(ZZ(valpi/3)) * y
-    # assert ans**3 == xx,'ans**3/xx = %s'%(ans**3/xx)
-
     if return_all:
-        t = PolynomialRing(QQ,'t').gen()
-        ans = [K(o[0])*ans for o in (t**3-1).roots(K)]
+        cubicpol = PolynomialRing(K,'t')([1,1,1])
+        ans = [ans] + [K(o) * ans for o,_ in cubicpol.roots()]
     return ans
 
 
@@ -612,7 +614,7 @@ def our_nroot(xx,n,K = None,return_all = False):
     xx=K(xx)
     x_orig = xx
     p=K.base_ring().prime()
-    valp = xx.valuation(p)
+    valp = xx.valuation()
     try:
         eK = K.ramification_index()
     except AttributeError:
@@ -629,13 +631,19 @@ def our_nroot(xx,n,K = None,return_all = False):
     else:
         minval = 1
     ppow = p**minval
-    for avec in product(range(ppow),repeat=deg):
-        y0 = avec[0]
-        for a in avec[1:]:
-            y0 = y0*z + a
-        if (y0**n-x).valuation(p) >= minval:
-            found = True
-            break
+    if deg == 1:
+        for y0 in range(ppow):
+            if (y0**n-x).valuation() >= minval:
+                found = True
+                break
+    else:
+        for avec in product(range(ppow),repeat=deg):
+            y0 = avec[0]
+            for a in avec[1:]:
+                y0 = y0*z + a
+            if (y0**n-x).valuation() >= minval:
+                found = True
+                break
     if found == False:
         raise ValueError,'Not an n-th power'
     y1 = y0
@@ -1055,7 +1063,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     return None,None,None
 
 
-def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True, kill_torsion = True,height_threshold = .8):
+def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True, kill_torsion = True,height_threshold = .85):
     assert qE.valuation() != 0, 'qE should not have zero valuation'
     if qE.valuation() < 0:
         qE = 1/qE
@@ -1081,71 +1089,43 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
     Deltamodform = CuspForms(weight=12).basis()[0]
     jpowseries = E4.q_expansion(prec+7)**3/Deltamodform.q_expansion(prec+7)
     jpowseries = PolynomialRing(ZZ,names='w')([ZZ(jpowseries[i]) for i in range(prec+1)])
-    Kp = qE.parent()
+    Kp = emb.codomain()
+    try:
+        qE = Kp(qE)
+    except RuntimeError:
+        qE = Kp(qE.trace()/2)
     revdivs = divisors(qval)
     revdivs.reverse()
     verbose('Number of divisors of %s is %s'%(qval,len(revdivs)))
+    w3s = [Kp(1)] + [o for o,_ in (PolynomialRing(Kp,names='w')([Kp.one(),Kp.one(),Kp.one()])).roots()]
     for guessed_pow in revdivs:
         verbose('guessed_pow = %s'%guessed_pow)
         try:
             qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True)
         except ValueError:
             continue
-        for qEroot,D in product(qErlist,selmer_group_iterator(F,S,24)):
+        for qEroot,D in product(qErlist,selmer_group_iterator(F,S,12)):
             jE = 1/qEroot + jpowseries(qEroot)
-            # jE = jpowseries(qEroot) # Get the candidate j invariant
-            # Kp = jE.parent()
             Deltap = Kp(emb(D))
             c4cubed = Kp(Deltap * jE)
             try:
-                c4list = our_cuberoot(c4cubed,Kp,return_all = True)
+                c4root = our_cuberoot(c4cubed,Kp)
             except ValueError:
                 continue
-            for c4 in c4list:
-                c4pol = our_algdep(c4,deg,prec = prec)
-                pol_height = height_polynomial(c4pol,base = p)
-                if pol_height < height_threshold * prec:
-                    verbose('c4pol = %s (height = %s)'%(c4pol,pol_height))
-
-                    # if c4pol.leading_coefficient() not in [1,-1]:
-                    #     continue
-                    for c4ex in [o[0] for c4 in c4list for o in c4pol.roots(F)]:
-                        verbose('Candidate c4 = %s'%c4ex)
+            for w3 in w3s:
+                c4pol = algdep((c4root * w3).add_bigoh(prec),deg)
+                if height_polynomial(c4pol,base = p) < height_threshold * prec:
+                    for c4ex,_ in c4pol.roots(F):
                         c6squared = F(c4ex**3 - 1728*D)
                         if not c6squared.is_square():
                             continue
-                        for c6ex in c6squared.sqrt(all=True):
+                        for c6ex in c6squared.sqrt(all = True):
                             try:
                                 E = EllipticCurve_from_c4c6(c4ex,c6ex)
                             except ArithmeticError: continue
                             if not check_conductor or E.conductor() == conductor:
-                                #assert E.discriminant() == D
                                 verbose('Success!')
                                 return E
-            try:
-                c6list = our_sqrt(c4cubed - 1728*Deltap,Kp,return_all = True)
-            except ValueError:
-                continue
-            for c6 in c6list:
-                c6pol = our_algdep(c6,deg,prec = prec)
-                pol_height = height_polynomial(c6pol,base = p)
-                if pol_height < height_threshold * prec:
-                    verbose('c6pol = %s (height = %s)'%(c6pol,pol_height))
-                    # if c6pol.leading_coefficient() not in [1,-1]:
-                    #     continue
-                    for c6ex in [o[0] for c6 in c6list for o in c6pol.roots(F)]:
-                        verbose('Candidate c6 = %s'%c6ex)
-                        T = PolynomialRing(F,names = 'T').gen()
-                        c4cubed_ex = F(c6ex**2 + 1728*D)
-                        for c4ex,_ in (T**3-c4cubed_ex).roots(F):
-                            try:
-                                E = EllipticCurve_from_c4c6(c4ex,c6ex)
-                            except ArithmeticError: continue
-                            if not check_conductor or E.conductor() == conductor:
-                                #assert E.discriminant() == D
-                                verbose('Success!')
-                                return E
-
     verbose('Curve not recognized')
     return None
 
@@ -1181,7 +1161,7 @@ def discover_equation_from_L_invariant(Linv,emb,conductor,prec,field = None,chec
                 if c4pol.leading_coefficient() not in [1,-1]:
                     continue
                 for c4ex in [o[0] for c4 in c4list for o in c4pol.roots(F)]:
-                    verbose('Candidate c4 = %s'%c4ex)
+                    # verbose('Candidate c4 = %s'%c4ex)
                     c6squared = F(c4ex**3 - 1728*D)
                     if not c6squared.is_square():
                         continue

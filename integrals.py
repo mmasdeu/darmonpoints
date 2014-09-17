@@ -220,6 +220,10 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         return res * resadd.exp()
     except ValueError:
         return res**2 * (2*resadd).exp()
+    except TypeError:
+        print res
+        print resadd
+        assert 0
 
 def evaluate_parallel(hc,gamma,pol,c0):
     HOC = hc.parent()

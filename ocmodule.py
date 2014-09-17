@@ -12,6 +12,7 @@ from sage.matrix.matrix_space import MatrixSpace
 from copy import copy
 from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.all import Integer,Zp
+from sage.rings.padics.factory import ZpCA
 from sage.rings.power_series_ring import PowerSeriesRing
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.rings.rational_field import QQ
@@ -19,8 +20,12 @@ from sage.rings.integer_ring import ZZ
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.categories.pushout import pushout
 from sage.rings.infinity import Infinity
+from sage.structure.sage_object import load,save
+load('fmpz_mat.spyx')
 
 oo = Infinity
+
+use_fmpz_mat = True
 
 class OCVnElement(ModuleElement):
     r"""
@@ -45,24 +50,29 @@ class OCVnElement(ModuleElement):
     """
     def __init__(self,parent,val = 0,check = False):
         ModuleElement.__init__(self,parent)
-        self._parent=parent
-        self._n=self._parent._n
-        self._nhalf=Integer(self._n/2)
-        self._depth=self._parent._depth
+        self._parent = parent
+        self._depth = self._parent._depth
         if check:
             if isinstance(val,self.__class__):
-                d=min([val._parent._depth,parent._depth])
-                assert(val._parent.weight()==parent.weight())
-                self._val=Matrix(self._parent._R,self._depth,1,0)
-                for ii in range(d):
-                    self._val[ii,0]=val._val[ii,0]
+                if val._parent._depth == parent._depth:
+                    self._val = val._val
+                else:
+                    d = min([val._parent._depth,parent._depth])
+                    if use_fmpz_mat:
+                        self._val = Fmpz_mat(None,d,1)
+                        for i in range(d):
+                            self._val[i,0] = val._val[i,0]
+                    else:
+                        self._val = val._val.submatrix(0,0,nrows = d)
             else:
                 try:
                     self._val = Matrix(self._parent._R,self._depth,1,val)
                 except:
                     self._val= self._parent._R(val) * MatrixSpace(self._parent._R,self._depth,1)(1)
+                if use_fmpz_mat:
+                    self._val = Fmpz_mat(self._val)
         else:
-            self._val= MatrixSpace(self._parent._R,self._depth,1)(val)
+            self._val= val
         self.moments = self._val
 
     def moment(self, i):
@@ -156,13 +166,6 @@ class OCVnElement(ModuleElement):
         val=self._val-y._val
         return self.__class__(self._parent,val, check = False)
 
-    def l_act_by_many(self,xlist):
-        if len(xlist) == 0:
-            return self._parent(0)
-        y = self._parent._get_action_matrix(xlist) * self._val
-        # y = y.change_ring(self._parent._R)
-        return self.__class__(self._parent, y)
-
     def r_act_by(self,x):
         r"""
 
@@ -190,12 +193,20 @@ class OCVnElement(ModuleElement):
 
         x.set_immutable()
         tmp = self._parent._get_powers(x) * self._val
-        # tmp = tmp.change_ring(R)
-        if self._nhalf == 0:
-            return self.__class__(self._parent, tmp,check = False)
-        else:
-            lam = xdet # * factor**2
-            return self.__class__(self._parent,lam**(-self._nhalf) * tmp,check = False)
+        return self.__class__(self._parent, tmp,check = False)
+
+    def _neg_(self):
+        r"""
+
+        EXAMPLES:
+
+        This example illustrates ...
+
+        ::
+
+        """
+        return self.__class__(self._parent,-self._val, check = False)
+
 
     def _rmul_(self,a):
         r"""
@@ -210,53 +221,6 @@ class OCVnElement(ModuleElement):
         #assume that a is a scalar
         return self.__class__(self._parent,a*self._val, check = False)
 
-    def precision_absolute(self):
-        r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-
-        """
-        #This needs to be thought more carefully...
-        if not self._parent.base_ring().is_exact():
-            return [self._val[ii,0].precision_absolute() for ii in range(self._depth)]
-        else:
-            return oo
-
-    def precision(self):
-        r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-
-        """
-        #This needs to be thought more carefully...
-        if not self._parent.base_ring().is_exact():
-            return min([self._val[ii,0].precision_absolute() for ii in range(self._depth)])
-        else:
-            return oo
-
-    def precision_relative(self):
-        r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-        """
-        #This needs to be thought more carefully...
-        if not self._parent.base_ring().is_exact():
-            return min([self._val[ii,0].precision_relative() for ii in range(self._depth)])
-        else:
-            return oo
-
     def _repr_(self):
         r"""
         This returns the representation of self as a string.
@@ -268,9 +232,9 @@ class OCVnElement(ModuleElement):
         ::
 
         """
-        R=PowerSeriesRing(self._parent._R,default_prec=self._depth,name='z')
-        z=R.gen()
-        s=str(sum([R(self._val[ii,0]*z**ii) for ii in range(self._depth)]))
+        R = PowerSeriesRing(self._parent._R,default_prec=self._depth,name='z')
+        z = R.gen()
+        s = str(sum([R(self._val[ii,0]*z**ii) for ii in range(self._depth)]))
         return s
 
     def __cmp__(self,other):
@@ -306,7 +270,7 @@ class OCVnElement(ModuleElement):
         ::
 
         """
-        p = self._parent._R.prime()
+        p = self._parent._p
         if R is None:
             try:
                 R = pushout(P.parent().base_ring(),self.parent().base_ring())
@@ -360,23 +324,13 @@ class OCVn(Module,UniqueRepresentation):
     - Cameron Franc (2012-02-20)
     - Marc Masdeu (2012-02-20)
     """
-    def __init__(self,n,R,depth=None,basis=None):
-        Module.__init__(self,base=R)
-        if basis is not None:
-            self._basis=copy(basis)
-        self._n=n
-        self._R=R
-        if R.is_exact():
-            self._Rmod=self._R
-        else:
-            self._Rmod=Zp(self._R.prime(),self._R.precision_cap())
-
-        if depth is None:
-            depth=n+1
-        if depth != n+1:
-            if R.is_exact(): raise ValueError, "Trying to construct an over-convergent module with exact coefficients, how do you store p-adics ??"
-        self._depth=depth
-        self._PowerSeries=PowerSeriesRing(self._Rmod,default_prec=self._depth,name='z')
+    def __init__(self,p,depth):
+        Module.__init__(self,base = ZZ)
+        self._R = ZZ
+        self._p = p
+        self._Rmod = ZpCA(p,depth - 1)
+        self._depth = depth
+        self._PowerSeries = PowerSeriesRing(self._Rmod, default_prec = self._depth,name='z')
         self._cache_powers = dict()
         self._populate_coercion_lists_()
 
@@ -385,12 +339,15 @@ class OCVn(Module,UniqueRepresentation):
         self._cache_powers = dict()
 
     def is_overconvergent(self):
-        return self._depth != self._n+1
+        return True
 
     def _an_element_(self):
         r"""
         """
-        return OCVnElement(self,Matrix(self._R,self._depth,1,range(1,self._depth+1)), check = False)
+        if use_fmpz_mat:
+            return OCVnElement(self,Fmpz_mat(Matrix(self._R,self._depth,1,range(1,self._depth+1))), check = False)
+        else:
+            return OCVnElement(self,Matrix(self._R,self._depth,1,range(1,self._depth+1)), check = False)
 
     def _coerce_map_from_(self, S):
         r"""
@@ -425,36 +382,27 @@ class OCVn(Module,UniqueRepresentation):
         try:
             return self._cache_powers[abcd]
         except KeyError:
-            if emb is None:
-                a,b,c,d = abcd.list()
-            else:
-                a,b,c,d = emb(abcd).list()
-        #a,b,c,d = a.lift(),b.lift(),c.lift(),d.lift()
-        R=self._PowerSeries
-        r=R([b,a])
-        s=R([d,c])
-        n=self._n
-        if self._depth == n+1:
-            rpows=[R(1)]
-            spows=[R(1)]
-            for ii in range(n):
-                rpows.append(r*rpows[-1])
-                spows.append(s*spows[-1])
-            x=Matrix(self._Rmod,n+1,n+1,0)
-            for ii in range(n+1):
-                y = rpows[ii] * spows[n-ii]
-                for jj in range(self._depth):
-                    x[ii,jj]=y[jj]
+            pass
+        if emb is None:
+            a,b,c,d = abcd.list()
         else:
-            ratio = r * s**-1
-            y = s**n
-            x = Matrix(self._Rmod,self._depth,self._depth,0)
+            a,b,c,d = emb(abcd).list()
+        #a,b,c,d = a.lift(),b.lift(),c.lift(),d.lift()
+        R = self._PowerSeries
+        r = R([b,a])
+        s = R([d,c])
+        ratio = r * s**-1
+        y = R(1)
+        if use_fmpz_mat:
+            x = Fmpz_mat(None,self._depth,self._depth)
+        else:
+            x = Matrix(ZZ,self._depth,self._depth,0)
+        for jj in range(self._depth):
+            x[0,jj] = y[jj]
+        for ii in range(1,self._depth):
+            y *= ratio
             for jj in range(self._depth):
-                x[0,jj] = y[jj]
-            for ii in range(1,self._depth):
-                y *= ratio
-                for jj in range(self._depth):
-                    x[ii,jj] = y[jj]
+                x[ii,jj] = y[jj]
         self._cache_powers[abcd] = x
         return x
 
@@ -465,23 +413,10 @@ class OCVn(Module,UniqueRepresentation):
         EXAMPLES:
 
         """
-        if self.is_overconvergent():
-            return "Space of %s-adic distributions with k=%s action and precision cap %s"%(self._R.prime(), self._n, self._depth - 1)
-        else:
-            if self.base_ring() is QQ:
-                V = 'Q^2'
-            elif self.base_ring() is ZZ:
-                V = 'Z^2'
-            elif isinstance(self.base_ring(), pAdicGeneric) and self.base_ring().degree() == 1:
-                if self.base_ring().is_field():
-                    V = 'Q_%s^2'%(self._R.prime())
-                else:
-                    V = 'Z_%s^2'%(self._R.prime())
-            else:
-                V = '(%s)^2'%(self.base_ring())
-            return "Sym^%s %s"%(self._n, V)
-        # s='Overconvergent coefficient module of weight n = %s over the ring %s and depth %s'%(self._n,self._R,self._depth)
-        return s
+        return "Space of %s-adic distributions with k=0 action and precision cap %s"%(self._p, self._depth - 1)
+
+    def prime(self):
+        return self._p
 
     def basis(self):
         r"""
@@ -505,7 +440,10 @@ class OCVn(Module,UniqueRepresentation):
         """
         try: return self._basis
         except: pass
-        self._basis=[OCVnElement(self,Matrix(self._R,self._depth,1,{(jj,0):1},sparse=False),check = False) for jj in range(self._depth)]
+        if use_fmpz_mat:
+            self._basis=[OCVnElement(self,Fmpz_mat(Matrix(self._R,self._depth,1,{(jj,0):1},sparse=False)),check = False) for jj in range(self._depth)]
+        else:
+            self._basis=[OCVnElement(self,Matrix(self._R,self._depth,1,{(jj,0):1},sparse=False),check = False) for jj in range(self._depth)]
         return self._basis
 
     def base_ring(self):
@@ -539,32 +477,5 @@ class OCVn(Module,UniqueRepresentation):
         """
         return self._depth
 
-    def weight(self):
-        r"""
-        Returns the cohomological weight of the automorphic form.
-        """
-        return self._n
-
-    def _get_action_matrix(self,xlist,emb = None):
-        assert self._n == 0
-        MatSp = MatrixSpace(self._Rmod,self._depth,self._depth)
-        y = MatSp(0)
-        for n,x in xlist:
-            if emb is None:
-                x.set_immutable()
-            y += n * self._get_powers(x,emb)
-        return y
-
-    def acting_matrix(self,g,d,B=None):
-        r"""
-        Matrix representation of ``g`` in a given basis.
-
-        """
-        if d is None:
-            d = self.dimension()
-        if B is None:
-            B=self.basis()
-        A=[(b.l_act_by(g)).matrix_rep(B) for b in B]
-        return Matrix(self._R,d,d,[A[jj][ii,0] for ii in range(d) for jj in range(d)]).transpose()
-
-
+    def is_exact(self):
+        return False
