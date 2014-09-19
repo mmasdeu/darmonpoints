@@ -683,7 +683,7 @@ class CohomologyGroup(Parent):
             for qq,e in F.ideal(q).factor():
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
                     try:
-                        Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).change_ring(QQ)
+                        Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).transpose().change_ring(QQ)
                     except (RuntimeError,TypeError):
                         continue
                     verbose('Computed hecke matrix at qq = %s'%qq)
@@ -714,7 +714,7 @@ class CohomologyGroup(Parent):
                 for K in good_components:
                     col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
                     ans.append( sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0)))
-                    return ans
+                return ans
             else:
                 K = good_components[0]
                 col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]

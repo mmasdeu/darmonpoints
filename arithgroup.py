@@ -226,11 +226,15 @@ class ArithGroup_generic(AlgebraicGroup):
         reps = [g0]
         I = self.enumerate_elements()
         n_iters = ZZ(0)
-        lnorm = self.F.ideal(l).norm()
-        try:
+        if self.F == QQ:
+            lnorm = ZZ(l).abs()
+            try:
+                num_reps = lnorm if ZZ(self._O_discriminant) % lnorm == 0 else lnorm + 1
+            except TypeError:
+                num_reps = lnorm if ZZ(self._O_discriminant.gen()) % ZZ(lnorm) == 0 else lnorm + 1
+        else:
+            lnorm = self.F.ideal(l).norm()
             num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
-        except TypeError:
-            num_reps = lnorm if ZZ(self._O_discriminant.gen()) % ZZ(lnorm.gen()) == 0 else lnorm + 1
 
         while len(reps) < num_reps:
             n_iters += 1
@@ -263,6 +267,8 @@ class ArithGroup_generic(AlgebraicGroup):
             ti = elt * gk2
             if self._is_in_order(ti):
                 return self(ti)
+        verbose("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
+        raise RuntimeError("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
 
     @cached_method
     def get_Up_ti(self,gk1,gamma):

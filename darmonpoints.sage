@@ -11,7 +11,7 @@ load('fmpz_mat.spyx')
 ##########################################################################
 
 def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,parallelize = False,Wlist = None,twist = True, progress_bar = True, magma = None, Up_method = None):
-    global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
+    # global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
     from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant, recognize_J
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
@@ -268,7 +268,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 ######################################
 
 
-def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None):
+def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None,return_all = False):
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
@@ -296,7 +296,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
 
     sys.setrecursionlimit(10**6)
 
-    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, Phi, curve, ker
+    # global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, curve, ker
 
     try:
         F = P.ring()
@@ -367,7 +367,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     # Define phiE, the cohomology class associated to the system of eigenvalues.
     Coh = CohomologyGroup(G.Gpn)
     try:
-        phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound)
+        phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all)
     except ValueError:
         if quit_when_done:
             magma.quit()
@@ -375,15 +375,6 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     if use_sage_db:
         G.save_to_db()
     print 'Cohomology class found'
-    try:
-        Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists,method = Up_method, progress_bar = progress_bar)
-    except (AssertionError,RuntimeError,ValueError):
-        if quit_when_done:
-            magma.quit()
-        return 'Problem when getting overconvergent class'
-    print 'Done overconvergent lift'
-    # Find an element x of Gpn for not in the kernel of phiE,
-    # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
     wp = G.wp()
     B = G.Gpn.abelianization()
     C = G.Gn.abelianization()
@@ -401,53 +392,71 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     V = Bab.gen(0).lift().parent()
     good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
     ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
-    found = False
-    for o in ker:
-        if phiE.evaluate(o) != 0:
-            found = True
-            break
-    assert found
-    xgen, wxgen = G.Gn(o),G.Gn(wp**-1 * o * wp)
-    found = False
-    while not found:
+
+    if not return_all:
+        phiE = [phiE]
+    ret_vals = []
+    for phi in phiE:
         try:
-            xi1, xi2 = lattice_homology_cycle(G,xgen,wxgen,working_prec,outfile = outfile)
-            found = True
+            Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,use_ps_dists,method = Up_method, progress_bar = progress_bar)
         except (AssertionError,RuntimeError,ValueError):
-            if quit_when_done:
-                magma.quit()
-            return 'Problem when computing homology cycle'
-        except PrecisionError:
-            working_prec  = 2 * working_prec
-            verbose('Setting working_prec to %s'%working_prec)
+            ret_vals.append( 'Problem when getting overconvergent class')
+            continue
+        print 'Done overconvergent lift'
+        # Find an element x of Gpn for not in the kernel of phi,
+        # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
+        found = False
+        for o in ker:
+            if phi.evaluate(o) != 0:
+                found = True
+                break
+        assert found
+        xgen, wxgen = G.Gn(o),G.Gn(wp**-1 * o * wp)
+        found = False
+        while not found:
+            try:
+                xi1, xi2 = lattice_homology_cycle(G,xgen,wxgen,working_prec,outfile = outfile)
+                found = True
+            except (AssertionError,RuntimeError,ValueError):
+                ret_vals.append( 'Problem when computing homology cycle')
+                continue
+            except PrecisionError:
+                working_prec  = 2 * working_prec
+                verbose('Setting working_prec to %s'%working_prec)
 
-    qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
-    qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
-    qE = qE1/qE2
-    Linv = qE.log(p_branch = 0)/qE.valuation()
+        qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
+        qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
+        qE = qE1/qE2
+        qE = qE.add_bigoh(prec + qE.valuation())
+        Linv = qE.log(p_branch = 0)/qE.valuation()
 
-    print 'Integral done. Now trying to recognize the curve'
-    fwrite('qE = %s'%qE,outfile)
-    fwrite('Linv = %s'%Linv,outfile)
-    curve = discover_equation(qE,G._F_to_local,NE,prec)
-    if curve is None:
-        fwrite('Curve not found with the sought conductor. Will try to find some curve at least',outfile)
-        print 'Curve not found with the sought conductor. Will try to find some curve at least'
-        curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = False)
+        print 'Integral done. Now trying to recognize the curve'
+        fwrite('qE = %s'%qE,outfile)
+        fwrite('Linv = %s'%Linv,outfile)
+        curve = discover_equation(qE,G._F_to_local,NE,prec)
         if curve is None:
-            fwrite('Still no luck. Sorry!',outfile)
-            print 'Still no luck. Sorry!'
-            if quit_when_done:
-                magma.quit()
-            return None
+            fwrite('Curve not found with the sought conductor. Will try to find some curve at least',outfile)
+            print 'Curve not found with the sought conductor. Will try to find some curve at least'
+            curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = False)
+            if curve is None:
+                fwrite('Still no luck. Sorry!',outfile)
+                print 'Still no luck. Sorry!'
+                if quit_when_done:
+                    magma.quit()
+                ret_vals.append(None)
+                continue
+            else:
+                curve = curve.global_minimal_model()
+                fwrite('Found a curve, at least...',outfile)
+                print 'Found a curve, at least...'
         else:
             curve = curve.global_minimal_model()
-            fwrite('Found a curve, at least...',outfile)
-            print 'Found a curve, at least...'
-    else:
-        curve = curve.global_minimal_model()
-    fwrite('Curve with a-invariants %s'%(list(curve.a_invariants())),outfile)
-    fwrite('================================================',outfile)
+        fwrite('Curve with a-invariants %s'%(list(curve.a_invariants())),outfile)
+        fwrite('================================================',outfile)
+        ret_vals.append((curve,qE,Linv,Phi))
     if quit_when_done:
         magma.quit()
-    return curve
+    if return_all:
+        return ret_vals
+    else:
+        return ret_vals[0]
