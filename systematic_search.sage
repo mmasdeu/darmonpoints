@@ -11,7 +11,6 @@ Nrange = range(1,200) # Conductors to explore
 max_P_norm = 200 # Maximum allowed conductor
 max_F_disc = None # Maximum size of discriminant of base field
 max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
-chunk_length = 20
 decimal_prec = 40
 
 @parallel
@@ -28,6 +27,10 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
         ROOT = os.getcwd()
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
 
+    F.<r> = NumberField(pol)
+    if len(F.narrow_class_group()) > 1:
+        return []
+
     from sage.interfaces.magma import Magma
     magma = Magma()
     magma.attach_spec(page_path)
@@ -38,11 +41,9 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
     out_str_vec = []
     for N in Nrange:
         print 'N = %s'%N
-        F.<r> = NumberField(pol)
+
         # if gcd(F.discriminant(),N) != 1:
         #     continue
-        if len(F.narrow_class_group()) > 1:
-            continue
         for a in F.elements_of_norm(N):
             print 'pol = %s'%pol
             facts = F.ideal(a).factor()
