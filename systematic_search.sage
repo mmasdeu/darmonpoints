@@ -1,12 +1,11 @@
-load('darmonpoints.sage')
+# load('darmonpoints.sage')
 from sage.misc.misc import alarm,cancel_alarm
 from sage.parallel.decorate import parallel,fork
+
+
 ######################
 # Parameters         #
 ######################
-
-x = QQ['x'].gen()
-
 Nrange = range(1,200) # Conductors to explore
 max_P_norm = 200 # Maximum allowed conductor
 max_F_disc = None # Maximum size of discriminant of base field
@@ -90,7 +89,9 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                     if F.signature()[1] == 0:
                         ram_at_inf[0] = 1
                     try:
+                        alarm(max_waiting_time)
                         G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = magma)
+                        cancel_alarm()
                     except Exception as e:
                         out_str_vec.append('Error when computing G: ' + e.message)
                         continue
@@ -101,8 +102,13 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                         out_str_vec.append('Error when finding cohomology class: ' + e.message)
                         continue
                     for phiE in phiElist:
-                        # curve = 'P,D,N = %s'%(P.reduced_gens()[0],D.reduced_gens()[0],(P*D*Np).reduced_gens()[0])
-                        curve = fork(find_curve,timeout = max_waiting_time)(P,D,P*D*Np,prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                        try:
+                            alarm(max_waiting_time)
+                            curve = find_curve(P,D,P*D*Np,prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                            cancel_alarm()
+                        except Exception as e:
+                            new_out_str = out_str.format(curve = '\'Error '+ curve + ' \'',right_conductor = '\'False\'')
+                            continue
                         if curve is None:
                             new_out_str = out_str.format(curve = 'Not recognized',right_conductor = 'False')
                         else:
@@ -117,16 +123,16 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                         out_str_vec.append(new_out_str)
     return out_str_vec
 
+# outfile='atest.txt'
 # # Testing
-# data = [[x^3-x^2-x+2]]
-# Nrange = [34]
+# data = [[x^3-x^2+x-2]]
+# Nrange = [10]
 # for inp,out_str_vec in find_all_curves([(data[0][0],Nrange,max_P_norm,max_waiting_time)]):
 #     for out_str in out_str_vec:
 #         fwrite(out_str,outfile)
 
-
-
 def compute_table(input_file,output_trail = None):
+    x = QQ['x'].gen()
     if output_trail is None:
         output_trail = '_computed.txt'
     load(input_file) # Initializes ``all_fields`` vector
