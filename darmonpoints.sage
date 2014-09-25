@@ -365,7 +365,10 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         except Exception as e:
             if quit_when_done:
                 magma.quit()
-            return 'Error when computing G: ' + e.message
+            if return_all:
+                return ['Error when computing G: ' + e.message]
+            else:
+                return 'Error when computing G: ' + e.message
 
         # Define phiE, the cohomology class associated to the system of eigenvalues.
         try:
@@ -374,7 +377,10 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         except Exception as e:
             if quit_when_done:
                 magma.quit()
-            return 'Error when finding cohomology class: ' + e.message
+            if return_all:
+                return ['Error when finding cohomology class: ' + e.message]
+            else:
+                return 'Error when finding cohomology class: ' + e.message
         if use_sage_db:
             G.save_to_db()
         print 'Cohomology class found'
@@ -399,7 +405,10 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     except Exception as e:
         if quit_when_done:
             magma.quit()
-        return 'Problem calculating homology kernel: ' + e.message
+        if return_all:
+            return ['Problem calculating homology kernel: ' + e.message]
+        else:
+            return 'Problem calculating homology kernel: ' + e.message
 
     if not return_all:
         phiE = [phiE]
@@ -408,7 +417,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         try:
             Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,use_ps_dists,method = Up_method, progress_bar = progress_bar)
         except Exception as e:
-            ret_vals.append('Problem when getting overconvergent class: ' + e.message)
+            ret_vals.append('Problem when getting overconvergent class: ' + str(e.message))
             continue
         print 'Done overconvergent lift'
         # Find an element x of Gpn for not in the kernel of phi,
@@ -422,7 +431,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
             if not found:
                 raise RuntimeError('Cocycle evaluates always to zero')
         except Exception as e:
-            ret_vals.append('Problem when choosing element in kernel: ' + e.message)
+            ret_vals.append('Problem when choosing element in kernel: ' + str(e.message))
             continue
 
         xgen, wxgen = G.Gn(o),G.Gn(wp**-1 * o * wp)
@@ -435,14 +444,14 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
                 working_prec  = 2 * working_prec
                 verbose('Setting working_prec to %s'%working_prec)
             except Exception as e:
-                ret_vals.append('Problem when computing homology cycle' + e.message)
+                ret_vals.append('Problem when computing homology cycle' + str(e.message))
                 break
 
         try:
             qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
             qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
         except Exception as e:
-            ret_vals.append('Problem with integration' + e.message)
+            ret_vals.append('Problem with integration' + str(e.message))
 
         qE = qE1/qE2
         qE = qE.add_bigoh(prec + qE.valuation())
@@ -461,7 +470,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
                 print 'Still no luck. Sorry!'
                 if quit_when_done:
                     magma.quit()
-                ret_vals.append(None)
+                ret_vals.append('None')
                 continue
             else:
                 curve = curve.global_minimal_model()
@@ -471,7 +480,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
             curve = curve.global_minimal_model()
         fwrite('Curve with a-invariants %s'%(list(curve.a_invariants())),outfile)
         fwrite('================================================',outfile)
-        ret_vals.append((curve,qE,Linv,Phi))
+        ret_vals.append(str(curve.a_invariants()))
     if quit_when_done:
         magma.quit()
     if return_all:

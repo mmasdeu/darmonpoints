@@ -140,5 +140,8 @@ def compute_table(input_file,output_trail = None):
     input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time) for datum in all_fields]
     output_file = input_file + output_trail
     for inp,out_str_vec in find_all_curves(input_vec):
-        for out_str in out_str_vec:
-            fwrite(out_str,output_file)
+        if out_str_vec == 'NO DATA':
+            fwrite('NO DATA',output_file)
+        else:
+            for out_str in out_str_vec:
+                fwrite(out_str,output_file)
