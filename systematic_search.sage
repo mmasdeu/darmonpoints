@@ -128,8 +128,8 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
 def compute_table(input_file,output_base = None):
     if output_base is None:
         output_base = 'computed_'
-    load(input_file) # Initializes ``data``
-    input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time) for datum in data]
+    load(input_file) # Initializes ``all_fields`` vector
+    input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time) for datum in all_fields]
     output_file = output_base + input_file
     for inp,out_str_vec in find_all_curves(input_vec):
         for out_str in out_str_vec:
