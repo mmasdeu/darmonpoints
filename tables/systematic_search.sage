@@ -14,7 +14,6 @@ max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
 chunk_length = 20
 
 decimal_prec = 40
-outfile = 'output_table.sage'
 
 @parallel
 def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
@@ -118,15 +117,21 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                         out_str_vec.append(new_out_str)
     return out_str_vec
 
-# Testing
-data = [[x^3-x^2-x+2]]
-Nrange = [34]
-for inp,out_str_vec in find_all_curves([(data[0][0],Nrange,max_P_norm,max_waiting_time)]):
-    for out_str in out_str_vec:
-        fwrite(out_str,outfile)
-
-# load('all_fields_atr.sage') # Initializes ``data``
-# input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time) for datum in data]
-# for inp,out_str_vec in find_all_curves(input_vec):
+# # Testing
+# data = [[x^3-x^2-x+2]]
+# Nrange = [34]
+# for inp,out_str_vec in find_all_curves([(data[0][0],Nrange,max_P_norm,max_waiting_time)]):
 #     for out_str in out_str_vec:
 #         fwrite(out_str,outfile)
+
+
+
+def compute_table(input_file,output_base = None):
+    if output_base is None:
+        output_base = 'computed_'
+    load(input_file) # Initializes ``data``
+    input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time) for datum in data]
+    output_file = output_base + input_file
+    for inp,out_str_vec in find_all_curves(input_vec):
+        for out_str in out_str_vec:
+            fwrite(out_str,output_file)
