@@ -1,4 +1,4 @@
-load('darmonpoints.sage')
+load('../darmonpoints.sage')
 from sage.misc.misc import alarm,cancel_alarm
 from sage.parallel.decorate import parallel,fork
 ######################
@@ -14,21 +14,21 @@ max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
 chunk_length = 20
 
 decimal_prec = 40
-outfile = 'systematic_table.sage'
+outfile = 'output_table.sage'
 
 @parallel
 def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
-    load('darmonpoints.sage')
+    load('../darmonpoints.sage')
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
     from util import enumerate_words, quaternion_algebra_from_discriminant
 
     try:
-        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+        page_path = ROOT + '/../KleinianGroups-1.0/klngpspec'
     except NameError:
         ROOT = os.getcwd()
-        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+        page_path = ROOT + '/../KleinianGroups-1.0/klngpspec'
 
     from sage.interfaces.magma import Magma
     magma = Magma()
