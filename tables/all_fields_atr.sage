@@ -1,6 +1,7 @@
 # This file contains a vector with all the ATR fields
 # of class number 1 of signatures (0,1), (1,1), (2,1)
 # whose discriminant has absolute value at most 5000.
+x = QQ['x'].gen()
 
 all_fields = [\
 [x^2 - x + 1, -3, 1, []],\
