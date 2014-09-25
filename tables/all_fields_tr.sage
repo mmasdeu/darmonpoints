@@ -1,5 +1,5 @@
-# This file contains a vector with all the number fields
-# of class number 1 of signatures (2,0), (3,0), (0,1), (1,1), (2,1)
+# This file contains a vector with all totally real number fields
+# of class number 1 of signatures (2,0), (3,0)
 # whose discriminant has absolute value at most 5000.
 
 all_fields = [\
