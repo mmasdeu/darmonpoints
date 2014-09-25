@@ -11,7 +11,7 @@ load('fmpz_mat.spyx')
 ##########################################################################
 
 def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,parallelize = False,Wlist = None,twist = True, progress_bar = True, magma = None, Up_method = None):
-    # global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
+    global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
     from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant, recognize_J
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
@@ -268,7 +268,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 ######################################
 
 
-def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None,return_all = False):
+def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None,return_all = False,initial_data = None):
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
@@ -296,7 +296,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
 
     sys.setrecursionlimit(10**6)
 
-    # global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, curve, ker
+    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, curve, ker
 
     try:
         F = P.ring()
@@ -356,42 +356,50 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         print "Partial results will be saved in %s"%outfile
     print "=================================================="
 
-    # Define the S-arithmetic group
-    try:
-        G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma)
-    except RuntimeError:
-        if quit_when_done:
-            magma.quit()
-        return 'Runtime Error in BigArithGroup'
+    if initial_data is not None:
+        G,phiE = initial_data
+    else:
+        # Define the S-arithmetic group
+        try:
+            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma)
+        except Exception as e:
+            if quit_when_done:
+                magma.quit()
+            return 'Error when computing G: ' + e.message
 
-    # Define phiE, the cohomology class associated to the system of eigenvalues.
-    Coh = CohomologyGroup(G.Gpn)
+        # Define phiE, the cohomology class associated to the system of eigenvalues.
+        try:
+            Coh = CohomologyGroup(G.Gpn)
+            phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all)
+        except Exception as e:
+            if quit_when_done:
+                magma.quit()
+            return 'Error when finding cohomology class: ' + e.message
+        if use_sage_db:
+            G.save_to_db()
+        print 'Cohomology class found'
     try:
-        phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all)
-    except ValueError:
+        wp = G.wp()
+        B = G.Gpn.abelianization()
+        C = G.Gn.abelianization()
+        Bab = B.abelian_group()
+        Cab = C.abelian_group()
+        verbose('Finding f...')
+        fdata = [B.ab_to_G(o).quaternion_rep for o in B.gens_small()]
+        # verbose('fdata = %s'%fdata)
+        f = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in fdata])
+        verbose('Finding g...')
+        gdata = [wp**-1 * o * wp for o in fdata]
+        # verbose('gdata = %s'%gdata)
+        g = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in gdata])
+        fg = direct_sum_of_maps([f,g])
+        V = Bab.gen(0).lift().parent()
+        good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
+        ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
+    except Exception as e:
         if quit_when_done:
             magma.quit()
-        return 'Could not find cohomology class'
-    if use_sage_db:
-        G.save_to_db()
-    print 'Cohomology class found'
-    wp = G.wp()
-    B = G.Gpn.abelianization()
-    C = G.Gn.abelianization()
-    Bab = B.abelian_group()
-    Cab = C.abelian_group()
-    verbose('Finding f...')
-    fdata = [B.ab_to_G(o).quaternion_rep for o in B.gens_small()]
-    # verbose('fdata = %s'%fdata)
-    f = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in fdata])
-    verbose('Finding g...')
-    gdata = [wp**-1 * o * wp for o in fdata]
-    # verbose('gdata = %s'%gdata)
-    g = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in gdata])
-    fg = direct_sum_of_maps([f,g])
-    V = Bab.gen(0).lift().parent()
-    good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
-    ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
+        return 'Problem calculating homology kernel: ' + e.message
 
     if not return_all:
         phiE = [phiE]
@@ -399,33 +407,43 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     for phi in phiE:
         try:
             Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,use_ps_dists,method = Up_method, progress_bar = progress_bar)
-        except (AssertionError,RuntimeError,ValueError):
-            ret_vals.append( 'Problem when getting overconvergent class')
+        except Exception as e:
+            ret_vals.append('Problem when getting overconvergent class: ' + e.message)
             continue
         print 'Done overconvergent lift'
         # Find an element x of Gpn for not in the kernel of phi,
         # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
-        found = False
-        for o in ker:
-            if phi.evaluate(o) != 0:
-                found = True
-                break
-        assert found
+        try:
+            found = False
+            for o in ker:
+                if phi.evaluate(o) != 0:
+                    found = True
+                    break
+            if not found:
+                raise RuntimeError('Cocycle evaluates always to zero')
+        except Exception as e:
+            ret_vals.append('Problem when choosing element in kernel: ' + e.message)
+            continue
+
         xgen, wxgen = G.Gn(o),G.Gn(wp**-1 * o * wp)
         found = False
         while not found:
             try:
                 xi1, xi2 = lattice_homology_cycle(G,xgen,wxgen,working_prec,outfile = outfile)
                 found = True
-            except (AssertionError,RuntimeError,ValueError):
-                ret_vals.append( 'Problem when computing homology cycle')
-                continue
             except PrecisionError:
                 working_prec  = 2 * working_prec
                 verbose('Setting working_prec to %s'%working_prec)
+            except Exception as e:
+                ret_vals.append('Problem when computing homology cycle' + e.message)
+                break
 
-        qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
-        qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
+        try:
+            qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
+            qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
+        except Exception as e:
+            ret_vals.append('Problem with integration' + e.message)
+
         qE = qE1/qE2
         qE = qE.add_bigoh(prec + qE.valuation())
         Linv = qE.log(p_branch = 0)/qE.valuation()

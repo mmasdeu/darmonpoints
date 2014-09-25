@@ -511,6 +511,7 @@ def our_sqrt(xx,K = None,return_all = False):
             return xx
     xx=K(xx)
     p=K.base_ring().prime()
+    prec = K.precision_cap()
     valp = xx.valuation(p)
     try:
         eK = K.ramification_index()
@@ -536,7 +537,8 @@ def our_sqrt(xx,K = None,return_all = False):
         raise ValueError,'Not a square'
     y1 = y0
     y = 0
-    while y != y1:
+    num_iters = 0
+    while y != y1 and num_iters < 2 * prec:
         y = y1
         y1 = (y**2+x)/(2*y)
 
@@ -555,6 +557,7 @@ def our_cuberoot(xx,K = None,return_all = False):
             return xx
     xx=K(xx)
     p=K.base_ring().prime()
+    prec = K.precision_cap()
     valp = xx.valuation()
     try:
         eK = K.ramification_index()
@@ -587,7 +590,8 @@ def our_cuberoot(xx,K = None,return_all = False):
         raise ValueError,'Not a cube'
     y1 = y0
     y = K(0)
-    while y != y1:
+    num_iters = 0
+    while y != y1 and num_iters < 2 * prec:
         y = y1
         y2 = y**2
         y1 = (2*y*y2+x)/(3*y2)
@@ -612,6 +616,7 @@ def our_nroot(xx,n,K = None,return_all = False):
         else:
             return xx
     xx=K(xx)
+    prec = K.precision_cap()
     x_orig = xx
     p=K.base_ring().prime()
     valp = xx.valuation()
@@ -648,7 +653,9 @@ def our_nroot(xx,n,K = None,return_all = False):
         raise ValueError,'Not an n-th power'
     y1 = y0
     y = 0
-    while y != y1:
+    num_iters = 0
+    while y != y1 and num_iters < 2 * prec:
+        num_iters += 1
         y = y1
         yn = y**n
         y1 = ((n-1)*yn+x)*y/(n*yn)

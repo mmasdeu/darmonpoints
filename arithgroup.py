@@ -1156,7 +1156,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             mat_gamma = self._kleinianmatrix(gammainv)
             gammaz = act_H3(mat_gamma,z)
             if len(boundary) == 0:
-                raise RuntimeError, 'Empty boundary'
+                raise RuntimeError('Empty boundary')
             lengthw = 0
             delta = B(1)
             while True:
@@ -1177,15 +1177,13 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 #verbose('deltaword = %s'%deltaword)
                 lengthw += 1
             correct = ( -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 10.0)
-            assert correct
             if not correct:
-                verbose('Trying again with hopefully smaller quaternion!!')
+                raise RuntimeError('Error in word problem from Aurel 1')
         deltaword.reverse()
         try:
             c = sum((list(self._simplification_iso[o-1]) for o in deltaword),[])
         except IndexError:
-            print min(deltaword)-1,max(deltaword)-1,len(self._simplification_iso)
-            raise RuntimeError
+            raise RuntimeError('Error in word problem from Aurel 1')
         tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)]
         ans = reduce_word(tmp)
         return ans

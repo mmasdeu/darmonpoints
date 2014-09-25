@@ -92,9 +92,9 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_
         method = 'bigmatrix'
     else:
         if method != 'naive' and method != 'bigmatrix':
-            raise ValueError,'method should be either "naive" or "bigmatrix"'
+            raise ValueError('method should be either "naive" or "bigmatrix"')
     if Pnorm != p:
-        raise NotImplementedError,'For now I can only work over totally split'
+        raise NotImplementedError('For now I can only work over totally split')
 
     base_ring = Zp(p,prec) #Qp(p,prec)
 
@@ -193,6 +193,7 @@ class CohomologyElement(ModuleElement):
             raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
+    @cached_method
     def evaluate_oc(self,x,parallelize = False,extramul = None):
         H = self.parent()
         if H._use_ps_dists:
@@ -347,7 +348,8 @@ class CohomologyElement(ModuleElement):
                 sign *= ZZ(-1)
                 h2 = -h2
                 m0val = min([(u.moment(0) - v.moment(0)).valuation(p) for u,v in zip(h2._val,self._val)])
-                assert m0val > 0
+                if m0val <= 0:
+                    raise RuntimeError("Does not seem to converge")
             current_val = min([(u-v).valuation(p) for u,v in zip(h2._val,self._val)])
             old_val = current_val - 1
             while current_val < prec and current_val > old_val:
@@ -707,7 +709,7 @@ class CohomologyGroup(Parent):
                         break
 
         if len(good_components) == 0:
-            raise ValueError,'Group does not seem to be attached to an elliptic curve'
+            raise ValueError('Group does not seem to be attached to an elliptic curve')
         else:
             if return_all:
                 ans = []
