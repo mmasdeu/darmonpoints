@@ -67,7 +67,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                         continue
                     D = F.ideal(1)
                     Np = F.ideal(1)
-                    n_ramified_places = F.signature()[0]
+                    n_ramified_places = F.signature()[0] + F.signature()[1] - 1
                     for i in range(nfactors):
                         if i == j:
                             continue
