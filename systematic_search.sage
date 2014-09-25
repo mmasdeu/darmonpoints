@@ -93,13 +93,14 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                         G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = magma)
                         cancel_alarm()
                     except Exception as e:
-                        out_str_vec.append('Error when computing G: ' + e.message)
+                        out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message,right_conductor = '\'False\''))
                         continue
                     try:
                         Coh = CohomologyGroup(G.Gpn)
                         phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
                     except Exception as e:
-                        out_str_vec.append('Error when finding cohomology class: ' + e.message)
+                        out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message,right_conductor = '\'False\''))
+
                         continue
                     for phiE in phiElist:
                         try:
@@ -107,10 +108,10 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                             curve = find_curve(P,D,P*D*Np,prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
                             cancel_alarm()
                         except Exception as e:
-                            new_out_str = out_str.format(curve = '\'Error '+ curve + ' \'',right_conductor = '\'False\'')
+                            new_out_str = out_str.format(curve = '\'Err '+ curve + ' \'',right_conductor = '\'False\'')
                             continue
                         if curve is None:
-                            new_out_str = out_str.format(curve = 'Not recognized',right_conductor = 'False')
+                            new_out_str = out_str.format(curve = '\'Not recognized\'',right_conductor = '\'False\'')
                         else:
                             try:
                                 curve_conductor = curve.conductor()
@@ -119,7 +120,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                                 if 'timed out' in curve:
                                     new_out_str = out_str.format(curve = '\'Timed out\'',right_conductor = '\'False\'')
                                 else:
-                                    new_out_str = out_str.format(curve = '\'Error '+ curve + ' \'',right_conductor = '\'False\'')
+                                    new_out_str = out_str.format(curve = '\'Err '+ curve + ' \'',right_conductor = '\'False\'')
                         out_str_vec.append(new_out_str)
     return out_str_vec
 
