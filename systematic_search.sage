@@ -1,7 +1,7 @@
 # load('darmonpoints.sage')
 from sage.misc.misc import alarm,cancel_alarm
 from sage.parallel.decorate import parallel,fork
-
+from util import fwrite
 
 ######################
 # Parameters         #
