@@ -48,23 +48,23 @@ class ArithGroupElement(MultiplicativeGroupElement):
             init_data = True
         if quaternion_rep is not None:
             if not parent._is_in_order(quaternion_rep):
-                raise ValueError,'Quaternion must be in order'
+                raise ValueError('Quaternion must be in order')
             if check:
                 if parent.base_field() == QQ:
                     rednrm = quaternion_rep.reduced_norm() if self.parent().discriminant != 1 else quaternion_rep.determinant()
                     if rednrm != 1:
-                        raise ValueError,'Quaternion must be of norm 1'
+                        raise ValueError('Quaternion must be of norm 1')
                 else:
                     rednrm = quaternion_rep.reduced_norm()
                     if not rednrm.is_integral() or not (1/rednrm).is_integral():
-                        raise ValueError,'Quaternion must be of unit norm'
+                        raise ValueError('Quaternion must be of unit norm')
             if check and not parent._is_in_order(quaternion_rep):
-                    raise ValueError,'Quaternion must be in order'
+                    raise ValueError('Quaternion must be in order')
             self.quaternion_rep = set_immutable(quaternion_rep)
             self.has_quaternion_rep = True
             init_data = True
         if init_data is False:
-            raise ValueError,'Must pass either quaternion_rep or word_rep'
+            raise ValueError('Must pass either quaternion_rep or word_rep')
         if not self.has_quaternion_rep:
             self.quaternion_rep = self.quaternion_rep
         assert self.has_quaternion_rep
@@ -165,7 +165,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
             #print q
             #print q1
             print q * q1**-1
-            raise AssertionError,'Word and quaternion are inconsistent! (%s)'%txt
+            raise RuntimeError('Word and quaternion are inconsistent! (%s)'%txt)
         return
 
     def __getitem__(self,n):

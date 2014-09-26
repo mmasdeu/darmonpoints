@@ -119,13 +119,21 @@ class BigArithGroup_class(AlgebraicGroup):
         self.F = base
         if self.F.degree() > 1:
             Fideal = self.F.maximal_order().ideal
-        self.ideal_p = Fideal(p) if self.F.degree() > 1 else ZZ(p)
-        self.norm_p = ZZ(p.norm()) if self.F.degree() > 1 else ZZ(p)
+            self.ideal_p = Fideal(p)
+            self.norm_p = ZZ(p.norm())
+            self.discriminant = Fideal(discriminant)
+            self.level = Fideal(level)
+            if self.ideal_p.ramification_index() > 1:
+                raise NotImplementedError("p must be unramified")
+        else:
+            self.ideal_p = ZZ(p)
+            self.norm_p = ZZ(p)
+            self.discriminant = ZZ(discriminant)
+            self.level = ZZ(level)
+
         self.p = self.norm_p.prime_divisors()[0]
         if not self.ideal_p.is_prime():
-            raise ValueError, 'p ( = %s) must be prime'%self.p
-        self.discriminant = Fideal(discriminant) if self.F.degree() > 1 else ZZ(discriminant)
-        self.level = Fideal(level) if self.F.degree() > 1 else ZZ(level)
+            raise ValueError('p (=%s) must be prime'%self.p)
 
         verbose('Initializing arithmetic group G(pn)...')
         self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype,magma = magma)
@@ -188,7 +196,10 @@ class BigArithGroup_class(AlgebraicGroup):
             self._F_to_local = QQ.hom([R(1)])
         else:
             M,f = self.magma.pMatrixRing(self.Gn._O_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
-            self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
+            try:
+                self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
+            except SyntaxError:
+                raise SyntaxError("Magma has trouble finding local splitting")
             self._F_to_local = None
             for o in self.F.gen().minpoly().change_ring(R).roots():
                 if (o[0] - self._goodroot).valuation() > 10:
@@ -330,7 +341,7 @@ class BigArithGroup_class(AlgebraicGroup):
             found = False
             all_initial = all_elts
             if len(all_initial) == 0:
-                raise RuntimeError
+                raise RuntimeError('Found no initial candidates for wp')
             verbose('Found %s initial candidates for wp'%len(all_initial))
             i = 0
             try:
@@ -340,12 +351,14 @@ class BigArithGroup_class(AlgebraicGroup):
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
                 if i % 50000 == 0:
                     verbose('Done %s iterations'%i)
+                    if i % 100000 == 0:
+                        raise RuntimeError('Trouble finding wp by enumeration')
                 i += 1
                 for tmp in all_initial:
                     new_candidate =  v1 * tmp * v2
                     if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
                         return new_candidate
-            raise RuntimeError
+            raise RuntimeError('Could not find wp')
 
     def get_embedding(self,prec):
         r"""
@@ -393,10 +406,10 @@ class BigArithGroup_class(AlgebraicGroup):
             rednrm = x.reduced_norm()
         rednrm_Q = rednrm.abs() if self.F == QQ else rednrm.norm().abs()
         if rednrm_Q != 1:
-            raise ValueError,'x (= %s) must have a unit as reduced norm'%x
+            raise ValueError('x (= %s) must have a unit as reduced norm'%x)
         if 'P' not in self.Gn._grouptype:
             if rednrm != 1:
-                raise ValueError,'x (= %s) must have reduced norm 1'%x
+                raise ValueError('x (= %s) must have reduced norm 1'%x)
         a,wd = self._reduce_in_amalgam(set_immutable(x))
         if return_word:
             return a,wd
@@ -445,7 +458,7 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, gro
             return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype)
         else:
             if magma is None:
-                raise ValueError,'Should specify magma session'
+                raise ValueError('Should specify magma session')
 
             if abtuple is not None:
                 return ArithGroup_rationalquaternion(abtuple,level,info_magma,grouptype = grouptype,magma = magma)
@@ -454,5 +467,5 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, gro
     else:
         a,b = abtuple
         if magma is None:
-            raise ValueError,'Should specify magma session'
+            raise ValueError('Should specify magma session')
         return ArithGroup_nf_quaternion(base,a,b,level,info_magma,grouptype = grouptype,magma = magma)

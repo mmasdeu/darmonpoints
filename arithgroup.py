@@ -432,7 +432,7 @@ class ArithGroup_generic(AlgebraicGroup):
 
     def calculate_weight_zero_word(self,x):
         if not self.abelianization()(x) == 0:
-            raise ValueError,'Element must be trivial in the abelianization'
+            raise ValueError('Element must be trivial in the abelianization')
         oldword = copy(x.word_rep)
         oldword += self._calculate_relation(self.get_weight_vector(x))
         return reduce_word(oldword)
@@ -583,7 +583,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
     def get_word_rep(self,delta):
         if not self._is_in_order(delta):
-            raise RuntimeError,'delta (= %s) is not in order!'%delta
+            raise RuntimeError('delta (= %s) is not in order!'%delta)
         try:
             c = self._get_word_recursive(delta,0)
         except RuntimeError:
@@ -600,7 +600,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
     def _get_word_recursive(self,delta,oldji,depth = 0):
         if depth > 1000:
-            raise RuntimeError
+            raise RuntimeError('Reached max depth of 1000')
         B = delta.parent()
         if delta == B(1):
             return []
@@ -670,7 +670,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             x = quaternion_to_magma_quaternion(self._B_magma,self.B(x))
         else:
             if len(x) != 4:
-                raise ValueError, 'x (=%s) should be a list of length 4'%x
+                raise ValueError('x (=%s) should be a list of length 4'%x)
             x = quaternion_to_magma_quaternion(self._B_magma,self.B(sum(a*b for a,b in zip(self.Obasis,x))))
         x_magma = self._G_magma(x)
         #verbose('Calling _magma_word_problem_jv with x = %s'%x)
@@ -747,7 +747,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 verbose('Found %s elements of requested norm'%len(all_candidates))
                 return all_candidates
             else:
-                raise RuntimeError,'Not found'
+                raise RuntimeError('Not found')
 
     def non_positive_unit(self,radius = -1):
         try:
@@ -836,7 +836,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
     def get_word_rep(self,delta):
         level = self.level
         if level != 1:
-            raise ValueError,'Level (= %s)should be 1!'%self.level
+            raise ValueError('Level (= %s)should be 1!'%self.level)
         a,b,c,d = delta.list()
         m1 = matrix(ZZ,2,2,[1,0,0,1])
         tmp = []
@@ -851,7 +851,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                 m1 = m1 * matrix(ZZ,2,2,[1,r,0,1]) * matrix(ZZ,2,2,[1,0,s,1])
         T = m1**-1 * delta
         if not (( T[0,0] == 1 and T[1,1] == 1 and T[1,0] == 0) or ( T[0,0] == -1 and T[1,1] == -1 and T[1,0] == 0)):
-            raise RuntimeError,'Entries of T (= %s) not correct'%T
+            raise RuntimeError('Entries of T (= %s) not correct'%T)
         tmp.append((0,T[0,0]*T[0,1]))
         if T[0,0] == -1 and 'P' not in self._grouptype:
             tmp.extend(self.minus_one)
@@ -927,7 +927,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self.algorithm = 'aurel'
             self.get_word_rep = self.get_word_rep_aurel
         else:
-            raise NotImplementedError,'At most one complex place!'
+            raise NotImplementedError('At most one complex place!')
         assert grouptype in ['SL2','PSL2','GL2','PGL2']
         self._prec_inf = -1
 
@@ -1216,7 +1216,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
     def get_word_rep_jv(self,delta):
         if not self._is_in_order(delta):
-            raise RuntimeError,'delta (= %s) is not in order!'%delta
+            raise RuntimeError('delta (= %s) is not in order!'%delta)
         try:
             c = self._get_word_recursive_jv(delta,0)
         except RuntimeError:
@@ -1233,7 +1233,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
     def _get_word_recursive_jv(self,delta,oldji,depth = 0):
         if depth > 1000:
-            raise RuntimeError
+            raise RuntimeError('Reached max depth of 1000')
         B = delta.parent()
         if delta == B(1):
             return []
@@ -1302,7 +1302,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             x = quaternion_to_magma_quaternion(self._B_magma,self.B(x))
         else:
             if len(x) != 4:
-                raise ValueError, 'x (=%s) should be a list of length 4'%x
+                raise ValueError('x (=%s) should be a list of length 4'%x)
             x = quaternion_to_magma_quaternion(self._B_magma,self.B(sum(a*b for a,b in zip(self.Obasis,x))))
         x_magma = self._G_magma(x)
         #verbose('Calling _magma_word_problem_jv with x = %s'%x)
@@ -1337,7 +1337,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             print 'An error ocurred!'
             print 'OK_magma = ',OK_magma
             print 'O_magma =',O_magma
-            raise RuntimeError
+            raise RuntimeError('Error while computing quadratic embedding')
         verbose('Calling magma Embed function done!')
         wm = K_magma(OK_magma.Basis()[2])
         w = K(magma_F_elt_to_sage(self.F,wm[1],self.magma) + magma_F_elt_to_sage(self.F,wm[2],self.magma) * b)
@@ -1423,7 +1423,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             # x = x * self.element_of_norm(-1,use_magma = False)
             x = x * self.non_positive_unit()
         if emb(x.reduced_norm()).sign() != emb(N).sign():
-            raise RuntimeError
+            raise RuntimeError('Error in fix_sign')
         return x
 
     def element_of_prime_norm(self,max_norm,radius = -1):
@@ -1462,7 +1462,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 pass
         else:
             if radius < 0 and max_elements < 0:
-                raise ValueError,'Radius must be positive'
+                raise ValueError('Radius must be positive')
 
         if not hasattr(self,'_element_of_norm'):
             self._element_of_norm  = dict([])
@@ -1503,7 +1503,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 verbose('Found %s elements of requested norm'%len(all_candidates))
                 return all_candidates
             else:
-                raise RuntimeError,'Not found'
+                raise RuntimeError('Not found')
 
     def non_positive_unit(self,radius = -1):
         try:
@@ -1550,7 +1550,7 @@ class Abelianization(Parent):
         if x.parent() is self.group():
             return self.G_to_ab(x)
         else:
-            raise TypeError,'Not the correct type'
+            raise TypeError('Not the correct type')
 
     def _repr_(self):
         return 'Abelianization of %s, with invariants %s'%(self.group(),self.abelian_invariants())
@@ -1576,7 +1576,7 @@ class Abelianization(Parent):
     def G_to_ab(self,x):
         V = self.ambient()
         if x.parent() != self.group():
-            raise TypeError,'Element does not belong to the right group (%s)'%self.group()
+            raise TypeError('Element does not belong to the right group (%s)'%self.group())
         return sum([ZZ(a) * self._Gab(V.gen(i)) for i,a in x.word_rep],self._Gab(0))
 
     def G_to_ab_free(self,x):
@@ -1588,7 +1588,7 @@ class Abelianization(Parent):
         elif x.parent() == self.ambient():
             return prod([self.group().gen(i)**ZZ(a) for i,a in enumerate(list(x))],self.group()([]))
         else:
-            raise TypeError,"Can't understand the input"
+            raise TypeError("Can't understand the input")
 
     def hom_from_image_of_gens_small(self,v):
         imgens = []
