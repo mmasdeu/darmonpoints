@@ -54,7 +54,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
                     if not ZZ(P.norm()).is_prime():
                         verbose('f > 1')
                         continue
-                    if ZZ(P.norm()).abs() != max_P_norm: # DEBUG
+                    if ZZ(P.norm()).abs() > max_P_norm:
                         verbose('large P')
                         continue
                     for v in enumerate_words([0,1],[0 for o in facts],nfactors):
