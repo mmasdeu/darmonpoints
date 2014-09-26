@@ -268,7 +268,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 ######################################
 
 
-def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None,return_all = False,initial_data = None):
+def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None,return_all = False,initial_data = None,check_conductor = True):
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
@@ -460,22 +460,11 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         print 'Integral done. Now trying to recognize the curve'
         fwrite('qE = %s'%qE,outfile)
         fwrite('Linv = %s'%Linv,outfile)
-        curve = discover_equation(qE,G._F_to_local,NE,prec)
+        curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = check_conductor)
         if curve is None:
-            fwrite('Curve not found with the sought conductor. Will try to find some curve at least',outfile)
-            print 'Curve not found with the sought conductor. Will try to find some curve at least'
-            curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = False)
-            if curve is None:
-                fwrite('Still no luck. Sorry!',outfile)
-                print 'Still no luck. Sorry!'
-                if quit_when_done:
-                    magma.quit()
-                ret_vals.append('None')
-                continue
-            else:
-                curve = curve.global_minimal_model()
-                fwrite('Found a curve, at least...',outfile)
-                print 'Found a curve, at least...'
+            if quit_when_done:
+                magma.quit()
+            ret_vals.append('None')
         else:
             curve = curve.global_minimal_model()
         fwrite('Curve with a-invariants %s'%(list(curve.a_invariants())),outfile)

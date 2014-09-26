@@ -111,10 +111,10 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec):
                                 curve = str(curve)
                             cancel_alarm()
                         except Exception as e:
-                            new_out_str = out_str.format(curve = '\'Err '+ curve + ' \'')
+                            new_out_str = out_str.format(curve = '\'Err (%s)\''%curve)
                             continue
                         if curve == 'None':
-                            new_out_str = out_str.format(curve = '\'Not recognized\'')
+                            new_out_str = out_str.format(curve = '\'Unrecognized\'')
                         else:
                             new_out_str = out_str.format(curve = curve)
                         out_str_vec.append(new_out_str)
