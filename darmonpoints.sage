@@ -279,7 +279,6 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
 
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
-    from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
     except NameError:
@@ -296,7 +295,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
 
     sys.setrecursionlimit(10**6)
 
-    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, curve, ker
+    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2
 
     try:
         F = P.ring()
@@ -454,7 +453,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
 
         print 'Integral done. Now trying to recognize the curve'
         # fwrite("Starting computation of the Curve",outfile)
-        fwrite('F.<r> = NumberField(%s)'%(F.gen(0).minpoly()))
+        fwrite('F.<r> = NumberField(%s)'%(F.gen(0).minpoly()),outfile)
         fwrite('N_E = %s = %s'%(NE,factor(NE)),outfile)
         fwrite('D_B = %s = %s'%(DB,factor(DB)),outfile)
         fwrite('Np = %s = %s'%(Np,factor(Np)),outfile)
@@ -467,10 +466,13 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
                 magma.quit()
             ret_vals.append('None')
         else:
-            curve = curve.global_minimal_model()
-        fwrite('EllipticCurve(F, %s )'%(list(curve.a_invariants())),outfile)
-        fwrite('='*60,outfile)
-        ret_vals.append(str(curve.a_invariants()))
+            try:
+                curve = curve.global_minimal_model()
+            except AttributeError,NotImplementedError:
+                pass
+            fwrite('EllipticCurve(F, %s )'%(list(curve.a_invariants())),outfile)
+            fwrite('='*60,outfile)
+            ret_vals.append(str(curve.a_invariants()))
     if quit_when_done:
         magma.quit()
     if return_all:
