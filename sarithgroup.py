@@ -351,7 +351,7 @@ class BigArithGroup_class(AlgebraicGroup):
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
                 if i % 50000 == 0:
                     verbose('Done %s iterations'%i)
-                    if i % 100000 == 0:
+                    if i > 0 and i % 500000 == 0:
                         raise RuntimeError('Trouble finding wp by enumeration')
                 i += 1
                 for tmp in all_initial:

@@ -19,6 +19,15 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
     from util import enumerate_words, quaternion_algebra_from_discriminant
+    from itertools import product,chain,izip,groupby,islice,tee,starmap
+    from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
+    from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
+    from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
+    import os,datetime
+    from sage.misc.persist import db
+    from sage.rings.padics.precision_error import PrecisionError
+    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
+    from integrals import integrate_H1,double_integral_zero_infty,indef_integral
 
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
@@ -26,7 +35,8 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
         ROOT = os.getcwd()
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
 
-    F.<r> = NumberField(pol)
+    F = NumberField(pol,names='r')
+    r = F.gen()
     if len(F.narrow_class_group()) > 1:
         return []
     try:
@@ -54,7 +64,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
                     if not ZZ(P.norm()).is_prime():
                         verbose('f > 1')
                         continue
-                    if ZZ(P.norm()).abs() > max_P_norm:
+                    if ZZ(P.norm()).abs() != max_P_norm: # DEBUG
                         verbose('large P')
                         continue
                     for v in enumerate_words([0,1],[0 for o in facts],nfactors):
@@ -106,7 +116,10 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
                                 try:
                                     alarm(max_waiting_time)
                                     curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
-                                    curve = str(curve)
+                                    try:
+                                        curve = str(curve)
+                                    except:
+                                        curve = 'None'
                                     cancel_alarm()
                                 except Exception as e:
                                     new_out_str = out_str.format(curve = '\'Err (%s)\''%curve)
@@ -140,9 +153,20 @@ def compute_table(input_file,output_trail = None):
     output_file = input_file.replace('.sage',output_trail)
     log_file = input_file.replace('.sage','.log')
     input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file) for datum in all_fields]
-    for inp,out_str_vec in find_all_curves(input_vec):
+
+    # DEBUG
+    for inp in input_vec:
+        out_str_vec = find_all_curves(*inp)
         if out_str_vec == 'NO DATA':
             fwrite('NO DATA',output_file)
         else:
             for out_str in out_str_vec:
                 fwrite(out_str,output_file)
+
+    # # REGULAR
+    # for inp,out_str_vec in find_all_curves(input_vec):
+    #     if out_str_vec == 'NO DATA':
+    #         fwrite('NO DATA',output_file)
+    #     else:
+    #         for out_str in out_str_vec:
+    #             fwrite(out_str,output_file)
