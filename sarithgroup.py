@@ -123,7 +123,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.norm_p = ZZ(p.norm()) if self.F.degree() > 1 else ZZ(p)
         self.p = self.norm_p.prime_divisors()[0]
         if not self.ideal_p.is_prime():
-            raise ValueError, 'p ( = %s) must be prime'%self.p
+            raise ValueError('p ( = %s) must be prime'%self.p)
         self.discriminant = Fideal(discriminant) if self.F.degree() > 1 else ZZ(discriminant)
         self.level = Fideal(level) if self.F.degree() > 1 else ZZ(level)
 
