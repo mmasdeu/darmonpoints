@@ -1,7 +1,7 @@
 # This file contains a vector with all totally real number fields
 # of class number 1 of signatures (2,0), (3,0)
 # whose discriminant has absolute value at most 5000.
-
+x = QQ['x'].gen()
 all_fields = [\
 [x^2 - x - 1, 5, 1, []],\
 [x^2 - 2, 8, 1, []],\
