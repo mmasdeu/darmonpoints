@@ -13,7 +13,7 @@ max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 40
 
 @parallel
-def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
+def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec):
     load('darmonpoints.sage')
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
@@ -84,7 +84,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                     Pnorm = P.norm()
                     assert N == NE.norm()
                     prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
-                    out_str = '[%s, %s, %s, %s, %s, %s, {curve}, {right_conductor}, %s],\\'%(N,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec)
+                    out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s],\\'%(N,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec)
                     ram_at_inf = [-1 for o in F.real_embeddings()]
                     if F.signature()[1] == 0:
                         ram_at_inf[0] = 1
@@ -93,34 +93,30 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
                         G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = magma)
                         cancel_alarm()
                     except Exception as e:
-                        out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message,right_conductor = '\'False\''))
+                        out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
                         continue
                     try:
                         Coh = CohomologyGroup(G.Gpn)
                         phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
                     except Exception as e:
-                        out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message,right_conductor = '\'False\''))
-
+                        out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message))
                         continue
                     for phiE in phiElist:
                         try:
                             alarm(max_waiting_time)
                             curve = find_curve(P,D,P*D*Np,prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                            if hasattr(curve,a_invariants):
+                                curve = str(curve.a_invariants())
+                            else:
+                                curve = str(curve)
                             cancel_alarm()
                         except Exception as e:
-                            new_out_str = out_str.format(curve = '\'Err '+ curve + ' \'',right_conductor = '\'False\'')
+                            new_out_str = out_str.format(curve = '\'Err '+ curve + ' \'')
                             continue
-                        if curve is None:
-                            new_out_str = out_str.format(curve = '\'Not recognized\'',right_conductor = '\'False\'')
+                        if curve == 'None':
+                            new_out_str = out_str.format(curve = '\'Not recognized\'')
                         else:
-                            try:
-                                curve_conductor = curve.conductor()
-                                new_out_str = out_str.format(curve = curve.a_invariants(),right_conductor = (curve_conductor == P*D*Np))
-                            except AttributeError:
-                                if 'timed out' in curve:
-                                    new_out_str = out_str.format(curve = '\'Timed out\'',right_conductor = '\'False\'')
-                                else:
-                                    new_out_str = out_str.format(curve = '\'Err '+ curve + ' \'',right_conductor = '\'False\'')
+                            new_out_str = out_str.format(curve = curve)
                         out_str_vec.append(new_out_str)
     return out_str_vec
 
@@ -133,11 +129,12 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time):
 #         fwrite(out_str,outfile)
 
 def compute_table(input_file,output_trail = None):
+    global Nrange, max_P_norm, max_waiting_time, max_F_disc, decimal_prec
     x = QQ['x'].gen()
     if output_trail is None:
         output_trail = '_computed.txt'
     load(input_file) # Initializes ``all_fields`` vector
-    input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time) for datum in all_fields]
+    input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time,decimal_prec) for datum in all_fields]
     output_file = input_file + output_trail
     for inp,out_str_vec in find_all_curves(input_vec):
         if out_str_vec == 'NO DATA':
