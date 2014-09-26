@@ -64,7 +64,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
                     if not ZZ(P.norm()).is_prime():
                         verbose('f > 1')
                         continue
-                    if ZZ(P.norm()).abs() != max_P_norm: # DEBUG
+                    if ZZ(P.norm()).abs() > max_P_norm:
                         verbose('large P')
                         continue
                     for v in enumerate_words([0,1],[0 for o in facts],nfactors):
@@ -154,19 +154,19 @@ def compute_table(input_file,output_trail = None):
     log_file = input_file.replace('.sage','.log')
     input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file) for datum in all_fields]
 
-    # DEBUG
-    for inp in input_vec:
-        out_str_vec = find_all_curves(*inp)
-        if out_str_vec == 'NO DATA':
-            fwrite('NO DATA',output_file)
-        else:
-            for out_str in out_str_vec:
-                fwrite(out_str,output_file)
-
-    # # REGULAR
-    # for inp,out_str_vec in find_all_curves(input_vec):
+    # # DEBUG
+    # for inp in input_vec:
+    #     out_str_vec = find_all_curves(*inp)
     #     if out_str_vec == 'NO DATA':
     #         fwrite('NO DATA',output_file)
     #     else:
     #         for out_str in out_str_vec:
     #             fwrite(out_str,output_file)
+
+    # REGULAR
+    for inp,out_str_vec in find_all_curves(input_vec):
+        if out_str_vec == 'NO DATA':
+            fwrite('NO DATA',output_file)
+        else:
+            for out_str in out_str_vec:
+                fwrite(out_str,output_file)
