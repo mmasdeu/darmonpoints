@@ -13,7 +13,7 @@ max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 40
 
 @parallel
-def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec):
+def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file):
     load('darmonpoints.sage')
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
@@ -50,7 +50,10 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec):
             #     verbose('e > 1')
             #     continue
             nfactors = len(facts)
+            no_rational_line = False
             for j,Pe in enumerate(facts):
+                if no_rational_line:
+                    break
                 P,e = Pe
                 if e > 1:
                     continue
@@ -61,6 +64,8 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec):
                     verbose('large P')
                     continue
                 for v in enumerate_words([0,1],[0 for o in facts],nfactors):
+                    if no_rational_line:
+                        break
                     if v[j] == 0:
                         continue
                     if any([v[k] == 1 and facts[k][1] > 1 for k in range(nfactors)]):
@@ -100,11 +105,12 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec):
                         phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
                     except Exception as e:
                         out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message))
+                        no_rational_line = True
                         continue
                     for phiE in phiElist:
                         try:
                             alarm(max_waiting_time)
-                            curve = find_curve(P,D,P*D*Np,prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                            curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
                             if hasattr(curve,a_invariants):
                                 curve = str(curve.a_invariants())
                             else:
@@ -134,8 +140,9 @@ def compute_table(input_file,output_trail = None):
     if output_trail is None:
         output_trail = '_computed.txt'
     load(input_file) # Initializes ``all_fields`` vector
-    input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time,decimal_prec) for datum in all_fields]
-    output_file = input_file + output_trail
+    output_file = input_file.replace('.sage',output_trail)
+    log_file = input_file.replace('.sage','.log')
+    input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file) for datum in all_fields]
     for inp,out_str_vec in find_all_curves(input_vec):
         if out_str_vec == 'NO DATA':
             fwrite('NO DATA',output_file)

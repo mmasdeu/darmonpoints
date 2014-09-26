@@ -347,11 +347,6 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         else:
             ramification_at_infinity = []
 
-    fwrite("Starting computation of the Curve",outfile)
-    fwrite('N_E = %s  %s'%(NE,factor(NE)),outfile)
-    fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
-    fwrite('Np = %s'%Np,outfile)
-    fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
     if outfile is not None:
         print "Partial results will be saved in %s"%outfile
     print "=================================================="
@@ -458,6 +453,12 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         Linv = qE.log(p_branch = 0)/qE.valuation()
 
         print 'Integral done. Now trying to recognize the curve'
+        # fwrite("Starting computation of the Curve",outfile)
+        fwrite('F.<r> = NumberField(%s)'%(F.gen(0).minpoly()))
+        fwrite('N_E = %s = %s'%(NE,factor(NE)),outfile)
+        fwrite('D_B = %s = %s'%(DB,factor(DB)),outfile)
+        fwrite('Np = %s = %s'%(Np,factor(Np)),outfile)
+        fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
         fwrite('qE = %s'%qE,outfile)
         fwrite('Linv = %s'%Linv,outfile)
         curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = check_conductor)
@@ -467,8 +468,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
             ret_vals.append('None')
         else:
             curve = curve.global_minimal_model()
-        fwrite('Curve with a-invariants %s'%(list(curve.a_invariants())),outfile)
-        fwrite('================================================',outfile)
+        fwrite('EllipticCurve(F, %s )'%(list(curve.a_invariants())),outfile)
+        fwrite('='*60,outfile)
         ret_vals.append(str(curve.a_invariants()))
     if quit_when_done:
         magma.quit()
