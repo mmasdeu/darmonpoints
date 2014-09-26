@@ -29,102 +29,99 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
     F.<r> = NumberField(pol)
     if len(F.narrow_class_group()) > 1:
         return []
+    try:
+        from sage.interfaces.magma import Magma
+        magma = Magma()
+        magma.attach_spec(page_path)
 
-    from sage.interfaces.magma import Magma
-    magma = Magma()
-    magma.attach_spec(page_path)
-
-    sys.setrecursionlimit(10**6)
-    x = pol.parent().gen()
-    # r = QQ['r'].gen()
-    out_str_vec = []
-    for N in Nrange:
-        print 'N = %s'%N
-
-        # if gcd(F.discriminant(),N) != 1:
-        #     continue
-        for a in F.elements_of_norm(N):
-            print 'pol = %s'%pol
-            facts = F.ideal(a).factor()
-            # if any([e > 1 for f,e in facts]):
-            #     verbose('e > 1')
+        sys.setrecursionlimit(10**6)
+        x = pol.parent().gen()
+        # r = QQ['r'].gen()
+        out_str_vec = []
+        for N in Nrange:
+            # if gcd(F.discriminant(),N) != 1:
             #     continue
-            nfactors = len(facts)
-            no_rational_line = False
-            for j,Pe in enumerate(facts):
-                if no_rational_line:
-                    break
-                P,e = Pe
-                if e > 1:
-                    continue
-                if not ZZ(P.norm()).is_prime():
-                    verbose('f > 1')
-                    continue
-                if ZZ(P.norm()).abs() > max_P_norm:
-                    verbose('large P')
-                    continue
-                for v in enumerate_words([0,1],[0 for o in facts],nfactors):
+            for a in F.elements_of_norm(N):
+                facts = F.ideal(a).factor()
+                nfactors = len(facts)
+                no_rational_line = False
+                for j,Pe in enumerate(facts):
                     if no_rational_line:
                         break
-                    if v[j] == 0:
+                    P,e = Pe
+                    if e > 1:
                         continue
-                    if any([v[k] == 1 and facts[k][1] > 1 for k in range(nfactors)]):
+                    if not ZZ(P.norm()).is_prime():
+                        verbose('f > 1')
                         continue
-                    D = F.ideal(1)
-                    Np = F.ideal(1)
-                    n_ramified_places = F.signature()[0] + F.signature()[1] - 1
-                    for i in range(nfactors):
-                        if i == j:
-                            continue
-                        if v[i] == 1:
-                            assert facts[i][1] == 1
-                            n_ramified_places +=1
-                            D *= facts[i][0]
-                        else:
-                            Np *= facts[i][0]**facts[i][1]
-                    if n_ramified_places % 2 != 0:
+                    if ZZ(P.norm()).abs() != max_P_norm: # DEBUG
+                        verbose('large P')
                         continue
-                    NE = P * D * Np
-                    assert NE == F.ideal(a)
-                    Pnorm = P.norm()
-                    assert N == NE.norm()
-                    prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
-                    out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s],\\'%(N,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec)
-                    ram_at_inf = [-1 for o in F.real_embeddings()]
-                    if F.signature()[1] == 0:
-                        ram_at_inf[0] = 1
-                    try:
-                        alarm(max_waiting_time)
-                        G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = magma)
-                        cancel_alarm()
-                    except Exception as e:
-                        out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
-                        continue
-                    try:
-                        Coh = CohomologyGroup(G.Gpn)
-                        phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
-                    except Exception as e:
-                        out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message))
-                        no_rational_line = True
-                        continue
-                    for phiE in phiElist:
+                    for v in enumerate_words([0,1],[0 for o in facts],nfactors):
                         try:
-                            alarm(max_waiting_time)
-                            curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
-                            if hasattr(curve,a_invariants):
-                                curve = str(curve.a_invariants())
-                            else:
-                                curve = str(curve)
-                            cancel_alarm()
+                            if no_rational_line:
+                                break
+                            if v[j] == 0:
+                                continue
+                            if any([v[k] == 1 and facts[k][1] > 1 for k in range(nfactors)]):
+                                continue
+                            D = F.ideal(1)
+                            Np = F.ideal(1)
+                            n_ramified_places = F.signature()[0] + F.signature()[1] - 1
+                            for i in range(nfactors):
+                                if i == j:
+                                    continue
+                                if v[i] == 1:
+                                    assert facts[i][1] == 1
+                                    n_ramified_places +=1
+                                    D *= facts[i][0]
+                                else:
+                                    Np *= facts[i][0]**facts[i][1]
+                            if n_ramified_places % 2 != 0:
+                                continue
+                            NE = P * D * Np
+                            assert NE == F.ideal(a)
+                            Pnorm = P.norm()
+                            assert N == NE.norm()
+                            prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
+                            out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s],\\'%(N,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec)
+                            ram_at_inf = [-1 for o in F.real_embeddings()]
+                            if F.signature()[1] == 0:
+                                ram_at_inf[0] = 1
+                            try:
+                                alarm(max_waiting_time)
+                                G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = magma)
+                                cancel_alarm()
+                            except Exception as e:
+                                out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
+                                continue
+                            try:
+                                Coh = CohomologyGroup(G.Gpn)
+                                phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
+                            except Exception as e:
+                                out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message))
+                                no_rational_line = True
+                                continue
+                            for phiE in phiElist:
+                                try:
+                                    alarm(max_waiting_time)
+                                    curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                                    curve = str(curve)
+                                    cancel_alarm()
+                                except Exception as e:
+                                    new_out_str = out_str.format(curve = '\'Err (%s)\''%curve)
+                                    continue
+                                if curve == 'None':
+                                    new_out_str = out_str.format(curve = '\'Unrecognized\'')
+                                else:
+                                    new_out_str = out_str.format(curve = curve)
+                                out_str_vec.append(new_out_str)
                         except Exception as e:
-                            new_out_str = out_str.format(curve = '\'Err (%s)\''%curve)
-                            continue
-                        if curve == 'None':
-                            new_out_str = out_str.format(curve = '\'Unrecognized\'')
-                        else:
-                            new_out_str = out_str.format(curve = curve)
-                        out_str_vec.append(new_out_str)
-    return out_str_vec
+                            out_str_vec.append(out_str.format(curve = '\'Unknown exception (%s)\''%e.message))
+        return out_str_vec
+    except Exception as e:
+        out_str_vec.append('Unhandled exception (%s)'%e.message)
+        return out_str_vec
 
 # outfile='atest.txt'
 # # Testing
