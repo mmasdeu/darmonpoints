@@ -119,13 +119,21 @@ class BigArithGroup_class(AlgebraicGroup):
         self.F = base
         if self.F.degree() > 1:
             Fideal = self.F.maximal_order().ideal
-        self.ideal_p = Fideal(p) if self.F.degree() > 1 else ZZ(p)
-        self.norm_p = ZZ(p.norm()) if self.F.degree() > 1 else ZZ(p)
+            self.ideal_p = Fideal(p)
+            self.norm_p = ZZ(p.norm())
+            self.discriminant = Fideal(discriminant)
+            self.level = Fideal(level)
+            if self.ideal_p.ramification_index() > 1:
+                raise NotImplementedError("p must be unramified")
+        else:
+            self.ideal_p = ZZ(p)
+            self.norm_p = ZZ(p)
+            self.discriminant = ZZ(discriminant)
+            self.level = ZZ(level)
+
         self.p = self.norm_p.prime_divisors()[0]
         if not self.ideal_p.is_prime():
-            raise ValueError('p ( = %s) must be prime'%self.p)
-        self.discriminant = Fideal(discriminant) if self.F.degree() > 1 else ZZ(discriminant)
-        self.level = Fideal(level) if self.F.degree() > 1 else ZZ(level)
+            raise ValueError('p (=%s) must be prime'%self.p)
 
         verbose('Initializing arithmetic group G(pn)...')
         self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype,magma = magma)
@@ -188,7 +196,10 @@ class BigArithGroup_class(AlgebraicGroup):
             self._F_to_local = QQ.hom([R(1)])
         else:
             M,f = self.magma.pMatrixRing(self.Gn._O_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
-            self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
+            try:
+                self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
+            except SyntaxError:
+                raise SyntaxError("Magma has trouble finding local splitting")
             self._F_to_local = None
             for o in self.F.gen().minpoly().change_ring(R).roots():
                 if (o[0] - self._goodroot).valuation() > 10:
