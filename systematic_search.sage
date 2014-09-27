@@ -28,6 +28,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
+    out_str_vec = []
 
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
@@ -37,17 +38,16 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
 
     F = NumberField(pol,names='r')
     r = F.gen()
+
     if len(F.narrow_class_group()) > 1:
-        return []
+        return out_str_vec
     try:
         from sage.interfaces.magma import Magma
         magma = Magma()
         magma.attach_spec(page_path)
-
         sys.setrecursionlimit(10**6)
         x = pol.parent().gen()
         # r = QQ['r'].gen()
-        out_str_vec = []
         for N in Nrange:
             # if gcd(F.discriminant(),N) != 1:
             #     continue
