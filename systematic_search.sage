@@ -47,7 +47,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
         magma.attach_spec(page_path)
         sys.setrecursionlimit(10**6)
         x = pol.parent().gen()
-        # r = QQ['r'].gen()
+        no_rational_line = False
         for N in Nrange:
             # if gcd(F.discriminant(),N) != 1:
             #     continue
@@ -132,8 +132,8 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
                         except Exception as e:
                             out_str_vec.append(out_str.format(curve = '\'Unknown exception (%s)\''%e.message))
         return out_str_vec
-    except Exception as e:
-        out_str_vec.append('Unhandled exception (%s)'%e.message)
+    except:
+        out_str_vec.append('Unhandled exception')
         return out_str_vec
 
 # outfile='atest.txt'
