@@ -61,6 +61,9 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
                     P,e = Pe
                     if e > 1:
                         continue
+                    if P.ramification_index() > 1:
+                        verbose('ramified P')
+                        continue
                     if not ZZ(P.norm()).is_prime():
                         verbose('f > 1')
                         continue
