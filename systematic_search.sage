@@ -109,7 +109,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time,decimal_prec,log_file
                             out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
                             continue
                         except:
-                            out_str_vec.append(out_str.format(curve = '\'Timed Out\'')
+                            out_str_vec.append(out_str.format(curve = '\'Timed Out\''))
                             continue
                         try:
                             Coh = CohomologyGroup(G.Gpn)
