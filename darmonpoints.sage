@@ -279,19 +279,22 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
 
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
-    try:
-        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
-    except NameError:
-        ROOT = os.getcwd()
-        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+    if initial_data is None:
+        try:
+            page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+        except NameError:
+            ROOT = os.getcwd()
+            page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
 
-    if magma is None:
-        from sage.interfaces.magma import Magma
-        quit_when_done = True
-        magma = Magma()
+        if magma is None:
+            from sage.interfaces.magma import Magma
+            quit_when_done = True
+            magma = Magma()
+        else:
+            quit_when_done = False
+        magma.attach_spec(page_path)
     else:
         quit_when_done = False
-    magma.attach_spec(page_path)
 
     sys.setrecursionlimit(10**6)
 
