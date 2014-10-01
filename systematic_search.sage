@@ -30,26 +30,16 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
-    from sage.interfaces.magma import Magma
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
 
     out_str_vec = []
-
-    try:
-        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
-    except NameError:
-        ROOT = os.getcwd()
-        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
 
     F = NumberField(pol,names='r')
     r = F.gen()
 
     if len(F.narrow_class_group()) > 1:
         return out_str_vec
-
-    magma = Magma()
-    magma.attach_spec(page_path)
     sys.setrecursionlimit(10**6)
     x = pol.parent().gen()
     no_rational_line = False
@@ -107,15 +97,13 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         if F.signature()[1] == 0:
                             ram_at_inf[0] = 1
                         try:
-                            alarm(max_waiting_time_aurel)
-                            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = magma)
-                            cancel_alarm()
-                        except AlarmInterrupt:
-                            out_str_vec.append(out_str.format(curve = '\'Timed Out\''))
-                            continue
+                            G = fork(BigArithGroup,max_waiting_time_aurel)(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = None)
                         except Exception as e:
                             out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
                             cancel_alarm()
+                            continue
+                        if 'timed out' in str(G):
+                            out_str_vec.append(out_str.format(curve = '\'Timed Out\''))
                             continue
                         try:
                             Coh = CohomologyGroup(G.Gpn)
@@ -130,14 +118,16 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         for phiE in phiElist:
                             try:
                                 alarm(max_waiting_time)
-                                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf,magma = G.magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
                                 cancel_alarm()
                                 curve = str(curve) # just in case
-                            except AlarmInterrupt:
-                                new_out_str = out_str.format(curve = '\'Timed Out in find_curve\'')
                             except Exception as e:
                                 new_out_str = out_str.format(curve = '\'Err (%s)\''%e.message)
                                 cancel_alarm()
+                            except (AlarmInterrupt,KeyboardInterrupt):
+                                new_out_str = out_str.format(curve = '\'Timed Out in find_curve\'')
+                            except:
+                                new_out_str = out_str.format(curve = '\'Probably Timed Out in find_curve\'')
                             else:
                                 new_out_str = out_str.format(curve = curve)
                             out_str_vec.append(new_out_str)

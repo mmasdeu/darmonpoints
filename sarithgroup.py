@@ -26,6 +26,7 @@ from sage.structure.sage_object import save,load
 from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
+import os,datetime
 
 class BTEdge(SageObject):
     r'''
@@ -49,7 +50,12 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
         if magma is None:
             from sage.interfaces.magma import Magma
             magma = Magma()
-
+            try:
+                page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+            except NameError:
+                ROOT = os.getcwd()
+                page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+            magma.attach_spec(page_path)
         try:
             discriminant = ZZ(quat_data)
             if base is not None:
