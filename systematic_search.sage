@@ -1,5 +1,4 @@
 # load('darmonpoints.sage')
-from sage.misc.misc import alarm,cancel_alarm
 from sage.parallel.decorate import parallel,fork
 from util import fwrite
 
@@ -7,14 +6,15 @@ from util import fwrite
 # Parameters         #
 ######################
 Nrange = range(1,200) # Conductors to explore
-max_P_norm = 200 # Maximum allowed conductor
+max_P_norm = 200 # Maximum allowed norm for the chosen prime
+max_P_norm_integrate = 23 # Maximum allowed norm for the chosen prime to integrate
 max_F_disc = None # Maximum size of discriminant of base field
 max_waiting_time_aurel = 2 * 60 * 60 # Amount of patience (in seconds)
 max_waiting_time = 10 * 60 * 60 # Amount of patience (in seconds)
-decimal_prec = 40
+decimal_prec = 50
 
 @parallel
-def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file):
+def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file):
     load('darmonpoints.sage')
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
@@ -103,13 +103,11 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time_aurel,max_waiting_tim
                         if F.signature()[1] == 0:
                             ram_at_inf[0] = 1
                         try:
-                            alarm(max_waiting_time_aurel)
-                            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = magma)
-                            cancel_alarm()
+                            G = fork(BigArithGroup,timeout = max_waiting_time_aurel)(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = magma)
                         except Exception as e:
                             out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
                             continue
-                        except:
+                        if not hasattr(G,'embed'): # Not very elegant but works
                             out_str_vec.append(out_str.format(curve = '\'Timed Out\''))
                             continue
                         try:
@@ -119,16 +117,17 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time_aurel,max_waiting_tim
                             out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message))
                             no_rational_line = True
                             continue
+                        if Pnorm > max_P_norm_integrate:
+                            out_str_vec.append(out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
+                            continue
                         for phiE in phiElist:
                             try:
-                                alarm(max_waiting_time)
-                                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
-                                curve = str(curve)
-                                cancel_alarm()
+                                curve = fork(find_curve,timeout = max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf,magma = magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                                curve = str(curve) # just in case
                             except Exception as e:
                                 out_str_vec.append(out_str.format(curve = '\'Err (%s)\''%e.message))
                                 continue
-                            except:
+                            if 'timed out' in curve:
                                 out_str_vec.append(out_str.format(curve = '\'Timed Out in find_curve\''))
                                 continue
                             if curve == 'None':
@@ -149,14 +148,14 @@ def find_all_curves(pol,Nrange,max_P_norm,max_waiting_time_aurel,max_waiting_tim
 #         fwrite(out_str,outfile)
 
 def compute_table(input_file,output_trail = None):
-    global Nrange, max_P_norm, max_waiting_time_aurel, max_waiting_time, max_F_disc, decimal_prec
+    global Nrange, max_P_norm, max_P_norm_integrate, max_waiting_time_aurel, max_waiting_time, max_F_disc, decimal_prec
     x = QQ['x'].gen()
     if output_trail is None:
         output_trail = '_computed.txt'
     load(input_file) # Initializes ``all_fields`` vector
     output_file = input_file.replace('.sage',output_trail)
     log_file = input_file.replace('.sage','.log')
-    input_vec = [(datum[0],Nrange,max_P_norm,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file) for datum in all_fields]
+    input_vec = [(datum[0],Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file) for datum in all_fields]
 
     # # DEBUG
     # for inp in input_vec:
