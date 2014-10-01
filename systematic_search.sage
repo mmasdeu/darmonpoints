@@ -29,6 +29,8 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
+    from sage.interfaces.magma import Magma
+
     out_str_vec = []
 
     try:
@@ -43,7 +45,6 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
     if len(F.narrow_class_group()) > 1:
         return out_str_vec
 
-    from sage.interfaces.magma import Magma
     magma = Magma()
     magma.attach_spec(page_path)
     sys.setrecursionlimit(10**6)
@@ -108,7 +109,10 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                             out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
                             continue
                         if not hasattr(G,'embed'): # Not very elegant but works
-                            out_str_vec.append(out_str.format(curve = '\'Timed Out\''))
+                            if 'timed out' in G:
+                                out_str_vec.append(out_str.format(curve = '\'Timed Out\''))
+                            else:
+                                out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%str(G)))
                             continue
                         try:
                             Coh = CohomologyGroup(G.Gpn)
