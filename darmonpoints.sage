@@ -285,7 +285,6 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         except NameError:
             ROOT = os.getcwd()
             page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
-
         if magma is None:
             from sage.interfaces.magma import Magma
             quit_when_done = True
@@ -293,6 +292,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         else:
             quit_when_done = False
         magma.attach_spec(page_path)
+        magma.eval('Page_initialized := true')
     else:
         quit_when_done = False
 
