@@ -44,7 +44,7 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = True,outfile = None, magma = None):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None,timeout = 0):
         # if seed is None:
         #     seed = 1000
         if magma is None:
@@ -56,6 +56,7 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
                 ROOT = os.getcwd()
                 page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
             magma.attach_spec(page_path)
+        magma.eval('Page_initialized := true')
         try:
             discriminant = ZZ(quat_data)
             if base is not None:
@@ -74,19 +75,27 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
 
         if grouptype is None:
             grouptype = 'PSL2' if base == QQ else 'PGL2'
-        if use_sage_db:
-            try:
-                newobj = db(fname)
-            except IOError:
-                verbose('Group not found in database. Computing from scratch.')
-                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma)
-                newobj.save_to_db()
-        else:
-            if discriminant is None:
-                discriminant = QuaternionAlgebra(base,a,b).discriminant()
-                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma)
+
+        magma.eval('Alarm(%s)'%timeout) # This will KILL magma if the computation takes too long
+        try:
+
+            if use_sage_db:
+                try:
+                    newobj = db(fname)
+                except IOError:
+                    verbose('Group not found in database. Computing from scratch.')
+                    newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma)
+                    newobj.save_to_db()
             else:
-                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma)
+                if discriminant is None:
+                    discriminant = QuaternionAlgebra(base,a,b).discriminant()
+                    newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma)
+                else:
+                    newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma)
+            magma.eval('Page_initialized eq true')
+        except (ValueError,TypeError,RuntimeError):
+            raise RuntimeError("Timed out in computation")
+        magma.eval('Alarm(0)') # Save Magma from killing itself
         return newobj
 
 
@@ -171,7 +180,6 @@ class BigArithGroup_class(AlgebraicGroup):
         #     self.Gn._ArithGroup_generic__delete_unused_attributes()
         #     self.Gpn._ArithGroup_generic__delete_unused_attributes()
         # except AttributeError: pass
-
         verbose('Done initialization of BigArithmeticGroup')
 
     def clear_cache(self):

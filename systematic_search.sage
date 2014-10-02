@@ -97,13 +97,9 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         if F.signature()[1] == 0:
                             ram_at_inf[0] = 1
                         try:
-                            G = fork(BigArithGroup,max_waiting_time_aurel)(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = None)
+                            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = None,magma = None,timeout = max_waiting_time_aurel)
                         except Exception as e:
                             out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
-                            cancel_alarm()
-                            continue
-                        if 'timed out' in str(G):
-                            out_str_vec.append(out_str.format(curve = '\'Timed Out\''))
                             continue
                         try:
                             Coh = CohomologyGroup(G.Gpn)
