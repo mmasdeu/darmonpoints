@@ -298,7 +298,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
 
     sys.setrecursionlimit(10**6)
 
-    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2
+    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, Phi
 
     try:
         F = P.ring()
@@ -448,7 +448,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
             qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
             qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
         except Exception as e:
-            ret_vals.append('Problem with integration' + str(e.message))
+            ret_vals.append('Problem with integration: %s'%str(e.message))
+            continue
 
         qE = qE1/qE2
         qE = qE.add_bigoh(prec + qE.valuation())

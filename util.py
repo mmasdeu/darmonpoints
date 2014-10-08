@@ -699,10 +699,11 @@ def cantor_diagonal(iter1,iter2):
 
 
 def act_flt_in_disc(g,x,P):
-    z = (P.conjugate()*x - P)/(x-1)
+    Pconj = P.conjugate()
+    z = (Pconj*x - P)/(x-1)
     a,b,c,d = g.list()
     z1 = (a*z + b)/(c*z + d)
-    return (z1 - P)/(z1 - P.conjugate())
+    return (z1 - P)/(z1 - Pconj)
 
 def translate_into_twosided_list(V):
     vp,vm = V

@@ -193,7 +193,7 @@ class CohomologyElement(ModuleElement):
             raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
-    @cached_method
+    #@cached_method
     def evaluate_oc(self,x,parallelize = False,extramul = None):
         H = self.parent()
         if H._use_ps_dists:
@@ -209,13 +209,12 @@ class CohomologyElement(ModuleElement):
             wd = x.word_rep
         if len(wd) == 0:
             return V(0)
-        emb = lambda x:G.embed(x,prec)
         i,a = wd[-1]
-        ans = H.get_fox_term(i,a) * self._val[i]._val
+        ans = H.eval_at_genpow(i,a,self._val)
         ans = modreduce(ans,H._pN)
         for i,a in reversed(wd[:-1]):
-            ans = H.get_fox_term(i,a) * self._val[i]._val + H.get_gen_pow(i,a) * ans
-            ans = modreduce(ans, H._pN)
+            ans = H.eval_at_genpow(i,a,self._val) + H.mul_by_gen_pow(i,a,ans)
+            # ans = modreduce(ans, H._pN)
         if extramul is not None:
             ans = extramul * ans
             ans = modreduce(ans, H._pN)
@@ -491,16 +490,13 @@ class CohomologyGroup(Parent):
             return self._gen_pows[0][0]
         elif a > 0:
             genpows = self._gen_pows[i]
-            while len(genpows) <= a:
-                genpows.append(genpows[1] * genpows[-1])
-                genpows[-1] = modreduce(genpows[-1],self._pN)
-            return genpows[a]
         else:
             genpows = self._gen_pows_neg[i]
-            while len(genpows) <= -a:
-                genpows.append(genpows[1] * genpows[-1])
-                genpows[-1] = modreduce(genpows[-1],self._pN)
-            return genpows[-a]
+            a = -a
+        while len(genpows) <= a:
+            tmp = genpows[1] * genpows[-1]
+            genpows.append(modreduce(tmp, self._pN))
+        return genpows[a]
 
     def get_fox_term(self,i,a):
         if a == 1:
@@ -525,6 +521,44 @@ class CohomologyGroup(Parent):
             ans = -genpows[1] * ans
             ans = modreduce(ans,self._pN)
             return ans
+
+    def eval_at_genpow(self,i,a,v):
+        v = v[i]._val
+        if a == 1:
+            return v
+        elif a == -1:
+            return - self._gen_pows_neg[i][1] * v
+        elif a > 1:
+            genpows = self._gen_pows[i]
+            ans = v + genpows[1] * v
+            for o in xrange(a-2):
+                ans = modreduce(ans,self._pN)
+                ans = v + genpows[1] * ans
+            ans = modreduce(ans,self._pN)
+            return ans
+        elif a < -1:
+            a = -a
+            genpows = self._gen_pows_neg[i]
+            ans = v + genpows[1] * v
+            for o in xrange(a-2):
+                ans = modreduce(ans,self._pN)
+                ans = v + genpows[1] * ans
+            ans = -genpows[1] * ans
+            ans = modreduce(ans,self._pN)
+            return ans
+
+    def mul_by_gen_pow(self,i,a,v):
+        ans = v
+        if a == 0:
+            return ans
+        elif a > 0:
+            g = self._gen_pows[i][1]
+        else:
+            g = self._gen_pows_neg[i][1]
+            a = -a
+        for o in xrange(a):
+            ans = modreduce(g * ans, self._pN)
+        return ans
 
     def dimension(self):
         raise NotImplementedError
