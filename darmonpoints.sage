@@ -219,7 +219,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     while known_multiple % p == 0:
         known_multiple = ZZ(known_multiple / p)
 
-    candidate,twopow,J1 = recognize_J(E,J,K,local_embedding = local_embedding,known_multiple = known_multiple,twopowlist = twopowlist,outfile = outfile)
+    candidate,twopow,J1 = recognize_J(E,J,K,local_embedding = local_embedding,known_multiple = known_multiple,twopowlist = twopowlist,prec = prec, outfile = outfile)
 
     if candidate is not None:
         HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K

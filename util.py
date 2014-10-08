@@ -55,7 +55,7 @@ def is_in_principal_affinoid(p,z):
 
 def find_containing_affinoid(p,z,level = 1):
     r"""
-    Returns the vertex corresponding to the affinoid in 
+    Returns the vertex corresponding to the affinoid in
     the `p`-adic upper half plane that a given (unramified!) point reduces to.
 
     INPUT:
@@ -103,7 +103,7 @@ def find_containing_affinoid(p,z,level = 1):
 
 def point_radius(z,level = 1):
     r"""
-    Returns the vertex corresponding to the affinoid in 
+    Returns the vertex corresponding to the affinoid in
     the `p`-adic upper half plane that a given (unramified!) point reduces to.
 
     INPUT:
@@ -989,9 +989,10 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                         if good_at_infinity:
                             return B
 
-def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,outfile = None):
+def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None):
     p = J.parent().prime()
-    prec = J.parent().precision_cap()
+    if prec is None:
+        prec = J.parent().precision_cap()
     QQp = Qp(p,prec)
     if local_embedding is None:
         local_embedding = QQp
@@ -1055,7 +1056,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
                     break
                 success = False
                 prec0 = prec
-                while not success and prec0 > 2/3 * prec:
+                while not success and prec0 > 0.66 * prec:
                     verbose('Trying to recognize point with precision %s'%prec0, level = 2)
                     candidate,success = recognize_point(x,y,E,K,prec = prec0,HCF = HCF,E_over_HCF = EH)
                     prec0 -= 1
