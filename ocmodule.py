@@ -260,7 +260,7 @@ class OCVnElement(ModuleElement):
         """
         return self._val!=0
 
-    def evaluate_at_poly(self,P,R = None):
+    def evaluate_at_poly(self,P,R = None,depth = None):
         r"""
 
         EXAMPLES:
@@ -276,13 +276,15 @@ class OCVnElement(ModuleElement):
                 R = pushout(P.parent().base_ring(),self.parent().base_ring())
             except AttributeError:
                 R = self.parent().base_ring()
-
-        if hasattr(P,'degree'):
+        if depth is None and hasattr(P,'degree'):
             try:
-                r = min([P.degree()+1,self._depth])
-                return sum([R(self._val[ii,0])*P[ii] for ii in range(r)])
+                depth = min([P.degree()+1,self._depth])
+                return sum(R(self._val[ii,0])*P[ii] for ii in xrange(depth))
             except NotImplementedError: pass
-        return R(self._val[0,0])*P
+            return R(self._val[0,0])*P
+        else:
+            return sum(R(self._val[ii,0])*P[ii] for ii in xrange(depth))
+
 
     def valuation(self,l=None):
         r"""

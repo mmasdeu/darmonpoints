@@ -219,7 +219,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     while known_multiple % p == 0:
         known_multiple = ZZ(known_multiple / p)
 
-    candidate,twopow,J1 = recognize_J(E,J,K,local_embedding = local_embedding,known_multiple = known_multiple,twopowlist = twopowlist,outfile = outfile)
+    candidate,twopow,J1 = recognize_J(E,J,K,local_embedding = local_embedding,known_multiple = known_multiple,twopowlist = twopowlist,prec = prec, outfile = outfile)
 
     if candidate is not None:
         HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
@@ -298,7 +298,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
 
     sys.setrecursionlimit(10**6)
 
-    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2
+    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, Phi
 
     try:
         F = P.ring()
@@ -448,14 +448,14 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
             qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
             qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
         except Exception as e:
-            ret_vals.append('Problem with integration' + str(e.message))
+            ret_vals.append('Problem with integration: %s'%str(e.message))
+            continue
 
         qE = qE1/qE2
         qE = qE.add_bigoh(prec + qE.valuation())
         Linv = qE.log(p_branch = 0)/qE.valuation()
 
         print 'Integral done. Now trying to recognize the curve'
-        # fwrite("Starting computation of the Curve",outfile)
         fwrite('F.<r> = NumberField(%s)'%(F.gen(0).minpoly()),outfile)
         fwrite('N_E = %s = %s'%(NE,factor(NE)),outfile)
         fwrite('D_B = %s = %s'%(DB,factor(DB)),outfile)

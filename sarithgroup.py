@@ -93,7 +93,7 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
                 else:
                     newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma)
             magma.eval('Page_initialized eq true')
-        except (ValueError,TypeError,RuntimeError):
+        except TypeError: # (ValueError,TypeError,RuntimeError): DEBUG
             raise RuntimeError("Timed out in computation")
         magma.eval('Alarm(0)') # Save Magma from killing itself
         return newobj
@@ -151,7 +151,15 @@ class BigArithGroup_class(AlgebraicGroup):
             raise ValueError('p (=%s) must be prime'%self.p)
 
         verbose('Initializing arithmetic group G(pn)...')
+        covol = covolume(self.F,self.discriminant,self.ideal_p * self.level)
+        verbose('Estimated Covolume = %s'%covol)
+        difficulty = covol**2
+        verbose('Estimated Difficulty = %s'%difficulty)
+        t = walltime()
         self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype,magma = magma)
+        t = walltime(t)
+        verbose('Time for calculation T = %s'%t)
+        verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
 

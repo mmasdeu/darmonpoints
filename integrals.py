@@ -17,8 +17,6 @@ from sage.parallel.decorate import fork,parallel
 from sage.misc.getusage import get_memory_usage
 import os
 
-oo = Infinity
-
 def act_on_polynomial(P,num,den,N = None):
     if N is None:
         N = P.degree()
@@ -187,7 +185,7 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist=False,progress_bar = False):
+def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist=False,progress_bar = False,multiplicative = True):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
@@ -213,17 +211,20 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
             gq = G.wp() * gq * G.wp()**-1
-        newres,newresadd = integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,parallelize)
+        newres,newresadd = integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,parallelize,multiplicative)
         res *= newres
         resadd += newresadd
-    try:
-        return res * resadd.exp()
-    except ValueError:
-        return res**2 * (2*resadd).exp()
-    except TypeError:
-        print res
-        print resadd
-        assert 0
+    if not multiplicative:
+        return resadd
+    else:
+        try:
+            return res * resadd.exp()
+        except ValueError:
+            return res**2 * (2*resadd).exp()
+        except TypeError:
+            print res
+            print resadd
+            assert 0
 
 def evaluate_parallel(hc,gamma,pol,c0):
     HOC = hc.parent()
@@ -235,7 +236,7 @@ def evaluate_parallel(hc,gamma,pol,c0):
     if HOC._use_ps_dists:
         newresadd = sum([a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments)])
     else:
-        newresadd = mu_e.evaluate_at_poly(pol)
+        newresadd = mu_e.evaluate_at_poly(pol,K,HOC.precision_cap())
     resadd += newresadd
     try:
         resmul *= c0**ZZ(mu_e.moment(0).rational_reconstruction())
@@ -292,7 +293,7 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
             res += phi(K(te)) * hce
     return res
 
-def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize):
+def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     verbose('Integral %s/%s...'%(counter,total_counter))
     HOC = hc.parent()
     if prec is None:
@@ -303,9 +304,9 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     R = PolynomialRing(K,names = 't').fraction_field()
     t = R.gen()
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
-    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = True)
+    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = multiplicative)
 
-def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize):
+def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
     HOC = hc.parent()
@@ -314,71 +315,59 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     depth = HOC.coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
     QQp = Qp(p,prec)
-    R1 = PowerSeriesRing(K,'r1')
-    r1 = R1.gen()
-    R1.set_default_prec(prec)
+    R = PolynomialRing(K,'r')
     divisor_list = [(P,n) for P,n in divisor]
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
-    mem0 = get_memory_usage()
-    # current_progress = QQ(0)
     while len(edgelist) > 0:
         verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
         ii = 0
         for parity, edge, wt in edgelist:
             ii += 1
-            mem_usage = get_memory_usage() - mem0
             rev, h = edge
-            a,b,c,d = G.embed(h,prec).list()
-            a,b,c,d = K(d),K(-b),K(-c),K(a)
-            y0num = R1(1)
-            y0den = R1(1)
-            for P,n in divisor_list:
-                hP = R1([b-d*P,a-P*c])
-                if n > 0:
-                    y0num *= hP**ZZ(n)
-                    y0num = y0num.add_bigoh(prec)
-                elif n < 0:
-                    y0den *= hP**ZZ(-n)
-                    y0den = y0den.add_bigoh(prec)
-
-            assert y0num.valuation() == y0den.valuation()
-            y0 = y0num/y0den
-            c0 = y0(K(0))
-            assert c0 != 0
-            c0val = c0.valuation()
-            if not all([o.valuation() >= 0 for o in (y0(r1/p)/c0).list() if o != 0]):
-            #if not all([o.valuation() >= e + c0val for o,e in zip(y0.coefficients(),y0.exponents())]):
+            a,b,c,d = G.embed(h,prec).apply_map(K).list()
+            try:
+                c0 = K.one()
+                pol = R.zero()
+                for P,n in divisor_list:
+                    hp0 = b + a*P
+                    hp1 = d + c*P
+                    if hp1.valuation() <= hp0.valuation():
+                        raise ValueError
+                    x = hp1/hp0
+                    v = [K.zero(),x]
+                    xpow = x
+                    for m in xrange(2, depth + 1):
+                        xpow *= x
+                        v.append(xpow/m)
+                    pol -= n * R(v)
+                    c0 *= (-hp0) ** n
+                pol += c0.log(p_branch = 0)
+            except ValueError:
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
-                # newedgelist.extend([(1-parity,o) for o in G.subdivide([edge],parity,1)])
-                #assert not rev
                 continue
-            pol = c0.log(p_branch = 0) + (y0.derivative()/y0).integral()
             if not rev:
                 newgamma = G.reduce_in_amalgam(h * gamma)
             else:
                 newgamma = G.wp()**-1 * G.reduce_in_amalgam(h * gamma) * G.wp()
             if HOC._use_ps_dists:
                 mu_e = hc.evaluate(newgamma,parallelize)
-                newresadd = sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
+                resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                mu_e = hc.evaluate(newgamma,parallelize)
-                newresadd = mu_e.evaluate_at_poly(pol)
-            resadd += newresadd
-            try:
-                resmul *= c0**ZZ(hc.get_liftee().evaluate(newgamma)[0])
-            except IndexError: pass
+                resadd += hc.evaluate(newgamma,parallelize).evaluate_at_poly(pol,K,depth)
+            if multiplicative:
+                try:
+                    resmul *= c0**ZZ(hc.get_liftee().evaluate(newgamma)[0])
+                except IndexError: pass
             if progress_bar:
-                # current_progress += wt
                 update_progress(float(QQ(ii)/QQ(len(edgelist))),'Integration %s/%s'%(counter,total_counter))
 
         edgelist = newedgelist
-    val =  resmul.valuation()
-    if val != 0:
-        verbose('val = %s'%val)
-    tmp = p**val * K.teichmuller(p**(-val)*resmul)
-    # if resadd != 0:
-    #     tmp *= resadd.exp()
-    return tmp,resadd
+    if multiplicative:
+        val =  resmul.valuation()
+        if val != 0:
+            verbose('val = %s'%val)
+        resmul = p**val * K.teichmuller(p**(-val)*resmul)
+    return resmul, resadd

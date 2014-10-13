@@ -1,5 +1,5 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp,RR,CC
+from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp,RR,CC,RealField
 from sage.matrix.all import matrix,Matrix
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
@@ -55,7 +55,7 @@ def is_in_principal_affinoid(p,z):
 
 def find_containing_affinoid(p,z,level = 1):
     r"""
-    Returns the vertex corresponding to the affinoid in 
+    Returns the vertex corresponding to the affinoid in
     the `p`-adic upper half plane that a given (unramified!) point reduces to.
 
     INPUT:
@@ -103,7 +103,7 @@ def find_containing_affinoid(p,z,level = 1):
 
 def point_radius(z,level = 1):
     r"""
-    Returns the vertex corresponding to the affinoid in 
+    Returns the vertex corresponding to the affinoid in
     the `p`-adic upper half plane that a given (unramified!) point reduces to.
 
     INPUT:
@@ -699,10 +699,11 @@ def cantor_diagonal(iter1,iter2):
 
 
 def act_flt_in_disc(g,x,P):
-    z = (P.conjugate()*x - P)/(x-1)
+    Pconj = P.conjugate()
+    z = (Pconj*x - P)/(x-1)
     a,b,c,d = g.list()
     z1 = (a*z + b)/(c*z + d)
-    return (z1 - P)/(z1 - P.conjugate())
+    return (z1 - P)/(z1 - Pconj)
 
 def translate_into_twosided_list(V):
     vp,vm = V
@@ -988,9 +989,10 @@ def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None)
                         if good_at_infinity:
                             return B
 
-def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,outfile = None):
+def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None):
     p = J.parent().prime()
-    prec = J.parent().precision_cap()
+    if prec is None:
+        prec = J.parent().precision_cap()
     QQp = Qp(p,prec)
     if local_embedding is None:
         local_embedding = QQp
@@ -1054,7 +1056,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
                     break
                 success = False
                 prec0 = prec
-                while not success and prec0 > 2/3 * prec:
+                while not success and prec0 > 0.66 * prec:
                     verbose('Trying to recognize point with precision %s'%prec0, level = 2)
                     candidate,success = recognize_point(x,y,E,K,prec = prec0,HCF = HCF,E_over_HCF = EH)
                     prec0 -= 1
@@ -1182,6 +1184,47 @@ def discover_equation_from_L_invariant(Linv,emb,conductor,prec,field = None,chec
     verbose('Curve not recognized')
     return None
 
+def covolume(F,D,M = 1,prec = None,zeta = None):
+    from sage.symbolic.constants import pi
+    n = F.degree()
+    if prec is None:
+        prec = 53
+    disc = ZZ(F.discriminant())
+    if n > 1:
+        if zeta is None:
+            zetaf = F.zeta_function(prec)(2)
+        else:
+            zetaf = zeta
+        M = F.ideal(M)
+    else:
+        from sage.functions.transcendental import zeta
+        if zeta is None:
+            zetaf = zeta(RealField(prec)(2))
+        else:
+            zetaf = zeta
+        M = ZZ(M)
+    if n > 1:
+        Phi = QQ(D.norm().abs())
+        for P,_ in D.factor():
+            np = P.norm()
+            Phi *= QQ(1)-QQ(1)/np
+        Psi = QQ(M.norm()).abs()
+        for P,e in M.factor():
+            np = QQ(P.norm())
+            Psi *= np**(ZZ(e)-1) * (np + 1)
+    else:
+        Phi = ZZ(D)
+        for np,_ in D.factor():
+            Phi *= QQ(1)-QQ(1)/np
+        Psi = ZZ(M).abs()
+        for np,e in M.factor():
+            Psi *= np**(ZZ(e)-1) * (np + 1)
+    RR = RealField(prec)
+    pi = RR(pi)
+    covol =  (RR(disc).abs()**(3/2) * zetaf * Phi)/((4 * pi**2)**(n-1))
+    index = RR(Psi)
+    indexunits = 1 # There is a factor missing here, due to units.
+    return covol * index / indexunits
 
 def simplification_isomorphism(G,return_inverse = False):
     """
