@@ -212,8 +212,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
                 new_out_str = out_str.format(curve = curve)
             out_str_vec.append(new_out_str)
     except Exception as e:
-        print e
-        #out_str_vec.append('Unknown exception field of discriminant %s (%s results preced)'%(F.discriminant(),len(out_str_vec)))
+        out_str_vec.append('Unknown exception field of discriminant %s (%s results preced)'%(F.discriminant(),len(out_str_vec)))
     return out_str_vec
 
 
