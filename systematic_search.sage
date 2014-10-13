@@ -10,9 +10,9 @@ Nrange = range(1,200) # Conductors to explore
 max_P_norm = 200 # Maximum allowed norm for the chosen prime
 max_P_norm_integrate = 23 # Maximum allowed norm for the chosen prime to integrate
 max_F_disc = None # Maximum size of discriminant of base field
-max_waiting_time_aurel = 2 * 60 * 60 # Amount of patience (in seconds)
-max_waiting_time = 10 * 60 * 60 # Amount of patience (in seconds)
-decimal_prec = 50
+max_waiting_time_aurel = 5 * 60 * 60 # Amount of patience (in seconds)
+max_waiting_time = 20 * 60 * 60 # Amount of patience (in seconds)
+decimal_prec = 60
 
 @parallel
 def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file):
