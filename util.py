@@ -1,5 +1,5 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp,RR,CC
+from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp,RR,CC,RealField
 from sage.matrix.all import matrix,Matrix
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
@@ -1184,6 +1184,47 @@ def discover_equation_from_L_invariant(Linv,emb,conductor,prec,field = None,chec
     verbose('Curve not recognized')
     return None
 
+def covolume(F,D,M = 1,prec = None,zeta = None):
+    from sage.symbolic.constants import pi
+    n = F.degree()
+    if prec is None:
+        prec = 53
+    disc = ZZ(F.discriminant())
+    if n > 1:
+        if zeta is None:
+            zetaf = F.zeta_function(prec)(2)
+        else:
+            zetaf = zeta
+        M = F.ideal(M)
+    else:
+        from sage.functions.transcendental import zeta
+        if zeta is None:
+            zetaf = zeta(RealField(prec)(2))
+        else:
+            zetaf = zeta
+        M = ZZ(M)
+    if n > 1:
+        Phi = QQ(D.norm().abs())
+        for P,_ in D.factor():
+            np = P.norm()
+            Phi *= QQ(1)-QQ(1)/np
+        Psi = QQ(M.norm()).abs()
+        for P,e in M.factor():
+            np = QQ(P.norm())
+            Psi *= np**(ZZ(e)-1) * (np + 1)
+    else:
+        Phi = ZZ(D)
+        for np,_ in D.factor():
+            Phi *= QQ(1)-QQ(1)/np
+        Psi = ZZ(M).abs()
+        for np,e in M.factor():
+            Psi *= np**(ZZ(e)-1) * (np + 1)
+    RR = RealField(prec)
+    pi = RR(pi)
+    covol =  (RR(disc).abs()**(3/2) * zetaf * Phi)/((4 * pi**2)**(n-1))
+    index = RR(Psi)
+    indexunits = 1 # There is a factor missing here, due to units.
+    return covol * index / indexunits
 
 def simplification_isomorphism(G,return_inverse = False):
     """

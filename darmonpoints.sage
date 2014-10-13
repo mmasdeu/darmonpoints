@@ -456,7 +456,6 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         Linv = qE.log(p_branch = 0)/qE.valuation()
 
         print 'Integral done. Now trying to recognize the curve'
-        # fwrite("Starting computation of the Curve",outfile)
         fwrite('F.<r> = NumberField(%s)'%(F.gen(0).minpoly()),outfile)
         fwrite('N_E = %s = %s'%(NE,factor(NE)),outfile)
         fwrite('D_B = %s = %s'%(DB,factor(DB)),outfile)
