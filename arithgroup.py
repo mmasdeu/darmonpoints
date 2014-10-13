@@ -1002,7 +1002,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 else:
                     self._relation_words.append(rel)
 
-    def _init_aurel_data(self,prec = 500):
+    def _init_aurel_data(self,prec = 100):
         verbose('Computing normalized basis')
         if 'GL' in self._grouptype:
             # raise NotImplementedError,'This implementation has bugs'
@@ -1010,12 +1010,15 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         else:
             grouptype = '"NormOne"'
             assert 'SL' in self._grouptype
-        if prec is None:
-            prec = 100
         _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec)
         self._facerels_magma = f
         self._facerels = []
-        self._RR = RR = RealField((len(str(f[1].Radius)) * RealField(20)(10).log()/RealField(20)(2).log()).ceil()-10)
+        verbose('Getting precision from Magma')
+        try:
+            self._RR = RR = RealField((len(str(f[1].Radius)) * RealField(20)(10).log()/RealField(20)(2).log()).ceil()-10)
+        except:
+            self._RR = RR = RealField(100)
+        verbose('Getting precision done')
         prec = RR.precision()
         CC = ComplexField(prec)
         all_complex_embs = [o for o in self.F.embeddings(CC) if o(self.F.gen()).imag() != 0]
