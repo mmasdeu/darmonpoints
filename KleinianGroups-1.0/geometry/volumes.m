@@ -184,7 +184,7 @@ function PolyhedronVolume(F, E, zetas) //F : faces, E : edges.
 		end for;
             end if;
 	end for;
-	if #EdgesOfFace[f] ge 1 then
+	if #EdgesOfFace[1] ge 1 then
       	    x00 := Rep(EdgesOfFace[1][1]);
 	    x00 := PerturbatedBtoH(j,x00);
         end if;
