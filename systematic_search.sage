@@ -10,9 +10,9 @@ Nrange = range(1,200) # Conductors to explore
 max_P_norm = 200 # Maximum allowed norm for the chosen prime
 max_P_norm_integrate = 23 # Maximum allowed norm for the chosen prime to integrate
 max_F_disc = None # Maximum size of discriminant of base field
-max_waiting_time_aurel = 5 * 60 * 60 # Amount of patience (in seconds)
-max_waiting_time = 20 * 60 * 60 # Amount of patience (in seconds)
-decimal_prec = 60
+max_waiting_time_aurel = 1 * 60 * 60 # Amount of patience (in seconds)
+max_waiting_time = 10 * 60 * 60 # Amount of patience (in seconds)
+decimal_prec = 50
 
 @parallel
 def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file):
@@ -206,10 +206,13 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
                 cancel_alarm()
             except (AlarmInterrupt,KeyboardInterrupt):
                 new_out_str = out_str.format(curve = '\'Timed Out in find_curve\'')
+                cancel_alarm()
             except:
                 new_out_str = out_str.format(curve = '\'Probably Timed Out in find_curve\'')
+                cancel_alarm()
             else:
                 new_out_str = out_str.format(curve = curve)
+                cancel_alarm()
             out_str_vec.append(new_out_str)
     except Exception as e:
         out_str_vec.append('Unknown exception field of discriminant %s (%s results preced)'%(F.discriminant(),len(out_str_vec)))
