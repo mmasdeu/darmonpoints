@@ -177,14 +177,17 @@ function PolyhedronVolume(F, E, zetas) //F : faces, E : edges.
 	TetrahedraVertices := [];
 	n := #F;
 	for f := 1 to n do
+	    if #EdgesOfFace[f] ge 1 then
 		x0 := Rep(EdgesOfFace[f][1]);
 		for ep in EdgesOfFace[f] do
 			Append(~TetrahedraVertices, [PerturbatedBtoH(j,x0)] cat [PerturbatedBtoH(j,w) : w in ep]);
 		end for;
+            end if;
 	end for;
-	
-	x00 := Rep(EdgesOfFace[1][1]);
-	x00 := PerturbatedBtoH(j,x00);
+	if #EdgesOfFace[f] ge 1 then
+      	    x00 := Rep(EdgesOfFace[1][1]);
+	    x00 := PerturbatedBtoH(j,x00);
+        end if;
     vol := R!0;
     for t in TetrahedraVertices do
         volt := TetrahedronVolume(t[1],t[2],t[3],x00,zetas,eps12);
