@@ -97,7 +97,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         if F.signature()[1] == 0:
                             ram_at_inf[0] = 1
                         try:
-                            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = "PSL2",magma = None,timeout = max_waiting_time_aurel)
+                            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = "PGL2",magma = None,timeout = max_waiting_time_aurel)
                         except Exception as e:
                             out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
                             continue
@@ -114,7 +114,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         for phiE in phiElist:
                             try:
                                 alarm(max_waiting_time)
-                                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PSL2", magma = G.magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", magma = G.magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
                                 cancel_alarm()
                                 curve = str(curve) # just in case
                             except Exception as e:
@@ -182,7 +182,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
         out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s, %s],\\'%(NE,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec,covol)
         abtuple = quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants()
         try:
-            G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PSL2", magma = None,timeout = max_waiting_time_aurel)
+            G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,timeout = max_waiting_time_aurel)
         except Exception as e:
             out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
             return out_str_vec
@@ -198,7 +198,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
         for phiE in phiElist:
             try:
                 alarm(max_waiting_time)
-                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PSL2", magma = G.magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", magma = G.magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
                 cancel_alarm()
                 curve = str(curve) # just in case
             except Exception as e:

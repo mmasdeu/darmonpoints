@@ -254,6 +254,34 @@ procedure AddNB(g, ~F, ~FE, ~IE, ~G, eps12, eps13, eps110)
     UpdateExteriorDomain(~F,~FE,~IE, s, 0, ~nbdel, eps12, eps13, eps110);
 end procedure;
 
+function CommUnits(O,x)
+  L := [];
+  B := Algebra(O);
+  F := BaseField(B);
+  cp := CharacteristicPolynomial(x);
+  if not IsIntegral(x) or not IsIrreducible(cp) then return []; end if;
+  K<t> := ext<F | cp>;
+  ZK := AbsoluteOrder(MaximalOrder(K));
+  Kabs := NumberField(ZK);
+  tabs := Kabs!t;
+  _ := ClassGroup(ZK : Proof := "Subgroup");
+  try
+    OK := Order([tabs]);
+  catch e
+    return [];
+  end try;
+  if Norm(Conductor(OK)) gt 3*10^6 then return []; end if;
+  U,f := UnitGroup(OK : Al := "ClassGroup");
+  for g in Generators(U) do
+  if Order(g) eq 0 then
+    s := Eltseq(K!(Kabs!f(g)));
+    y := s[1] + s[2]*x;
+    Append(~L, y);
+  end if;
+  end for;
+  return L;
+end function;
+
 intrinsic NormalizedBasis(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodEnum := 100, Level := 1, BoundPrimes := -1, PairingMethod := "Reduction", GroupType := "NormOne", EnumMethod := "SmallBalls", Maple := false, zetas := [], zK2 := 0, Center := "Auto", index := 1, pr := DefaultPrecision) -> SeqEnum, SeqEnum, SeqEnum, SeqEnum, FldReElt, SeqEnum, SeqEnum, FldReElt, FldReElt, FldReElt, RngIntElt, RngIntElt, AlgQuatElt
 {
     Computes a fundamental domain for the Kleinian group attached to the order O.
@@ -277,6 +305,21 @@ elif GroupType eq "Maximal" then
     end if;
 else
     error "Invalid Group Type";
+end if;
+
+if GroupType ne "NormOne" then
+  vprint Kleinian, 2: "\ncomputing some units first\n";
+  found := false;
+  moreunits := [];
+  for x in ZBasis(O) do
+    newunits := CommUnits(O,x);
+    moreunits cat:= newunits;
+    for g in newunits do
+      if not IsSquare(Norm(g)) then found := true; break; end if;
+    end for;
+    if found then break; end if;
+  end for;
+  InitialG cat:= moreunits;
 end if;
 
 if pr ne DefaultPrecision then
