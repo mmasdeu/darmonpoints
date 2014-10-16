@@ -1011,6 +1011,9 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             grouptype = '"NormOne"'
             assert 'SL' in self._grouptype
         _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec)
+        # magma_str = "_,f,e := NormalizedBasis(%s : GroupType := %s, pr := %s);"%(self._O_magma.name(),grouptype,prec)
+        # verbose('Calling magma.eval: ' + magma_str)
+        # self.magma.eval(magma_str)
         self._facerels_magma = f
         self._facerels = []
         verbose('Getting precision from Magma')
