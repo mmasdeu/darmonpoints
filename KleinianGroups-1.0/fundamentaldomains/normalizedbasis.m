@@ -307,20 +307,20 @@ else
     error "Invalid Group Type";
 end if;
 
-if GroupType ne "NormOne" then
-  vprint Kleinian, 2: "\ncomputing some units first\n";
-  found := false;
-  moreunits := [];
-  for x in ZBasis(O) do
-    newunits := CommUnits(O,x);
-    moreunits cat:= newunits;
-    for g in newunits do
-      if not IsSquare(Norm(g)) then found := true; break; end if;
-    end for;
-    if found then break; end if;
-  end for;
-  InitialG cat:= moreunits;
-end if;
+//if GroupType ne "NormOne" then
+//  vprint Kleinian, 2: "\ncomputing some units first\n";
+//  found := false;
+//  moreunits := [];
+//  for x in ZBasis(O) do
+//    newunits := CommUnits(O,x);
+//    moreunits cat:= newunits;
+//    for g in newunits do
+//      if not IsSquare(Norm(g)) then found := true; break; end if;
+//    end for;
+//    if found then break; end if;
+//  end for;
+//  InitialG cat:= moreunits;
+//end if;
 
 if pr ne DefaultPrecision then
     R := RealField(pr);
