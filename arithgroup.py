@@ -918,7 +918,7 @@ class FaceRel(SageObject):
 
 class ArithGroup_nf_quaternion(ArithGroup_generic):
     Element = ArithGroupElement
-    def __init__(self,base,a,b,level,info_magma = None,grouptype =  'PSL2',magma = None):
+    def __init__(self,base,a,b,level,info_magma = None,grouptype =  'PSL2',magma = None,timeout = 0):
         self.magma = magma
         if base.signature()[1] == 0:
             self.algorithm = 'jv'
@@ -949,8 +949,10 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant(),self.magma)
 
         if self.algorithm == 'aurel':
-            self._init_aurel_data()
+            self._init_aurel_data(timeout = timeout)
         else:
+            if timeout != 0:
+                raise NotImplementedError("Timeout functionality not implemented for totally real fields")
             self._init_jv_data()
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
@@ -1002,7 +1004,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 else:
                     self._relation_words.append(rel)
 
-    def _init_aurel_data(self,prec = 100):
+    def _init_aurel_data(self,prec = 100,timeout = 0):
         verbose('Computing normalized basis')
         if 'GL' in self._grouptype:
             # raise NotImplementedError,'This implementation has bugs'
@@ -1010,10 +1012,14 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         else:
             grouptype = '"NormOne"'
             assert 'SL' in self._grouptype
-        _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec)
+        _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, max_time = timeout)
         # magma_str = "_,f,e := NormalizedBasis(%s : GroupType := %s, pr := %s);"%(self._O_magma.name(),grouptype,prec)
         # verbose('Calling magma.eval: ' + magma_str)
         # self.magma.eval(magma_str)
+        if f == self.magma(False):
+            raise RuntimeError("Timed Out (%s sec) in NormalizedBasis"%timeout)
+        matlist = self.magma.GetMatrixList(f)
+
         self._facerels_magma = f
         self._facerels = []
         verbose('Getting precision from Magma')
@@ -1035,7 +1041,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self._HH = QuaternionAlgebra(RR,-1,-1)
         ih,jh,kh = self._HH.gens()
         self._Pmat, self._Pmatinv = JtoP(self._HH,MatrixSpace(CC,2,2))
-        matlist = self.magma.GetMatrixList(f)
         i,j,k  = self.B.gens()
         centerlist = [self._HH(o) for o in sage_eval(self.magma.eval('[%s[i]`Center : i in [1..%s]]'%(f.name(),len(f))),{'i': ih, 'j': jh})]
         radiuslist = [RR(o) for o in sage_eval(self.magma.eval('[%s[i]`Radius : i in [1..%s]]'%(f.name(),len(f))))]

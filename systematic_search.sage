@@ -11,7 +11,7 @@ max_P_norm = 200 # Maximum allowed norm for the chosen prime
 max_P_norm_integrate = 23 # Maximum allowed norm for the chosen prime to integrate
 max_F_disc = None # Maximum size of discriminant of base field
 max_waiting_time_aurel = 1 * 60 * 60 # Amount of patience (in seconds)
-max_waiting_time = 10 * 60 * 60 # Amount of patience (in seconds)
+max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 50
 
 @parallel
