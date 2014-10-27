@@ -76,26 +76,19 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
         if grouptype is None:
             grouptype = 'PSL2' if base == QQ else 'PGL2'
 
-        magma.eval('Alarm(%s)'%timeout) # This will KILL magma if the computation takes too long
-        try:
-
-            if use_sage_db:
-                try:
-                    newobj = db(fname)
-                except IOError:
-                    verbose('Group not found in database. Computing from scratch.')
-                    newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma)
-                    newobj.save_to_db()
+        if use_sage_db:
+            try:
+                newobj = db(fname)
+            except IOError:
+                verbose('Group not found in database. Computing from scratch.')
+                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout)
+                newobj.save_to_db()
+        else:
+            if discriminant is None:
+                discriminant = QuaternionAlgebra(base,a,b).discriminant()
+                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout)
             else:
-                if discriminant is None:
-                    discriminant = QuaternionAlgebra(base,a,b).discriminant()
-                    newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma)
-                else:
-                    newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma)
-            magma.eval('Page_initialized eq true')
-        except TypeError: # (ValueError,TypeError,RuntimeError): DEBUG
-            raise RuntimeError("Timed out in computation")
-        magma.eval('Alarm(0)') # Save Magma from killing itself
+                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout)
         return newobj
 
 
@@ -125,7 +118,7 @@ class BigArithGroup_class(AlgebraicGroup):
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = 'PGL2',seed = None,outfile = None,magma = None):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = 'PGL2',seed = None,outfile = None,magma = None,timeout = 0):
         self.seed = seed
         self.magma = magma
         if seed is not None:
@@ -156,7 +149,7 @@ class BigArithGroup_class(AlgebraicGroup):
         difficulty = covol**2
         verbose('Estimated Difficulty = %s'%difficulty)
         t = walltime()
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype,magma = magma)
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype,magma = magma,timeout = timeout)
         t = walltime(t)
         verbose('Time for calculation T = %s'%t)
         verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
@@ -164,7 +157,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn.embed = self.embed
 
         verbose('Initializing arithmetic group G(n)...')
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,info_magma = self.Gpn,grouptype = grouptype,magma = magma)
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,info_magma = self.Gpn,grouptype = grouptype,magma = magma,timeout = timeout)
         self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
 
@@ -473,8 +466,10 @@ class BigArithGroup_class(AlgebraicGroup):
             return a, wd + [wd1,wd0]
 
 
-def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = 'PGL2',magma = None):
+def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = 'PGL2',magma = None,timeout = 0):
     if base == QQ:
+        if timeout != 0:
+            raise NotImplementedError("Timeout not implemented for rational base yet")
         discriminant = ZZ(discriminant)
         if discriminant == 1:
             return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype)
@@ -490,4 +485,4 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, gro
         a,b = abtuple
         if magma is None:
             raise ValueError('Should specify magma session')
-        return ArithGroup_nf_quaternion(base,a,b,level,info_magma,grouptype = grouptype,magma = magma)
+        return ArithGroup_nf_quaternion(base,a,b,level,info_magma,grouptype = grouptype,magma = magma,timeout = timeout)

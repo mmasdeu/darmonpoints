@@ -282,7 +282,7 @@ function CommUnits(O,x)
   return L;
 end function;
 
-intrinsic NormalizedBasis(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodEnum := 100, Level := 1, BoundPrimes := -1, PairingMethod := "Reduction", GroupType := "NormOne", EnumMethod := "SmallBalls", Maple := false, zetas := [], zK2 := 0, Center := "Auto", index := 1, pr := DefaultPrecision) -> SeqEnum, SeqEnum, SeqEnum, SeqEnum, FldReElt, SeqEnum, SeqEnum, FldReElt, FldReElt, FldReElt, RngIntElt, RngIntElt, AlgQuatElt
+intrinsic NormalizedBasis(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodEnum := 100, Level := 1, BoundPrimes := -1, PairingMethod := "Reduction", GroupType := "NormOne", EnumMethod := "SmallBalls", Maple := false, zetas := [], zK2 := 0, Center := "Auto", index := 1, pr := DefaultPrecision, max_time := 0) -> SeqEnum, SeqEnum, SeqEnum, SeqEnum, FldReElt, SeqEnum, SeqEnum, FldReElt, FldReElt, FldReElt, RngIntElt, RngIntElt, AlgQuatElt
 {
     Computes a fundamental domain for the Kleinian group attached to the order O.
 
@@ -292,6 +292,10 @@ nbit := 0;
 
 if EnumMethod notin {"BigBall", "ManyBalls", "SmallBalls", "None"} then
     error "Invalid Enumeration Method.";
+end if;
+
+if max_time eq 0 then
+    max_time := Infinity();
 end if;
 
 if GroupType eq "NormOne" then
@@ -533,6 +537,7 @@ enumtime := Cputime();
 enumtime *:= 0;
 pairingtime := enumtime;
 ksgtime := enumtime;
+elapsed_time := Cputime();
 
 repeat
 	nbit +:= 1;
@@ -752,6 +757,11 @@ repeat
         F,FE,IE := ExteriorDomain(F);
     end if;
 
+
+if Cputime(elapsed_time) gt max_time then
+   return false,false,false,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
+end if;
+
 until (allpaired and Abs(Vol/Covol-1) lt 1/1000) or Abs(Vol/Covol-1) lt 1/10000000000;
 
 if Maple then
@@ -761,4 +771,5 @@ if Maple then
 end if;
 
 return NormalizedBoundary(F),F,FE,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
+
 end intrinsic;
