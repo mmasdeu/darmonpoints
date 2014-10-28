@@ -571,6 +571,10 @@ repeat
         vprint Kleinian: ">>>>>>>>>> Enumerate";
         vprint Kleinian, 3: "stepu =", RealField(5)!stepu;
         repeat
+	if Cputime(elapsed_time) gt max_time then
+	return false,false,false,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
+        end if;
+
             allowsq := true;
             if EnumMethod eq "ManyBalls" or EnumMethod eq "SmallBalls" then
                 if ball mod 10 lt propi and #IE ne 0 and (not Fuchsian or loo gt eps13) then
@@ -756,8 +760,6 @@ repeat
     if Fuchsian then
         F,FE,IE := ExteriorDomain(F);
     end if;
-
-
 if Cputime(elapsed_time) gt max_time then
    return false,false,false,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
 end if;
