@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License along with Kle
 
 */
 import "../kleinian.m" : isscalar, dgm;
+import "normalizedbasis.m" : CheckTimeOut;
 
 /*
     INPUT
@@ -66,6 +67,7 @@ end procedure;
     Stores x (maybe scaled) in the relevant container
 */
 procedure ProcessVector(x, order, ZK, ~Enum, ~partialgpelt, grouptype, bp, ~primes, ~maxp, allowsq, fuchsian)
+  CheckTimeOut();
     nx := Norm(x);
     if isscalar(x) or nx eq 0 then
         return;

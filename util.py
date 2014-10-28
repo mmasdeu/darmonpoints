@@ -1197,9 +1197,9 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
             zetaf = zeta
         M = F.ideal(M)
     else:
-        from sage.functions.transcendental import zeta
+        from sage.functions.transcendental import Function_zeta
         if zeta is None:
-            zetaf = zeta(RealField(prec)(2))
+            zetaf = Function_zeta()(RealField(prec)(2))
         else:
             zetaf = zeta
         M = ZZ(M)
