@@ -23,6 +23,13 @@ import "../geometry/random.m" : RadiusDisc, RadiusBall, RandomHyperbolicDisc, Ra
 import "enumeration.m" : InitializeLattice, Enumerate;
 import "../kleinian.m" : kleinianmatrix, isscalar, Hdef, Rdef, DefaultPrecision;
 
+function CheckTimeOut()
+  if Cputime() gt 120 then
+  error Error("Time Out");
+  end if;
+return false;
+end function;
+
 /*
     Returns the normalized boundary of the exterior domain with faces F
 */
@@ -154,7 +161,6 @@ while ie le nfe and ie le #FE do
                         allpaired := false;
                         _, delta := Reduce(gamma, F : eps12 := eps12, z := z1, Word := false);
                             gamma := delta*gamma;
-                    
                             if not isscalar(gamma) then
                                 repairing +:= 1;
                                 AddP(gamma, ~F, ~FE, ~IE, ~ie, ~G, eps12, eps13, eps110);
@@ -289,7 +295,6 @@ intrinsic NormalizedBasis(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodE
     Returns the normalized boundary of the domain, the faces, the finite edges, the infinite edges, the volume, elements with prime norm, the time spent enumerating, the time spent repairing, the time spent in KeepSameGroup, the number of enumerated vectors, the number of enumerated group elements.
 }
 nbit := 0;
-
 if EnumMethod notin {"BigBall", "ManyBalls", "SmallBalls", "None"} then
     error "Invalid Enumeration Method.";
 end if;
@@ -297,6 +302,7 @@ end if;
 if max_time eq 0 then
     max_time := Infinity();
 end if;
+TimeLimit:=Cputime() + max_time;
 
 if GroupType eq "NormOne" then
     grouptype := 1;
@@ -350,6 +356,7 @@ _,_,Fuchsian := KleinianInjection(B : Center := Center, H := Parent(Center), Red
 omega := K!ZK.2;
 
 primes := [ B | ];
+try
 
 if Type(Level) eq RngIntElt then
 	if not IsMaximal(O) then
@@ -377,6 +384,7 @@ eps13 := epsilon(1/3,pr);
 eps110 := epsilon(1/10,pr);
 
 loo := R!7;
+
 
 vprint Kleinian: ">>>>>>>>>> Initialization";
 
@@ -771,6 +779,10 @@ if Maple then
     MapleFile(MapleDraw(MapleExteriorDomain(F,FE,IE) : view := 1.), "FinalFDomS");
     MapleFile(MapleDraw(MapleExteriorDomain([],FE,IE : Caption := true) : view := 1.), "FinalFDomC");
 end if;
+
+catch e
+return false,false,false;
+end try;
 
 return NormalizedBoundary(F),F,FE,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
 

@@ -19,6 +19,7 @@ import "basics.m" : IsExterior, SphereCircleIntersection, AngleInPlane, IsInteri
 import "random.m" : RandomInCircle;
 import "intervals.m" : PointInInterval, IntersectionCompacts, LengthInterval;
 import "../aux.m" : epsilon;
+import "../fundamentaldomains/normalizedbasis.m" : CheckTimeOut;
 
 function IsInExteriorDomain(w,L,eps)
 	for s in L do
@@ -259,6 +260,7 @@ procedure EatEdges(~F, ~E, S, ~FP, start, ~nbdel, eps12, eps13)
     end if;
     e := 0;
 	while (dfs and not IsEmpty(tovisit)) or (not dfs and e lt n) do
+       CheckTimeOut();
         if dfs then
             ExtractRep(~tovisit, ~e);
             Include(~visited, e);

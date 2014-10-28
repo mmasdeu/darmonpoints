@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License along with Kle
 import "../geometry/basics.m" : Delta, action, sqrnorm, JtoP;
 import "../aux.m" : epsilon;
 import "../kleinian.m" : kleinianmatrix, epsdef;
+import "normalizedbasis.m" : CheckTimeOut;
 
 intrinsic GetMatrixList(Boundary :: SeqEnum) -> SeqEnum
 {
@@ -63,6 +64,7 @@ intrinsic ReducePoint(z :: AlgQuatElt, Boundary :: SeqEnum : eps12 := epsdef, Do
 		i0 := 0;
         d := R!1;
 		for i := 1 to n do
+			   CheckTimeOut();
 			if not (Boundary[i]`g in DontUse) then
                 d1 := sqrnorm(z - Boundary[i]`Center)/(Boundary[i]`Radius)^2;
 				if d ge (1+eps12)*d1 then
