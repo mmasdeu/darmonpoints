@@ -338,16 +338,16 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     if F != QQ and ramification_at_infinity is None:
         if F.signature()[0] > 1:
             if F.signature()[1] == 1:
-                ramification_at_infinity = [-1 for o in range(F.signature()[0])]
+                ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'
             else:
                 raise ValueError,'Please specify the ramification at infinity'
         elif F.signature()[0] == 1:
             if len(F.ideal(DB).factor()) % 2 == 0:
-                ramification_at_infinity = [1] # Split
+                ramification_at_infinity = [] # Split at infinity
             else:
-                ramification_at_infinity = [-1] # Ramified
+                ramification_at_infinity = F.real_places(prec = Infinity) # Ramified at infinity
         else:
-            ramification_at_infinity = []
+            ramification_at_infinity = None
 
     if outfile is not None:
         print "Partial results will be saved in %s"%outfile

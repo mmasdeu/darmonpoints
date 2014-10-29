@@ -92,9 +92,9 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         assert N == NE.norm().abs()
                         prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
                         out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s],\\'%(N,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec)
-                        ram_at_inf = [-1 for o in F.real_embeddings()]
+                        ram_at_inf = F.real_places(prec = Infinity)
                         if F.signature()[1] == 0:
-                            ram_at_inf[0] = 1
+                            ram_at_inf = ram_at_inf[1:]
                         try:
                             G = BigArithGroup(P,quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf),Np,base = F,use_sage_db = False,grouptype = "PGL2",magma = None,timeout = max_waiting_time_aurel)
                         except Exception as e:
@@ -314,9 +314,9 @@ def dry_run(input_file):
                         assert N == NE.norm().abs()
                         prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
                         out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s],\\'%(N,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec)
-                        ram_at_inf = [-1 for o in F.real_embeddings()]
+                        ram_at_inf = F.real_places(prec = Infinity)
                         if F.signature()[1] == 0:
-                            ram_at_inf[0] = 1
+                            ram_at_inf = ram_at_inf[1:]
                         covol = covolume(F,D,P * Np,prec = 53, zeta = zeta)
                         verbose('Estimated Covolume = %s'%covol)
                         difficulty = covol**2
