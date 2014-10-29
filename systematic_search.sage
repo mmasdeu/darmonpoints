@@ -187,14 +187,21 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
             return out_str_vec
         try:
+            alarm(max_waiting_time)
             Coh = CohomologyGroup(G.Gpn)
             phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
+            cancel_alarm()
         except Exception as e:
             out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message))
+            cancel_alarm()
+            return out_str_vec
+        except (AlarmInterrupt,KeyboardInterrupt):
+            out_str_vec.append(out_str.format(curve = '\'Timed out in get_rational_cocycle\''))
             return out_str_vec
         if Pnorm > max_P_norm_integrate:
             out_str_vec.append(out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
             return out_str_vec
+        
         for phiE in phiElist:
             try:
                 alarm(max_waiting_time)
