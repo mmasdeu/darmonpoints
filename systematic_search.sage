@@ -178,7 +178,11 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
         Pnorm = P.norm()
         prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
         out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s, %s],\\'%(NE,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec,covol)
-        abtuple = quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf)
+        ram_at_inf_places = []
+	for i,v	in enumerate(F.real_places(prec	= Infinity)):
+	    if ram_at_inf[i] ==	-1:
+              	ram_at_inf_places.append(v)
+	abtuple = quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf_places)
         try:
             G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,timeout = max_waiting_time_aurel)
         except Exception as e:
