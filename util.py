@@ -940,54 +940,286 @@ def magma_F_ideal_to_sage(F_sage,x,magma):
     gens = x.TwoElement(nvals = 2)
     return F_sage.ideal([magma_F_elt_to_sage(F_sage,gens[0],magma),magma_F_elt_to_sage(F_sage,gens[1],magma)])
 
-r'''
-Follows S.Johansson, "A description of quaternion algebras"
-ramification_at_infinity is a list of the same length as the real places.
-Ramified = -1, Split = +1
-'''
-def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None):
-    if F.degree() == 1:
-        return QuaternionAlgebra(disc)
-    if len(F.embeddings(RR)) > 1 and ramification_at_infinity is None:
-        raise ValueError, 'Must specify ramification type at infinity places'
-    if ramification_at_infinity is not None and len(ramification_at_infinity) != len(F.embeddings(RR)):
-        raise ValueError, 'Must specify exactly %s ramifications at infinity'%len(F.embeddings(RR))
-    if ramification_at_infinity is not None:
-        ramification_at_infinity = [ZZ(r) for r in ramification_at_infinity]
-        assert all((r.abs() == 1 for r in ramification_at_infinity))
-    disc = F.ideal(disc)
-    if not disc.is_principal():
-        raise ValueError, 'Discriminant should be principal'
-    d = disc.gens_reduced()[0]
-    vinf = F.embeddings(RR)
-    vfin = disc.factor()
-    if ramification_at_infinity is not None and (len(vfin) + sum((1 if ram == -1 else 0 for ram in ramification_at_infinity))) % 2 == 1:
-        raise ValueError, 'There is no quaternion algebra with the specified ramification'
-    if any([ri % 2 == 0 for _,ri in vfin]):
+
+
+def quaternion_algebra_invariants_from_ramification(F, I, S = None):
+    r"""
+    Creates a quaternion algebra over a number field which ramifies exactly at
+    the specified places. The algorithm is inspired by the current MAGMA implementation
+    by John Voight.
+
+    .. WARNING::
+
+       At the moment the algorithm requires F to be of narrow class number one. This
+       is only needed when calling the routine weak_approximation, whose current
+       implementation is done under this assumption.
+
+    INPUT:
+
+    - ``F`` - a number field
+    - ``I`` - an ideal in F
+    - ``S`` - (default: None) a list of real embeddings or real places of F
+
+    OUTPUT:
+
+    - a quaternion algebra of discriminant I and whose set of infinite
+      ramified places is S
+
+    EXAMPLES::
+
+        sage: F.<r> = QuadraticField(5)
+        sage: from sage.algebras.quatalg.quaternion_algebra import quaternion_algebra_invariants_from_ramification
+        sage: quaternion_algebra_invariants_from_ramification(F,F.ideal(11),[]) # random
+        (22, -22*r - 31)
+        sage: F.<r> = NumberField(x^2 - x - 24)
+        sage: D = F.ideal(106*r + 469)
+        sage: S = [F.real_places()[0]]
+        sage: B = QuaternionAlgebra(F,D,S)
+        sage: B.discriminant() == D
+        True
+        sage: a,b = B.invariants()
+        sage: all([v(a) < 0 and v(b) < 0 for v in S])
+        True
+        sage: all([v(a) > 0 or v(b) > 0 for v in F.real_places() if v not in S])
+        True
+        sage: B = QuaternionAlgebra(F,r+1,[])
+        sage: B.discriminant() == F.ideal(r + 1)
+        True
+        sage: a,b = B.invariants()
+        sage: all([v(a) > 0 or v(b) > 0 for v in F.real_places()])
+        True
+
+    The number of ramified places must be even:
+
+        sage: F.<r> = NumberField(x^2 - x - 24)
+        sage: QuaternionAlgebra(F,r+4,[])
+        Traceback (most recent call last):
+        ...
+        ValueError: Number of ramified places must be even
+    """
+    from sage.misc.misc_c import prod
+    if S is None:
+        S = []
+    I = F.ideal(I)
+    P = I.factor()
+    if (len(P) + len(S)) % 2 != 0:
+        raise ValueError, 'Number of ramified places must be even'
+    if any([ri > 1 for _,ri in P]):
         raise ValueError, 'All exponents in the discriminant factorization must be odd'
-    if ramification_at_infinity is None:
-        ramification_at_infinity = []
-    for p in chain([1],Primes()):
-        facts = F.ideal(p).prime_factors() if p > 1 else [F.ideal(1)]
-        for P in facts:
-            if P.is_coprime(disc) and P.is_principal():
-                pi0 = P.gens_reduced()[0]
-                for sgn1,sgn2 in product([-1,+1],repeat = 2):
-                    a = sgn1 * pi0
-                    B = QuaternionAlgebra(F,a,sgn2 * d)
-                    if B.discriminant() == disc:
-                        good_at_infinity = True
-                        for si,sigma in zip(ramification_at_infinity,F.embeddings(RR)):
-                            if si == 1: # Want it split
-                                if sigma(a) < 0 and sigma(sgn2 * d) < 0:
-                                    good_at_infinity = False
-                                    break
-                            else: # si == -1, want it ramified
-                                if sigma(a) > 0 or sigma(sgn2 * d) > 0:
-                                    good_at_infinity = False
-                                    break
-                        if good_at_infinity:
-                            return B
+    Foo = F.real_places(prec = infinity)
+    T = F.real_places(prec = infinity)
+    Sold,S = S,[]
+    for v in Sold:
+        for w in T:
+            if w(F.gen()) == v(F.gen()):
+                S.append(w)
+                T.remove(w)
+                break
+    if  len(S) != len(Sold):
+        raise ValueError,'Please specify more precision for the places.'
+    a = weak_approximation(F,I,J = None,S = S,T = [v for v in Foo if v not in S])
+    if len(P) == 0 and all([F.hilbert_symbol(-F.one(),a,pp) == 1 for pp,_ in F.ideal(2*a).factor()]):
+        return -F.one(), a
+    Ps = []
+    for p,_ in P:
+        if F.ideal(2).valuation(p) == 0:
+            Ps.append((p,1,False))
+        else:
+            Ps.append((p,2*p.ramification_index() + 1, False))
+    if len(Ps) == 0:
+        ps2 = F.ideal(a).factor()
+    else:
+        ps2 = prod([p**e for p,e,_ in Ps],F.ideal(1))
+        ps2 = (F.ideal(a)/(F.ideal(a) + ps2)).factor()
+    for p,_ in ps2:
+        if F.ideal(2).valuation(p) == 0:
+            Ps.append((p,1,True))
+        else:
+            Ps.append((p,2*p.ramification_index() + 1,True))
+    Ps.extend([(p,2*p.ramification_index() + 1, True) for p,e in F.ideal(2).factor() if F.ideal(a).valuation(p) == 0])
+    m = prod([p**e for p,e,_ in Ps],F.ideal(1))
+    mnorm = m.norm().abs()
+    passed = False
+    while not passed:
+        cnt = 0
+        n = F.degree()
+        bbnd = min(max(20,RR(m.norm().abs()).sqrt()),10**4) # Thanks, Steve!
+        for _ in range(10):
+            cnt += 1
+            b = F.zero()
+            while b == F.zero() or ZZ((F.ideal(b) + m).pari_hnf()[0,0]) != 1:
+                b = m.reduce(F.maximal_order().random_element(mnorm+1))
+            Sminus = []
+            Splus = []
+            for v in S:
+                if v(b) > 0:
+                    Sminus.append(v)
+                else:
+                    Splus.append(v)
+            ub = weak_approximation(F,S = Sminus, T = Splus)
+            b *= ub
+            passed = True
+            for p,e,condition in Ps:
+                if e > 1 and (F.hilbert_symbol(a,b,p) == 1) != condition:
+                    passed = False
+                    break
+                if e ==1 and (p.residue_symbol(b,ZZ(2),check=False) == 1) != condition:
+                    passed = False
+                    break
+            Fb = F.ideal(b)
+            if passed and ZZ(Fb.pari_hnf()[0,0]) != 1 and not Fb.is_prime():
+                m1 = ZZ(m.pari_hnf()[0,0])
+                T = [v for v in Foo if v(b*m1) < 0]
+                Tcomp = [v for v in Foo if v not in T]
+                ubm1 = weak_approximation(F,S = T, T = Tcomp)
+                Fb = F.ideal(b)
+                while cnt <= bbnd and ZZ(Fb.pari_hnf()[0,0]) != 1 and not Fb.is_prime():
+                    b += ubm1 * m1
+                    Fb = F.ideal(b)
+                    cnt += 1
+            if cnt > bbnd:
+                cnt = 0
+                m *= 2
+                mnorm = m.norm().abs()
+                passed = False
+            if passed:
+                return a,b
+
+def weak_approximation(self,I = None,S = None,J = None,T = None):
+    r"""
+
+    Weak approximation at finite places if a number field
+
+
+    .. WARNING::
+
+       When S or T are non-empty, it is only implemented for number fields of
+       narrow class number 1.
+
+    INPUT:
+
+    - ``I`` - a fractional ideal (trivial by default) of ``self``.
+    - ``S`` - a list (empty by default) of real places of ``self``.
+    - ``J`` - a fractional ideal (trivial by default) of ``self``.
+    - ``T`` - a list (empty by default) of real places of ``self``.
+
+    OUTPUT:
+
+    An element x in ``self`` satisfying:
+        1. `v_p(x) = v_p(I)` for all prime ideals `p` dividing ``I``.
+        2. `v_p(x) = 0` for all prime ideals `p` dividing ``J``.
+        3. `v_p(x) \geq 0` for all prime ideals coprime to ``I``+``J``.
+        4. `v(x) < 0` for all places `v` in ``S``.
+        5. `v(x) > 0` for all places `v` in ``T``.
+
+    EXAMPLES::
+
+        sage: F.<r> = NumberField(x^2 - x - 24)
+        sage: P3 = F.prime_above(3)
+        sage: P11 = F.prime_above(11)
+        sage: a = F.weak_approximation(P3^2 * P11^3); a
+        196*r + 141
+        sage: a.valuation(P3)
+        2
+        sage: a.valuation(P11)
+        3
+        sage: F.<r> = NumberField(x^4 - x -1)
+        sage: P = F.prime_above(7)
+        sage: Q = F.prime_above(13)
+        sage: R = F.prime_above(23)
+        sage: b = F.weak_approximation(P * Q * R); b
+        -r^3 + 9*r^2 + 28*r - 19
+        sage: b.valuation(P), b.valuation(Q), b.valuation(R)
+        (1, 1, 1)
+        sage: F.<r> = NumberField(x^4 - x - 12)
+        sage: F.weak_approximation(S = [F.real_places()[0]], T =[F.real_places()[1]])
+        11*r^3 - 43*r^2 - 32*r + 143
+    """
+    if S is None:
+        S = []
+    if T is None:
+        T = []
+    if (len(S) > 0 or len(T) > 0) and len(self.narrow_class_group()) > 1:
+        raise NotImplementedError, 'Only implemented for fields of narrow class number 1'
+    from itertools import chain
+    from sage.libs.pari.all import pari
+    nf = self.pari_nf()
+    n = 0
+    entrylist = []
+    if I is not None:
+        for p,e in I.factor():
+            entrylist.extend([p.pari_prime(),e])
+            n += 1
+    if J is not None:
+        for p,_ in J.factor():
+            entrylist.extend([p.pari_prime(),0])
+            n += 1
+    if n > 0:
+        a = self(nf.idealappr(pari.matrix(n,2,entrylist),1))
+    else:
+        a = self.one()
+    if len(S) == 0 and len(T) == 0:
+        return a
+    else:
+        Funits = list(self.units()) + [-1]
+        Sa = [-v(a).sign() for v in S] + [v(a).sign() for v in T]
+        ST = S + T
+        for uu in product([False,True],repeat = len(Funits)):
+            u = prod((eps for eps,i in zip(Funits,uu) if i),self.one())
+            if all((v(u).sign() == e for v,e in zip(ST,Sa))):
+                return a*u
+    assert 0,'Signs not compatible'
+
+
+
+# r'''
+# Follows S.Johansson, "A description of quaternion algebras"
+# ramification_at_infinity is a list of the same length as the real places.
+# Ramified = -1, Split = +1
+# '''
+# def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None):
+#     if F.degree() == 1:
+#         return QuaternionAlgebra(disc)
+#     if len(F.embeddings(RR)) > 1 and ramification_at_infinity is None:
+#         raise ValueError, 'Must specify ramification type at infinity places'
+#     if ramification_at_infinity is not None and len(ramification_at_infinity) != len(F.embeddings(RR)):
+#         raise ValueError, 'Must specify exactly %s ramifications at infinity'%len(F.embeddings(RR))
+#     if ramification_at_infinity is not None:
+#         ramification_at_infinity = [ZZ(r) for r in ramification_at_infinity]
+#         assert all((r.abs() == 1 for r in ramification_at_infinity))
+#     disc = F.ideal(disc)
+#     if not disc.is_principal():
+#         raise ValueError, 'Discriminant should be principal'
+#     d = disc.gens_reduced()[0]
+#     vinf = F.embeddings(RR)
+#     vfin = disc.factor()
+#     if ramification_at_infinity is not None and (len(vfin) + sum((1 if ram == -1 else 0 for ram in ramification_at_infinity))) % 2 == 1:
+#         raise ValueError, 'There is no quaternion algebra with the specified ramification'
+#     if any([ri % 2 == 0 for _,ri in vfin]):
+#         raise ValueError, 'All exponents in the discriminant factorization must be odd'
+#     if ramification_at_infinity is None:
+#         ramification_at_infinity = []
+#     for p in chain([1],Primes()):
+#         facts = F.ideal(p).prime_factors() if p > 1 else [F.ideal(1)]
+#         for P in facts:
+#             if P.is_coprime(disc) and P.is_principal():
+#                 pi0 = P.gens_reduced()[0]
+#                 for sgn1,sgn2 in product([-1,+1],repeat = 2):
+#                     a = sgn1 * pi0
+#                     B = QuaternionAlgebra(F,a,sgn2 * d)
+#                     if B.discriminant() == disc:
+#                         good_at_infinity = True
+#                         for si,sigma in zip(ramification_at_infinity,F.embeddings(RR)):
+#                             if si == 1: # Want it split
+#                                 if sigma(a) < 0 and sigma(sgn2 * d) < 0:
+#                                     good_at_infinity = False
+#                                     break
+#                             else: # si == -1, want it ramified
+#                                 if sigma(a) > 0 or sigma(sgn2 * d) > 0:
+#                                     good_at_infinity = False
+#                                     break
+#                         if good_at_infinity:
+#                             return B
 
 def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None):
     p = J.parent().prime()

@@ -20,7 +20,6 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
-    from util import enumerate_words, quaternion_algebra_from_discriminant
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
     from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
@@ -28,7 +27,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
     import os,datetime
     from sage.misc.persist import db
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
+    from util import enumerate_words,discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, discover_equation_from_L_invariant,direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
@@ -97,7 +96,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         if F.signature()[1] == 0:
                             ram_at_inf[0] = 1
                         try:
-                            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants(),Np,base = F,use_sage_db = False,grouptype = "PGL2",magma = None,timeout = max_waiting_time_aurel)
+                            G = BigArithGroup(P,quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf),Np,base = F,use_sage_db = False,grouptype = "PGL2",magma = None,timeout = max_waiting_time_aurel)
                         except Exception as e:
                             out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
                             continue
@@ -155,7 +154,6 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
-    from util import enumerate_words, quaternion_algebra_from_discriminant
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
     from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
@@ -163,7 +161,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
     import os,datetime
     from sage.misc.persist import db
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
+    from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, discover_equation_from_L_invariant,direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
@@ -180,7 +178,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
         Pnorm = P.norm()
         prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
         out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s, %s],\\'%(NE,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec,covol)
-        abtuple = quaternion_algebra_from_discriminant(F,D,ram_at_inf).invariants()
+        abtuple = quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf)
         try:
             G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,timeout = max_waiting_time_aurel)
         except Exception as e:
@@ -244,7 +242,7 @@ def dry_run(input_file):
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
-    from util import enumerate_words, quaternion_algebra_from_discriminant,covolume
+    from util import enumerate_words, quaternion_algebra_invariants_from_ramification,covolume
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
     from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
@@ -252,7 +250,7 @@ def dry_run(input_file):
     import os,datetime
     from sage.misc.persist import db
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
+    from util import discover_equation,get_heegner_params,fwrite, discover_equation_from_L_invariant,direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm

@@ -12,7 +12,7 @@ load('fmpz_mat.spyx')
 
 def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,parallelize = False,Wlist = None,twist = True, progress_bar = True, magma = None, Up_method = None):
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
-    from util import get_heegner_params,fwrite,quaternion_algebra_from_discriminant, recognize_J
+    from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
     from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, CohomologyGroup
@@ -111,7 +111,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     if input_data is None:
         if quaternionic:
             # Define the S-arithmetic group
-            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB).invariants(),Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma)
+            G = BigArithGroup(P,quaternion_algebra_invariants_from_ramification(F,DB),Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             try:
@@ -271,7 +271,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None,return_all = False,initial_data = None,check_conductor = True,timeout = 0):
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_from_discriminant, discover_equation_from_L_invariant,direct_sum_of_maps
+    from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, discover_equation_from_L_invariant,direct_sum_of_maps
     import os,datetime
 
     from sarithgroup import BigArithGroup
@@ -358,7 +358,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     else:
         # Define the S-arithmetic group
         try:
-            G = BigArithGroup(P,quaternion_algebra_from_discriminant(F,DB,ramification_at_infinity).invariants(),Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma,timeout = timeout)
+            G = BigArithGroup(P,quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity),Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma,timeout = timeout)
         except Exception as e:
             if quit_when_done:
                 magma.quit()
