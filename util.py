@@ -1006,8 +1006,8 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None):
         raise ValueError, 'Number of ramified places must be even'
     if any([ri > 1 for _,ri in P]):
         raise ValueError, 'All exponents in the discriminant factorization must be odd'
-    Foo = F.real_places(prec = infinity)
-    T = F.real_places(prec = infinity)
+    Foo = F.real_places(prec = Infinity)
+    T = F.real_places(prec = Infinity)
     Sold,S = S,[]
     for v in Sold:
         for w in T:
