@@ -643,7 +643,7 @@ class CohomologyGroup(Parent):
                         ap = getap(qq)
                     except (ValueError,ArithmeticError):
                         continue
-                    K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)-ap).right_kernel()
+                    K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma)-ap).right_kernel()
                     K = K.intersection(K1)
         if K.dimension() != 1:
             raise ValueError,'Did not obtain a one-dimensional space corresponding to E'
@@ -677,7 +677,7 @@ class CohomologyGroup(Parent):
                         ap = getap(qq)
                     except (ValueError,ArithmeticError):
                         continue
-                    K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0)-ap).right_kernel()
+                    K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma)-ap).right_kernel()
                     K = K.intersection(K1)
         if K.dimension() != 1:
             raise ValueError,'Group does not have the required system of eigenvalues'
@@ -719,7 +719,7 @@ class CohomologyGroup(Parent):
             for qq,e in F.ideal(q).factor():
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
                     try:
-                        Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).transpose().change_ring(QQ)
+                        Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
                     except (RuntimeError,TypeError):
                         continue
                     verbose('Computed hecke matrix at qq = %s'%qq)
@@ -802,7 +802,7 @@ class CohomologyGroup(Parent):
             for qq,e in F.ideal(q).factor():
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
                     try:
-                        Aq0 = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0).change_ring(QQ)
+                        Aq0 = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).change_ring(QQ)
                         Aq1 = self.group().hecke_matrix_freepart(qq.gens_reduced()[0],g0=g0)
                         R = Aq0.parent()
                         Aq = block_matrix([[Aq0,R(0)],[R(0),Aq1]])
