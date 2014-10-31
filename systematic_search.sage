@@ -12,7 +12,7 @@ max_P_norm_integrate = 23 # Maximum allowed norm for the chosen prime to integra
 max_F_disc = None # Maximum size of discriminant of base field
 max_waiting_time_aurel = 1 * 60 * 60 # Amount of patience (in seconds)
 max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
-decimal_prec = 50
+decimal_prec = 60
 
 def find_num_classes(P,abtuple,Np,F,out_str):
     load('darmonpoints.sage')
@@ -202,7 +202,10 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str)
             num_classes = ZZ(num_classes)
         except TypeError:
-            out_str_vec.append(num_classes)
+            if num_classes.startswith('NO DATA'):
+                out_str_vec.append(out_str.format(curve = '\'Err G (Timed out)\''))
+            else:
+                out_str_vec.append(num_classes)
             return out_str_vec
         if num_classes == 0:
             out_str_vec.append(out_str.format(curve = '\'Err G (No rational classes)\''))
