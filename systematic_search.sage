@@ -126,7 +126,6 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         ram_at_inf = F.real_places(prec = Infinity)
                         if F.signature()[1] == 0:
                             ram_at_inf = ram_at_inf[1:]
-                        find_rational_lines()
                         for phiE in phiElist:
                             try:
                                 alarm(max_waiting_time)
@@ -212,7 +211,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             out_str_vec.append( out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
             return out_str_vec
         try:
-            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
+            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf_places, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
         except Exception as e:
             out_str_vec.append( out_str.format(curve = '\'Err (%s)\''%e.message))
         except (AlarmInterrupt,KeyboardInterrupt):
