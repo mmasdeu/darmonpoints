@@ -15,6 +15,22 @@ max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 50
 
 def find_num_classes(P,abtuple,Np,F,out_str): #P,quatinvariants,Np,base = F,use_sage_db = False,grouptype = "PGL2",magma = None,timeout = max_waiting_time_aurel)
+        load('darmonpoints.sage')
+    from sarithgroup import BigArithGroup
+    from homology import construct_homology_cycle,lattice_homology_cycle
+    from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
+    from itertools import product,chain,izip,groupby,islice,tee,starmap
+    from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
+    from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
+    from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
+    import os,datetime
+    from sage.misc.persist import db
+    from sage.rings.padics.precision_error import PrecisionError
+    from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, discover_equation_from_L_invariant,direct_sum_of_maps
+    from integrals import integrate_H1,double_integral_zero_infty,indef_integral
+    from sage.ext.c_lib import AlarmInterrupt
+    from sage.misc.misc import alarm, cancel_alarm
+
     try:
         G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None)
     except Exception as e:
