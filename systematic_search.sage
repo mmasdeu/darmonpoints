@@ -42,6 +42,7 @@ def find_num_classes(P,abtuple,Np,F,out_str):
         return out_str.format(curve = '\'Err coh (%s)\''%e.message)
     except (AlarmInterrupt,KeyboardInterrupt):
         return out_str.format(curve = '\'Timed out in get_rational_cocycle\'')
+    return len(phiElist)
 
 
 @parallel
@@ -202,15 +203,14 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str)
             num_classes = ZZ(num_classes)
         except TypeError:
-            out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%num_classes))
-            return out_str_vec
-        if Pnorm > max_P_norm_integrate:
-            out_str_vec.append( out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
+            out_str_vec.append(num_classes)
             return out_str_vec
         if num_classes == 0:
             out_str_vec.append(out_str.format(curve = '\'Err G (No rational classes)\''))
             return out_str_vec
-
+        if Pnorm > max_P_norm_integrate:
+            out_str_vec.append( out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
+            return out_str_vec
         try:
             curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", magma = G.magma,return_all = True,Up_method='bigmatrix')
         except Exception as e:
