@@ -24,10 +24,11 @@ import "enumeration.m" : InitializeLattice, Enumerate;
 import "../kleinian.m" : kleinianmatrix, isscalar, Hdef, Rdef, DefaultPrecision;
 
 function CheckTimeOut()
-  if Cputime() gt 120 then
-  error Error("Time Out");
-  end if;
-return false;
+  return false;
+//  if Cputime() gt 120 then
+//  error Error("Time Out");
+//  end if;
+//return false;
 end function;
 
 /*
