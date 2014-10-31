@@ -14,6 +14,20 @@ max_waiting_time_aurel = 1 * 60 * 60 # Amount of patience (in seconds)
 max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 50
 
+def find_num_classes((P,abtuple,Np,F,out_str) #P,quatinvariants,Np,base = F,use_sage_db = False,grouptype = "PGL2",magma = None,timeout = max_waiting_time_aurel)
+    try:
+        G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None)
+    except Exception as e:
+        return out_str.format(curve = '\'Err G (%s)\''%e.message)
+    try:
+        Coh = CohomologyGroup(G.Gpn)
+        phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
+    except Exception as e:
+        return out_str.format(curve = '\'Err coh (%s)\''%e.message)
+    except (AlarmInterrupt,KeyboardInterrupt):
+        return out_str.format(curve = '\'Timed out in get_rational_cocycle\'')
+
+
 @parallel
 def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file):
     load('darmonpoints.sage')
@@ -95,21 +109,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         ram_at_inf = F.real_places(prec = Infinity)
                         if F.signature()[1] == 0:
                             ram_at_inf = ram_at_inf[1:]
-                        try:
-                            G = BigArithGroup(P,quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf),Np,base = F,use_sage_db = False,grouptype = "PGL2",magma = None,timeout = max_waiting_time_aurel)
-                        except Exception as e:
-                            out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
-                            continue
-                        try:
-                            Coh = CohomologyGroup(G.Gpn)
-                            phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
-                        except Exception as e:
-                            out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message))
-                            no_rational_line = True
-                            continue
-                        if Pnorm > max_P_norm_integrate:
-                            out_str_vec.append(out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
-                            continue
+                        find_rational_lines()
                         for phiE in phiElist:
                             try:
                                 alarm(max_waiting_time)
@@ -129,7 +129,6 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
     except:
         out_str_vec.append('Unknown exception field of discriminant %s (%s results preced)'%(F.discriminant(),len(out_str_vec)))
     return out_str_vec
-
 
 def compute_table(input_file,output_trail = None):
     global Nrange, max_P_norm, max_P_norm_integrate, max_waiting_time_aurel, max_waiting_time, max_F_disc, decimal_prec
@@ -184,45 +183,28 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
               	ram_at_inf_places.append(v)
 	abtuple = quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf_places)
         try:
-            G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,timeout = max_waiting_time_aurel)
-        except Exception as e:
-            out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%e.message))
-            return out_str_vec
-        try:
-            alarm(max_waiting_time)
-            Coh = CohomologyGroup(G.Gpn)
-            phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
-            cancel_alarm()
-        except Exception as e:
-            out_str_vec.append(out_str.format(curve = '\'Err coh (%s)\''%e.message))
-            cancel_alarm()
-            return out_str_vec
-        except (AlarmInterrupt,KeyboardInterrupt):
-            out_str_vec.append(out_str.format(curve = '\'Timed out in get_rational_cocycle\''))
+            num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str)
+            num_classes = ZZ(num_classes)
+        except TypeError:
+            out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%num_classes))
             return out_str_vec
         if Pnorm > max_P_norm_integrate:
-            out_str_vec.append(out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
+            out_str_vec.append( out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
             return out_str_vec
-        
-        for phiE in phiElist:
-            try:
-                alarm(max_waiting_time)
-                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", magma = G.magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
-                cancel_alarm()
-                curve = str(curve) # just in case
-            except Exception as e:
-                new_out_str = out_str.format(curve = '\'Err (%s)\''%e.message)
-                cancel_alarm()
-            except (AlarmInterrupt,KeyboardInterrupt):
-                new_out_str = out_str.format(curve = '\'Timed Out in find_curve\'')
-                cancel_alarm()
-            except:
-                new_out_str = out_str.format(curve = '\'Probably Timed Out in find_curve\'')
-                cancel_alarm()
-            else:
-                new_out_str = out_str.format(curve = curve)
-                cancel_alarm()
-            out_str_vec.append(new_out_str)
+        if num_classes == 0:
+            out_str_vec.append(out_str.format(curve = '\'Err G (No rational classes)\''))
+            return out_str_vec
+
+        try:
+            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", magma = G.magma,return_all = True,Up_method='bigmatrix')
+        except Exception as e:
+            out_str_vec.append( out_str.format(curve = '\'Err (%s)\''%e.message))
+        except (AlarmInterrupt,KeyboardInterrupt):
+            out_str_vec.append( out_str.format(curve = '\'Timed Out in find_curve\''))
+        except:
+            out_str_vec.append( out_str.format(curve = '\'Probably Timed Out in find_curve\''))
+        else:
+            out_str_vec.extend( out_str.format(curve = o) for o in curve)
     except Exception as e:
         out_str_vec.append('Unknown exception field of discriminant %s (%s results preced)'%(F.discriminant(),len(out_str_vec)))
     return out_str_vec
