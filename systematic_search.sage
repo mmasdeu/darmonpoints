@@ -14,8 +14,8 @@ max_waiting_time_aurel = 1 * 60 * 60 # Amount of patience (in seconds)
 max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 50
 
-def find_num_classes(P,abtuple,Np,F,out_str): #P,quatinvariants,Np,base = F,use_sage_db = False,grouptype = "PGL2",magma = None,timeout = max_waiting_time_aurel)
-        load('darmonpoints.sage')
+def find_num_classes(P,abtuple,Np,F,out_str):
+    load('darmonpoints.sage')
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
