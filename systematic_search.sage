@@ -10,9 +10,9 @@ Nrange = range(1,200) # Conductors to explore
 max_P_norm = 200 # Maximum allowed norm for the chosen prime
 max_P_norm_integrate = 23 # Maximum allowed norm for the chosen prime to integrate
 max_F_disc = None # Maximum size of discriminant of base field
-max_waiting_time_aurel = 1 * 60 * 60 # Amount of patience (in seconds)
-max_waiting_time = 5 * 60 * 60 # Amount of patience (in seconds)
-decimal_prec = 60
+max_waiting_time_aurel = 2 * 60 * 60 # Amount of patience (in seconds)
+max_waiting_time = 10 * 60 * 60 # Amount of patience (in seconds)
+decimal_prec = 70
 
 def find_num_classes(P,abtuple,Np,F,out_str):
     load('darmonpoints.sage')
@@ -222,7 +222,10 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
         except:
             out_str_vec.append( out_str.format(curve = '\'Probably Timed Out in find_curve\''))
         else:
-            out_str_vec.extend( out_str.format(curve = o) for o in curve)
+            if hasattr(curve,'startswith'):
+                out_str_vec.append( out_str.format(curve = curve))
+            else:
+                out_str_vec.extend( out_str.format(curve = o) for o in curve) # Success
     except Exception as e:
         out_str_vec.append('Unknown exception field of discriminant %s (%s results preced)'%(F.discriminant(),len(out_str_vec)))
     return out_str_vec
