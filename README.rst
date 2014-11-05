@@ -69,7 +69,7 @@ This constructs the curve with equation::
      sage: F.<r> = QuadraticField(5)
      sage: P = F.ideal(3/2*r + 1/2)
      sage: D = F.ideal(3)
-     sage: find_curve(P,D,P*D,30,ramification_at_infinity=[-1,1])
+     sage: find_curve(P,D,P*D,30,ramification_at_infinity = F.real_places()[:1])
 
 This returns something like::
 

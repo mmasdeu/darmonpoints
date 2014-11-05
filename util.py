@@ -1303,17 +1303,13 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     assert not success
     return None,None,None
 
-
-def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True, kill_torsion = True,height_threshold = .85):
-    assert qE.valuation() != 0, 'qE should not have zero valuation'
+def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True, height_threshold = .85):
     if qE.valuation() < 0:
         qE = 1/qE
+    qElog = qE.log(p_branch = 0)
     F = emb.domain() if field is None else field
     deg = F.degree()
-    p = qE.parent().prime()
-    if kill_torsion:
-        qE = qE**(p-1) # Kill the torsion
-    qval = qE.valuation()
+    p = qElog.parent().prime()
     try:
         Ftors = F.unit_group().torsion_generator()
         Funits = [F(Ftors)**i for i in range(Ftors.order())]
@@ -1332,87 +1328,37 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
     jpowseries = PolynomialRing(ZZ,names='w')([ZZ(jpowseries[i]) for i in range(prec+1)])
     Kp = emb.codomain()
     try:
-        qE = Kp(qE)
+        qElog = Kp(qElog)
     except RuntimeError:
-        qE = Kp(qE.trace()/2)
-    revdivs = divisors(qval)
-    revdivs.reverse()
-    verbose('Number of divisors of %s is %s'%(qval,len(revdivs)))
+        qElog = Kp(qElog.trace()/2)
     w3s = [Kp(1)] + [o for o,_ in (PolynomialRing(Kp,names='w')([Kp.one(),Kp.one(),Kp.one()])).roots()]
-    for guessed_pow in revdivs:
-        verbose('guessed_pow = %s'%guessed_pow)
+    qE0 = qElog.exp()
+    roots_of_unity = [Kp.teichmuller(a) for a in range(1,p)]
+    qElist = [qE0 * zeta for zeta in roots_of_unity]
+    for qE1,D in product(qElist,selmer_group_iterator(F,S,12)):
+        Deltap = Kp(emb(D))
+        qE = p**Deltap.valuation() * qE1
+        jE = 1/qE + jpowseries(qE)
+        c4cubed = Kp(Deltap * jE)
         try:
-            qErlist = our_nroot(qE,guessed_pow,qE.parent(),return_all = True)
+            c4root = our_cuberoot(c4cubed,Kp)
         except ValueError:
             continue
-        for qEroot,D in product(qErlist,selmer_group_iterator(F,S,12)):
-            jE = 1/qEroot + jpowseries(qEroot)
-            Deltap = Kp(emb(D))
-            c4cubed = Kp(Deltap * jE)
-            try:
-                c4root = our_cuberoot(c4cubed,Kp)
-            except ValueError:
+        for w3 in w3s:
+            c4pol = algdep((c4root * w3).add_bigoh(prec),deg)
+            if height_polynomial(c4pol,base = p) > height_threshold * prec:
                 continue
-            for w3 in w3s:
-                c4pol = algdep((c4root * w3).add_bigoh(prec),deg)
-                if height_polynomial(c4pol,base = p) < height_threshold * prec:
-                    for c4ex,_ in c4pol.roots(F):
-                        c6squared = F(c4ex**3 - 1728*D)
-                        if not c6squared.is_square():
-                            continue
-                        for c6ex in c6squared.sqrt(all = True):
-                            try:
-                                E = EllipticCurve_from_c4c6(c4ex,c6ex)
-                            except ArithmeticError: continue
-                            if not check_conductor or E.conductor() == conductor:
-                                verbose('Success!')
-                                return E
-    verbose('Curve not recognized')
-    return None
-
-
-def discover_equation_from_L_invariant(Linv,emb,conductor,prec,field = None,check_conductor = True, max_valuation = 20, preferred_valuation = None):
-    F = emb.domain() if field is None else field
-    deg = F.degree()
-    p = Linv.parent().prime()
-    S = [o[0] for o in conductor.factor()]
-    E4 = EisensteinForms(weight=4).basis()[0]
-    Deltamodform = CuspForms(weight=12).basis()[0]
-    jpowseries = E4.q_expansion(prec+7)**3/Deltamodform.q_expansion(prec+7)
-    jpowseries = PolynomialRing(ZZ,names='w')([ZZ(jpowseries[i]) for i in range(prec+1)])
-    Kp = Linv.parent()
-    qE0 = Linv.exp()
-    roots_of_unity = [Kp.teichmuller(a) for a in range(1,p)]
-    val_range = range(1,max_valuation)
-    if preferred_valuation is not None:
-        val_range = [preferred_valuation] + val_range
-    for guessed_val in val_range:
-        verbose('guessed_val = %s'%guessed_val)
-        qElist = [qE0 * p**guessed_val * zeta for zeta in roots_of_unity]
-        for qE,D in product(qElist,selmer_group_iterator(F,S,12)):
-            jE = 1/qE + jpowseries(qE)
-            Deltap = Kp(emb(D))
-            c4cubed = Kp(Deltap * jE)
-            try:
-                c4list = our_cuberoot(c4cubed,Kp,return_all = True)
-            except ValueError:
-                continue
-            for c4 in c4list:
-                c4pol = our_algdep(c4,deg,prec = prec)
-                if c4pol.leading_coefficient() not in [1,-1]:
+            for c4ex,_ in c4pol.roots(F):
+                c6squared = F(c4ex**3 - 1728*D)
+                if not c6squared.is_square():
                     continue
-                for c4ex in [o[0] for c4 in c4list for o in c4pol.roots(F)]:
-                    # verbose('Candidate c4 = %s'%c4ex)
-                    c6squared = F(c4ex**3 - 1728*D)
-                    if not c6squared.is_square():
-                        continue
-                    for c6ex in c6squared.sqrt(all=True):
-                        try:
-                            E = EllipticCurve_from_c4c6(c4ex,c6ex)
-                        except ArithmeticError: continue
-                        if not check_conductor or E.conductor() == conductor:
-                            verbose('Success!')
-                            return E
+                for c6ex in c6squared.sqrt(all = True):
+                    try:
+                        E = EllipticCurve_from_c4c6(c4ex,c6ex)
+                    except ArithmeticError: continue
+                    if not check_conductor or E.conductor() == conductor:
+                        verbose('Success!')
+                        return E
     verbose('Curve not recognized')
     return None
 
