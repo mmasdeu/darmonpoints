@@ -26,7 +26,7 @@ def find_num_classes(P,abtuple,Np,F,out_str):
     import os,datetime
     from sage.misc.persist import db
     from sage.rings.padics.precision_error import PrecisionError
-    from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, discover_equation_from_L_invariant,direct_sum_of_maps
+    from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
@@ -58,7 +58,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
     import os,datetime
     from sage.misc.persist import db
     from sage.rings.padics.precision_error import PrecisionError
-    from util import enumerate_words,discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, discover_equation_from_L_invariant,direct_sum_of_maps
+    from util import enumerate_words,discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
@@ -176,7 +176,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
     import os,datetime
     from sage.misc.persist import db
     from sage.rings.padics.precision_error import PrecisionError
-    from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, discover_equation_from_L_invariant,direct_sum_of_maps
+    from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
@@ -257,7 +257,7 @@ def dry_run(input_file):
     import os,datetime
     from sage.misc.persist import db
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation,get_heegner_params,fwrite, discover_equation_from_L_invariant,direct_sum_of_maps
+    from util import discover_equation,get_heegner_params,fwrite, direct_sum_of_maps
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
