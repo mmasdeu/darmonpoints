@@ -231,10 +231,10 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
     return out_str_vec
 
 
-def compute_table_in_order(candidates,output_file,step = 1):
+def compute_table_in_order(candidates,output_file,c0 = 0, c1 = 200,step = 50):
     global Nrange, max_P_norm, max_P_norm_integrate, max_waiting_time_aurel, max_waiting_time, max_F_disc, decimal_prec
     log_file = output_file.replace('.txt','.log')
-    for cov in range(0,200,step):
+    for cov in range(c0,c1,step):
         good_candidates = filter(lambda x:x[-1] >= cov and x[-1] < cov + step,candidates)
         input_vec = [(datum[0],datum[1],datum[2],datum[3],datum[4],max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file,datum[-1]) for datum in good_candidates]
         fwrite('# Starting range %s..%s'%(cov,cov+step),output_file)
