@@ -245,7 +245,7 @@ def compute_table_in_order(candidates,output_file,step = 1):
                 for out_str in out_str_vec:
                     fwrite(out_str,output_file)
 
-def dry_run(input_file):
+def dry_run(input_file,covolume_bound):
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
@@ -328,5 +328,6 @@ def dry_run(input_file):
                         verbose('Estimated Covolume = %s'%covol)
                         difficulty = covol**2
                         verbose('Estimated Difficulty = %s'%difficulty)
-                        candidates.append([F,P,D,Np,ram_at_inf,difficulty])
+                        if covol < covolume_bound:
+                            candidates.append([F,P,D,Np,ram_at_inf,covol])
     return candidates
