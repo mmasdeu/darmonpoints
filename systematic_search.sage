@@ -193,11 +193,12 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
         Pnorm = P.norm()
         prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
         out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s, %s],\\'%(NE,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec,covol)
-        ram_at_inf_places = []
-	for i,v	in enumerate(F.real_places(prec	= Infinity)):
-	    if ram_at_inf[i] ==	-1:
-              	ram_at_inf_places.append(v)
-	abtuple = quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf_places)
+        ram_at_inf_places = ram_at_inf
+        # ram_at_inf_places = []
+	# for i,v	in enumerate(F.real_places(prec	= Infinity)):
+	#     if ram_at_inf[i] ==	-1:
+        #       	ram_at_inf_places.append(v)
+	abtuple = quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf)
         try:
             num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str)
             num_classes = ZZ(num_classes)
@@ -214,7 +215,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             out_str_vec.append( out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
             return out_str_vec
         try:
-            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf_places, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
+            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
         except Exception as e:
             out_str_vec.append( out_str.format(curve = '\'Err (%s)\''%e.message))
         except (AlarmInterrupt,KeyboardInterrupt):
