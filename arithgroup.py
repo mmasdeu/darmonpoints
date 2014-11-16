@@ -19,7 +19,6 @@ from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.structure.sage_object import save,load
-from sage.groups.free_group import FreeGroup
 from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
@@ -30,7 +29,6 @@ from arithgroup_element import ArithGroupElement
 from sage.misc.sage_eval import sage_eval
 from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
-from sage.groups.free_group import FreeGroup
 
 def JtoP(H,MR,p = None):
     CC = MR.base_ring()

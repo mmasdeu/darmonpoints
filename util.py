@@ -1411,6 +1411,7 @@ def simplification_isomorphism(G,return_inverse = False):
 
     EXAMPLES::
 
+        sage: from sage.groups.free_group import FreeGroup
         sage: G.<a,b,c> = FreeGroup()
         sage: H = G / [a*b*c, a*b^2, c*b/c^2]
         sage: I = H.simplification_isomorphism()
@@ -1427,6 +1428,7 @@ def simplification_isomorphism(G,return_inverse = False):
 
     TESTS::
 
+        sage: from sage.groups.free_group import FreeGroup
         sage: F = FreeGroup(1)
         sage: G = F.quotient([F.0])
         sage: G.simplification_isomorphism()
