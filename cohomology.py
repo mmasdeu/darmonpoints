@@ -28,9 +28,11 @@ from sage.parallel.ncpus import ncpus
 oo = Infinity
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
-load('fmpz_mat.spyx')
 
-use_fmpz_mat = True
+
+use_fmpz_mat = False
+if use_fmpz_mat:
+    load('fmpz_mat.spyx')
 
 def modreduce(A,N):
     if use_fmpz_mat:
@@ -970,7 +972,7 @@ class CohomologyGroup(Parent):
                 if use_fmpz_mat:
                     A.square_inplace()
                 else:
-                    A = A * A
+                    A = A**2
                 if N != 0:
                     A = modreduce(A,self._pN)
                 update_progress(float(i+1)/float(times),'Exponentiating matrix')

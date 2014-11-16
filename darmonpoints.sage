@@ -4,7 +4,6 @@ from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_ma
 from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
 import os,datetime
 from sage.misc.persist import db
-load('fmpz_mat.spyx')
 
 ##########################################################################
 ### Stark-Heegner points for quaternion algebras                         #
