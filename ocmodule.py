@@ -21,11 +21,13 @@ from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.categories.pushout import pushout
 from sage.rings.infinity import Infinity
 from sage.structure.sage_object import load,save
-load('fmpz_mat.spyx')
+
 
 oo = Infinity
 
-use_fmpz_mat = True
+use_fmpz_mat = False
+if use_fmpz_mat:
+    load('fmpz_mat.spyx')
 
 class OCVnElement(ModuleElement):
     r"""
