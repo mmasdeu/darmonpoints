@@ -25,7 +25,6 @@ from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
-from sage.groups.finitely_presented import FinitelyPresentedGroup,FinitelyPresentedGroupElement
 
 class ArithGroupElement(MultiplicativeGroupElement):
     def __init__(self,parent, word_rep = None, quaternion_rep = None, check = False):
