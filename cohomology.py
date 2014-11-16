@@ -43,7 +43,7 @@ def modreduce(A,N):
 
 def find_newans(Coh,glocs,ti):
     G = Coh.group()
-    newans = [glocs[0].zero_matrix() for u in G.gens()]
+    newans = [glocs[0].new_matrix() for u in G.gens()]
     for gk,tik in zip(glocs,ti):
         fox_grad_k = Coh.fox_gradient(tik)
         for j,gj in enumerate(G.gens()):
@@ -474,7 +474,7 @@ class CohomologyGroup(Parent):
 
     def fox_gradient(self,word):
         h = self.get_gen_pow(0,0)
-        ans = [h.zero_matrix() for o in self.group().gens()]
+        ans = [h.new_matrix() for o in self.group().gens()]
         if len(word) == 0:
             return ans
         lenword = len(word)
@@ -949,7 +949,7 @@ class CohomologyGroup(Parent):
             S = repslocal[0].nrows()
             NN = ngens * S
             if use_fmpz_mat:
-                A = Fmpz_mat(None,nrows = NN,ncols = NN).zero_matrix()
+                A = Fmpz_mat(None,nrows = NN,ncols = NN).new_matrix()
             else:
                 A = Matrix(ZZ,NN,NN,0)
 

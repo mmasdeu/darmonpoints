@@ -202,7 +202,7 @@ cdef class Fmpz_mat(SageObject):
         sig_off()
         return res
 
-    def zero_matrix(Fmpz_mat self):
+    def new_matrix(Fmpz_mat self):
         cdef Fmpz_mat res = Fmpz_mat(None,self._nrows,self._ncols)
         sig_on()
         fmpz_mat_zero(res.mat)
