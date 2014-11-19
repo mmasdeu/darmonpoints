@@ -44,7 +44,7 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, seed = None,timeout = 0):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0):
         # if seed is None:
         #     seed = 1000
         if magma is None:
