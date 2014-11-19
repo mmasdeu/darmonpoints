@@ -195,7 +195,7 @@ for potcyc in potentialcycles do
                 end while;
 
                 if not found then
-                    print "candidates", ncan;
+		vprint Kleinian, 1 : "candidates", ncan;
                     error "did not find an adequate edge !";
                 end if;
 
@@ -209,7 +209,7 @@ for potcyc in potentialcycles do
             Append(~cycles, <cycle,cycletransfo>);
             Append(~words, word);
         else
-            print "Should not happen, please report." ;
+	  vprint Kleinian, 1 : "Should not happen, please report." ;
             Exclude(~restecyc, e);
         end if;
     end while;

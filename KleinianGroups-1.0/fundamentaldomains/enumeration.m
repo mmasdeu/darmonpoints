@@ -38,7 +38,7 @@ procedure InitializeLattice(O, ~Lat, ~TZB, ~nzb, pr, factor, ~HGM, ~basismat : C
     DGM,ZB,basismat := dgm(O : Precision := pr, Facteur := 4*factor, Center1 := Center1, Center2 := Center2, Balance := 0, HGM := HGM, Matrices := basismat);
     ispd := IsPositiveDefinite(DGM);
     if not ispd then 
-        print "\nTHE QUADRATIC FORM IS NOT POSITIVE DEFINITE !!!";
+        vprint Kleinian, 2 :"\nTHE QUADRATIC FORM IS NOT POSITIVE DEFINITE !!!";
         TZB := [];
         return;
     end if;
@@ -67,7 +67,7 @@ end procedure;
     Stores x (maybe scaled) in the relevant container
 */
 procedure ProcessVector(x, order, ZK, ~Enum, ~partialgpelt, grouptype, bp, ~primes, ~maxp, allowsq, fuchsian)
-  CheckTimeOut();
+//CheckTimeOut();
     nx := Norm(x);
     if isscalar(x) or nx eq 0 then
         return;
