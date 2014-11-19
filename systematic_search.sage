@@ -32,7 +32,7 @@ def find_num_classes(P,abtuple,Np,F,out_str):
     from sage.misc.misc import alarm, cancel_alarm
 
     try:
-        G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None)
+        G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,seed = 12345)
     except Exception as e:
         return out_str.format(curve = '\'Err G (%s)\''%e.message)
     try:
@@ -48,7 +48,6 @@ def find_num_classes(P,abtuple,Np,F,out_str):
 @parallel
 def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file):
     load('darmonpoints.sage')
-    from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
     from itertools import product,chain,izip,groupby,islice,tee,starmap
@@ -129,7 +128,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
                         for phiE in phiElist:
                             try:
                                 alarm(max_waiting_time)
-                                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", magma = G.magma,return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
+                                curve = find_curve(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", magma = G.magma, magma_seed = 12345, return_all = False,Up_method='bigmatrix',initial_data = [G,phiE])
                                 cancel_alarm()
                                 curve = str(curve) # just in case
                             except Exception as e:
@@ -166,7 +165,6 @@ def compute_table(input_file,output_trail = None):
 @parallel
 def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file,covol):
     load('darmonpoints.sage')
-    from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
     from itertools import product,chain,izip,groupby,islice,tee,starmap
@@ -185,7 +183,9 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
     pol = F.polynomial()
     # F = NumberField(pol,names='r')
     # r = F.gen()
-
+    P = F.ideal(P)
+    D = F.ideal(D)
+    Np = F.ideal(Np)
     sys.setrecursionlimit(10**6)
     # x = pol.parent().gen()
     try:
@@ -214,7 +214,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             out_str_vec.append( out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
             return out_str_vec
         try:
-            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
+            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, magma_seed = 12345, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
             if hasattr(curve,'startswith'):
                 out_str_vec.append( out_str.format(curve = str(curve)))
             else:
@@ -245,7 +245,6 @@ def compute_table_in_order(candidates,output_file,c0 = 0, c1 = 200,step = 50):
                     fwrite(out_str,output_file)
 
 def dry_run(input_file,covolume_bound):
-    from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
     from util import enumerate_words, quaternion_algebra_invariants_from_ramification,covolume
