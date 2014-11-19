@@ -312,7 +312,7 @@ elif GroupType eq "Units" then
 elif GroupType eq "Maximal" then
     grouptype := 3;
     if not IsMaximal(O) then
-        print "Warning : computing the normalizer of a non-maximal order, may have unexpected behaviour.";
+        vprint Kleinian, 1 : "Warning : computing the normalizer of a non-maximal order, may have unexpected behaviour.";
     end if;
 else
     error "Invalid Group Type";
