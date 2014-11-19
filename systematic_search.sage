@@ -10,9 +10,9 @@ Nrange = range(1,200) # Conductors to explore
 max_P_norm = 200 # Maximum allowed norm for the chosen prime
 max_P_norm_integrate = 23 # Maximum allowed norm for the chosen prime to integrate
 max_F_disc = None # Maximum size of discriminant of base field
-max_waiting_time_aurel = 2 * 60 * 60 # Amount of patience (in seconds)
-max_waiting_time = 10 * 60 * 60 # Amount of patience (in seconds)
-decimal_prec = 70
+max_waiting_time_aurel = 30 * 60 # Amount of patience (in seconds)
+max_waiting_time = 2 * 60 * 60 # Amount of patience (in seconds)
+decimal_prec = 50
 
 def find_num_classes(P,abtuple,Np,F,out_str):
     load('darmonpoints.sage')
@@ -189,16 +189,15 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
     sys.setrecursionlimit(10**6)
     # x = pol.parent().gen()
     try:
-        NE = P * D * Np
-        Pnorm = P.norm()
-        prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
-        out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s, %s],\\'%(NE,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec,covol)
-        ram_at_inf_places = ram_at_inf
-        # ram_at_inf_places = []
-	# for i,v	in enumerate(F.real_places(prec	= Infinity)):
-	#     if ram_at_inf[i] ==	-1:
-        #       	ram_at_inf_places.append(v)
-	abtuple = quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf)
+        try:
+            NE = P * D * Np
+            Pnorm = P.norm()
+            prec = (RR(decimal_prec) * RR(10).log(Pnorm)).ceil()
+            out_str = '[%s, %s, %s, %s, %s, %s, {curve}, %s, %s],\\'%(NE,F.discriminant(),pol,P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],prec,covol)
+            abtuple = quaternion_algebra_invariants_from_ramification(F,D,ram_at_inf)
+        except:
+            out_str_vec.append(out_str.format(curve = '\'Err G (initialization)\''))
+            return out_str_vec
         try:
             num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str)
             num_classes = ZZ(num_classes)
@@ -206,7 +205,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             if num_classes.startswith('NO DATA'):
                 out_str_vec.append(out_str.format(curve = '\'Err G (Timed out)\''))
             else:
-                out_str_vec.append(num_classes)
+                out_str_vec.append(str(num_classes))
             return out_str_vec
         if num_classes == 0:
             out_str_vec.append(out_str.format(curve = '\'Err G (No rational classes)\''))
@@ -216,17 +215,16 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             return out_str_vec
         try:
             curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
+            if hasattr(curve,'startswith'):
+                out_str_vec.append( out_str.format(curve = str(curve)))
+            else:
+                out_str_vec.extend( out_str.format(curve = str(o)) for o in curve) # Success
         except Exception as e:
-            out_str_vec.append( out_str.format(curve = '\'Err (%s)\''%e.message))
+            out_str_vec.append( out_str.format(curve = '\'Err (%s)\''%str(e.message)))
         except (AlarmInterrupt,KeyboardInterrupt):
             out_str_vec.append( out_str.format(curve = '\'Timed Out in find_curve\''))
         except:
             out_str_vec.append( out_str.format(curve = '\'Probably Timed Out in find_curve\''))
-        else:
-            if hasattr(curve,'startswith'):
-                out_str_vec.append( out_str.format(curve = curve))
-            else:
-                out_str_vec.extend( out_str.format(curve = o) for o in curve) # Success
     except Exception as e:
         out_str_vec.append('Unknown exception field of discriminant %s (%s results preced)'%(F.discriminant(),len(out_str_vec)))
     return out_str_vec
