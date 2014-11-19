@@ -203,7 +203,10 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             num_classes = ZZ(num_classes)
         except TypeError:
             if num_classes.startswith('NO DATA'):
-                out_str_vec.append(out_str.format(curve = '\'Err G (Timed out)\''))
+                if 'imed out' in num_classes:
+                    out_str_vec.append(out_str.format(curve = '\'Err G (Timed out)\''))
+                else:
+                    out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%num_classes[7:]))
             else:
                 out_str_vec.append(str(num_classes))
             return out_str_vec
