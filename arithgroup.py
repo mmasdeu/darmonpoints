@@ -1015,7 +1015,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         # verbose('Calling magma.eval: ' + magma_str)
         # self.magma.eval(magma_str)
         if f == self.magma(False):
-            raise RuntimeError("Timed Out (%s sec) in NormalizedBasis"%timeout)
+            raise RuntimeError("Timed out (%s sec) in NormalizedBasis"%timeout)
         matlist = self.magma.GetMatrixList(f)
 
         self._facerels_magma = f
