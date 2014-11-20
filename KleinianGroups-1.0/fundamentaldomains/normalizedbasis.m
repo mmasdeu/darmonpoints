@@ -72,7 +72,7 @@ end procedure;
     Runs the routine KeepSameGroup
 */
 procedure KeepSameGroup(~G,~F,~FE,~IE,eps12, eps13, eps110)
-vprint Kleinian: ">>>>>>>>>> KeepSameGroup";
+vprint Kleinian: "=========== KeepSameGroup";
 S := SetToSequence(G);
 repeat
     add := 0;
@@ -136,7 +136,7 @@ end procedure;
     Runs the routine CheckPairing
 */
 procedure CheckPairing(~G,~F,~FE,~IE,~allpaired,eps12,eps13,eps110 : Method := "Reduction")
-vprint Kleinian: ">>>>>>>>>> CheckPairing :", Method, "method";
+vprint Kleinian: "=========== CheckPairing :", Method, "method";
 allpaired := true;
 repairing := 0;
 ie := 1;
@@ -152,7 +152,7 @@ while ie le nfe and ie le #FE do
 			Include(~Sz, z1);
 		end if;
             if #Sz ne 0 and not IsInExteriorDomain(Rep(Sz),F,eps110) then
-                error ">>>>>>>>>  INVALID EDGE !!!!!";
+                error "===========  INVALID EDGE !!!!!";
             end if;
 		for z1 in Sz do
 			for f in e[3] do
@@ -344,7 +344,7 @@ end if;
 if Center cmpeq "J" then
     Center := H!0;
 elif Center cmpeq "Auto" then
-    Center := 17/5*H.2 - 1/2*H.1 + 1/3*H![1,0,0,0];
+Center := 17.1/5*H.2 - 1.3/2*H.1 + 1.1/3*H![1,0,0,0];
 end if;
 
 B := Algebra(O);
@@ -357,22 +357,22 @@ _,_,Fuchsian := KleinianInjection(B : Center := Center, H := Parent(Center), Red
 omega := K!ZK.2;
 
 primes := [ B | ];
-try
+//try
 
 if Type(Level) eq RngIntElt then
 	if not IsMaximal(O) then
-		vprint Kleinian: ">>>>>>>>>> >>>>>>>>>> Computing for a maximal order first";
+		vprint Kleinian: "========= ========= Computing for a maximal order first";
 		OO := MaximalOrder(O);
 		LG,_,_,_,_,primes := NormalizedBasis(OO : InitialG := InitialG, NbEnum := NbEnum, PeriodEnum := PeriodEnum, BoundPrimes := BoundPrimes, PairingMethod := PairingMethod, GroupType := GroupType, EnumMethod := EnumMethod, zetas := zetas, Maple := false, zK2 := zK2, Center := Center, pr := pr);
 		index, Repres, Genes := myIndex(LG, func<x | x in O>);
-		vprintf Kleinian, 2: ">>>>>>>>>> >>>>>>>>>> Subgroup has index %o in larger group, %o generators found\n", index, #Genes;
-		vprint Kleinian: ">>>>>>>>>> >>>>>>>>>> Computing for the smaller order";
+		vprintf Kleinian, 2: "========= ========= Subgroup has index %o in larger group, %o generators found\n", index, #Genes;
+		vprint Kleinian: "========== ========== Computing for the smaller order";
 		InitialG := InitialG cat Genes;
 		NbEnum := 1;
 	end if;
 end if;
 
-vprint Kleinian: ">>>>>>>>>> NormalizedBasis";
+vprint Kleinian: "========== NormalizedBasis";
 H := B`KlnH;
 e := H![1,0,0,0];
 MH := Parent(Matrix(2, [H| e, 0, 0, e]));
@@ -387,7 +387,7 @@ eps110 := epsilon(1/10,pr);
 loo := R!7;
 
 
-vprint Kleinian: ">>>>>>>>>> Initialization";
+vprint Kleinian: "=========== Initialization";
 
 indexunits := 1;
 randids := [];
@@ -577,13 +577,9 @@ repeat
         end if;
         ball := 1;
         oldtotalgpelt := totalgpelt;
-        vprint Kleinian: ">>>>>>>>>> Enumerate";
+        vprint Kleinian: "========= Enumerate";
         vprint Kleinian, 3: "stepu =", RealField(5)!stepu;
         repeat
-	if Cputime(elapsed_time) gt max_time then
-	return false,false,false,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
-        end if;
-
             allowsq := true;
             if EnumMethod eq "ManyBalls" or EnumMethod eq "SmallBalls" then
                 if ball mod 10 lt propi and #IE ne 0 and (not Fuchsian or loo gt eps13) then
@@ -672,6 +668,7 @@ repeat
 		
         vprint Kleinian: "Reduction of the new elements";
 		for gamma in Enum do
+			    vprint Kleinian: "gamma = ", gamma;
 			if #F ne 0  and PairingMethod ne "None" then
 				_, delta := Reduce(gamma, F : eps12 := eps12, Word := false);
 				gammabar := delta*gamma;
@@ -684,6 +681,7 @@ repeat
 		end for;
 		PrintSizeExtDom(F,FE,IE);
 		period := PeriodEnum;
+        vprint Kleinian: "Done with Reduction of the new elements";
 
     	t := Cputime();
 	    KeepSameGroup(~G,~F,~FE,~IE,eps12, eps13, eps110);
@@ -730,7 +728,7 @@ repeat
 		vprint Kleinian, 3: "NbEnum :", NbEnum;
 	end if;
 	
-	vprint Kleinian: ">>>>>>>>>> IsSubgroup";
+	vprint Kleinian: "========= IsSubgroup";
 	if not Fuchsian then
 		if #F ne 0 and #IE /*eq 0*/ le 1 then
 			if allpaired then
@@ -769,9 +767,6 @@ repeat
     if Fuchsian then
         F,FE,IE := ExteriorDomain(F);
     end if;
-if Cputime(elapsed_time) gt max_time then
-   return false,false,false,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
-end if;
 
 until (allpaired and Abs(Vol/Covol-1) lt 1/1000) or Abs(Vol/Covol-1) lt 1/10000000000;
 
@@ -781,9 +776,9 @@ if Maple then
     MapleFile(MapleDraw(MapleExteriorDomain([],FE,IE : Caption := true) : view := 1.), "FinalFDomC");
 end if;
 
-catch e
-return false,false,false;
-end try;
+// catch e
+// return false,false,false;
+// end try;
 
 return NormalizedBoundary(F),F,FE,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
 
