@@ -290,8 +290,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
             magma = Magma()
         else:
             quit_when_done = False
-        if magma_seed is not None:
-            magma.eval('SetSeed(%s)'%magma_seed)
+        # if magma_seed is not None:
+        #     magma.eval('SetSeed(%s)'%magma_seed)
         magma.attach_spec(page_path)
         magma.eval('Page_initialized := true')
     else:
