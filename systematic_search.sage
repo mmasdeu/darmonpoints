@@ -210,6 +210,9 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             else:
                 out_str_vec.append(str(num_classes))
             return out_str_vec
+        except:
+            out_str_vec.append('\'Err G(unhandled)\'')
+            return out_str_vec
         if num_classes == 0:
             out_str_vec.append(out_str.format(curve = '\'Err G (No rational classes)\''))
             return out_str_vec
@@ -229,7 +232,10 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
         except:
             out_str_vec.append( out_str.format(curve = '\'Probably Timed Out in find_curve\''))
     except Exception as e:
-        out_str_vec.append('Unknown exception (%s), field of discriminant %s (%s results preced)'%(str(e.message),F.discriminant(),len(out_str_vec)))
+        try:
+            out_str_vec.append(out_str.format(curve = 'unhandled exception: %s'%str(e.message)))
+        except:
+            out_str_vec.append('Unknown exception (%s), field of discriminant %s (%s results preced)'%(str(e.message),F.discriminant(),len(out_str_vec)))
     return out_str_vec
 
 
