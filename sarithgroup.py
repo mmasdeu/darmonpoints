@@ -374,6 +374,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 for tmp in all_initial:
                     new_candidate =  v1 * tmp * v2
                     if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
+                        verbose('wp = %s'%new_candidate)
                         return new_candidate
             raise RuntimeError('Could not find wp')
 

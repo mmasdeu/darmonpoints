@@ -1188,6 +1188,7 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None):
         raise ValueError, 'All exponents in the discriminant factorization must be odd'
     Foo = F.real_places(prec = Infinity)
     T = F.real_places(prec = Infinity)
+    ramification_at_infinity = []
     Sold,S = S,[]
     for v in Sold:
         for w in T:
@@ -1197,7 +1198,11 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None):
                 break
     if  len(S) != len(Sold):
         raise ValueError,'Please specify more precision for the places.'
-
+    for sigma in F.real_places(prec = Infinity):
+        if sigma in S:
+            ramification_at_infinity.append(-1)
+        else:
+            ramification_at_infinity.append(1)
     if F.degree() == 1:
         return QuaternionAlgebra(I).invariants()
     I = F.ideal(I)
@@ -1216,14 +1221,15 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None):
                     B = QuaternionAlgebra(F,a,sgn2 * d)
                     if B.discriminant() == I:
                         good_at_infinity = True
-                        for sigma in S:
+                        for si,sigma in zip(ramification_at_infinity,F.embeddings(RR)):
+                            if si == 1: # Want it split
+                                if sigma(a) < 0 and sigma(sgn2 * d) < 0:
+                                    good_at_infinity = False
+                                    break
+                            else: # si == -1, want it ramified
                                 if sigma(a) > 0 or sigma(sgn2 * d) > 0:
                                     good_at_infinity = False
                                     break
-                        for tau in T:
-                            if tau(a) < 0 and tau(sgn2 * d) < 0:
-                                good_at_infinity = False
-                                break
                         if good_at_infinity:
                             return B.invariants()
 
