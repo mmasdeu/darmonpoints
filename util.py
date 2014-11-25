@@ -1169,20 +1169,11 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
         Funits = list(self.units()) + [-1]
         Sa = [-v(a).sign() for v in S] + [v(a).sign() for v in T]
         ST = S + T
-        min_ans = None
-        min_length = 10**5
         for uu in product([False,True],repeat = len(Funits)):
             u = prod((eps for eps,i in zip(Funits,uu) if i),self.one())
             if all((v(u).sign() == e for v,e in zip(ST,Sa))):
-                a * u
-                lenau = len(str(a*u))
-                if lenau < min_length:
-                    min_ans = a*u
-                    min_length = lenau
-        return min_ans
+                return a*u
     assert 0,'Signs not compatible'
-
-
 
 # r'''
 # Follows S.Johansson, "A description of quaternion algebras"
