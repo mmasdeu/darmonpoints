@@ -367,10 +367,13 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         except Exception as e:
             if quit_when_done:
                 magma.quit()
+            mystr = str(e.message)
+            if len(mystr) > 30:
+                mystr = mystr[:14] + ' ... ' + mystr[-14:]
             if return_all:
-                return ['Error when computing G: ' + str(e.message)]
+                return ['Error when computing G: ' + mystr]
             else:
-                return 'Error when computing G: ' + str(e.message)
+                return 'Error when computing G: ' + mystr
 
         # Define phiE, the cohomology class associated to the system of eigenvalues.
         try:
