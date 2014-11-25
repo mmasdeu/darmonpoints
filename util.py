@@ -1083,7 +1083,9 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
             if passed:
                 if optimize_through_magma:
                     from sage.interfaces.magma import magma
-                    Bm = magma(QuaternionAlgebra(F,a,b)).OptimizedRepresentation()
+                    Fm = magma(F)
+                    Bm = magma.QuaternionAlgebra(magma(F),sage_F_elt_to_magma(Fm,a),sage_F_elt_to_magma(Fm,b)).OptimizedRepresentation()
+                    # Bm = magma(QuaternionAlgebra(F,a,b)).OptimizedRepresentation()
                     a,b = Bm.StandardForm(nvals = 2)
                     a = magma_F_elt_to_sage(F,a,magma)
                     b = magma_F_elt_to_sage(F,b,magma)
