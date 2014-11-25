@@ -940,9 +940,7 @@ def magma_F_ideal_to_sage(F_sage,x,magma):
     gens = x.TwoElement(nvals = 2)
     return F_sage.ideal([magma_F_elt_to_sage(F_sage,gens[0],magma),magma_F_elt_to_sage(F_sage,gens[1],magma)])
 
-
-
-def quaternion_algebra_invariants_from_ramification(F, I, S = None):
+def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_through_magma = True):
     r"""
     Creates a quaternion algebra over a number field which ramifies exactly at
     the specified places. The algorithm is inspired by the current MAGMA implementation
@@ -1083,6 +1081,12 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None):
                 mnorm = m.norm().abs()
                 passed = False
             if passed:
+                if optimize_through_magma:
+                    from sage.interfaces.magma import magma
+                    Bm = magma(QuaternionAlgebra(F,a,b)).OptimizedRepresentation()
+                    a,b = Bm.StandardForm(nvals = 2)
+                    a = magma_F_elt_to_sage(F,a,magma)
+                    b = magma_F_elt_to_sage(F,b,magma)
                 return a,b
 
 def weak_approximation(self,I = None,S = None,J = None,T = None):
@@ -1164,50 +1168,69 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
         Funits = list(self.units()) + [-1]
         Sa = [-v(a).sign() for v in S] + [v(a).sign() for v in T]
         ST = S + T
+        min_ans = None
+        min_length = 10**5
         for uu in product([False,True],repeat = len(Funits)):
             u = prod((eps for eps,i in zip(Funits,uu) if i),self.one())
             if all((v(u).sign() == e for v,e in zip(ST,Sa))):
-                return a*u
+                a * u
+                lenau = len(str(a*u))
+                if lenau < min_length:
+                    min_ans = a*u
+                    min_length = lenau
+        return min_ans
     assert 0,'Signs not compatible'
 
 
 
 # r'''
 # Follows S.Johansson, "A description of quaternion algebras"
-# ramification_at_infinity is a list of the same length as the real places.
-# Ramified = -1, Split = +1
+# S is a list of the places which should be ramified.
 # '''
-# def quaternion_algebra_from_discriminant(F,disc,ramification_at_infinity = None):
-#     if F.degree() == 1:
-#         return QuaternionAlgebra(disc)
-#     if len(F.embeddings(RR)) > 1 and ramification_at_infinity is None:
-#         raise ValueError, 'Must specify ramification type at infinity places'
-#     if ramification_at_infinity is not None and len(ramification_at_infinity) != len(F.embeddings(RR)):
-#         raise ValueError, 'Must specify exactly %s ramifications at infinity'%len(F.embeddings(RR))
-#     if ramification_at_infinity is not None:
-#         ramification_at_infinity = [ZZ(r) for r in ramification_at_infinity]
-#         assert all((r.abs() == 1 for r in ramification_at_infinity))
-#     disc = F.ideal(disc)
-#     if not disc.is_principal():
-#         raise ValueError, 'Discriminant should be principal'
-#     d = disc.gens_reduced()[0]
-#     vinf = F.embeddings(RR)
-#     vfin = disc.factor()
-#     if ramification_at_infinity is not None and (len(vfin) + sum((1 if ram == -1 else 0 for ram in ramification_at_infinity))) % 2 == 1:
-#         raise ValueError, 'There is no quaternion algebra with the specified ramification'
-#     if any([ri % 2 == 0 for _,ri in vfin]):
+# def quaternion_algebra_invariants_from_ramification(F, I, S = None):
+#     from sage.misc.misc_c import prod
+#     if S is None:
+#         S = []
+#     I = F.ideal(I)
+#     P = I.factor()
+#     if (len(P) + len(S)) % 2 != 0:
+#         raise ValueError, 'Number of ramified places must be even'
+#     if any([ri > 1 for _,ri in P]):
 #         raise ValueError, 'All exponents in the discriminant factorization must be odd'
-#     if ramification_at_infinity is None:
-#         ramification_at_infinity = []
+#     Foo = F.real_places(prec = Infinity)
+#     T = F.real_places(prec = Infinity)
+#     ramification_at_infinity = []
+#     Sold,S = S,[]
+#     for v in Sold:
+#         for w in T:
+#             if w(F.gen()) == v(F.gen()):
+#                 S.append(w)
+#                 T.remove(w)
+#                 break
+#     if  len(S) != len(Sold):
+#         raise ValueError,'Please specify more precision for the places.'
+#     for sigma in F.real_places(prec = Infinity):
+#         if sigma in S:
+#             ramification_at_infinity.append(-1)
+#         else:
+#             ramification_at_infinity.append(1)
+#     if F.degree() == 1:
+#         return QuaternionAlgebra(I).invariants()
+#     I = F.ideal(I)
+#     if not I.is_principal():
+#         raise ValueError, 'Discriminant should be principal'
+#     d = I.gens_reduced()[0]
+#     vinf = F.embeddings(RR)
+#     vfin = I.factor()
 #     for p in chain([1],Primes()):
 #         facts = F.ideal(p).prime_factors() if p > 1 else [F.ideal(1)]
 #         for P in facts:
-#             if P.is_coprime(disc) and P.is_principal():
+#             if P.is_coprime(I) and P.is_principal():
 #                 pi0 = P.gens_reduced()[0]
 #                 for sgn1,sgn2 in product([-1,+1],repeat = 2):
 #                     a = sgn1 * pi0
 #                     B = QuaternionAlgebra(F,a,sgn2 * d)
-#                     if B.discriminant() == disc:
+#                     if B.discriminant() == I:
 #                         good_at_infinity = True
 #                         for si,sigma in zip(ramification_at_infinity,F.embeddings(RR)):
 #                             if si == 1: # Want it split
@@ -1219,7 +1242,7 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
 #                                     good_at_infinity = False
 #                                     break
 #                         if good_at_infinity:
-#                             return B
+#                             return B.invariants()
 
 def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None):
     p = J.parent().prime()

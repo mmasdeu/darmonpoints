@@ -211,7 +211,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
                 out_str_vec.append(str(num_classes))
             return out_str_vec
         except:
-            out_str_vec.append('\'Err G(unhandled)\'')
+            out_str_vec.append('\'Err G(unhandled: %s)\''%num_classes)
             return out_str_vec
         if num_classes == 0:
             out_str_vec.append(out_str.format(curve = '\'Err G (No rational classes)\''))

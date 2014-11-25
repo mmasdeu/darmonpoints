@@ -45,8 +45,6 @@ class BTEdge(SageObject):
         return iter([self.reverse,self.gamma])
 
 def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0):
-        # if seed is None:
-        #     seed = 1000
         if magma is None:
             from sage.interfaces.magma import Magma
             magma = Magma()
@@ -302,10 +300,8 @@ class BigArithGroup_class(AlgebraicGroup):
                         break
 
     def do_tilde(self,g):
-        # lam = -self.p
         lam = -self.wp().reduced_norm()
-        # lam = -self.F(self.ideal_p.gen(0)) if self.F.degree() > 1 else -self.p
-        return 1/lam * self.wp() * g * self.wp() # FIXME
+        return 1/lam * self.wp() * g * self.wp()
 
     @cached_method
     def get_BT_reps_twisted(self):
@@ -313,10 +309,8 @@ class BigArithGroup_class(AlgebraicGroup):
 
     @cached_method
     def get_Up_reps(self):
-        # lam = -self.p
         lam = -self.wp().reduced_norm()
-        # lam = -self.F(self.ideal_p.gen(0)) if self.F.degree() > 1 else -self.p
-        tmp = [ lam * o**-1 * self.wp()**-1 for o in self.get_BT_reps()[1:]] #FIXME
+        tmp = [ lam * o**-1 * self.wp()**-1 for o in self.get_BT_reps()[1:]]
         return tmp
 
     def get_covering(self,depth):
@@ -352,9 +346,9 @@ class BigArithGroup_class(AlgebraicGroup):
             else:
                 force_sign = True
             if self.F == QQ:
-                all_elts = self.Gn.element_of_norm(self.ideal_p,use_magma = True,return_all = True,radius = 1, max_elements = 1,force_sign = force_sign)
+                all_elts = self.Gn.element_of_norm(self.ideal_p,use_magma = True,return_all = True,radius = -1, max_elements = 1,force_sign = force_sign)
             else:
-                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = 1, max_elements = 1,force_sign = force_sign)
+                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = -1, max_elements = 1,force_sign = force_sign)
             found = False
             all_initial = all_elts
             if len(all_initial) == 0:
@@ -374,6 +368,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 for tmp in all_initial:
                     new_candidate =  v1 * tmp * v2
                     if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
+                        verbose('wp = %s'%new_candidate)
                         return new_candidate
             raise RuntimeError('Could not find wp')
 

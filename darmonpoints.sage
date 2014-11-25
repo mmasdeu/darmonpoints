@@ -290,8 +290,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
             magma = Magma()
         else:
             quit_when_done = False
-        if magma_seed is not None:
-            magma.eval('SetSeed(%s)'%magma_seed)
+        # if magma_seed is not None:
+        #     magma.eval('SetSeed(%s)'%magma_seed)
         magma.attach_spec(page_path)
         magma.eval('Page_initialized := true')
     else:
@@ -363,7 +363,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity)
-            G = BigArithGroup(P,abtuple,Np,use_sage_db = use_sage_db,grouptype = grouptype,magma = magma,seed = magma_seed,timeout = timeout)
+            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout)
         except Exception as e:
             if quit_when_done:
                 magma.quit()
@@ -375,7 +375,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         # Define phiE, the cohomology class associated to the system of eigenvalues.
         try:
             Coh = CohomologyGroup(G.Gpn)
-            phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,use_magma = True, return_all = return_all)
+            phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all)
         except Exception as e:
             if quit_when_done:
                 magma.quit()

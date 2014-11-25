@@ -1190,9 +1190,10 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 deltaword.append(i0+1)
                 #verbose('deltaword = %s'%deltaword)
                 lengthw += 1
-            correct = ( -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 10.0)
+            correct = ( -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 5.0)
             if not correct:
-                raise RuntimeError('Error in word problem from Aurel 1')
+                verbose('Error in word problem from Aurel 1?')
+                # raise RuntimeError('Error in word problem from Aurel 1')
         deltaword.reverse()
         try:
             c = sum((list(self._simplification_iso[o-1]) for o in deltaword),[])

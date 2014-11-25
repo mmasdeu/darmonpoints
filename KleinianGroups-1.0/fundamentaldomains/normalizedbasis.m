@@ -344,7 +344,7 @@ end if;
 if Center cmpeq "J" then
     Center := H!0;
 elif Center cmpeq "Auto" then
-Center := 17.1/5*H.2 - 1.3/2*H.1 + 1.1/3*H![1,0,0,0];
+    Center := 17/5*H.2 - 1/2*H.1 + 1/3*H![1,0,0,0];
 end if;
 
 B := Algebra(O);
