@@ -357,7 +357,7 @@ _,_,Fuchsian := KleinianInjection(B : Center := Center, H := Parent(Center), Red
 omega := K!ZK.2;
 
 primes := [ B | ];
-//try
+try
 
 if Type(Level) eq RngIntElt then
 	if not IsMaximal(O) then
@@ -668,7 +668,7 @@ repeat
 		
         vprint Kleinian: "Reduction of the new elements";
 		for gamma in Enum do
-			    vprint Kleinian: "gamma = ", gamma;
+			vprint Kleinian: "gamma = ", gamma;
 			if #F ne 0  and PairingMethod ne "None" then
 				_, delta := Reduce(gamma, F : eps12 := eps12, Word := false);
 				gammabar := delta*gamma;
@@ -676,7 +676,10 @@ repeat
 				gammabar := gamma;
 			end if;
 			if not isscalar(gammabar) and not (gammabar in G) then
-                AddNB(gammabar, ~F, ~FE, ~IE, ~G, eps12, eps13, eps110);
+			   vprint Kleinian: "About to call AddNB";
+                           AddNB(gammabar, ~F, ~FE, ~IE, ~G, eps12, eps13, eps110);
+			   vprint Kleinian: "Done AddNB";
+
 			end if;
 		end for;
 		PrintSizeExtDom(F,FE,IE);
@@ -776,9 +779,9 @@ if Maple then
     MapleFile(MapleDraw(MapleExteriorDomain([],FE,IE : Caption := true) : view := 1.), "FinalFDomC");
 end if;
 
-// catch e
-// return false,false,false;
-// end try;
+catch e
+ return false,false,false;
+end try;
 
 return NormalizedBoundary(F),F,FE,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u/(8*factor),Center;
 

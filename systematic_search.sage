@@ -30,6 +30,7 @@ def find_num_classes(P,abtuple,Np,F,out_str):
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
+    from sage.rings.integer_ring import ZZ
 
     try:
         G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,seed = 12345)
@@ -61,6 +62,7 @@ def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
+    from sage.rings.integer_ring import ZZ
 
     out_str_vec = []
 
@@ -178,6 +180,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
     from integrals import integrate_H1,double_integral_zero_infty,indef_integral
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
+    from sage.rings.integer_ring import ZZ
 
     out_str_vec = []
     pol = F.polynomial()
@@ -198,29 +201,34 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
         except:
             out_str_vec.append(out_str.format(curve = '\'Err G (initialization)\''))
             return out_str_vec
+        num_classes = ZZ(-1)
         try:
             num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str)
             num_classes = ZZ(num_classes)
-        except TypeError:
-            if num_classes.startswith('NO DATA'):
-                if 'imed out' in num_classes:
-                    out_str_vec.append(out_str.format(curve = '\'Err G (Timed out)\''))
+        except TypeError as e:
+            if hasattr(num_classes,'startswith'):
+                if num_classes.startswith('NO DATA'):
+                    if 'imed out' in num_classes:
+                        out_str_vec.append(out_str.format(curve = '\'Err G (Timed out)\''))
+                    else:
+                        out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%num_classes[7:]))
                 else:
-                    out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%num_classes[7:]))
+                    out_str_vec.append(str(num_classes))
+                return out_str_vec
             else:
-                out_str_vec.append(str(num_classes))
-            return out_str_vec
+                out_str_vec.append(out_str.format(curve = '\'Err G(%s)\''%str(e.message)))
+                return out_str_vec
         except:
             out_str_vec.append('\'Err G(unhandled: %s)\''%num_classes)
             return out_str_vec
-        if num_classes == 0:
+        if num_classes <= 0:
             out_str_vec.append(out_str.format(curve = '\'Err G (No rational classes)\''))
             return out_str_vec
         if Pnorm > max_P_norm_integrate:
             out_str_vec.append( out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
             return out_str_vec
         try:
-            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, magma_seed = 12345, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
+            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, magma_seed = 1123, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
             if hasattr(curve,'startswith'):
                 out_str_vec.append( out_str.format(curve = str(curve)))
             else:
