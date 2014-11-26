@@ -14,7 +14,7 @@ max_waiting_time_aurel = 30 * 60 # Amount of patience (in seconds)
 max_waiting_time = 2 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 50
 
-def find_num_classes(P,abtuple,Np,F,out_str,magma_seed):
+def find_num_classes(P,abtuple,Np,F,out_str,magma_seed,logging = False):
     load('darmonpoints.sage')
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
@@ -33,14 +33,18 @@ def find_num_classes(P,abtuple,Np,F,out_str,magma_seed):
     from sage.rings.integer_ring import ZZ
 
     try:
-        G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,seed = magma_seed)
+        if logging:
+            logfile = '/tmp/log_nb_%s_%s_%s_%s_%s.log'%(F.discriminant().abs(),P.norm(),QuaternionAlgebra(F,abtuple[0],abtuple[1]).discriminant().norm(),Np.norm(),magma_seed)
+        else:
+            logfile = None
+        G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,seed = magma_seed,logfile = logfile)
     except Exception as e:
-        return out_str.format(curve = '\'Err G (%s)\''%e.message)
+        return out_str.format(curve = '\'Err G (%s)\''%str(e.message))
     try:
         Coh = CohomologyGroup(G.Gpn)
         phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
     except Exception as e:
-        return out_str.format(curve = '\'Err coh (%s)\''%e.message)
+        return out_str.format(curve = '\'Err coh (%s)\''%str(e.message))
     except (AlarmInterrupt,KeyboardInterrupt):
         return out_str.format(curve = '\'Timed out in get_rational_cocycle\'')
     return len(phiElist)
@@ -203,7 +207,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             return out_str_vec
         num_classes = ZZ(-1)
         try:
-            num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str,magma_seed)
+            num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str,magma_seed,logging = True)
             num_classes = ZZ(num_classes)
         except TypeError as e:
             if hasattr(num_classes,'startswith'):

@@ -366,7 +366,7 @@ class ArithGroup_generic(AlgebraicGroup):
             return gamma, tau1
 
     @cached_method
-    def hecke_matrix(self,l,use_magma = False,g0 = None):
+    def hecke_matrix(self,l,use_magma = True,g0 = None):
         Gab = self.abelianization()
         gens = Gab.gens()
         dim = len(gens)
@@ -380,7 +380,7 @@ class ArithGroup_generic(AlgebraicGroup):
         return M
 
     @cached_method
-    def hecke_matrix_freepart(self,l,use_magma = False,g0 = None):
+    def hecke_matrix_freepart(self,l,use_magma = True,g0 = None):
         Gab = self.abelianization()
         freegens = Gab.free_gens()
         dim = len(freegens)
@@ -696,7 +696,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         verbose('Done fixing sign')
         return x
 
-    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1,force_sign = True): # in rationalquaternion
+    def element_of_norm(self,N,use_magma = True,return_all = False,radius = -1,max_elements = -1,force_sign = True): # in rationalquaternion
         N = ZZ(N)
         if return_all == False:
             try:
@@ -866,7 +866,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         self._element_of_norm[N] = candidate
         return candidate
 
-    def get_hecke_reps(self,l,use_magma = True,g0 = None): # rationalmatrix
+    def get_hecke_reps(self,l,use_magma = False,g0 = None): # rationalmatrix
         r'''
         TESTS:
 
@@ -1456,7 +1456,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                     self._elements_of_prime_norm.append(candidate)
                     yield candidate
 
-    def element_of_norm(self,N,use_magma = False,return_all = False,radius = -1,max_elements = -1,force_sign = True): # in nf_quaternion
+    def element_of_norm(self,N,use_magma = True,return_all = False,radius = -1,max_elements = -1,force_sign = True): # in nf_quaternion
         Nideal = self.F.ideal(N)
         try:
             N = N.gens_reduced()[0]
