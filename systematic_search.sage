@@ -213,16 +213,16 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
                     else:
                         out_str_vec.append(out_str.format(curve = '\'Err G (%s)\''%num_classes[7:]))
                 else:
-                    out_str_vec.append(str(num_classes))
+                    out_str_vec.append(out_str.format(curve = str(num_classes)))
                 return out_str_vec
             else:
                 out_str_vec.append(out_str.format(curve = '\'Err G(%s)\''%str(e.message)))
                 return out_str_vec
         except Exception as e:
-            out_str_vec.append('\'Err G(unhandled: %s)\''%str(e.message))
+            out_str_vec.append(out_str.format(curve = '\'Err G(unhandled: %s)\''%str(e.message)))
             return out_str_vec
         except:
-            out_str_vec.append('\'Err G(unhandled error)\'')
+            out_str_vec.append(out_str.format(curve = '\'Err G(unhandled: error)\''))
             return out_str_vec
 
         if num_classes <= 0:
