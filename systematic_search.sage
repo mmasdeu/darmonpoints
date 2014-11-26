@@ -265,13 +265,13 @@ def get_new_candidates(input_file,output_file):
         line = line.split(",",1)[-1]
         line = line.split("],\\",1)[0]
         if line.count(",") > 10: # Indicates a success line
-            fout.write(line_orig + '\n')
+            fout.write(line_orig)
             continue
         if 'Group does not seem to be attached' in line_orig:
-            fout.write(line_orig + '\n')
+            fout.write(line_orig)
             continue
         if 'Prime too large' in line_orig:
-            fout.write(line_orig + '\n')
+            fout.write(line_orig)
             continue
         r = QQ['r'].gen()
         _,pol,P,D,Np,msg,Nnorm,covol = line.split(",")
