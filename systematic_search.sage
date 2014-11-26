@@ -14,7 +14,7 @@ max_waiting_time_aurel = 30 * 60 # Amount of patience (in seconds)
 max_waiting_time = 2 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 50
 
-def find_num_classes(P,abtuple,Np,F,out_str):
+def find_num_classes(P,abtuple,Np,F,out_str,magma_seed):
     load('darmonpoints.sage')
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
@@ -33,7 +33,7 @@ def find_num_classes(P,abtuple,Np,F,out_str):
     from sage.rings.integer_ring import ZZ
 
     try:
-        G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,seed = 12345)
+        G = BigArithGroup(P,abtuple,Np,base = F,use_sage_db = False,grouptype = "PGL2", magma = None,seed = magma_seed)
     except Exception as e:
         return out_str.format(curve = '\'Err G (%s)\''%e.message)
     try:
@@ -165,7 +165,7 @@ def compute_table(input_file,output_trail = None):
                 fwrite(out_str,output_file)
 
 @parallel
-def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file,covol):
+def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file,covol,magma_seed):
     load('darmonpoints.sage')
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
@@ -203,7 +203,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             return out_str_vec
         num_classes = ZZ(-1)
         try:
-            num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str)
+            num_classes = fork(find_num_classes,timeout = max_waiting_time_aurel)(P,abtuple,Np,F,out_str,magma_seed)
             num_classes = ZZ(num_classes)
         except TypeError as e:
             if hasattr(num_classes,'startswith'):
@@ -228,7 +228,7 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             out_str_vec.append( out_str.format(curve = '\'Prime too large to integrate (Pnorm = %s)\''%Pnorm))
             return out_str_vec
         try:
-            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, magma_seed = 1123, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
+            curve = fork(find_curve,timeout = num_classes * max_waiting_time)(P,D,P*D*Np,prec,outfile=log_file,ramification_at_infinity = ram_at_inf, magma_seed = magma_seed, grouptype = "PGL2", return_all = True,Up_method='bigmatrix')
             if hasattr(curve,'startswith'):
                 out_str_vec.append( out_str.format(curve = str(curve)))
             else:
@@ -253,6 +253,7 @@ def get_new_candidates(input_file,output_file):
     r = QQ['r'].gen()
     candidates = []
     for line in finp:
+        line_orig = line
         if line.startswith('#'):
             fout.write(line)
             fout.write("\n")
@@ -260,7 +261,13 @@ def get_new_candidates(input_file,output_file):
         line = line.split(",",1)[-1]
         line = line.split("],\\",1)[0]
         if line.count(",") > 10: # Indicates a success line
-            fout.write("['',"+line+"],\\\n")
+            fout.write(line_orig + '\n')
+            continue
+        if 'Group does not seem to be attached' in line_orig:
+            fout.write(line_orig + '\n')
+            continue
+        if 'Prime too large' in line_orig:
+            fout.write(line_orig + '\n')
             continue
         r = QQ['r'].gen()
         _,pol,P,D,Np,msg,Nnorm,covol = line.split(",")
@@ -285,12 +292,12 @@ def get_new_candidates(input_file,output_file):
     fout.close()
     return candidates
 
-def compute_table_in_order(candidates,output_file,c0 = 0, c1 = 200,step = 50):
+def compute_table_in_order(candidates,output_file,c0 = 0, c1 = 200,step = 50,magma_seed = None):
     global Nrange, max_P_norm, max_P_norm_integrate, max_waiting_time_aurel, max_waiting_time, max_F_disc, decimal_prec
     log_file = output_file.replace('.txt','.log')
     for cov in range(c0,c1,step):
         good_candidates = filter(lambda x:x[-1] >= cov and x[-1] < cov + step,candidates)
-        input_vec = [(datum[0],datum[1],datum[2],datum[3],datum[4],max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file,datum[-1]) for datum in good_candidates]
+        input_vec = [(datum[0],datum[1],datum[2],datum[3],datum[4],max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file,datum[-1],magma_seed) for datum in good_candidates]
         fwrite('# Starting range %s..%s'%(cov,cov+step),output_file)
         for inp,out_str_vec in find_few_curves(input_vec):
             if out_str_vec == 'NO DATA':
