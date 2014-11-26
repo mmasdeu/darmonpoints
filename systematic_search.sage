@@ -241,11 +241,49 @@ def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_au
             out_str_vec.append( out_str.format(curve = '\'Probably Timed Out in find_curve\''))
     except Exception as e:
         try:
-            out_str_vec.append(out_str.format(curve = 'unhandled exception: %s'%str(e.message)))
+            out_str_vec.append(out_str.format(curve = '\'unhandled exception: %s\''%str(e.message)))
         except:
-            out_str_vec.append('Unknown exception (%s), field of discriminant %s (%s results preced)'%(str(e.message),F.discriminant(),len(out_str_vec)))
+            out_str_vec.append('\'Unknown exception (%s), field of discriminant %s (%s results preced)\''%(str(e.message),F.discriminant(),len(out_str_vec)))
     return out_str_vec
 
+def get_new_candidates(input_file,output_file):
+    finp = open(input_file)
+    fout = open(output_file,"w+")
+    x = QQ['x'].gen()
+    r = QQ['r'].gen()
+    candidates = []
+    for line in finp:
+        if line.startswith('#'):
+            fout.write(line)
+            fout.write("\n")
+            continue
+        line = line.split(",",1)[-1]
+        line = line.split("],\\",1)[0]
+        if line.count(",") > 10: # Indicates a success line
+            fout.write("['',"+line+"],\\\n")
+            continue
+        r = QQ['r'].gen()
+        _,pol,P,D,Np,msg,Nnorm,covol = line.split(",")
+        pol = sage_eval(pol,locals = {'x':x})
+        F.<r> = NumberField(pol)
+        r = F.gen()
+        P = F.ideal(sage_eval(P,locals = {'r':r}))
+        D = F.ideal(sage_eval(D,locals = {'r':r}))
+        Np = F.ideal(sage_eval(Np,locals = {'r':r}))
+        try:
+            msg = sage_eval(msg)
+        except SyntaxError:
+            msg = msg
+        covol = RR(sage_eval(covol))
+        ram_at_inf = F.real_places(prec = Infinity)
+        if F.signature()[1] == 0:
+            ram_at_inf = ram_at_inf[1:]
+        candidates.append([F,P,D,Np,ram_at_inf,covol])
+    finp.close()
+    fout.write("#" * 40)
+    fout.write('\n')
+    fout.close()
+    return candidates
 
 def compute_table_in_order(candidates,output_file,c0 = 0, c1 = 200,step = 50):
     global Nrange, max_P_norm, max_P_norm_integrate, max_waiting_time_aurel, max_waiting_time, max_F_disc, decimal_prec
