@@ -804,7 +804,7 @@ class CohomologyGroup(Parent):
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
                     try:
                         Aq0 = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).change_ring(QQ)
-                        Aq1 = self.group().hecke_matrix_freepart(qq.gens_reduced()[0],g0=g0)
+                        Aq1 = self.group().hecke_matrix_freepart(qq.gens_reduced()[0],g0=g0,use_magma = use_magma)
                         R = Aq0.parent()
                         Aq = block_matrix([[Aq0,R(0)],[R(0),Aq1]])
                     except (RuntimeError,TypeError):
@@ -842,9 +842,10 @@ class CohomologyGroup(Parent):
         EXAMPLES::
 
         """
+        verbose('Entering apply_hecke_operator')
         if hecke_reps is None:
             hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma) # Assume l != p here!
-
+        verbose('Got hecke reps')
         V = self.coefficient_module()
         padic = not V.base_ring().is_exact()
         Gpn = self.group()
@@ -868,6 +869,7 @@ class CohomologyGroup(Parent):
 
         vals = [V(0) for gamma in gammas]
         input_vector = []
+        verbose('Calculation action')
         for j,gamma in enumerate(gammas):
             input_vector.extend([(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,use_magma,j) for g in hecke_reps])
         if parallelize:
@@ -878,6 +880,7 @@ class CohomologyGroup(Parent):
             for inp in input_vector:
                 outp = _calculate_hecke_contribution(*inp)
                 vals[inp[-1]] += outp
+        verbose('Leaving apply_hecke_operator')
         return scale * self(vals)
 
     def get_Up_reps_local(self,prec):
