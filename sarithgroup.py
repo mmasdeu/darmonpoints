@@ -343,14 +343,10 @@ class BigArithGroup_class(AlgebraicGroup):
                 return matrix(QQ,2,2,[0,-1,self.ideal_p,0])
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            if 'P' in self.Gn._grouptype:
-                force_sign = False
-            else:
-                force_sign = True
             if self.F == QQ:
-                all_elts = self.Gn.element_of_norm(self.ideal_p,use_magma = True,return_all = True,radius = -1, max_elements = 1,force_sign = force_sign)
+                all_elts = self.Gn.element_of_norm(self.ideal_p,use_magma = True,return_all = True,radius = -1, max_elements = 1)
             else:
-                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = -1, max_elements = 1,force_sign = force_sign)
+                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = -1, max_elements = 1)
             found = False
             all_initial = all_elts
             if len(all_initial) == 0:
