@@ -44,10 +44,10 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None):
         if magma is None:
             from sage.interfaces.magma import Magma
-            magma = Magma()
+            magma = Magma(logfile = logfile)
             try:
                 page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
             except NameError:
@@ -57,6 +57,8 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
                 magma.eval('SetSeed(%s)'%seed)
             magma.attach_spec(page_path)
         magma.eval('Page_initialized := true')
+        if logfile is not None:
+            magma.eval('SetVerbose("Kleinian",2)')
         try:
             discriminant = ZZ(quat_data)
             if base is not None:

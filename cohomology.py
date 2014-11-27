@@ -24,7 +24,6 @@ from ocmodule import OCVn
 from sage.misc.persist import db,db_save
 from sage.schemes.plane_curves.constructor import Curve
 from sage.parallel.decorate import fork,parallel
-from sage.parallel.ncpus import ncpus
 oo = Infinity
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
@@ -609,7 +608,7 @@ class CohomologyGroup(Parent):
             M.set_column(j,list(Gab.G_to_ab_free(g)))
         return M.transpose()
 
-    def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = False):
+    def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
@@ -652,7 +651,7 @@ class CohomologyGroup(Parent):
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
-    def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = False):
+    def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = True):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
@@ -687,7 +686,7 @@ class CohomologyGroup(Parent):
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
-    def get_rational_cocycle(self,sign = 1,use_magma = False,bound = 3, return_all = False):
+    def get_rational_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K = (self.involution_at_infinity_matrix()-sign).right_kernel()
@@ -767,7 +766,7 @@ class CohomologyGroup(Parent):
         groupelement = Gab.ab_to_G(sum([a*Gab.gens()[i] for i,a in enumerate(col[n:]) if a != 0]))
         return (groupelement,cocycle)
 
-    def get_rational_cycle_and_cocycle(self,sign = 1,use_magma = False,bound = 3, return_all = False):
+    def get_rational_cycle_and_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K1 = (self.involution_at_infinity_matrix()-sign).right_kernel()
@@ -799,13 +798,13 @@ class CohomologyGroup(Parent):
         num_hecke_operators = 0
         while len(component_list) > 0 and num_hecke_operators < bound:
             verbose('num_hecke_ops = %s'%num_hecke_operators)
-            verbose('len(components_list) = %s'%len(component_list))
+            verbose('component_dimensions = %s'%([o.dimension() for o in component_list]))
             q = q.next_prime()
             for qq,e in F.ideal(q).factor():
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
                     try:
                         Aq0 = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).change_ring(QQ)
-                        Aq1 = self.group().hecke_matrix_freepart(qq.gens_reduced()[0],g0=g0)
+                        Aq1 = self.group().hecke_matrix_freepart(qq.gens_reduced()[0],g0=g0,use_magma = use_magma)
                         R = Aq0.parent()
                         Aq = block_matrix([[Aq0,R(0)],[R(0),Aq1]])
                     except (RuntimeError,TypeError):
@@ -843,9 +842,10 @@ class CohomologyGroup(Parent):
         EXAMPLES::
 
         """
+        verbose('Entering apply_hecke_operator')
         if hecke_reps is None:
             hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma) # Assume l != p here!
-
+        verbose('Got hecke reps')
         V = self.coefficient_module()
         padic = not V.base_ring().is_exact()
         Gpn = self.group()
@@ -869,6 +869,7 @@ class CohomologyGroup(Parent):
 
         vals = [V(0) for gamma in gammas]
         input_vector = []
+        verbose('Calculation action')
         for j,gamma in enumerate(gammas):
             input_vector.extend([(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,use_magma,j) for g in hecke_reps])
         if parallelize:
@@ -879,6 +880,7 @@ class CohomologyGroup(Parent):
             for inp in input_vector:
                 outp = _calculate_hecke_contribution(*inp)
                 vals[inp[-1]] += outp
+        verbose('Leaving apply_hecke_operator')
         return scale * self(vals)
 
     def get_Up_reps_local(self,prec):
