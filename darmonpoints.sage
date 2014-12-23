@@ -1,10 +1,3 @@
-from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
-from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
-from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
-import os,datetime
-from sage.misc.persist import db
-
 ##########################################################################
 ### Stark-Heegner points for quaternion algebras                         #
 ##########################################################################
@@ -15,9 +8,9 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
     from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, CohomologyGroup
-
     from integrals import double_integral_zero_infty,indef_integral,integrate_H1
     from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
+    import os,datetime
 
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
@@ -268,7 +261,6 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,outfile 
 
 
 def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None,return_all = False,initial_data = None,check_conductor = True,timeout = 0):
-    from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
     import os,datetime

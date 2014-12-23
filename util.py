@@ -1506,3 +1506,81 @@ def selmer_group_iterator(self, S, m, proof=True):
     from sage.misc.all import cartesian_product_iterator
     for ev in cartesian_product_iterator([range(-o//2,(1+o)//2) for o in orders]):
         yield prod([p**e for p,e in zip(KSgens,ev)],one)
+
+def print_table_latex(self, header_string = None):
+    r"""
+    LaTeX representation of a table.
+
+    If an entry is a Sage object, it is replaced by its LaTeX
+    representation, delimited by dollar signs (i.e., ``x`` is
+    replaced by ``$latex(x)$``). If an entry is a string, the
+    dollar signs are not automatically added, so tables can
+    include both plain text and mathematics.
+
+    EXAMPLES::
+
+        sage: from sage.misc.table import table
+        sage: a = [[r'$\sin(x)$', '$x$', 'text'], [1,34342,3], [identity_matrix(2),5,6]]
+        sage: latex(table(a)) # indirect doctest
+        \begin{tabular}{lll}
+        $\sin(x)$ & $x$ & text \\
+        $1$ & $34342$ & $3$ \\
+        $\left(\begin{array}{rr}
+        1 & 0 \\
+        0 & 1
+        \end{array}\right)$ & $5$ & $6$ \\
+        \end{tabular}
+        sage: latex(table(a, frame=True, align='center'))
+        \begin{tabular}{|c|c|c|} \hline
+        $\sin(x)$ & $x$ & text \\ \hline
+        $1$ & $34342$ & $3$ \\ \hline
+        $\left(\begin{array}{rr}
+        1 & 0 \\
+        0 & 1
+        \end{array}\right)$ & $5$ & $6$ \\ \hline
+        \end{tabular}
+    """
+    from latex import latex, LatexExpr
+    import types
+
+    rows = self._rows
+    nc = len(rows[0])
+    if len(rows) == 0 or nc == 0:
+        return ""
+
+    align_char = self._options['align'][0]   # 'l', 'c', 'r'
+    if self._options['frame']:
+        frame_char = '|'
+        frame_str = ' \\hline'
+    else:
+        frame_char = ''
+        frame_str = ''
+    if self._options['header_column']:
+        head_col_char = '|'
+    else:
+        head_col_char = ''
+    if self._options['header_row']:
+        head_row_str = ' \\hline'
+    else:
+        head_row_str = ''
+
+    # table header
+    s = "\\begin{tabular}{"
+    if header_string is None:
+        s += frame_char + align_char + frame_char + head_col_char
+        s += frame_char.join([align_char] * (nc-1))
+        s += frame_char
+    else:
+        s += header_string
+    s += "}" + frame_str + "\n"
+    # first row
+    s += " & ".join(LatexExpr(x) if isinstance(x, (str, LatexExpr))
+                  else '$' + latex(x).strip() + '$' for x in rows[0])
+    s += " \\\\" + frame_str + head_row_str + "\n"
+    # other rows
+    for row in rows[1:]:
+        s += " & ".join(LatexExpr(x) if isinstance(x, (str, LatexExpr))
+                      else '$' + latex(x).strip() + '$' for x in row)
+        s += " \\\\" + frame_str + "\n"
+    s += "\\end{tabular}"
+    return s
