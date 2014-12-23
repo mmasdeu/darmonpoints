@@ -288,6 +288,7 @@ class ArithGroup_generic(AlgebraicGroup):
             ti = elt * gk2
             if self._is_in_order(ti):
                 return self(ti)
+        raise RuntimeError('No Up ti found for gk1 = %s, gamma = %s'%(gk1,gamma))
 
     def gen(self,i):
         return self._gens[i]
@@ -1069,6 +1070,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self._simplification_iso.extend(newvec)
             tmp_quaternions.extend(sage_eval(self.magma.eval('[%s[i] : i in [%s..%s]]'%(gens.name(),i0,i1)).replace('$.1','r'),{'r':r, 'i':i, 'j':j, 'k':k}))
 
+        assert len(self._simplification_iso) == len(self._facerels), "Simplification iso and facerels have different lengths (%s != %s)"%(len(self._simplification_iso),len(self._facerels))
         verbose('Done inverse isomorphism. Now calculating Ugens for %s generators'%len(Hm.gens()))
         self.Ugens = []
         wrds = sage_eval(self.magma.eval('[ElementToSequence(%s!(%s.i)) : i in [1..%s]]'%(G.name(),Hm.name(),len(Hm.gens()))))
