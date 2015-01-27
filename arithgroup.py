@@ -395,6 +395,21 @@ class ArithGroup_generic(AlgebraicGroup):
             M.set_column(j,newcol)
         return M
 
+    @cached_method
+    def involution_at_infinity_matrix_freepart(self,use_magma = True):
+        Gab = self.abelianization()
+        freegens = Gab.free_gens()
+        dim = len(freegens)
+        M = matrix(ZZ,dim,dim,0)
+        x = self.non_positive_unit()
+        V = QQ**len(freegens)
+        for j,g in enumerate(freegens):
+            # Construct column j of the matrix
+            glift = Gab.ab_to_G(g).quaternion_rep
+            newg = self(x**-1 * glift * x)
+            M.set_column(j,list(Gab.G_to_ab_free(newg)))
+        return M
+
     def _calculate_relation(self,wt,separated = False):
         relmat = self.get_relation_matrix()
         relwords = self.get_relation_words()
