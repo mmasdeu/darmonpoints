@@ -194,7 +194,7 @@ class CohomologyElement(ModuleElement):
             raise TypeError,'This functionality is only for trivial coefficients'
         return ShapiroImage(G,self)
 
-    #@cached_method
+    @cached_method
     def evaluate_oc(self,x,parallelize = False,extramul = None):
         H = self.parent()
         if H._use_ps_dists:
@@ -249,7 +249,8 @@ class CohomologyElement(ModuleElement):
         coeff_module = self.parent().coefficient_module()
         gablist = list(Gab.G_to_ab_free(G.gen(j)))
         cvals = [coeff_module(o) for o in self._val]
-        return sum([ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0],coeff_module(0))
+        ans = sum([ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0],coeff_module(0))
+        return ans
 
     def _evaluate_syllable(self,g,a):
         G = self.parent().group()
@@ -721,19 +722,27 @@ class CohomologyGroup(Parent):
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
                     try:
                         Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
-                    except (RuntimeError,TypeError):
+                    except (RuntimeError,TypeError) as e:
                         continue
                     verbose('Computed hecke matrix at qq = %s'%qq)
                     old_component_list = component_list
                     component_list = []
                     num_hecke_operators += 1
                     for U in old_component_list:
-                        for U0,is_irred in Aq.decomposition_of_subspace(U):
+                        print 'Aq ='
+                        print Aq
+                        print 'U ='
+                        print U
+                        V = Aq.decomposition_of_subspace(U)
+                        print 'good'
+                        for U0,is_irred in V:
+                            if Aq.restrict(U0).eigenvalues()[0] == ZZ(qq.norm()) + 1:
+                                continue # Do not take Eisenstein classes.
                             if U0.dimension() == 1:
                                 good_components.append(U0)
                             elif is_irred:
                                 # Bad
-                                pass
+                                continue
                             else: # U0.dimension() > 1 and not is_irred
                                 component_list.append(U0)
                     if len(good_components) > 0 and not return_all:
@@ -866,10 +875,9 @@ class CohomologyGroup(Parent):
             S0 = self.Sigma0()
         else:
             S0 = lambda x:x
-
         vals = [V(0) for gamma in gammas]
         input_vector = []
-        verbose('Calculation action')
+        verbose('Calculating action')
         for j,gamma in enumerate(gammas):
             input_vector.extend([(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,use_magma,j) for g in hecke_reps])
         if parallelize:
@@ -1003,11 +1011,14 @@ def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dis
     tig = G.get_hecke_ti(g,gamma,l,use_magma)
     if padic:
         if use_ps_dists:
-            return gloc *  c.evaluate(tig)
+            ans = gloc *  c.evaluate(tig)
+            return ans
         else:
-            return c.evaluate(tig,extramul = gloc)
+            ans = c.evaluate(tig,extramul = gloc)
+            return ans
     else:
-        return c.evaluate(tig)
+        ans = c.evaluate(tig)
+        return ans
 
 class ShapiroImage(SageObject):
     def __init__(self,G,cocycle):

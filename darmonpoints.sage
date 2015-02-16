@@ -356,7 +356,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity)
             G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout)
-        except Exception as e:
+        except RuntimeError as e:
             if quit_when_done:
                 magma.quit()
             mystr = str(e.message)
@@ -413,7 +413,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
     for phi in phiE:
         try:
             Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,use_ps_dists,method = Up_method, progress_bar = progress_bar)
-        except Exception as e:
+        except ValueError as e:
             ret_vals.append('Problem when getting overconvergent class: ' + str(e.message))
             continue
         print 'Done overconvergent lift'
@@ -430,7 +430,6 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         except Exception as e:
             ret_vals.append('Problem when choosing element in kernel: ' + str(e.message))
             continue
-
         xgen, wxgen = G.Gn(o),G.Gn(wp**-1 * o * wp)
         found = False
         while not found:
@@ -441,9 +440,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
                 working_prec  = 2 * working_prec
                 verbose('Setting working_prec to %s'%working_prec)
             except Exception as e:
-                ret_vals.append('Problem when computing homology cycle' + str(e.message))
+                ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
                 break
-
         try:
             qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
             qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)

@@ -37,6 +37,7 @@ class BTEdge(SageObject):
     def __init__(self,reverse,gamma):
         self.reverse = reverse
         self.gamma = gamma
+        set_immutable(self.gamma)
 
     def _repr_(self):
         return "(%s)^%s"%(self.gamma,'+' if self.reverse == False else '-')
@@ -57,6 +58,7 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
                 magma.eval('SetSeed(%s)'%seed)
             magma.attach_spec(page_path)
         magma.eval('Page_initialized := true')
+        a, b = None, None
         if logfile is not None:
             magma.eval('SetVerbose("Kleinian",2)')
         try:
@@ -67,16 +69,22 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
                 base = QQ
             fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level) # Fix this name
         except TypeError:
-            discriminant = None
             a,b = quat_data
             if base is None:
                 base = a.parent()
+            discriminant = QuaternionAlgebra(base,a,b).discriminant()
             fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level) # Fix this name
         if base != QQ:
             use_sage_db = False # This is not implemented yet
 
         if grouptype is None:
-            grouptype = 'PSL2' if base == QQ else 'PGL2'
+            if base == QQ:
+                if discriminant == 1:
+                    grouptype = 'SL2'
+                else:
+                    grouptype = 'PSL2'
+            else:
+                grouptype = 'PGL2'
 
         if use_sage_db:
             try:
@@ -86,8 +94,7 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
                 newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout)
                 newobj.save_to_db()
         else:
-            if discriminant is None:
-                discriminant = QuaternionAlgebra(base,a,b).discriminant()
+            if a is not None:
                 newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout)
             else:
                 newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout)
@@ -120,7 +127,7 @@ class BigArithGroup_class(AlgebraicGroup):
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = 'PGL2',seed = None,outfile = None,magma = None,timeout = 0):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0):
         self.seed = seed
         self.magma = magma
         if seed is not None:
@@ -173,7 +180,8 @@ class BigArithGroup_class(AlgebraicGroup):
         fwrite('R with basis %s'%basis_data_1,outfile)
         fwrite('R(p) with basis %s'%basis_data_p,outfile)
         self._prec = -1
-        self._II,self._JJ,self._KK = self.local_splitting(200)
+        # self._II,self._JJ,self._KK = self.local_splitting(200)
+        self.get_embedding(200)
         #self.wpold = self.wp()
         # self.get_Up_reps()
         verbose('Done initializing arithmetic groups')
@@ -207,7 +215,6 @@ class BigArithGroup_class(AlgebraicGroup):
         R = Qp(prime,prec+10) #Zmod(prime**prec) #
         B_magma = self.Gn._B_magma
         verbose('Calling magma pMatrixRing')
-        # self.Gn._O_magma.set_magma_attribute('pMatrixRings',[])
         if self.F == QQ:
             M,f = self.magma.pMatrixRing(self.Gn._O_magma,prime*self.Gn._O_magma.BaseRing(),Precision = 20,nvals = 2)
             self._F_to_local = QQ.hom([R(1)])
@@ -302,17 +309,30 @@ class BigArithGroup_class(AlgebraicGroup):
                         break
 
     def do_tilde(self,g):
-        lam = -self.wp().reduced_norm()
-        return 1/lam * self.wp() * g * self.wp()
+        if self.F == QQ and self.discriminant == 1:
+            lam = -self.wp().determinant()
+        else:
+            lam = -self.wp().reduced_norm()
+        ans = 1/lam * self.wp() * g * self.wp()
+        set_immutable(ans)
+        return ans
 
     @cached_method
     def get_BT_reps_twisted(self):
-        return [self.Gn.B(1)] + [self.do_tilde(g) for g in self.get_BT_reps()[1:]]
+        ans = [self.Gn.B(1)] + [self.do_tilde(g) for g in self.get_BT_reps()[1:]]
+        for o in ans:
+            set_immutable(o)
+        return ans
 
     @cached_method
     def get_Up_reps(self):
-        lam = -self.wp().reduced_norm()
+        if self.F == QQ and self.discriminant == 1:
+            lam = -self.wp().determinant()
+        else:
+            lam = -self.wp().reduced_norm()
         tmp = [ lam * o**-1 * self.wp()**-1 for o in self.get_BT_reps()[1:]]
+        for o in tmp:
+            set_immutable(o)
         return tmp
 
     def get_covering(self,depth):
@@ -337,10 +357,20 @@ class BigArithGroup_class(AlgebraicGroup):
     def wp(self):
         verbose('Finding a suitable wp...')
         if self.F == QQ and self.discriminant == 1:
-            try:
-                return matrix(QQ,2,2,[0,-1,self.ideal_p.gens_reduced()[0],0])
-            except AttributeError:
-                return matrix(QQ,2,2,[0,-1,self.ideal_p,0])
+            if self.level == 1:
+                try:
+                    ans = matrix(QQ,2,2,[0,-1,self.ideal_p.gens_reduced()[0],0])
+                except AttributeError:
+                    ans = matrix(QQ,2,2,[0,-1,self.ideal_p,0])
+            else:
+                # Follow Atkin--Li
+                from sage.rings.arith import XGCD
+                p = self.ideal_p
+                m = self.level
+                g,w,z = XGCD(p,-m)
+                ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
+            ans.set_immutable()
+            return ans
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             if self.F == QQ:
@@ -382,6 +412,7 @@ class BigArithGroup_class(AlgebraicGroup):
         """
         if self.F == QQ and self.discriminant == 1:
             R =  Qp(self.p,prec)
+            self._F_to_local = QQ.hom([R(1)])
             def iota(q):
                 return q.change_ring(R)
         else:
@@ -461,7 +492,7 @@ class BigArithGroup_class(AlgebraicGroup):
             return a, wd + [wd1,wd0]
 
 
-def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = 'PGL2',magma = None,timeout = 0):
+def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None,timeout = 0):
     if base == QQ:
         if timeout != 0:
             raise NotImplementedError("Timeout not implemented for rational base yet")

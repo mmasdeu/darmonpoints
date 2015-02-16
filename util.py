@@ -1319,9 +1319,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     return None,None,None
 
 def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True, height_threshold = .85):
-    if qE.valuation() < 0:
-        qE = 1/qE
-    qElog = qE.log(p_branch = 0)
+    qElog = qE.log(p_branch = 0)/qE.valuation()
     F = emb.domain() if field is None else field
     deg = F.degree()
     p = qElog.parent().prime()
@@ -1347,12 +1345,12 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
     except RuntimeError:
         qElog = Kp(qElog.trace()/2)
     w3s = [Kp(1)] + [o for o,_ in (PolynomialRing(Kp,names='w')([Kp.one(),Kp.one(),Kp.one()])).roots()]
-    qE0 = qElog.exp()
     roots_of_unity = [Kp.teichmuller(a) for a in range(1,p)]
-    qElist = [qE0 * zeta for zeta in roots_of_unity]
-    for qE1,D in product(qElist,selmer_group_iterator(F,S,12)):
+    qE0 = qElog.exp()
+    for zeta,D in product(roots_of_unity,selmer_group_iterator(F,S,12)):
         Deltap = Kp(emb(D))
-        qE = p**Deltap.valuation() * qE1
+        Deltapval = Deltap.valuation()
+        qE = (p * qE0)**Deltapval * zeta
         jE = 1/qE + jpowseries(qE)
         c4cubed = Kp(Deltap * jE)
         try:
