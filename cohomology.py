@@ -729,12 +729,7 @@ class CohomologyGroup(Parent):
                     component_list = []
                     num_hecke_operators += 1
                     for U in old_component_list:
-                        print 'Aq ='
-                        print Aq
-                        print 'U ='
-                        print U
                         V = Aq.decomposition_of_subspace(U)
-                        print 'good'
                         for U0,is_irred in V:
                             if Aq.restrict(U0).eigenvalues()[0] == ZZ(qq.norm()) + 1:
                                 continue # Do not take Eisenstein classes.
