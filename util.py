@@ -4,7 +4,7 @@ from sage.matrix.all import matrix,Matrix
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
-from sage.libs.pari.gen import PariError
+from sage.libs.pari.handle_error import PariError
 from sage.misc.sage_eval import sage_eval
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
@@ -513,16 +513,16 @@ def our_sqrt(xx,K = None,return_all = False):
     p=K.base_ring().prime()
     prec = K.precision_cap()
     valp = xx.valuation(p)
+    valpi = xx.ordp()
     try:
         eK = K.ramification_index()
     except AttributeError:
         eK = 1
-    valpi = eK * valp
-    if valpi % 2 != 0:
+    if valp * eK % 2 != 0:
         raise ValueError,'Not a square'
-    x = p**(-valp) * xx
+    x = K.uniformizer()**(-valp) * xx
     z = K.gen()
-    deg = K.degree()
+    deg = K.residue_class_degree()
     found = False
     ppow = p if p != 2 else 8
     minval = 1 if p != 2 else 3
@@ -538,11 +538,10 @@ def our_sqrt(xx,K = None,return_all = False):
     y1 = y0
     y = 0
     num_iters = 0
-    while y != y1 and num_iters < 2 * prec:
+    while y != y1:
         y = y1
         y1 = (y**2+x)/(2*y)
-
-    ans = K.uniformizer()**(ZZ(valpi/2)) * y
+    ans = K.uniformizer()**(ZZ(valp/2)) * y
     if return_all:
         ans = [ans, -ans]
     return ans
