@@ -77,7 +77,7 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
 def lattice_homology_cycle(G,x,wx,prec,outfile = None,check = False):
     p = G.prime()
     Cp = Qq(p**2,prec,names = 'g')
-    wpmat = G.embed(G.wp()**-1,prec).change_ring(Cp)
+    wpmat = (G.embed(G.wp(),prec)**-1).change_ring(Cp)
     a,b,c,d = wpmat.list()
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)

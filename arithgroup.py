@@ -29,6 +29,7 @@ from arithgroup_element import ArithGroupElement
 from sage.misc.sage_eval import sage_eval
 from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
+from sage.modular.arithgroup.congroup_sl2z import SL2Z
 
 def JtoP(H,MR,p = None):
     CC = MR.base_ring()
@@ -263,8 +264,10 @@ class ArithGroup_generic(AlgebraicGroup):
         reps = self.get_hecke_reps(l,use_magma = use_magma)
         for gk2 in reps:
             ti = elt * gk2
+            is_in_order = self._is_in_order(ti)
             if self._is_in_order(ti):
-                return self(ti)
+                ans = self(ti)
+                return ans
         verbose("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
         raise RuntimeError("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
 
@@ -482,7 +485,7 @@ class ArithGroup_generic(AlgebraicGroup):
 
 class ArithGroup_rationalquaternion(ArithGroup_generic):
     Element = ArithGroupElement
-    def __init__(self,discriminant,level,info_magma = None,grouptype = 'PSL2',magma = None):
+    def __init__(self,discriminant,level,info_magma = None,grouptype = None,magma = None):
         assert grouptype in ['SL2','PSL2','PGL2'] # Need to find how to return the other groups with Voight's algorithm
         self._grouptype = grouptype
         self.magma = magma
@@ -531,30 +534,20 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         self.minus_one_long = [ len(self.Ugens) + 1 ]
         self.minus_one = shorten_word(self.minus_one_long)
         self.Ugens.append(self.B(-1))
-
         self.translate = [None] + [self.__magma_word_problem_jv(g**-1) for g in self.gquats[1:]]
-
         self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens) ]
-
         temp_relation_words = [shorten_word(self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in xrange(len(self._U_magma.Relations()))] + [[(len(self.Ugens)-1,2)]]
-
         self._relation_words = []
         for rel in temp_relation_words:
             sign = prod((self.Ugens[g]**a for g,a in rel), z = self.B(1))
-            #assert sign.abs() == 1
-            if sign == 1:
+            if sign == 1 or 'P' in grouptype:
                 self._relation_words.append(rel)
             else:
-                if 'P' not in grouptype:
-                    newrel = rel + self.minus_one
-                    sign = prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1))
-                    assert sign == 1
-                    self._relation_words.append(newrel)
-                else:
-                    self._relation_words.append(rel)
+                newrel = rel + self.minus_one
+                assert prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)) == 1
+                self._relation_words.append(newrel)
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
-
 
     def _repr_(self):
         return 'Arithmetic Group attached to rational quaternion algebra, disc = %s, level = %s'%(self.discriminant,self.level)
@@ -784,41 +777,63 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
 class ArithGroup_rationalmatrix(ArithGroup_generic):
     Element = ArithGroupElement #Matrix
-    def __init__(self,level,info_magma = None,grouptype = 'PSL2',magma = None):
+    def __init__(self,level,info_magma = None,grouptype = None,magma = None):
+        from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor
         assert grouptype in ['SL2','PSL2']
         self._grouptype = grouptype
         self.magma = magma
         self.F = QQ
         self.discriminant = ZZ(1)
         self.level = ZZ(level)
-
+        self.F_units = []
+        self._Gamma0_farey = Gamma0_constructor(self.level).farey_symbol()
         self._prec_inf = -1
 
-        self.__init_magma_objects(info_magma)
+        # self.__init_magma_objects(info_magma)
         self.B = MatrixSpace(QQ,2,2)
         self.Obasis = [matrix(ZZ,2,2,v) for v in [[1,0,0,0],[0,1,0,0],[0,0,self.level,0],[0,0,0,1]]]
-        self.Ugens = [self.B([1,1,0,1]), self.B([1,0,level,1])]
-        self._gens = [self.element_class(self,quaternion_rep = g, word_rep = [(i,1)],check = False) for i,g in enumerate(self.Ugens)]
-        if self.level == 1:
-            temp_relation_words = [6*[(0,-1),(1,1)],4*[(0,1),(1,-1),(0,1)]]
-        else:
-            temp_relation_words = [[(0,0)],[(1,0)]]
-        self.minus_one = [(0,-1),(1,1),(0,-1),(1,1),(0,-1),(1,1)]
+        self._O_discriminant = ZZ.ideal(self.level)
 
+        self.Ugens = []
+        self._gens = []
+        temp_relation_words = []
+        I = SL2Z([1,0,0,1])
+        E = SL2Z([-1,0,0,-1])
+        self.minus_one = None
+        for i,g in enumerate(self._Gamma0_farey.generators()):
+            newg = self.B([g.a(),g.b(),g.c(),g.d()])
+            self.Ugens.append(newg)
+            self._gens.append(self.element_class(self,quaternion_rep = newg, word_rep = [(i,1)],check = False))
+            if g.matrix()**2 == I.matrix():
+                temp_relation_words.append([(i,2)])
+                if self.minus_one is not None:
+                    temp_relation_words.append([(i,-1)]+self.minus_one)
+                self.minus_one = [(i,1)]
+            elif g.matrix()**2 == E.matrix():
+                temp_relation_words.append([(i,4)])
+                if self.minus_one is not None:
+                    temp_relation_words.append([(i,-2)]+self.minus_one)
+                self.minus_one = [(i,2)]
+            elif g.matrix()**3 == I.matrix():
+                temp_relation_words.append([(i,3)])
+            elif g.matrix()**3 == E.matrix():
+                temp_relation_words.append([(i,6)])
+                if self.minus_one is not None:
+                    temp_relation_words.append([(i,-3)]+self.minus_one)
+                self.minus_one = [(i,3)]
+        self.F_unit_offset =len(self.Ugens)
+        self.minus_one_long = syllables_to_tietze(self.minus_one)
         self._relation_words = []
         for rel in temp_relation_words:
             sign = prod((self._gens[g].quaternion_rep**a for g,a in rel), z = self.B(1))
-            if sign == 1:
+            if sign == self.B(1) or 'P' in grouptype:
                 self._relation_words.append(rel)
             else:
-                assert sign == -1
-                if 'P' not in grouptype:
-                    newrel = rel + self.minus_one
-                    sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1))
-                    assert sign == 1
-                    self._relation_words.append(newrel)
-                else:
-                    self._relation_words.append(rel)
+                assert sign == self.B(-1)
+                newrel = rel + self.minus_one
+                sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1))
+                assert sign == self.B(1)
+                self._relation_words.append(newrel)
 
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
@@ -826,51 +841,67 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
     def _repr_(self):
         return 'Matrix Arithmetic Group of level = %s'%(self.level)
 
-    def __init_magma_objects(self,info_magma = None):
-        wtime = walltime()
-        verbose('Calling _init_magma_objects...')
-        if info_magma is None:
-            ZZ_magma = self.magma.Integers()
-            self._B_magma = self.magma.QuaternionAlgebra(self.magma.Rationals(),1,1)
-            self._Omax_magma = self._B_magma.MaximalOrder()
-            if self.level != ZZ(1):
-                self._O_magma = self._Omax_magma.Order('%s'%self.level)
-            else:
-                self._O_magma = self._Omax_magma
-        else:
-            ZZ_magma = info_magma._B_magma.BaseRing().Integers()
-            self._B_magma = info_magma._B_magma
-            self._O_magma = info_magma._O_magma.Order('%s'%self.level)
-
-        verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
-
     def _quaternion_to_list(self,x):
         a,b,c,d = x.list()
         return [a, b, QQ(c)/self.level, d]
 
+    def check_word(self,delta,wd):
+        tmp = self.B(1)
+        for i,a in wd:
+            tmp = tmp * self.gen(i).quaternion_rep**a
+        assert tmp == delta,"tmp = %s, delta = %s, wd = %s"%(tmp,delta,wd)
+        return wd
+
     def get_word_rep(self,delta):
         level = self.level
-        if level != 1:
-            raise ValueError('Level (= %s)should be 1!'%self.level)
-        a,b,c,d = delta.list()
-        m1 = matrix(ZZ,2,2,[1,0,0,1])
-        tmp = []
-        if c != 0:
-            decomp = continued_fraction_list(QQ(a)/QQ(c))
-            if len(decomp) % 2 == 1:
-                decomp[-1] -= 1
-                decomp.append(1)
-            I = iter(decomp)
-            for r,s in izip(I,I):
-                tmp.extend([(0,r),(1,s)])
-                m1 = m1 * matrix(ZZ,2,2,[1,r,0,1]) * matrix(ZZ,2,2,[1,0,s,1])
-        T = m1**-1 * delta
-        if not (( T[0,0] == 1 and T[1,1] == 1 and T[1,0] == 0) or ( T[0,0] == -1 and T[1,1] == -1 and T[1,0] == 0)):
-            raise RuntimeError('Entries of T (= %s) not correct'%T)
-        tmp.append((0,T[0,0]*T[0,1]))
-        if T[0,0] == -1 and 'P' not in self._grouptype:
-            tmp.extend(self.minus_one)
-        return tmp
+        ans = self._Gamma0_farey.word_problem(SL2Z(delta.list()))
+        tmp = self.B(1)
+        for i,a in shorten_word(ans):
+            tmp = tmp * self.gen(i).quaternion_rep**a
+        delta = SL2Z(delta.list())
+        err = SL2Z(delta * SL2Z(tmp**-1))
+        I = SL2Z([1,0,0,1])
+        E = SL2Z([-1,0,0,-1])
+        gens = self._Gamma0_farey.generators()
+        if err == I:
+            ans = shorten_word(ans)
+            return self.check_word(delta.matrix(),ans)
+        elif err == E:
+            ans = shorten_word(self.minus_one_long + ans)
+            return self.check_word(delta.matrix(),ans)
+        else:
+            try:
+                i = gens.index(err)
+            except ValueError:
+                pass
+            else:
+                ans =  shorten_word([i+1] + ans)
+                return self.check_word(delta.matrix(),ans)
+            try:
+                i = gens.index(E*err)
+            except ValueError:
+                pass
+            else:
+                ans =  shorten_word(self.minus_one_long + [i+1] + ans)
+                return self.check_word(delta.matrix(),ans)
+            try:
+                i = gens.index(err**-1)
+            except ValueError:
+                pass
+            else:
+                ans = shorten_word([-i-1] + ans)
+                return self.check_word(delta.matrix(),ans)
+            try:
+                i = gens.index(E*err**-1)
+            except ValueError:
+                pass
+            else:
+                ans = shorten_word(self.minus_one_long + [-i-1] + ans)
+                return self.check_word(delta.matrix(),ans)
+            print '!!!!!'
+            print delta
+            print tmp
+            assert 0
 
     def element_of_norm(self,N,use_magma = False,local_condition = None): # in rationalmatrix
         try:
@@ -897,33 +928,19 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         if use_magma:
             verbose("Warning: asked to use Magma to get hecke reps, but trivial to do without!")
         ans = [self.B([l,i,0,1]) for i in xrange(l)] + [self.B([1,0,0,l])]
+        for o in ans:
+            o.set_immutable()
         self._cache_hecke_reps[l] = ans
         return ans
 
-    def image_in_abelianized(self, x):
-        r''' Given an element x in Gamma, returns its image in the abelianized group'''
-        Gab,V,free_idx = self.abelianization()
-        M = self.modsym_ambient
-        f = self.modsym_map
-        M1 = self.modsym_cuspidal
-        a,b,c,d = x.quaternion_rep.list()
-        tmp = Gab(M1.coordinate_vector(4*f(M([Cusps(Infinity),MatrixSpace(ZZ,2,2)(x.quaternion_rep) * Cusps(Infinity)]))))
-        return (QQ**len(free_idx))([tmp[i] for i in free_idx])
+    def non_positive_unit(self):
+        return self.B([-1,0,0,1])
 
-    @cached_method
-    def abelianization(self):
-        self.modsym_ambient = ModularSymbols(self.level,sign = 1)
-        self.modsym_cuspidal = self.modsym_ambient.cuspidal_subspace()[0]
-        self.modsym_map = self.modsym_cuspidal.projection()
-        ngens = self.modsym_cuspidal.dimension()
-        V = ZZ**ngens
-        W = V.span([])
-        Gab = V/W
-        free_idx = []
-        for i in xrange(len(Gab.invariants())):
-            if Gab.invariants()[i] == 0:
-                free_idx.append(i)
-        return Gab,V,free_idx
+    def _is_in_order(self,x):
+        try:
+            return SL2Z(x.list()) in self._Gamma0_farey
+        except TypeError:
+            return False
 
 class FaceRel(SageObject):
     def __init__(self,center = None ,radius = None, mat = None):
@@ -1008,16 +1025,12 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         for rel in temp_relation_words:
             sign = prod((self.Ugens[g]**a for g,a in rel), z = self.B(1))
             # assert sign.abs() == 1
-            if sign == 1:
+            if sign == 1 or 'P' in self._grouptype:
                 self._relation_words.append(rel)
             else:
-                if 'P' not in self._grouptype:
-                    newrel = rel + self.minus_one
-                    sign = prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1))
-                    assert sign == 1
-                    self._relation_words.append(newrel)
-                else:
-                    self._relation_words.append(rel)
+                newrel = rel + self.minus_one
+                assert prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)) == 1
+                self._relation_words.append(newrel)
 
     def _init_aurel_data(self,prec = 100,periodenum = 10, timeout = 0):
         verbose('Computing normalized basis')
@@ -1106,10 +1119,8 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 assert remaining_unit.multiplicative_order() != Infinity
                 ulist = remaining_unit.exponents()
                 newrel = rel + [(self.F_unit_offset + i,a) for i,a in enumerate(ulist) if a != 0 ]
-                sign = prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1))
-                assert sign == 1
+                assert prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)) == 1
                 self._relation_words.append(newrel)
-
         else:
             self._relation_words = [shorten_word(Hm.Relations()[n+1].LHS().ElementToSequence()._sage_()) for n in xrange(len(Hm.Relations()))]
         verbose('Done initializing relations. Now generators...')

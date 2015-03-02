@@ -4,7 +4,7 @@ from sage.matrix.all import matrix,Matrix
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
-from sage.libs.pari.gen import PariError
+from sage.libs.pari.handle_error import PariError
 from sage.misc.sage_eval import sage_eval
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
@@ -513,16 +513,16 @@ def our_sqrt(xx,K = None,return_all = False):
     p=K.base_ring().prime()
     prec = K.precision_cap()
     valp = xx.valuation(p)
+    valpi = xx.ordp()
     try:
         eK = K.ramification_index()
     except AttributeError:
         eK = 1
-    valpi = eK * valp
-    if valpi % 2 != 0:
+    if valp * eK % 2 != 0:
         raise ValueError,'Not a square'
-    x = p**(-valp) * xx
+    x = K.uniformizer()**(-valp) * xx
     z = K.gen()
-    deg = K.degree()
+    deg = K.residue_class_degree()
     found = False
     ppow = p if p != 2 else 8
     minval = 1 if p != 2 else 3
@@ -538,11 +538,10 @@ def our_sqrt(xx,K = None,return_all = False):
     y1 = y0
     y = 0
     num_iters = 0
-    while y != y1 and num_iters < 2 * prec:
+    while y != y1:
         y = y1
         y1 = (y**2+x)/(2*y)
-
-    ans = K.uniformizer()**(ZZ(valpi/2)) * y
+    ans = K.uniformizer()**(ZZ(valp/2)) * y
     if return_all:
         ans = [ans, -ans]
     return ans
@@ -1319,9 +1318,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     return None,None,None
 
 def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True, height_threshold = .85):
-    if qE.valuation() < 0:
-        qE = 1/qE
-    qElog = qE.log(p_branch = 0)
+    qElog = qE.log(p_branch = 0)/qE.valuation()
     F = emb.domain() if field is None else field
     deg = F.degree()
     p = qElog.parent().prime()
@@ -1347,12 +1344,12 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
     except RuntimeError:
         qElog = Kp(qElog.trace()/2)
     w3s = [Kp(1)] + [o for o,_ in (PolynomialRing(Kp,names='w')([Kp.one(),Kp.one(),Kp.one()])).roots()]
-    qE0 = qElog.exp()
     roots_of_unity = [Kp.teichmuller(a) for a in range(1,p)]
-    qElist = [qE0 * zeta for zeta in roots_of_unity]
-    for qE1,D in product(qElist,selmer_group_iterator(F,S,12)):
+    qE0 = qElog.exp()
+    for zeta,D in product(roots_of_unity,selmer_group_iterator(F,S,12)):
         Deltap = Kp(emb(D))
-        qE = p**Deltap.valuation() * qE1
+        Deltapval = Deltap.valuation()
+        qE = (p * qE0)**Deltapval * zeta
         jE = 1/qE + jpowseries(qE)
         c4cubed = Kp(Deltap * jE)
         try:

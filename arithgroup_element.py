@@ -47,7 +47,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
             init_data = True
         if quaternion_rep is not None:
             if not parent._is_in_order(quaternion_rep):
-                raise ValueError('Quaternion must be in order')
+                raise ValueError('Quaternion (= %s) must be in order'%quaternion_rep)
             if check:
                 if parent.base_field() == QQ:
                     rednrm = quaternion_rep.reduced_norm() if self.parent().discriminant != 1 else quaternion_rep.determinant()
@@ -58,7 +58,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
                     if not rednrm.is_integral() or not (1/rednrm).is_integral():
                         raise ValueError('Quaternion must be of unit norm')
             if check and not parent._is_in_order(quaternion_rep):
-                    raise ValueError('Quaternion must be in order')
+                    raise ValueError('Quaternion (= %s) must be in order'%quaternion_rep)
             self.quaternion_rep = set_immutable(quaternion_rep)
             self.has_quaternion_rep = True
             init_data = True
