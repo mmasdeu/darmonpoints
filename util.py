@@ -519,7 +519,10 @@ def our_sqrt(xx,K = None,return_all = False):
     except AttributeError:
         eK = 1
     if valp * eK % 2 != 0:
-        raise ValueError,'Not a square'
+        if return_all:
+            return []
+        else:
+            raise ValueError,'Not a square'
     x = K.uniformizer()**(-valp) * xx
     z = K.gen()
     deg = K.residue_class_degree()
@@ -534,7 +537,10 @@ def our_sqrt(xx,K = None,return_all = False):
             found = True
             break
     if found == False:
-        raise ValueError,'Not a square'
+        if return_all:
+            return []
+        else:
+            raise ValueError,'Not a square'
     y1 = y0
     y = 0
     num_iters = 0
