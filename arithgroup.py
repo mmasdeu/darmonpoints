@@ -1154,8 +1154,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 self._O_magma = self._Omax_magma
             if self.algorithm == 'jv':
                 self._D_magma = self.magma.UnitDisc(Precision = 300)
-
-
         else:
             self._F_magma = info_magma._F_magma
             OF_magma = info_magma._F_magma.Integers()
