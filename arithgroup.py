@@ -517,6 +517,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
 
         self.Uside = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(mside_magma.Image(g))),self.magma) for g in Uside_magma.Generators()]
+        self.F_unit_offset =len(self.Ugens)
 
         # We initialize some attributes by calling this function stupidly
         self.magma.WordProblem(self._G_magma(1))
@@ -1154,8 +1155,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 self._O_magma = self._Omax_magma
             if self.algorithm == 'jv':
                 self._D_magma = self.magma.UnitDisc(Precision = 300)
-
-
         else:
             self._F_magma = info_magma._F_magma
             OF_magma = info_magma._F_magma.Integers()

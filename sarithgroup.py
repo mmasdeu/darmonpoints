@@ -371,6 +371,13 @@ class BigArithGroup_class(AlgebraicGroup):
                 ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
             ans.set_immutable()
             return ans
+        # elif self.discriminant == 1 and self.level == 1:
+        #     # Follow Atkin--Li
+        #     p = self.ideal_p.gens_reduced()[0]
+        #     # ans = matrix(self.F,2,2,[p,1,-p,0])
+        #     ans = self.Gn.B([p/2,(-1-p)/2,-p/2,(p-1)/2])
+        #     ans.set_immutable()
+        #     return ans
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             if self.F == QQ:
