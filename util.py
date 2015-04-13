@@ -169,13 +169,16 @@ def is_in_Gamma_1(mat,N,p = None,determinant_condition = True):
     return True
 
 
-def is_in_Gamma0loc(A,det_condition = True):
+def is_in_Gamma0loc(A,det_condition = True,p = None):
     r'''
     Whether the matrix A has all entries Zp-integral, and is upper-triangular mod p.
     '''
     if det_condition == True and A.determinant() != 1:
         return False
-    return all((o.valuation() >= 0 for o in A.list())) and A[1,0].valuation() > 0
+    if p is not None:
+        return all((o.valuation(p) >= 0 for o in A.list())) and A[1,0].valuation(p) > 0
+    else:
+        return all((o.valuation() >= 0 for o in A.list())) and A[1,0].valuation() > 0
 
 def is_in_Sigma0(x):
     if x.determinant() == 0:
@@ -447,7 +450,7 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
     return newII.change_ring(R),newJJ.change_ring(R)
 
 def height_polynomial(x,base = 10):
-    return sum(((RR(o).abs()+1).log(base) for o in x.coeffs()))
+    return sum(((RR(o).abs()+1).log(base) for o in x.coefficients()))
 
 def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   hF = F.class_number()

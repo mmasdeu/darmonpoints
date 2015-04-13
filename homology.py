@@ -74,7 +74,7 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
             tmp = tmp.hecke_smoothen(q1,prec = prec)
     return tmp,n,q1
 
-def lattice_homology_cycle(G,x,wx,prec,outfile = None,check = False):
+def lattice_homology_cycle(G,x,wx,prec,outfile = None,smoothen = None):
     p = G.prime()
     Cp = Qq(p**2,prec,names = 'g')
     wpmat = (G.embed(G.wp(),prec)**-1).change_ring(Cp)
@@ -84,6 +84,9 @@ def lattice_homology_cycle(G,x,wx,prec,outfile = None,check = False):
     H1 = Homology(G.large_group(),Div)
     xi1 = H1(dict([(x,Div(tau1))])).zero_degree_equivalent()
     xi2 = H1(dict([(wx,Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
+    if smoothen is not None:
+        xi1 = xi1.hecke_smoothen(smoothen)
+        xi2 = xi2.hecke_smoothen(smoothen)
     return xi1, xi2
 
 class Divisors(Parent):
@@ -475,7 +478,9 @@ class HomologyClass(ModuleElement):
         for gk1 in hecke_reps:
             for g,v in self._data.iteritems():
                 ti = G.get_hecke_ti(gk1,g.quaternion_rep,l,True)
-                newv = v.left_act_by_matrix(G.embed(gk1**-1,prec))
+                gk1inv = gk1**-1
+                gk1inv.set_immutable()
+                newv = v.left_act_by_matrix(G.embed(gk1inv,prec))
                 try:
                     newdict[ti] += newv
                     if newdict[ti].is_zero():
