@@ -938,10 +938,18 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         return self.B([-1,0,0,1])
 
     def _is_in_order(self,x):
-        try:
-            return SL2Z(x.list()) in self._Gamma0_farey
-        except TypeError:
+        entries = x.list()
+        if all([o.denominator() == 1 for o in entries]):
+            if entries[2] % self.level == 0:
+                return True
+            else:
+                return False
+        else:
             return False
+        # try:
+        #     return SL2Z(x.list()) in self._Gamma0_farey
+        # except TypeError:
+        #     return False
 
 class FaceRel(SageObject):
     def __init__(self,center = None ,radius = None, mat = None):

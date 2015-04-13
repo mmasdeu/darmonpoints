@@ -352,6 +352,10 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 newgamma = G.reduce_in_amalgam(h * gamma)
             else:
                 newgamma = G.wp()**-1 * G.reduce_in_amalgam(h * gamma) * G.wp()
+            try:
+                newgamma.set_immutable()
+            except AttributeError:
+                pass
             if HOC._use_ps_dists:
                 mu_e = hc.evaluate(newgamma,parallelize)
                 resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))

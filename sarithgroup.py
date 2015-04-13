@@ -370,14 +370,10 @@ class BigArithGroup_class(AlgebraicGroup):
                 g,w,z = XGCD(p,-m)
                 ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
             ans.set_immutable()
+            epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
+            assert is_in_Gamma0loc(epsinv * ans, det_condition = False,p = self.p),"Check that epsinv * ans is in Gamma0"
+            assert all((self.Gpn._is_in_order(ans**-1 * g.quaternion_rep * ans) for g in self.Gpn.gens())),"Check that it normalizes"
             return ans
-        # elif self.discriminant == 1 and self.level == 1:
-        #     # Follow Atkin--Li
-        #     p = self.ideal_p.gens_reduced()[0]
-        #     # ans = matrix(self.F,2,2,[p,1,-p,0])
-        #     ans = self.Gn.B([p/2,(-1-p)/2,-p/2,(p-1)/2])
-        #     ans.set_immutable()
-        #     return ans
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             if self.F == QQ:
@@ -402,7 +398,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 i += 1
                 for tmp in all_initial:
                     new_candidate =  v1 * tmp * v2
-                    if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate): # and self.Gpn._is_in_order(new_candidate**2/pgen): #FIXME: is last condition needed?
+                    if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate):
                         verbose('wp = %s'%new_candidate)
                         return new_candidate
             raise RuntimeError('Could not find wp')
