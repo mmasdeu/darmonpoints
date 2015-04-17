@@ -690,7 +690,7 @@ class CohomologyGroup(Parent):
     def get_rational_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.involution_at_infinity_matrix()-sign).right_kernel()
+            K = (self.involution_at_infinity_matrix()-sign).right_kernel().change_ring(QQ)
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
 
@@ -760,6 +760,88 @@ class CohomologyGroup(Parent):
                 K = good_components[0]
                 col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
                 return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
+
+
+    def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 3, pol = None, return_all = False):
+        F = self.group().base_ring()
+        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
+            K = (self.involution_at_infinity_matrix()-sign).right_kernel().change_ring(QQ)
+        else:
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+
+        component_list = []
+        good_components = []
+        if K.dimension() == 1:
+            good_components.append((K,[]))
+        else:
+            component_list.append((K,[]))
+
+        disc = self.group()._O_discriminant
+        discnorm = disc.norm()
+        try:
+            N = ZZ(discnorm.gen())
+        except AttributeError:
+            N = ZZ(discnorm)
+
+        if F == QQ:
+            x = QQ['x'].gen()
+            F = NumberField(x,names='a')
+        q = ZZ(1)
+        g0 = None
+        num_hecke_operators = 0
+        while len(component_list) > 0 and num_hecke_operators < bound:
+            verbose('num_hecke_ops = %s'%num_hecke_operators)
+            verbose('len(components_list) = %s'%len(component_list))
+            q = q.next_prime()
+            for qq,e in F.ideal(q).factor():
+                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
+                    try:
+                        Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
+                    except (RuntimeError,TypeError) as e:
+                        continue
+                    verbose('Computed hecke matrix at qq = %s'%qq)
+                    old_component_list = component_list
+                    component_list = []
+                    num_hecke_operators += 1
+                    for U,hecke_data in old_component_list:
+                        V = Aq.decomposition_of_subspace(U)
+                        for U0,is_irred in V:
+                            if U0.dimension() == 1:
+                                continue
+                            if U0.dimension() == 2 and is_irred:
+                                if pol is not None and Aq.restrict(U0).charpoly() != pol:
+                                    continue
+                                good_components.append((U0.denominator() * U0.matrix(),hecke_data+[(qq.gens_reduced()[0],Aq.restrict(U0))]))
+                            else: # U0.dimension() > 2 or not is_irred
+                                component_list.append((U0,hecke_data+[(qq.gens_reduced()[0],Aq.restrict(U0))]))
+                    if len(good_components) > 0 and not return_all:
+                        flist = []
+                        for row0 in good_components[0][0].rows():
+                            col0 = [ZZ(o) for o in row0.list()]
+                            flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
+                        return flist,good_components[0][1]
+                    if len(component_list) == 0 or num_hecke_operators >= bound:
+                        break
+
+        if len(good_components) == 0:
+            raise ValueError('Group does not seem to be attached to an elliptic curve')
+        else:
+            if return_all:
+                ans = []
+                for K,hecke_data in good_components:
+                    flist = []
+                    for row0 in K.rows():
+                        col0 = [ZZ(o) for o in row0.list()]
+                        flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
+                    ans.append((flist,hecke_data))
+                return ans
+            else:
+                flist = []
+                for row0 in good_components[0][0].rows():
+                    col0 = [ZZ(o) for o in row0.list()]
+                    flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
+                return flist,good_components[0][1]
+
 
     def _reconstruct_from_abelianization(self,K):
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
