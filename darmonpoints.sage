@@ -291,7 +291,7 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
 
     sys.setrecursionlimit(10**6)
 
-    global qE, Linv, G, Coh, phiE, xgen, wxgen, xi1, xi2, Phi
+    global qE, Linv, G, Coh, phiE, xgen, xi1, xi2, Phi
 
     try:
         F = P.ring()
@@ -430,11 +430,11 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,outfile = N
         except Exception as e:
             ret_vals.append('Problem when choosing element in kernel: ' + str(e.message))
             continue
-        xgen, wxgen = G.Gn(o),G.Gn(wp**-1 * o * wp)
+        xgen = o
         found = False
         while not found:
             try:
-                xi1, xi2 = lattice_homology_cycle(G,xgen,wxgen,working_prec,outfile = outfile)
+                xi1, xi2 = lattice_homology_cycle(G,xgen,working_prec,outfile = outfile)
                 found = True
             except PrecisionError:
                 working_prec  = 2 * working_prec

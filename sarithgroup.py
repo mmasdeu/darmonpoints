@@ -494,6 +494,70 @@ class BigArithGroup_class(AlgebraicGroup):
             a,wd = self._reduce_in_amalgam(x)
             return a, wd + [wd1,wd0]
 
+    def smoothen(self,gi,ell,hecke_reps = None):
+        Gab = self.Gpn.abelianization()
+        if hecke_reps is None:
+            hecke_reps = self.Gpn.get_hecke_reps(ell,use_magma = True)
+        newelt = sum([Gab.G_to_ab(self.Gpn.get_hecke_ti(gk1,gi,ell,True)) for gk1 in hecke_reps],Gab(self.Gpn.one()))
+        newelt -= (ZZ(self.F(ell).norm()) + 1) * Gab.G_to_ab(self.Gpn(gi))
+        return Gab.ab_to_G(newelt).quaternion_rep
+
+    def get_homology_kernel(self,smoothen = 0):
+        wp = self.wp()
+        B = self.Gpn.abelianization()
+        C = self.Gn.abelianization()
+        Bab = B.abelian_group()
+        Cab = C.abelian_group()
+        verbose('Finding f...')
+        fdata = [B.ab_to_G(o).quaternion_rep for o in B.gens_small()]
+        # verbose('fdata = %s'%fdata)
+        f = B.hom_from_image_of_gens_small([C.G_to_ab(self.Gn(o)) for o in fdata])
+        verbose('Finding g...')
+        gdata = [wp**-1 * o * wp for o in fdata]
+        # verbose('gdata = %s'%gdata)
+        g = B.hom_from_image_of_gens_small([C.G_to_ab(self.Gn(o)) for o in gdata])
+        fg = direct_sum_of_maps([f,g])
+        V = Bab.gen(0).lift().parent()
+        good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
+        ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
+        if smoothen != 0:
+            hecke_reps = self.Gpn.get_hecke_reps(smoothen,use_magma = True)
+            ker = [self.smoothen(o,smoothen,hecke_reps) for o in ker]
+        return ker
+
+    def get_pseudo_orthonormal_homology(self, cocycles, smoothen = 0):
+        ker = self.get_homology_kernel(smoothen = smoothen)
+        dim = len(cocycles)
+        A = Matrix(ZZ,dim,0)
+        for vec0 in ker:
+            A = A.augment(vector([ZZ(f.evaluate(vec0)[0]) for f in cocycles]))
+        Gab = self.Gpn.abelianization()
+        kernrms = [ Gab.G_to_ab(self.Gpn(o)).vector() for o in ker]
+        custom_norm = lambda B: max([(sum(ZZ(i) * o for o,i in zip(kernrms,col.list()))).norm(1) for col in B.columns()])
+
+        min_norm = 10**100 # Or infinity...
+        minB = None
+        for i in range(len(A.columns())):
+            B0 = A.submatrix(col = i,ncols = 1)
+            if B0.is_zero():
+                continue
+            for j in range(i+1,len(A.columns())):
+                if A.column(j).is_zero():
+                    continue
+                B1 = B0.augment(A.column(j))
+                if B1.determinant().is_zero():
+                    continue
+                B = B1.adjoint()
+                B = B.parent()(1/B.gcd() * B)
+                Bnrm = custom_norm(B)
+                print Bnrm
+                if Bnrm < min_norm:
+                    min_norm = Bnrm
+                    minB = B
+                    minij = (i,j)
+        assert minB is not None
+        ker = [ker[o] for o in minij]
+        return [ Gab.ab_to_G(sum(ZZ(i) * Gab.G_to_ab(self.Gpn(o)) for o,i in zip(ker,col.list()))).quaternion_rep for col in minB.columns() ]
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None,timeout = 0):
     if base == QQ:

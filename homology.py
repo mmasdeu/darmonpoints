@@ -22,15 +22,16 @@ import operator
 from sage.rings.arith import GCD
 
 def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False,max_n = None):
-    t = PolynomialRing(G.F,names = 't').gen()
-    K = G.F.extension(t**2 - D,names = 'beta')
-    if G.F.degree() == 1:
+    F = G.F
+    t = PolynomialRing(F,names = 't').gen()
+    K = F.extension(t**2 - D,names = 'beta')
+    if F.degree() == 1:
         assert len(K.embeddings(RR)) == 2
     else:
-        if len(G.F.embeddings(RR)) > 1:
+        if len(F.embeddings(RR)) > 1:
             raise NotImplementedError
-        elif len(G.F.embeddings(RR)) == 1:
-            if G.F.degree() != 3:
+        elif len(F.embeddings(RR)) == 1:
+            if F.degree() != 3:
                 raise NotImplementedError
             assert len(K.embeddings(RR)) == 0
     if trace_down:
@@ -66,24 +67,25 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
         except AttributeError: pass
         while D % q == 0:
             q = q.next_prime()
-        if G.F.degree() == 1:
+        if F.degree() == 1:
             q1 = q
             tmp = tmp.hecke_smoothen(q,prec = prec) #.factor_into_generators()
         else:
-            q1 = G.F.ideal(q).factor()[0][0]
+            q1 = F.ideal(q).factor()[0][0]
             tmp = tmp.hecke_smoothen(q1,prec = prec)
     return tmp,n,q1
 
-def lattice_homology_cycle(G,x,wx,prec,outfile = None,smoothen = None):
+def lattice_homology_cycle(G,x,prec,outfile = None,smoothen = None):
     p = G.prime()
     Cp = Qq(p**2,prec,names = 'g')
-    wpmat = (G.embed(G.wp(),prec)**-1).change_ring(Cp)
+    wp = G.wp()
+    wpmat = (G.embed(wp,prec)**-1).change_ring(Cp)
     a,b,c,d = wpmat.list()
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
     H1 = Homology(G.large_group(),Div)
-    xi1 = H1(dict([(x,Div(tau1))])).zero_degree_equivalent()
-    xi2 = H1(dict([(wx,Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
+    xi1 = H1(dict([(G.Gn(x),Div(tau1))])).zero_degree_equivalent()
+    xi2 = H1(dict([(G.Gn(wp**-1 * x * wp),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
     if smoothen is not None:
         xi1 = xi1.hecke_smoothen(smoothen)
         xi2 = xi2.hecke_smoothen(smoothen)
