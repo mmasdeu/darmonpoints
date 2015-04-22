@@ -550,7 +550,6 @@ class BigArithGroup_class(AlgebraicGroup):
                 B = B1.adjoint()
                 B = B.parent()(1/B.gcd() * B)
                 Bnrm = custom_norm(B)
-                print Bnrm
                 if Bnrm < min_norm:
                     min_norm = Bnrm
                     minB = B
