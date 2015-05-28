@@ -855,7 +855,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
 
     def get_word_rep(self,delta):
         level = self.level
-        ans = self._Gamma0_farey.word_problem(SL2Z(delta.list()))
+        ans = list(self._Gamma0_farey.word_problem(SL2Z(delta.list()),output = 'standard'))
         tmp = self.B(1)
         for i,a in shorten_word(ans):
             tmp = tmp * self.gen(i).quaternion_rep**a
@@ -899,10 +899,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             else:
                 ans = shorten_word(self.minus_one_long + [-i-1] + ans)
                 return self.check_word(delta.matrix(),ans)
-            print '!!!!!'
-            print delta
-            print tmp
-            assert 0
+            raise RuntimeError('Word problem failed')
 
     def element_of_norm(self,N,use_magma = False,local_condition = None): # in rationalmatrix
         try:

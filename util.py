@@ -212,7 +212,7 @@ def tate_parameter(E,R):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reversion()(R(1/jE))
+    qE =  (1/j).power_series().reverse()(R(1/jE))
     return qE
 
 def get_C_and_C2(E,qEpows,R,prec):
@@ -267,7 +267,7 @@ def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
             E4 = EisensteinForms(weight=4).basis()[0]
             Delta = CuspForms(weight=12).basis()[0]
             j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-            qE =  (1/j).power_series().reversion()(R(1/jE))
+            qE =  (1/j).power_series().reverse()(R(1/jE))
 
     qEval = qE.valuation()
 
@@ -344,7 +344,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reversion()(R(1/jE))
+    qE =  (1/j).power_series().reverse()(R(1/jE))
     sk = lambda q,k,pprec: sum( [n**k*q**n/(1-q**n) for n in range(1,pprec+1)] )
     n = qE.valuation()
     precp = ((prec+4)/n).floor() + 2;
@@ -1183,67 +1183,6 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
                 return a*u
     assert 0,'Signs not compatible'
 
-# r'''
-# Follows S.Johansson, "A description of quaternion algebras"
-# S is a list of the places which should be ramified.
-# '''
-# def quaternion_algebra_invariants_from_ramification(F, I, S = None):
-#     from sage.misc.misc_c import prod
-#     if S is None:
-#         S = []
-#     I = F.ideal(I)
-#     P = I.factor()
-#     if (len(P) + len(S)) % 2 != 0:
-#         raise ValueError, 'Number of ramified places must be even'
-#     if any([ri > 1 for _,ri in P]):
-#         raise ValueError, 'All exponents in the discriminant factorization must be odd'
-#     Foo = F.real_places(prec = Infinity)
-#     T = F.real_places(prec = Infinity)
-#     ramification_at_infinity = []
-#     Sold,S = S,[]
-#     for v in Sold:
-#         for w in T:
-#             if w(F.gen()) == v(F.gen()):
-#                 S.append(w)
-#                 T.remove(w)
-#                 break
-#     if  len(S) != len(Sold):
-#         raise ValueError,'Please specify more precision for the places.'
-#     for sigma in F.real_places(prec = Infinity):
-#         if sigma in S:
-#             ramification_at_infinity.append(-1)
-#         else:
-#             ramification_at_infinity.append(1)
-#     if F.degree() == 1:
-#         return QuaternionAlgebra(I).invariants()
-#     I = F.ideal(I)
-#     if not I.is_principal():
-#         raise ValueError, 'Discriminant should be principal'
-#     d = I.gens_reduced()[0]
-#     vinf = F.embeddings(RR)
-#     vfin = I.factor()
-#     for p in chain([1],Primes()):
-#         facts = F.ideal(p).prime_factors() if p > 1 else [F.ideal(1)]
-#         for P in facts:
-#             if P.is_coprime(I) and P.is_principal():
-#                 pi0 = P.gens_reduced()[0]
-#                 for sgn1,sgn2 in product([-1,+1],repeat = 2):
-#                     a = sgn1 * pi0
-#                     B = QuaternionAlgebra(F,a,sgn2 * d)
-#                     if B.discriminant() == I:
-#                         good_at_infinity = True
-#                         for si,sigma in zip(ramification_at_infinity,F.embeddings(RR)):
-#                             if si == 1: # Want it split
-#                                 if sigma(a) < 0 and sigma(sgn2 * d) < 0:
-#                                     good_at_infinity = False
-#                                     break
-#                             else: # si == -1, want it ramified
-#                                 if sigma(a) > 0 or sigma(sgn2 * d) > 0:
-#                                     good_at_infinity = False
-#                                     break
-#                         if good_at_infinity:
-#                             return B.invariants()
-
 def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None):
     p = J.parent().prime()
     if prec is None:
@@ -1508,7 +1447,7 @@ def selmer_group_iterator(self, S, m, proof=True):
         KSgens = self.selmer_group(S=S, m=m, proof=proof)
     f = lambda o: m if o is Infinity else o.gcd(m)
     orders = [f(a.multiplicative_order()) for a in KSgens]
-    one = self.one_element()
+    one = self.one()
     from sage.misc.all import cartesian_product_iterator
     for ev in cartesian_product_iterator([range(-o//2,(1+o)//2) for o in orders]):
         yield prod([p**e for p,e in zip(KSgens,ev)],one)

@@ -38,7 +38,7 @@ from sage.structure.sage_object import SageObject
 from sage.modules.free_module_element import zero_vector
 from copy import deepcopy
 from sage.misc.cachefunc import cached_method
-from sage.rings.arith import convergents,xgcd,gcd
+from sage.rings.arith import xgcd,gcd
 
 from sigma0 import Sigma0, Sigma0Element
 

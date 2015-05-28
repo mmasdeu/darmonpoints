@@ -114,7 +114,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         try:
             tmp = self.parent().F(tmp)
         except TypeError:
-            return 2
+            return 0
         if not tmp.is_integral():
             return -1
         elif not (1/tmp).is_integral():
