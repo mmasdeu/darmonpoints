@@ -29,16 +29,8 @@ from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 
 
-use_fmpz_mat = False
-if use_fmpz_mat:
-    load('fmpz_mat.spyx')
-
 def modreduce(A,N):
-    if use_fmpz_mat:
-        A.modreduce(N)
-        return A
-    else:
-        return A.apply_map(lambda x: x % N)
+    return A.apply_map(lambda x: x % N)
 
 def find_newans(Coh,glocs,ti):
     G = Coh.group()
@@ -117,10 +109,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_
     if use_ps_dists:
         Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group().gens()])
     else:
-        if use_fmpz_mat:
-            Phi = CohOC([VOC(Fmpz_mat(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in xrange(VOC._depth - 1)])),check = False) for g in G.small_group().gens()])
-        else:
-            Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in xrange(VOC._depth - 1)]),check = False) for g in G.small_group().gens()])
+        Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in xrange(VOC._depth - 1)]),check = False) for g in G.small_group().gens()])
     if progress_bar:
         verb_level = get_verbose()
     verbose('Now lifting...')
@@ -1035,10 +1024,7 @@ class CohomologyGroup(Parent):
             ngens = len(self.group().gens())
             S = repslocal[0].nrows()
             NN = ngens * S
-            if use_fmpz_mat:
-                A = Fmpz_mat(None,nrows = NN,ncols = NN).new_matrix()
-            else:
-                A = Matrix(ZZ,NN,NN,0)
+            A = Matrix(ZZ,NN,NN,0)
 
             total_counter = ngens**2
             counter = 0
@@ -1056,10 +1042,7 @@ class CohomologyGroup(Parent):
                 iS += S
             verbose('Computing 2^(%s)-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
             for i in range(times):
-                if use_fmpz_mat:
-                    A.square_inplace()
-                else:
-                    A = A**2
+                A = A**2
                 if N != 0:
                     A = modreduce(A,self._pN)
                 update_progress(float(i+1)/float(times),'Exponentiating matrix')
@@ -1071,8 +1054,6 @@ class CohomologyGroup(Parent):
             bvec = Matrix(R,NN,1,[o for b in c._val for o in b._val.list()])
             if scale_factor != 1:
                 bvec = scale_factor * bvec
-            if use_fmpz_mat:
-                bvec = Fmpz_mat(bvec)
             valmat = A * bvec
             return self([V(valmat.submatrix(row=i,nrows = N),check = False) for i in xrange(0,valmat.nrows(),N)])
 
