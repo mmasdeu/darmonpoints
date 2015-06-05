@@ -32,9 +32,9 @@ Installation of the *darmonpoints* package has been grealy simplified and is now
 Basic usage
 ~~~~~~~~~~~
 
-The file ``darmonpoints.sage`` contains the high level routines from which show how to use the package, although one can use parts of the package in other ways if one feels adventurous. Here are some sample calculations that one can try::
+The files ``darmonpoints.sage`` and ``findcurve.sage`` contain the high level routines from which show how to use the package, although one can use parts of the package in other ways if one feels adventurous. Here are some sample calculations that one can try::
 
-    sage: %runfile 'darmonpoints.sage'
+    sage: %runfile darmonpoints.sage
 
 1) A classical Darmon (a.k.a. Stark-Heegner) point. The following will perform a `7`-adic calculation to precision `7^20`, to find a point over the real quadratic field of discriminant `41` for the elliptic curve ``35a1``::
 
@@ -66,6 +66,7 @@ This constructs the curve with equation::
 
 2) Now for a curve defined over a real quadratic field. Note that here we must specify which place will ramify in the quaternion algebra::
 
+     sage: %runfile findcurve.sage
      sage: F.<r> = QuadraticField(5)
      sage: P = F.ideal(3/2*r + 1/2)
      sage: D = F.ideal(3)
@@ -100,6 +101,7 @@ This should return an elliptic curve like this::
    y^2 + r*x*y + (r+1)*y = x^3 + (-575*r^2-829*r-1195)*x + (-13327*r^2-19221*r-27721)
 
 ..   [Darmon] H.Darmon. *Integration on Hp x H and arithmetic applications*. Annals of Math.
-..   [GMS] X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves over number fields of arbitrary signature*. Preprint.
+..   [GMS1] X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves over number fields of arbitrary signature*. Preprint.
+..   [GMS2] X.Guitart, M.Masdeu, M.H.Sengun. *Uniformization of modular elliptic curves via p-adic methods*. Preprint.
 ..   [Greenberg] M.Greenberg. *Stark-Heegner points and the cohomology of quaternionic Shimura varieties*. Duke Math.
 ..   [Trifkovic] M.Trifkovic. *Stark-Heegner points on elliptic curves defined over imaginary quadratic fields*. Duke Math.
