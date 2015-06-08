@@ -137,17 +137,16 @@ def compute_tau0(v0,gamma,wD,return_exact = False):
     X = R.gen()
     F = v0.domain()
     Cp = v0.codomain()
-
     assert wD.minpoly() == gamma.minpoly()
-    gamma0 = gamma.apply_map(v0)
+    gamma0 = gamma.apply_morphism(v0)
     a,b,c,d = gamma.list()
     tau0_vec = (c*X**2+(d-a)*X-b).roots(F)
     tau0 = v0(tau0_vec[0][0])
     idx = 0
-    if gamma0[1,0]*tau0 + gamma0[1,1] != v0(wD):
+    if c * tau0 + d != v0(wD):
         tau0 = v0(tau0_vec[1][0])
         idx = 1
-    assert gamma0*Matrix(Cp,2,1,[tau0,1]) == v0(wD)*Matrix(Cp,2,1,[tau0,1])
+    assert gamma0 * Matrix(Cp,2,1,[tau0,1]) == v0(wD) * Matrix(Cp,2,1,[tau0,1])
     return tau0_vec[idx][0] if return_exact == True else tau0
 
 def order_and_unit(F,conductor):
@@ -223,7 +222,6 @@ def _explode_embedding_list(v0,M,emblist,power = 1):
     list_embeddings = []
     for tau0,gtau_orig in emblist:
         gtau = gtau_orig**power
-        print gtau.list()
         verbose('gtau = %s'%gtau)
         ## First method
         for u1 in is_represented_by_unit(M,ZZ(gtau[0,0]),p):
@@ -245,16 +243,6 @@ def _explode_embedding_list(v0,M,emblist,power = 1):
                     list_embeddings.append((tau02,gtau2,1))
                 elif gtau1[0,0] % M == -1:
                     list_embeddings.append((tau02,-gtau2,1))
-
-    # ## Third method
-    # new_embs = []
-    # for tau,gtau,sign in list_embeddings:
-    #     gtauinv = gtau**(-1)
-    #     a,b,c,d = gtauinv.list()
-    #     newtau = (a*tau+b) / (c*tau+d) #act_flt(gtau^(-1),tau)
-    #     if gtauinv[0,0] % M == 1:
-    #         new_embs.append((newtau,gtauinv,-sign))
-    # list_embeddings.extend(new_embs)
     verbose('Found %s embeddings...'%len(list_embeddings))
     return list_embeddings
 
@@ -350,7 +338,7 @@ def find_optimal_embeddings(F,use_magma = False,extra_conductor = 1,magma = None
             b = ZZ((alpha+beta).norm()/nrm) - a - c
             G.append((a,b,c))
     delta = extra_conductor * F.gen() if D%4 == 1 else 2*extra_conductor * F.gen() # delta = sqrt{discriminant}
-    r,s = delta.coordinates_in_terms_of_powers()(w) # w = r + s*delta 
+    r,s = delta.coordinates_in_terms_of_powers()(w) # w = r + s*delta
     return [Matrix(QQ,2,2,[r-s*B,-2*s*C,2*s*A,r+s*B]) for A,B,C in G] # There's a typo in Darmon-Pollack pg.12, fixed by Juan Restrepo
 
 def _find_limits_manin_trick(tau,gtau):

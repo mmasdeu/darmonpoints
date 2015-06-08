@@ -28,8 +28,8 @@ AUTHORS:
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2
 from sage.modular.modsym.all import P1List
+from sage.matrix.matrix_space import MatrixSpace
 from sage.rings.integer import Integer
 from sage.rings.integer_ring import ZZ
 from sage.rings.finite_rings.integer_mod_ring import Zmod
@@ -38,11 +38,11 @@ from sage.structure.sage_object import SageObject
 from sage.modules.free_module_element import zero_vector
 from copy import deepcopy
 from sage.misc.cachefunc import cached_method
-from sage.rings.arith import convergents,xgcd,gcd
+from sage.rings.arith import xgcd,gcd
 
 from sigma0 import Sigma0, Sigma0Element
 
-M2ZSpace = MatrixSpace_ZZ_2x2()
+M2ZSpace = MatrixSpace(ZZ,2)
 
 def M2Z(x):
     r"""

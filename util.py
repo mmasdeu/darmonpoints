@@ -212,7 +212,7 @@ def tate_parameter(E,R):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reversion()(R(1/jE))
+    qE =  (1/j).power_series().reverse()(R(1/jE))
     return qE
 
 def get_C_and_C2(E,qEpows,R,prec):
@@ -267,7 +267,7 @@ def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
             E4 = EisensteinForms(weight=4).basis()[0]
             Delta = CuspForms(weight=12).basis()[0]
             j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-            qE =  (1/j).power_series().reversion()(R(1/jE))
+            qE =  (1/j).power_series().reverse()(R(1/jE))
 
     qEval = qE.valuation()
 
@@ -344,7 +344,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reversion()(R(1/jE))
+    qE =  (1/j).power_series().reverse()(R(1/jE))
     sk = lambda q,k,pprec: sum( [n**k*q**n/(1-q**n) for n in range(1,pprec+1)] )
     n = qE.valuation()
     precp = ((prec+4)/n).floor() + 2;
@@ -362,7 +362,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
 
     tt = -xx/yy
     if tt.valuation(p) <= 0:
-        raise  ValueError , "The point must lie in the formal group."
+        raise ValueError, "The point must lie in the formal group (valuation = %s should be positive)."%tt.valuation(p)
 
     eqhat = Eq.formal()
     eqlog = eqhat.log(prec + 3)
@@ -765,12 +765,13 @@ def get_heegner_params(p,E,beta):
 def _get_heegner_params_numberfield(P,N,beta):
     F = N.number_field()
     x = PolynomialRing(F,names = 'x').gen()
-    K = F.extension(x**2-beta,names = 'b')
+    K = F.extension(x*x-beta,names = 'b')
     if not P.divides(N):
         raise ValueError,'p (=%s) must divide conductor (=%s)'%(P,N)
     PK = K.ideal(P)
-    if PK.relative_ramification_index() > 1 or not PK.is_prime():
+    if len(PK.factor()) > 1:
         raise ValueError,'p (=%s) must be inert in K (=Q(sqrt{%s}))'%(P,beta)
+    PK = PK.factor()[0] #    if PK.relative_ramification_index() > 1 or not PK.is_prime():
     N1 = N/P
     if P.divides(N1):
         raise ValueError,'p (=%s) must exactly divide the conductor (=%s)'%(p,N)
@@ -779,12 +780,15 @@ def _get_heegner_params_numberfield(P,N,beta):
     num_inert_primes = 0
     for ell,r in N1.factor():
         LK = K.ideal(ell)
-        assert LK.relative_ramification_index() == 1
-        if LK.is_prime(): # inert
-            if r != 1:
-                raise ValueError,'The inert prime l = %s divides too much the conductor.'%ell
-            num_inert_primes += 1
-            DB *= ell
+        LKfact = LK.factor()
+        # assert LK.relative_ramification_index() == 1
+        if len(LKfact) == 1: # inert or ramified
+            if LKfact[0][1] == 1: # inert
+                num_inert_primes += 1
+                DB *= ell**1
+            else: # ramified
+                assert r == 1
+                Np *= ell
         else:
             Np *= ell**r
     assert N == P * DB * Np
@@ -882,7 +886,14 @@ def find_the_unit_of(F,K):
     GK = K.unit_group()
     OK = K.maximal_order()
     for uK in GK.fundamental_units():
-        is_square,rootNuK = uK.norm(F).is_square(root=True)
+        try:
+            is_square,rootNuK = uK.norm(F).is_square(root = True)
+        except TypeError:
+            is_square = uK.norm(F).is_square()
+            if is_square:
+                rootNuK = uK.norm(F).sqrt()
+            else:
+                rootNuK = None
         if uK not in F:
             unit_not_in_F = uK
         if is_square and uK not in F:
@@ -929,7 +940,7 @@ def sage_F_ideal_to_magma(F_magma,x):
     return sage_F_elt_to_magma(F_magma,gens[0])*Zm + sage_F_elt_to_magma(F_magma,gens[1])*Zm
 
 def magma_F_elt_to_sage(F_sage,x,magma):
-    if F_sage.degree() > 1:
+    if F_sage != QQ:
         return F_sage(sage_eval(magma.eval('[%s[i] : i in [1..%s]]'%(x.name(),F_sage.degree()))))
     else:
         return F_sage(sage_eval(magma.eval('%s'%x.name())))
@@ -1183,67 +1194,6 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
                 return a*u
     assert 0,'Signs not compatible'
 
-# r'''
-# Follows S.Johansson, "A description of quaternion algebras"
-# S is a list of the places which should be ramified.
-# '''
-# def quaternion_algebra_invariants_from_ramification(F, I, S = None):
-#     from sage.misc.misc_c import prod
-#     if S is None:
-#         S = []
-#     I = F.ideal(I)
-#     P = I.factor()
-#     if (len(P) + len(S)) % 2 != 0:
-#         raise ValueError, 'Number of ramified places must be even'
-#     if any([ri > 1 for _,ri in P]):
-#         raise ValueError, 'All exponents in the discriminant factorization must be odd'
-#     Foo = F.real_places(prec = Infinity)
-#     T = F.real_places(prec = Infinity)
-#     ramification_at_infinity = []
-#     Sold,S = S,[]
-#     for v in Sold:
-#         for w in T:
-#             if w(F.gen()) == v(F.gen()):
-#                 S.append(w)
-#                 T.remove(w)
-#                 break
-#     if  len(S) != len(Sold):
-#         raise ValueError,'Please specify more precision for the places.'
-#     for sigma in F.real_places(prec = Infinity):
-#         if sigma in S:
-#             ramification_at_infinity.append(-1)
-#         else:
-#             ramification_at_infinity.append(1)
-#     if F.degree() == 1:
-#         return QuaternionAlgebra(I).invariants()
-#     I = F.ideal(I)
-#     if not I.is_principal():
-#         raise ValueError, 'Discriminant should be principal'
-#     d = I.gens_reduced()[0]
-#     vinf = F.embeddings(RR)
-#     vfin = I.factor()
-#     for p in chain([1],Primes()):
-#         facts = F.ideal(p).prime_factors() if p > 1 else [F.ideal(1)]
-#         for P in facts:
-#             if P.is_coprime(I) and P.is_principal():
-#                 pi0 = P.gens_reduced()[0]
-#                 for sgn1,sgn2 in product([-1,+1],repeat = 2):
-#                     a = sgn1 * pi0
-#                     B = QuaternionAlgebra(F,a,sgn2 * d)
-#                     if B.discriminant() == I:
-#                         good_at_infinity = True
-#                         for si,sigma in zip(ramification_at_infinity,F.embeddings(RR)):
-#                             if si == 1: # Want it split
-#                                 if sigma(a) < 0 and sigma(sgn2 * d) < 0:
-#                                     good_at_infinity = False
-#                                     break
-#                             else: # si == -1, want it ramified
-#                                 if sigma(a) > 0 or sigma(sgn2 * d) > 0:
-#                                     good_at_infinity = False
-#                                     break
-#                         if good_at_infinity:
-#                             return B.invariants()
-
 def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None):
     p = J.parent().prime()
     if prec is None:
@@ -1394,15 +1344,15 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
             zetaf = F.zeta_function(prec)(2)
         else:
             zetaf = zeta
-        M = F.ideal(M)
     else:
         from sage.functions.transcendental import Function_zeta
         if zeta is None:
             zetaf = Function_zeta()(RealField(prec)(2))
         else:
             zetaf = zeta
-        M = ZZ(M)
-    if n > 1:
+
+    if F != QQ:
+        M = F.ideal(M)
         Phi = QQ(D.norm().abs())
         for P,_ in D.factor():
             np = P.norm()
@@ -1412,6 +1362,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
             np = QQ(P.norm())
             Psi *= np**(ZZ(e)-1) * (np + 1)
     else:
+        M = ZZ(M)
         Phi = ZZ(D)
         for np,_ in D.factor():
             Phi *= QQ(1)-QQ(1)/np
@@ -1420,7 +1371,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
             Psi *= np**(ZZ(e)-1) * (np + 1)
     RR = RealField(prec)
     pi = RR(pi)
-    covol =  (RR(disc).abs()**(3/2) * zetaf * Phi)/((4 * pi**2)**(n-1))
+    covol =  (RR(disc).abs()**(3/2) * zetaf * Phi)/((4 * pi**2)**(F.degree()-1))
     index = RR(Psi)
     indexunits = 1 # There is a factor missing here, due to units.
     return covol * index / indexunits
@@ -1508,7 +1459,7 @@ def selmer_group_iterator(self, S, m, proof=True):
         KSgens = self.selmer_group(S=S, m=m, proof=proof)
     f = lambda o: m if o is Infinity else o.gcd(m)
     orders = [f(a.multiplicative_order()) for a in KSgens]
-    one = self.one_element()
+    one = self.one()
     from sage.misc.all import cartesian_product_iterator
     for ev in cartesian_product_iterator([range(-o//2,(1+o)//2) for o in orders]):
         yield prod([p**e for p,e in zip(KSgens,ev)],one)

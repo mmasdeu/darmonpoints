@@ -39,9 +39,8 @@ sage: f(M2Z([2,3,4,5]))
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-from sage.rings.arith import convergents
+from sage.rings.continued_fraction import convergents
 from sage.misc.misc import verbose
-from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2, Matrix_integer_2x2
 from sigma0 import Sigma0,Sigma0Element
 from fund_domain import t00, t10, t01, t11, Id, basic_hecke_matrix, M2Z
 from sage.matrix.matrix_space import MatrixSpace
@@ -506,7 +505,6 @@ class ManinMap(object):
             sage: (f*2)(M2Z([1,0,0,1]))
             (2 + O(11^2), 4 + O(11))
         """
-#        if isinstance(right, Matrix_integer_2x2):
         if isinstance(right, type(Sigma0(self._manin.level())(MatrixSpace(ZZ,2,2)([1,0,0,1])))):
             return self._right_action(right)
 
@@ -564,7 +562,7 @@ class ManinMap(object):
         SN = Sigma0(N)
         A = M2Z(A)
         B = self._manin.equivalent_rep(M2Z([A[t00] % N,A[t01] % N,A[t10] % N,A[t11] % N]))
-        gaminv = SN(B * M2Z(A).inverse())
+        gaminv = SN(B * M2Z([A[t11],-A[t01],-A[t10],A[t00]]))
         return self[B] * gaminv
 
     def __call__(self, A):

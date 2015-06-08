@@ -28,18 +28,6 @@ oo = Infinity
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 
-
-use_fmpz_mat = False
-if use_fmpz_mat:
-    load('fmpz_mat.spyx')
-
-def modreduce(A,N):
-    if use_fmpz_mat:
-        A.modreduce(N)
-        return A
-    else:
-        return A.apply_map(lambda x: x % N)
-
 def find_newans(Coh,glocs,ti):
     G = Coh.group()
     newans = [glocs[0].new_matrix() for u in G.gens()]
@@ -47,13 +35,14 @@ def find_newans(Coh,glocs,ti):
         fox_grad_k = Coh.fox_gradient(tik)
         for j,gj in enumerate(G.gens()):
             newans[j] += gk * fox_grad_k[j]
-            newans[j] = modreduce(newans[j],Coh._pN)
+            newans[j] = newans[j].apply_map(lambda x: x % Coh._pN)
     return newans
-
 
 def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
+    from sage.misc.persist import db_save
+
     if use_ps_dists == False:
         raise NotImplementedError, 'Must use distributions from Pollack-Stevens code in the split case'
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
@@ -76,10 +65,10 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
     else:
         progress_bar = None
     Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True,progress_bar = progress_bar)
-    Phi.db(fname)
+    db_save(Phi,fname)
     return Phi
 
-def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False,method = None,Ename = 'unknown'):
+def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap, use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False,method = None,Ename = 'unknown'):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -117,14 +106,11 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,use_ps_
     if use_ps_dists:
         Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group().gens()])
     else:
-        if use_fmpz_mat:
-            Phi = CohOC([VOC(Fmpz_mat(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in xrange(VOC._depth - 1)])),check = False) for g in G.small_group().gens()])
-        else:
-            Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in xrange(VOC._depth - 1)]),check = False) for g in G.small_group().gens()])
+        Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in xrange(VOC._depth - 1)]),check = False) for g in G.small_group().gens()])
     if progress_bar:
         verb_level = get_verbose()
     verbose('Now lifting...')
-    Phi = Phi.improve(prec = prec,parallelize = parallelize,progress_bar = progress_bar,method = method)
+    Phi = Phi.improve(prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
     if use_sage_db:
         db_save(Phi._val,fname)
     verbose('Done.')
@@ -212,13 +198,12 @@ class CohomologyElement(ModuleElement):
             return V(0)
         i,a = wd[-1]
         ans = H.eval_at_genpow(i,a,self._val)
-        ans = modreduce(ans,H._pN)
+        ans = ans.apply_map(lambda x: x % H._pN)
         for i,a in reversed(wd[:-1]):
             ans = H.eval_at_genpow(i,a,self._val) + H.mul_by_gen_pow(i,a,ans)
-            # ans = modreduce(ans, H._pN)
         if extramul is not None:
             ans = extramul * ans
-            ans = modreduce(ans, H._pN)
+            ans = ans.apply_map(lambda x: x % H._pN)
         return V(ans,check = False)
 
     def evaluate_triv(self,x,parallelize = False,extramul = None):
@@ -322,7 +307,7 @@ class CohomologyElement(ModuleElement):
         if lenword == 1:
             return self._evaluate_syllable(*word[0])
 
-    def improve(self,prec = None,parallelize = False,progress_bar = False,method = 'bigmatrix'):
+    def improve(self,prec = None,sign = 1, parallelize = False,progress_bar = False,method = 'bigmatrix'):
         r"""
         Repeatedly applies U_p.
 
@@ -336,7 +321,6 @@ class CohomologyElement(ModuleElement):
             prec = U.precision_cap()
 
         repslocal = self.parent().get_Up_reps_local(prec)
-        sign = ZZ(1)
         if method == 'naive':
             h2 = self.parent().apply_Up(self, group = group, scale = sign,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
             if progress_bar:
@@ -369,7 +353,7 @@ class CohomologyElement(ModuleElement):
             return h2
         else:
             assert method == 'bigmatrix'
-            return self.parent().apply_Up(self, group = group, parallelize = parallelize,times = len(ZZ(prec-1).bits()),progress_bar = progress_bar,method = 'bigmatrix',repslocal = repslocal)
+            return self.parent().apply_Up(self, group = group, scale = sign, parallelize = parallelize,times = len(ZZ(prec-1).bits()),progress_bar = progress_bar,method = 'bigmatrix',repslocal = repslocal)
 
 
 class _our_adjuster(Sigma0ActionAdjuster):
@@ -481,10 +465,10 @@ class CohomologyGroup(Parent):
         for j in xrange(lenword):
             i,a = word[j]
             ans[i] += h  * self.get_fox_term(i,a)
-            ans[i] = modreduce(ans[i],self._pN)
+            ans[i] = ans[i].apply_map(lambda x: x % self._pN)
             if j < lenword -1:
                 h = h * self.get_gen_pow(i,a)
-                h = modreduce(h,self._pN)
+                h = h.apply_map(lambda x: x % self._pN)
         return ans
 
     def get_gen_pow(self,i,a):
@@ -497,7 +481,7 @@ class CohomologyGroup(Parent):
             a = -a
         while len(genpows) <= a:
             tmp = genpows[1] * genpows[-1]
-            genpows.append(modreduce(tmp, self._pN))
+            genpows.append(tmp.apply_map(lambda x:x % self._pN))
         return genpows[a]
 
     def get_fox_term(self,i,a):
@@ -509,19 +493,19 @@ class CohomologyGroup(Parent):
             genpows = self._gen_pows[i]
             ans = genpows[0] + genpows[1]
             for o in xrange(a-2):
-                ans = modreduce(ans,self._pN)
+                ans = ans.apply_map(lambda x: x % self._pN)
                 ans = genpows[0] + genpows[1] * ans
-            ans = modreduce(ans,self._pN)
+            ans = ans.apply_map(lambda x: x % self._pN)
             return ans
         elif a < -1:
             a = -a
             genpows = self._gen_pows_neg[i]
             ans = genpows[0] + genpows[1]
             for o in xrange(a-2):
-                ans = modreduce(ans,self._pN)
+                ans = ans.apply_map(lambda x: x % self._pN)
                 ans = genpows[0] + genpows[1] * ans
             ans = -genpows[1] * ans
-            ans = modreduce(ans,self._pN)
+            ans = ans.apply_map(lambda x: x % self._pN)
             return ans
 
     def eval_at_genpow(self,i,a,v):
@@ -534,19 +518,19 @@ class CohomologyGroup(Parent):
             genpows = self._gen_pows[i]
             ans = v + genpows[1] * v
             for o in xrange(a-2):
-                ans = modreduce(ans,self._pN)
+                ans = ans.apply_map(lambda x: x % self._pN)
                 ans = v + genpows[1] * ans
-            ans = modreduce(ans,self._pN)
+            ans = ans.apply_map(lambda x: x % self._pN)
             return ans
         elif a < -1:
             a = -a
             genpows = self._gen_pows_neg[i]
             ans = v + genpows[1] * v
             for o in xrange(a-2):
-                ans = modreduce(ans,self._pN)
+                ans = ans.apply_map(lambda x: x % self._pN)
                 ans = v + genpows[1] * ans
             ans = -genpows[1] * ans
-            ans = modreduce(ans,self._pN)
+            ans = ans.apply_map(lambda x: x % self._pN)
             return ans
 
     def mul_by_gen_pow(self,i,a,v):
@@ -559,7 +543,7 @@ class CohomologyGroup(Parent):
             g = self._gen_pows_neg[i][1]
             a = -a
         for o in xrange(a):
-            ans = modreduce(g * ans, self._pN)
+            ans = (g * ans).apply_map(lambda x: x % self._pN)
         return ans
 
     def dimension(self):
@@ -624,6 +608,10 @@ class CohomologyGroup(Parent):
         except AttributeError:
             N = ZZ(discnorm)
 
+        if F == QQ:
+            x = QQ['x'].gen()
+            F = NumberField(x,names='a')
+            E = E.change_ring(F)
 
         def getap(q):
             if F == QQ:
@@ -632,9 +620,6 @@ class CohomologyGroup(Parent):
                 Q = F.ideal(q).factor()[0][0]
                 return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
 
-        if F == QQ:
-            x = QQ['x'].gen()
-            F = NumberField(x,names='a')
         q = ZZ(1)
         g0 = None
         while K.dimension() > 1:
@@ -971,12 +956,13 @@ class CohomologyGroup(Parent):
     def get_Up_reps_local(self,prec):
         Gpn = self.group()
         if self._use_ps_dists:
-            return [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
+            ans = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
         else:
             glocs = [Gpn.embed(g,prec) for g in Gpn.get_Up_reps()]
             for o in glocs:
                 o.set_immutable()
-            return [self._coeffmodule._get_powers(o) for o in glocs]
+            ans = [self._coeffmodule._get_powers(o) for o in glocs]
+        return [set_immutable(o) for o in ans]
 
     def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'bigmatrix', repslocal = None):
         r"""
@@ -1035,10 +1021,7 @@ class CohomologyGroup(Parent):
             ngens = len(self.group().gens())
             S = repslocal[0].nrows()
             NN = ngens * S
-            if use_fmpz_mat:
-                A = Fmpz_mat(None,nrows = NN,ncols = NN).new_matrix()
-            else:
-                A = Matrix(ZZ,NN,NN,0)
+            A = Matrix(ZZ,NN,NN,0)
 
             total_counter = ngens**2
             counter = 0
@@ -1056,12 +1039,9 @@ class CohomologyGroup(Parent):
                 iS += S
             verbose('Computing 2^(%s)-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
             for i in range(times):
-                if use_fmpz_mat:
-                    A.square_inplace()
-                else:
-                    A = A**2
+                A = A**2
                 if N != 0:
-                    A = modreduce(A,self._pN)
+                    A = A.apply_map(lambda x: x % self._pN)
                 update_progress(float(i+1)/float(times),'Exponentiating matrix')
             verbose('Done computing 2^(%s)-th power'%times)
             if times > 0:
@@ -1071,8 +1051,6 @@ class CohomologyGroup(Parent):
             bvec = Matrix(R,NN,1,[o for b in c._val for o in b._val.list()])
             if scale_factor != 1:
                 bvec = scale_factor * bvec
-            if use_fmpz_mat:
-                bvec = Fmpz_mat(bvec)
             valmat = A * bvec
             return self([V(valmat.submatrix(row=i,nrows = N),check = False) for i in xrange(0,valmat.nrows(),N)])
 

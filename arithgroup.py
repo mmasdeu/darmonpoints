@@ -237,12 +237,11 @@ class ArithGroup_generic(AlgebraicGroup):
 
         while len(reps) < num_reps:
             n_iters += 1
-            if n_iters % 50 == 0:
-                verbose('%s, len = %s/%s'%(n_iters,len(reps),num_reps))
             new_candidate = I.next() * g0
             new_inv = new_candidate**-1
             if not any([self._is_in_order(new_inv * old) for old in reps]):
                 reps.append(new_candidate)
+            update_progress(float(len(reps))/float(num_reps),'Getting Hecke representatives (%s iterations)'%(n_iters))
         self._cache_hecke_reps[l] = reps
         return reps
 
@@ -299,18 +298,25 @@ class ArithGroup_generic(AlgebraicGroup):
     def gens(self):
         return self._gens
 
+    # generic
     def compute_quadratic_embedding(self,K):
-        a,b = self.B.invariants() if self.discriminant != 1 else (1,1)
         QQmagma = self.magma.Rationals()
         ZZmagma = self.magma.Integers()
-        Btmp = self.magma.QuaternionAlgebra(QQmagma,a,b)
-        def quat_to_mquat(x):
-            v = list(x)
-            return Btmp(v[0]) + sum(v[i+1]*Btmp.gen(i+1) for i in xrange(3))
+        try:
+            a,b = self.B.invariants()
+            Btmp = self.magma.QuaternionAlgebra(QQmagma,a,b)
+            def quat_to_mquat(x):
+                v = list(x)
+                return Btmp(v[0]) + sum(v[i+1]*Btmp.gen(i+1) for i in xrange(3))
+        except AttributeError:
+            a,b = (1,1)
+            Btmp = self.magma.QuaternionAlgebra(QQmagma,a,b)
+            def quat_to_mquat(x): # Matrices
+                a,b,c,d = x.list()
+                v = [(a + d)/2, (a - d)/2, (-b - c)/2, (c - b)/2]
+                return Btmp(v[0]) + sum(v[i+1]*Btmp.gen(i+1) for i in xrange(3))
 
         O_magma = self.magma.QuaternionOrder(ZZmagma,[quat_to_mquat(o) for o in self.Obasis])
-
-        #QQmagma = self._B_magma.BaseRing()#magma.RationalsAsNumberField()
         K_magma = self.magma.RadicalExtension(QQmagma,2,K.discriminant()) #self._B_magma.BaseField()
         OK_magma = K_magma.MaximalOrder()
         _,iota = self.magma.Embed(OK_magma,O_magma,nvals = 2)
@@ -322,50 +328,61 @@ class ArithGroup_generic(AlgebraicGroup):
             Bgens = [matrix(QQ,2,2,[1,0,0,-1]),matrix(QQ,2,2,[0,1,1,0]),matrix(QQ,2,2,[0,1,-1,0])]
             return sum(a*b for a,b in zip([self.B(1)]+Bgens,[Btmp(mu_magma).Vector()[m+1].Norm()._sage_() for m in xrange(4)]))
 
-    def embed_order(self,p,K,prec,zero_deg = True,outfile = None,return_all = False):
+    # generic
+    def embed_order(self,p,K,prec,outfile = None,return_all = False):
         r'''
-        sage: G = ArithGroup(5,6,1)
-        sage: f = G.embed_order(23,20)
-        sage: f0 = f.zero_degree_equivalent()
         '''
+        verbose('Computing quadratic embedding to precision %s'%prec)
+        mu = self.compute_quadratic_embedding(K,return_generator = False)
+        verbose('Finding module generators')
+        w = module_generators(K)[1]
+        verbose('Done')
+        w_minpoly = w.minpoly().change_ring(Qp(p,prec))
+        verbose('w_minpoly = %s'%w_minpoly)
+        Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
+        verbose('Cp is %s'%Cp)
+        wl = w.list()
+        assert len(wl) == 2
+        r0 = -wl[0]/wl[1]
+        r1 = 1/wl[1]
+        assert r0+r1*w == K.gen()
+        padic_Kgen = Cp(self._F_to_local(r0))+Cp(self._F_to_local(r1))*Cp.gen()
         try:
-            newobj = db('quadratic_embeddings_%s_%s.sobj'%(self.discriminant,self.level))
-            mu = newobj[K.discriminant()]
-        except IOError,KeyError:
-            mu = self.compute_quadratic_embedding(K)
-
-        w = K.maximal_order().ring_generators()[0]
-        verbose('w is %s'%w)
-        verbose('w.minpoly() = %s'%w.minpoly())
-        Cp = Qp(p,prec).extension(w.minpoly(),names = 'g')
-        r0,r1 = w.coordinates_in_terms_of_powers()(K.gen())
-        v0 = K.hom([Cp(r0)+Cp(r1)*Cp.gen()])
-        try:
-            phi = K.hom([mu])
-        except TypeError:
-            phi = K.hom([mu/2])
-        fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+            fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+        except NotImplementedError: pass
         fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
-        assert self._is_in_order(phi(w))
+        assert K.gen(0).trace(K.base_ring()) == mu.reduced_trace() and K.gen(0).norm(K.base_ring()) == mu.reduced_norm()
 
         iotap = self.get_embedding(prec)
         fwrite('Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
         a,b,c,d = iotap(mu).list()
-        R = PolynomialRing(Cp,names = 'X')
-        X = R.gen()
-        tau1 = (Cp(a-d) + 2*v0(K.gen()))/Cp(2*c)
-        tau2 = (Cp(a-d) - 2*v0(K.gen()))/Cp(2*c)
-
-        # assert (c*tau**2 + (d-a)*tau-b) == 0
+        X = PolynomialRing(Cp,names = 'X').gen()
+        tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
+        tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
+        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
+        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
 
         found = False
-        gamma = self(phi(K.units()[0])**2)
-        fwrite('\cO_K to R_0 given by w_K |-> %s'%phi(w),outfile)
+        u = find_the_unit_of(self.F,K)
+        assert u.is_integral() and (1/u).is_integral()
+        gammalst = u.list()
+        assert len(gammalst) == 2
+        gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
+        verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.reduced_trace(),gammaquatrep.reduced_norm()))
+        assert gammaquatrep.reduced_trace() == u.trace(self.F) and gammaquatrep.reduced_norm() == u.norm(self.F)
+        gammaq = gammaquatrep
+        while True:
+            try:
+                gamma = self(gammaq)
+                break
+            except ValueError:
+                gammaq *= gammaquatrep
+        fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
         fwrite('gamma_psi = %s'%gamma,outfile)
         fwrite('tau_psi = %s'%tau1,outfile)
         fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
         if return_all:
-            return gamma,tau1,tau2
+            return gamma, tau1, tau2
         else:
             return gamma, tau1
 
@@ -448,7 +465,9 @@ class ArithGroup_generic(AlgebraicGroup):
         return weight_vector
 
     def calculate_weight_zero_word(self,x):
-        if not self.abelianization()(x) == 0:
+        abx = self.abelianization()(x)
+        if not abx == 0:
+            verbose('self.abelianization()(x) = %s'%abx)
             raise ValueError('Element must be trivial in the abelianization')
         oldword = copy(x.word_rep)
         oldword += self._calculate_relation(self.get_weight_vector(x))
@@ -473,7 +492,7 @@ class ArithGroup_generic(AlgebraicGroup):
                 oldword = reduce_word(gatmp + oldword[:idx] + oldword[idx+1:])
                 w0q = w0.quaternion_rep
                 gaq = ga.quaternion_rep
-                commute = w0q*gaq*w0q**-1*gaq**-1
+                commute = w0q * gaq * w0q**-1 * gaq**-1
                 if commute != 1:
                     commutator_list.append((w0,ga))
         assert len(oldword) == 0
@@ -558,7 +577,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
             QQ_magma = self.magma.RationalsAsNumberField()
-            ZZ_magma = QQ_magma.Integers()
+            ZZ_magma = QQ_magma.MaximalOrder()
             if hasattr(self,'abtuple'):
                 self._B_magma = self.magma.QuaternionAlgebra('%s'%QQ_magma.name(),self.abtuple[0],self.abtuple[1])
             else:
@@ -588,6 +607,54 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
     def _quaternion_to_list(self,x):
         return (self.basis_invmat * matrix(QQ,4,1,x.coefficient_tuple())).list()
+
+    # rationalquaternion
+    def embed_order(self,p,K,prec,outfile = None,return_all = False):
+        r'''
+        sage: G = ArithGroup(5,6,1)
+        sage: f = G.embed_order(23,20)
+        sage: f0 = f.zero_degree_equivalent()
+        '''
+        try:
+            newobj = db('quadratic_embeddings_%s_%s.sobj'%(self.discriminant,self.level))
+            mu = newobj[K.discriminant()]
+        except IOError,KeyError:
+            mu = self.compute_quadratic_embedding(K)
+
+        w = K.maximal_order().ring_generators()[0]
+        verbose('w is %s'%w)
+        verbose('w.minpoly() = %s'%w.minpoly())
+        QQp = Qp(p,prec)
+        w_minpoly = w.minpoly().change_ring(QQp)
+        Cp = QQp.extension(w_minpoly,names = 'g')
+        r0,r1 = w.coordinates_in_terms_of_powers()(K.gen())
+        v0 = K.hom([Cp(r0)+Cp(r1)*Cp.gen()])
+        try:
+            phi = K.hom([mu])
+        except TypeError:
+            phi = K.hom([mu/2])
+        fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+        fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
+        assert self._is_in_order(phi(w))
+
+        iotap = self.get_embedding(prec)
+        fwrite('Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
+        a,b,c,d = iotap(mu).list()
+        R = PolynomialRing(Cp,names = 'X')
+        X = R.gen()
+        tau1 = (Cp(a-d) + 2*v0(K.gen()))/Cp(2*c)
+        tau2 = (Cp(a-d) - 2*v0(K.gen()))/Cp(2*c)
+
+        found = False
+        gamma = self(phi(K.units()[0])**2)
+        fwrite('\cO_K to R_0 given by w_K |-> %s'%phi(w),outfile)
+        fwrite('gamma_psi = %s'%gamma,outfile)
+        fwrite('tau_psi = %s'%tau1,outfile)
+        fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
+        if return_all:
+            return gamma,tau1,tau2
+        else:
+            return gamma, tau1
 
     def get_word_rep(self,delta):
         if not self._is_in_order(delta):
@@ -790,7 +857,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         self._Gamma0_farey = Gamma0_constructor(self.level).farey_symbol()
         self._prec_inf = -1
 
-        # self.__init_magma_objects(info_magma)
         self.B = MatrixSpace(QQ,2,2)
         self.Obasis = [matrix(ZZ,2,2,v) for v in [[1,0,0,0],[0,1,0,0],[0,0,self.level,0],[0,0,0,1]]]
         self._O_discriminant = ZZ.ideal(self.level)
@@ -803,6 +869,8 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         self.minus_one = None
         for i,g in enumerate(self._Gamma0_farey.generators()):
             newg = self.B([g.a(),g.b(),g.c(),g.d()])
+            if newg == I:
+                continue
             self.Ugens.append(newg)
             self._gens.append(self.element_class(self,quaternion_rep = newg, word_rep = [(i,1)],check = False))
             if g.matrix()**2 == I.matrix():
@@ -822,7 +890,9 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                 if self.minus_one is not None:
                     temp_relation_words.append([(i,-3)]+self.minus_one)
                 self.minus_one = [(i,3)]
-        self.F_unit_offset =len(self.Ugens)
+            else:
+                assert g.matrix()**24 != I.matrix()
+        self.F_unit_offset = len(self.Ugens)
         self.minus_one_long = syllables_to_tietze(self.minus_one)
         self._relation_words = []
         for rel in temp_relation_words:
@@ -846,6 +916,93 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         a,b,c,d = x.list()
         return [a, b, QQ(c)/self.level, d]
 
+    # rationalmatrix
+    def embed_order(self,p,K,prec,outfile = None,return_all = False):
+        r'''
+        '''
+        from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
+
+        verbose('Computing quadratic embedding to precision %s'%prec)
+        mu = find_optimal_embeddings(K,use_magma = True, extra_conductor = 1)[-1]
+        verbose('Finding module generators')
+        w = module_generators(K)[1]
+        verbose('Done')
+        w_minpoly = w.minpoly().change_ring(Qp(p,prec))
+        Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
+        wl = w.list()
+        assert len(wl) == 2
+        r0 = -wl[0]/wl[1]
+        r1 = 1/wl[1]
+        assert r0+r1*w == K.gen()
+        padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
+        try:
+            fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+        except NotImplementedError: pass
+        fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
+        mu = r0 + r1*mu
+        assert K.gen(0).trace() == mu.trace() and K.gen(0).norm() == mu.determinant()
+
+        iotap = self.get_embedding(prec)
+        a,b,c,d = iotap(mu).list()
+        X = PolynomialRing(Cp,names = 'X').gen()
+        tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
+        tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
+        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
+        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
+
+        found = False
+        u = K.units()[0]**2
+        # u = find_the_unit_of(self.F,K)
+        # verbose('u = %s'%u)
+        # assert u.is_integral() and (1/u).is_integral()
+        gammalst = u.list()
+        assert len(gammalst) == 2
+        gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
+        verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.trace(),gammaquatrep.determinant()))
+        verbose('u trace = %s and unorm = %s'%(u.trace(),u.norm()))
+        assert gammaquatrep.trace() == u.trace() and gammaquatrep.determinant() == u.norm()
+        gammaq = gammaquatrep
+        while True:
+            try:
+                gamma = self(gammaq)
+                break
+            except ValueError:
+                gammaq *= gammaquatrep
+
+        a, b, c, d = iotap(gamma.quaternion_rep).list()
+        assert (c*tau1**2 + (d-a)*tau1 - b) == 0
+        fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
+        fwrite('gamma_psi = %s'%gamma,outfile)
+        fwrite('tau_psi = %s'%tau1,outfile)
+        fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
+        if return_all:
+            return gamma, tau1, tau2
+        else:
+            return gamma, tau1
+
+    # def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False):
+    #     from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
+    #     M = self.level
+    #     r = K.gen()
+    #     w = K.maximal_order().ring_generators()[0]
+    #     r0,r1 = w.coordinates_in_terms_of_powers()(K.gen())
+    #     Cp = Qp(p,prec).extension(w.minpoly(),names = 'g')
+    #     v0 = K.hom([r0+r1*Cp.gen()])
+    #     Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = 1)
+    #     emblist = []
+    #     for W in Wlist:
+    #         assert w.minpoly() == W.minpoly()
+    #         OD,u = order_and_unit(K,1) # 1 = extra_conductor
+    #         wD = OD.ring_generators()[0]
+    #         wDvec = w.coordinates_in_terms_of_powers()(wD)
+    #         WD = wDvec[0] + wDvec[1] * W
+    #         assert all([o.is_integral() for o in WD.list()])
+    #         assert WD.minpoly() == wD.minpoly()
+    #         emblist.extend([emb for sgn in [+1,-1] for emb in _find_initial_embedding_list(v0,M,WD,orientation,OD,sgn * u)])
+    #     tau, gamma = emblist[0]
+    #     gamma.set_immutable()
+    #     return self(gamma), v0(tau)
+
     def check_word(self,delta,wd):
         tmp = self.B(1)
         for i,a in wd:
@@ -855,7 +1012,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
 
     def get_word_rep(self,delta):
         level = self.level
-        ans = self._Gamma0_farey.word_problem(SL2Z(delta.list()))
+        ans = list(self._Gamma0_farey.word_problem(SL2Z(delta.list()),output = 'standard'))
         tmp = self.B(1)
         for i,a in shorten_word(ans):
             tmp = tmp * self.gen(i).quaternion_rep**a
@@ -899,10 +1056,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             else:
                 ans = shorten_word(self.minus_one_long + [-i-1] + ans)
                 return self.check_word(delta.matrix(),ans)
-            print '!!!!!'
-            print delta
-            print tmp
-            assert 0
+            raise RuntimeError('Word problem failed')
 
     def element_of_norm(self,N,use_magma = False,local_condition = None): # in rationalmatrix
         try:
@@ -946,10 +1100,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                 return False
         else:
             return False
-        # try:
-        #     return SL2Z(x.list()) in self._Gamma0_farey
-        # except TypeError:
-        #     return False
 
 class FaceRel(SageObject):
     def __init__(self,center = None ,radius = None, mat = None):
@@ -1150,7 +1300,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             xm = Qx_magma.gen(1)
             f = self.F.gen().minpoly()
             fmagma = sum([self.magma(c)*xm**i for c,i in zip(f.coefficients(),f.exponents())])
-            FF_magma = self.magma.NumberField(fmagma)
+            FF_magma = self.magma.NumberField(fmagma,DoLinearExtension = True)
             self._F_magma = FF_magma
             OF_magma = FF_magma.Integers()
             am, bm = sage_F_elt_to_magma(self._F_magma,self.a),sage_F_elt_to_magma(self._F_magma,self.b)
@@ -1366,6 +1516,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
     def _is_in_order(self,x):
         return all([o.is_integral() for o in self._quaternion_to_list(x)])
 
+    # nf_quaternion
     def compute_quadratic_embedding(self,K,return_generator = False):
         O_magma = self._O_magma
         F_magma = self._F_magma
@@ -1400,7 +1551,8 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         else:
             return ans
 
-    def embed_order(self,p,K,prec,zero_deg = True,outfile = None,return_all = False):
+    # nf_quaternion
+    def embed_order(self,p,K,prec,outfile = None,return_all = False):
         r'''
         '''
         verbose('Computing quadratic embedding to precision %s'%prec)

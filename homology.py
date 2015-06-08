@@ -21,10 +21,10 @@ from ocmodule import *
 import operator
 from sage.rings.arith import GCD
 
-def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace_down = False,max_n = None):
+def construct_homology_cycle(G,D,prec,outfile = None,max_n = None):
     F = G.F
     t = PolynomialRing(F,names = 't').gen()
-    K = F.extension(t**2 - D,names = 'beta')
+    K = F.extension(t*t - D,names = 'beta')
     if F.degree() == 1:
         assert len(K.embeddings(RR)) == 2
     else:
@@ -34,45 +34,46 @@ def construct_homology_cycle(G,D,prec,hecke_smoothen = True,outfile = None,trace
             if F.degree() != 3:
                 raise NotImplementedError
             assert len(K.embeddings(RR)) == 0
-    if trace_down:
-        gamma, tau1,tau2 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = True)
+
+    # Choose the prime to do Hecke smoothen later
+    q = ZZ(2)
+    D = G.prime() * G.discriminant * G.level
+    try:
+        D = D.norm()
+    except AttributeError: pass
+    while D % q == 0:
+        q = q.next_prime()
+    if F == QQ:
+        q1 = q
     else:
-        gamma, tau1 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = False)
+        q1 = F.ideal(q).factor()[0][0]
+
+    gamma, tau1 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = False)
     Div = Divisors(tau1.parent())
     H1 = Homology(G.large_group(),Div)
+
     n = 1
-    if trace_down:
-        D1 = Div(tau1) - Div(tau2)
-        tmp = H1(dict([(gamma,D1)]))
-    else:
-        D1 = Div(tau1)
-        gamman = gamma
-        found = False
-        verbose('Trying with n = %s...'%n)
-        while not found:
-            try:
-                tmp = H1(dict([(gamman,D1)])).zero_degree_equivalent()
-                found = True
-            except ValueError:
-                n += 1
-                if max_n is not None and n > max_n:
-                    raise ValueError,'Reached maximum allowed power (%s)'%max_n
-                verbose('Trying with n = %s...'%n)
-                gamman *= gamma
-    if hecke_smoothen:
-        q = ZZ(2)
-        D = G.prime() * G.discriminant * G.level
+    D1 = Div(tau1)
+    gamman = gamma
+    while True:
         try:
-            D = D.norm()
-        except AttributeError: pass
-        while D % q == 0:
-            q = q.next_prime()
-        if F.degree() == 1:
-            q1 = q
-            tmp = tmp.hecke_smoothen(q,prec = prec) #.factor_into_generators()
-        else:
-            q1 = F.ideal(q).factor()[0][0]
-            tmp = tmp.hecke_smoothen(q1,prec = prec)
+            tmp = H1(dict([(gamman,D1)]))
+            assert tmp._check_cycle_condition()
+            tmp = tmp.zero_degree_equivalent()
+            assert tmp._check_cycle_condition()
+            raise StopIteration
+        except StopIteration:
+            break
+        except ValueError:
+            if max_n is not None and n > max_n:
+                raise ValueError,'Reached maximum allowed power (%s)'%max_n
+            verbose('Trying with n = %s...'%n)
+            n += 1
+            gamman *= gamma
+
+    # Do hecke_smoothen
+    tmp = tmp.hecke_smoothen(q1,prec = prec)
+    assert tmp._check_cycle_condition()
     return tmp,n,q1
 
 def lattice_homology_cycle(G,x,prec,outfile = None,smoothen = None):
@@ -119,11 +120,10 @@ class Divisors(Parent):
 
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)
 def _hash(x):
-    # ans = x._ntl_rep_abs()
-    # tmp = (ZZ(ans[0][0]),ZZ(ans[0][1]))
-    # return hash((tmp,ans[1]))
-    # return hash((x.trace(),x.norm()))
-    ans = [x.valuation()]
+    try:
+        ans = [x.valuation()]
+    except AttributeError:
+        return hash(x)
     for tup in x.list()[:60]:
         ans.extend(tup)
     return tuple(ans)
@@ -164,7 +164,10 @@ class Divisor_element(ModuleElement):
             self._data.update(data)
             self._ptdict.update(ptdata)
         else:
-            P = self.parent().base_field()(data)
+            if data != Infinity:
+                P = self.parent().base_field()(data)
+            else:
+                P = data
             hP = _hash(P)
             self._data[hP] = 1
             self._ptdict[hP] = P
@@ -248,7 +251,13 @@ class Divisor_element(ModuleElement):
         newdict = defaultdict(ZZ)
         newptdata = {}
         for P,n in self:
-            newpt = (K(a)*P+K(b))/(K(c)*P+K(d))
+            if P == Infinity:
+                try:
+                    newpt = K(a)/K(c)
+                except ZeroDivisionError:
+                    newpt = Infinity
+            else:
+                newpt = (K(a)*P+K(b))/(K(c)*P+K(d))
             hnewpt = _hash(newpt)
             newdict[hnewpt] += n
             newptdata[hnewpt] = newpt
@@ -283,7 +292,7 @@ class ArithGroupAction(Action):
                 return v.parent()(v)
         prec = K.precision_cap()
         G = g.parent()
-        a,b,c,d = G.embed(g.quaternion_rep,prec).change_ring(K).list()
+        a,b,c,d = [K(o) for o in G.embed(g.quaternion_rep,prec).list()] #G.embed(g.quaternion_rep,prec).change_ring(K).list()
         newdict = defaultdict(ZZ)
         newpts = {}
         for P,n in v:
@@ -410,12 +419,11 @@ class HomologyClass(ModuleElement):
                 g = G.gen(i)
                 oldv = newv
                 newv = (g**-a) * oldv
+                sign = 1
                 if a < 0:
                     a = -a
                     oldv = (g**a) * oldv
                     sign = -1
-                else:
-                    sign = 1
                 for j in range(a):
                     newdict[g] += sign * oldv
                     oldv = (g**-1) * oldv
@@ -432,8 +440,8 @@ class HomologyClass(ModuleElement):
         V = self.parent().coefficient_module()
         G = self.parent().group()
         newdict = defaultdict(V)
-        for oldword,v in self._data.iteritems():
-            gword = oldword.word_rep
+        for oldg,v in self._data.iteritems():
+            gword = oldg.word_rep
             newv = v
             for i,a in gword:
                 g = G.gen(i)
@@ -449,6 +457,8 @@ class HomologyClass(ModuleElement):
                 for j in range(a):
                     newdict[g] += sign * oldv
                     oldv = oldv.left_act_by_matrix(G.embed(gq**-1,prec))
+                if a > 0:
+                    assert oldv == newv
         return HomologyClass(self.parent(),newdict)
 
     def _add_(self,right):
@@ -481,7 +491,7 @@ class HomologyClass(ModuleElement):
             for g,v in self._data.iteritems():
                 ti = G.get_hecke_ti(gk1,g.quaternion_rep,l,True)
                 gk1inv = gk1**-1
-                gk1inv.set_immutable()
+                set_immutable(gk1inv)
                 newv = v.left_act_by_matrix(G.embed(gk1inv,prec))
                 try:
                     newdict[ti] += newv
@@ -489,7 +499,7 @@ class HomologyClass(ModuleElement):
                         del newdict[ti]
                 except KeyError:
                     newdict[ti] = newv
-        return HomologyClass(self.parent(),newdict)#.factor_into_generators()
+        return HomologyClass(self.parent(),newdict)
 
     def _check_cycle_condition(self,return_residue = False):
         res = self.parent().coefficient_module()(0)
@@ -509,7 +519,7 @@ class HomologyClass(ModuleElement):
         try:
             rnorm = r.norm()
         except AttributeError: pass
-        return self.act_by_hecke(r,prec = prec) - self.mult_by(ZZ(rnorm+1))
+        return self.act_by_hecke(r,prec = prec) - self.mult_by(ZZ(rnorm + 1))
 
     def __rmul__(self,a):
         newdict = dict(((g,a*v) for g,v in self._data.iteritems())) if a != 0 else dict([])

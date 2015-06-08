@@ -1,4 +1,4 @@
-load('darmonpoints.sage')
+load('findcurve.sage')
 from sage.misc.misc import alarm,cancel_alarm
 from sage.parallel.decorate import parallel,fork
 ######################
