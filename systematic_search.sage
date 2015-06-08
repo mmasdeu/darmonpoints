@@ -1,4 +1,3 @@
-# load('darmonpoints.sage')
 from sage.parallel.decorate import parallel,fork
 from sage.misc.misc import alarm, cancel_alarm
 from util import fwrite
@@ -15,7 +14,7 @@ max_waiting_time = 2 * 60 * 60 # Amount of patience (in seconds)
 decimal_prec = 50
 
 def find_num_classes(P,abtuple,Np,F,out_str,magma_seed,logging = False):
-    load('darmonpoints.sage')
+    load('findcurve.sage')
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
@@ -52,7 +51,7 @@ def find_num_classes(P,abtuple,Np,F,out_str,magma_seed,logging = False):
 
 @parallel
 def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file):
-    load('darmonpoints.sage')
+    load('findcurve.sage')
     from homology import construct_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
     from itertools import product,chain,izip,groupby,islice,tee,starmap
@@ -170,7 +169,7 @@ def compute_table(input_file,output_trail = None):
 
 @parallel
 def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file,covol,magma_seed):
-    load('darmonpoints.sage')
+    load('findcurve.sage')
     from homology import construct_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
     from itertools import product,chain,izip,groupby,islice,tee,starmap
@@ -330,7 +329,7 @@ def dry_run(input_file,covolume_bound):
     from sage.ext.c_lib import AlarmInterrupt
     from sage.misc.misc import alarm, cancel_alarm
 
-    load('darmonpoints.sage')
+    load('findcurve.sage')
     global Nrange, max_P_norm, max_P_norm_integrate, max_waiting_time_aurel, max_waiting_time, max_F_disc, decimal_prec, candidates
 
     x = QQ['x'].gen()
