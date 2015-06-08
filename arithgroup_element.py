@@ -46,9 +46,9 @@ class ArithGroupElement(MultiplicativeGroupElement):
             self.has_word_rep = True
             init_data = True
         if quaternion_rep is not None:
-            if not parent._is_in_order(quaternion_rep):
-                raise ValueError('Quaternion (= %s) must be in order'%quaternion_rep)
             if check:
+                if not parent._is_in_order(quaternion_rep):
+                    raise ValueError('Quaternion (= %s) must be in order'%quaternion_rep)
                 if parent.base_field() == QQ:
                     rednrm = quaternion_rep.reduced_norm() if self.parent().discriminant != 1 else quaternion_rep.determinant()
                     if rednrm != 1:
