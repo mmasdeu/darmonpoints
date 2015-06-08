@@ -2,21 +2,49 @@
 ### Stark-Heegner points for quaternion algebras                         #
 ##########################################################################
 
-def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,parallelize = False,Wlist = None,twist = True, progress_bar = True, magma = None, Up_method = None, ramification_at_infinity = None, quaternionic = None, cohomological = None):
+def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data = None, magma = None, **kwargs):
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
-    from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J
+    from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,ConfigSectionMap
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
     from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, CohomologyGroup
     from integrals import double_integral_zero_infty,integrate_H1
     from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
-    import os,datetime
+    import os, datetime, ConfigParser
+
+    config = ConfigParser.ConfigParser()
+    config.read('config.ini')
+    param_dict = ConfigSectionMap(config, 'General')
+    param_dict.update(ConfigSectionMap(config, 'DarmonPoint'))
+    param_dict.update(kwargs)
+    param = Bunch(**param_dict)
+
+    # Get general parameters
+    outfile = param.outfile
+    use_ps_dists = param.use_ps_dists
+    use_sage_db = param.use_sage_db
+    magma_seed = param.magma_seed
+    parallelize = param.parallelize
+    Up_method = param.up_method
+    use_magma = param.use_magma
+    progress_bar = param.progress_bar
+    sign_at_infinity = param.sign_at_infinity
+
+    # Get darmon_point specific parameters
+    idx_orientation = param.idx_orientation
+    idx_embedding = param.idx_embedding
+    algorithm = param.algorithm
+    quaternionic = param.quaternionic
+    cohomological = param.cohomological
+
+    working_prec = max([2 * prec + 10,30])
 
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
     except NameError:
         ROOT = os.getcwd()
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+
     if magma is None:
         from sage.interfaces.magma import Magma
         magma = Magma()
@@ -57,9 +85,6 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap 
     else:
         dK = beta
 
-    if working_prec is None:
-        working_prec = 2 * prec + 10
-
     # Compute the completion of K at p
     x = QQ['x'].gen()
     K = F.extension(x*x - dK,names = 'alpha')
@@ -83,7 +108,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap 
     print 'D_B = %s = %s'%(DB,factor(DB))
     print 'Np = %s'%Np
     print 'dK = %s'%dK
-    print "The calculation is being done with p = %s and prec = %s"%(p,working_prec)
+    print "The calculation is being done with p = %s"%p
     print "Should find points in the elliptic curve:"
     print E
     if use_sage_db:
@@ -98,7 +123,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap 
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
     fwrite('Np = %s'%Np,outfile)
     fwrite('dK = %s (class number = %s)'%(dK,hK),outfile)
-    fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
+    fwrite('Calculation with p = %s and prec = %s'%(P,prec),outfile)
     fwrite('Elliptic curve %s: %s'%(Ename,E),outfile)
     if outfile is not None:
         print "Partial results will be saved in %s"%outfile
@@ -128,19 +153,24 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap 
             G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
-            try:
-                cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,outfile = outfile)
-            except ValueError:
-                print 'ValueError occurred when constructing homology cycle. Returning the S-arithmetic group.'
-                if quit_when_done:
-                    magma.quit()
-                return G
-            except AssertionError as e:
-                print 'Assertion occurred when constructing homology cycle. Returning the S-arithmetic group.'
-                print e
-                if quit_when_done:
-                    magma.quit()
-                return G
+            while True:
+                try:
+                    cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,outfile = outfile)
+                    break
+                except PrecisionError:
+                    working_prec *= 2
+                    verbose('Encountered precision error, trying with higher precision (= %s)'%working_prec)
+                except ValueError:
+                    print 'ValueError occurred when constructing homology cycle. Returning the S-arithmetic group.'
+                    if quit_when_done:
+                        magma.quit()
+                    return G
+                except AssertionError as e:
+                    print 'Assertion occurred when constructing homology cycle. Returning the S-arithmetic group.'
+                    print e
+                    if quit_when_done:
+                        magma.quit()
+                    return G
             smoothen_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,smoothen_constant),outfile)
             fwrite('exponent = %s'%nn,outfile)
@@ -157,7 +187,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap 
             Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar,Ename = Ename)
             # Integration with moments
             tot_time = walltime()
-            J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec,parallelize = parallelize,twist = twist,progress_bar = progress_bar)
+            J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec,parallelize = parallelize,twist = True,progress_bar = progress_bar)
             verbose('integration tot_time = %s'%walltime(tot_time))
             if use_sage_db:
                 G.save_to_db()
@@ -175,10 +205,9 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap 
             v0 = K.hom([r0+r1*Cp.gen()])
 
             # Optimal embeddings of level one
-            if Wlist is None:
-                print "Computing optimal embeddings of level one..."
-                Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor)
-                print "Found %s such embeddings."%len(Wlist)
+            print "Computing optimal embeddings of level one..."
+            Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor)
+            print "Found %s such embeddings."%len(Wlist)
             if idx_embedding is not None:
                 if idx_embedding >= len(Wlist):
                     print 'There are not enough embeddings. Taking the index modulo %s'%len(Wlist)
