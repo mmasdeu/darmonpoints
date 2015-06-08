@@ -362,7 +362,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
 
     tt = -xx/yy
     if tt.valuation(p) <= 0:
-        raise  ValueError , "The point must lie in the formal group."
+        raise ValueError, "The point must lie in the formal group (valuation = %s should be positive)."%tt.valuation(p)
 
     eqhat = Eq.formal()
     eqlog = eqhat.log(prec + 3)
@@ -765,12 +765,13 @@ def get_heegner_params(p,E,beta):
 def _get_heegner_params_numberfield(P,N,beta):
     F = N.number_field()
     x = PolynomialRing(F,names = 'x').gen()
-    K = F.extension(x**2-beta,names = 'b')
+    K = F.extension(x*x-beta,names = 'b')
     if not P.divides(N):
         raise ValueError,'p (=%s) must divide conductor (=%s)'%(P,N)
     PK = K.ideal(P)
-    if PK.relative_ramification_index() > 1 or not PK.is_prime():
+    if len(PK.factor()) > 1:
         raise ValueError,'p (=%s) must be inert in K (=Q(sqrt{%s}))'%(P,beta)
+    PK = PK.factor()[0] #    if PK.relative_ramification_index() > 1 or not PK.is_prime():
     N1 = N/P
     if P.divides(N1):
         raise ValueError,'p (=%s) must exactly divide the conductor (=%s)'%(p,N)
@@ -779,12 +780,15 @@ def _get_heegner_params_numberfield(P,N,beta):
     num_inert_primes = 0
     for ell,r in N1.factor():
         LK = K.ideal(ell)
-        assert LK.relative_ramification_index() == 1
-        if LK.is_prime(): # inert
-            if r != 1:
-                raise ValueError,'The inert prime l = %s divides too much the conductor.'%ell
-            num_inert_primes += 1
-            DB *= ell
+        LKfact = LK.factor()
+        # assert LK.relative_ramification_index() == 1
+        if len(LKfact) == 1: # inert or ramified
+            if LKfact[0][1] == 1: # inert
+                num_inert_primes += 1
+                DB *= ell**1
+            else: # ramified
+                assert r == 1
+                Np *= ell
         else:
             Np *= ell**r
     assert N == P * DB * Np
@@ -882,7 +886,14 @@ def find_the_unit_of(F,K):
     GK = K.unit_group()
     OK = K.maximal_order()
     for uK in GK.fundamental_units():
-        is_square,rootNuK = uK.norm(F).is_square(root=True)
+        try:
+            is_square,rootNuK = uK.norm(F).is_square(root = True)
+        except TypeError:
+            is_square = uK.norm(F).is_square()
+            if is_square:
+                rootNuK = uK.norm(F).sqrt()
+            else:
+                rootNuK = None
         if uK not in F:
             unit_not_in_F = uK
         if is_square and uK not in F:
@@ -929,7 +940,7 @@ def sage_F_ideal_to_magma(F_magma,x):
     return sage_F_elt_to_magma(F_magma,gens[0])*Zm + sage_F_elt_to_magma(F_magma,gens[1])*Zm
 
 def magma_F_elt_to_sage(F_sage,x,magma):
-    if F_sage.degree() > 1:
+    if F_sage != QQ:
         return F_sage(sage_eval(magma.eval('[%s[i] : i in [1..%s]]'%(x.name(),F_sage.degree()))))
     else:
         return F_sage(sage_eval(magma.eval('%s'%x.name())))
@@ -1333,15 +1344,15 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
             zetaf = F.zeta_function(prec)(2)
         else:
             zetaf = zeta
-        M = F.ideal(M)
     else:
         from sage.functions.transcendental import Function_zeta
         if zeta is None:
             zetaf = Function_zeta()(RealField(prec)(2))
         else:
             zetaf = zeta
-        M = ZZ(M)
-    if n > 1:
+
+    if F != QQ:
+        M = F.ideal(M)
         Phi = QQ(D.norm().abs())
         for P,_ in D.factor():
             np = P.norm()
@@ -1351,6 +1362,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
             np = QQ(P.norm())
             Psi *= np**(ZZ(e)-1) * (np + 1)
     else:
+        M = ZZ(M)
         Phi = ZZ(D)
         for np,_ in D.factor():
             Phi *= QQ(1)-QQ(1)/np
@@ -1359,7 +1371,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
             Psi *= np**(ZZ(e)-1) * (np + 1)
     RR = RealField(prec)
     pi = RR(pi)
-    covol =  (RR(disc).abs()**(3/2) * zetaf * Phi)/((4 * pi**2)**(n-1))
+    covol =  (RR(disc).abs()**(3/2) * zetaf * Phi)/((4 * pi**2)**(F.degree()-1))
     index = RR(Psi)
     indexunits = 1 # There is a factor missing here, due to units.
     return covol * index / indexunits
