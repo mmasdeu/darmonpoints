@@ -128,7 +128,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap 
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             try:
-                cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,hecke_smoothen = True,outfile = outfile)
+                cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,outfile = outfile)
             except ValueError:
                 print 'ValueError occurred when constructing homology cycle. Returning the S-arithmetic group.'
                 if quit_when_done:
