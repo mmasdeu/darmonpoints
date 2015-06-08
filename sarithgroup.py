@@ -79,10 +79,11 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
 
         if grouptype is None:
             if base == QQ:
-                if discriminant == 1:
-                    grouptype = 'SL2'
-                else:
-                    grouptype = 'PSL2'
+                grouptype = 'PSL2'
+                # if discriminant == 1:
+                #     grouptype = 'SL2'
+                # else:
+                #     grouptype = 'PSL2'
             else:
                 grouptype = 'PGL2'
 
@@ -134,7 +135,7 @@ class BigArithGroup_class(AlgebraicGroup):
             verbose('Setting Magma seed to %s'%seed)
             self.magma.eval('SetSeed(%s)'%seed)
         self.F = base
-        if self.F.degree() > 1:
+        if self.F != QQ:
             Fideal = self.F.maximal_order().ideal
             self.ideal_p = Fideal(p)
             self.norm_p = ZZ(p.norm())
@@ -169,8 +170,10 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,info_magma = self.Gpn,grouptype = grouptype,magma = magma,timeout = timeout)
         self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
-
-        fwrite('B = Q<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gn.B.gens()[0]**2,self.Gn.B.gens()[1]**2),outfile)
+        if hasattr(self.Gn.B,'is_division_algebra'):
+            fwrite('B = F<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gn.B.gens()[0]**2,self.Gn.B.gens()[1]**2),outfile)
+        else:
+            fwrite('B = M_2(F)',outfile)
         try:
             basis_data_1 = list(self.Gn.Obasis)
             basis_data_p = list(self.Gpn.Obasis)
@@ -184,6 +187,42 @@ class BigArithGroup_class(AlgebraicGroup):
         self.get_embedding(200)
         #self.wpold = self.wp()
         # self.get_Up_reps()
+
+        # Add data corresponding to the S-arithmetic group
+        if False: #not hasattr(self.Gn.B,'is_division_algebra'):
+            try:
+                pgen = self.ideal_p.gens_reduced()[0]
+                Ngen = self.level.gens_reduced()[0]
+            except AttributeError:
+                pgen = self.ideal_p
+                Ngen = self.level
+            try:
+                u = Matrix(QQ,2,2,[pgen,0,0,pgen**-1])
+                idx = len(self.Gn.Ugens)
+                self.Gn._gens.append(self.Gn.element_class(self.Gn,quaternion_rep = self.Gn.B([pgen,0,0,pgen**-1]), word_rep = [(idx,1)],check = False))
+                for i,g in enumerate(self.Gn.Ugens):
+                    k = 1
+                    g1 = g
+                    while True:
+                        try:
+                            conj = self.Gn(u * g1 * u**-1)
+                            break
+                        except (ValueError,TypeError): pass
+                        k += 1
+                        g1 *= g
+                    wd = self.Gn.get_word_rep(conj.quaternion_rep)
+                    print 'newrel = %s'%(wd + [(idx,1),(i,-k),(idx,-1)])
+                    self.Gn._relation_words.append(wd + [(idx,1),(i,-k),(idx,-1)])
+                self.Gn.Ugens.append(u)
+                assert self.Gn.Ugens[idx] == u
+            except AttributeError:
+                pass
+            # Re-define the (abelian) relation matrix for Gn
+            self.Gn._relation_matrix = matrix(ZZ,len(self.Gn.get_relation_words()),len(self.Gn.gens()),0)
+            for i,rel in enumerate(self.Gn.get_relation_words()):
+                for j,k in rel:
+                    self.Gn._relation_matrix[i,j] += k
+
         verbose('Done initializing arithmetic groups')
         self.Gpn.get_Up_reps = self.get_Up_reps
 
@@ -204,8 +243,11 @@ class BigArithGroup_class(AlgebraicGroup):
         return self.p
 
     def base_ring_local_embedding(self,prec):
-        phi = self.local_splitting(prec)
-        return self._F_to_local
+        if self.F == QQ:
+            return lambda x:x
+        else:
+            self.local_splitting(prec)
+            return self._F_to_local
 
     def _compute_padic_splitting(self,prec):
         verbose('Entering compute_padic_splitting')
@@ -303,7 +345,8 @@ class BigArithGroup_class(AlgebraicGroup):
                     if is_in_Gamma0loc(tmp, det_condition = False):
                         reps[i] = set_immutable(elt)
                         del matrices[idx]
-                        verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
+                        update_progress(float((self.p+1-len(matrices)))/float(self.p+1),'Getting BT representatives (%s iterations)'%(n_iters))
+                        # verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
                         if len(matrices) == 0:
                             return reps
                         break
@@ -564,7 +607,7 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, gro
             raise NotImplementedError("Timeout not implemented for rational base yet")
         discriminant = ZZ(discriminant)
         if discriminant == 1:
-            return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype)
+            return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype, magma = magma)
         else:
             if magma is None:
                 raise ValueError('Should specify magma session')

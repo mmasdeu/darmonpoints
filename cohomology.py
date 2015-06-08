@@ -608,6 +608,10 @@ class CohomologyGroup(Parent):
         except AttributeError:
             N = ZZ(discnorm)
 
+        if F == QQ:
+            x = QQ['x'].gen()
+            F = NumberField(x,names='a')
+            E = E.change_ring(F)
 
         def getap(q):
             if F == QQ:
@@ -616,9 +620,6 @@ class CohomologyGroup(Parent):
                 Q = F.ideal(q).factor()[0][0]
                 return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
 
-        if F == QQ:
-            x = QQ['x'].gen()
-            F = NumberField(x,names='a')
         q = ZZ(1)
         g0 = None
         while K.dimension() > 1:

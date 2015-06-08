@@ -110,11 +110,13 @@ class ArithGroupElement(MultiplicativeGroupElement):
     def __cmp__(self,right):
         selfquatrep = self.quaternion_rep
         rightquatrep = right.quaternion_rep
+        if 'P' not in self.parent()._grouptype:
+            return selfquatrep.__cmp__(rightquatrep)
         tmp = selfquatrep/rightquatrep
         try:
             tmp = self.parent().F(tmp)
         except TypeError:
-            return 0
+            return 1
         if not tmp.is_integral():
             return -1
         elif not (1/tmp).is_integral():

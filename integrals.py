@@ -249,7 +249,7 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
     return res
 
 def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
-    verbose('Integral %s/%s...'%(counter,total_counter))
+    # verbose('Integral %s/%s...'%(counter,total_counter))
     HOC = hc.parent()
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
@@ -262,7 +262,7 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = multiplicative)
 
 def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
-    verbose('Integral %s/%s...'%(counter,total_counter))
+    # verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
     HOC = hc.parent()
     if prec is None:
@@ -276,7 +276,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     resmul = ZZ(1)
     edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
     while len(edgelist) > 0:
-        verbose('Remaining %s edges'%len(edgelist))
+        # verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
         ii = 0
         for parity, edge, wt in edgelist:
@@ -329,7 +329,5 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
         edgelist = newedgelist
     if multiplicative:
         val =  resmul.valuation()
-        if val != 0:
-            verbose('val = %s'%val)
         resmul = p**val * K.teichmuller(p**(-val)*resmul)
     return resmul, resadd

@@ -2,7 +2,7 @@
 ### Stark-Heegner points for quaternion algebras                         #
 ##########################################################################
 
-def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,parallelize = False,Wlist = None,twist = True, progress_bar = True, magma = None, Up_method = None, ramification_at_infinity = None, quaternionic = None, cohomological = True):
+def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap = 1,outfile = None,use_ps_dists = None,algorithm = None,idx_orientation = -1,magma_seed = None,use_magma = False, use_sage_db = False,idx_embedding = 0, input_data = None,parallelize = False,Wlist = None,twist = True, progress_bar = True, magma = None, Up_method = None, ramification_at_infinity = None, quaternionic = None, cohomological = None):
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
     from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J
     from sarithgroup import BigArithGroup
@@ -32,6 +32,7 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap 
     DB,Np = get_heegner_params(P,E,beta)
     if quaternionic is None:
         quaternionic = ( DB != 1 )
+        cohomological = quaternionic
     if quaternionic and not cohomological:
         raise ValueError("Need cohomological algorithm when dealing with quaternions")
     if use_ps_dists is None:
@@ -147,7 +148,11 @@ def darmon_point(P,E,beta,prec,working_prec = None,sign_at_infinity = 1,sign_ap 
             if hasattr(E,'ap'):
                 sign_ap = E.ap(P)
             else:
-                sign_ap = ZZ(P.norm() + 1 - E.reduction(P).count_points())
+                try:
+                    sign_ap = ZZ(P.norm() + 1 - E.reduction(P).count_points())
+                except ValueError:
+                    from sage.schemes.plane_curves.constructor import Curve
+                    sign_ap = ZZ(P.norm() + 1 - Curve(E).change_ring(P.residue_field()).count_points(1)[0])
 
             Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar,Ename = Ename)
             # Integration with moments
