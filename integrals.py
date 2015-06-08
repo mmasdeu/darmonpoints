@@ -131,54 +131,9 @@ def double_integral(Phi,tau1,tau2,r,s):
          i2 = double_integral(Phi,tau1,tau2,rr,[1,0])
          return i1*i2
    else:
-      i1= double_integral(Phi,tau1,tau2,r,[1,0])
+      i1 = double_integral(Phi,tau1,tau2,r,[1,0])
       i2 = double_integral(Phi,tau1,tau2,s,[1,0])
       return i1/i2
-
-
-##----------------------------------------------------------------------------
-##  indef_integral(tau,r,s)
-##
-## Input:
-##    tau:       Elements of the ``standard affinoid" in H_p consisting
-##               of elements in PP_1(C_p) whose natural image in
-##               P_1(F_p-bar) does not belong to P_1(F_p).
-##    r,s:       Elements of P_1(Q). The cusp r=a/b is
-##               represented in the form r=[a,b], with a and b relatively
-##               prime integers, and b>=0. By convention infty=[1,0].
-##    omega:     The modular form on Gamma_0(p), represented as above.
-##
-## Output:
-##    The indefinite ``multiplicative double integral" defined in [Da].
-##----------------------------------------------------------
-def indef_integral(Phi,tau,r,s  = None,limits = None):
-    p = Phi._map._codomain().parent().base_ring().prime()
-    level = ZZ(Phi._map._manin.level()/p)
-    I = 1
-    if limits is None:
-        g,y,mx = xgcd(r[0],r[1])
-        gtau = matrix(ZZ,2,2,[r[0],-mx/g,r[1],y/g])
-        assert gtau.determinant() == 1
-        Vr = find_limits(tau,gtau,level)
-        g,y,mx = xgcd(s[0],s[1])
-        gtau = matrix(ZZ,2,2,[s[0],-mx/g,s[1],y/g])
-        assert gtau.determinant() == 1
-        Vs = find_limits(tau,gtau,level)
-    else:
-        assert s is None
-        Vr = limits
-        Vs = []
-    n_evals = sum((num_evals(t1,t2) for t1,t2 in Vr+Vs))
-    verbose('Will perform a total of %s evaluations...'%n_evals)
-    for t1,t2 in Vr:
-        tmp = double_integral(Phi,t1,t2,[0,1],[1,0])
-        I *= tmp
-    for t1,t2 in Vs:
-        tmp = double_integral(Phi,t1,t2,[0,1],[1,0])
-        I /= tmp
-    return I
-
-
 
 r'''
 Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
@@ -327,15 +282,18 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
         for parity, edge, wt in edgelist:
             ii += 1
             rev, h = edge
-            a,b,c,d = G.embed(h,prec).apply_map(K).list()
+            a,b,c,d = [K(o) for o in G.embed(h,prec).list()]
             try:
                 c0 = K.one()
                 pol = R.zero()
                 for P,n in divisor_list:
-                    hp0 = b + a*P
-                    hp1 = d + c*P
-                    if hp1.valuation() <= hp0.valuation():
-                        raise ValueError
+                    if P == Infinity:
+                        continue
+                    else:
+                        hp0 = b + a*P
+                        hp1 = d + c*P
+                        if hp1.valuation() <= hp0.valuation():
+                            raise ValueError
                     x = hp1/hp0
                     v = [K.zero(),x]
                     xpow = x
