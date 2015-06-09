@@ -333,6 +333,7 @@ def find_abelianization(F,D,level):
 
 @parallel
 def find_candidates(data,Nrange,max_P_norm,max_F_disc,max_waiting_time,outfile):
+    from util import fwrite, enumerate_words
     sys.setrecursionlimit(10**6)
     x = QQ['x'].gen()
     fwrite('data = [\\',outfile)
