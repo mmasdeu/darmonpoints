@@ -314,6 +314,7 @@ data = [\
 def find_abelianization(F,D,level):
     from sarithgroup import ArithGroup
     from sage.interfaces.magma import Magma
+    from util import quaternion_algebra_invariants_from_ramification
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
     except NameError:
@@ -325,7 +326,7 @@ def find_abelianization(F,D,level):
 
     sys.setrecursionlimit(10**6)
 
-    abtuple = quaternion_algebra_from_discriminant(F,D,[-1 for o in F.real_embeddings()]).invariants()
+    abtuple = quaternion_algebra_invariants_from_ramification(F,D,F.real_places())
     G = ArithGroup(F,D,abtuple,level = level,magma = magma, grouptype = 'PGL2')
     ngens = len(G.abelianization().free_gens())
     return ngens
