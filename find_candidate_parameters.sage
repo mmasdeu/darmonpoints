@@ -325,8 +325,14 @@ def find_abelianization(F,D,level):
     magma.attach_spec(page_path)
 
     sys.setrecursionlimit(10**6)
+    places_prec = 100
+    while True:
+        try:
+            abtuple = quaternion_algebra_invariants_from_ramification(F,D,F.real_embeddings(places_prec))
+            break
+        except ValueError:
+            places_prec *= 2
 
-    abtuple = quaternion_algebra_invariants_from_ramification(F,D,F.real_places())
     G = ArithGroup(F,D,abtuple,level = level,magma = magma, grouptype = 'PGL2')
     ngens = len(G.abelianization().free_gens())
     return ngens
