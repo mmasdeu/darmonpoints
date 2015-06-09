@@ -188,40 +188,37 @@ class BigArithGroup_class(AlgebraicGroup):
         #self.wpold = self.wp()
         # self.get_Up_reps()
 
-        # Add data corresponding to the S-arithmetic group
-        if False: #not hasattr(self.Gn.B,'is_division_algebra'):
-            try:
-                pgen = self.ideal_p.gens_reduced()[0]
-                Ngen = self.level.gens_reduced()[0]
-            except AttributeError:
-                pgen = self.ideal_p
-                Ngen = self.level
-            try:
-                u = Matrix(QQ,2,2,[pgen,0,0,pgen**-1])
-                idx = len(self.Gn.Ugens)
-                self.Gn._gens.append(self.Gn.element_class(self.Gn,quaternion_rep = self.Gn.B([pgen,0,0,pgen**-1]), word_rep = [(idx,1)],check = False))
-                for i,g in enumerate(self.Gn.Ugens):
-                    k = 1
-                    g1 = g
-                    while True:
-                        try:
-                            conj = self.Gn(u * g1 * u**-1)
-                            break
-                        except (ValueError,TypeError): pass
-                        k += 1
-                        g1 *= g
-                    wd = self.Gn.get_word_rep(conj.quaternion_rep)
-                    print 'newrel = %s'%(wd + [(idx,1),(i,-k),(idx,-1)])
-                    self.Gn._relation_words.append(wd + [(idx,1),(i,-k),(idx,-1)])
-                self.Gn.Ugens.append(u)
-                assert self.Gn.Ugens[idx] == u
-            except AttributeError:
-                pass
-            # Re-define the (abelian) relation matrix for Gn
-            self.Gn._relation_matrix = matrix(ZZ,len(self.Gn.get_relation_words()),len(self.Gn.gens()),0)
-            for i,rel in enumerate(self.Gn.get_relation_words()):
-                for j,k in rel:
-                    self.Gn._relation_matrix[i,j] += k
+        # # Create generators and relations for the S-arithmetic group (amalgam)
+        # try:
+        #     pgen = self.ideal_p.gens_reduced()[0]
+        #     Ngen = self.level.gens_reduced()[0]
+        # except AttributeError:
+        #     pgen = self.ideal_p
+        #     Ngen = self.level
+        # u = Matrix(QQ,2,2,[pgen,0,0,pgen**-1])
+        # idx = len(self.Gn.Ugens)
+        # self.Gn._gens.append(self.Gn.element_class(self.Gn,quaternion_rep = self.Gn.B([pgen,0,0,pgen**-1]), word_rep = [(idx,1)],check = False))
+        # for i,g in enumerate(self.Gn.Ugens):
+        #     k = 1
+        #     g1 = g
+        #     while True:
+        #         try:
+        #             conj = self.Gn(u * g1 * u**-1)
+        #             break
+        #         except (ValueError,TypeError): pass
+        #         k += 1
+        #         g1 *= g
+        #     wd = self.Gn.get_word_rep(conj.quaternion_rep)
+        #     print 'newrel = %s'%(wd + [(idx,1),(i,-k),(idx,-1)])
+        #     self.Gn._relation_words.append(wd + [(idx,1),(i,-k),(idx,-1)])
+        # self.Gn.Ugens.append(u)
+        # assert self.Gn.Ugens[idx] == u
+
+        # # Define the (abelian) relation matrix for self
+        # self._relation_matrix = matrix(ZZ,len(self.Gn.get_relation_words()),len(self.Gn.gens()),0)
+        # for i,rel in enumerate(self.Gn.get_relation_words()):
+        #     for j,k in rel:
+        #         self.Gn._relation_matrix[i,j] += k
 
         verbose('Done initializing arithmetic groups')
         self.Gpn.get_Up_reps = self.get_Up_reps
