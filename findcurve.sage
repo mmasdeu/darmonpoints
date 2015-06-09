@@ -2,17 +2,39 @@
 #####     Curve finding           ####
 ######################################
 
-
-def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,sign_ap = 1, outfile = None,use_ps_dists = None,use_sage_db = False,magma_seed = None, parallelize = False,ramification_at_infinity = None,kill_torsion = True,grouptype = None, progress_bar = True,magma = None, hecke_bound = 3,Up_method = None,return_all = False,initial_data = None,check_conductor = True,timeout = 0):
+def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, initial_data = None, **kwargs):
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
-    import os,datetime
-
+    from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, ConfigSectionMap, Bunch
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
-
     from integrals import integrate_H1,double_integral_zero_infty
+    import os, datetime, ConfigParser
+
+    config = ConfigParser.ConfigParser()
+    config.read('config.ini')
+    param_dict = ConfigSectionMap(config, 'General')
+    param_dict.update(ConfigSectionMap(config, 'FindCurve'))
+    param_dict.update(kwargs)
+    param = Bunch(**param_dict)
+
+    # Get general parameters
+    outfile = param.outfile
+    use_ps_dists = param.use_ps_dists
+    use_sage_db = param.use_sage_db
+    magma_seed = param.magma_seed
+    parallelize = param.parallelize
+    Up_method = param.up_method
+    use_magma = param.use_magma
+    progress_bar = param.progress_bar
+    sign_at_infinity = param.sign_at_infinity
+
+    # Get find_curve specific parameters
+    grouptype = param.grouptype
+    hecke_bound = param.hecke_bound
+    timeout = param.timeout
+    check_conductor = param.check_conductor
+
     if initial_data is None:
         try:
             page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
@@ -58,8 +80,8 @@ def find_curve(P,DB,NE,prec,working_prec = None,sign_at_infinity = 1,sign_ap = 1
     if not p.is_prime():
         raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
 
-    if working_prec is None:
-        working_prec = max([2 * prec + 10,30])
+
+    working_prec = max([2 * prec + 10,30])
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)

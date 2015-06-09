@@ -313,18 +313,20 @@ data = [\
 @fork(timeout = max_waiting_time)
 def find_abelianization(F,D,level):
     from sarithgroup import ArithGroup
+    from sage.interfaces.magma import Magma
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
     except NameError:
         ROOT = os.getcwd()
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
 
+    magma = Magma()
     magma.attach_spec(page_path)
 
     sys.setrecursionlimit(10**6)
 
     abtuple = quaternion_algebra_from_discriminant(F,D,[-1 for o in F.real_embeddings()]).invariants()
-    G = ArithGroup(F,D,abtuple,level = level)
+    G = ArithGroup(F,D,abtuple,level = level,magma = magma, grouptype = 'PGL2')
     ngens = len(G.abelianization().free_gens())
     return ngens
 

@@ -1541,3 +1541,20 @@ def print_table_latex(self, header_string = None):
         s += " \\\\" + frame_str + "\n"
     s += "\\end{tabular}"
     return s
+
+class Bunch:
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+    def update(self, **v):
+        self.__dict__.update(**v)
+
+def ConfigSectionMap(Config, section):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = sage_eval(Config.get(section, option))
+        except NameError:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return dict1
