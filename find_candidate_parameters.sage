@@ -388,7 +388,7 @@ def find_candidates(data,Nrange,max_P_norm,max_F_disc,max_waiting_time,outfile):
                             ngens = ZZ(find_abelianization(F,D,P*Np))
                             if ngens > 0:
                                 print 'Found, p = %s, F = %s, length %s'%(P.norm(),F,ngens)
-                                fwrite('[%s,%s,%s,%s,%s,%s],\\'%(F.defining_polynomial(),P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],P.norm(),(P*D*Np).norm()),outfile)
+                                fwrite('[%s,%s,%s,%s,%s,%s,%s],\\'%(F.defining_polynomial(),P.gens_reduced()[0],D.gens_reduced()[0],Np.gens_reduced()[0],P.norm(),(P*D*Np).norm(),ngens),outfile)
 
                         except TypeError:
                             print 'Skipping, Magma takes too long (p = %s, F = %s, NE = %s)'%(P.norm(),F,NE.norm())
