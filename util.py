@@ -145,9 +145,9 @@ def find_center(p,level,t1,t2):
         same_ball = False
         new_dir = None
         for g in new_dirs:
-            a,b,c,d = (g**(-1)).list()
+            a,b,c,d = g.adjoint().list()
             # Check whether t1 and t2 are in the open given by g
-            if all([(a*t + b).valuation() >= (c*t + d).valuation() for t in [t1,t2]]):
+            if all([(a * t + b).valuation() >= (c * t + d).valuation() for t in [t1,t2]]):
                 new_dir = g
                 break
         if new_dir is None:
@@ -252,7 +252,7 @@ def get_j_invariant(qE,prec):
     j = ((E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7))
     return j(qE)
 
-def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
+def getcoords(E, u, prec = 20, R = None, qE = None, qEpows = None, C = None):
     if R is None:
         R = u.parent()
         u = R(u)
@@ -276,8 +276,11 @@ def getcoords(E,u,prec=20,R = None,qE = None,qEpows = None,C = None):
     qpow = -(u.valuation()/qEval).floor()
 
     if qEpows is None:
-        qEpows =[R(1)]
-        for i in range(max([precn,precp + 1,qpow.abs()])):
+        qEpows = [ R(1) ]
+        for i in range(len(qEpows) - max([precn,precp + 1,qpow.abs()])):
+            qEpows.append(qE * qEpows[-1])
+    if len(qEpows) < qpow.abs() + 1:
+        for i in range(qpow.abs() + 1 - len(qEpows)):
             qEpows.append(qE * qEpows[-1])
 
     # Normalize the period by appropriate powers of qE
@@ -708,10 +711,10 @@ def cantor_diagonal(iter1,iter2):
 
 def act_flt_in_disc(g,x,P):
     Pconj = P.conjugate()
-    z = (Pconj*x - P)/(x-1)
+    z = (Pconj * x - P) / (x-1)
     a,b,c,d = g.list()
-    z1 = (a*z + b)/(c*z + d)
-    return (z1 - P)/(z1 - Pconj)
+    z1 = (a * z + b) / (c * z + d)
+    return (z1 - P) / (z1 - Pconj)
 
 def translate_into_twosided_list(V):
     vp,vm = V
@@ -1548,12 +1551,12 @@ class Bunch:
     def update(self, **v):
         self.__dict__.update(**v)
 
-def ConfigSectionMap(Config, section):
+def config_section_map(config, section):
     dict1 = {}
-    options = Config.options(section)
+    options = config.options(section)
     for option in options:
         try:
-            dict1[option] = sage_eval(Config.get(section, option))
+            dict1[option] = sage_eval(config.get(section, option))
         except NameError:
             print("exception on %s!" % option)
             dict1[option] = None

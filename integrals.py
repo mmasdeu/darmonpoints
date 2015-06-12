@@ -79,7 +79,8 @@ def double_integral_zero_infty(Phi,tau1,tau2):
                     except OverflowError:
                         print a,b,c,d
                         raise OverflowError,'Matrix too large?'
-                    mu_e0 = ZZ(phimap.moment(0).rational_reconstruction())
+                    # mu_e0 = ZZ(phimap.moment(0).rational_reconstruction())
+                    mu_e0 = ZZ(Phi._liftee._map(M2Z([b,d,a,c])).moment(0))
                     mu_e = [mu_e0] + [phimap.moment(o).lift() for o in range(1,len(V))]
                     resadd += sum(starmap(mul,izip(V,mu_e)))
                     resmul *= val**mu_e0
@@ -140,7 +141,7 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0,prec = None,parallelize = False,twist=False,progress_bar = False,multiplicative = True):
+def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',prec = None,parallelize = False,twist=False,progress_bar = False,multiplicative = True):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
@@ -160,9 +161,11 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',smoothen_prime = 0
     resadd = Cp(0)
     for g,divisor in cycle.get_data():
         jj += 1
-        if divisor.degree() != 0:
-            raise ValueError,'Divisor must be of degree 0'
         gq = g.quaternion_rep
+        if divisor.degree() != 0:
+            verbose('Divisor must be of degree 0. Now it is of degree %s. And g = %s.'%(divisor.degree(),gq))
+            continue
+            raise ValueError('Divisor must be of degree 0. Now it is of degree %s. And g = %s.'%(divisor.degree(),gq))
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
             gq = G.wp() * gq * G.wp()**-1

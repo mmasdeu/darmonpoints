@@ -2,9 +2,10 @@
 ### Stark-Heegner points for quaternion algebras                         #
 ##########################################################################
 
-def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data = None, magma = None, **kwargs):
+def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data = None, magma = None, working_prec = None, **kwargs):
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
-    from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,ConfigSectionMap
+    from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,config_section_map, Bunch
+    from sage.rings.padics.precision_error import PrecisionError
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
     from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, CohomologyGroup
@@ -14,8 +15,8 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
 
     config = ConfigParser.ConfigParser()
     config.read('config.ini')
-    param_dict = ConfigSectionMap(config, 'General')
-    param_dict.update(ConfigSectionMap(config, 'DarmonPoint'))
+    param_dict = config_section_map(config, 'General')
+    param_dict.update(config_section_map(config, 'DarmonPoint'))
     param_dict.update(kwargs)
     param = Bunch(**param_dict)
 
@@ -37,7 +38,8 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     quaternionic = param.quaternionic
     cohomological = param.cohomological
 
-    working_prec = max([2 * prec + 10,30])
+    if working_prec is None:
+        working_prec = max([2 * prec + 10, 30])
 
     try:
         page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
@@ -60,6 +62,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     DB,Np = get_heegner_params(P,E,beta)
     if quaternionic is None:
         quaternionic = ( DB != 1 )
+    if cohomological is None:
         cohomological = quaternionic
     if quaternionic and not cohomological:
         raise ValueError("Need cohomological algorithm when dealing with quaternions")
@@ -148,14 +151,14 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             if F == QQ:
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
-                abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity)
+                abtuple = quaternion_algebra_invariants_from_ramification(F, DB, ramification_at_infinity)
 
             G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             while True:
                 try:
-                    cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,outfile = outfile)
+                    cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,outfile = outfile, elliptic_curve = E)
                     break
                 except PrecisionError:
                     working_prec *= 2
@@ -171,10 +174,10 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                     if quit_when_done:
                         magma.quit()
                     return G
-            smoothen_constant = -ZZ(E.reduction(ell).count_points())
-            fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,smoothen_constant),outfile)
+            eisenstein_constant = -ZZ(E.reduction(ell).count_points())
+            fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,eisenstein_constant),outfile)
             fwrite('exponent = %s'%nn,outfile)
-            phiE = CohomologyGroup(G.small_group()).get_cocycle_from_elliptic_curve(E,sign = sign_at_infinity)
+            phiE = CohomologyGroup(G.small_group()).get_cocycle_from_elliptic_curve(E, sign = sign_at_infinity)
             if hasattr(E,'ap'):
                 sign_ap = E.ap(P)
             else:
@@ -193,7 +196,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                 G.save_to_db()
         else: # not cohomological
             nn = 1
-            smoothen_constant = 1
+            eisenstein_constant = 1
             if algorithm is None:
                 if Np == 1:
                     algorithm = 'darmon_pollack'
@@ -201,8 +204,9 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                     algorithm = 'guitart_masdeu'
             w = K.maximal_order().ring_generators()[0]
             r0,r1 = w.coordinates_in_terms_of_powers()(K.gen())
-            Cp = Qp(p,working_prec).extension(w.minpoly(),names = 'g')
-            v0 = K.hom([r0+r1*Cp.gen()])
+            QQp = Qp(p,working_prec)
+            Cp = QQp.extension(w.minpoly().change_ring(QQp),names = 'g')
+            v0 = K.hom([r0 + r1 * Cp.gen()])
 
             # Optimal embeddings of level one
             print "Computing optimal embeddings of level one..."
@@ -254,10 +258,11 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         twopowlist = [4, 3, 2, 1, 1/2, 3/2, 1/3, 2/3, 1/4, 3/4, 5/2, 4/3]
     else:
         local_embedding = Qp(p,working_prec)
-        twopowlist = [2, 1, 1/2]
+        twopowlist = [4, 3, 2, 1, 1/2, 3/2, 1/3, 2/3, 1/4, 3/4, 5/2, 4/3]
+        # twopowlist = [2, 1, 1/2] # DEBUG
 
 
-    known_multiple = (smoothen_constant*nn)
+    known_multiple = eisenstein_constant * nn
     while known_multiple % p == 0:
         known_multiple = ZZ(known_multiple / p)
 
