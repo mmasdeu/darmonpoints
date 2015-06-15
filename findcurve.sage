@@ -2,7 +2,7 @@
 #####     Curve finding           ####
 ######################################
 
-def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, initial_data = None, **kwargs):
+def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
     from sarithgroup import BigArithGroup
@@ -91,7 +91,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         outfile = outfile.replace('/','div')
         outfile = '/tmp/findcurve_' + outfile
 
-    if True: #F != QQ and ramification_at_infinity is None:
+    if F != QQ and ramification_at_infinity is None:
         if F.signature()[0] > 1:
             if F.signature()[1] == 1:
                 ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'
@@ -202,9 +202,9 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
             except PrecisionError:
                 working_prec  = 2 * working_prec
                 verbose('Setting working_prec to %s'%working_prec)
-            except Exception as e:
-                ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
-                break
+            # except Exception as e:
+            #     ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
+            #     break
         try:
             qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
             qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)

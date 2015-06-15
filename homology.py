@@ -471,7 +471,6 @@ class HomologyClass(ModuleElement):
             update_progress(float(QQ(counter)/QQ(len(oldvals))),'Reducing to degree zero equivalent')
         verbose('Done zero_degree_equivalent')
         ans = HH(newdict)
-        assert ans._check_cycle_condition()
         assert ans.is_degree_zero_valued()
         return ans
 
