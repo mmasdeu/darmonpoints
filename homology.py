@@ -445,7 +445,6 @@ class HomologyClass(ModuleElement):
         HH = self.parent()
         V = HH.coefficient_module()
         G = HH.group()
-        assert self._check_cycle_condition()
         oldvals = self._data.values()
         gwordlist, rel = G.calculate_weight_zero_word([(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)])
         gwordlist.append(rel)
