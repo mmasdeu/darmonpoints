@@ -20,8 +20,10 @@ import os
 from ocmodule import *
 import operator
 from sage.rings.arith import GCD
+from sage.rings.padics.precision_error import PrecisionError
 
-def construct_homology_cycle(G,D,prec,outfile = None,max_n = None):
+
+def construct_homology_cycle(G,D,prec,outfile = None,max_n = None,elliptic_curve = None):
     F = G.F
     t = PolynomialRing(F,names = 't').gen()
     K = F.extension(t*t - D,names = 'beta')
@@ -51,30 +53,47 @@ def construct_homology_cycle(G,D,prec,outfile = None,max_n = None):
     gamma, tau1 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = False)
     Div = Divisors(tau1.parent())
     H1 = Homology(G.large_group(),Div)
-
     n = 1
     D1 = Div(tau1)
-    gamman = gamma
+    ans0 = H1({gamma: D1})
+    assert ans0._check_cycle_condition()
+    ans = H1({})
     while True:
         try:
-            tmp = H1(dict([(gamman,D1)]))
-            assert tmp._check_cycle_condition()
-            tmp = tmp.zero_degree_equivalent()
-            assert tmp._check_cycle_condition()
+            ans += ans0
+            # Do hecke_smoothen to kill Eisenstein part
+            ans = ans.hecke_smoothen(q1,prec = prec)
+            assert ans._check_cycle_condition()
+            if elliptic_curve is not None:
+                a_ell = elliptic_curve.ap(q1)
+                A = G.small_group().hecke_matrix_freepart(q1)
+                f = A.minpoly().radical()
+                R = f.parent()
+                x = R.gen()
+                while True:
+                    try:
+                        f = R(f/(x-a_ell))
+                    except TypeError:
+                        break
+                while True:
+                    try:
+                        f = R(f/(x-(q1+1)))
+                    except TypeError:
+                        break
+                ans = ans.act_by_poly_hecke(q1,f,prec = prec)
+                verbose('Passed the check!')
+            # Find zero degree equivalent
+            ans = ans.zero_degree_equivalent(prec = prec)
             raise StopIteration
         except StopIteration:
             break
-        except ValueError:
+        except ValueError as e:
+            verbose('%s'%e)
             if max_n is not None and n > max_n:
                 raise ValueError,'Reached maximum allowed power (%s)'%max_n
             verbose('Trying with n = %s...'%n)
             n += 1
-            gamman *= gamma
-
-    # Do hecke_smoothen
-    tmp = tmp.hecke_smoothen(q1,prec = prec)
-    assert tmp._check_cycle_condition()
-    return tmp,n,q1
+    return ans, n * f(a_ell), q1
 
 def lattice_homology_cycle(G,x,prec,outfile = None,smoothen = None):
     p = G.prime()
@@ -85,8 +104,8 @@ def lattice_homology_cycle(G,x,prec,outfile = None,smoothen = None):
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
     H1 = Homology(G.large_group(),Div)
-    xi1 = H1(dict([(G.Gn(x),Div(tau1))])).zero_degree_equivalent()
-    xi2 = H1(dict([(G.Gn(wp**-1 * x * wp),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent()
+    xi1 = H1(dict([(G.Gn(x),Div(tau1))])).zero_degree_equivalent(prec = prec)
+    xi2 = H1(dict([(G.Gn(wp**-1 * x * wp),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
     if smoothen is not None:
         xi1 = xi1.hecke_smoothen(smoothen)
         xi2 = xi2.hecke_smoothen(smoothen)
@@ -121,10 +140,16 @@ class Divisors(Parent):
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)
 def _hash(x):
     try:
-        ans = [x.valuation()]
-    except AttributeError:
         return hash(x)
-    for tup in x.list()[:60]:
+    except TypeError: pass
+    try:
+        return hash(str(x))
+    except TypeError: pass
+    try:
+        ans = [x.valuation()]
+    except (AttributeError,TypeError):
+        return hash(x)
+    for tup in x.list()[:100]:
         ans.extend(tup)
     return tuple(ans)
 
@@ -149,6 +174,9 @@ class Divisor_element(ModuleElement):
         ModuleElement.__init__(self,parent)
         if data == 0:
             return
+        elif isinstance(data,Divisor_element):
+            self._data.update(data._data)
+            self._ptdict.update(data._ptdict)
         elif isinstance(data,list):
             for n,P in data:
                 if n == 0:
@@ -344,7 +372,7 @@ class Homology(Parent):
             return False
 
 class HomologyClass(ModuleElement):
-    def __init__(self, parent, data,check = False):
+    def __init__(self, parent, data, check = False):
         r'''
         Define an element of `H_1(G,V)`
             - data: a list
@@ -396,39 +424,56 @@ class HomologyClass(ModuleElement):
     def short_rep(self):
         return [(len(g.word_rep),v.degree(),v.size()) for g,v in self._data.iteritems()]
 
+    def is_degree_zero_valued(self):
+        for v in self._data.values():
+            if v.degree() != 0:
+                return False
+        return True
+
     def radius(self):
         return max([0] + [v.radius() for g,v in self._data.iteritems()])
 
-    def zero_degree_equivalent(self):
+
+    def zero_degree_equivalent(self, prec):
         r'''
         Use the relations:
             * gh|v = g|v + h|g^-1 v
             * g^a|v = g|(v + g^-1v + ... + g^-(a-1)v)
             * g^(-a)|v = - g^a|g^av
         '''
-
         verbose('Entering zero_degree_equivalent')
-        V = self.parent().coefficient_module()
-        G = self.parent().group()
+        HH = self.parent()
+        V = HH.coefficient_module()
+        G = HH.group()
+        assert self._check_cycle_condition()
+        oldvals = self._data.values()
+        gwordlist, rel = G.calculate_weight_zero_word([(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)])
+        gwordlist.append(rel)
+        oldvals.append(V(V.base_field().gen()))
+        counter = 0
+        assert len(gwordlist) == len(oldvals)
         newdict = defaultdict(V)
-        for oldg,v in self._data.iteritems():
-            gword = G.calculate_weight_zero_word(oldg)
-            verbose('len(gword) = %s'%len(gword))
-            newv = v
+        for gword, v in zip(gwordlist,oldvals):
+            newv = V(v)
             for i,a in gword:
+                oldv = V(newv)
                 g = G.gen(i)
-                oldv = newv
-                newv = (g**-a) * oldv
+                newv = (g**-a) * V(oldv) # for the next iteration
                 sign = 1
                 if a < 0:
                     a = -a
-                    oldv = (g**a) * oldv
+                    oldv = (g**a) * V(oldv)
                     sign = -1
                 for j in range(a):
-                    newdict[g] += sign * oldv
+                    newdict[g] += ZZ(sign) * oldv
                     oldv = (g**-1) * oldv
+            counter += 1
+            update_progress(float(QQ(counter)/QQ(len(oldvals))),'Reducing to degree zero equivalent')
         verbose('Done zero_degree_equivalent')
-        return HomologyClass(self.parent(),newdict)
+        ans = HH(newdict)
+        assert ans._check_cycle_condition()
+        assert ans.is_degree_zero_valued()
+        return ans
 
     def factor_into_generators(self,prec):
         r'''
@@ -448,12 +493,11 @@ class HomologyClass(ModuleElement):
                 gq = g.quaternion_rep
                 oldv = newv
                 newv = oldv.left_act_by_matrix(G.embed(gq**-a,prec))
+                sign = 1
                 if a < 0:
                     a = -a
                     oldv = oldv.left_act_by_matrix(G.embed(gq**a,prec))
                     sign = -1
-                else:
-                    sign = 1
                 for j in range(a):
                     newdict[g] += sign * oldv
                     oldv = oldv.left_act_by_matrix(G.embed(gq**-1,prec))
@@ -521,6 +565,29 @@ class HomologyClass(ModuleElement):
         except AttributeError: pass
         return self.act_by_hecke(r,prec = prec) - self.mult_by(ZZ(rnorm + 1))
 
+    def act_by_poly_hecke(self,r,f,prec = 20):
+        if f == 1:
+            return self
+        facts = f.factor()
+        if len(facts) == 1:
+            verbose('Acting by f = %s and r = %s'%(f.factor(),r))
+            x = f.parent().gen()
+            V = f.coefficients(sparse = False)
+            ans = self.mult_by(V[-1])
+            for c in reversed(V[:-1]):
+                ans = ans.act_by_hecke(r,prec = prec)
+                ans += self.mult_by(c)
+            return ans
+        else:
+            f0 = facts[0][0]
+            ans = self.act_by_poly_hecke(r,f0,prec = prec)
+            for i in range(facts[0][1]-1):
+                ans = ans.act_by_poly_hecke(r,f0,prec = prec)
+            for f0,e in facts[1:]:
+                for i in range(e):
+                    ans = ans.act_by_poly_hecke(r,f0,prec = prec)
+            return ans
+
     def __rmul__(self,a):
-        newdict = dict(((g,a*v) for g,v in self._data.iteritems())) if a != 0 else dict([])
+        newdict = {g: a * v for g,v in self._data.iteritems()} if a != 0 else {}
         return HomologyClass(self.parent(),newdict)

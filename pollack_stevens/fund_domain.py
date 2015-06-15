@@ -672,7 +672,7 @@ class ManinRelations(PSModularSymbolsDomain):
                     ## generators which satisfy a 2-torsion relation
                     twotor_index.append(r)
 
-                    gam = SN(coset_reps[r] * sig * coset_reps[r].inverse())
+                    gam = SN(coset_reps[r] * sig * coset_reps[r].adjoint())
                     ## gam is 2-torsion matrix and in Gamma_0(N).
                     ## if D is the divisor associated to coset_reps[r]
                     ## then gam * D = - D and so (1+gam)D=0.
@@ -708,7 +708,7 @@ class ManinRelations(PSModularSymbolsDomain):
                         ## generators which satisfy a 3-torsion relation
                         threetor_index.append(r)
 
-                        gam = SN(coset_reps[r] * tau * coset_reps[r].inverse())
+                        gam = SN(coset_reps[r] * tau * coset_reps[r].adjoint())
                         ## gam is 3-torsion matrix and in Gamma_0(N).
                         ## if D is the divisor associated to coset_reps[r]
                         ## then (1+gam+gam^2)D=0.
@@ -768,7 +768,7 @@ class ManinRelations(PSModularSymbolsDomain):
                                 ## A corresponds to reversing the orientation
                                 ## of the edge corr. to coset_reps[r]
 
-                                gam = SN(coset_reps[r] * A.inverse())
+                                gam = SN(coset_reps[r] * A.adjoint())
                                 ## gam is in Gamma_0(N) (by assumption of
                                 ## ending up here in this if statement)
 
@@ -1499,7 +1499,7 @@ class ManinRelations(PSModularSymbolsDomain):
                    #  B is the coset rep equivalent to A
                    B = self.equivalent_rep(A)
                    #  gaminv = B*A^(-1)
-                   gaminv = B * A.inverse()
+                   gaminv = B * A.adjoint()
                    #  The matrix gaminv * gamma is added to our list in the j-th slot
                    #  (as described above)
                    tmp = SN(gaminv * gamma)

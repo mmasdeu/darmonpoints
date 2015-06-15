@@ -4,7 +4,7 @@
 
 def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, initial_data = None, **kwargs):
     from sage.rings.padics.precision_error import PrecisionError
-    from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, ConfigSectionMap, Bunch
+    from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle,lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
@@ -13,8 +13,8 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
 
     config = ConfigParser.ConfigParser()
     config.read('config.ini')
-    param_dict = ConfigSectionMap(config, 'General')
-    param_dict.update(ConfigSectionMap(config, 'FindCurve'))
+    param_dict = config_section_map(config, 'General')
+    param_dict.update(config_section_map(config, 'FindCurve'))
     param_dict.update(kwargs)
     param = Bunch(**param_dict)
 
@@ -91,7 +91,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         outfile = outfile.replace('/','div')
         outfile = '/tmp/findcurve_' + outfile
 
-    if F != QQ and ramification_at_infinity is None:
+    if True: #F != QQ and ramification_at_infinity is None:
         if F.signature()[0] > 1:
             if F.signature()[1] == 1:
                 ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'

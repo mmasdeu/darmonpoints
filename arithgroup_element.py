@@ -59,7 +59,8 @@ class ArithGroupElement(MultiplicativeGroupElement):
                         raise ValueError('Quaternion must be of unit norm')
             if check and not parent._is_in_order(quaternion_rep):
                     raise ValueError('Quaternion (= %s) must be in order'%quaternion_rep)
-            self.quaternion_rep = set_immutable(quaternion_rep)
+            self.quaternion_rep = quaternion_rep
+            set_immutable(self.quaternion_rep)
             self.has_quaternion_rep = True
             init_data = True
         if init_data is False:
@@ -69,6 +70,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         assert self.has_quaternion_rep
         if not self.has_word_rep:
             self.word_rep = self._word_rep()
+        set_immutable(self.quaternion_rep)
         self._reduce_word()
 
     @cached_method
@@ -176,7 +178,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         g,a = self.word_rep[n]
         return self.parent().gen(g)**a
 
-    # @cached_method
+    @cached_method
     def embed(self,prec):
         return self.parent().embed(self.quaternion_rep,prec)
 
@@ -245,23 +247,3 @@ class ArithGroupElement(MultiplicativeGroupElement):
                 verbose('Leftover of %s'%tmp)
         return ans
 
-    def find_bounding_cycle_original(self,G,npow = 1):
-        r'''
-        Use recursively that:
-        - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))
-        - x^(-a) g = -a x + g + del(1|1) + del(x^(a)|(x^-a)) - del(x^(-a)|g) + del(x|(x + x^2 + ... + x^(a-1)))
-        '''
-        ans = []
-        gword = G.Gn.calculate_weight_zero_word(G.Gn(self.quaternion_rep**npow))
-        num_terms = len(gword)
-        jj = 0
-        for i,a in gword:
-            jj += 1
-            g = G.Gn.gen(i)
-            gq = g.quaternion_rep
-            ga = g**a
-            gaq = gq**a
-            ans.extend([(-1,[gaq],G.Gn(gword[jj:]))] if jj < num_terms else [])
-            ans.extend([(1,[G.Gn.B(1)],G.Gn([])),(1,[gaq**-1],ga)] if a < 0 else [])
-            ans.append((-sgn(a),[gq**j for j in range(1,abs(a))],g))
-        return ans

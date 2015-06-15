@@ -561,8 +561,9 @@ class BigArithGroup_class(AlgebraicGroup):
         good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
         ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
         if smoothen != 0:
-            hecke_reps = self.Gpn.get_hecke_reps(smoothen,use_magma = True)
-            ker = [self.smoothen(o,smoothen,hecke_reps) for o in ker]
+            ell = smoothen
+            hecke_reps = self.Gpn.get_hecke_reps(ell,use_magma = True)
+            ker = [self.smoothen(o,ell,hecke_reps) for o in ker]
         return ker
 
     def get_pseudo_orthonormal_homology(self, cocycles, smoothen = 0):
