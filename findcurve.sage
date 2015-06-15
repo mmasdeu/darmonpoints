@@ -91,7 +91,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         outfile = outfile.replace('/','div')
         outfile = '/tmp/findcurve_' + outfile
 
-    if F != QQ and ramification_at_infinity is None:
+    if True: #F != QQ and ramification_at_infinity is None:
         if F.signature()[0] > 1:
             if F.signature()[1] == 1:
                 ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'
