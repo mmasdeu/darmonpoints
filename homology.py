@@ -22,11 +22,10 @@ import operator
 from sage.rings.arith import GCD
 from sage.rings.padics.precision_error import PrecisionError
 
-
-def construct_homology_cycle(G,D,prec,outfile = None,max_n = None,elliptic_curve = None):
+def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_curve = None):
     F = G.F
-    t = PolynomialRing(F,names = 't').gen()
-    K = F.extension(t*t - D,names = 'beta')
+    t = PolynomialRing(F, names = 't').gen()
+    K = F.extension(t*t - D, names = 'beta')
     if F.degree() == 1:
         assert len(K.embeddings(RR)) == 2
     else:
@@ -95,7 +94,7 @@ def construct_homology_cycle(G,D,prec,outfile = None,max_n = None,elliptic_curve
             n += 1
     return ans, n * f(a_ell), q1
 
-def lattice_homology_cycle(G,x,prec,outfile = None,smoothen = None):
+def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
     p = G.prime()
     Cp = Qq(p**2,prec,names = 'g')
     wp = G.wp()
@@ -445,7 +444,6 @@ class HomologyClass(ModuleElement):
         HH = self.parent()
         V = HH.coefficient_module()
         G = HH.group()
-        assert self._check_cycle_condition()
         oldvals = self._data.values()
         gwordlist, rel = G.calculate_weight_zero_word([(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)])
         gwordlist.append(rel)
@@ -471,7 +469,6 @@ class HomologyClass(ModuleElement):
             update_progress(float(QQ(counter)/QQ(len(oldvals))),'Reducing to degree zero equivalent')
         verbose('Done zero_degree_equivalent')
         ans = HH(newdict)
-        assert ans._check_cycle_condition()
         assert ans.is_degree_zero_valued()
         return ans
 

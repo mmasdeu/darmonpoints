@@ -2,7 +2,7 @@
 #####     Curve finding           ####
 ######################################
 
-def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, initial_data = None, **kwargs):
+def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
     from sarithgroup import BigArithGroup
@@ -73,15 +73,14 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         if NE % (P*DB) != 0:
             raise ValueError,'Conductor (NE) should be divisible by P*DB'
 
-    Np = NE / (P*DB)
+    Np = NE / (P * DB)
     if use_ps_dists is None:
         use_ps_dists = False # More efficient our own implementation
 
     if not p.is_prime():
         raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
 
-
-    working_prec = max([2 * prec + 10,30])
+    working_prec = max([2 * prec + 10, 30])
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
@@ -91,7 +90,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         outfile = outfile.replace('/','div')
         outfile = '/tmp/findcurve_' + outfile
 
-    if True: #F != QQ and ramification_at_infinity is None:
+    if F != QQ and ramification_at_infinity is None:
         if F.signature()[0] > 1:
             if F.signature()[1] == 1:
                 ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'
@@ -107,7 +106,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
 
     if outfile is not None:
         print "Partial results will be saved in %s"%outfile
-    print "=================================================="
+    print '=' * 60
 
     if initial_data is not None:
         G,phiE = initial_data
@@ -234,8 +233,8 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
                 curve = curve.global_minimal_model()
             except AttributeError,NotImplementedError:
                 pass
-            fwrite('EllipticCurve(F, %s )'%(list(curve.a_invariants())),outfile)
-            fwrite('='*60,outfile)
+            fwrite('EllipticCurve(F, %s )'%(list(curve.a_invariants())), outfile)
+            fwrite('=' * 60, outfile)
             ret_vals.append(str(curve.a_invariants()))
     if quit_when_done:
         magma.quit()
