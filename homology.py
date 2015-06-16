@@ -22,11 +22,10 @@ import operator
 from sage.rings.arith import GCD
 from sage.rings.padics.precision_error import PrecisionError
 
-
-def construct_homology_cycle(G,D,prec,outfile = None,max_n = None,elliptic_curve = None):
+def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_curve = None):
     F = G.F
-    t = PolynomialRing(F,names = 't').gen()
-    K = F.extension(t*t - D,names = 'beta')
+    t = PolynomialRing(F, names = 't').gen()
+    K = F.extension(t*t - D, names = 'beta')
     if F.degree() == 1:
         assert len(K.embeddings(RR)) == 2
     else:
@@ -95,7 +94,7 @@ def construct_homology_cycle(G,D,prec,outfile = None,max_n = None,elliptic_curve
             n += 1
     return ans, n * f(a_ell), q1
 
-def lattice_homology_cycle(G,x,prec,outfile = None,smoothen = None):
+def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
     p = G.prime()
     Cp = Qq(p**2,prec,names = 'g')
     wp = G.wp()

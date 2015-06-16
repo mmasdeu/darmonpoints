@@ -73,15 +73,14 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         if NE % (P*DB) != 0:
             raise ValueError,'Conductor (NE) should be divisible by P*DB'
 
-    Np = NE / (P*DB)
+    Np = NE / (P * DB)
     if use_ps_dists is None:
         use_ps_dists = False # More efficient our own implementation
 
     if not p.is_prime():
         raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
 
-
-    working_prec = max([2 * prec + 10,30])
+    working_prec = max([2 * prec + 10, 30])
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
@@ -107,7 +106,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
 
     if outfile is not None:
         print "Partial results will be saved in %s"%outfile
-    print "=================================================="
+    print '=' * 60
 
     if initial_data is not None:
         G,phiE = initial_data
@@ -202,9 +201,9 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
             except PrecisionError:
                 working_prec  = 2 * working_prec
                 verbose('Setting working_prec to %s'%working_prec)
-            # except Exception as e:
-            #     ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
-            #     break
+            except Exception as e:
+                ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
+                break
         try:
             qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
             qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
@@ -234,8 +233,8 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
                 curve = curve.global_minimal_model()
             except AttributeError,NotImplementedError:
                 pass
-            fwrite('EllipticCurve(F, %s )'%(list(curve.a_invariants())),outfile)
-            fwrite('='*60,outfile)
+            fwrite('EllipticCurve(F, %s )'%(list(curve.a_invariants())), outfile)
+            fwrite('=' * 60, outfile)
             ret_vals.append(str(curve.a_invariants()))
     if quit_when_done:
         magma.quit()
