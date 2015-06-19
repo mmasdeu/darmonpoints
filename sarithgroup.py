@@ -542,7 +542,8 @@ class BigArithGroup_class(AlgebraicGroup):
         newelt -= (ZZ(self.F(ell).norm()) + 1) * Gab.G_to_ab(self.Gpn(gi))
         return Gab.ab_to_G(newelt).quaternion_rep
 
-    def get_homology_kernel(self,smoothen = 0):
+    @cached_method
+    def get_homology_kernel(self):
         wp = self.wp()
         B = self.Gpn.abelianization()
         C = self.Gn.abelianization()
@@ -560,14 +561,14 @@ class BigArithGroup_class(AlgebraicGroup):
         V = Bab.gen(0).lift().parent()
         good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
         ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
+        return ker
+
+    def get_pseudo_orthonormal_homology(self, cocycles, smoothen = 0):
+        ker = self.get_homology_kernel()
         if smoothen != 0:
             ell = smoothen
             hecke_reps = self.Gpn.get_hecke_reps(ell,use_magma = True)
             ker = [self.smoothen(o,ell,hecke_reps) for o in ker]
-        return ker
-
-    def get_pseudo_orthonormal_homology(self, cocycles, smoothen = 0):
-        ker = self.get_homology_kernel(smoothen = smoothen)
         dim = len(cocycles)
         A = Matrix(ZZ,dim,0)
         for vec0 in ker:
