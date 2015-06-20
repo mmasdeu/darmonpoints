@@ -3,6 +3,32 @@
 ##########################################################################
 
 def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data = None, magma = None, working_prec = None, **kwargs):
+    r'''
+
+    EXAMPLES:
+
+    First we load the file::
+
+    sage: %runfile darmonpoints.sage
+
+    A first example (Stark--Heegner point)::
+
+    sage: darmon_point(7,EllipticCurve('35a1'),41,20)
+
+    A quaternionic (Greenberg) point::
+
+    sage: darmon_point(13,EllipticCurve('78a1'),5,20)
+
+    A Darmon point over a cubic (1,1) field::
+
+    sage: F.<r> = NumberField(x^3 - x^2 - x + 2)
+    sage: E = EllipticCurve([-r -1, -r, -r - 1,-r - 1, 0])
+    sage: N = E.conductor()
+    sage: P = F.ideal(r^2 - 2*r - 1)
+    sage: beta = -3*r^2 + 9*r - 6
+    sage: darmon_point(P,E,beta,20)
+
+    '''
     global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
     from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,config_section_map, Bunch
     from sage.rings.padics.precision_error import PrecisionError

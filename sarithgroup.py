@@ -550,17 +550,17 @@ class BigArithGroup_class(AlgebraicGroup):
         Bab = B.abelian_group()
         Cab = C.abelian_group()
         verbose('Finding f...')
-        fdata = [B.ab_to_G(o).quaternion_rep for o in B.gens_small()]
+        fdata = [B.ab_to_G(o) for o in B.gens_small()]
         # verbose('fdata = %s'%fdata)
         f = B.hom_from_image_of_gens_small([C.G_to_ab(self.Gn(o)) for o in fdata])
         verbose('Finding g...')
-        gdata = [wp**-1 * o * wp for o in fdata]
+        gdata = [o.conjugate_by(wp) for o in fdata]
         # verbose('gdata = %s'%gdata)
         g = B.hom_from_image_of_gens_small([C.G_to_ab(self.Gn(o)) for o in gdata])
         fg = direct_sum_of_maps([f,g])
         V = Bab.gen(0).lift().parent()
         good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
-        ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
+        ker = [B.ab_to_G(Bab(o)) for o in good_ker]
         return ker
 
     def get_pseudo_orthonormal_homology(self, cocycles, smoothen = 0):
@@ -574,7 +574,7 @@ class BigArithGroup_class(AlgebraicGroup):
         for vec0 in ker:
             A = A.augment(vector([ZZ(f.evaluate(vec0)[0]) for f in cocycles]))
         Gab = self.Gpn.abelianization()
-        kernrms = [ Gab.G_to_ab(self.Gpn(o)).vector() for o in ker]
+        kernrms = [ Gab.G_to_ab(o).vector() for o in ker]
         custom_norm = lambda B: max([(sum(ZZ(i) * o for o,i in zip(kernrms,col.list()))).norm(1) for col in B.columns()])
 
         min_norm = 10**100 # Or infinity...
@@ -598,7 +598,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     minij = (i,j)
         assert minB is not None
         ker = [ker[o] for o in minij]
-        return [ Gab.ab_to_G(sum(ZZ(i) * Gab.G_to_ab(self.Gpn(o)) for o,i in zip(ker,col.list()))).quaternion_rep for col in minB.columns() ]
+        return [ Gab.ab_to_G(sum(ZZ(i) * Gab.G_to_ab(self.Gpn(o)) for o,i in zip(ker,col.list()))) for col in minB.columns() ]
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None,timeout = 0):
     if base == QQ:

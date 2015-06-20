@@ -96,15 +96,18 @@ def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_
 
 def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
     p = G.prime()
+    Gn = G.large_group()
+    Gpn = G.small_group()
     Cp = Qq(p**2,prec,names = 'g')
     wp = G.wp()
     wpmat = (G.embed(wp,prec)**-1).change_ring(Cp)
     a,b,c,d = wpmat.list()
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
-    H1 = Homology(G.large_group(),Div)
-    xi1 = H1(dict([(G.Gn(x),Div(tau1))])).zero_degree_equivalent(prec = prec)
-    xi2 = H1(dict([(G.Gn(wp**-1 * x * wp),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
+    H1 = Homology(Gn,Div)
+    x = Gpn(x)
+    xi1 = H1(dict([(Gn(x),Div(tau1))])).zero_degree_equivalent(prec = prec)
+    xi2 = H1(dict([(Gn(x.conjugate_by(wp)),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
     if smoothen is not None:
         xi1 = xi1.hecke_smoothen(smoothen)
         xi2 = xi2.hecke_smoothen(smoothen)
