@@ -64,7 +64,11 @@ def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_
             ans = ans.hecke_smoothen(q1,prec = prec)
             assert ans._check_cycle_condition()
             if elliptic_curve is not None:
-                a_ell = elliptic_curve.ap(q1)
+                if F == QQ:
+                    a_ell = elliptic_curve.ap(q1)
+                else:
+                    Q = F.ideal(q1).factor()[0][0]
+                    a_ell = ZZ(Q.norm() + 1 - elliptic_curve.reduction(Q).count_points())
                 A = G.small_group().hecke_matrix_freepart(q1)
                 f = A.minpoly().radical()
                 R = f.parent()
