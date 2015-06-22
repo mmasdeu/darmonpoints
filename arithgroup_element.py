@@ -38,6 +38,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
             an element of the quaternion algebra ``self.parent().quaternion_algebra()``
         '''
         MultiplicativeGroupElement.__init__(self, parent)
+        # check = True #DEBUG
         init_data = False
         self.has_word_rep = False
         self.has_quaternion_rep = False
@@ -57,6 +58,8 @@ class ArithGroupElement(MultiplicativeGroupElement):
                     rednrm = quaternion_rep.reduced_norm()
                     if not rednrm.is_integral() or not (1/rednrm).is_integral():
                         raise ValueError('Quaternion must be of unit norm')
+                if self.has_word_rep:
+                    self.check_consistency(quaternion_rep,self.word_rep)
             if check and not parent._is_in_order(quaternion_rep):
                     raise ValueError('Quaternion (= %s) must be in order'%quaternion_rep)
             self.quaternion_rep = quaternion_rep
@@ -65,12 +68,9 @@ class ArithGroupElement(MultiplicativeGroupElement):
             init_data = True
         if init_data is False:
             raise ValueError('Must pass either quaternion_rep or word_rep')
-        if not self.has_quaternion_rep:
-            self.quaternion_rep = self.quaternion_rep
-        assert self.has_quaternion_rep
-        if not self.has_word_rep:
-            self.word_rep = self._word_rep()
-        set_immutable(self.quaternion_rep)
+        # assert self.has_quaternion_rep
+        # if not self.has_word_rep:
+        #     self.word_rep = self._word_rep()
         self._reduce_word()
 
     @cached_method
@@ -131,15 +131,14 @@ class ArithGroupElement(MultiplicativeGroupElement):
             return
         self.word_rep = reduce_word(self.word_rep)
 
-    #@lazy_attribute
-    def _word_rep(self):
+    @lazy_attribute
+    def word_rep(self):
         r'''
         Returns a word in the generators of `\Gamma` representing the given quaternion `x`.
         '''
+        verbose('WORD REP!!!')
         tmp = self.parent().get_word_rep(self.quaternion_rep)
         self.has_word_rep = True
-        # DEBUG
-        # self.check_consistency(self.quaternion_rep,tmp)
         return tmp
 
     @lazy_attribute
@@ -149,7 +148,9 @@ class ArithGroupElement(MultiplicativeGroupElement):
         '''
         Gamma = self.parent()
         self.has_quaternion_rep = True
-        return prod([Gamma.Ugens[g]**a for g,a in self.word_rep], z = Gamma.B(1))
+        self.quaternion_rep = prod([Gamma.Ugens[g]**a for g,a in self.word_rep], z = Gamma.B(1))
+        set_immutable(self.quaternion_rep)
+        return self.quaternion_rep
 
     def check_consistency(self, q = None, wd = None,txt = ''):
         if q is None and wd is None:
@@ -181,6 +182,26 @@ class ArithGroupElement(MultiplicativeGroupElement):
     @cached_method
     def embed(self,prec):
         return self.parent().embed(self.quaternion_rep,prec)
+
+    def conjugate_by(self, wp):
+        word_rep = None
+        quat_rep = None
+        if self.has_word_rep:
+            if len(self.word_rep) == 0:
+                return self
+            elif len(self.word_rep) == 1:
+                i, a = self.word_rep[0]
+                return self.parent()(wp**-1 * self.parent().gen(i).quaternion_rep * wp) ** a
+            else:
+                word_rep = []
+                for i,a in self.word_rep:
+                    if a > 0:
+                        word_rep += self.parent().gen(i).conjugate_by(wp).word_rep * a
+                    else:
+                        word_rep += (self.parent().gen(i)**-1).conjugate_by(wp).word_rep * (-a)
+        if self.has_quaternion_rep:
+            quat_rep = wp**-1 * self.quaternion_rep * wp
+        return self.parent().element_class(self.parent(), word_rep = word_rep, quaternion_rep = quat_rep, check = False)
 
     def is_trivial_in_abelianization(self):
         #return self.parent().get_weight_vector(self) in self.parent().get_relation_matrix().image()

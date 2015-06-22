@@ -111,6 +111,19 @@ class ArithGroup_generic(AlgebraicGroup):
             return self.element_class(self, word_rep = x,check = False)
         elif x.parent() is self.quaternion_algebra():
             return self.element_class(self, quaternion_rep = x,check = False)
+        elif isinstance(x, self.element_class):
+            if not x.has_word_rep:
+                return self.element_class(self, quaternion_rep = x.quaternion_rep, word_rep = None, check = False)
+            else:
+                word_rep = []
+                Gx = x.parent()
+                for i,a in x.word_rep:
+                    if a > 0:
+                        word_rep += self.get_word_rep(Gx.gen(i).quaternion_rep) * a
+                    else:
+                        word_rep += self.get_word_rep(Gx.gen(i).quaternion_rep**-1) * (-a)
+                ans = self.element_class(self, quaternion_rep = x.quaternion_rep, word_rep = word_rep, check = False)
+                return ans
         elif isinstance(x.parent(),FreeModule_generic):
             return self.abelianization().ab_to_G(x)
         else:
@@ -1123,7 +1136,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 assert prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)) == 1
                 self._relation_words.append(newrel)
 
-    def _init_aurel_data(self,prec = 100,periodenum = 10, timeout = 0):
+    def _init_aurel_data(self,prec = 300,periodenum = 10, timeout = 0):
         verbose('Computing normalized basis')
         if 'GL' in self._grouptype:
             # raise NotImplementedError,'This implementation has bugs'
@@ -1308,8 +1321,11 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 lengthw += 1
             correct = ( -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 5.0)
             if not correct:
-                verbose('Error in word problem from Aurel 1?')
-                # raise RuntimeError('Error in word problem from Aurel 1')
+                # verbose('Error in word problem from Aurel 1?')
+                verbose('Error in word problem:')
+                verbose('gamma = %s'%gamma)
+                verbose('err = %s'%-(sum((o**2 for o in gammaz.coefficient_tuple()))))
+                raise RuntimeError('Error in word problem from Aurel 1')
         deltaword.reverse()
         try:
             c = sum((list(self._simplification_iso[o-1]) for o in deltaword),[])

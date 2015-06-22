@@ -3,6 +3,41 @@
 ######################################
 
 def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
+    r'''
+    EXAMPLES:
+
+    First we load the file::
+
+    sage: %runfile findcurve.sage
+
+    First example::
+
+    sage: find_curve(5,6,30,20)
+
+    A second example, now over a real quadratic::
+
+    sage: F.<r> = QuadraticField(5)
+    sage: P = F.ideal(3/2*r + 1/2)
+    sage: D = F.ideal(3)
+    sage: find_curve(P,D,P*D,30,ramification_at_infinity = F.real_places()[:1])
+
+
+    Now over a cubic of mixed signature::
+
+    sage: F.<r> = NumberField(x^3-x^2-x+2)
+    sage: N = F.ideal(r^2 + 2)
+    sage: P = N.factor()[0][0]
+    sage: D = N/P
+    sage: find_curve(P,D,N,20)
+
+    And another one::
+
+    sage: F.<r> = NumberField(x^3 -3)
+    sage: P = F.ideal(r-2)
+    sage: D = F.ideal(r-1)
+    sage: find_curve(P,D,P*D,30)
+
+    '''
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
     from sarithgroup import BigArithGroup
@@ -80,7 +115,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
     if not p.is_prime():
         raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
 
-    working_prec = max([2 * prec + 10, 30])
+    working_prec = max([2 * prec + 10, 100])
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
@@ -130,16 +165,15 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
                 return 'Error when computing G: ' + mystr
 
         # Define phiE, the cohomology class associated to the system of eigenvalues.
-        try:
-            Coh = CohomologyGroup(G.Gpn)
-            phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all,use_magma = True)
-        except Exception as e:
-            if quit_when_done:
-                magma.quit()
-            if return_all:
-                return ['Error when finding cohomology class: ' + str(e.message)]
-            else:
-                return 'Error when finding cohomology class: ' + str(e.message)
+        Coh = CohomologyGroup(G.Gpn)
+        phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all,use_magma = True)
+        # except Exception as e:
+        #     if quit_when_done:
+        #         magma.quit()
+        #     if return_all:
+        #         return ['Error when finding cohomology class: ' + str(e.message)]
+        #     else:
+        #         return 'Error when finding cohomology class: ' + str(e.message)
         if use_sage_db:
             G.save_to_db()
         print 'Cohomology class found'
@@ -160,7 +194,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         fg = direct_sum_of_maps([f,g])
         V = Bab.gen(0).lift().parent()
         good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
-        ker = [B.ab_to_G(Bab(o)).quaternion_rep for o in good_ker]
+        ker = [B.ab_to_G(Bab(o)) for o in good_ker]
     except Exception as e:
         if quit_when_done:
             magma.quit()
@@ -201,9 +235,9 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
             except PrecisionError:
                 working_prec  = 2 * working_prec
                 verbose('Setting working_prec to %s'%working_prec)
-            except Exception as e:
-                ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
-                break
+            # except Exception as e:
+            #     ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
+            #     break
         try:
             qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
             qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
