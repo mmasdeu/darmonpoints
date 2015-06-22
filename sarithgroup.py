@@ -427,7 +427,7 @@ class BigArithGroup_class(AlgebraicGroup):
             verbose('Found %s initial candidates for wp'%len(all_initial))
             i = 0
             try:
-                pgen = self.ideal_p.gen(0)
+                pgen = self.ideal_p.gens_reduced()[0]
             except AttributeError:
                 pgen = self.ideal_p
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
@@ -505,7 +505,7 @@ class BigArithGroup_class(AlgebraicGroup):
         p = self.p
         denval = self.Gn._denominator_valuation
         if self.Gpn._denominator(x) == 1:
-            return x,[]
+            return x, []
         else:
             gis = [ g**-1 for g in self.get_BT_reps()]
             gitildes = [self.Gn.B(1)] + [ g**-1 for g in self.get_BT_reps_twisted()[1:]]
@@ -526,12 +526,11 @@ class BigArithGroup_class(AlgebraicGroup):
 
             if self.Gpn._denominator(x) == 1:
                 return x, [wd0]
-
             i = next((i for i,g in enumerate(gitildes) if denval(x * g,p) < valx),0)
             assert i > 0
             wd1 = (i,1)
             x = set_immutable(x * gitildes[i])
-            a,wd = self._reduce_in_amalgam(x)
+            a, wd = self._reduce_in_amalgam(x)
             return a, wd + [wd1,wd0]
 
     def smoothen(self,gi,ell,hecke_reps = None):
