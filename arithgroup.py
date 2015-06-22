@@ -710,7 +710,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         except AttributeError:
             pass
         if emb(x.reduced_norm()).sign() != emb(N).sign():
-            # x = x * self.element_of_norm(-1,use_magma = False)
             x = x * self.non_positive_unit()
         assert emb(x.reduced_norm()).sign() == emb(N).sign()
         verbose('Done fixing sign')
@@ -729,7 +728,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         force_sign = not 'P' in self._grouptype
         if use_magma:
             # assert return_all == False
-            elt_magma = self._O_magma.ElementOfNorm(N*self._F_magma.Integers())
+            elt_magma = self._O_magma.ElementOfNorm(N * self._F_magma.Integers())
             candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1],self.magma) for m in xrange(4)])
 
             if force_sign:
