@@ -100,7 +100,7 @@ class HomologyGroupElement(ModuleElement):
         hecke_reps = G.get_hecke_reps(l)
         for gk1 in hecke_reps:
             for g,v in self._data.iteritems():
-                ti = G.get_hecke_ti(gk1,g.quaternion_rep,l,hecke_reps)
+                ti = G.get_hecke_ti(gk1,g,l,hecke_reps)
                 newv = v.left_act_by_matrix(G.embed(gk1**-1,prec))
                 try:
                     newdict[ti] += newv

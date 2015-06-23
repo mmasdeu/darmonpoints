@@ -161,15 +161,12 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',prec = None,parall
     resadd = Cp(0)
     for g,divisor in cycle.get_data():
         jj += 1
-        gq = g.quaternion_rep
         if divisor.degree() != 0:
-            verbose('Divisor must be of degree 0. Now it is of degree %s. And g = %s.'%(divisor.degree(),gq))
-            continue
-            raise ValueError('Divisor must be of degree 0. Now it is of degree %s. And g = %s.'%(divisor.degree(),gq))
+            raise ValueError('Divisor must be of degree 0. Now it is of degree %s. And g = %s.'%(divisor.degree(),g.quaternion_rep))
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
-            gq = G.wp() * gq * G.wp()**-1
-        newres,newresadd = integrate_H0(G,divisor,cocycle,depth,gq,prec,jj,total_integrals,progress_bar,parallelize,multiplicative)
+            g = g.conjugate_by(G.wp()**-1)
+        newres,newresadd = integrate_H0(G,divisor,cocycle,depth,g,prec,jj,total_integrals,progress_bar,parallelize,multiplicative)
         res *= newres
         resadd += newresadd
     if not multiplicative:
@@ -262,7 +259,7 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     R = PolynomialRing(K,names = 't').fraction_field()
     t = R.gen()
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
-    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma),depth,mult = multiplicative)
+    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma.quaternion_rep),depth,mult = multiplicative)
 
 def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     # verbose('Integral %s/%s...'%(counter,total_counter))
@@ -310,13 +307,9 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
                 continue
             if not rev:
-                newgamma = G.reduce_in_amalgam(h * gamma)
+                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep)
             else:
-                newgamma = G.wp()**-1 * G.reduce_in_amalgam(h * gamma) * G.wp()
-            try:
-                newgamma.set_immutable()
-            except AttributeError:
-                pass
+                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep).conjugate_by(G.wp())
             if HOC._use_ps_dists:
                 mu_e = hc.evaluate(newgamma,parallelize)
                 resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))

@@ -243,20 +243,18 @@ class CohomologyElement(ModuleElement):
         V = self.parent().coefficient_module()
         prec = V.precision_cap()
         Sigma0 = self.parent().Sigma0()
-        #G._evaluate_stats[ZZ(a).abs()] += 1
         if a == 1:
             return self._val[g]
         elif a == 0:
             return V(0)
         elif a == -1:
-            # gmat_inv = G.embed(G.gen(g).quaternion_rep**-1,prec)
             gmat_inv = G.gen(g).embed(prec).adjoint() # G.gen(g).embed(prec)**-1
             if self.parent()._use_ps_dists:
                 return -(Sigma0(gmat_inv) * self._val[g])
             else:
                 return  -self._val[g].l_act_by(gmat_inv)
         elif a < 0:
-            gmat = G.gen(g).embed(prec) # G.embed(G.gen(g).quaternion_rep,prec)
+            gmat = G.gen(g).embed(prec)
             gmat_inv = gmat.adjoint() #gmat**-1
             phig = self._val[g]
             tmp = V(phig)
@@ -269,7 +267,7 @@ class CohomologyElement(ModuleElement):
                     tmp = phig + tmp.l_act_by(gmat)
                 return -(tmp.l_act_by(gmat_inv**-a))
         else:
-            gmat = G.gen(g).embed(prec) #G.embed(G.gen(g).quaternion_rep,prec)
+            gmat = G.gen(g).embed(prec)
             phig = self._val[g]
             tmp = V(phig)
             if self.parent()._use_ps_dists:
@@ -590,7 +588,7 @@ class CohomologyGroup(Parent):
         assert len(self.gens()) == len(Gab.free_gens())
         for j,g0 in enumerate(Gab.free_gens()):
             # Construct column j of the matrix
-            g = Gpn(x**-1 * Gab.ab_to_G(g0).quaternion_rep * x)
+            g = Gab.ab_to_G(g0).conjugate_by(x)
             M.set_column(j,list(Gab.G_to_ab_free(g)))
         return M.transpose()
 
@@ -942,7 +940,7 @@ class CohomologyGroup(Parent):
         input_vector = []
         # verbose('Calculating action')
         for j,gamma in enumerate(gammas):
-            input_vector.extend([(group,g,gamma.quaternion_rep,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,use_magma,j) for g in hecke_reps])
+            input_vector.extend([(group,g,gamma,c,l,hecke_reps,padic,S0(Gpn.embed(g,prec)),self._use_ps_dists,use_magma,j) for g in hecke_reps])
         if parallelize:
             f = parallel(_calculate_hecke_contribution)
             for inp,outp in f(input_vector):
@@ -1000,7 +998,7 @@ class CohomologyGroup(Parent):
             vals = [V(0) for gamma in gammas]
             input_vector = []
             for j,gamma in enumerate(gammas):
-                input_vector.extend([(group,g,gamma.quaternion_rep,c,repslocal[k],self._use_ps_dists,j) for k,g in enumerate(Up_reps)])
+                input_vector.extend([(group,g,gamma,c,repslocal[k],self._use_ps_dists,j) for k,g in enumerate(Up_reps)])
             if parallelize:
                 f = parallel(_calculate_Up_contribution)
                 for inp,outp in f(input_vector):
@@ -1028,8 +1026,7 @@ class CohomologyGroup(Parent):
             counter = 0
             iS = 0
             for i,gi in enumerate(self.group().gens()):
-                giquat = gi.quaternion_rep
-                ti = [tuple(self.group().get_Up_ti(sk,giquat).word_rep) for sk in Up_reps]
+                ti = [tuple(self.group().get_Up_ti(sk,gi).word_rep) for sk in Up_reps]
                 jS = 0
                 for ans in find_newans(self,repslocal,ti):
                     A.set_block(iS,jS,ans)

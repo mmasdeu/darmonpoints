@@ -21,16 +21,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
     sage: D = F.ideal(3)
     sage: find_curve(P,D,P*D,30,ramification_at_infinity = F.real_places()[:1])
 
-
     Now over a cubic of mixed signature::
-
-    sage: F.<r> = NumberField(x^3-x^2-x+2)
-    sage: N = F.ideal(r^2 + 2)
-    sage: P = N.factor()[0][0]
-    sage: D = N/P
-    sage: find_curve(P,D,N,20)
-
-    And another one::
 
     sage: F.<r> = NumberField(x^3 -3)
     sage: P = F.ideal(r-2)
