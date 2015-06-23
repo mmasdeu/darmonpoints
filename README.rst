@@ -79,18 +79,6 @@ This returns something like::
 
 3) A curve over a cubic field of mixed signature::
 
-     sage: F.<r> = NumberField(x^3-x^2-x+2)
-     sage: N = F.ideal(r^2 + 2)
-     sage: P = N.factor()[0][0]
-     sage: D = N/P
-     sage: find_curve(P,D,N,20)
-
-which returns::
-
-  y^2 + x*y + y = x^3 + (r^2-2)*x^2 + (r^2-2)*x + (-r^2-r)
-
-4) Another (more spectacular) curve over a cubic field of mixed signature::
-
      sage: F.<r> = NumberField(x^3 -3)
      sage: P = F.ideal(r-2)
      sage: D = F.ideal(r-1)

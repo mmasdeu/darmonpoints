@@ -326,7 +326,7 @@ class ArithGroupAction(Action):
                 return v.parent()(v)
         prec = K.precision_cap()
         G = g.parent()
-        a,b,c,d = [K(o) for o in G.embed(g.quaternion_rep,prec).list()] #G.embed(g.quaternion_rep,prec).change_ring(K).list()
+        a,b,c,d = [K(o) for o in G.embed(g.quaternion_rep,prec).list()]
         newdict = defaultdict(ZZ)
         newpts = {}
         for P,n in v:
@@ -494,17 +494,16 @@ class HomologyClass(ModuleElement):
             newv = v
             for i,a in gword:
                 g = G.gen(i)
-                gq = g.quaternion_rep
                 oldv = newv
-                newv = oldv.left_act_by_matrix(G.embed(gq**-a,prec))
+                newv = g**-a * oldv
                 sign = 1
                 if a < 0:
                     a = -a
-                    oldv = oldv.left_act_by_matrix(G.embed(gq**a,prec))
+                    oldv = g**a * oldv
                     sign = -1
                 for j in range(a):
                     newdict[g] += sign * oldv
-                    oldv = oldv.left_act_by_matrix(G.embed(gq**-1,prec))
+                    oldv = g**-1 * oldv
                 if a > 0:
                     assert oldv == newv
         return HomologyClass(self.parent(),newdict)
@@ -537,7 +536,7 @@ class HomologyClass(ModuleElement):
         hecke_reps = G.get_hecke_reps(l,g0 = g0)
         for gk1 in hecke_reps:
             for g,v in self._data.iteritems():
-                ti = G.get_hecke_ti(gk1,g.quaternion_rep,l,True)
+                ti = G.get_hecke_ti(gk1,g,l,True)
                 gk1inv = gk1**-1
                 set_immutable(gk1inv)
                 newv = v.left_act_by_matrix(G.embed(gk1inv,prec))

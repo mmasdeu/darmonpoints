@@ -38,7 +38,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
             an element of the quaternion algebra ``self.parent().quaternion_algebra()``
         '''
         MultiplicativeGroupElement.__init__(self, parent)
-        # check = True #DEBUG
         init_data = False
         self.has_word_rep = False
         self.has_quaternion_rep = False
@@ -68,14 +67,11 @@ class ArithGroupElement(MultiplicativeGroupElement):
             init_data = True
         if init_data is False:
             raise ValueError('Must pass either quaternion_rep or word_rep')
-        # assert self.has_quaternion_rep
-        # if not self.has_word_rep:
-        #     self.word_rep = self._word_rep()
         self._reduce_word()
 
     @cached_method
     def __hash__(self):
-        return self.quaternion_rep.__hash__()
+        return hash((hash(self.parent()), hash(self.quaternion_rep)))
 
     def _repr_(self):
         return str(self.quaternion_rep)
@@ -181,6 +177,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
 
     @cached_method
     def embed(self,prec):
+        assert self.has_quaternion_rep
         return self.parent().embed(self.quaternion_rep,prec)
 
     def conjugate_by(self, wp):

@@ -109,10 +109,14 @@ class ArithGroup_generic(AlgebraicGroup):
     def _element_constructor_(self,x):
         if isinstance(x,list):
             return self.element_class(self, word_rep = x,check = False)
-        elif x.parent() is self.quaternion_algebra():
-            return self.element_class(self, quaternion_rep = x,check = False)
         elif isinstance(x, self.element_class):
-            if not x.has_word_rep:
+            if x.parent() is self:
+                if x.has_word_rep:
+                    word_rep = x.word_rep
+                else:
+                    word_rep = None
+                return self.element_class(self, quaternion_rep = x.quaternion_rep, word_rep = word_rep, check = False)
+            elif not x.has_word_rep:
                 return self.element_class(self, quaternion_rep = x.quaternion_rep, word_rep = None, check = False)
             else:
                 word_rep = []
@@ -121,7 +125,7 @@ class ArithGroup_generic(AlgebraicGroup):
                     if a > 0:
                         word_rep += self.get_word_rep(Gx.gen(i).quaternion_rep) * a
                     else:
-                        word_rep += self.get_word_rep(Gx.gen(i).quaternion_rep**-1) * (-a)
+                        word_rep += [(i,-b) for i,b in reversed(self.get_word_rep(Gx.gen(i).quaternion_rep))] * (-a)
                 ans = self.element_class(self, quaternion_rep = x.quaternion_rep, word_rep = word_rep, check = False)
                 return ans
         elif isinstance(x.parent(),FreeModule_generic):
@@ -272,14 +276,13 @@ class ArithGroup_generic(AlgebraicGroup):
         - t_{gk1}(gamma)
 
         """
-        elt = gk1**-1 * gamma
+        elt = gk1**-1 * gamma.quaternion_rep
         reps = self.get_hecke_reps(l,use_magma = use_magma)
         for gk2 in reps:
             ti = elt * gk2
             is_in_order = self._is_in_order(ti)
             if self._is_in_order(ti):
-                ans = self(ti)
-                return ans
+                return self(ti)
         verbose("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
         raise RuntimeError("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
 
@@ -297,7 +300,7 @@ class ArithGroup_generic(AlgebraicGroup):
         - t_{gk1}(gamma)
 
         """
-        elt = gk1**-1 * gamma
+        elt = gk1**-1 * gamma.quaternion_rep
         reps = self.get_Up_reps()
         for gk2 in reps:
             ti = elt * gk2
@@ -321,7 +324,7 @@ class ArithGroup_generic(AlgebraicGroup):
         V = QQ**len(gens)
         for j,g in enumerate(gens):
             # Construct column j of the matrix
-            newcol = sum([V(list(Gab.G_to_ab(self.get_hecke_ti(gk1,Gab.ab_to_G(g).quaternion_rep,l,use_magma)))) for gk1 in hecke_reps],V(0))
+            newcol = sum([V(list(Gab.G_to_ab(self.get_hecke_ti(gk1,Gab.ab_to_G(g),l,use_magma)))) for gk1 in hecke_reps],V(0))
             M.set_column(j,list(newcol))
         return M
 
@@ -335,7 +338,7 @@ class ArithGroup_generic(AlgebraicGroup):
         V = QQ**len(freegens)
         for j,g in enumerate(freegens):
             # Construct column j of the matrix
-            glift = Gab.ab_to_G(g).quaternion_rep
+            glift = Gab.ab_to_G(g)
             newcol = list(Gab.G_to_ab_free(prod([self.get_hecke_ti(gk1,glift,l,use_magma) for gk1 in hecke_reps],self.one())))
             M.set_column(j,newcol)
         return M
@@ -350,8 +353,7 @@ class ArithGroup_generic(AlgebraicGroup):
         V = QQ**len(freegens)
         for j,g in enumerate(freegens):
             # Construct column j of the matrix
-            glift = Gab.ab_to_G(g).quaternion_rep
-            newg = self(x**-1 * glift * x)
+            newg = Gab.ab_to_G(g).conjugate_by(x)
             M.set_column(j,list(Gab.G_to_ab_free(newg)))
         return M
 
@@ -710,7 +712,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         except AttributeError:
             pass
         if emb(x.reduced_norm()).sign() != emb(N).sign():
-            # x = x * self.element_of_norm(-1,use_magma = False)
             x = x * self.non_positive_unit()
         assert emb(x.reduced_norm()).sign() == emb(N).sign()
         verbose('Done fixing sign')
@@ -729,7 +730,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         force_sign = not 'P' in self._grouptype
         if use_magma:
             # assert return_all == False
-            elt_magma = self._O_magma.ElementOfNorm(N*self._F_magma.Integers())
+            elt_magma = self._O_magma.ElementOfNorm(N * self._F_magma.Integers())
             candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1],self.magma) for m in xrange(4)])
 
             if force_sign:
@@ -960,7 +961,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         ans = list(self._Gamma0_farey.word_problem(SL2Z(delta.list()),output = 'standard'))
         tmp = self.B(1)
         for i,a in shorten_word(ans):
-            tmp = tmp * self.gen(i).quaternion_rep**a
+            tmp *= self.gen(i).quaternion_rep**a
         delta = SL2Z(delta.list())
         err = SL2Z(delta * SL2Z(tmp**-1))
         I = SL2Z([1,0,0,1])

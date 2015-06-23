@@ -80,10 +80,6 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
         if grouptype is None:
             if base == QQ:
                 grouptype = 'PSL2'
-                # if discriminant == 1:
-                #     grouptype = 'SL2'
-                # else:
-                #     grouptype = 'PSL2'
             else:
                 grouptype = 'PGL2'
 
@@ -183,50 +179,10 @@ class BigArithGroup_class(AlgebraicGroup):
         fwrite('R with basis %s'%basis_data_1,outfile)
         fwrite('R(p) with basis %s'%basis_data_p,outfile)
         self._prec = -1
-        # self._II,self._JJ,self._KK = self.local_splitting(200)
         self.get_embedding(200)
-        #self.wpold = self.wp()
-        # self.get_Up_reps()
-
-        # # Create generators and relations for the S-arithmetic group (amalgam)
-        # try:
-        #     pgen = self.ideal_p.gens_reduced()[0]
-        #     Ngen = self.level.gens_reduced()[0]
-        # except AttributeError:
-        #     pgen = self.ideal_p
-        #     Ngen = self.level
-        # u = Matrix(QQ,2,2,[pgen,0,0,pgen**-1])
-        # idx = len(self.Gn.Ugens)
-        # self.Gn._gens.append(self.Gn.element_class(self.Gn,quaternion_rep = self.Gn.B([pgen,0,0,pgen**-1]), word_rep = [(idx,1)],check = False))
-        # for i,g in enumerate(self.Gn.Ugens):
-        #     k = 1
-        #     g1 = g
-        #     while True:
-        #         try:
-        #             conj = self.Gn(u * g1 * u**-1)
-        #             break
-        #         except (ValueError,TypeError): pass
-        #         k += 1
-        #         g1 *= g
-        #     wd = self.Gn.get_word_rep(conj.quaternion_rep)
-        #     print 'newrel = %s'%(wd + [(idx,1),(i,-k),(idx,-1)])
-        #     self.Gn._relation_words.append(wd + [(idx,1),(i,-k),(idx,-1)])
-        # self.Gn.Ugens.append(u)
-        # assert self.Gn.Ugens[idx] == u
-
-        # # Define the (abelian) relation matrix for self
-        # self._relation_matrix = matrix(ZZ,len(self.Gn.get_relation_words()),len(self.Gn.gens()),0)
-        # for i,rel in enumerate(self.Gn.get_relation_words()):
-        #     for j,k in rel:
-        #         self.Gn._relation_matrix[i,j] += k
 
         verbose('Done initializing arithmetic groups')
         self.Gpn.get_Up_reps = self.get_Up_reps
-
-        # try:
-        #     self.Gn._ArithGroup_generic__delete_unused_attributes()
-        #     self.Gpn._ArithGroup_generic__delete_unused_attributes()
-        # except AttributeError: pass
         verbose('Done initialization of BigArithmeticGroup')
 
     def clear_cache(self):
@@ -427,7 +383,7 @@ class BigArithGroup_class(AlgebraicGroup):
             verbose('Found %s initial candidates for wp'%len(all_initial))
             i = 0
             try:
-                pgen = self.ideal_p.gen(0)
+                pgen = self.ideal_p.gens_reduced()[0]
             except AttributeError:
                 pgen = self.ideal_p
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
@@ -505,7 +461,7 @@ class BigArithGroup_class(AlgebraicGroup):
         p = self.p
         denval = self.Gn._denominator_valuation
         if self.Gpn._denominator(x) == 1:
-            return x,[]
+            return self.Gpn(x), []
         else:
             gis = [ g**-1 for g in self.get_BT_reps()]
             gitildes = [self.Gn.B(1)] + [ g**-1 for g in self.get_BT_reps_twisted()[1:]]
@@ -525,13 +481,12 @@ class BigArithGroup_class(AlgebraicGroup):
                 valx = 1
 
             if self.Gpn._denominator(x) == 1:
-                return x, [wd0]
-
+                return self.Gpn(x), [wd0]
             i = next((i for i,g in enumerate(gitildes) if denval(x * g,p) < valx),0)
             assert i > 0
             wd1 = (i,1)
             x = set_immutable(x * gitildes[i])
-            a,wd = self._reduce_in_amalgam(x)
+            a, wd = self._reduce_in_amalgam(x)
             return a, wd + [wd1,wd0]
 
     def smoothen(self,gi,ell,hecke_reps = None):
@@ -540,7 +495,7 @@ class BigArithGroup_class(AlgebraicGroup):
             hecke_reps = self.Gpn.get_hecke_reps(ell,use_magma = True)
         newelt = sum([Gab.G_to_ab(self.Gpn.get_hecke_ti(gk1,gi,ell,True)) for gk1 in hecke_reps],Gab(self.Gpn.one()))
         newelt -= (ZZ(self.F(ell).norm()) + 1) * Gab.G_to_ab(self.Gpn(gi))
-        return Gab.ab_to_G(newelt).quaternion_rep
+        return Gab.ab_to_G(newelt)
 
     @cached_method
     def get_homology_kernel(self):
