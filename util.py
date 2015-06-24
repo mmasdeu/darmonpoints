@@ -827,13 +827,18 @@ def _get_heegner_params_rational(p,N,beta):
 
 def fwrite(string, outfile,newline = True):
     if outfile is None:
-        return
-    with open(outfile,"a") as fout:
+        fout = sys.stdout
         if newline:
             fout.write(string + '\n')
         else:
             fout.write(string)
-    return
+    else:
+        with open(outfile,"a") as fout:
+            if newline:
+                fout.write(string + '\n')
+            else:
+                fout.write(string)
+        return
 
 @cached_function
 def module_generators_new(K):

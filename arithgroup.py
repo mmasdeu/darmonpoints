@@ -391,11 +391,12 @@ class ArithGroup_generic(AlgebraicGroup):
             weight_vector[i] += a
         return weight_vector
 
-    def calculate_weight_zero_word(self,xlist):
+    def calculate_weight_zero_word(self, xlist):
         Gab = self.abelianization()
         abxlist = [n * Gab(x) for x,n in xlist]
-        if not sum(abxlist) == 0:
-            raise ValueError('Must yield trivial element in the abelianization (%s)'%(sum(abxlist)))
+        sum_abxlist = sum(abxlist)
+        if not sum_abxlist == 0:
+            raise ValueError('Must yield trivial element in the abelianization (%s)'%(sum_abxlist))
         oldwordlist = [copy(x.word_rep) for x,n in xlist]
         return oldwordlist, self._calculate_relation(sum(n * self.get_weight_vector(x) for x,n in xlist))
 
@@ -558,7 +559,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         r'''
         sage: G = ArithGroup(5,6,1)
         sage: f = G.embed_order(23,20)
-        sage: f0 = f.zero_degree_equivalent()
         '''
         try:
             newobj = db('quadratic_embeddings_%s_%s.sobj'%(self.discriminant,self.level))
@@ -602,6 +602,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             return gamma, tau1
 
     def get_word_rep(self,delta):
+        verbose('Word REP !')
         if not self._is_in_order(delta):
             raise RuntimeError('delta (= %s) is not in order!'%delta)
         try:

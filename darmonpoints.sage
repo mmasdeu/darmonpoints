@@ -133,17 +133,10 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         Ename = 'unknown'
     fname = 'moments_%s_%s_%s_%s.sobj'%(P,Ename,sgninfty,prec)
 
-    print "Computing the Darmon point attached to the data:"
-    print 'D_B = %s = %s'%(DB,factor(DB))
-    print 'Np = %s'%Np
-    print 'dK = %s'%dK
-    print "The calculation is being done with p = %s"%p
-    print "Should find points in the elliptic curve:"
-    print E
     if use_sage_db:
         print "Moments will be stored in database as %s"%(fname)
 
-    if outfile is None:
+    if outfile == 'log':
         outfile = '%s_%s_%s_%s_%s_%s.log'%(P,Ename,dK,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
         outfile = outfile.replace('/','div')
         outfile = '/tmp/darmonpoint_' + outfile
@@ -156,7 +149,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     fwrite('Elliptic curve %s: %s'%(Ename,E),outfile)
     if outfile is not None:
         print "Partial results will be saved in %s"%outfile
-    print "=================================================="
 
     if input_data is None:
         if cohomological:
@@ -190,13 +182,13 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                     working_prec *= 2
                     verbose('Encountered precision error, trying with higher precision (= %s)'%working_prec)
                 except ValueError:
-                    print 'ValueError occurred when constructing homology cycle. Returning the S-arithmetic group.'
+                    fwrite('ValueError occurred when constructing homology cycle. Returning the S-arithmetic group.', outfile)
                     if quit_when_done:
                         magma.quit()
                     return G
                 except AssertionError as e:
-                    print 'Assertion occurred when constructing homology cycle. Returning the S-arithmetic group.'
-                    print e
+                    fwrite('Assertion occurred when constructing homology cycle. Returning the S-arithmetic group.', outfile)
+                    fwrite('%s'%str(e), outfile)
                     if quit_when_done:
                         magma.quit()
                     return G
@@ -235,30 +227,30 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             v0 = K.hom([r0 + r1 * Cp.gen()])
 
             # Optimal embeddings of level one
-            print "Computing optimal embeddings of level one..."
+            fwrite("Computing optimal embeddings of level one...", outfile)
             Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor)
-            print "Found %s such embeddings."%len(Wlist)
+            fwrite("Found %s such embeddings."%len(Wlist), outfile)
             if idx_embedding is not None:
                 if idx_embedding >= len(Wlist):
-                    print 'There are not enough embeddings. Taking the index modulo %s'%len(Wlist)
+                    fwrite('There are not enough embeddings. Taking the index modulo %s'%len(Wlist), outfile)
                     idx_embedding = idx_embedding % len(Wlist)
-                print 'Taking only embedding number %s'%(idx_embedding)
+                fwrite('Taking only embedding number %s'%(idx_embedding), outfile)
                 Wlist = [Wlist[idx_embedding]]
 
             # Find the orientations
             orients = K.maximal_order().ring_generators()[0].minpoly().roots(Zmod(Np),multiplicities = False)
-            print "Possible orientations: %s"%orients
+            fwrite("Possible orientations: %s"%orients, outfile)
             if len(Wlist) == 1 or idx_orientation == -1:
-                print "Using all orientations, since hK = 1"
+                fwrite("Using all orientations, since hK = 1", outfile)
                 chosen_orientation = None
             else:
-                print "Using orientation = %s"%orients[idx_orientation]
+                fwrite("Using orientation = %s"%orients[idx_orientation], outfile)
                 chosen_orientation = orients[idx_orientation]
 
             emblist = []
             for i,W in enumerate(Wlist):
                 tau, gtau,sign,limits = find_tau0_and_gtau(v0,Np,W,algorithm = algorithm,orientation = chosen_orientation,extra_conductor = extra_conductor)
-                print 'n_evals = ', sum((num_evals(t1,t2) for t1,t2 in limits))
+                fwrite('n_evals = ', sum((num_evals(t1,t2) for t1,t2 in limits)), outfile)
                 emblist.append((tau,gtau,sign,limits))
 
             # Get the cohomology class from E
@@ -267,16 +259,16 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             J = 1
             Jlist = []
             for i,emb in enumerate(emblist):
-                print i, " Computing period attached to the embedding: %s"%Wlist[i].list()
+                fwrite(" Computing %s-th period, attached to the embedding: %s"%(i,Wlist[i].list()), outfile)
                 tau, gtau,sign,limits = emb
                 n_evals = sum((num_evals(t1,t2) for t1,t2 in limits))
-                print "Computing one period...(total of %s evaluations)"%n_evals
+                fwrite("Computing one period...(total of %s evaluations)"%n_evals, outfile)
                 newJ = prod((double_integral_zero_infty(Phi,t1,t2) for t1,t2 in limits))**ZZ(sign)
                 Jlist.append(newJ)
                 J *= newJ
     else: # input_data is not None
         Phi,J = input_data[1:3]
-    print 'Integral done. Now trying to recognize the point'
+    fwrite('Integral done. Now trying to recognize the point', outfile)
     fwrite('J_psi = %s'%J,outfile)
     #Try to recognize a generator
     if quaternionic:
@@ -305,7 +297,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                 fwrite('(first factor is not understood, second factor is)',outfile)
                 fwrite('(r satisfies %s = 0)'%(Ptsmall[0].parent().gen().minpoly()),outfile)
                 fwrite('================================================',outfile)
-                print 'Point found: %s'%Ptsmall
                 if quit_when_done:
                     magma.quit()
                 return Ptsmall
@@ -323,7 +314,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             fwrite('Where x satisfies %s'%pols[0],outfile)
             fwrite('and y satisfies %s'%pols[1],outfile)
             fwrite('================================================',outfile)
-            print 'Point found: %s'%candidate
             if quit_when_done:
                 magma.quit()
             return candidate

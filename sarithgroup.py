@@ -518,10 +518,11 @@ class BigArithGroup_class(AlgebraicGroup):
         ker = [B.ab_to_G(Bab(o)) for o in good_ker]
         return ker
 
-    def get_pseudo_orthonormal_homology(self, cocycles, smoothen = 0):
+    def get_pseudo_orthonormal_homology(self, cocycles, smoothen = None):
         ker = self.get_homology_kernel()
-        if smoothen != 0:
-            ell = smoothen
+        if smoothen is None:
+            smoothen = []
+        for ell in smoothen:
             hecke_reps = self.Gpn.get_hecke_reps(ell,use_magma = True)
             ker = [self.smoothen(o,ell,hecke_reps) for o in ker]
         dim = len(cocycles)

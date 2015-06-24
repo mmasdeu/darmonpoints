@@ -52,50 +52,45 @@ def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_
     gamma, tau1 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = False)
     Div = Divisors(tau1.parent())
     H1 = Homology(G.large_group(),Div)
-    n = 1
     D1 = Div(tau1)
     ans0 = H1({gamma: D1})
     assert ans0._check_cycle_condition()
     ans = H1({})
-    while True:
-        try:
-            ans += ans0
-            # Do hecke_smoothen to kill Eisenstein part
-            ans = ans.hecke_smoothen(q1,prec = prec)
-            assert ans._check_cycle_condition()
-            if elliptic_curve is not None:
-                if F == QQ:
-                    a_ell = elliptic_curve.ap(q1)
-                else:
-                    Q = F.ideal(q1).factor()[0][0]
-                    a_ell = ZZ(Q.norm() + 1 - elliptic_curve.reduction(Q).count_points())
-                A = G.small_group().hecke_matrix_freepart(q1)
-                f = A.minpoly().radical()
-                R = f.parent()
-                x = R.gen()
-                while True:
-                    try:
-                        f = R(f/(x-a_ell))
-                    except TypeError:
-                        break
-                while True:
-                    try:
-                        f = R(f/(x-(q1+1)))
-                    except TypeError:
-                        break
-                ans = ans.act_by_poly_hecke(q1,f,prec = prec)
-                verbose('Passed the check!')
-            # Find zero degree equivalent
-            ans = ans.zero_degree_equivalent(prec = prec)
-            raise StopIteration
-        except StopIteration:
-            break
-        except ValueError as e:
-            verbose('%s'%e)
-            if max_n is not None and n > max_n:
-                raise ValueError,'Reached maximum allowed power (%s)'%max_n
-            verbose('Trying with n = %s...'%n)
-            n += 1
+    ans += ans0
+    # Do hecke_smoothen to kill Eisenstein part
+    ans = ans.hecke_smoothen(q1,prec = prec)
+    assert ans._check_cycle_condition()
+    if elliptic_curve is not None:
+        if F == QQ:
+            a_ell = elliptic_curve.ap(q1)
+        else:
+            Q = F.ideal(q1).factor()[0][0]
+            a_ell = ZZ(Q.norm() + 1 - elliptic_curve.reduction(Q).count_points())
+        A = G.small_group().hecke_matrix_freepart(q1)
+        f = A.minpoly()
+        R = f.parent()
+        x = R.gen()
+        while True:
+            try:
+                f = R(f/(x-a_ell))
+            except TypeError:
+                break
+        while True:
+            try:
+                f = R(f/(x-(q1+1)))
+            except TypeError:
+                break
+        f0 = f.parent()(1)
+        for g, e in f.factor():
+            ans = ans.act_by_poly_hecke(q1,g**e,prec = prec)
+            f0 *= g**e
+            try:
+                ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
+                return ans, n * f0(a_ell), q1
+            except ValueError: pass
+        verbose('Passed the check!')
+    # Find zero degree equivalent
+    ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
     return ans, n * f(a_ell), q1
 
 def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
@@ -440,7 +435,7 @@ class HomologyClass(ModuleElement):
         return max([0] + [v.radius() for g,v in self._data.iteritems()])
 
 
-    def zero_degree_equivalent(self, prec):
+    def zero_degree_equivalent(self, prec, allow_multiple = False):
         r'''
         Use the relations:
             * gh|v = g|v + h|g^-1 v
@@ -452,7 +447,16 @@ class HomologyClass(ModuleElement):
         V = HH.coefficient_module()
         G = HH.group()
         oldvals = self._data.values()
-        gwordlist, rel = G.calculate_weight_zero_word([(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)])
+        Gab = G.abelianization()
+        xlist = [(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)]
+        abxlist = [n * Gab(x) for x,n in xlist]
+        sum_abxlist = sum(abxlist)
+        x_ord = sum_abxlist.order()
+        if x_ord == Infinity or not allow_multiple:
+            raise ValueError('Must yield trivial element in abelianization (%s)'%(sum_abxlist))
+        else:
+            xlist = [(x,x_ord * n) for x,n in xlist]
+        gwordlist, rel = G.calculate_weight_zero_word(xlist)
         gwordlist.append(rel)
         oldvals.append(V(V.base_field().gen()))
         counter = 0
@@ -477,7 +481,10 @@ class HomologyClass(ModuleElement):
         verbose('Done zero_degree_equivalent')
         ans = HH(newdict)
         assert ans.is_degree_zero_valued()
-        return ans
+        if allow_multiple:
+            return ans, x_ord
+        else:
+            return ans
 
     def factor_into_generators(self,prec):
         r'''

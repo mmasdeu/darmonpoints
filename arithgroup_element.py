@@ -132,7 +132,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
         r'''
         Returns a word in the generators of `\Gamma` representing the given quaternion `x`.
         '''
-        verbose('WORD REP!!!')
         tmp = self.parent().get_word_rep(self.quaternion_rep)
         self.has_word_rep = True
         return tmp
@@ -201,7 +200,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
         return self.parent().element_class(self.parent(), word_rep = word_rep, quaternion_rep = quat_rep, check = False)
 
     def is_trivial_in_abelianization(self):
-        #return self.parent().get_weight_vector(self) in self.parent().get_relation_matrix().image()
         return self.parent().abelianization()(self) == 0
 
     def find_bounding_cycle(self,G,npow = 1,check = False):
@@ -264,4 +262,3 @@ class ArithGroupElement(MultiplicativeGroupElement):
             if tmp.size_of_support() !=0:
                 verbose('Leftover of %s'%tmp)
         return ans
-

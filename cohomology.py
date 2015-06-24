@@ -793,11 +793,10 @@ class CohomologyGroup(Parent):
                             if U0.dimension() == 1:
                                 continue
                             if U0.dimension() == 2 and is_irred:
-                                if pol is not None and Aq.restrict(U0).charpoly() != pol:
-                                    continue
-                                good_components.append((U0.denominator() * U0.matrix(),hecke_data+[(qq.gens_reduced()[0],Aq.restrict(U0))]))
+                                if pol is None or Aq.restrict(U0).charpoly() == pol:
+                                    good_components.append((U0.denominator() * U0.matrix(),hecke_data+[(qq.gens_reduced()[0],Aq.restrict(U0))]))
                             else: # U0.dimension() > 2 or not is_irred
-                                component_list.append((U0,hecke_data+[(qq.gens_reduced()[0],Aq.restrict(U0))]))
+                                component_list.append((U0,hecke_data + [(qq.gens_reduced()[0],Aq.restrict(U0))]))
                     if len(good_components) > 0 and not return_all:
                         flist = []
                         for row0 in good_components[0][0].rows():
