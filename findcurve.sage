@@ -111,7 +111,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
 
-    if outfile is None:
+    if outfile == 'log':
         outfile = '%s_%s_%s_%s_%s.log'%(P,NE,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
         outfile = outfile.replace('/','div')
         outfile = '/tmp/findcurve_' + outfile
@@ -132,7 +132,6 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
 
     if outfile is not None:
         print "Partial results will be saved in %s"%outfile
-    print '=' * 60
 
     if initial_data is not None:
         G,phiE = initial_data
@@ -167,7 +166,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         #         return 'Error when finding cohomology class: ' + str(e.message)
         if use_sage_db:
             G.save_to_db()
-        print 'Cohomology class found'
+        fwrite('Cohomology class found', outfile)
     try:
         wp = G.wp()
         B = G.Gpn.abelianization()
@@ -203,7 +202,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         except ValueError as e:
             ret_vals.append('Problem when getting overconvergent class: ' + str(e.message))
             continue
-        print 'Done overconvergent lift'
+        fwrite('Done overconvergent lift', outfile)
         # Find an element x of Gpn for not in the kernel of phi,
         # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
         try:
@@ -240,7 +239,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         qE = qE.add_bigoh(prec + qE.valuation())
         Linv = qE.log(p_branch = 0)/qE.valuation()
 
-        print 'Integral done. Now trying to recognize the curve'
+        fwrite('Integral done. Now trying to recognize the curve', outfile)
         fwrite('F.<r> = NumberField(%s)'%(F.gen(0).minpoly()),outfile)
         fwrite('N_E = %s = %s'%(NE,factor(NE)),outfile)
         fwrite('D_B = %s = %s'%(DB,factor(DB)),outfile)
