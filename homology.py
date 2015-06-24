@@ -80,7 +80,14 @@ def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_
                 f = R(f/(x-(q1+1)))
             except TypeError:
                 break
-        ans = ans.act_by_poly_hecke(q1,f,prec = prec)
+        f0 = f.parent()(1)
+        for g, e in f.factor():
+            ans = ans.act_by_poly_hecke(q1,g**e,prec = prec)
+            f0 *= g**e
+            try:
+                ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
+                return ans, n * f0(a_ell), q1
+            except ValueError: pass
         verbose('Passed the check!')
     # Find zero degree equivalent
     ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
