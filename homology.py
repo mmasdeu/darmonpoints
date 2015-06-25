@@ -396,7 +396,7 @@ class HomologyClass(ModuleElement):
         '''
         if not isinstance(data,dict):
             raise ValueError,'data should be a dictionary indexed by elements of ArithGroup'
-        self._data = copy(data)
+        self._data = data # DEBUG
         ModuleElement.__init__(self,parent)
         if check:
             if not self._check_cycle_condition():
@@ -452,8 +452,8 @@ class HomologyClass(ModuleElement):
         abxlist = [n * Gab(x) for x,n in xlist]
         sum_abxlist = sum(abxlist)
         x_ord = sum_abxlist.order()
-        if x_ord == Infinity or not allow_multiple:
-            raise ValueError('Must yield trivial element in abelianization (%s)'%(sum_abxlist))
+        if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
+            raise ValueError('Must yield torsion element in abelianization (%s)'%(sum_abxlist))
         else:
             xlist = [(x,x_ord * n) for x,n in xlist]
         gwordlist, rel = G.calculate_weight_zero_word(xlist)
@@ -542,18 +542,20 @@ class HomologyClass(ModuleElement):
         G = self.parent().group()
         hecke_reps = G.get_hecke_reps(l,g0 = g0)
         for gk1 in hecke_reps:
+            gk1inv = gk1**-1
+            set_immutable(gk1inv)
+            gk1inv0 = G.embed(gk1inv, prec)
             for g,v in self._data.iteritems():
                 ti = G.get_hecke_ti(gk1,g,l,True)
-                gk1inv = gk1**-1
-                set_immutable(gk1inv)
-                newv = v.left_act_by_matrix(G.embed(gk1inv,prec))
+                newv = v.left_act_by_matrix(gk1inv0)
                 try:
                     newdict[ti] += newv
-                    if newdict[ti].is_zero():
-                        del newdict[ti]
+                    # if newdict[ti].is_zero():
+                    #     del newdict[ti]
                 except KeyError:
                     newdict[ti] = newv
-        return HomologyClass(self.parent(),newdict)
+        ans = HomologyClass(self.parent(),newdict)
+        return ans
 
     def _check_cycle_condition(self,return_residue = False):
         res = self.parent().coefficient_module()(0)

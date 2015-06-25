@@ -250,7 +250,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             emblist = []
             for i,W in enumerate(Wlist):
                 tau, gtau,sign,limits = find_tau0_and_gtau(v0,Np,W,algorithm = algorithm,orientation = chosen_orientation,extra_conductor = extra_conductor)
-                fwrite('n_evals = ', sum((num_evals(t1,t2) for t1,t2 in limits)), outfile)
+                fwrite('n_evals = %s'%sum((num_evals(t1,t2) for t1,t2 in limits)), outfile)
                 emblist.append((tau,gtau,sign,limits))
 
             # Get the cohomology class from E
@@ -259,7 +259,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             J = 1
             Jlist = []
             for i,emb in enumerate(emblist):
-                fwrite(" Computing %s-th period, attached to the embedding: %s"%(i,Wlist[i].list()), outfile)
+                fwrite("Computing %s-th period, attached to the embedding: %s"%(i,Wlist[i].list()), outfile)
                 tau, gtau,sign,limits = emb
                 n_evals = sum((num_evals(t1,t2) for t1,t2 in limits))
                 fwrite("Computing one period...(total of %s evaluations)"%n_evals, outfile)
