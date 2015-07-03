@@ -602,7 +602,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             return gamma, tau1
 
     def get_word_rep(self,delta):
-        verbose('Word REP !')
         if not self._is_in_order(delta):
             raise RuntimeError('delta (= %s) is not in order!'%delta)
         try:
