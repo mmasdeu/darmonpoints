@@ -385,7 +385,7 @@ class CohomologyGroup(Parent):
                 from sage.modular.pollack_stevens.distributions import Distributions, Symk
                 self._coeffmodule = Distributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = _our_adjuster(), dettwist = 0) # Darmon convention
             else:
-                self._coeffmodule = OCVn(base.prime(),1+base.precision_cap())
+                self._coeffmodule = OCVn(base.prime(),1 + base.precision_cap())
                 # self._coeffmodule = OCVn(0,base,1+base.precision_cap())
             self._num_abgens = len(self._group.gens())
             self._gen_pows = []
@@ -401,7 +401,8 @@ class CohomologyGroup(Parent):
                 gmat.set_immutable()
                 A = self._coeffmodule._get_powers(gmat)
                 self._gen_pows.append([one,A])
-                gmatinv = gmat**-1
+                assert gmat.determinant() == 1
+                gmatinv = gmat.adjoint() # gmat**-1
                 gmatinv.set_immutable()
                 Ainv = self._coeffmodule._get_powers(gmatinv)
                 self._gen_pows_neg.append([one,Ainv])
