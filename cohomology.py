@@ -397,15 +397,15 @@ class CohomologyGroup(Parent):
             except AttributeError:
                 one = self._coeffmodule._get_powers(onemat).identity_matrix()
             for i,g in enumerate(self._group.gens()):
-                gmat = self.group().embed(self._group.Ugens[i],1+base.precision_cap())
+                gmat = self.group().embed(self._group.Ugens[i], 1 + base.precision_cap())
                 gmat.set_immutable()
                 A = self._coeffmodule._get_powers(gmat)
-                self._gen_pows.append([one,A])
-                assert gmat.determinant() == 1
+                self._gen_pows.append([one, A])
+                # assert gmat.determinant() == 1
                 gmatinv = gmat.adjoint() # gmat**-1
                 gmatinv.set_immutable()
                 Ainv = self._coeffmodule._get_powers(gmatinv)
-                self._gen_pows_neg.append([one,Ainv])
+                self._gen_pows_neg.append([one, Ainv])
 
             self._pN = self._coeffmodule._p**base.precision_cap()
         else:
