@@ -40,7 +40,7 @@ def find_num_classes(P,abtuple,Np,F,out_str,magma_seed,logging = False):
     except Exception as e:
         return out_str.format(curve = '\'Err G (%s)\''%str(e.message))
     try:
-        Coh = CohomologyGroup(G.Gpn)
+        Coh = CohomologyGroup(G)
         phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
     except Exception as e:
         return out_str.format(curve = '\'Err coh (%s)\''%str(e.message))

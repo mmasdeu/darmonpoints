@@ -315,7 +315,7 @@ class ArithGroup_generic(AlgebraicGroup):
         return self._gens
 
     @cached_method
-    def hecke_matrix(self,l,use_magma = True,g0 = None):
+    def hecke_matrix_legacy(self,l,use_magma = True,g0 = None):
         Gab = self.abelianization()
         gens = Gab.gens()
         dim = len(gens)
@@ -329,7 +329,7 @@ class ArithGroup_generic(AlgebraicGroup):
         return M
 
     @cached_method
-    def hecke_matrix_freepart(self,l,use_magma = True,g0 = None):
+    def hecke_matrix_freepart_legacy(self,l,use_magma = True,g0 = None):
         Gab = self.abelianization()
         freegens = Gab.free_gens()
         dim = len(freegens)

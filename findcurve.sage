@@ -32,7 +32,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
     from sarithgroup import BigArithGroup
-    from homology import construct_homology_cycle,lattice_homology_cycle
+    from homology import lattice_homology_cycle
     from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
     from integrals import integrate_H1,double_integral_zero_infty
     import os, datetime, ConfigParser
@@ -155,7 +155,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
                 return 'Error when computing G: ' + mystr
 
         # Define phiE, the cohomology class associated to the system of eigenvalues.
-        Coh = CohomologyGroup(G.Gpn)
+        Coh = CohomologyGroup(G)
         phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all,use_magma = True)
         # except Exception as e:
         #     if quit_when_done:

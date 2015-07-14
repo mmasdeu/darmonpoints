@@ -22,7 +22,7 @@ import operator
 from sage.rings.arith import GCD
 from sage.rings.padics.precision_error import PrecisionError
 
-def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_curve = None):
+def construct_homology_cycle(G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
     F = G.F
     t = PolynomialRing(F, names = 't').gen()
     K = F.extension(t*t - D, names = 'beta')
@@ -66,8 +66,7 @@ def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_
         else:
             Q = F.ideal(q1).factor()[0][0]
             a_ell = ZZ(Q.norm() + 1 - elliptic_curve.reduction(Q).count_points())
-        A = G.small_group().hecke_matrix_freepart(q1)
-        f = A.minpoly()
+        f = hecke_poly_getter(q1)
         R = f.parent()
         x = R.gen()
         while True:

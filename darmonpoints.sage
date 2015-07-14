@@ -174,9 +174,10 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
+            Coh = CohomologyGroup(G)
             while True:
                 try:
-                    cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,outfile = outfile, elliptic_curve = E)
+                    cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,lambda q: Coh.hecke_matrix(q).minpoly(), outfile = outfile, elliptic_curve = E)
                     break
                 except PrecisionError:
                     working_prec *= 2
@@ -195,7 +196,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             eisenstein_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,eisenstein_constant),outfile)
             fwrite('exponent = %s'%nn,outfile)
-            phiE = CohomologyGroup(G.small_group()).get_cocycle_from_elliptic_curve(E, sign = sign_at_infinity)
+            phiE = Coh.get_cocycle_from_elliptic_curve(E, sign = sign_at_infinity)
             if hasattr(E,'ap'):
                 sign_ap = E.ap(P)
             else:

@@ -95,14 +95,14 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     if use_sage_db:
         try:
             Phivals = db(fname)
-            CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
+            CohOC = CohomologyGroup(G,overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
             CohOC._coeff_module = Phivals[0].parent()
             VOC = CohOC.coefficient_module()
             Phi = CohOC([VOC(o) for o in Phivals])
             return Phi
         except IOError: pass
     verbose('Computing moments...')
-    CohOC = CohomologyGroup(G.small_group(),overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
+    CohOC = CohomologyGroup(G,overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
     VOC = CohOC.coefficient_module()
     if use_ps_dists:
         Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group().gens()])
@@ -122,7 +122,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
 class CohomologyElement(ModuleElement):
     def __init__(self, parent, data):
         r'''
-        Define an element of `H^1(G,ZZ)`
+        Define an element of `H^1(G,V)`
 
         INPUT:
             - G: a BigArithGroup
@@ -165,16 +165,16 @@ class CohomologyElement(ModuleElement):
         return 'Cohomology class in %s'%self.parent()
 
     def  _add_(self,right):
-        return self.__class__(self.parent(),[a+b for a,b in zip(self._val,right._val)])
+        return self.__class__(self.parent(),[ a + b for a,b in zip(self._val,right._val)])
 
     def  _sub_(self,right):
-        return self.__class__(self.parent(),[a-b for a,b in zip(self._val,right._val)])
+        return self.__class__(self.parent(),[ a - b for a,b in zip(self._val,right._val)])
 
     def  _neg_(self):
-        return self.__class__(self.parent(),[-a for a in self._val])
+        return self.__class__(self.parent(),[ -a for a in self._val])
 
     def  __rmul__(self,right):
-        return self.__class__(self.parent(),[ZZ(right) * a for a in self._val])
+        return self.__class__(self.parent(),[ ZZ(right) * a for a in self._val])
 
     def shapiro_image(self,G):
         if self.parent().is_overconvergent:
@@ -373,7 +373,7 @@ class _our_adjuster(Sigma0ActionAdjuster):
 class CohomologyGroup(Parent):
     Element = CohomologyElement
     def __init__(self,G,overconvergent = False,base = None,use_ps_dists = False):
-        self._group = G
+        self._group = G.small_group()
         self._use_ps_dists = use_ps_dists
         if overconvergent and base is None:
             raise ValueError, 'Must give base if overconvergent'
@@ -835,75 +835,6 @@ class CohomologyGroup(Parent):
         Gab = self.group().abelianization()
         groupelement = Gab.ab_to_G(sum([a*Gab.gens()[i] for i,a in enumerate(col[n:]) if a != 0]))
         return (groupelement,cocycle)
-
-    def get_rational_cycle_and_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
-        F = self.group().base_ring()
-        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K1 = (self.involution_at_infinity_matrix()-sign).right_kernel()
-            K2 = (self.group().involution_at_infinity_matrix_freepart()-sign).right_kernel()
-        else:
-            K1 = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
-            K2 = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
-
-        component_list = []
-        good_components = []
-        K = direct_sum_of_modules([K1,K2])
-        if K.dimension() == 2:
-            good_components.append(K)
-        else:
-            component_list.append(K)
-
-        disc = self.group()._O_discriminant
-        discnorm = disc.norm()
-        try:
-            N = ZZ(discnorm.gen())
-        except AttributeError:
-            N = ZZ(discnorm)
-
-        if F == QQ:
-            x = QQ['x'].gen()
-            F = NumberField(x,names='a')
-        q = ZZ(1)
-        g0 = None
-        num_hecke_operators = 0
-        while len(component_list) > 0 and num_hecke_operators < bound:
-            verbose('num_hecke_ops = %s'%num_hecke_operators)
-            verbose('component_dimensions = %s'%([o.dimension() for o in component_list]))
-            q = q.next_prime()
-            for qq,e in F.ideal(q).factor():
-                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
-                    try:
-                        Aq0 = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).change_ring(QQ)
-                        Aq1 = self.group().hecke_matrix_freepart(qq.gens_reduced()[0],g0=g0,use_magma = use_magma)
-                        R = Aq0.parent()
-                        Aq = block_matrix([[Aq0,R(0)],[R(0),Aq1]])
-                    except (RuntimeError,TypeError):
-                        continue
-                    verbose('Computed hecke matrix at qq = %s'%qq)
-                    old_component_list = component_list
-                    component_list = []
-                    num_hecke_operators += 1
-                    for U in old_component_list:
-                        for U0,is_irred in Aq.decomposition_of_subspace(U):
-                            if U0.dimension() == 2:
-                                good_components.append(U0)
-                            elif is_irred:
-                                # Bad
-                                pass
-                            else: # U0.dimension() > 1 and not is_irred
-                                component_list.append(U0)
-                    if len(good_components) > 0 and not return_all:
-                        return self._reconstruct_from_abelianization(good_components[0])
-                    if len(component_list) == 0 or num_hecke_operators >= bound:
-                        break
-
-        if len(good_components) == 0:
-            raise ValueError,'Group does not seem to be attached to an elliptic curve'
-        else:
-            if return_all:
-                return [self._reconstruct_from_abelianization(K) for K in good_components]
-            else:
-                return self._reconstruct_from_abelianization(good_components[0])
 
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,parallelize = False,g0 = None):
         r"""
