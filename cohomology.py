@@ -412,7 +412,7 @@ class CohomologyGroup(Parent):
             self._pN = 0
             self.is_overconvergent = False
             self._coeffmodule = base**1
-            self._Ga = G.abelianization()
+            self._Ga = G.small_group().abelianization()
             self._V = self._Ga.ambient()
             self._num_abgens = len(self._Ga.free_gens())
             self._F = QQ**self._num_abgens
