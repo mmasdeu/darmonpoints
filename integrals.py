@@ -248,6 +248,31 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
             res += phi(K(te)) * hce
     return res
 
+
+class ShapiroImage(SageObject):
+    def __init__(self,G,cocycle):
+        self.G = G
+        self.cocycle = cocycle
+
+    def __call__(self,gamma):
+        return CoinducedElement(self.G,self.cocycle,gamma)
+
+class CoinducedElement(SageObject):
+    def __init__(self,G,cocycle,gamma):
+        self.G = G
+        self.cocycle = cocycle
+        self.gamma = gamma
+
+    def __call__(self,h,check = False):
+        rev, b = h
+        if check:
+            assert self.G.reduce_in_amalgam(b) == 1
+        a = self.G.reduce_in_amalgam(b * self.gamma)
+        if rev == False:
+            return self.cocycle.evaluate(a)
+        else:
+            return -self.cocycle.evaluate(a)
+
 def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     # verbose('Integral %s/%s...'%(counter,total_counter))
     HOC = hc.parent()
@@ -259,7 +284,7 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     R = PolynomialRing(K,names = 't').fraction_field()
     t = R.gen()
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
-    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma.quaternion_rep),depth,mult = multiplicative)
+    return riemann_sum(G,phi,ShapiroImage(G,hc)(gamma.quaternion_rep),depth,mult = multiplicative)
 
 def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     # verbose('Integral %s/%s...'%(counter,total_counter))

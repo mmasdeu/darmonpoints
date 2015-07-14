@@ -141,10 +141,12 @@ class CohomologyElement(ModuleElement):
         '''
         G = parent.group()
         V = parent.coefficient_module()
+        # self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
         if isinstance(data,list):
             self._val = [V(0) if o.is_zero() else V(o) for o in data]
         else:
             self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
+
         if parent.is_overconvergent:
             self.evaluate = self.evaluate_oc
         else:
@@ -153,6 +155,7 @@ class CohomologyElement(ModuleElement):
 
     def set_liftee(self,x):
         self._liftee = x
+
     def get_liftee(self):
         try:
             return self._liftee
@@ -373,6 +376,7 @@ class _our_adjuster(Sigma0ActionAdjuster):
 class CohomologyGroup(Parent):
     Element = CohomologyElement
     def __init__(self,G,overconvergent = False,base = None,use_ps_dists = False):
+        self._S_arithgroup = G
         self._group = G.small_group()
         self._use_ps_dists = use_ps_dists
         if overconvergent and base is None:
@@ -417,6 +421,7 @@ class CohomologyGroup(Parent):
             self._num_abgens = len(self._Ga.free_gens())
             self._F = QQ**self._num_abgens
             self._space = Hom(self._F,self._coeffmodule)
+            self._dimension = self._num_abgens
         Parent.__init__(self)
 
     def group(self):
@@ -431,8 +436,11 @@ class CohomologyGroup(Parent):
     def _repr_(self):
         return 'H^1(G,V), with G being %s and V = %s'%(self.group(),self.coefficient_module())
 
+    def zero(self):
+        return self.element_class(self,[self._coeffmodule(0) for g in xrange(self._num_abgens)])
+
     def _an_element_(self):
-        return self(0)
+        return self.zero()
 
     def _coerce_map_from_(self,S):
         if isinstance(S,CohomologyGroup):
@@ -442,19 +450,21 @@ class CohomologyGroup(Parent):
 
     def _element_constructor_(self,data):
         if isinstance(data,list):
-            return self.element_class(self,data)
-        elif isinstance(data,self.element_class):
+            return self.element_class(self, data)
+        else:
+            assert isinstance(data,self.element_class)
             G = self.group()
             V = self.coefficient_module()
             if data.parent().is_overconvergent:
                 try:
+                    print 2
                     return self.element_class(self,[V(data.get_liftee().evaluate(g).moment(0)) for g in G.gens()])
                 except RuntimeError:
+                    print 3
                     return self.element_class(self,[V(data.evaluate(g).moment(0).rational_reconstruction()) for g in G.gens()])
             else:
+                print 4
                 return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
-        else:
-            return self.element_class(self,[self._coeffmodule(data) for g in xrange(self._num_abgens)])
 
     def fox_gradient(self,word):
         h = self.get_gen_pow(0,0)
@@ -546,15 +556,13 @@ class CohomologyGroup(Parent):
             ans = (g * ans).apply_map(lambda x: x % self._pN)
         return ans
 
-    def dimension(self):
-        raise NotImplementedError
-
     def coefficient_module(self):
         return self._coeffmodule
 
     def dimension(self): # Warning
-        return len(self._space.basis())
+        return self._num_abgens * self._coeffmodule.dimension()
 
+    @cached_method
     def gen(self,i): # Warning
         phi = self._space.basis()[i]
         dom = phi.domain()
@@ -579,7 +587,6 @@ class CohomologyGroup(Parent):
     def involution_at_infinity_matrix(self):
         if self.coefficient_module().dimension() > 1:
             raise NotImplementedError
-        H = self._space
         Gpn = self.group()
         Gab = self._Ga
         # x = Gpn.element_of_norm(-1,use_magma = False)
@@ -635,7 +642,7 @@ class CohomologyGroup(Parent):
         if K.dimension() != 1:
             raise ValueError,'Did not obtain a one-dimensional space corresponding to E'
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
+        return sum([a * self.gen(i) for i,a in enumerate(col) if a != 0],self.zero())
 
     def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = True):
         F = self.group().base_ring()
@@ -670,7 +677,7 @@ class CohomologyGroup(Parent):
             raise ValueError,'Group does not have the required system of eigenvalues'
 
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
+        return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self.zero())
 
     def get_rational_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
         F = self.group().base_ring()
@@ -728,7 +735,7 @@ class CohomologyGroup(Parent):
                     if len(good_components) > 0 and not return_all:
                         K = good_components[0]
                         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-                        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
+                        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self.zero())
                     if len(component_list) == 0 or num_hecke_operators >= bound:
                         break
 
@@ -739,12 +746,12 @@ class CohomologyGroup(Parent):
                 ans = []
                 for K in good_components:
                     col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-                    ans.append( sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0)))
+                    ans.append( sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self.zero()))
                 return ans
             else:
                 K = good_components[0]
                 col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-                return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
+                return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self.zero())
 
 
     def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 3, pol = None, return_all = False):
@@ -802,7 +809,7 @@ class CohomologyGroup(Parent):
                         flist = []
                         for row0 in good_components[0][0].rows():
                             col0 = [ZZ(o) for o in row0.list()]
-                            flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
+                            flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self.zero()))
                         return flist,good_components[0][1]
                     if len(component_list) == 0 or num_hecke_operators >= bound:
                         break
@@ -816,14 +823,14 @@ class CohomologyGroup(Parent):
                     flist = []
                     for row0 in K.rows():
                         col0 = [ZZ(o) for o in row0.list()]
-                        flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
+                        flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self.zero()))
                     ans.append((flist,hecke_data))
                 return ans
             else:
                 flist = []
                 for row0 in good_components[0][0].rows():
                     col0 = [ZZ(o) for o in row0.list()]
-                    flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
+                    flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self.zero()))
                 return flist,good_components[0][1]
 
 
@@ -831,7 +838,7 @@ class CohomologyGroup(Parent):
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         assert len(col) % 2 == 0
         n = ZZ(len(col)/2)
-        cocycle = sum([a*self.gen(i) for i,a in enumerate(col[:n]) if a != 0],self(0))
+        cocycle = sum([a*self.gen(i) for i,a in enumerate(col[:n]) if a != 0],self.zero())
         Gab = self.group().abelianization()
         groupelement = Gab.ab_to_G(sum([a*Gab.gens()[i] for i,a in enumerate(col[n:]) if a != 0]))
         return (groupelement,cocycle)
@@ -1004,26 +1011,3 @@ def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dis
         ans = c.evaluate(tig)
         return ans
 
-class ShapiroImage(SageObject):
-    def __init__(self,G,cocycle):
-        self.G = G
-        self.cocycle = cocycle
-
-    def __call__(self,gamma):
-        return CoinducedElement(self.G,self.cocycle,gamma)
-
-class CoinducedElement(SageObject):
-    def __init__(self,G,cocycle,gamma):
-        self.G = G
-        self.cocycle = cocycle
-        self.gamma = gamma
-
-    def __call__(self,h,check = False):
-        rev, b = h
-        if check:
-            assert self.G.reduce_in_amalgam(b) == 1
-        a = self.G.reduce_in_amalgam(b * self.gamma)
-        if rev == False:
-            return self.cocycle.evaluate(a)
-        else:
-            return -self.cocycle.evaluate(a)
