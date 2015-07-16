@@ -34,7 +34,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     from sage.rings.padics.precision_error import PrecisionError
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
-    from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, CohomologyGroup
+    from cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
     from integrals import double_integral_zero_infty,integrate_H1
     from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
     import os, datetime, ConfigParser
@@ -174,7 +174,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
-            Coh = CohomologyGroup(G)
+            Coh = ArithCoh(G)
             while True:
                 try:
                     cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,lambda q: Coh.hecke_matrix(q).minpoly(), outfile = outfile, elliptic_curve = E)

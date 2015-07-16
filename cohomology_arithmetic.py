@@ -1,5 +1,6 @@
 ######################
 ##                  ##
+##    ARITHMETIC    ##
 ##    COHOMOLOGY    ##
 ##                  ##
 ######################
@@ -27,13 +28,17 @@ from sage.parallel.decorate import fork,parallel
 oo = Infinity
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
+from sage.categories.action import Action
+import operator
+from cohomology_abstract import *
+
 
 def find_newans(Coh,glocs,ti):
-    G = Coh.group()
-    newans = [glocs[0].new_matrix() for u in G.gens()]
+    gens = Coh.group().gens()
+    newans = [glocs[0].new_matrix() for u in gens]
     for gk,tik in zip(glocs,ti):
         fox_grad_k = Coh.fox_gradient(tik)
-        for j,gj in enumerate(G.gens()):
+        for j,gj in enumerate(gens):
             newans[j] += gk * fox_grad_k[j]
             newans[j] = newans[j].apply_map(lambda x: x % Coh._pN)
     return newans
@@ -42,7 +47,6 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     from sage.misc.persist import db_save
-
     if use_ps_dists == False:
         raise NotImplementedError, 'Must use distributions from Pollack-Stevens code in the split case'
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
@@ -95,21 +99,19 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     if use_sage_db:
         try:
             Phivals = db(fname)
-            CohOC = CohomologyGroup(G,overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
+            CohOC = ArithCoh(G,overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
             CohOC._coeff_module = Phivals[0].parent()
             VOC = CohOC.coefficient_module()
             Phi = CohOC([VOC(o) for o in Phivals])
             return Phi
         except IOError: pass
     verbose('Computing moments...')
-    CohOC = CohomologyGroup(G,overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
+    CohOC = ArithCoh(G,overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
     VOC = CohOC.coefficient_module()
     if use_ps_dists:
         Phi = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.small_group().gens()])
     else:
         Phi = CohOC([VOC(Matrix(VOC._R,VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in xrange(VOC._depth - 1)]),check = False) for g in G.small_group().gens()])
-    if progress_bar:
-        verb_level = get_verbose()
     verbose('Now lifting...')
     Phi = Phi.improve(prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
     if use_sage_db:
@@ -119,40 +121,8 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     return Phi
 
 
-class CohomologyElement(ModuleElement):
-    def __init__(self, parent, data):
-        r'''
-        Define an element of `H^1(G,V)`
 
-        INPUT:
-            - G: a BigArithGroup
-            - V: a CoeffModule
-            - data: a list
-
-        TESTS:
-            sage: G = BigArithGroup(5,6,1)
-            sage: V = QQ^1
-            sage: Coh = Cohomology(G,V)
-            sage: print Coh.hecke_matrix(13).eigenvalues()
-            [2,2]
-            sage: print Coh.hecke_matrix(7).eigenvalues()
-            [4,-4]
-            sage: PhiE = Coh.gen(1)
-        '''
-        G = parent.group()
-        V = parent.coefficient_module()
-        # self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
-        if isinstance(data,list):
-            self._val = [V(0) if o.is_zero() else V(o) for o in data]
-        else:
-            self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
-
-        if parent.is_overconvergent:
-            self.evaluate = self.evaluate_oc
-        else:
-            self.evaluate = self.evaluate_triv
-        ModuleElement.__init__(self,parent)
-
+class ArithCohElement(CohomologyElement):
     def set_liftee(self,x):
         self._liftee = x
 
@@ -161,38 +131,12 @@ class CohomologyElement(ModuleElement):
             return self._liftee
         except AttributeError:
             raise RuntimeError,"Don't know what this cocycle is a lift of!"
-    def values(self):
-        return self._val
-
-    def _repr_(self):
-        return 'Cohomology class in %s'%self.parent()
-
-    def  _add_(self,right):
-        return self.__class__(self.parent(),[ a + b for a,b in zip(self._val,right._val)])
-
-    def  _sub_(self,right):
-        return self.__class__(self.parent(),[ a - b for a,b in zip(self._val,right._val)])
-
-    def  _neg_(self):
-        return self.__class__(self.parent(),[ -a for a in self._val])
-
-    def  __rmul__(self,right):
-        return self.__class__(self.parent(),[ ZZ(right) * a for a in self._val])
-
-    def shapiro_image(self,G):
-        if self.parent().is_overconvergent:
-            raise TypeError,'This functionality is only for trivial coefficients'
-        return ShapiroImage(G,self)
 
     @cached_method
-    def evaluate_oc(self,x,parallelize = False,extramul = None):
+    def evaluate(self,x,parallelize = False,extramul = None):
         H = self.parent()
-        if H._use_ps_dists:
-            return self.evaluate_oc_naive(x,extramul = extramul)
         G = H.group()
         V = H.coefficient_module()
-        prec = V.precision_cap()
-        Sigma0 = H.Sigma0()
         if hasattr(x,'word_rep'):
             wd  = x.word_rep
         else:
@@ -200,46 +144,21 @@ class CohomologyElement(ModuleElement):
             wd = x.word_rep
         if len(wd) == 0:
             return V(0)
+        if H._use_ps_dists:
+            if len(wd) == 1:
+                return self._evaluate_syllable(*wd[0])
+            else:
+                return self._evaluate_word(wd)
+        Sigma0 = H.Sigma0()
         i,a = wd[-1]
         ans = H.eval_at_genpow(i,a,self._val)
         ans = ans.apply_map(lambda x: x % H._pN)
-        for i,a in reversed(wd[:-1]):
+        for i, a in reversed(wd[:-1]):
             ans = H.eval_at_genpow(i,a,self._val) + H.mul_by_gen_pow(i,a,ans)
         if extramul is not None:
             ans = extramul * ans
             ans = ans.apply_map(lambda x: x % H._pN)
         return V(ans,check = False)
-
-    def evaluate_triv(self,x,parallelize = False,extramul = None):
-        try:
-            word = tuple(x.word_rep)
-        except AttributeError:
-            word = tuple(self.parent().group()(x).word_rep)
-        V = self.parent().coefficient_module()
-        return sum([a*self._evaluate_at_group_generator(j) for j,a in word],V(0))
-
-    def evaluate_oc_naive(self,x,extramul = None):
-        try:
-            word = tuple(x.word_rep)
-        except AttributeError:
-            word = tuple(self.parent().group()(x).word_rep)
-        V = self.parent().coefficient_module()
-        if len(word) == 0:
-            return V(0)
-        elif len(word) == 1:
-            return self._evaluate_syllable(*word[0])
-        else:
-            return self._evaluate_word(word)
-
-    @cached_method
-    def _evaluate_at_group_generator(self,j): # j is the index in Gpn.gens()
-        G = self.parent().group()
-        Gab = G.abelianization()
-        coeff_module = self.parent().coefficient_module()
-        gablist = list(Gab.G_to_ab_free(G.gen(j)))
-        cvals = [coeff_module(o) for o in self._val]
-        ans = sum([ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0],coeff_module(0))
-        return ans
 
     def _evaluate_syllable(self,g,a):
         G = self.parent().group()
@@ -330,14 +249,14 @@ class CohomologyElement(ModuleElement):
             else:
                 verbose("Applied Up once")
             ii = 0
-            m0val = min([(u.moment(0) - v.moment(0)).valuation(p) for u,v in zip(h2._val,self._val)])
+            m0val = (h2 - self).valuation(p) # min([(u.moment(0) - v.moment(0)).valuation(p) for u,v in zip(h2._val,self._val)])
             if m0val == 0:
                 sign *= ZZ(-1)
                 h2 = -h2
-                m0val = min([(u.moment(0) - v.moment(0)).valuation(p) for u,v in zip(h2._val,self._val)])
+                m0val = (h2 - self).valuation(p) # min([(u.moment(0) - v.moment(0)).valuation(p) for u,v in zip(h2._val,self._val)])
                 if m0val <= 0:
                     raise RuntimeError("Does not seem to converge")
-            current_val = min([(u-v).valuation(p) for u,v in zip(h2._val,self._val)])
+            current_val = (h2 - self).valuation(p) # min([(u-v).valuation(p) for u,v in zip(h2._val,self._val)])
             old_val = current_val - 1
             while current_val < prec and current_val > old_val:
                 h1 = h2
@@ -373,8 +292,8 @@ class _our_adjuster(Sigma0ActionAdjuster):
         a,b,c,d = g.list()
         return tuple([d,b,c,a])
 
-class CohomologyGroup(Parent):
-    Element = CohomologyElement
+class ArithCoh(CohomologyGroup):
+    Element = ArithCohElement
     def __init__(self,G,overconvergent = False,base = None,use_ps_dists = False):
         self._S_arithgroup = G
         self._group = G.small_group()
@@ -424,144 +343,11 @@ class CohomologyGroup(Parent):
             self._dimension = self._num_abgens
         Parent.__init__(self)
 
-    def group(self):
-        return self._group
-
     def Sigma0(self):
         if self._use_ps_dists:
             return self._coeffmodule._act._Sigma0
         else:
             return (lambda x:x)
-
-    def _repr_(self):
-        return 'H^1(G,V), with G being %s and V = %s'%(self.group(),self.coefficient_module())
-
-    def zero(self):
-        return self.element_class(self,[self._coeffmodule(0) for g in xrange(self._num_abgens)])
-
-    def _an_element_(self):
-        return self.zero()
-
-    def _coerce_map_from_(self,S):
-        if isinstance(S,CohomologyGroup):
-            return True
-        else:
-            return False
-
-    def _element_constructor_(self,data):
-        if isinstance(data,list):
-            return self.element_class(self, data)
-        else:
-            assert isinstance(data,self.element_class)
-            G = self.group()
-            V = self.coefficient_module()
-            if data.parent().is_overconvergent:
-                try:
-                    print 2
-                    return self.element_class(self,[V(data.get_liftee().evaluate(g).moment(0)) for g in G.gens()])
-                except RuntimeError:
-                    print 3
-                    return self.element_class(self,[V(data.evaluate(g).moment(0).rational_reconstruction()) for g in G.gens()])
-            else:
-                print 4
-                return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
-
-    def fox_gradient(self,word):
-        h = self.get_gen_pow(0,0)
-        ans = [h.new_matrix() for o in self.group().gens()]
-        if len(word) == 0:
-            return ans
-        lenword = len(word)
-        for j in xrange(lenword):
-            i,a = word[j]
-            ans[i] += h  * self.get_fox_term(i,a)
-            ans[i] = ans[i].apply_map(lambda x: x % self._pN)
-            if j < lenword -1:
-                h = h * self.get_gen_pow(i,a)
-                h = h.apply_map(lambda x: x % self._pN)
-        return ans
-
-    def get_gen_pow(self,i,a):
-        if a == 0:
-            return self._gen_pows[0][0]
-        elif a > 0:
-            genpows = self._gen_pows[i]
-        else:
-            genpows = self._gen_pows_neg[i]
-            a = -a
-        while len(genpows) <= a:
-            tmp = genpows[1] * genpows[-1]
-            genpows.append(tmp.apply_map(lambda x:x % self._pN))
-        return genpows[a]
-
-    def get_fox_term(self,i,a):
-        if a == 1:
-            return self._gen_pows[i][0]
-        elif a == -1:
-            return -self._gen_pows_neg[i][1]
-        elif a > 1:
-            genpows = self._gen_pows[i]
-            ans = genpows[0] + genpows[1]
-            for o in xrange(a-2):
-                ans = ans.apply_map(lambda x: x % self._pN)
-                ans = genpows[0] + genpows[1] * ans
-            ans = ans.apply_map(lambda x: x % self._pN)
-            return ans
-        elif a < -1:
-            a = -a
-            genpows = self._gen_pows_neg[i]
-            ans = genpows[0] + genpows[1]
-            for o in xrange(a-2):
-                ans = ans.apply_map(lambda x: x % self._pN)
-                ans = genpows[0] + genpows[1] * ans
-            ans = -genpows[1] * ans
-            ans = ans.apply_map(lambda x: x % self._pN)
-            return ans
-
-    def eval_at_genpow(self,i,a,v):
-        v = v[i]._val
-        if a == 1:
-            return v
-        elif a == -1:
-            return - self._gen_pows_neg[i][1] * v
-        elif a > 1:
-            genpows = self._gen_pows[i]
-            ans = v + genpows[1] * v
-            for o in xrange(a-2):
-                ans = ans.apply_map(lambda x: x % self._pN)
-                ans = v + genpows[1] * ans
-            ans = ans.apply_map(lambda x: x % self._pN)
-            return ans
-        elif a < -1:
-            a = -a
-            genpows = self._gen_pows_neg[i]
-            ans = v + genpows[1] * v
-            for o in xrange(a-2):
-                ans = ans.apply_map(lambda x: x % self._pN)
-                ans = v + genpows[1] * ans
-            ans = -genpows[1] * ans
-            ans = ans.apply_map(lambda x: x % self._pN)
-            return ans
-
-    def mul_by_gen_pow(self,i,a,v):
-        ans = v
-        if a == 0:
-            return ans
-        elif a > 0:
-            g = self._gen_pows[i][1]
-        else:
-            g = self._gen_pows_neg[i][1]
-            a = -a
-        for o in xrange(a):
-            ans = (g * ans).apply_map(lambda x: x % self._pN)
-        return ans
-
-    def coefficient_module(self):
-        return self._coeffmodule
-
-    def dimension(self): # Warning
-        return self._num_abgens * self._coeffmodule.dimension()
-
     @cached_method
     def gen(self,i): # Warning
         phi = self._space.basis()[i]
@@ -570,6 +356,10 @@ class CohomologyGroup(Parent):
 
     def gens(self): # Warning
         return [self.gen(i) for i in xrange(self.dimension())]
+
+    def _repr_(self):
+        return 'H^1(G,V), with G being %s and V = %s'%(self.group(),self.coefficient_module())
+
 
     @cached_method
     def hecke_matrix(self,l,use_magma = True,g0 = None):
@@ -589,7 +379,6 @@ class CohomologyGroup(Parent):
             raise NotImplementedError
         Gpn = self.group()
         Gab = self._Ga
-        # x = Gpn.element_of_norm(-1,use_magma = False)
         x = Gpn.non_positive_unit()
         dim = self.dimension()
         M = matrix(QQ,dim,dim,0)
@@ -833,16 +622,6 @@ class CohomologyGroup(Parent):
                     flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self.zero()))
                 return flist,good_components[0][1]
 
-
-    def _reconstruct_from_abelianization(self,K):
-        col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-        assert len(col) % 2 == 0
-        n = ZZ(len(col)/2)
-        cocycle = sum([a*self.gen(i) for i,a in enumerate(col[:n]) if a != 0],self.zero())
-        Gab = self.group().abelianization()
-        groupelement = Gab.ab_to_G(sum([a*Gab.gens()[i] for i,a in enumerate(col[n:]) if a != 0]))
-        return (groupelement,cocycle)
-
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,parallelize = False,g0 = None):
         r"""
         Apply the l-th Hecke operator operator to ``c``.
@@ -990,6 +769,9 @@ class CohomologyGroup(Parent):
             valmat = A * bvec
             return self([V(valmat.submatrix(row=i,nrows = N),check = False) for i in xrange(0,valmat.nrows(),N)])
 
+
+
+
 def _calculate_Up_contribution(G,g,gamma,c,gloc,use_ps_dists,num_gamma):
     tig = G.get_Up_ti(g,gamma)
     if use_ps_dists:
@@ -1011,3 +793,88 @@ def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dis
         ans = c.evaluate(tig)
         return ans
 
+class CoIndAction(Action):
+    def __init__(self, G, V):
+        self.G = G
+        self.V = V
+        Action.__init__(self,G.large_group(),V,is_left = True,op = operator.mul)
+
+    def _call_(self,g,v):
+        print 'ACT'
+        return v # DEBUG
+        # Here v is an element of the coinduced module
+        # v = [v_1, ... , v_r], indexed by cosets
+        G = self.G
+        Gpn = G.small_group()
+        Gn = G.large_group()
+        # To know (g*f)(x_i) = f(x_i g), we write
+        # x_i g = g' x_j, and then f(x_i g) = g' f(x_j).
+        ans = []
+        for xi in G.coset_reps():
+            g1, j = Gn.get_coset_ti(xi * g)
+            ans.append( g1 * v[j] )
+        return self.V(ans)
+
+class CoIndElement(ModuleElement):
+    r'''
+    Elements in a co-induced module are represented by lists [v_1,\ldots v_r]
+    indexed by the cosets of G(p) \ G(1).
+    '''
+    def __init__(self, parent, data):
+        V = parent.coefficient_module()
+        self._val = [ V(o) for o in data ]
+        ModuleElement.__init__(self,parent)
+
+    def values(self):
+        return self._val
+
+    def _repr_(self):
+        return 'Element of %s'%self.parent()
+
+    def _add_(self,right):
+        return self.__class__(self.parent(),[ a + b for a,b in zip(self._val,right._val)])
+
+    def _sub_(self,right):
+        return self.__class__(self.parent(),[ a - b for a,b in zip(self._val,right._val)])
+
+    def _neg_(self):
+        return self.__class__(self.parent(),[ -a for a in self._val])
+
+    def __rmul__(self,right):
+        return self.__class__(self.parent(),[ ZZ(right) * a for a in self._val])
+
+class CoIndModule(Parent):
+    r'''
+    TESTS::
+
+    sage: from homology import *
+    sage: from cohomology import *
+    sage: from sarithgroup import *
+    sage: G = BigArithGroup(5,6,1)
+    sage: V = ZZ**1
+    sage: act = ArithGroupAction(G.Gpn,V)
+    sage: V._unset_coercions_used()
+    sage: V.register_action(act)
+    sage: CoI = CoIndModule(G,V)
+    sage: g = G.Gn.gen(1)
+    sage: x = CoI([0])
+    sage: g * x
+
+    '''
+    Element = CoIndElement
+    def __init__(self, G, V):
+        self._G = G
+        self._V = V
+        Parent.__init__(self)
+        self._unset_coercions_used()
+        self.register_action(CoIndAction(G,self))
+        self._populate_coercion_lists_()
+
+    def coefficient_module(self):
+        return self._V
+
+    def group(self):
+        return self._G
+
+    def _element_constructor_(self, x):
+        return self.element_class(self, x)

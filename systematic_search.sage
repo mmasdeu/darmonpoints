@@ -17,7 +17,7 @@ def find_num_classes(P,abtuple,Np,F,out_str,magma_seed,logging = False):
     load('findcurve.sage')
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
-    from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
+    from cohomology_arithmetic import ArithCoh
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
     from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
@@ -40,7 +40,7 @@ def find_num_classes(P,abtuple,Np,F,out_str,magma_seed,logging = False):
     except Exception as e:
         return out_str.format(curve = '\'Err G (%s)\''%str(e.message))
     try:
-        Coh = CohomologyGroup(G)
+        Coh = ArithCoh(G)
         phiElist = Coh.get_rational_cocycle(sign = 1,bound = 5,return_all =True)
     except Exception as e:
         return out_str.format(curve = '\'Err coh (%s)\''%str(e.message))
@@ -53,7 +53,7 @@ def find_num_classes(P,abtuple,Np,F,out_str,magma_seed,logging = False):
 def find_all_curves(pol,Nrange,max_P_norm,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file):
     load('findcurve.sage')
     from homology import construct_homology_cycle
-    from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
+    from cohomology import ArithCoh
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
     from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
@@ -171,7 +171,7 @@ def compute_table(input_file,output_trail = None):
 def find_few_curves(F,P,D,Np,ram_at_inf,max_P_norm_integrate,max_waiting_time_aurel,max_waiting_time,decimal_prec,log_file,covol,magma_seed):
     load('findcurve.sage')
     from homology import construct_homology_cycle
-    from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
+    from cohomology_arithmetic import ArithCoh
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
     from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
@@ -315,7 +315,7 @@ def compute_table_in_order(candidates,output_file,c0 = 0, c1 = 200,step = 50,mag
 
 def dry_run(input_file,covolume_bound):
     from homology import construct_homology_cycle
-    from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
+    from cohomology_arithmetic import ArithCoh
     from util import enumerate_words, quaternion_algebra_invariants_from_ramification,covolume
     from itertools import product,chain,izip,groupby,islice,tee,starmap
     from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class

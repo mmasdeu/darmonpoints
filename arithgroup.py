@@ -24,7 +24,6 @@ from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
 from sage.matrix.matrix_space import MatrixSpace
-from sigma0 import Sigma0,Sigma0ActionAdjuster
 from arithgroup_element import ArithGroupElement
 from sage.misc.sage_eval import sage_eval
 from util import *

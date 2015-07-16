@@ -15,6 +15,7 @@ from util import *
 from limits import num_evals,find_center
 from sage.parallel.decorate import fork,parallel
 from sage.misc.getusage import get_memory_usage
+from sage.structure.sage_object import SageObject
 import os
 
 def act_on_polynomial(P,num,den,N = None):
