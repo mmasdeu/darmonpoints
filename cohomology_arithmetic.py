@@ -120,8 +120,6 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     Phi.set_liftee(phiE)
     return Phi
 
-
-
 class ArithCohElement(CohomologyElement):
     def set_liftee(self,x):
         self._liftee = x
@@ -132,8 +130,16 @@ class ArithCohElement(CohomologyElement):
         except AttributeError:
             raise RuntimeError,"Don't know what this cocycle is a lift of!"
 
+    def evaluate_triv(self,x,parallelize = False,extramul = None):
+        try:
+            word = tuple(x.word_rep)
+        except AttributeError:
+            word = tuple(self.parent().group()(x).word_rep)
+        V = self.parent().coefficient_module()
+        return sum([ a * self._evaluate_at_group_generator(j) for j,a in word ], V(0))
+
     @cached_method
-    def evaluate(self,x,parallelize = False,extramul = None):
+    def evaluate_oc(self,x,parallelize = False,extramul = None):
         H = self.parent()
         G = H.group()
         V = H.coefficient_module()
@@ -159,6 +165,16 @@ class ArithCohElement(CohomologyElement):
             ans = extramul * ans
             ans = ans.apply_map(lambda x: x % H._pN)
         return V(ans,check = False)
+
+    @cached_method
+    def _evaluate_at_group_generator(self,j): # j is the index in Gpn.gens()
+        G = self.parent().group()
+        Gab = G.abelianization()
+        coeff_module = self.parent().coefficient_module()
+        gablist = list(Gab.G_to_ab_free(G.gen(j)))
+        cvals = [coeff_module(o) for o in self._val]
+        ans = sum([ZZ(a0) * b for a0,b in zip(gablist,cvals) if a0 != 0],coeff_module(0))
+        return ans
 
     def _evaluate_syllable(self,g,a):
         G = self.parent().group()
@@ -249,14 +265,14 @@ class ArithCohElement(CohomologyElement):
             else:
                 verbose("Applied Up once")
             ii = 0
-            m0val = (h2 - self).valuation(p) # min([(u.moment(0) - v.moment(0)).valuation(p) for u,v in zip(h2._val,self._val)])
+            m0val = min([(u.moment(0) - v.moment(0)).valuation(p) for u,v in zip(h2._val,self._val)])
             if m0val == 0:
                 sign *= ZZ(-1)
                 h2 = -h2
-                m0val = (h2 - self).valuation(p) # min([(u.moment(0) - v.moment(0)).valuation(p) for u,v in zip(h2._val,self._val)])
+                m0val = min([(u.moment(0) - v.moment(0)).valuation(p) for u,v in zip(h2._val,self._val)])
                 if m0val <= 0:
                     raise RuntimeError("Does not seem to converge")
-            current_val = (h2 - self).valuation(p) # min([(u-v).valuation(p) for u,v in zip(h2._val,self._val)])
+            current_val = min([(u-v).valuation(p) for u,v in zip(h2._val,self._val)])
             old_val = current_val - 1
             while current_val < prec and current_val > old_val:
                 h1 = h2

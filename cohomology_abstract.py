@@ -58,6 +58,10 @@ class CohomologyElement(ModuleElement):
             self._val = [V(0) if o.is_zero() else V(o) for o in data]
         else:
             self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
+        if parent.is_overconvergent:
+            self.evaluate = self.evaluate_oc
+        else:
+            self.evaluate = self.evaluate_triv
         ModuleElement.__init__(self,parent)
 
     def values(self):
