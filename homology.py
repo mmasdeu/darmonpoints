@@ -10,7 +10,6 @@ from collections import defaultdict
 from sage.matrix.all import matrix,Matrix
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
-from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.structure.parent import Parent
 from sage.categories.action import Action
 from sage.rings.padics.factory import Qq

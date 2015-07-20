@@ -237,12 +237,6 @@ class BigArithGroup_class(AlgebraicGroup):
         a,b = self.Gn.B.invariants()
         self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
         self._KK = self._II * self._JJ
-        # # Test splitting
-        # mats = [matrix(R,2,2,[1,0,0,1]),self._II,self._JJ,self._KK]
-        # for g in self.Gpn.Obasis:
-        #     tup = g.coefficient_tuple()
-        #     mat = sum([self._F_to_local(a) * b for a,b in zip(tup,mats)])
-        #     assert is_in_Gamma0loc(mat,det_condition = False)
         self._prec = prec
         return self._II, self._JJ, self._KK
 
@@ -454,6 +448,18 @@ class BigArithGroup_class(AlgebraicGroup):
             return a,wd
         else:
             return a
+
+    def coset_reps(self):
+        return self.get_BT_reps()
+
+    def get_coset_ti(self, x):
+        a, wd = self.reduce_in_amalgam(x, return_word = True)
+        assert len(wd) <= 1
+        if len(wd) == 0:
+            return a, 0
+        else:
+            assert wd[0] != 0
+            return a, wd[0][0]
 
     def _reduce_in_amalgam(self,x):
         x0 = x

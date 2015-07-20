@@ -21,13 +21,33 @@ from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.categories.pushout import pushout
 from sage.rings.infinity import Infinity
 from sage.structure.sage_object import load,save
-
+from sage.categories.action import Action
+from sigma0 import Sigma0
+import operator
+from sigma0 import Sigma0,Sigma0ActionAdjuster
 
 oo = Infinity
 
 use_fmpz_mat = False
 if use_fmpz_mat:
     load('fmpz_mat.spyx')
+
+
+class our_adjuster(Sigma0ActionAdjuster):
+    """
+    Callable object that turns matrices into 4-tuples.
+
+    EXAMPLES::
+
+        sage: from sage.modular.btquotients.pautomorphicform import _btquot_adjuster
+        sage: adj = _btquot_adjuster()
+        sage: adj(matrix(ZZ,2,2,[1..4]))
+        (4, 2, 3, 1)
+    """
+    def __call__(self, g):
+        a,b,c,d = g.list()
+        return tuple([d,b,c,a])
+
 
 class OCVnElement(ModuleElement):
     r"""
@@ -75,10 +95,10 @@ class OCVnElement(ModuleElement):
                     self._val = Fmpz_mat(self._val)
         else:
             self._val= val
-        self.moments = self._val
+        self._moments = self._val
 
     def moment(self, i):
-        return self.moments[i,0]
+        return self._moments[i,0]
 
     def __getitem__(self,r):
         r"""
@@ -305,6 +325,11 @@ class OCVnElement(ModuleElement):
         else:
             return min([self._val[ii,0].valuation(l) for ii in range(self._depth)])
 
+    def reduce_mod(self, N = None):
+        if N is None:
+            N = self.parent()._pN
+        self._val = self._val.apply_map(lambda x: x % N)
+        return self
 
 class OCVn(Module,UniqueRepresentation):
     Element=OCVnElement
@@ -334,9 +359,21 @@ class OCVn(Module,UniqueRepresentation):
         self._p = p
         self._Rmod = ZpCA(p,depth - 1)
         self._depth = depth
+        self._pN = self._p**(depth - 1)
         self._PowerSeries = PowerSeriesRing(self._Rmod, default_prec = self._depth,name='z')
         self._cache_powers = dict()
+        self._unset_coercions_used()
+        self._Sigma0 = Sigma0(self._p, base_ring = self._Rmod, adjuster = our_adjuster())
+        self.register_action(Sigma0Action(self._Sigma0,self))
         self._populate_coercion_lists_()
+
+    def Sigma0(self):
+        return self._Sigma0
+
+    def approx_module(self, M = None):
+        if M is None:
+            M = self._depth
+        return MatrixSpace(self._R, M, 1)
 
     def clear_cache(self):
         del self._cache_powers
@@ -374,6 +411,10 @@ class OCVn(Module,UniqueRepresentation):
         #Admissible values of x?
         return OCVnElement(self,x,check)
 
+    def acting_matrix(self, g, M):
+        # We discard the number of moments, M.
+        return self._get_powers(g)
+
     def _get_powers(self,abcd,emb = None):
         r"""
         Compute the action of a matrix on the basis elements.
@@ -387,12 +428,15 @@ class OCVn(Module,UniqueRepresentation):
             return self._cache_powers[abcd]
         except KeyError:
             pass
+        R = self._PowerSeries
         if emb is None:
-            a,b,c,d = abcd.list()
+            try:
+                a,b,c,d = abcd.list()
+            except AttributeError:
+                a,b,c,d = abcd.parent().embed(abcd.quaternion_rep, R.base_ring().precision_cap()).list()
         else:
             a,b,c,d = emb(abcd).list()
         #a,b,c,d = a.lift(),b.lift(),c.lift(),d.lift()
-        R = self._PowerSeries
         r = R([b,a])
         s = R([d,c])
         ratio = r * s**-1
@@ -483,3 +527,10 @@ class OCVn(Module,UniqueRepresentation):
 
     def is_exact(self):
         return False
+
+class Sigma0Action(Action):
+    def __init__(self,G,M):
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
+
+    def _call_(self,g,v):
+        return v.l_act_by(g.matrix())

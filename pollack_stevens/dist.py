@@ -1071,7 +1071,6 @@ class WeightKAction(Action):
 
             sage: from sage.modular.pollack_stevens.distributions import Distributions, Symk
         """
-        g = g.matrix()
         if not self._maxprecs.has_key(g):
             A = self._compute_acting_matrix(g, M)
             self._actmat[g] = {M:A}
@@ -1129,7 +1128,7 @@ class WeightKAction(Action):
 class WeightKAction_vector(WeightKAction):
     def _compute_acting_matrix(self, g, M):
         r"""
-        
+
 
         INPUT:
 

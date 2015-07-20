@@ -187,12 +187,12 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                     if quit_when_done:
                         magma.quit()
                     return G
-                except AssertionError as e:
-                    fwrite('Assertion occurred when constructing homology cycle. Returning the S-arithmetic group.', outfile)
-                    fwrite('%s'%str(e), outfile)
-                    if quit_when_done:
-                        magma.quit()
-                    return G
+                # except AssertionError as e:
+                #     fwrite('Assertion occurred when constructing homology cycle. Returning the S-arithmetic group.', outfile)
+                #     fwrite('%s'%str(e), outfile)
+                #     if quit_when_done:
+                #         magma.quit()
+                #     return G
             eisenstein_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,eisenstein_constant),outfile)
             fwrite('exponent = %s'%nn,outfile)

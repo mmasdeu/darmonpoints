@@ -106,6 +106,11 @@ class ArithGroup_generic(AlgebraicGroup):
         return self.element_class(self,word_rep = [],quaternion_rep = self.B(1),check = False)
 
     def _element_constructor_(self,x):
+        if isinstance(x,int):
+            if x == 0:
+                return self.zero()
+            elif x == 1:
+                return self.one()
         if isinstance(x,list):
             return self.element_class(self, word_rep = x,check = False)
         elif isinstance(x, self.element_class):
