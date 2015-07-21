@@ -438,11 +438,11 @@ class BigArithGroup_class(AlgebraicGroup):
         else:
             rednrm = x.reduced_norm()
         rednrm_Q = rednrm.abs() if self.F == QQ else rednrm.norm().abs()
-        if rednrm_Q != 1:
-            raise ValueError('x (= %s) must have a unit as reduced norm'%x)
-        if 'P' not in self.Gn._grouptype:
-            if rednrm != 1:
-                raise ValueError('x (= %s) must have reduced norm 1'%x)
+        # if rednrm_Q != 1:
+        #     raise ValueError('x (= %s) must have a unit as reduced norm'%x)
+        # if 'P' not in self.Gn._grouptype:
+        #     if rednrm != 1:
+        #         raise ValueError('x (= %s) must have reduced norm 1'%x)
         a,wd = self._reduce_in_amalgam(set_immutable(x))
         if return_word:
             return a,wd
@@ -466,7 +466,7 @@ class BigArithGroup_class(AlgebraicGroup):
         p = self.p
         denval = self.Gn._denominator_valuation
         if self.Gpn._denominator(x) == 1:
-            return self.Gpn(x), []
+            return x, [] # DEBUG # self.Gpn(x), []
         else:
             gis = [ g**-1 for g in self.get_BT_reps()]
             gitildes = [self.Gn.B(1)] + [ g**-1 for g in self.get_BT_reps_twisted()[1:]]
@@ -486,7 +486,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 valx = 1
 
             if self.Gpn._denominator(x) == 1:
-                return self.Gpn(x), [wd0]
+                return x, [wd0] # DEBUG # self.Gpn(x), [wd0]
             i = next((i for i,g in enumerate(gitildes) if denval(x * g,p) < valx),0)
             assert i > 0
             wd1 = (i,1)

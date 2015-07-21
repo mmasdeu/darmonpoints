@@ -67,6 +67,14 @@ class CohomologyElement(ModuleElement):
     def values(self):
         return self._val
 
+    def _vector_(self):
+        ambient = self.parent().space
+        ans = sum([list(o) for o in self._val], [])
+        if self.trivial_action():
+            return ambient(ans)
+        else:
+            return ambient(ambient.V()(ans))
+
     def _repr_(self):
         return 'Cohomology class in %s'%self.parent()
 
@@ -264,7 +272,7 @@ class CohomologyGroup(Parent):
         if self.trivial_action():
             return self.element_class(self,[self._coeffmodule(0) for g in xrange(len(self.group().abelianization().free_gens()))])
         else:
-            return self.element_class(self,[self._coeffmodule(0) for g in xrange(self.gens())])
+            return self.element_class(self,[self._coeffmodule(0) for g in xrange(len(self.gens()))])
 
     def _an_element_(self):
         return self.zero()
@@ -280,7 +288,7 @@ class CohomologyGroup(Parent):
 
     @cached_method
     def gen(self,i):
-        vi = self.space.basis()[i]
+        vi = self.space.gen(i)
         try:
             vi = vi.lift()
         except AttributeError: pass

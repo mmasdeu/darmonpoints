@@ -29,6 +29,9 @@ from sage.misc.sage_eval import sage_eval
 from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
+from sage.rings.infinity import Infinity
+oo = Infinity
+
 
 def JtoP(H,MR,p = None):
     CC = MR.base_ring()
@@ -241,28 +244,32 @@ class ArithGroup_generic(AlgebraicGroup):
         try:
             return self._cache_hecke_reps[l]
         except KeyError: pass
-        if g0 is None:
-            g0 = self.element_of_norm(l,use_magma = use_magma)
-        reps = [g0]
-        I = self.enumerate_elements()
-        n_iters = ZZ(0)
-        if self.F == QQ:
-            lnorm = ZZ(l).abs()
-            try:
-                num_reps = lnorm if ZZ(self._O_discriminant) % lnorm == 0 else lnorm + 1
-            except TypeError:
-                num_reps = lnorm if ZZ(self._O_discriminant.gen()) % ZZ(lnorm) == 0 else lnorm + 1
+        if l == oo:
+            reps = [self.non_positive_unit()]
         else:
-            lnorm = self.F.ideal(l).norm()
-            num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
+            if g0 is None:
+                g0 = self.element_of_norm(l,use_magma = use_magma)
+            reps = [g0]
+            I = self.enumerate_elements()
+            n_iters = ZZ(0)
+            if self.F == QQ:
+                lnorm = ZZ(l).abs()
+                try:
+                    num_reps = lnorm if ZZ(self._O_discriminant) % lnorm == 0 else lnorm + 1
+                except TypeError:
+                    num_reps = lnorm if ZZ(self._O_discriminant.gen()) % ZZ(lnorm) == 0 else lnorm + 1
+            else:
+                lnorm = self.F.ideal(l).norm()
+                num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
 
-        while len(reps) < num_reps:
-            n_iters += 1
-            new_candidate = I.next() * g0
-            new_inv = new_candidate**-1
-            if not any([self._is_in_order(new_inv * old) for old in reps]):
-                reps.append(new_candidate)
-            update_progress(float(len(reps))/float(num_reps),'Getting Hecke representatives (%s iterations)'%(n_iters))
+            while len(reps) < num_reps:
+                n_iters += 1
+                new_candidate = I.next() * g0
+                new_inv = new_candidate**-1
+                if not any([self._is_in_order(new_inv * old) for old in reps]):
+                    reps.append(new_candidate)
+                if n_iters % 100 == 0:
+                    update_progress(float(len(reps))/float(num_reps),'Getting Hecke representatives (%s iterations)'%(n_iters))
         self._cache_hecke_reps[l] = reps
         return reps
 
@@ -345,20 +352,6 @@ class ArithGroup_generic(AlgebraicGroup):
             glift = Gab.ab_to_G(g)
             newcol = list(Gab.G_to_ab_free(prod([self.get_hecke_ti(gk1,glift,l,use_magma) for gk1 in hecke_reps],self.one())))
             M.set_column(j,newcol)
-        return M
-
-    @cached_method
-    def involution_at_infinity_matrix_freepart(self,use_magma = True):
-        Gab = self.abelianization()
-        freegens = Gab.free_gens()
-        dim = len(freegens)
-        M = matrix(ZZ,dim,dim,0)
-        x = self.non_positive_unit()
-        V = QQ**len(freegens)
-        for j,g in enumerate(freegens):
-            # Construct column j of the matrix
-            newg = Gab.ab_to_G(g).conjugate_by(x)
-            M.set_column(j,list(Gab.G_to_ab_free(newg)))
         return M
 
     def _calculate_relation(self,wt,separated = False):
@@ -1032,7 +1025,10 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         except KeyError: pass
         if use_magma:
             verbose("Warning: asked to use Magma to get hecke reps, but trivial to do without!")
-        ans = [self.B([l,i,0,1]) for i in xrange(l)] + [self.B([1,0,0,l])]
+        if l == oo:
+            ans = [self.non_positive_unit()]
+        else:
+            ans = [self.B([l,i,0,1]) for i in xrange(l)] + [self.B([1,0,0,l])]
         for o in ans:
             o.set_immutable()
         self._cache_hecke_reps[l] = ans
