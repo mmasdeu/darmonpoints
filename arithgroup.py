@@ -274,13 +274,14 @@ class ArithGroup_generic(AlgebraicGroup):
         return reps
 
     @cached_method
-    def get_hecke_ti(self,gk1,gamma,l,use_magma):
+    def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False):
         r"""
 
         INPUT:
 
         - gk1 - a quaternion element of norm l
         - gamma - an element of G
+        - If l is None, it is assumed to be p.
 
         OUTPUT:
 
@@ -288,36 +289,21 @@ class ArithGroup_generic(AlgebraicGroup):
 
         """
         elt = gk1**-1 * gamma.quaternion_rep
-        reps = self.get_hecke_reps(l,use_magma = use_magma)
+        if l is None:
+            reps = self.get_Up_reps()
+        else:
+            reps = self.get_hecke_reps(l,use_magma = use_magma)
         for gk2 in reps:
             ti = elt * gk2
             is_in_order = self._is_in_order(ti)
             if self._is_in_order(ti):
-                return self(ti)
+                if l is None:
+                    if self.embed(ti,20)[1,0].valuation() > 0:
+                        return self(ti)
+                else:
+                    return self(ti)
         verbose("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
         raise RuntimeError("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
-
-    @cached_method
-    def get_Up_ti(self,gk1,gamma):
-        r"""
-
-        INPUT:
-
-        - gk1 - a quaternion element of norm l
-        - gamma - an element of G
-
-        OUTPUT:
-
-        - t_{gk1}(gamma)
-
-        """
-        elt = gk1**-1 * gamma.quaternion_rep
-        reps = self.get_Up_reps()
-        for gk2 in reps:
-            ti = elt * gk2
-            if self._is_in_order(ti):
-                return self(ti)
-        raise RuntimeError('No Up ti found for gk1 = %s, gamma = %s'%(gk1,gamma))
 
     def gen(self,i):
         return self._gens[i]

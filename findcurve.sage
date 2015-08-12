@@ -168,23 +168,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
             G.save_to_db()
         fwrite('Cohomology class found', outfile)
     try:
-        wp = G.wp()
-        B = G.Gpn.abelianization()
-        C = G.Gn.abelianization()
-        Bab = B.abelian_group()
-        Cab = C.abelian_group()
-        verbose('Finding f...')
-        fdata = [B.ab_to_G(o).quaternion_rep for o in B.gens_small()]
-        # verbose('fdata = %s'%fdata)
-        f = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in fdata])
-        verbose('Finding g...')
-        gdata = [wp**-1 * o * wp for o in fdata]
-        # verbose('gdata = %s'%gdata)
-        g = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in gdata])
-        fg = direct_sum_of_maps([f,g])
-        V = Bab.gen(0).lift().parent()
-        good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
-        ker = [B.ab_to_G(Bab(o)) for o in good_ker]
+        ker = G.get_homology_kernel()
     except Exception as e:
         if quit_when_done:
             magma.quit()

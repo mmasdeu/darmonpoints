@@ -101,9 +101,8 @@ def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
     H1 = OneChains(Gn,Div)
-    x = G.small_group()(x)
     xi1 = H1(dict([(Gn(x),Div(tau1))])).zero_degree_equivalent(prec = prec)
-    xi2 = H1(dict([(Gn(x.conjugate_by(wp)),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
+    xi2 = H1(dict([(Gn(wp**-1 * x * wp),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
     if smoothen is not None:
         xi1 = xi1.hecke_smoothen(smoothen)
         xi2 = xi2.hecke_smoothen(smoothen)

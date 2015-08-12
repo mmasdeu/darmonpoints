@@ -25,13 +25,11 @@ from sage.categories.action import Action
 from sigma0 import Sigma0
 import operator
 from sigma0 import Sigma0,Sigma0ActionAdjuster
+from sage.modules.vector_integer_dense import Vector_integer_dense
+from sage.modules.free_module_element import FreeModuleElement_generic_dense
+
 
 oo = Infinity
-
-use_fmpz_mat = False
-if use_fmpz_mat:
-    load('fmpz_mat.spyx')
-
 
 class our_adjuster(Sigma0ActionAdjuster):
     """
@@ -74,31 +72,26 @@ class OCVnElement(ModuleElement):
         ModuleElement.__init__(self,parent)
         self._parent = parent
         self._depth = self._parent._depth
-        if check:
-            if isinstance(val,self.__class__):
-                if val._parent._depth == parent._depth:
-                    self._val = val._val
-                else:
-                    d = min([val._parent._depth,parent._depth])
-                    if use_fmpz_mat:
-                        self._val = Fmpz_mat(None,d,1)
-                        for i in range(d):
-                            self._val[i,0] = val._val[i,0]
-                    else:
-                        self._val = val._val.submatrix(0,0,nrows = d)
+        if isinstance(val,self.__class__):
+            if val._parent._depth == parent._depth:
+                self._val = val._val
             else:
-                try:
-                    self._val = Matrix(self._parent._R,self._depth,1,val)
-                except:
-                    self._val= self._parent._R(val) * MatrixSpace(self._parent._R,self._depth,1)(1)
-                if use_fmpz_mat:
-                    self._val = Fmpz_mat(self._val)
+                d = min([val._parent._depth,parent._depth])
+                self._val = val._val.submatrix(0,0,nrows = d)
+
+        elif isinstance(val, Vector_integer_dense) or isinstance(val, FreeModuleElement_generic_dense):
+            self._val = MatrixSpace(self._parent._R, self._depth, 1)(0)
+            for i,o in enumerate(val.list()):
+                self._val[i,0] = o
         else:
-            self._val= val
+            try:
+                self._val = Matrix(self._parent._R,self._depth,1,val)
+            except (TypeError, ValueError):
+                self._val= self._parent._R(val) * MatrixSpace(self._parent._R,self._depth,1)(1)
         self._moments = self._val
 
     def moment(self, i):
-        return self._moments[i,0]
+        return self._parent._Rmod(self._moments[i,0])
 
     def __getitem__(self,r):
         r"""
@@ -198,9 +191,9 @@ class OCVnElement(ModuleElement):
         ::
         """
         #assert(x.nrows()==2 and x.ncols()==2) #An element of GL2
-        return self._l_act_by(x.adjoint())
+        return self._acted_upon_(x.adjoint(), False)
 
-    def l_act_by(self,x):
+    def _acted_upon_(self,x, right_action): # Act by x on the left
         r"""
 
         EXAMPLES:
@@ -210,12 +203,14 @@ class OCVnElement(ModuleElement):
         ::
 
         """
-        R = self._parent._R
-        xdet = x.determinant()
-
-        x.set_immutable()
-        tmp = self._parent._get_powers(x) * self._val
-        return self.__class__(self._parent, tmp,check = False)
+        if right_action:
+            return self._acted_upon_(x.adjoint(), False)
+        else:
+            R = self._parent._R
+            xdet = x.determinant()
+            x.set_immutable()
+            tmp = self._parent._get_powers(x) * self._val
+            return self.__class__(self._parent, tmp, check = False)
 
     def _neg_(self):
         r"""
@@ -319,9 +314,10 @@ class OCVnElement(ModuleElement):
 
         """
         if not self._parent.base_ring().is_exact():
-            if(not l is None and l!=self._parent._R.prime()):
+            if(not l is None and l!=self._parent._Rmod.prime()):
                 raise ValueError, "This function can only be called with the base prime"
-            return min([self._val[ii,0].valuation() for ii in range(self._depth)])
+            l = self._parent._Rmod.prime()
+            return min([self._val[ii,0].valuation(l) for ii in range(self._depth)])
         else:
             return min([self._val[ii,0].valuation(l) for ii in range(self._depth)])
 
@@ -330,6 +326,7 @@ class OCVnElement(ModuleElement):
             N = self.parent()._pN
         self._val = self._val.apply_map(lambda x: x % N)
         return self
+
 
 class OCVn(Module,UniqueRepresentation):
     Element=OCVnElement
@@ -385,10 +382,7 @@ class OCVn(Module,UniqueRepresentation):
     def _an_element_(self):
         r"""
         """
-        if use_fmpz_mat:
-            return OCVnElement(self,Fmpz_mat(Matrix(self._R,self._depth,1,range(1,self._depth+1))), check = False)
-        else:
-            return OCVnElement(self,Matrix(self._R,self._depth,1,range(1,self._depth+1)), check = False)
+        return OCVnElement(self,Matrix(self._R,self._depth,1,range(1,self._depth+1)), check = False)
 
     def _coerce_map_from_(self, S):
         r"""
@@ -409,7 +403,7 @@ class OCVn(Module,UniqueRepresentation):
         """
         #Code how to coherce x into the space
         #Admissible values of x?
-        return OCVnElement(self,x,check)
+        return OCVnElement(self, x)
 
     def acting_matrix(self, g, M):
         # We discard the number of moments, M.
@@ -441,10 +435,7 @@ class OCVn(Module,UniqueRepresentation):
         s = R([d,c])
         ratio = r * s**-1
         y = R(1)
-        if use_fmpz_mat:
-            x = Fmpz_mat(None,self._depth,self._depth)
-        else:
-            x = Matrix(ZZ,self._depth,self._depth,0)
+        x = Matrix(ZZ,self._depth,self._depth,0)
         for jj in range(self._depth):
             x[0,jj] = y[jj]
         for ii in range(1,self._depth):
@@ -488,10 +479,7 @@ class OCVn(Module,UniqueRepresentation):
         """
         try: return self._basis
         except: pass
-        if use_fmpz_mat:
-            self._basis=[OCVnElement(self,Fmpz_mat(Matrix(self._R,self._depth,1,{(jj,0):1},sparse=False)),check = False) for jj in range(self._depth)]
-        else:
-            self._basis=[OCVnElement(self,Matrix(self._R,self._depth,1,{(jj,0):1},sparse=False),check = False) for jj in range(self._depth)]
+        self._basis=[OCVnElement(self,Matrix(self._R,self._depth,1,{(jj,0):1},sparse=False),check = False) for jj in range(self._depth)]
         return self._basis
 
     def base_ring(self):
@@ -505,7 +493,7 @@ class OCVn(Module,UniqueRepresentation):
         ::
 
         """
-        return self._R
+        return self._Rmod
 
     def depth(self):
         r"""
@@ -533,4 +521,4 @@ class Sigma0Action(Action):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
     def _call_(self,g,v):
-        return v.l_act_by(g.matrix())
+        return v._acted_upon_(g.matrix(), False)

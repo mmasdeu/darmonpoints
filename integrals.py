@@ -291,9 +291,13 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     # verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
     HOC = hc.parent()
+    assert depth == 1
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
-    depth = HOC.coefficient_module().precision_cap()
+    try:
+        depth = HOC.coefficient_module().precision_cap()
+    except AttributeError:
+        depth = HOC.coefficient_module().coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
     QQp = Qp(p,prec)
     R = PolynomialRing(K,'r')
@@ -337,13 +341,13 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             else:
                 newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep).conjugate_by(G.wp())
             if HOC._use_ps_dists:
-                mu_e = hc.evaluate(newgamma,parallelize)
-                resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
+                mu_e = hc.evaluate(newgamma,parallelize).evaluate_at_identity()
+                resadd += sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                resadd += hc.evaluate(newgamma,parallelize).evaluate_at_poly(pol,K,depth)
+                resadd += hc.evaluate(newgamma,parallelize).evaluate_at_identity().evaluate_at_poly(pol, K, depth)
             if multiplicative:
                 try:
-                    resmul *= c0**ZZ(hc.get_liftee().evaluate(newgamma)[0])
+                    resmul *= c0**ZZ(hc.get_liftee().evaluate(newgamma).evaluate_at_identity()[0])
                 except IndexError: pass
             if progress_bar:
                 update_progress(float(QQ(ii)/QQ(len(edgelist))),'Integration %s/%s'%(counter,total_counter))

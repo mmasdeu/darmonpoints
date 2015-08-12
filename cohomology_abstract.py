@@ -198,12 +198,11 @@ class CohomologyGroup(Parent):
             dim = len(V.basis())
         one = Matrix(V.base_ring(),dim,dim,1)
         for i,g in enumerate(G.gens()):
-            try:
-                A = self._acting_matrix(g, dim)
-            except AttributeError: # DEBUG
-                gmat = G.embed(G.Ugens[i], dim)
-                gmat.set_immutable()
-                A = self._acting_matrix(gmat, dim)
+            A = self._acting_matrix(g, dim)
+            # except AttributeError: # DEBUG
+            #     gmat = G.embed(G.Ugens[i], dim)
+            #     gmat.set_immutable()
+            #     A = self._acting_matrix(gmat, dim)
             self._gen_pows.append([one, A])
             try:
                 Ainv = self._acting_matrix(g**-1, dim)
@@ -235,7 +234,7 @@ class CohomologyGroup(Parent):
         sage: from cohomology_abstract import *
         sage: from ocmodule import *
         sage: GS = BigArithGroup(5, 6, 1)
-        sage: G = GS.small_group()
+        sage: G = GS.large_group()
         sage: V = OCVn(5,1)
         sage: Coh = CohomologyGroup(G,V,trivial_action = False)
         sage: amb = Coh.space
@@ -272,7 +271,7 @@ class CohomologyGroup(Parent):
         if self.trivial_action():
             return self.element_class(self,[self._coeffmodule(0) for g in xrange(len(self.group().abelianization().free_gens()))])
         else:
-            return self.element_class(self,[self._coeffmodule(0) for g in xrange(len(self.gens()))])
+            return self.element_class(self,[self._coeffmodule(0) for g in xrange(len(self.group().gens()))])
 
     def _an_element_(self):
         return self.zero()

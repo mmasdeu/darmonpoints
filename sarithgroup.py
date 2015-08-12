@@ -182,6 +182,7 @@ class BigArithGroup_class(AlgebraicGroup):
 
         verbose('Done initializing arithmetic groups')
         self.Gpn.get_Up_reps = self.get_Up_reps
+        self.Gn.get_Up_reps = self.get_Up_reps
         verbose('Done initialization of BigArithmeticGroup')
 
     def clear_cache(self):
@@ -430,7 +431,7 @@ class BigArithGroup_class(AlgebraicGroup):
             except AttributeError: pass
             I,J,K = self.local_splitting(prec)
             f = self._F_to_local
-            return f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K
+            return (f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K).change_ring(Qp(self.p, prec))
 
     def reduce_in_amalgam(self,x,return_word = False):
         if self.F == QQ and self.discriminant == 1:
@@ -452,13 +453,15 @@ class BigArithGroup_class(AlgebraicGroup):
     def coset_reps(self):
         return self.get_BT_reps()
 
+    @cached_method
     def get_coset_ti(self, x):
         a, wd = self.reduce_in_amalgam(x, return_word = True)
         assert len(wd) <= 1
         if len(wd) == 0:
             return a, 0
         else:
-            assert wd[0] != 0
+            assert len(wd) == 1
+            assert wd[0][1] == 0
             return a, wd[0][0]
 
     def _reduce_in_amalgam(self,x):
