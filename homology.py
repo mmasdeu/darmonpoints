@@ -51,15 +51,15 @@ def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_
 
     gamma, tau1 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = False)
     Div = Divisors(tau1.parent())
-    H1 = Homology(G.large_group(),Div)
+    H1 = OneChains(G.large_group(),Div)
     D1 = Div(tau1)
     ans0 = H1({gamma: D1})
-    assert ans0._check_cycle_condition()
+    assert ans0.is_cycle()
     ans = H1({})
     ans += ans0
     # Do hecke_smoothen to kill Eisenstein part
     ans = ans.hecke_smoothen(q1,prec = prec)
-    assert ans._check_cycle_condition()
+    assert ans.is_cycle()
     if elliptic_curve is not None:
         if F == QQ:
             a_ell = elliptic_curve.ap(q1)
@@ -96,15 +96,14 @@ def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_
 def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
     p = G.prime()
     Gn = G.large_group()
-    Gpn = G.small_group()
     Cp = Qq(p**2,prec,names = 'g')
     wp = G.wp()
     wpmat = (G.embed(wp,prec)**-1).change_ring(Cp)
     a,b,c,d = wpmat.list()
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
-    H1 = Homology(Gn,Div)
-    x = Gpn(x)
+    H1 = OneChains(Gn,Div)
+    x = G.small_group()(x)
     xi1 = H1(dict([(Gn(x),Div(tau1))])).zero_degree_equivalent(prec = prec)
     xi2 = H1(dict([(Gn(x.conjugate_by(wp)),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
     if smoothen is not None:
@@ -112,31 +111,6 @@ def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
         xi2 = xi2.hecke_smoothen(smoothen)
     return xi1, xi2
 
-class Divisors(Parent):
-    def __init__(self,field):
-        self._field = field
-        Parent.__init__(self)
-
-    def _an_element_(self):
-        return Divisor_element(self,[(3,self._field._an_element_())])
-
-    def _element_constructor_(self,data,ptdata = None):
-        return Divisor_element(self,data,ptdata)
-
-    def _coerce_map_from_(self,S):
-        if isinstance(S,self.__class__):
-            return S._field is self._field
-        else:
-            return False
-
-    def base_field(self):
-        return self._field
-
-    def base_ring(self):
-        return self._field
-
-    def _repr_(self):
-        return 'Group of divisors over ' + self._field._repr_()
 
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)
 def _hash(x):
@@ -153,7 +127,6 @@ def _hash(x):
     for tup in x.list()[:100]:
         ans.extend(tup)
     return tuple(ans)
-
 
 class Divisor_element(ModuleElement):
     def __init__(self,parent,data,ptdata = None):
@@ -308,6 +281,36 @@ class Divisor_element(ModuleElement):
     def support(self):
         return [self._ptdict[P] for P in Set([d for d in self._data])]
 
+class Divisors(Parent):
+
+    Element = Divisor_element
+
+    def __init__(self,field):
+        self._field = field
+        Parent.__init__(self)
+
+    def _an_element_(self):
+        return self.element_class(self,[(3,self._field._an_element_())])
+
+    def _element_constructor_(self,data,ptdata = None):
+        return self.element_class(self,data,ptdata)
+
+    def _coerce_map_from_(self,S):
+        if isinstance(S,self.__class__):
+            return S._field is self._field
+        else:
+            return False
+
+    def base_field(self):
+        return self._field
+
+    def base_ring(self):
+        return self._field
+
+    def _repr_(self):
+        return 'Group of divisors over ' + self._field._repr_()
+
+
 class ArithGroupAction(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
@@ -325,83 +328,28 @@ class ArithGroupAction(Action):
         newdict = defaultdict(ZZ)
         newpts = {}
         for P,n in v:
-            newpt = (a*P+b)/(c*P+d)
+            newpt = (a*P+b) / (c*P+d)
             hp = _hash(newpt)
-            newdict[hp] += n #K0(a)*P+K0(b))/(K0(c)*P+K0(d))] += n
+            newdict[hp] += n
             newpts[hp] = newpt
             if newdict[hp] == 0:
                 del newdict[hp]
                 del newpts[hp]
         return v.parent()(newdict,newpts)
 
-class Homology(Parent):
-    def __init__(self,G,V):
-        r'''
-        INPUT:
-        - G: an ArithGroup
-        - V: a CoeffModule
-        '''
-        self._group = G
-        self._coeffmodule = V
-        Parent.__init__(self)
-        V._unset_coercions_used()
-        V.register_action(ArithGroupAction(G,V))
-        self._populate_coercion_lists_()
-
-    def _an_element_(self):
-        return HomologyClass(self,dict([(self.group().gen(0),self._coeffmodule._an_element_())]))
-
-    def _repr_(self):
-        return 'Homology Group'
-
-    def group(self):
-        return self._group
-
-    def coefficient_module(self):
-        return self._coeffmodule
-
-    def _element_constructor_(self,data):
-        if isinstance(data,dict):
-            return HomologyClass(self,data)
-        else:
-            return HomologyClass(self,dict([(data,ZZ(1))]))
-
-    def _coerce_map_from_(self,S):
-        if isinstance(S,Homology):
-            return S.group() is self.group() and S.coefficient_module() is self.coefficient_module()
-        else:
-            return False
-
-class HomologyClass(ModuleElement):
-    def __init__(self, parent, data, check = False):
+class OneChains_element(ModuleElement):
+    def __init__(self, parent, data):
         r'''
         Define an element of `H_1(G,V)`
             - data: a list
 
         TESTS:
 
-            sage: G = BigArithGroup(5,6,1)
-            sage: a = G([(1,2),(0,3),(2,-1)])
-            sage: b = G([(1,3),(2,-1),(0,2)])
-            sage: c= a^2*b^-1
-            sage: rel_words = G.large_group().get_relation_words()
-            sage: x = commutator(a,b)*G(rel_words[0])*commutator(c,b)*(G(rel_words[3])^-3)*commutator(a*b,c)*commutator(b,a)*G(rel_words[2])^5*commutator(a*b,c*a)
-            sage: Cp.<g> = Qq(5^3,20)
-            sage: Div = Divisors(Cp)
-            sage: D1 = Div(g+3)
-            sage: D2 = Div(2*g+1)
-            sage: H1 = Homology(G,Div)
-            sage: xi = H1(dict([(x,D1),(commutator(b,c),D2)]))
-            sage: xi1 = xi.zero_degree_equivalent()
         '''
         if not isinstance(data,dict):
             raise ValueError,'data should be a dictionary indexed by elements of ArithGroup'
-        self._data = data # DEBUG
+        self._data = data
         ModuleElement.__init__(self,parent)
-        if check:
-            if not self._check_cycle_condition():
-                raise TypeError,'Element does not satisfy cycle condition'
-
 
     def get_data(self):
         return self._data.iteritems()
@@ -433,7 +381,6 @@ class HomologyClass(ModuleElement):
 
     def radius(self):
         return max([0] + [v.radius() for g,v in self._data.iteritems()])
-
 
     def zero_degree_equivalent(self, prec, allow_multiple = False):
         r'''
@@ -513,7 +460,7 @@ class HomologyClass(ModuleElement):
                     oldv = g**-1 * oldv
                 if a > 0:
                     assert oldv == newv
-        return HomologyClass(self.parent(),newdict)
+        return self.parent()(newdict)
 
     def _add_(self,right):
         newdict = dict()
@@ -524,7 +471,7 @@ class HomologyClass(ModuleElement):
                     del newdict[g]
             except KeyError:
                 newdict[g] = v
-        return HomologyClass(self.parent(),newdict)
+        return self.parent()(newdict)
 
     def _sub_(self,right):
         newdict = dict(self._data)
@@ -535,7 +482,7 @@ class HomologyClass(ModuleElement):
                     del newdict[g]
             except KeyError:
                 newdict[g] = -v
-        return HomologyClass(self.parent(),newdict)
+        return self.parent(newdict)
 
     def act_by_hecke(self,l,prec,g0 = None):
         newdict = dict()
@@ -550,14 +497,14 @@ class HomologyClass(ModuleElement):
                 newv = v.left_act_by_matrix(gk1inv0)
                 try:
                     newdict[ti] += newv
-                    # if newdict[ti].is_zero():
-                    #     del newdict[ti]
+                    if newdict[ti].is_zero():
+                        del newdict[ti]
                 except KeyError:
                     newdict[ti] = newv
-        ans = HomologyClass(self.parent(),newdict)
+        ans = self.parent()(newdict)
         return ans
 
-    def _check_cycle_condition(self,return_residue = False):
+    def is_cycle(self,return_residue = False):
         res = self.parent().coefficient_module()(0)
         for g,v in self._data.iteritems():
             res += (g**-1) * v - v
@@ -602,4 +549,45 @@ class HomologyClass(ModuleElement):
 
     def __rmul__(self,a):
         newdict = {g: a * v for g,v in self._data.iteritems()} if a != 0 else {}
-        return HomologyClass(self.parent(),newdict)
+        return self.parent()(newdict)
+
+class OneChains(Parent):
+
+    Element = OneChains_element
+
+    def __init__(self,G,V):
+        r'''
+        INPUT:
+        - G: an ArithGroup
+        - V: a CoeffModule
+        '''
+        self._group = G
+        self._coeffmodule = V
+        Parent.__init__(self)
+        V._unset_coercions_used()
+        V.register_action(ArithGroupAction(G,V))
+        self._populate_coercion_lists_()
+
+    def _an_element_(self):
+        return self.element_class(self,dict([(self.group().gen(0),self._coeffmodule._an_element_())]))
+
+    def _repr_(self):
+        return 'Group of 1-chains'
+
+    def group(self):
+        return self._group
+
+    def coefficient_module(self):
+        return self._coeffmodule
+
+    def _element_constructor_(self,data):
+        if isinstance(data,dict):
+            return self.element_class(self,data)
+        else:
+            return self.element_class(self,dict([(data,ZZ(1))]))
+
+    def _coerce_map_from_(self,S):
+        if isinstance(S,self.__class__):
+            return S.group() is self.group() and S.coefficient_module() is self.coefficient_module()
+        else:
+            return False

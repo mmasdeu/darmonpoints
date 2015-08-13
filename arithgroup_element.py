@@ -202,7 +202,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
     def is_trivial_in_abelianization(self):
         return self.parent().abelianization()(self) == 0
 
-    def find_bounding_cycle(self,G,npow = 1,check = False):
+    def find_bounding_cycle(self,G,npow = 1):
         r'''
         Use recursively that:
         - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))
@@ -251,14 +251,4 @@ class ArithGroupElement(MultiplicativeGroupElement):
                 ans.extend([(m,[gaq**-1],ga)] if a < 0 else [])
                 # add the boundaries of g^abs(a)
                 ans.extend([(-sgn(a)*m,[gq**j for j in range(1,abs(a))],g)] if abs(a) > 1 else [])
-        if check:
-            # DEBUG
-            from homology import Homology
-            Coh = Homology(G.Gn.B,ZZ)
-            tmp = Coh(dict([(self.quaternion_rep**npow,ZZ(1))]))
-            for m,xlist,y in ans:
-                for x in xlist:
-                    tmp -= Coh(dict([(x,ZZ(m))])) + Coh(dict([(y.quaternion_rep,ZZ(m))])) - Coh(dict([(x*y.quaternion_rep,ZZ(m))]))
-            if tmp.size_of_support() !=0:
-                verbose('Leftover of %s'%tmp)
         return ans

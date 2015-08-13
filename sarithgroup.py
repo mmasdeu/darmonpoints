@@ -21,7 +21,6 @@ from itertools import product,chain,izip,groupby,islice,tee,starmap
 from arithgroup import ArithGroup_nf_quaternion,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
-from homology import Divisors, Homology
 from sage.structure.sage_object import save,load
 from copy import copy
 from sage.misc.persist import db
