@@ -136,11 +136,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     verbose('Computing moments...')
     CohOC = ArithCoh(G,overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
     VOC = CohOC.coefficient_module()
-    # DEBUG BELOW
-    if use_ps_dists:
-        Phi0 = CohOC([VOC(QQ(phiE.evaluate(g)[0])).lift(M = prec) for g in G.large_group().gens()])
-    else:
-        Phi0 = CohOC([VOC(o) for o in phiE.values()]) #Matrix(VOC.base_ring(),VOC._depth,1,[phiE.evaluate(g)[0]]+[0 for i in xrange(VOC._depth - 1)]),check = False) for g in G.large_group().gens()])
+    Phi0 = CohOC([VOC(o) for o in phiE.values()])
     verbose('Now lifting...')
     Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
     if use_sage_db:
@@ -157,7 +153,7 @@ class ArithAction(Action):
     def _call_(self,g,v):
         V = v.parent()
         S0 = V.Sigma0()
-        return S0(g.embed(V.precision_cap())) * v
+        return S0(g.embed(V.precision_cap()), check = False) * v
 
 class LocalAction(Action):
     def __init__(self,G,M):
@@ -167,7 +163,7 @@ class LocalAction(Action):
     def _call_(self,g,v):
         V = v.parent()
         S0 = V.Sigma0()
-        return self.G.embed(g, V.precision_cap()) * v
+        return S0(self.G.embed(g, V.precision_cap()), check = False) * v
 
 class ArithCohElement(CohomologyElement):
     def set_liftee(self,x):
@@ -565,7 +561,12 @@ class ArithCoh(CohomologyGroup):
     def get_Up_reps_local(self,prec):
         assert prec is not None
         try:
-            S0 = self.coefficient_module().Sigma0()
+            V = self.coefficient_module()
+            try:
+                V = V.coefficient_module()
+            except AttributeError:
+                pass
+            S0 = V.Sigma0()
         except AttributeError:
             S0 = lambda x:x
         return [S0(self.group().embed(g,prec)) for g in self.group().get_Up_reps()]
@@ -595,31 +596,23 @@ class ArithCoh(CohomologyGroup):
 
         if method == 'naive':
             assert times == 0
-            vals = [ V(0) for gamma in gammas ]
-            if parallelize:
-                raise NotImplementedError
-                # input_vector = []
-                # for j,gamma in enumerate(gammas):
-                #     input_vector.extend([(self,g,gamma,c,repslocal[k],self._use_ps_dists,j) for k,g in enumerate(Up_reps)])
-                # f = parallel(_calculate_Up_contribution)
-                # for inp,outp in f(input_vector):
-                #     vals[inp[0][-1]] += outp
-
+            input_vec = []
             G = self.S_arithgroup()
             Gn = G.large_group()
             for j, gamma in enumerate(gammas):
-                print 'j = %s/%s'%(j,len(gammas))
-                newvals = []
                 for i, xi in enumerate(G.coset_reps()):
                     delta = Gn(G.get_coset_ti(xi * gamma.quaternion_rep)[0])
-                    tk = Gn(Gn.get_hecke_ti(Up_reps[0], delta).quaternion_rep)
-                    newval = repslocal[0] * c.evaluate(tk).evaluate_at_identity()
-                    for k, g in enumerate(Up_reps[1:]):
-                        tk = Gn(Gn.get_hecke_ti(g, delta).quaternion_rep)
-                        newval += repslocal[k] * c.evaluate(tk).evaluate_at_identity()
-                    newvals.append(newval)
-                vals[j] = V(newvals)
-            ans = self(vals)
+                    input_vec.append(([(sk, Gn.get_hecke_ti(g,delta)) for sk, g in zip(repslocal, Up_reps)], c, i, j))
+
+            vals_lists = [[V.coefficient_module()(0) for xi in G.coset_reps()] for gamma in gammas]
+            if parallelize:
+                for inp, outp in parallel(_calculate_Up_contribution)(input_vec):
+                    vals_lists[inp[0][-1]][inp[0][-2]] += outp
+            else:
+                for inp in input_vec:
+                    newval = _calculate_Up_contribution(*inp)
+                    vals_lists[inp[-1]][inp[-2]] += newval
+            ans = self([V(o) for o in vals_lists])
             if scale != 1:
                 ans = scale * ans
             return ans
@@ -664,15 +657,8 @@ class ArithCoh(CohomologyGroup):
             return self([V(appr_module(valmat.submatrix(row=i,nrows = N).list())) for i in xrange(0,valmat.nrows(),N)])
 
 
-def _calculate_Up_contribution(G,g,gamma,c,gloc,use_ps_dists,num_gamma):
-    return gloc * c.evaluate(G.S_arithgroup().large_group().get_hecke_ti(g,gamma))
-
-def _calculate_hecke_contribution(G,g,gamma,c,l,hecke_reps,padic,gloc,use_ps_dists,use_magma,num_gamma):
-    tig = G.get_hecke_ti(g,gamma,l,use_magma)
-    if padic:
-        return gloc * c.evaluate(tig)
-    else:
-        return c.evaluate(tig)
+def _calculate_Up_contribution(lst, c, i, j):
+    return sum([sk * c.evaluate(tt).evaluate_at_identity() for sk, tt in lst])
 
 class CoIndAction(Action):
     def __init__(self, algebra , V, G, trivial_action = False):
@@ -705,9 +691,9 @@ class CoIndElement(ModuleElement):
     def __init__(self, parent, data):
         V = parent.coefficient_module()
         if isinstance(data,list):
-            try:
+            if data[0].parent() is V:
                 self._val = [V(o) for o in data]
-            except TypeError:
+            else:
                 dim = len(V.gens())
                 self._val = []
                 for i in range(0,dim * len(parent._G.coset_reps()),dim):
@@ -716,6 +702,7 @@ class CoIndElement(ModuleElement):
             self._val = [V(o) for o in data._val]
         else:
             self._val = [V(data) for o in parent._G.coset_reps()]
+        assert len(self._val) == len(parent._G.coset_reps())
         ModuleElement.__init__(self,parent)
 
     def evaluate_at_identity(self):
@@ -778,6 +765,7 @@ class CoIndModule(Parent):
     def base_field(self):
         return self._V.base_field()
 
+    @cached_method
     def acting_matrix(self, g, prec = None):
         dim = len(self.basis())
         ans = Matrix(self._V.base_ring(),dim, 0)
@@ -785,10 +773,14 @@ class CoIndModule(Parent):
             gv = g * v
             gvlist = []
             for w in gv._val:
+                try:
+                    wlist = list(w)
+                except TypeError:
+                    wlist = list(w._moments)
                 if prec is None:
-                    gvlist.extend(list(w))
+                    gvlist.extend(wlist)
                 else:
-                    gvlist.extend(list(w)[:prec])
+                    gvlist.extend(wlist[:prec])
             ans = ans.augment(Matrix(self._V.base_ring(),dim,1,gvlist))
         return ans
 
@@ -798,6 +790,7 @@ class CoIndModule(Parent):
     def _element_constructor_(self, x):
         return self.element_class(self, x)
 
+    @cached_method
     def gens(self):
         try:
             return tuple([self.gen(i) for i in range(len(self._V.gens()) * len(self._G.coset_reps()))])

@@ -210,7 +210,8 @@ class OCVnElement(ModuleElement):
             xdet = x.determinant()
             x.set_immutable()
             tmp = self._parent._get_powers(x) * self._val
-            return self.__class__(self._parent, tmp, check = False)
+            ans = self.__class__(self._parent, tmp, check = False)
+            return ans.reduce_mod()
 
     def _neg_(self):
         r"""

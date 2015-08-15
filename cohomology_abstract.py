@@ -95,9 +95,9 @@ class CohomologyElement(ModuleElement):
 
     def evaluate_trivial(self,x,parallelize = False):
         G = self.parent().group()
-        try:
+        if x.parent() is G:
             word = tuple(x.word_rep)
-        except AttributeError:
+        else:
             word = tuple(G(x).word_rep)
         V = self.parent().coefficient_module()
         Gab = G.abelianization()
@@ -116,7 +116,7 @@ class CohomologyElement(ModuleElement):
     def evaluate_general(self,x,parallelize = False):
         H = self.parent()
         G = H.group()
-        if hasattr(x,'word_rep'):
+        if x.parent() is G:
             wd  = x.word_rep
         else:
             x = G(x)

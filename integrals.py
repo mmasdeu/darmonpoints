@@ -221,7 +221,7 @@ def sample_point(G,e,prec = 20):
 r'''
 Integration pairing of a function with an harmonic cocycle.
 '''
-def riemann_sum(G,phi,hc,depth = 1,mult = False):
+def riemann_sum(G,phi,hc,depth = 1,mult = False, progress_bar = False):
     prec = max([20,2*depth])
     res = 1 if mult else 0
     K = phi.parent().base_ring()
@@ -230,6 +230,8 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
     for e in cover:
         if n_ints % 500 == 499:
             verbose('Done %s percent'%(100*RealField(10)(n_ints)/len(cover)))
+        if progress_bar and n_ints % 10 == 0:
+            update_progress(float(RealField(10)(n_ints)/len(cover)),'Riemann sum')
         n_ints += 1
         val = hc(e)
         vmom = val[0] #.moment(0)
@@ -269,10 +271,15 @@ class CoinducedElement(SageObject):
         if check:
             assert self.G.reduce_in_amalgam(b) == 1
         a = self.G.reduce_in_amalgam(b * self.gamma)
+        ans = self.cocycle.evaluate(a)
+        try:
+            ans = ans.evaluate_at_identity()
+        except AttributeError:
+            pass
         if rev == False:
-            return self.cocycle.evaluate(a)
+            return ans
         else:
-            return -self.cocycle.evaluate(a)
+            return -ans
 
 def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     # verbose('Integral %s/%s...'%(counter,total_counter))
@@ -285,7 +292,12 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     R = PolynomialRing(K,names = 't').fraction_field()
     t = R.gen()
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
-    return riemann_sum(G,phi,ShapiroImage(G,hc)(gamma.quaternion_rep),depth,mult = multiplicative)
+    try:
+        hc = hc.get_liftee()
+    except AttributeError:
+        pass
+    ans = riemann_sum(G,phi,ShapiroImage(G,hc)(gamma.quaternion_rep),depth,mult = multiplicative,progress_bar = progress_bar)
+    return ans, ans.log(p_branch = 0)
 
 def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     # verbose('Integral %s/%s...'%(counter,total_counter))
@@ -341,13 +353,27 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             else:
                 newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep).conjugate_by(G.wp())
             if HOC._use_ps_dists:
-                mu_e = hc.evaluate(newgamma,parallelize).evaluate_at_identity()
+                mu_e = hc.evaluate(newgamma,parallelize)
+                try:
+                    mu_e = mu_e.evaluate_at_identity()
+                except AttributeError:
+                    pass
                 resadd += sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                resadd += hc.evaluate(newgamma,parallelize).evaluate_at_identity().evaluate_at_poly(pol, K, depth)
+                tmp = hc.evaluate(newgamma,parallelize)
+                try:
+                    tmp = tmp.evaluate_at_identity()
+                except AttributeError:
+                    pass
+                resadd += tmp.evaluate_at_poly(pol, K, depth)
             if multiplicative:
                 try:
-                    resmul *= c0**ZZ(hc.get_liftee().evaluate(newgamma).evaluate_at_identity()[0])
+                    tmp = hc.get_liftee().evaluate(newgamma)
+                    try:
+                        tmp = tmp.evaluate_at_identity()
+                    except AttributeError:
+                        pass
+                    resmul *= c0**ZZ(tmp[0])
                 except IndexError: pass
             if progress_bar:
                 update_progress(float(QQ(ii)/QQ(len(edgelist))),'Integration %s/%s'%(counter,total_counter))
