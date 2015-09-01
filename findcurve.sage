@@ -2,7 +2,7 @@
 #####     Curve finding           ####
 ######################################
 
-def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
+def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
     r'''
     EXAMPLES:
 
@@ -47,6 +47,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
     # Get general parameters
     outfile = param.outfile
     use_ps_dists = param.use_ps_dists
+    use_shapiro = param.use_shapiro
     use_sage_db = param.use_sage_db
     magma_seed = param.magma_seed
     parallelize = param.parallelize
@@ -142,7 +143,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity)
-            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout)
+            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout, use_shapiro = use_shapiro)
         except RuntimeError as e:
             if quit_when_done:
                 magma.quit()
@@ -156,14 +157,15 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
 
         # Define phiE, the cohomology class associated to the system of eigenvalues.
         Coh = ArithCoh(G)
-        phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all,use_magma = True)
-        # except Exception as e:
-        #     if quit_when_done:
-        #         magma.quit()
-        #     if return_all:
-        #         return ['Error when finding cohomology class: ' + str(e.message)]
-        #     else:
-        #         return 'Error when finding cohomology class: ' + str(e.message)
+        try:
+            phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all,use_magma = True)
+        except Exception as e:
+            if quit_when_done:
+                magma.quit()
+            if return_all:
+                return ['Error when finding cohomology class: ' + str(e.message)]
+            else:
+                return 'Error when finding cohomology class: ' + str(e.message)
         if use_sage_db:
             G.save_to_db()
         fwrite('Cohomology class found', outfile)
@@ -181,18 +183,21 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         phiE = [phiE]
     ret_vals = []
     for phi in phiE:
-        try:
-            Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,sign_ap,use_ps_dists,method = Up_method, progress_bar = progress_bar)
-        except ValueError as e:
-            ret_vals.append('Problem when getting overconvergent class: ' + str(e.message))
-            continue
+        # try:
+        Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,sign_ap,use_ps_dists,method = Up_method, progress_bar = progress_bar)
+        # except ValueError as e:
+        #     ret_vals.append('Problem when getting overconvergent class: ' + str(e.message))
+        #     continue
         fwrite('Done overconvergent lift', outfile)
         # Find an element x of Gpn for not in the kernel of phi,
         # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
         try:
             found = False
             for o in ker:
-                if phi.evaluate(o) != 0:
+                phi_o = phi.evaluate(o)
+                if use_shapiro:
+                    phi_o = phi_o.evaluate_at_identity()
+                if phi_o != 0:
                     found = True
                     break
             if not found:
@@ -209,9 +214,10 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
             except PrecisionError:
                 working_prec  = 2 * working_prec
                 verbose('Setting working_prec to %s'%working_prec)
-            # except Exception as e:
-            #     ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
-            #     break
+            except Exception as e:
+                ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
+                break
+
         try:
             qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
             qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)

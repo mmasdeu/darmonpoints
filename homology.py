@@ -20,6 +20,7 @@ from ocmodule import *
 import operator
 from sage.rings.arith import GCD
 from sage.rings.padics.precision_error import PrecisionError
+from representations import *
 
 def construct_homology_cycle(G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
     F = G.F
@@ -101,8 +102,8 @@ def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
     H1 = OneChains(Gn,Div)
-    xi1 = H1(dict([(Gn(x),Div(tau1))])).zero_degree_equivalent(prec = prec)
-    xi2 = H1(dict([(Gn(wp**-1 * x * wp),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
+    xi1 = H1(dict([(Gn(x.quaternion_rep),Div(tau1))])).zero_degree_equivalent(prec = prec)
+    xi2 = H1(dict([(Gn(wp**-1 * x.quaternion_rep * wp),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
     if smoothen is not None:
         xi1 = xi1.hecke_smoothen(smoothen)
         xi2 = xi2.hecke_smoothen(smoothen)
@@ -306,7 +307,6 @@ class Divisors(Parent):
 
     def _repr_(self):
         return 'Group of divisors over ' + self._field._repr_()
-
 
 class ArithGroupAction(Action):
     def __init__(self,G,M):

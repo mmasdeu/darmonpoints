@@ -6,8 +6,6 @@
 import itertools
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-#from distributions import Distributions, Symk
-from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing,lcm, Infinity,Zmod
 from sage.all import prod
 from operator import mul
@@ -172,15 +170,13 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',prec = None,parall
         resadd += newresadd
     if not multiplicative:
         return resadd
+    elif resadd == 0:
+        return res
     else:
         try:
             return res * resadd.exp()
         except ValueError:
             return res**2 * (2*resadd).exp()
-        except TypeError:
-            print res
-            print resadd
-            assert 0
 
 def evaluate_parallel(hc,gamma,pol,c0):
     HOC = hc.parent()

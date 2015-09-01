@@ -32,6 +32,7 @@ from sage.matrix.constructor import column_matrix
 from sage.misc.lazy_attribute import lazy_attribute
 from sage.matrix.matrix_space import MatrixSpace
 
+
 class CohomologyElement(ModuleElement):
     def __init__(self, parent, data):
         r'''
@@ -68,7 +69,7 @@ class CohomologyElement(ModuleElement):
         return self._val
 
     def _vector_(self):
-        ambient = self.parent().space
+        ambient = self.parent().space()
         ans = sum([list(o) for o in self._val], [])
         if self.trivial_action():
             return ambient(ans)
@@ -121,18 +122,22 @@ class CohomologyElement(ModuleElement):
         else:
             x = G(x)
             wd = x.word_rep
-        if len(wd) == 0:
-            return H.coefficient_module()(0)
-        if True: #H._use_ps_dists:
-            if len(wd) == 1:
-                return self._evaluate_syllable(*wd[0])
-            else:
-                return self._evaluate_word(wd)
-        i,a = wd[-1]
-        ans = H.eval_at_genpow(i,a,self).reduce_mod()
-        for i, a in reversed(wd[:-1]):
-            ans = H.eval_at_genpow(i,a,self) + H.mul_by_gen_pow(i,a,ans)
-        return ans
+        return self._evaluate_word_tietze(syllables_to_tietze(wd))
+
+        ## TOO SLOW BELOW
+        # if len(wd) == 0:
+        #     return H.coefficient_module()(0)
+        # ans = self._evaluate_syllable(*wd[-1])
+        # for i, a in reversed(wd[:-1]):
+        #     g = G.gen(i)
+        #     newans = self._evaluate_syllable(i, a)
+        #     if a < 0:
+        #         g = g**-1
+        #         a = -a
+        #     for o in xrange(a):
+        #         ans = g * ans
+        #     ans += newans
+        # return ans
 
     def _evaluate_syllable(self,g,a):
         G = self.parent().group()
@@ -158,6 +163,30 @@ class CohomologyElement(ModuleElement):
                 tmp = phig + G.gen(g) * tmp
             return tmp
 
+    def _evaluate_word_tietze(self,word):
+        G = self.parent().group()
+        V = self.parent().coefficient_module()
+
+        if len(word) == 0:
+            return V(0)
+        g = word[0]
+        if g > 0:
+            ans = self._val[g-1]
+            gamma = G.gen(g-1)
+        else:
+            g0 = -g-1
+            gamma = G.gen(g0)**-1
+            ans = -(gamma * self._val[g0])
+        for g in word[1:]:
+            if g > 0:
+                ans += gamma * self._val[g-1]
+                gamma = gamma * G.gen(g-1)
+            else:
+                g0 = -g-1
+                gamma = gamma * G.gen(g0)**-1
+                ans -= gamma * self._val[g0]
+        return ans
+
     def _evaluate_word(self,word):
         r''' Evaluate recursively, using cocycle condition:
         self(gh) = self(g) + g*self(h)
@@ -168,17 +197,19 @@ class CohomologyElement(ModuleElement):
         G = self.parent().group()
         V = self.parent().coefficient_module()
         lenword = len(word)
-        if lenword > 1:
-            pivot = ZZ(lenword) // ZZ(2)
-            word_prefix = word[:pivot]
-            gamma = prod([G.gen(g)**a for g,a in word_prefix],G.one())
-            return self._evaluate_word(tuple(word_prefix)) + gamma * self._evaluate_word(tuple(word[pivot:]))
-
         if lenword == 0:
             return V(0)
-
-        if lenword == 1:
-            return self._evaluate_syllable(*word[0])
+        else:
+            gamma = G(1)
+            ans = self._evaluate_syllable(*word[0])
+            for g, a in word[1:]:
+                gamma = gamma * G.gen(g)**a
+                ans += gamma * self._evaluate_syllable(g, a)
+            return ans
+            # pivot = ZZ(lenword) // ZZ(2)
+            # word_prefix = word[:pivot]
+            # gamma = prod([G.gen(g)**a for g,a in word_prefix],G.one())
+            # return self._evaluate_word(tuple(word_prefix)) + gamma * self._evaluate_word(tuple(word[pivot:]))
 
 class CohomologyGroup(Parent):
     def __init__(self, G, V, trivial_action = False):
@@ -189,27 +220,25 @@ class CohomologyGroup(Parent):
         self._gen_pows_neg = []
         if trivial_action:
             self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
+            gens_local = [ (None, None) for g in G.gens() ]
         else:
-            self._acting_matrix = lambda x, y: V.acting_matrix(x, y)
+            def acting_matrix(x,y):
+                try:
+                    return V.acting_matrix(x,y)
+                except AttributeError:
+                    return V.acting_matrix(G.embed(x.quaternion_rep,V.base_ring().precision_cap()), y)
+            self._acting_matrix = acting_matrix
+            gens_local = [ (g, g**-1) for g in G.gens() ]
         onemat = G(1)
         try:
             dim = V.dimension()
         except AttributeError:
             dim = len(V.basis())
         one = Matrix(V.base_ring(),dim,dim,1)
-        for i,g in enumerate(G.gens()):
+        for g, ginv in gens_local:
             A = self._acting_matrix(g, dim)
-            # except AttributeError: # DEBUG
-            #     gmat = G.embed(G.Ugens[i], dim)
-            #     gmat.set_immutable()
-            #     A = self._acting_matrix(gmat, dim)
             self._gen_pows.append([one, A])
-            try:
-                Ainv = self._acting_matrix(g**-1, dim)
-            except AttributeError: # DEBUG
-                gmatinv = gmat.adjoint() # gmat**-1
-                gmatinv.set_immutable()
-                Ainv = self._acting_matrix(gmatinv, dim)
+            Ainv = self._acting_matrix(ginv, dim)
             self._gen_pows_neg.append([one, Ainv])
         Parent.__init__(self)
         return
@@ -223,7 +252,6 @@ class CohomologyGroup(Parent):
     def coefficient_module(self):
         return self._coeffmodule
 
-    @lazy_attribute
     def space(self):
         r'''
         Calculates the space of cocyles modulo coboundaries, as a Z-module.
@@ -237,7 +265,7 @@ class CohomologyGroup(Parent):
         sage: G = GS.large_group()
         sage: V = OCVn(5,1)
         sage: Coh = CohomologyGroup(G,V,trivial_action = False)
-        sage: amb = Coh.space
+        sage: amb = Coh.space()
         '''
         V = self.coefficient_module()
         R = V.base_ring()
@@ -263,9 +291,9 @@ class CohomologyGroup(Parent):
     @cached_method
     def dimension(self):
         try:
-            return len([o for o in self.space.invariants() if o == 0])
+            return len([o for o in self.space().invariants() if o == 0])
         except AttributeError:
-            return self.space.rank()
+            return self.space().rank()
 
     def zero(self):
         if self.trivial_action():
@@ -287,7 +315,7 @@ class CohomologyGroup(Parent):
 
     @cached_method
     def gen(self,i):
-        vi = self.space.gen(i)
+        vi = self.space().gen(i)
         try:
             vi = vi.lift()
         except AttributeError: pass
@@ -308,8 +336,9 @@ class CohomologyGroup(Parent):
     def fox_gradient(self, word, red = None):
         if red is None:
             red = lambda x:x
+        V = self.coefficient_module()
         h = self.get_gen_pow(0,0, red)
-        ans = [h.new_matrix() for o in self.group().gens()]
+        ans = [self._gen_pows[0][0].parent()(0) for o in self.group().gens()]
         if len(word) == 0:
             return ans
         lenword = len(word)
@@ -386,18 +415,3 @@ class CohomologyGroup(Parent):
                 ans = V(v) + V(genpows[1] * ans._val)
             ans = V(-genpows[1] * ans._val)
             return ans.reduce_mod()
-
-    def mul_by_gen_pow(self,i,a,v):
-        ans = v
-        V = v.parent()
-        if a == 0:
-            return ans
-        elif a > 0:
-            g = self._gen_pows[i][1]
-        else:
-            g = self._gen_pows_neg[i][1]
-            a = -a
-        for o in xrange(a):
-            ans = V(g * ans._val).reduce_mod()
-        return ans
-

@@ -44,7 +44,7 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True):
         if magma is None:
             from sage.interfaces.magma import Magma
             magma = Magma(logfile = logfile)
@@ -87,13 +87,13 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
                 newobj = db(fname)
             except IOError:
                 verbose('Group not found in database. Computing from scratch.')
-                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout)
+                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro)
                 newobj.save_to_db()
         else:
             if a is not None:
-                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout)
+                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro)
             else:
-                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout)
+                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro)
         return newobj
 
 
@@ -123,9 +123,10 @@ class BigArithGroup_class(AlgebraicGroup):
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True):
         self.seed = seed
         self.magma = magma
+        self._use_shapiro = use_shapiro
         if seed is not None:
             verbose('Setting Magma seed to %s'%seed)
             self.magma.eval('SetSeed(%s)'%seed)
@@ -154,7 +155,7 @@ class BigArithGroup_class(AlgebraicGroup):
         difficulty = covol**2
         verbose('Estimated Difficulty = %s'%difficulty)
         t = walltime()
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype,magma = magma,timeout = timeout)
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype,magma = magma, compute_presentation = not self._use_shapiro, timeout = timeout)
         t = walltime(t)
         verbose('Time for calculation T = %s'%t)
         verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
@@ -162,7 +163,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn.embed = self.embed
 
         verbose('Initializing arithmetic group G(n)...')
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,info_magma = self.Gpn,grouptype = grouptype,magma = magma,timeout = timeout)
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,info_magma = self.Gpn,grouptype = grouptype,magma = magma, compute_presentation = True, timeout = timeout)
         self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
         if hasattr(self.Gn.B,'is_division_algebra'):
@@ -171,29 +172,35 @@ class BigArithGroup_class(AlgebraicGroup):
             fwrite('B = M_2(F)',outfile)
         try:
             basis_data_1 = list(self.Gn.Obasis)
-            basis_data_p = list(self.Gpn.Obasis)
+            if not self.use_shapiro():
+                basis_data_p = list(self.Gpn.Obasis)
         except AttributeError:
             basis_data_1 = self.Gn.basis_invmat.inverse().columns()
-            basis_data_p = self.Gpn.basis_invmat.inverse().columns()
-        fwrite('R with basis %s'%basis_data_1,outfile)
-        fwrite('R(p) with basis %s'%basis_data_p,outfile)
+            if not self.use_shapiro():
+                basis_data_p = self.Gpn.basis_invmat.inverse().columns()
         self._prec = -1
         self.get_embedding(200)
-
-        verbose('Done initializing arithmetic groups')
-        self.Gpn.get_Up_reps = self.get_Up_reps
+        fwrite('R with basis %s'%basis_data_1,outfile)
         self.Gn.get_Up_reps = self.get_Up_reps
+        if not self.use_shapiro():
+            fwrite('R(p) with basis %s'%basis_data_p,outfile)
+            self.Gpn.get_Up_reps = self.get_Up_reps
+        verbose('Done initializing arithmetic groups')
         verbose('Done initialization of BigArithmeticGroup')
 
     def clear_cache(self):
         self.Gn.clear_cache()
-        self.Gpn.clear_cache()
+        if not self.use_shapiro():
+            self.Gpn.clear_cache()
 
     def _repr_(self):
        return 'S-Arithmetic Rational Group attached to data p = %s,  disc = %s, level = %s'%(self.p,self.discriminant,self.level)
 
     def prime(self):
         return self.p
+
+    def use_shapiro(self):
+        return self._use_shapiro
 
     def base_ring_local_embedding(self,prec):
         if self.F == QQ:
@@ -226,7 +233,8 @@ class BigArithGroup_class(AlgebraicGroup):
                     break
             assert self._F_to_local is not None
         self.Gn._F_to_local = self._F_to_local
-        self.Gpn._F_to_local = self._F_to_local
+        if not self.use_shapiro():
+            self.Gpn._F_to_local = self._F_to_local
         verbose('Initializing II,JJ,KK')
         v = f.Image(B_magma.gen(1)).Vector()
         self._II = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
@@ -277,6 +285,15 @@ class BigArithGroup_class(AlgebraicGroup):
     def large_group(self):
         return self.Gn
 
+    def is_in_Gpn_order(self, x):
+        return self.Gpn._is_in_order(x)
+
+    def Gpn_Obasis(self):
+        return self.Gpn.Obasis
+
+    def Gpn_denominator(self, x):
+        return self.Gpn._denominator(x)
+
     @cached_method
     def get_BT_reps(self):
         reps = [self.Gn.B(1)] + [None for i in xrange(self.p)]
@@ -285,7 +302,7 @@ class BigArithGroup_class(AlgebraicGroup):
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)
             embelt = emb(elt)
-            if (embelt[0,0]-1).valuation() > 0 and all([not self.Gpn._is_in_order(o * new_inv) for o in reps if o is not None]):
+            if (embelt[0,0]-1).valuation() > 0 and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
                 for idx,o1 in enumerate(matrices):
                     i,mat = o1
                     tmp = embelt * mat
@@ -362,7 +379,6 @@ class BigArithGroup_class(AlgebraicGroup):
             ans.set_immutable()
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             assert is_in_Gamma0loc(epsinv * ans, det_condition = False,p = self.p),"Check that epsinv * ans is in Gamma0"
-            assert all((self.Gpn._is_in_order(ans**-1 * g.quaternion_rep * ans) for g in self.Gpn.gens())),"Check that it normalizes"
             return ans
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
@@ -383,12 +399,12 @@ class BigArithGroup_class(AlgebraicGroup):
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
                 if i % 50000 == 0:
                     verbose('Done %s iterations'%i)
-                    if i > 0 and i % 500000 == 0:
+                    if i > 0 and i % 50000000 == 0:
                         raise RuntimeError('Trouble finding wp by enumeration')
                 i += 1
                 for tmp in all_initial:
                     new_candidate =  v1 * tmp * v2
-                    if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.Gpn._is_in_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn.Obasis)) and self.Gpn._is_in_order(new_candidate):
+                    if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.is_in_Gpn_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn_Obasis())) and self.is_in_Gpn_order(new_candidate):
                         verbose('wp = %s'%new_candidate)
                         return new_candidate
             raise RuntimeError('Could not find wp')
@@ -424,14 +440,14 @@ class BigArithGroup_class(AlgebraicGroup):
         if prec is None:
             return None
         if self.F == QQ and self.discriminant == 1:
-            return q.change_ring(Qp(self.p,prec))
+            return set_immutable(q.change_ring(Qp(self.p,prec)))
         else:
             try:
                 q = q.coefficient_tuple()
             except AttributeError: pass
             I,J,K = self.local_splitting(prec)
             f = self._F_to_local
-            return (f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K).change_ring(Qp(self.p, prec))
+            return set_immutable((f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K).change_ring(Qp(self.p, prec)))
 
     def reduce_in_amalgam(self,x,return_word = False):
         if self.F == QQ and self.discriminant == 1:
@@ -439,11 +455,6 @@ class BigArithGroup_class(AlgebraicGroup):
         else:
             rednrm = x.reduced_norm()
         rednrm_Q = rednrm.abs() if self.F == QQ else rednrm.norm().abs()
-        # if rednrm_Q != 1:
-        #     raise ValueError('x (= %s) must have a unit as reduced norm'%x)
-        # if 'P' not in self.Gn._grouptype:
-        #     if rednrm != 1:
-        #         raise ValueError('x (= %s) must have reduced norm 1'%x)
         a,wd = self._reduce_in_amalgam(set_immutable(x))
         if return_word:
             return a,wd
@@ -468,7 +479,7 @@ class BigArithGroup_class(AlgebraicGroup):
         x0 = x
         p = self.p
         denval = self.Gn._denominator_valuation
-        if self.Gpn._denominator(x) == 1:
+        if self.Gpn_denominator(x) == 1:
             return x, [] # DEBUG # self.Gpn(x), []
         else:
             gis = [ g**-1 for g in self.get_BT_reps()]
@@ -488,14 +499,14 @@ class BigArithGroup_class(AlgebraicGroup):
             if valx == 0:
                 valx = 1
 
-            if self.Gpn._denominator(x) == 1:
-                return x, [wd0] # DEBUG # self.Gpn(x), [wd0]
+            if self.Gpn_denominator(x) == 1:
+                return set_immutable(x), [wd0] # DEBUG # self.Gpn(x), [wd0]
             i = next((i for i,g in enumerate(gitildes) if denval(x * g,p) < valx),0)
             assert i > 0
             wd1 = (i,1)
             x = set_immutable(x * gitildes[i])
             a, wd = self._reduce_in_amalgam(x)
-            return a, wd + [wd1,wd0]
+            return set_immutable(a), wd + [wd1,wd0]
 
     def smoothen(self,gi,ell,hecke_reps = None):
         Gab = self.Gpn.abelianization()
@@ -507,6 +518,42 @@ class BigArithGroup_class(AlgebraicGroup):
 
     @cached_method
     def get_homology_kernel(self):
+        from homology_abstract import ArithHomology, HomologyGroup
+        wp = self.wp()
+        Gn = self.large_group()
+        B = ArithHomology(self, ZZ**1, trivial_action = True)
+        C = HomologyGroup(Gn, ZZ**1, trivial_action = True)
+        def phif(x):
+            ans = C(0)
+            for g, v in zip(self.large_group().gens(), x.values()):
+                for a, ti in zip(v.values(), self.coset_reps()):
+                    # We are considering a * (g tns t_i)
+                    g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                    ans += C((Gn(g0), a))
+            return ans
+        f = B.space().hom([vector(C(phif(o))) for o in B.gens()])
+        def phig(x):
+            ans = C(0)
+            for g, v in zip(self.large_group().gens(), x.values()):
+                for a, ti in zip(v.values(), self.coset_reps()):
+                    # We are considering a * (g tns t_i)
+                    g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                    ans += C((Gn(wp**-1 * g0 * wp), a))
+            return ans
+        g = B.space().hom([vector(C(phig(o))) for o in B.gens()])
+        fg = direct_sum_of_maps([f,g])
+        def Phi(x):
+            ans = 1
+            for g, v in zip(self.large_group().gens(), x.values()):
+                for a, ti in zip(v.values(), self.coset_reps()):
+                    # We are considering a * (g tns t_i)
+                    g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                    ans *= Gn(g0)**ZZ(a[0])
+            return ans
+        return  [Phi(B(o)) for o in fg.kernel().gens()]
+
+    @cached_method
+    def get_homology_kernel_old(self):
         wp = self.wp()
         B = self.Gpn.abelianization()
         C = self.Gn.abelianization()
@@ -564,23 +611,23 @@ class BigArithGroup_class(AlgebraicGroup):
         ker = [ker[o] for o in minij]
         return [ Gab.ab_to_G(sum(ZZ(i) * Gab.G_to_ab(self.Gpn(o)) for o,i in zip(ker,col.list()))) for col in minB.columns() ]
 
-def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None,timeout = 0):
+def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0):
     if base == QQ:
         if timeout != 0:
             raise NotImplementedError("Timeout not implemented for rational base yet")
         discriminant = ZZ(discriminant)
         if discriminant == 1:
-            return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype, magma = magma)
+            return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype, magma = magma, compute_presentation = compute_presentation)
         else:
             if magma is None:
                 raise ValueError('Should specify magma session')
 
             if abtuple is not None:
-                return ArithGroup_rationalquaternion(abtuple,level,info_magma,grouptype = grouptype,magma = magma)
+                return ArithGroup_rationalquaternion(abtuple,level,info_magma,grouptype = grouptype,magma = magma, compute_presentation = compute_presentation)
             else:
-                return ArithGroup_rationalquaternion(discriminant,level,info_magma,grouptype = grouptype,magma = magma)
+                return ArithGroup_rationalquaternion(discriminant,level,info_magma,grouptype = grouptype,magma = magma, compute_presentation = compute_presentation)
     else:
         a,b = abtuple
         if magma is None:
             raise ValueError('Should specify magma session')
-        return ArithGroup_nf_quaternion(base,a,b,level,info_magma,grouptype = grouptype,magma = magma,timeout = timeout)
+        return ArithGroup_nf_quaternion(base,a,b,level,info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)

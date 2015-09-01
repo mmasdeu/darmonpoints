@@ -68,26 +68,29 @@ class OCVnElement(ModuleElement):
     - Cameron Franc (2012-02-20)
     - Marc Masdeu (2012-02-20)
     """
-    def __init__(self,parent,val = 0,check = False):
+    def __init__(self,parent,val = 0,check = True):
         ModuleElement.__init__(self,parent)
         self._parent = parent
         self._depth = self._parent._depth
-        if isinstance(val,self.__class__):
-            if val._parent._depth == parent._depth:
-                self._val = val._val
-            else:
-                d = min([val._parent._depth,parent._depth])
-                self._val = val._val.submatrix(0,0,nrows = d)
-
-        elif isinstance(val, Vector_integer_dense) or isinstance(val, FreeModuleElement_generic_dense):
-            self._val = MatrixSpace(self._parent._R, self._depth, 1)(0)
-            for i,o in enumerate(val.list()):
-                self._val[i,0] = o
+        if not check:
+            self._val = val
         else:
-            try:
-                self._val = Matrix(self._parent._R,self._depth,1,val)
-            except (TypeError, ValueError):
-                self._val= self._parent._R(val) * MatrixSpace(self._parent._R,self._depth,1)(1)
+            if isinstance(val,self.__class__):
+                if val._parent._depth == parent._depth:
+                    self._val = val._val
+                else:
+                    d = min([val._parent._depth,parent._depth])
+                    self._val = val._val.submatrix(0,0,nrows = d)
+
+            elif isinstance(val, Vector_integer_dense) or isinstance(val, FreeModuleElement_generic_dense):
+                self._val = MatrixSpace(self._parent._R, self._depth, 1)(0)
+                for i,o in enumerate(val.list()):
+                    self._val[i,0] = o
+            else:
+                try:
+                    self._val = Matrix(self._parent._R,self._depth,1,val)
+                except (TypeError, ValueError):
+                    self._val= self._parent._R(val) * MatrixSpace(self._parent._R,self._depth,1)(1)
         self._moments = self._val
 
     def moment(self, i):
@@ -207,11 +210,9 @@ class OCVnElement(ModuleElement):
             return self._acted_upon_(x.adjoint(), False)
         else:
             R = self._parent._R
-            xdet = x.determinant()
-            x.set_immutable()
-            tmp = self._parent._get_powers(x) * self._val
-            ans = self.__class__(self._parent, tmp, check = False)
-            return ans.reduce_mod()
+            A = self._parent._get_powers(x)
+            tmp = A * self._val
+            return self.__class__(self._parent, tmp, check = False)
 
     def _neg_(self):
         r"""
@@ -407,8 +408,7 @@ class OCVn(Module,UniqueRepresentation):
         return OCVnElement(self, x)
 
     def acting_matrix(self, g, M):
-        # We discard the number of moments, M.
-        return self._get_powers(g)
+        return self._get_powers(g).submatrix(0,0,M,M)
 
     def _get_powers(self,abcd,emb = None):
         r"""
@@ -419,30 +419,28 @@ class OCVn(Module,UniqueRepresentation):
         ::
 
         """
+        abcd = tuple(abcd.list())
         try:
             return self._cache_powers[abcd]
         except KeyError:
             pass
         R = self._PowerSeries
         if emb is None:
-            try:
-                a,b,c,d = abcd.list()
-            except AttributeError:
-                a,b,c,d = abcd.parent().embed(abcd.quaternion_rep, R.base_ring().precision_cap()).list()
+            a,b,c,d = abcd
         else:
             a,b,c,d = emb(abcd).list()
-        #a,b,c,d = a.lift(),b.lift(),c.lift(),d.lift()
         r = R([b,a])
         s = R([d,c])
         ratio = r * s**-1
-        y = R(1)
-        x = Matrix(ZZ,self._depth,self._depth,0)
-        for jj in range(self._depth):
-            x[0,jj] = y[jj]
+        ratio = ratio.change_ring(ZZ)
+        y = R(1).change_ring(ZZ)
+        xlist = [1] + [0 for o in range(self._depth - 1)]
         for ii in range(1,self._depth):
             y *= ratio
-            for jj in range(self._depth):
-                x[ii,jj] = y[jj]
+            ylist = y.list()
+            xlist.extend(ylist)
+            xlist.extend([ZZ(0) for o in range(self._depth - len(ylist))])
+        x = Matrix(R.base_ring(),self._depth,self._depth, xlist).apply_map(ZZ)
         self._cache_powers[abcd] = x
         return x
 

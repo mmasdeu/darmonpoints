@@ -49,6 +49,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     # Get general parameters
     outfile = param.outfile
     use_ps_dists = param.use_ps_dists
+    use_shapiro = param.use_shapiro
     use_sage_db = param.use_sage_db
     magma_seed = param.magma_seed
     parallelize = param.parallelize
@@ -171,7 +172,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F, DB, ramification_at_infinity)
 
-            G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma)
+            G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             Coh = ArithCoh(G)
