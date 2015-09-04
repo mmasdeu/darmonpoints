@@ -394,7 +394,7 @@ class OneChains_element(ModuleElement):
         Gab = G.abelianization()
         xlist = [(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)]
         abxlist = [n * Gab(x) for x,n in xlist]
-        sum_abxlist = sum(abxlist)
+        sum_abxlist = vector(sum(abxlist))
         x_ord = sum_abxlist.order()
         if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
             raise ValueError('Must yield torsion element in abelianization (%s)'%(sum_abxlist))

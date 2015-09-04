@@ -30,6 +30,7 @@ from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.rings.infinity import Infinity
+from homology_abstract import HomologyGroup
 oo = Infinity
 
 
@@ -352,7 +353,7 @@ class ArithGroup_generic(AlgebraicGroup):
     def calculate_weight_zero_word(self, xlist):
         Gab = self.abelianization()
         abxlist = [n * Gab(x) for x,n in xlist]
-        sum_abxlist = sum(abxlist)
+        sum_abxlist = vector(sum(abxlist))
         if not sum_abxlist == 0:
             raise ValueError('Must yield trivial element in the abelianization (%s)'%(sum_abxlist))
         oldwordlist = [copy(x.word_rep) for x,n in xlist]
@@ -1641,79 +1642,37 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                     self._non_positive_unit = candidate
                     return candidate
 
-class Abelianization(Parent):
-    # Element = FGP_Module
+class Abelianization(HomologyGroup):
     def __init__(self,G):
-        V = ZZ**len(G.gens())
-        W = V.span([sum([a*v for a,v in zip(rel,V.gens())],V(0)) for rel in G.get_relation_matrix().rows()])
-        self._G = G
-        self._Gab = V/W
-        self._ambient = V
-        self._abelian_invariants = self._Gab.invariants()
-        Parent.__init__(self)
+        HomologyGroup.__init__(self, G, ZZ**1, trivial_action = True)
 
     def ambient(self):
-        return self._ambient
-
-    def group(self):
-        return self._G
+        return self.space().V()
 
     def abelian_group(self):
-        return self._Gab
+        return self.space()
 
     def abelian_invariants(self):
-        return self._abelian_invariants
+        return self.space().invariants()
 
     def _element_constructor_(self,x):
-        if x.parent() is self.group():
-            return self.G_to_ab(x)
+        if isinstance(x, tuple):
+            if isinstance(x[1], tuple):
+                return HomologyGroup._element_constructor_(self, x)
+            else:
+                return HomologyGroup._element_constructor_(self, (x[0], self.coefficient_module()([x[1]])))
+        elif hasattr(x,'parent') and x.parent() is self.group():
+            return HomologyGroup._element_constructor_(self, (x,self.coefficient_module()([1])))
         else:
-            raise TypeError('Not the correct type')
+            return HomologyGroup._element_constructor_(self, x)
 
     def _repr_(self):
         return 'Abelianization of %s, with invariants %s'%(self.group(),self.abelian_invariants())
 
-    @cached_method
-    def gens(self):
-        return tuple((o.lift() for o in self._Gab.gens()))
-
-    @cached_method
-    def gens_small(self):
-        V = self.ambient()
-        VV = V.span_of_basis([V(o.lift()) for o in self._Gab.gens()])
-        self._Gab_LLL = VV.LLL()
-        return [V(o) for o in self._Gab_LLL.rows()]
-
-    def coordinates_in_gens_small(self,x):
-        return self._Gab_LLL.solve_left(x)
-
-    @cached_method
-    def free_gens(self):
-        return tuple((o.lift() for i,o in enumerate(self._Gab.gens()) if self.abelian_invariants()[i] == 0))
-
-    def G_to_ab(self,x):
-        V = self.ambient()
-        if x.parent() != self.group():
-            raise TypeError('Element does not belong to the right group (%s)'%self.group())
-        return sum([ZZ(a) * self._Gab(V.gen(i)) for i,a in x.word_rep],self._Gab(0))
-
-    def G_to_ab_free(self,x):
-        return tuple((o for i,o in enumerate(list(self.G_to_ab(x))) if self.abelian_invariants()[i] == 0))
-
     def ab_to_G(self,x):
-        if x.parent() == self._Gab:
-            return prod([self.group().gen(i)**ZZ(a) for i,a in enumerate(list(x.lift()))],self.group()([]))
-        elif x.parent() == self.ambient():
-            return prod([self.group().gen(i)**ZZ(a) for i,a in enumerate(list(x))],self.group()([]))
-        else:
-            raise TypeError("Can't understand the input")
-
-    def hom_from_image_of_gens_small(self,v):
-        imgens = []
-        for g in self.gens():
-            coords = self.coordinates_in_gens_small(g)
-            newimg = sum((ZZ(a)*vi for a,vi in zip(coords,v)),0)
-            imgens.append(newimg)
-        return self._Gab.hom(imgens)
-
-
+        group = self.group()
+        ans = 1
+        if x.parent() == self:
+            for g, v in zip(self.group().gens(), x.values()):
+                ans *= g**ZZ(v[0])
+        return ans

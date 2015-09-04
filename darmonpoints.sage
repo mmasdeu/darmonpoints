@@ -65,6 +65,11 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     quaternionic = param.quaternionic
     cohomological = param.cohomological
 
+    if Up_method == "bigmatrix" and use_shapiro == True:
+        import warnings
+        warnings.warn('Use of "bigmatrix" for Up iteration is incompatible with Shapiro Lemma trick. Using "naive" method for Up.')
+        Up_method = 'naive'
+
     if working_prec is None:
         working_prec = max([2 * prec + 10, 30])
 

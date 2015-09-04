@@ -56,7 +56,7 @@ from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
 from ocmodule import our_adjuster, Sigma0Action
 from sage.rings.arith import XGCD
-from sage.modules.free_module_element import free_module_element
+from sage.modules.free_module_element import free_module_element, vector
 from representations import *
 
 def find_newans(Coh,glocs,ti):
@@ -69,7 +69,10 @@ def find_newans(Coh,glocs,ti):
         fox_grad_k = Coh.fox_gradient(tik, red = lambda x:x.apply_map(lambda y: y % Coh._pN))
         for j,gj in enumerate(gens):
             newans[j] += gk * fox_grad_k[j]
-            newans[j] = newans[j].apply_map(lambda x: x % Coh._pN)
+            try:
+                newans[j] = newans[j].apply_map(lambda x: x % Coh._pN)
+            except PrecisionError:
+                pass
     return newans
 
 def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
@@ -292,21 +295,10 @@ class ArithCoh(CohomologyGroup):
         dim = self.dimension()
         R = self.coefficient_module().base_ring()
         M = matrix(R,dim,dim,0)
-        V = self.space()
-        try:
-            V = V.V()
-        except AttributeError:
-            pass
         for j,cocycle in enumerate(self.gens()):
             # Construct column j of the matrix
-            fvals = self.apply_hecke_operator(cocycle, l, use_magma = use_magma, g0 = g0).values()
-            if self.trivial_action():
-                M.set_column(j,[o[0] for o in fvals])
-            else:
-                tmp_mat = Matrix(R, len(fvals[0].values()), 0, 0)
-                for u in fvals:
-                    tmp_mat = tmp_mat.augment(Matrix(R, len(u.values()), 1, sum([list(o) for o in u.values()],[])))
-                M.set_column(j,list(self.space()(V(tmp_mat.transpose().list()))))
+            fvals = self.apply_hecke_operator(cocycle, l, use_magma = use_magma, g0 = g0)
+            M.set_column(j,list(vector(fvals)))
         return M
 
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
@@ -349,7 +341,7 @@ class ArithCoh(CohomologyGroup):
         if K.dimension() != 1:
             raise ValueError,'Did not obtain a one-dimensional space corresponding to E'
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-        return sum([a * self.gen(i) for i,a in enumerate(col) if a != 0],self.zero())
+        return sum([a * self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
     def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = True):
         F = self.group().base_ring()
@@ -384,7 +376,7 @@ class ArithCoh(CohomologyGroup):
             raise ValueError,'Group does not have the required system of eigenvalues'
 
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-        return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self.zero())
+        return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self(0))
 
     def get_rational_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
         F = self.group().base_ring()
@@ -442,7 +434,7 @@ class ArithCoh(CohomologyGroup):
                     if len(good_components) > 0 and not return_all:
                         K = good_components[0]
                         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-                        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self.zero())
+                        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
                     if len(component_list) == 0 or num_hecke_operators >= bound:
                         break
 
@@ -453,12 +445,12 @@ class ArithCoh(CohomologyGroup):
                 ans = []
                 for K in good_components:
                     col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-                    ans.append( sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self.zero()))
+                    ans.append( sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0)))
                 return ans
             else:
                 K = good_components[0]
                 col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-                return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self.zero())
+                return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self(0))
 
     def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 3, pol = None, return_all = False):
         F = self.group().base_ring()
@@ -515,7 +507,7 @@ class ArithCoh(CohomologyGroup):
                         flist = []
                         for row0 in good_components[0][0].rows():
                             col0 = [ZZ(o) for o in row0.list()]
-                            flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self.zero()))
+                            flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
                         return flist,good_components[0][1]
                     if len(component_list) == 0 or num_hecke_operators >= bound:
                         break
@@ -529,14 +521,14 @@ class ArithCoh(CohomologyGroup):
                     flist = []
                     for row0 in K.rows():
                         col0 = [ZZ(o) for o in row0.list()]
-                        flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self.zero()))
+                        flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
                     ans.append((flist,hecke_data))
                 return ans
             else:
                 flist = []
                 for row0 in good_components[0][0].rows():
                     col0 = [ZZ(o) for o in row0.list()]
-                    flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self.zero()))
+                    flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
                 return flist,good_components[0][1]
 
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,g0 = None):
@@ -559,12 +551,7 @@ class ArithCoh(CohomologyGroup):
             prec = None
         vals = []
         R = V.base_ring()
-        if self._trivial_action:
-            Gab = group.abelianization()
-            gammas = [Gab.ab_to_G(o) for o in Gab.free_gens()]
-        else:
-            gammas = group.gens()
-
+        gammas = group.gens()
         vals = [V(0) for gamma in gammas]
         input_vector = []
         # verbose('Calculating action')
@@ -597,11 +584,7 @@ class ArithCoh(CohomologyGroup):
 
         V = self.coefficient_module()
         R = V.base_ring()
-        if hasattr(V,'is_full'): # This should be more robust
-            Gab = self.group().abelianization()
-            gammas = [Gab.ab_to_G(o) for o in Gab.free_gens()]
-        else:
-            gammas = self.group().gens()
+        gammas = self.group().gens()
 
         if repslocal is None:
             try:

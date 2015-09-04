@@ -51,25 +51,15 @@ class CoIndAction(Action):
         # x_i g = g' x_j, and then f(x_i g) = g' f(x_j).
         G = self.G
         V = self.V
-        if False: #hasattr(g,'quaternion_rep'):
-            # Hopefully we can do better than below
-            word = g.word_rep
-            if len(word) == 0:
-                return v.parent()(0)
-            ans = v.values()
-            for i,a in reversed(word):
-                ans = V.act_by_genpow(i,a,ans)
-            return V(ans, check = False)
+        try:
+            g = g.quaternion_rep
+        except AttributeError:
+            pass
+        action_data = V.get_action_data(g)
+        if self._trivial_action:
+            return self.V([v._val[ti] for g1, ti in action_data], check = False)
         else:
-            try:
-                g = g.quaternion_rep
-            except AttributeError:
-                pass
-            action_data = V.get_action_data(g)
-            if self._trivial_action:
-                return self.V([v._val[ti] for g1, ti in action_data], check = False)
-            else:
-                return self.V([g1 * v._val[ti] for g1, ti in action_data], check = False)
+            return self.V([g1 * v._val[ti] for g1, ti in action_data], check = False)
 
 class CoIndElement(ModuleElement):
     r'''

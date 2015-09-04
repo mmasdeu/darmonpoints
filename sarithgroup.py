@@ -508,84 +508,73 @@ class BigArithGroup_class(AlgebraicGroup):
             a, wd = self._reduce_in_amalgam(x)
             return set_immutable(a), wd + [wd1,wd0]
 
-    def smoothen(self,gi,ell,hecke_reps = None):
-        Gab = self.Gpn.abelianization()
-        if hecke_reps is None:
-            hecke_reps = self.Gpn.get_hecke_reps(ell,use_magma = True)
-        newelt = sum([Gab.G_to_ab(self.Gpn.get_hecke_ti(gk1,gi,ell,True)) for gk1 in hecke_reps],Gab(self.Gpn.one()))
-        newelt -= (ZZ(self.F(ell).norm()) + 1) * Gab.G_to_ab(self.Gpn(gi))
-        return Gab.ab_to_G(newelt)
+    def smoothen(self,gi,ell):
+        hecke_reps = self.group().get_hecke_reps(ell,use_magma = True)
+        ans = self.apply_hecke_operator(gi, ell, hecke_reps = hecke_reps)
+        ans -=  (ZZ(self.F(ell).norm()) + 1) * gi
+        return ans
 
     @cached_method
-    def get_homology_kernel(self):
+    def get_homology_kernel(self, smoothen = None):
         from homology_abstract import ArithHomology, HomologyGroup
+        if smoothen is None:
+            smoothen = []
         wp = self.wp()
         Gn = self.large_group()
         B = ArithHomology(self, ZZ**1, trivial_action = True)
         C = HomologyGroup(Gn, ZZ**1, trivial_action = True)
+        group = B.group()
         def phif(x):
             ans = C(0)
-            for g, v in zip(self.large_group().gens(), x.values()):
-                for a, ti in zip(v.values(), self.coset_reps()):
-                    # We are considering a * (g tns t_i)
-                    g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
-                    ans += C((Gn(g0), a))
+            for g, v in zip(group.gens(), x.values()):
+                if not self.use_shapiro():
+                    ans += C((Gn(g), v))
+                else:
+                    for a, ti in zip(v.values(), self.coset_reps()):
+                        # We are considering a * (g tns t_i)
+                        g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                        ans += C((Gn(g0), a))
             return ans
         f = B.space().hom([vector(C(phif(o))) for o in B.gens()])
         def phig(x):
             ans = C(0)
-            for g, v in zip(self.large_group().gens(), x.values()):
-                for a, ti in zip(v.values(), self.coset_reps()):
-                    # We are considering a * (g tns t_i)
-                    g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
-                    ans += C((Gn(wp**-1 * g0 * wp), a))
+            for g, v in zip(group.gens(), x.values()):
+                if not self.use_shapiro():
+                    ans += C((Gn(g), v))
+                else:
+                    for a, ti in zip(v.values(), self.coset_reps()):
+                        # We are considering a * (g tns t_i)
+                        g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                        ans += C((Gn(wp**-1 * g0 * wp), a))
             return ans
         g = B.space().hom([vector(C(phig(o))) for o in B.gens()])
         fg = direct_sum_of_maps([f,g])
         def Phi(x):
             ans = 1
-            for g, v in zip(self.large_group().gens(), x.values()):
-                for a, ti in zip(v.values(), self.coset_reps()):
-                    # We are considering a * (g tns t_i)
-                    g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
-                    ans *= Gn(g0)**ZZ(a[0])
+            for g, v in zip(group.gens(), x.values()):
+                if not self.use_shapiro():
+                    ans *= group(g)**ZZ(v[0])
+                else:
+                    for a, ti in zip(v.values(), self.coset_reps()):
+                        # We are considering a * (g tns t_i)
+                        g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                        ans *= Gn(g0)**ZZ(a[0])
             return ans
-        return  [Phi(B(o)) for o in fg.kernel().gens()]
-
-    @cached_method
-    def get_homology_kernel_old(self):
-        wp = self.wp()
-        B = self.Gpn.abelianization()
-        C = self.Gn.abelianization()
-        Bab = B.abelian_group()
-        Cab = C.abelian_group()
-        verbose('Finding f...')
-        fdata = [B.ab_to_G(o) for o in B.gens_small()]
-        # verbose('fdata = %s'%fdata)
-        f = B.hom_from_image_of_gens_small([C.G_to_ab(self.Gn(o)) for o in fdata])
-        verbose('Finding g...')
-        gdata = [o.conjugate_by(wp) for o in fdata]
-        # verbose('gdata = %s'%gdata)
-        g = B.hom_from_image_of_gens_small([C.G_to_ab(self.Gn(o)) for o in gdata])
-        fg = direct_sum_of_maps([f,g])
-        V = Bab.gen(0).lift().parent()
-        good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
-        ker = [B.ab_to_G(Bab(o)) for o in good_ker]
-        return ker
+        ker = fg.kernel()
+        good_ker = ker.V().span_of_basis([o.lift() for o in ker.gens()]).LLL().rows()
+        good_ker = [B(o) for o in good_ker]
+        for ell in smoothen:
+            good_ker = [self.smoothen(o,ell) for o in good_ker]
+        return [Phi(o) for o in good_ker]
 
     def get_pseudo_orthonormal_homology(self, cocycles, smoothen = None):
-        ker = self.get_homology_kernel()
-        if smoothen is None:
-            smoothen = []
-        for ell in smoothen:
-            hecke_reps = self.Gpn.get_hecke_reps(ell,use_magma = True)
-            ker = [self.smoothen(o,ell,hecke_reps) for o in ker]
+        ker = self.get_homology_kernel(smoothen = smoothen)
         dim = len(cocycles)
         A = Matrix(ZZ,dim,0)
         for vec0 in ker:
             A = A.augment(vector([ZZ(f.evaluate(vec0)[0]) for f in cocycles]))
         Gab = self.Gpn.abelianization()
-        kernrms = [ Gab.G_to_ab(o).vector() for o in ker]
+        kernrms = [ Gab(o).vector() for o in ker]
         custom_norm = lambda B: max([(sum(ZZ(i) * o for o,i in zip(kernrms,col.list()))).norm(1) for col in B.columns()])
 
         min_norm = 10**100 # Or infinity...
@@ -609,7 +598,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     minij = (i,j)
         assert minB is not None
         ker = [ker[o] for o in minij]
-        return [ Gab.ab_to_G(sum(ZZ(i) * Gab.G_to_ab(self.Gpn(o)) for o,i in zip(ker,col.list()))) for col in minB.columns() ]
+        return [ Gab.ab_to_G(sum(ZZ(i) * Gab(self.Gpn(o)) for o,i in zip(ker,col.list()))) for col in minB.columns() ]
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0):
     if base == QQ:
