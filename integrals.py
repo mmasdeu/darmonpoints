@@ -267,11 +267,10 @@ class CoinducedElement(SageObject):
         if check:
             assert self.G.reduce_in_amalgam(b) == 1
         a = self.G.reduce_in_amalgam(b * self.gamma)
-        ans = self.cocycle.evaluate(a)
-        try:
-            ans = ans.evaluate_at_identity()
-        except AttributeError:
-            pass
+        if self.G.use_shapiro():
+            ans = self.cocycle.evaluate_and_identity(a)
+        else:
+            ans = self.cocycle.evaluate(a)
         if rev == False:
             return ans
         else:
@@ -349,26 +348,23 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             else:
                 newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep).conjugate_by(G.wp())
             if HOC._use_ps_dists:
-                mu_e = hc.evaluate(newgamma,parallelize)
-                try:
-                    mu_e = mu_e.evaluate_at_identity()
-                except AttributeError:
-                    pass
+                if G.use_shapiro():
+                    mu_e = hc.evaluate_and_identity(newgamma, parallelize)
+                else:
+                    mu_e = hc.evaluate(newgamma,parallelize)
                 resadd += sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                tmp = hc.evaluate(newgamma,parallelize)
-                try:
-                    tmp = tmp.evaluate_at_identity()
-                except AttributeError:
-                    pass
+                if G.use_shapiro():
+                    tmp = hc.evaluate_and_identity(newgamma, parallelize)
+                else:
+                    tmp = hc.evaluate(newgamma,parallelize)
                 resadd += tmp.evaluate_at_poly(pol, K, depth)
             if multiplicative:
                 try:
-                    tmp = hc.get_liftee().evaluate(newgamma)
-                    try:
-                        tmp = tmp.evaluate_at_identity()
-                    except AttributeError:
-                        pass
+                    if G.use_shapiro():
+                        tmp = hc.get_liftee().evaluate_and_identity(newgamma)
+                    else:
+                        tmp = hc.get_liftee().evaluate(newgamma)
                     resmul *= c0**ZZ(tmp[0])
                 except IndexError: pass
             if progress_bar:

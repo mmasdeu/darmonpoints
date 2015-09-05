@@ -96,6 +96,20 @@ class CohomologyElement(ModuleElement):
             return sum([self.evaluate(g).evaluate(a) for a, g in zip(xi.values(), self.parent().group().gens())])
 
     @cached_method
+    def evaluate_and_identity(self,x,parallelize = False):
+        H = self.parent()
+        G = H.group()
+        if x.parent() is G:
+            wd  = x.word_rep
+        else:
+            x = G(x)
+            wd = x.word_rep
+        if self.parent().trivial_action():
+            return self._evaluate_word_tietze_trivial_identity(syllables_to_tietze(wd))
+        else:
+            return self._evaluate_word_tietze_identity(syllables_to_tietze(wd))
+
+    @cached_method
     def evaluate(self,x,parallelize = False):
         H = self.parent()
         G = H.group()
@@ -133,6 +147,30 @@ class CohomologyElement(ModuleElement):
                 ans -= gamma * self._val[g0]
         return ans
 
+    def _evaluate_word_tietze_identity(self,word):
+        G = self.parent().group()
+        V = self.parent().coefficient_module()
+
+        if len(word) == 0:
+            return V(0)[0]
+        g = word[0]
+        if g > 0:
+            ans = self._val[g-1][0]
+            gamma = G.gen(g-1)
+        else:
+            g0 = -g-1
+            gamma = G.gen(g0)**-1
+            ans = - self._val[g0].act_and_evaluate_at_identity(gamma)
+        for g in word[1:]:
+            if g > 0:
+                ans += self._val[g-1].act_and_evaluate_at_identity(gamma)
+                gamma = gamma * G.gen(g-1)
+            else:
+                g0 = -g-1
+                gamma = gamma * G.gen(g0)**-1
+                ans -= self._val[g0].act_and_evaluate_at_identity(gamma)
+        return ans
+
     def _evaluate_word_tietze_trivial(self,word):
         G = self.parent().group()
         V = self.parent().coefficient_module()
@@ -142,6 +180,17 @@ class CohomologyElement(ModuleElement):
                 ans += self._val[g-1]
             else:
                 ans -= self._val[-g-1]
+        return ans
+
+    def _evaluate_word_tietze_trivial_identity(self,word):
+        G = self.parent().group()
+        V = self.parent().coefficient_module()
+        ans = V(0)[0]
+        for g in word:
+            if g > 0:
+                ans += self._val[g-1][0]
+            else:
+                ans -= self._val[-g-1][0]
         return ans
 
 class CohomologyGroup(Parent):

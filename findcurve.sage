@@ -192,7 +192,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
         # try:
         found = False
-        for o in ker.gens():
+        for o in ker:
             phi_o = phi.evaluate(o)
             if use_shapiro:
                 phi_o = phi_o.evaluate_at_identity()
@@ -216,13 +216,12 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
             except Exception as e:
                 ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
                 break
-
-        try:
-            qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
-            qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
-        except Exception as e:
-            ret_vals.append('Problem with integration: %s'%str(e.message))
-            continue
+        # try:
+        qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
+        qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
+        # except Exception as e:
+        #     ret_vals.append('Problem with integration: %s'%str(e.message))
+        #     continue
 
         qE = qE1/qE2
         qE = qE.add_bigoh(prec + qE.valuation())

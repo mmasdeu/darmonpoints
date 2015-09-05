@@ -98,11 +98,25 @@ class CoIndElement(ModuleElement):
     def evaluate_at_identity(self):
         return self._val[0]
 
+    def act_and_evaluate_at_identity(self, g):
+        try:
+            g = g.quaternion_rep
+        except AttributeError:
+            pass
+        g0, idx = self.parent().get_action_data(g, 0)
+        if self.parent()._base_trivial_action:
+            return self._val[idx]
+        else:
+            return g0 * self._val[idx]
+
     def evaluate(self, x):
         return sum([a * b for a, b in zip(self.values(), x.values())])
 
     def values(self):
         return self._val
+
+    def __getitem__(self, idx):
+        return self._val[idx]
 
     def _repr_(self):
         return 'Element of %s'%self.parent()
@@ -210,9 +224,12 @@ class CoIndModule(Parent):
             return [g1 * v[ti] for g1, ti in action_data]
 
     @cached_method
-    def get_action_data(self, g):
+    def get_action_data(self, g, idx = None):
         G = self._G
-        return [G.get_coset_ti(set_immutable(xi * g)) for xi in G.coset_reps()]
+        if idx is None:
+            return [G.get_coset_ti(set_immutable(xi * g)) for xi in G.coset_reps()]
+        else:
+            return G.get_coset_ti(set_immutable(G.coset_reps()[idx] * g))
 
     def group(self):
         return self._G

@@ -1,6 +1,5 @@
 from itertools import product
 from util import *
-load_attach_path('/home/float/GitProjects/surface-periods/')
 
 # Theta functions of (25) in Teitelbaum's
 # and also the other theta functions that we need to compute the lambda's according to the formulas (23)
@@ -378,7 +377,7 @@ def euler_factor_twodim(p,T):
     n = T.determinant()
     return x**4 - t*x**3 + (2*p+n)*x**2 - p*t*x + p*p
 
-def guess_equation(code,pol,Pgen,Dgen,Npgen,Sinf,sign, prec, hecke_poly = None, working_prec = None, outfile = None, recognize_invariants = True, use_shapiro = False):
+def guess_equation(code,pol,Pgen,Dgen,Npgen,prec, sign_ap = None, hecke_poly = None, working_prec = None, recognize_invariants = True, **kwargs):
     from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
     from sarithgroup import BigArithGroup
     from homology import lattice_homology_cycle
@@ -393,7 +392,35 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen,Sinf,sign, prec, hecke_poly = None, 
     from integrals import integrate_H1
     from sage.misc.misc import alarm, cancel_alarm
     from sage.rings.integer_ring import ZZ
-    global G
+
+    import os, datetime, ConfigParser
+
+    config = ConfigParser.ConfigParser()
+    config.read('config.ini')
+    param_dict = config_section_map(config, 'General')
+    param_dict.update(config_section_map(config, 'DarmonPoint'))
+    param_dict.update(kwargs)
+    param = Bunch(**param_dict)
+
+    # Get general parameters
+    outfile = param.outfile
+    use_ps_dists = param.use_ps_dists
+    use_shapiro = param.use_shapiro
+    use_sage_db = param.use_sage_db
+    magma_seed = param.magma_seed
+    parallelize = param.parallelize
+    Up_method = param.up_method
+    use_magma = param.use_magma
+    progress_bar = param.progress_bar
+    sign_at_infinity = param.sign_at_infinity
+
+    if Up_method == "bigmatrix" and use_shapiro == True:
+        import warnings
+        warnings.warn('Use of "bigmatrix" for Up iteration is incompatible with Shapiro Lemma trick. Using "naive" method for Up.')
+        Up_method = 'naive'
+
+    global G, Coh, flist, hecke_data, g0, g1, A, B, D, a, b
+
     if pol is None or pol.degree() == 1:
         F = QQ
         P = Pgen
@@ -413,25 +440,25 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen,Sinf,sign, prec, hecke_poly = None, 
         Pring = P.ring()
         D = F.ideal(Dgen)
         Np = F.ideal(Npgen)
-        Sinf_places = [v for v,o in zip(F.real_places(prec = Infinity),Sinf) if o == -1]
+        Sinf_places = [v for v,o in zip(F.real_places(prec = Infinity),sign_at_infinity) if o == -1]
         abtuple = quaternion_algebra_invariants_from_ramification(F,D,Sinf_places)
         if outfile is None:
             outfile = 'atr_surface_%s_%s_%s_%s.txt'%(F.discriminant().abs(),Pnrm,D.norm(),(P*D*Np).norm())
 
     if Pnrm > 29:
         return 'Giving up, prime norm is too large (Pnrm = %s)'%Pnrm
-    fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,Sinf)),outfile)
+    fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,sign_at_infinity)),outfile)
 
-    G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro)
+    G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = magma)
     Coh = ArithCoh(G)
     fwrite('Computed Cohomology group',outfile)
-    flist, hecke_data = Coh.get_twodim_cocycle(sign, pol = hecke_poly, return_all = False)
+    flist, hecke_data = Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, return_all = False)
     fwrite('Obtained cocycle',outfile)
     g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
 
     fwrite('Obtained homology generators',outfile)
     if working_prec is None:
-        working_prec = 2 * prec
+        working_prec = max([2 * prec + 10, 30])
     found = False
     while not found:
         try:
@@ -442,29 +469,29 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen,Sinf,sign, prec, hecke_poly = None, 
             working_prec *= 2
             fwrite('Raising working precision to %s and trying again'%working_prec, outfile)
     fwrite('Defined homology cycles', outfile)
-    Phif = get_overconvergent_class_quaternionic(P, flist[0], G, prec, sign, 1, progress_bar = True)
-    Phig = get_overconvergent_class_quaternionic(P, flist[1], G, prec, sign, 1, progress_bar = True)
+    Phif = get_overconvergent_class_quaternionic(P, flist[0], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
+    Phig = get_overconvergent_class_quaternionic(P, flist[1], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
     fwrite('Overconvergent lift completed', outfile)
 
     from integrals import integrate_H1
-    num = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = True)
-    den = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = True)
+    num = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
+    den = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
     A = num / den
     fwrite('Finished computation of A period', outfile)
     A = A.add_bigoh(prec + A.valuation())
     # A = A.trace() / A.parent().degree()
     fwrite('A = %s'%A, outfile)
 
-    num = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = True)
-    den = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = True)
+    num = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
+    den = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
     B = num / den
     fwrite('Finished computation of B period', outfile)
     B = B.add_bigoh(prec + B.valuation())
     # B = B.trace() / B.parent().degree()
     fwrite('B = %s'%B, outfile)
 
-    num = integrate_H1(G, xi11, Phig, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = True)
-    den = integrate_H1(G, xi21, Phig, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = True)
+    num = integrate_H1(G, xi11, Phig, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
+    den = integrate_H1(G, xi21, Phig, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
     D = num / den
     fwrite('Finished computation of D period', outfile)
     D = D.add_bigoh(prec + D.valuation())

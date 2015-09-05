@@ -599,7 +599,7 @@ class ArithCoh(CohomologyGroup):
             Gn = G.large_group()
             if self.use_shapiro():
                 def calculate_Up_contribution(lst, c, i, j):
-                    return sum([sk * c.evaluate(tt).evaluate_at_identity() for sk, tt in lst])
+                    return sum([sk * c.evaluate_and_identity(tt) for sk, tt in lst])
                 input_vec = []
                 for j, gamma in enumerate(gammas):
                     for i, xi in enumerate(G.coset_reps()):
