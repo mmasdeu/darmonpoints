@@ -500,15 +500,15 @@ class ArithCoh(CohomologyGroup):
                                 continue
                             if U0.dimension() == 2 and is_irred:
                                 if pol is None or Aq.restrict(U0).charpoly() == pol:
-                                    good_components.append((U0.denominator() * U0.matrix(),hecke_data+[(qq.gens_reduced()[0],Aq.restrict(U0))]))
+                                    good_components.append((U0.denominator() * U0,hecke_data+[(qq.gens_reduced()[0],Aq)]))
                             else: # U0.dimension() > 2 or not is_irred
-                                component_list.append((U0,hecke_data + [(qq.gens_reduced()[0],Aq.restrict(U0))]))
+                                component_list.append((U0,hecke_data + [(qq.gens_reduced()[0],Aq)]))
                     if len(good_components) > 0 and not return_all:
                         flist = []
-                        for row0 in good_components[0][0].rows():
+                        for row0 in good_components[0][0].matrix().rows():
                             col0 = [ZZ(o) for o in row0.list()]
                             flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-                        return flist,good_components[0][1]
+                        return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
                     if len(component_list) == 0 or num_hecke_operators >= bound:
                         break
 
@@ -519,17 +519,17 @@ class ArithCoh(CohomologyGroup):
                 ans = []
                 for K,hecke_data in good_components:
                     flist = []
-                    for row0 in K.rows():
+                    for row0 in K.matrix().rows():
                         col0 = [ZZ(o) for o in row0.list()]
                         flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-                    ans.append((flist,hecke_data))
+                    ans.append((flist,[(ell, o.restrict(K)) for ell, o in hecke_data]))
                 return ans
             else:
                 flist = []
-                for row0 in good_components[0][0].rows():
+                for row0 in good_components[0][0].matrix().rows():
                     col0 = [ZZ(o) for o in row0.list()]
                     flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-                return flist,good_components[0][1]
+                return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
 
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,g0 = None):
         r"""

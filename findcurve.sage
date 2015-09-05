@@ -169,7 +169,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         if use_sage_db:
             G.save_to_db()
         fwrite('Cohomology class found', outfile)
-    ker = G.get_homology_kernel()
+    ker = [G.inverse_shapiro(o) for o in G.get_homology_kernel()]
     # except Exception as e:
     #     if quit_when_done:
     #         magma.quit()
@@ -192,7 +192,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
         # try:
         found = False
-        for o in ker:
+        for o in ker.gens():
             phi_o = phi.evaluate(o)
             if use_shapiro:
                 phi_o = phi_o.evaluate_at_identity()

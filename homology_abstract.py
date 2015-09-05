@@ -106,6 +106,7 @@ class HomologyGroup(Parent):
     def coefficient_module(self):
         return self._coeffmodule
 
+    @cached_method
     def space(self):
         r'''
         Calculates the homology space as a Z-module.
@@ -113,6 +114,8 @@ class HomologyGroup(Parent):
         TESTS::
 
         '''
+        verb = get_verbose()
+        set_verbose(0)
         V = self.coefficient_module()
         R = V.base_ring()
         Vdim = V.dimension()
@@ -135,7 +138,9 @@ class HomologyGroup(Parent):
             for v in V.gens():
                 boundaries.append(cycles(ambient(sum([list(a * vector(v)) for a in grad],[]))))
         boundaries = cycles.submodule(boundaries)
-        return cycles.quotient(boundaries)
+        ans = cycles.quotient(boundaries)
+        set_verbose(verb)
+        return ans
 
     @cached_method
     def rank(self):
@@ -253,19 +258,21 @@ class HomologyGroup(Parent):
         return genpows[a]
 
     def get_twisted_fox_term(self,i,a, red = None):
+        verb_level = get_verbose()
+        set_verbose(0)
         if red is None:
             red = lambda x:x
         if a == 1:
-            return self._gen_pows[i][0]
+            ans = self._gen_pows[i][0]
         elif a == -1:
-            return -self._gen_pows_neg[i][1]**-1
+            ans = -self._gen_pows_neg[i][1]**-1
         elif a > 1:
             genpows = self._gen_pows[i]
             ans = genpows[0] + genpows[1]**-1
             for o in xrange(a-2):
                 ans = red(ans)
                 ans = genpows[0] + genpows[1]**-1 * ans
-            return red(ans)
+            ans = red(ans)
         elif a < -1:
             a = -a
             genpows = self._gen_pows_neg[i]
@@ -274,7 +281,9 @@ class HomologyGroup(Parent):
                 ans = red(ans)
                 ans = genpows[0] + genpows[1]**-1 * ans
             ans = -genpows[1]**-1 * ans
-            return red(ans)
+            ans = red(ans)
+        set_verbose(verb_level)
+        return ans
 
 class ArithHomologyElement(HomologyElement):
     def _repr_(self):
@@ -294,16 +303,27 @@ class ArithHomology(HomologyGroup):
             HomologyGroup.__init__(self, group, W, trivial_action = trivial_action)
 
     @cached_method
-    def hecke_matrix(self, l, use_magma = True, g0 = None): # l can be oo
-        dim = self.rank()
+    def hecke_matrix(self, l, use_magma = True, g0 = None, with_torsion = False): # l can be oo
+        verb = get_verbose()
+        set_verbose(0)
+        if with_torsion:
+            dim = len(self.gens())
+            gens = self.gens()
+        else:
+            dim = self.rank()
+            gens = self.free_gens()
         R = self.coefficient_module().base_ring()
         M = matrix(R,dim,dim,0)
         coeff_dim = self.coefficient_module().dimension()
         invs = self.space().invariants()
-        for j,cycle in enumerate(self.free_gens()):
+        for j,cycle in enumerate(gens):
             # Construct column j of the matrix
             new_col = vector(self.apply_hecke_operator(cycle, l, use_magma = use_magma, g0 = g0))
-            M.set_column(j,[o for o,a in zip(new_col,invs) if a == 0])
+            if with_torsion:
+                M.set_column(j,list(new_col))
+            else:
+                M.set_column(j,[o for o,a in zip(new_col,invs) if a == 0])
+        set_verbose(verb)
         return M
 
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,g0 = None):

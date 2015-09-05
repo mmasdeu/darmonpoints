@@ -89,6 +89,12 @@ class CohomologyElement(ModuleElement):
     def valuation(self, p = None):
         return min([ u.valuation(p) for u in self._val ])
 
+    def pair_with_cycle(self, xi):
+        if self.parent().trivial_action():
+            return sum([a * self.evaluate(g) for a, g in zip(xi.values(), self.parent().group().gens())])
+        else:
+            return sum([self.evaluate(g).evaluate(a) for a, g in zip(xi.values(), self.parent().group().gens())])
+
     @cached_method
     def evaluate(self,x,parallelize = False):
         H = self.parent()
@@ -179,6 +185,7 @@ class CohomologyGroup(Parent):
     def coefficient_module(self):
         return self._coeffmodule
 
+    @cached_method
     def space(self):
         r'''
         Calculates the space of cocyles modulo coboundaries, as a Z-module.
@@ -194,6 +201,8 @@ class CohomologyGroup(Parent):
         sage: Coh = CohomologyGroup(G,V,trivial_action = False)
         sage: amb = Coh.space()
         '''
+        verb = get_verbose()
+        set_verbose(0)
         V = self.coefficient_module()
         R = V.base_ring()
         Vdim = V.dimension()
@@ -210,7 +219,9 @@ class CohomologyGroup(Parent):
         cocycles = ambient.submodule([ambient(o) for o in A.right_kernel_matrix().rows()])
         gmat = block_matrix([self._gen_pows[i][1] - 1 for i in range(len(G.gens()))], nrows = len(G.gens()))
         coboundaries = cocycles.submodule([ambient(o) for o in gmat.columns()])
-        return cocycles.quotient(coboundaries)
+        ans = cocycles.quotient(coboundaries)
+        set_verbose(verb)
+        return ans
 
     @cached_method
     def dimension(self):

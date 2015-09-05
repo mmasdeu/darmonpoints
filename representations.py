@@ -98,6 +98,9 @@ class CoIndElement(ModuleElement):
     def evaluate_at_identity(self):
         return self._val[0]
 
+    def evaluate(self, x):
+        return sum([a * b for a, b in zip(self.values(), x.values())])
+
     def values(self):
         return self._val
 

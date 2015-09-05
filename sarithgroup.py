@@ -26,6 +26,7 @@ from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 import os,datetime
+from homology_abstract import ArithHomology, HomologyGroup
 
 class BTEdge(SageObject):
     r'''
@@ -509,16 +510,14 @@ class BigArithGroup_class(AlgebraicGroup):
             return set_immutable(a), wd + [wd1,wd0]
 
     def smoothen(self,gi,ell):
-        hecke_reps = self.group().get_hecke_reps(ell,use_magma = True)
-        ans = self.apply_hecke_operator(gi, ell, hecke_reps = hecke_reps)
+        hecke_reps = gi.parent().group().get_hecke_reps(ell,use_magma = True)
+        ans = gi.parent().apply_hecke_operator(gi, ell, hecke_reps = hecke_reps)
         ans -=  (ZZ(self.F(ell).norm()) + 1) * gi
         return ans
 
-    @cached_method
-    def get_homology_kernel(self, smoothen = None):
-        from homology_abstract import ArithHomology, HomologyGroup
-        if smoothen is None:
-            smoothen = []
+    def get_homology_kernel(self, hecke_data = None):
+        if hecke_data is None:
+            hecke_data = []
         wp = self.wp()
         Gn = self.large_group()
         B = ArithHomology(self, ZZ**1, trivial_action = True)
@@ -548,34 +547,55 @@ class BigArithGroup_class(AlgebraicGroup):
                         ans += C((Gn(wp**-1 * g0 * wp), a))
             return ans
         g = B.space().hom([vector(C(phig(o))) for o in B.gens()])
-        fg = direct_sum_of_maps([f,g])
-        def Phi(x):
-            ans = 1
-            for g, v in zip(group.gens(), x.values()):
-                if not self.use_shapiro():
-                    ans *= group(g)**ZZ(v[0])
-                else:
-                    for a, ti in zip(v.values(), self.coset_reps()):
-                        # We are considering a * (g tns t_i)
-                        g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
-                        ans *= Gn(g0)**ZZ(a[0])
-            return ans
+        maplist = [f, g]
+        Bsp = B.space()
+        for ell, T in hecke_data:
+            Aq = B.hecke_matrix(ell, with_torsion = True)
+            tmap = Bsp.hom([sum([ZZ(a) * o for a, o in zip(col, Bsp.gens())]) for col in T.charpoly()(Aq).columns()])
+            maplist.append(tmap)
+        fg = direct_sum_of_maps(maplist)
         ker = fg.kernel()
         good_ker = ker.V().span_of_basis([o.lift() for o in ker.gens()]).LLL().rows()
         good_ker = [B(o) for o in good_ker]
-        for ell in smoothen:
-            good_ker = [self.smoothen(o,ell) for o in good_ker]
-        return [Phi(o) for o in good_ker]
+        return good_ker
 
-    def get_pseudo_orthonormal_homology(self, cocycles, smoothen = None):
-        ker = self.get_homology_kernel(smoothen = smoothen)
-        dim = len(cocycles)
+    def inverse_shapiro(self, x):
+        Gn = self.large_group()
+        B = ArithHomology(self, ZZ**1, trivial_action = True)
+        group = B.group()
+        ans = 1
+        for g, v in zip(group.gens(), x.values()):
+            if not self.use_shapiro():
+                ans *= group(g)**ZZ(v[0])
+            else:
+                for a, ti in zip(v.values(), self.coset_reps()):
+                    # We are considering a * (g tns t_i)
+                    g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                    ans *= Gn(g0)**ZZ(a[0])
+        return ans
+
+    def get_pseudo_orthonormal_homology(self, cocycles, hecke_data = None):
+        from sage.rings.arith import GCD
+        ker = self.get_homology_kernel(hecke_data = tuple(hecke_data))
+        assert len(ker) == 2
+        f0, f1 = cocycles
+        a00 = f0.pair_with_cycle(ker[0])
+        a01 = f0.pair_with_cycle(ker[1])
+        a10 = f1.pair_with_cycle(ker[0])
+        a11 = f1.pair_with_cycle(ker[1])
+        den = GCD([a00, a01, a10, a11])
+        a00, a01, a10, a11 = ZZ(a00/den), ZZ(a01/den), ZZ(a10/den), ZZ(a11/den)
+        return [self.inverse_shapiro(a11 * ker[0] - a10 * ker[1]), self.inverse_shapiro(-a01 * ker[0] + a00 * ker[1])]
+
+    def get_pseudo_orthonormal_homology_old(self, cocycles, hecke_data = None):
+        ker = self.get_homology_kernel(hecke_data = tuple(hecke_data))
+        dim = cocycles[0].parent().coefficient_module().dimension() * len(cocycles)
         A = Matrix(ZZ,dim,0)
         for vec0 in ker:
-            A = A.augment(vector([ZZ(f.evaluate(vec0)[0]) for f in cocycles]))
+            A = A.augment(vector(sum([list(vector(f.evaluate(vec0))) for f in cocycles],[])))
         Gab = self.Gpn.abelianization()
-        kernrms = [ Gab(o).vector() for o in ker]
-        custom_norm = lambda B: max([(sum(ZZ(i) * o for o,i in zip(kernrms,col.list()))).norm(1) for col in B.columns()])
+        kernrms = [ vector(Gab(o)) for o in ker]
+        custom_norm = lambda B: max([(sum(ZZ(i) * o for o,i in zip(list(kernrms),col.list()))).norm(1) for col in B.columns()])
 
         min_norm = 10**100 # Or infinity...
         minB = None
