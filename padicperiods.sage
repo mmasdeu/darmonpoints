@@ -451,7 +451,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, prec, Sinf = None, sign_ap = None, 
         return 'Giving up, prime norm is too large (Pnrm = %s)'%Pnrm
     fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,Sinf)),outfile)
 
-    G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = magma)
+    G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None)
     Coh = ArithCoh(G)
     fwrite('Computed Cohomology group',outfile)
     for flist, hecke_data in Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, return_all = True):
