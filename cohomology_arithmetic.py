@@ -470,10 +470,6 @@ class ArithCoh(CohomologyGroup):
 
         component_list = []
         good_components = []
-        if K.dimension() == 1:
-            good_components.append((K,[]))
-        else:
-            component_list.append((K,[]))
 
         disc = self.group()._O_discriminant
         discnorm = disc.norm()
