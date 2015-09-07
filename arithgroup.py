@@ -1053,12 +1053,13 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
         self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant(),self.magma)
 
-        if self.algorithm == 'aurel' and self._compute_presentation:
-            self._init_aurel_data(timeout = timeout)
-        else:
-            if timeout != 0:
-                raise NotImplementedError("Timeout functionality not implemented for totally real fields")
-            self._init_jv_data()
+        if self._compute_presentation:
+            if self.algorithm == 'aurel':
+                self._init_aurel_data(timeout = timeout)
+            else:
+                if timeout != 0:
+                    raise NotImplementedError("Timeout functionality not implemented for totally real fields")
+                self._init_jv_data()
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
 
