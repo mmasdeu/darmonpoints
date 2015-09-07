@@ -138,7 +138,6 @@ def compute_tau0(v0,gamma,wD,return_exact = False):
     F = v0.domain()
     Cp = v0.codomain()
     assert wD.minpoly() == gamma.minpoly()
-    gamma0 = gamma.apply_morphism(v0)
     a,b,c,d = gamma.list()
     tau0_vec = (c*X**2+(d-a)*X-b).roots(F)
     tau0 = v0(tau0_vec[0][0])
@@ -146,7 +145,6 @@ def compute_tau0(v0,gamma,wD,return_exact = False):
     if c * tau0 + d != v0(wD):
         tau0 = v0(tau0_vec[1][0])
         idx = 1
-    assert gamma0 * Matrix(Cp,2,1,[tau0,1]) == v0(wD) * Matrix(Cp,2,1,[tau0,1])
     return tau0_vec[idx][0] if return_exact == True else tau0
 
 def order_and_unit(F,conductor):

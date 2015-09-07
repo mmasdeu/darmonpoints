@@ -2,7 +2,7 @@
 #####     Curve finding           ####
 ######################################
 
-def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
+def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
     r'''
     EXAMPLES:
 
@@ -32,8 +32,8 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
     from sage.rings.padics.precision_error import PrecisionError
     from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
     from sarithgroup import BigArithGroup
-    from homology import construct_homology_cycle,lattice_homology_cycle
-    from cohomology import CohomologyGroup, get_overconvergent_class_quaternionic
+    from homology import lattice_homology_cycle
+    from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
     from integrals import integrate_H1,double_integral_zero_infty
     import os, datetime, ConfigParser
 
@@ -47,6 +47,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
     # Get general parameters
     outfile = param.outfile
     use_ps_dists = param.use_ps_dists
+    use_shapiro = param.use_shapiro
     use_sage_db = param.use_sage_db
     magma_seed = param.magma_seed
     parallelize = param.parallelize
@@ -142,7 +143,7 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity)
-            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout)
+            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout, use_shapiro = use_shapiro)
         except RuntimeError as e:
             if quit_when_done:
                 magma.quit()
@@ -155,36 +156,21 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
                 return 'Error when computing G: ' + mystr
 
         # Define phiE, the cohomology class associated to the system of eigenvalues.
-        Coh = CohomologyGroup(G.Gpn)
-        phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all,use_magma = True)
-        # except Exception as e:
-        #     if quit_when_done:
-        #         magma.quit()
-        #     if return_all:
-        #         return ['Error when finding cohomology class: ' + str(e.message)]
-        #     else:
-        #         return 'Error when finding cohomology class: ' + str(e.message)
+        Coh = ArithCoh(G)
+        try:
+            phiE = Coh.get_rational_cocycle(sign = sign_at_infinity,bound = hecke_bound,return_all = return_all,use_magma = True)
+        except Exception as e:
+            if quit_when_done:
+                magma.quit()
+            if return_all:
+                return ['Error when finding cohomology class: ' + str(e.message)]
+            else:
+                return 'Error when finding cohomology class: ' + str(e.message)
         if use_sage_db:
             G.save_to_db()
         fwrite('Cohomology class found', outfile)
     try:
-        wp = G.wp()
-        B = G.Gpn.abelianization()
-        C = G.Gn.abelianization()
-        Bab = B.abelian_group()
-        Cab = C.abelian_group()
-        verbose('Finding f...')
-        fdata = [B.ab_to_G(o).quaternion_rep for o in B.gens_small()]
-        # verbose('fdata = %s'%fdata)
-        f = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in fdata])
-        verbose('Finding g...')
-        gdata = [wp**-1 * o * wp for o in fdata]
-        # verbose('gdata = %s'%gdata)
-        g = B.hom_from_image_of_gens_small([C.G_to_ab(G.Gn(o)) for o in gdata])
-        fg = direct_sum_of_maps([f,g])
-        V = Bab.gen(0).lift().parent()
-        good_ker = V.span_of_basis([o.lift() for o in fg.kernel().gens()]).LLL().rows()
-        ker = [B.ab_to_G(Bab(o)) for o in good_ker]
+        ker = [G.inverse_shapiro(o) for o in G.get_homology_kernel()]
     except Exception as e:
         if quit_when_done:
             magma.quit()
@@ -208,7 +194,10 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
         try:
             found = False
             for o in ker:
-                if phi.evaluate(o) != 0:
+                phi_o = phi.evaluate(o)
+                if use_shapiro:
+                    phi_o = phi_o.evaluate_at_identity()
+                if phi_o != 0:
                     found = True
                     break
             if not found:
@@ -225,15 +214,15 @@ def find_curve(P, DB, NE, prec, sign_ap = 1, magma = None, return_all = False, i
             except PrecisionError:
                 working_prec  = 2 * working_prec
                 verbose('Setting working_prec to %s'%working_prec)
-            # except Exception as e:
-            #     ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
-            #     break
-        try:
-            qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
-            qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
-        except Exception as e:
-            ret_vals.append('Problem with integration: %s'%str(e.message))
-            continue
+            except Exception as e:
+                ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
+                break
+        # try:
+        qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
+        qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
+        # except Exception as e:
+        #     ret_vals.append('Problem with integration: %s'%str(e.message))
+        #     continue
 
         qE = qE1/qE2
         qE = qE.add_bigoh(prec + qE.valuation())

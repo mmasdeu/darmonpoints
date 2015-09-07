@@ -10,7 +10,6 @@ from collections import defaultdict
 from sage.matrix.all import matrix,Matrix
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 #from distributions import Distributions, Symk
-from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.structure.parent import Parent
 from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
@@ -21,8 +20,9 @@ from ocmodule import *
 import operator
 from sage.rings.arith import GCD
 from sage.rings.padics.precision_error import PrecisionError
+from representations import *
 
-def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_curve = None):
+def construct_homology_cycle(G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
     F = G.F
     t = PolynomialRing(F, names = 't').gen()
     K = F.extension(t*t - D, names = 'beta')
@@ -66,8 +66,7 @@ def construct_homology_cycle(G, D, prec, outfile = None, max_n = None, elliptic_
         else:
             Q = F.ideal(q1).factor()[0][0]
             a_ell = ZZ(Q.norm() + 1 - elliptic_curve.reduction(Q).count_points())
-        A = G.small_group().hecke_matrix_freepart(q1)
-        f = A.minpoly()
+        f = hecke_poly_getter(q1)
         R = f.parent()
         x = R.gen()
         while True:
@@ -103,9 +102,8 @@ def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
     H1 = OneChains(Gn,Div)
-    x = G.small_group()(x)
-    xi1 = H1(dict([(Gn(x),Div(tau1))])).zero_degree_equivalent(prec = prec)
-    xi2 = H1(dict([(Gn(x.conjugate_by(wp)),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
+    xi1 = H1(dict([(Gn(x.quaternion_rep),Div(tau1))])).zero_degree_equivalent(prec = prec)
+    xi2 = H1(dict([(Gn(wp**-1 * x.quaternion_rep * wp),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
     if smoothen is not None:
         xi1 = xi1.hecke_smoothen(smoothen)
         xi2 = xi2.hecke_smoothen(smoothen)
@@ -310,7 +308,6 @@ class Divisors(Parent):
     def _repr_(self):
         return 'Group of divisors over ' + self._field._repr_()
 
-
 class ArithGroupAction(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
@@ -397,7 +394,7 @@ class OneChains_element(ModuleElement):
         Gab = G.abelianization()
         xlist = [(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)]
         abxlist = [n * Gab(x) for x,n in xlist]
-        sum_abxlist = sum(abxlist)
+        sum_abxlist = vector(sum(abxlist))
         x_ord = sum_abxlist.order()
         if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
             raise ValueError('Must yield torsion element in abelianization (%s)'%(sum_abxlist))

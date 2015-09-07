@@ -164,7 +164,7 @@ def is_in_Gamma_1(mat,N,p = None,determinant_condition = True):
             return False
         if Zmod(N)(a) != 1 or Zmod(N)(c) % N != 0:
             return False
-    if determinant_condition and mat.det() != 1:
+    if determinant_condition and mat.determinant() != 1:
         return False
     return True
 

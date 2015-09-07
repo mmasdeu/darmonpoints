@@ -6,8 +6,6 @@
 import itertools
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-#from distributions import Distributions, Symk
-from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing,lcm, Infinity,Zmod
 from sage.all import prod
 from operator import mul
@@ -15,6 +13,7 @@ from util import *
 from limits import num_evals,find_center
 from sage.parallel.decorate import fork,parallel
 from sage.misc.getusage import get_memory_usage
+from sage.structure.sage_object import SageObject
 import os
 
 def act_on_polynomial(P,num,den,N = None):
@@ -171,15 +170,13 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',prec = None,parall
         resadd += newresadd
     if not multiplicative:
         return resadd
+    elif resadd == 0:
+        return res
     else:
         try:
             return res * resadd.exp()
         except ValueError:
             return res**2 * (2*resadd).exp()
-        except TypeError:
-            print res
-            print resadd
-            assert 0
 
 def evaluate_parallel(hc,gamma,pol,c0):
     HOC = hc.parent()
@@ -220,7 +217,7 @@ def sample_point(G,e,prec = 20):
 r'''
 Integration pairing of a function with an harmonic cocycle.
 '''
-def riemann_sum(G,phi,hc,depth = 1,mult = False):
+def riemann_sum(G,phi,hc,depth = 1,mult = False, progress_bar = False):
     prec = max([20,2*depth])
     res = 1 if mult else 0
     K = phi.parent().base_ring()
@@ -229,6 +226,8 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
     for e in cover:
         if n_ints % 500 == 499:
             verbose('Done %s percent'%(100*RealField(10)(n_ints)/len(cover)))
+        if progress_bar and n_ints % 10 == 0:
+            update_progress(float(RealField(10)(n_ints)/len(cover)),'Riemann sum')
         n_ints += 1
         val = hc(e)
         vmom = val[0] #.moment(0)
@@ -248,26 +247,62 @@ def riemann_sum(G,phi,hc,depth = 1,mult = False):
             res += phi(K(te)) * hce
     return res
 
+
+class ShapiroImage(SageObject):
+    def __init__(self,G,cocycle):
+        self.G = G
+        self.cocycle = cocycle
+
+    def __call__(self,gamma):
+        return CoinducedElement(self.G,self.cocycle,gamma)
+
+class CoinducedElement(SageObject):
+    def __init__(self,G,cocycle,gamma):
+        self.G = G
+        self.cocycle = cocycle
+        self.gamma = gamma
+
+    def __call__(self,h,check = False):
+        rev, b = h
+        if check:
+            assert self.G.reduce_in_amalgam(b) == 1
+        a = self.G.reduce_in_amalgam(b * self.gamma)
+        if self.G.use_shapiro():
+            ans = self.cocycle.evaluate_and_identity(a)
+        else:
+            ans = self.cocycle.evaluate(a)
+        if rev == False:
+            return ans
+        else:
+            return -ans
+
 def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     # verbose('Integral %s/%s...'%(counter,total_counter))
     HOC = hc.parent()
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
-    #R = LaurentSeriesRing(K,'t')
-    #R.set_default_prec(prec)
     R = PolynomialRing(K,names = 't').fraction_field()
     t = R.gen()
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
-    return riemann_sum(G,phi,hc.shapiro_image(G)(gamma.quaternion_rep),depth,mult = multiplicative)
+    try:
+        hc = hc.get_liftee()
+    except AttributeError:
+        pass
+    ans = riemann_sum(G,phi,ShapiroImage(G,hc)(gamma.quaternion_rep),depth,mult = multiplicative,progress_bar = progress_bar)
+    return ans, ans.log(p_branch = 0)
 
 def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     # verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
     HOC = hc.parent()
+    assert depth == 1
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
-    depth = HOC.coefficient_module().precision_cap()
+    try:
+        depth = HOC.coefficient_module().precision_cap()
+    except AttributeError:
+        depth = HOC.coefficient_module().coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
     QQp = Qp(p,prec)
     R = PolynomialRing(K,'r')
@@ -275,6 +310,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
+    tilist = G.coset_reps()
     while len(edgelist) > 0:
         # verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
@@ -307,17 +343,24 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
                 continue
             if not rev:
-                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep)
+                newgamma, wd = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = True)
             else:
-                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep).conjugate_by(G.wp())
-            if HOC._use_ps_dists:
+                newgamma, wd = G.reduce_in_amalgam(h * gamma.quaternion_rep).conjugate_by(G.wp(), return_word = True)
+            if G.use_shapiro():
+                mu_e = hc.evaluate_and_identity(newgamma, parallelize)
+            else:
                 mu_e = hc.evaluate(newgamma,parallelize)
-                resadd += sum(a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
+            if HOC._use_ps_dists:
+                resadd += sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                resadd += hc.evaluate(newgamma,parallelize).evaluate_at_poly(pol,K,depth)
+                resadd += mu_e.evaluate_at_poly(pol, K, depth)
             if multiplicative:
                 try:
-                    resmul *= c0**ZZ(hc.get_liftee().evaluate(newgamma)[0])
+                    if G.use_shapiro():
+                        tmp = hc.get_liftee().evaluate_and_identity(newgamma)
+                    else:
+                        tmp = hc.get_liftee().evaluate(newgamma)
+                    resmul *= c0**ZZ(tmp[0])
                 except IndexError: pass
             if progress_bar:
                 update_progress(float(QQ(ii)/QQ(len(edgelist))),'Integration %s/%s'%(counter,total_counter))

@@ -436,7 +436,7 @@ class Sigma0_class(Parent):
         else:
             return False
 
-    def _element_constructor_(self, x, check=True):
+    def _element_constructor_(self, x, check = True):
         r"""
         Construct an element of self from x.
 
@@ -480,7 +480,7 @@ class Sigma0_class(Parent):
     def _repr_(self):
         r"""
         String representation of self.
-
+ 
         EXAMPLE::   
 
             sage: from sage.modular.pollack_stevens.sigma0 import Sigma0

@@ -34,7 +34,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     from sage.rings.padics.precision_error import PrecisionError
     from sarithgroup import BigArithGroup
     from homology import construct_homology_cycle
-    from cohomology import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, CohomologyGroup
+    from cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
     from integrals import double_integral_zero_infty,integrate_H1
     from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
     import os, datetime, ConfigParser
@@ -49,6 +49,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     # Get general parameters
     outfile = param.outfile
     use_ps_dists = param.use_ps_dists
+    use_shapiro = param.use_shapiro
     use_sage_db = param.use_sage_db
     magma_seed = param.magma_seed
     parallelize = param.parallelize
@@ -63,6 +64,11 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     algorithm = param.algorithm
     quaternionic = param.quaternionic
     cohomological = param.cohomological
+
+    if Up_method == "bigmatrix" and use_shapiro == True:
+        import warnings
+        warnings.warn('Use of "bigmatrix" for Up iteration is incompatible with Shapiro Lemma trick. Using "naive" method for Up.')
+        Up_method = 'naive'
 
     if working_prec is None:
         working_prec = max([2 * prec + 10, 30])
@@ -171,12 +177,13 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F, DB, ramification_at_infinity)
 
-            G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma)
+            G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
+            Coh = ArithCoh(G)
             while True:
                 try:
-                    cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,outfile = outfile, elliptic_curve = E)
+                    cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,lambda q: Coh.hecke_matrix(q).minpoly(), outfile = outfile, elliptic_curve = E)
                     break
                 except PrecisionError:
                     working_prec *= 2
@@ -195,7 +202,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             eisenstein_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,eisenstein_constant),outfile)
             fwrite('exponent = %s'%nn,outfile)
-            phiE = CohomologyGroup(G.small_group()).get_cocycle_from_elliptic_curve(E, sign = sign_at_infinity)
+            phiE = Coh.get_cocycle_from_elliptic_curve(E, sign = sign_at_infinity)
             if hasattr(E,'ap'):
                 sign_ap = E.ap(P)
             else:
@@ -277,8 +284,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     else:
         local_embedding = Qp(p,working_prec)
         twopowlist = [4, 3, 2, 1, 1/2, 3/2, 1/3, 2/3, 1/4, 3/4, 5/2, 4/3]
-        # twopowlist = [2, 1, 1/2] # DEBUG
-
 
     known_multiple = eisenstein_constant * nn
     while known_multiple % p == 0:
