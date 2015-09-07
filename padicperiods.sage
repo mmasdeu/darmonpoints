@@ -377,7 +377,7 @@ def euler_factor_twodim(p,T):
     n = T.determinant()
     return x**4 - t*x**3 + (2*p+n)*x**2 - p*t*x + p*p
 
-def guess_equation(code,pol,Pgen,Dgen,Npgen,prec, sign_ap = None, hecke_poly = None, working_prec = None, recognize_invariants = True, **kwargs):
+def guess_equation(code,pol,Pgen,Dgen,Npgen, prec, Sinf = None, sign_ap = None, hecke_poly = None, working_prec = None, recognize_invariants = True, **kwargs):
     from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
     from sarithgroup import BigArithGroup
     from homology import lattice_homology_cycle
@@ -440,14 +440,16 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen,prec, sign_ap = None, hecke_poly = N
         Pring = P.ring()
         D = F.ideal(Dgen)
         Np = F.ideal(Npgen)
-        Sinf_places = [v for v,o in zip(F.real_places(prec = Infinity),sign_at_infinity) if o == -1]
+        if Sinf is None:
+            Sinf = [-1 for i in F.real_places()]
+        Sinf_places = [v for v,o in zip(F.real_places(prec = Infinity),Sinf) if o == -1]
         abtuple = quaternion_algebra_invariants_from_ramification(F,D,Sinf_places)
         if outfile is None:
             outfile = 'atr_surface_%s_%s_%s_%s.txt'%(F.discriminant().abs(),Pnrm,D.norm(),(P*D*Np).norm())
 
     if Pnrm > 29:
         return 'Giving up, prime norm is too large (Pnrm = %s)'%Pnrm
-    fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,sign_at_infinity)),outfile)
+    fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,Sinf)),outfile)
 
     G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = magma)
     Coh = ArithCoh(G)
