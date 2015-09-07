@@ -481,7 +481,7 @@ class BigArithGroup_class(AlgebraicGroup):
         p = self.p
         denval = self.Gn._denominator_valuation
         if self.Gpn_denominator(x) == 1:
-            return x, [] # DEBUG # self.Gpn(x), []
+            return x, []
         else:
             gis = [ g**-1 for g in self.get_BT_reps()]
             gitildes = [self.Gn.B(1)] + [ g**-1 for g in self.get_BT_reps_twisted()[1:]]
@@ -501,7 +501,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 valx = 1
 
             if self.Gpn_denominator(x) == 1:
-                return set_immutable(x), [wd0] # DEBUG # self.Gpn(x), [wd0]
+                return set_immutable(x), [wd0]
             i = next((i for i,g in enumerate(gitildes) if denval(x * g,p) < valx),0)
             assert i > 0
             wd1 = (i,1)

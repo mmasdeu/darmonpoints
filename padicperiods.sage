@@ -452,82 +452,80 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen,prec, sign_ap = None, hecke_poly = N
     G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = magma)
     Coh = ArithCoh(G)
     fwrite('Computed Cohomology group',outfile)
-    flist, hecke_data = Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, return_all = False)
-    fwrite('Obtained cocycle',outfile)
-    g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
+    for flist, hecke_data in Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, return_all = True):
+        g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
+        fwrite('Obtained homology generators',outfile)
+        if working_prec is None:
+            working_prec = max([2 * prec + 10, 30])
+        found = False
+        while not found:
+            try:
+                xi10,xi20 = lattice_homology_cycle(G, g0, working_prec)
+                xi11,xi21 = lattice_homology_cycle(G, g1, working_prec)
+                found = True
+            except PrecisionError:
+                working_prec *= 2
+                fwrite('Raising working precision to %s and trying again'%working_prec, outfile)
+        fwrite('Defined homology cycles', outfile)
+        Phif = get_overconvergent_class_quaternionic(P, flist[0], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
+        Phig = get_overconvergent_class_quaternionic(P, flist[1], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
+        fwrite('Overconvergent lift completed', outfile)
 
-    fwrite('Obtained homology generators',outfile)
-    if working_prec is None:
-        working_prec = max([2 * prec + 10, 30])
-    found = False
-    while not found:
-        try:
-            xi10,xi20 = lattice_homology_cycle(G, g0, working_prec)
-            xi11,xi21 = lattice_homology_cycle(G, g1, working_prec)
-            found = True
-        except PrecisionError:
-            working_prec *= 2
-            fwrite('Raising working precision to %s and trying again'%working_prec, outfile)
-    fwrite('Defined homology cycles', outfile)
-    Phif = get_overconvergent_class_quaternionic(P, flist[0], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
-    Phig = get_overconvergent_class_quaternionic(P, flist[1], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
-    fwrite('Overconvergent lift completed', outfile)
+        from integrals import integrate_H1
+        num = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
+        den = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
+        A = num / den
+        fwrite('Finished computation of A period', outfile)
+        A = A.add_bigoh(prec + A.valuation())
+        # A = A.trace() / A.parent().degree()
+        fwrite('A = %s'%A, outfile)
 
-    from integrals import integrate_H1
-    num = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
-    den = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
-    A = num / den
-    fwrite('Finished computation of A period', outfile)
-    A = A.add_bigoh(prec + A.valuation())
-    # A = A.trace() / A.parent().degree()
-    fwrite('A = %s'%A, outfile)
+        num = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
+        den = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
+        B = num / den
+        fwrite('Finished computation of B period', outfile)
+        B = B.add_bigoh(prec + B.valuation())
+        # B = B.trace() / B.parent().degree()
+        fwrite('B = %s'%B, outfile)
 
-    num = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
-    den = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
-    B = num / den
-    fwrite('Finished computation of B period', outfile)
-    B = B.add_bigoh(prec + B.valuation())
-    # B = B.trace() / B.parent().degree()
-    fwrite('B = %s'%B, outfile)
+        num = integrate_H1(G, xi11, Phig, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
+        den = integrate_H1(G, xi21, Phig, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
+        D = num / den
+        fwrite('Finished computation of D period', outfile)
+        D = D.add_bigoh(prec + D.valuation())
+        # D = D.trace() / D.parent().degree()
+        fwrite('D = %s'%D, outfile)
 
-    num = integrate_H1(G, xi11, Phig, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
-    den = integrate_H1(G, xi21, Phig, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
-    D = num / den
-    fwrite('Finished computation of D period', outfile)
-    D = D.add_bigoh(prec + D.valuation())
-    # D = D.trace() / D.parent().degree()
-    fwrite('D = %s'%D, outfile)
+        found = False
+        for ell, T0 in hecke_data:
+            fwrite('ell = %s'%ell, outfile)
+            fwrite('T_ell = %s'%str(T0.list()), outfile)
+            if T0.charpoly().is_irreducible():
+                found = True
+                T = T0
+                fwrite('The above is the good T', outfile)
+        if not found:
+            fwrite('Good T not found...', outfile)
 
-    found = False
-    for ell, T0 in hecke_data:
-        fwrite('ell = %s'%ell, outfile)
-        fwrite('T_ell = %s'%str(T0.list()), outfile)
-        if T0.charpoly().is_irreducible():
-            found = True
-            T = T0
-            fwrite('The above is the good T', outfile)
-    if not found:
-        fwrite('Good T not found...', outfile)
+        F = A.parent()
+        TF = T.change_ring(F)
+        a,b = p_adic_l_invariant(A, B, D, TF)
 
-    F = A.parent()
-    TF = T.change_ring(F)
-    a,b = p_adic_l_invariant(A, B, D, TF)
+        fwrite('a = %s'%a, outfile)
+        fwrite('b = %s'%b, outfile)
 
-    fwrite('a = %s'%a, outfile)
-    fwrite('b = %s'%b, outfile)
+        a = a.trace()/a.parent().degree()
+        b = b.trace()/b.parent().degree()
 
-    a = a.trace()/a.parent().degree()
-    b = b.trace()/b.parent().degree()
-
-    if recognize_invariants:
-        from sage.matrix.constructor import companion_matrix
-        fwrite('Trying to recognize invariants...',outfile)
-        phi = G._F_to_local
-        T = companion_matrix(T.charpoly()).change_ring(ZZ)
-        inp_vec = [(a, b, T.transpose(), qords, prec, Pring, None, phi) for qords in all_possible_qords(T.transpose().change_ring(ZZ), 20)]
-        for inpt in inp_vec:
-            ans = find_igusa_invariants_from_L_inv(*inpt)
-            if ans != 'Nope' and ans != '' and 'indistinguishable' not in ans:
-                fwrite(str(ans), outfile)
+        if recognize_invariants:
+            from sage.matrix.constructor import companion_matrix
+            fwrite('Trying to recognize invariants...',outfile)
+            phi = G._F_to_local
+            T = companion_matrix(T.charpoly()).change_ring(ZZ)
+            inp_vec = [(a, b, T.transpose(), qords, prec, Pring, None, phi) for qords in all_possible_qords(T.transpose().change_ring(ZZ), 20)]
+            for inpt in inp_vec:
+                ans = find_igusa_invariants_from_L_inv(*inpt)
+                if ans != 'Nope' and ans != '' and 'indistinguishable' not in ans:
+                    fwrite(str(ans), outfile)
     fwrite('DONE WITH COMPUTATION', outfile)
     return('DONE')

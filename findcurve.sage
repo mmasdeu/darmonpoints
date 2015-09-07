@@ -169,41 +169,42 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         if use_sage_db:
             G.save_to_db()
         fwrite('Cohomology class found', outfile)
-    ker = [G.inverse_shapiro(o) for o in G.get_homology_kernel()]
-    # except Exception as e:
-    #     if quit_when_done:
-    #         magma.quit()
-    #     if return_all:
-    #         return ['Problem calculating homology kernel: ' + str(e.message)]
-    #     else:
-    #         return 'Problem calculating homology kernel: ' + str(e.message)
+    try:
+        ker = [G.inverse_shapiro(o) for o in G.get_homology_kernel()]
+    except Exception as e:
+        if quit_when_done:
+            magma.quit()
+        if return_all:
+            return ['Problem calculating homology kernel: ' + str(e.message)]
+        else:
+            return 'Problem calculating homology kernel: ' + str(e.message)
 
     if not return_all:
         phiE = [phiE]
     ret_vals = []
     for phi in phiE:
-        # try:
-        Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,sign_ap,use_ps_dists,method = Up_method, progress_bar = progress_bar)
-        # except ValueError as e:
-        #     ret_vals.append('Problem when getting overconvergent class: ' + str(e.message))
-        #     continue
+        try:
+            Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,sign_ap,use_ps_dists,method = Up_method, progress_bar = progress_bar)
+        except ValueError as e:
+            ret_vals.append('Problem when getting overconvergent class: ' + str(e.message))
+            continue
         fwrite('Done overconvergent lift', outfile)
         # Find an element x of Gpn for not in the kernel of phi,
         # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
-        # try:
-        found = False
-        for o in ker:
-            phi_o = phi.evaluate(o)
-            if use_shapiro:
-                phi_o = phi_o.evaluate_at_identity()
-            if phi_o != 0:
-                found = True
-                break
-        if not found:
-            raise RuntimeError('Cocycle evaluates always to zero')
-        # except Exception as e:
-        #     ret_vals.append('Problem when choosing element in kernel: ' + str(e.message))
-        #     continue
+        try:
+            found = False
+            for o in ker:
+                phi_o = phi.evaluate(o)
+                if use_shapiro:
+                    phi_o = phi_o.evaluate_at_identity()
+                if phi_o != 0:
+                    found = True
+                    break
+            if not found:
+                raise RuntimeError('Cocycle evaluates always to zero')
+        except Exception as e:
+            ret_vals.append('Problem when choosing element in kernel: ' + str(e.message))
+            continue
         xgen = o
         found = False
         while not found:

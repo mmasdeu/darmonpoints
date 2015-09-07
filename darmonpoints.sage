@@ -284,8 +284,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     else:
         local_embedding = Qp(p,working_prec)
         twopowlist = [4, 3, 2, 1, 1/2, 3/2, 1/3, 2/3, 1/4, 3/4, 5/2, 4/3]
-        # twopowlist = [2, 1, 1/2] # DEBUG
-
 
     known_multiple = eisenstein_constant * nn
     while known_multiple % p == 0:

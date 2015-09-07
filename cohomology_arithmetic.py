@@ -257,9 +257,14 @@ class ArithCoh(CohomologyGroup):
         repslocal = self.get_Up_reps_local(prec)
         if method == 'naive':
             h2 = self.apply_Up(Phi, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
+            if progress_bar:
+                update_progress(float(0)/float(prec),'f|Up')
+            else:
+                verbose('Applied Up %s times (val = %s)'%(1,current_val))
+
             h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
             if progress_bar:
-                update_progress(2.0/float(prec),'f|Up')
+                update_progress(1.0/float(prec),'f|Up')
             else:
                 verbose("Applied Up twice")
             ii = 0
@@ -273,6 +278,10 @@ class ArithCoh(CohomologyGroup):
                 old_val = current_val
                 ii += 2
                 h2 = self.apply_Up(h1, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
+                if progress_bar:
+                    update_progress(float(ii)/float(prec),'f|Up')
+                else:
+                    verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
                 h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
                 try:
                     current_val = min([(u-v).valuation() for u,v in zip([o for w in h2.values() for o in w.values()],[o for w in h1.values() for o in w.values()])])

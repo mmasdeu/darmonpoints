@@ -55,7 +55,7 @@ class CoIndAction(Action):
             g = g.quaternion_rep
         except AttributeError:
             pass
-        action_data = V.get_action_data(g)
+        action_data = V.get_action_data(set_immutable(g))
         if self._trivial_action:
             return self.V([v._val[ti] for g1, ti in action_data], check = False)
         else:
@@ -103,7 +103,7 @@ class CoIndElement(ModuleElement):
             g = g.quaternion_rep
         except AttributeError:
             pass
-        g0, idx = self.parent().get_action_data(g, 0)
+        g0, idx = self.parent().get_action_data(set_immutable(g), 0)
         if self.parent()._base_trivial_action:
             return self._val[idx]
         else:
@@ -217,7 +217,7 @@ class CoIndModule(Parent):
     def act_by_genpow(self, i, a, v):
         G = self._G
         g = G.large_group().gen(i).quaternion_rep**a
-        action_data = self.get_action_data(g)
+        action_data = self.get_action_data(set_immutable(g))
         if self._base_trivial_action:
             return [v[ti] for g1, ti in action_data]
         else:

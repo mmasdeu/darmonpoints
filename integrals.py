@@ -282,8 +282,6 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
-    #R = LaurentSeriesRing(K,'t')
-    #R.set_default_prec(prec)
     R = PolynomialRing(K,names = 't').fraction_field()
     t = R.gen()
     phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
@@ -312,6 +310,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     resadd = ZZ(0)
     resmul = ZZ(1)
     edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
+    tilist = G.coset_reps()
     while len(edgelist) > 0:
         # verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
@@ -344,21 +343,17 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
                 continue
             if not rev:
-                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep)
+                newgamma, wd = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = True)
             else:
-                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep).conjugate_by(G.wp())
+                newgamma, wd = G.reduce_in_amalgam(h * gamma.quaternion_rep).conjugate_by(G.wp(), return_word = True)
+            if G.use_shapiro():
+                mu_e = hc.evaluate_and_identity(newgamma, parallelize)
+            else:
+                mu_e = hc.evaluate(newgamma,parallelize)
             if HOC._use_ps_dists:
-                if G.use_shapiro():
-                    mu_e = hc.evaluate_and_identity(newgamma, parallelize)
-                else:
-                    mu_e = hc.evaluate(newgamma,parallelize)
                 resadd += sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                if G.use_shapiro():
-                    tmp = hc.evaluate_and_identity(newgamma, parallelize)
-                else:
-                    tmp = hc.evaluate(newgamma,parallelize)
-                resadd += tmp.evaluate_at_poly(pol, K, depth)
+                resadd += mu_e.evaluate_at_poly(pol, K, depth)
             if multiplicative:
                 try:
                     if G.use_shapiro():
