@@ -470,6 +470,10 @@ class ArithCoh(CohomologyGroup):
 
         component_list = []
         good_components = []
+        if K.dimension() == 2:
+            good_components.append((K, []))
+        elif K.dimension() >= 2:
+            component_list.append((K, []))
 
         disc = self.group()._O_discriminant
         discnorm = disc.norm()
@@ -518,23 +522,25 @@ class ArithCoh(CohomologyGroup):
                         break
 
         if len(good_components) == 0:
-            raise ValueError('Group does not seem to be attached to an elliptic curve')
-        else:
-            if return_all:
-                ans = []
-                for K,hecke_data in good_components:
-                    flist = []
-                    for row0 in K.matrix().rows():
-                        col0 = [ZZ(o) for o in row0.list()]
-                        flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-                    ans.append((flist,[(ell, o.restrict(K)) for ell, o in hecke_data]))
-                return ans
+            if not return_all:
+                raise ValueError('Group does not seem to be attached to an abelian surface')
             else:
+                return []
+        if return_all:
+            ans = []
+            for K,hecke_data in good_components:
                 flist = []
-                for row0 in good_components[0][0].matrix().rows():
+                for row0 in K.matrix().rows():
                     col0 = [ZZ(o) for o in row0.list()]
                     flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-                return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
+                ans.append((flist,[(ell, o.restrict(K)) for ell, o in hecke_data]))
+            return ans
+        else:
+            flist = []
+            for row0 in good_components[0][0].matrix().rows():
+                col0 = [ZZ(o) for o in row0.list()]
+                flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
+            return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
 
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,g0 = None):
         r"""

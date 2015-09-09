@@ -454,7 +454,13 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, prec, Sinf = None, sign_ap = None, 
     G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None)
     Coh = ArithCoh(G)
     fwrite('Computed Cohomology group',outfile)
-    for flist, hecke_data in Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, return_all = True):
+    all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, return_all = True)
+    if len(all_twodim_cocycles) == 0:
+        fwrite('Group not attached to surface',outfile)
+        fwrite('DONE WITH COMPUTATION',outfile)
+        return 'DONE'
+    fwrite('Obtained cocycles',outfile)
+    for flist, hecke_data in all_twodim_cocycles:
         g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
         fwrite('Obtained homology generators',outfile)
         if working_prec is None:
