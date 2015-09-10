@@ -446,6 +446,8 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, prec, Sinf = None, sign_ap = None, 
         abtuple = quaternion_algebra_invariants_from_ramification(F,D,Sinf_places)
         if outfile is None:
             outfile = 'atr_surface_%s_%s_%s_%s.txt'%(F.discriminant().abs(),Pnrm,D.norm(),(P*D*Np).norm())
+    if os.path.isfile(outfile):
+        return 'Skipping because outfile exists'
 
     if Pnrm > 29:
         return 'Giving up, prime norm is too large (Pnrm = %s)'%Pnrm
