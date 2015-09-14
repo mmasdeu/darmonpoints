@@ -516,6 +516,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
                 fwrite('The above is the good T', outfile)
         if not found:
             fwrite('Good T not found...', outfile)
+            return('DONE WITH ERROR')
 
         F = A.parent()
         TF = T.change_ring(F)

@@ -310,8 +310,8 @@ class BigArithGroup_class(AlgebraicGroup):
                     if is_in_Gamma0loc(tmp, det_condition = False):
                         reps[i] = set_immutable(elt)
                         del matrices[idx]
-                        update_progress(float((self.p+1-len(matrices)))/float(self.p+1),'Getting BT representatives (%s iterations)'%(n_iters))
-                        # verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
+                        # update_progress(float((self.p+1-len(matrices)))/float(self.p+1),'Getting BT representatives (%s iterations)'%(n_iters))
+                        verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
                         if len(matrices) == 0:
                             return reps
                         break
