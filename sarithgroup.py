@@ -541,7 +541,7 @@ class BigArithGroup_class(AlgebraicGroup):
             ans = C(0)
             for g, v in zip(group.gens(), x.values()):
                 if not self.use_shapiro():
-                    ans += C((Gn(g), v))
+                    ans += C((Gn(wp**-1 * g * wp), v))
                 else:
                     for a, ti in zip(v.values(), self.coset_reps()):
                         # We are considering a * (g tns t_i)

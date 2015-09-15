@@ -260,7 +260,7 @@ class ArithCoh(CohomologyGroup):
             if progress_bar:
                 update_progress(float(0)/float(prec),'f|Up')
             else:
-                verbose('Applied Up %s times (val = %s)'%(1,current_val))
+                verbose('Applied Up %s times')
 
             h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
             if progress_bar:
@@ -470,9 +470,7 @@ class ArithCoh(CohomologyGroup):
 
         component_list = []
         good_components = []
-        if K.dimension() == 2:
-            good_components.append((K, []))
-        elif K.dimension() >= 2:
+        if K.dimension() >= 2:
             component_list.append((K, []))
 
         disc = self.group()._O_discriminant
