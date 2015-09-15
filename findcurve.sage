@@ -194,7 +194,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         try:
             found = False
             for o in ker:
-                phi_o = phi.evaluate(o)
+                phi_o = sum( [phi.evaluate(t**a) for t, a in o], 0 )
                 if use_shapiro:
                     phi_o = phi_o.evaluate_at_identity()
                 if phi_o != 0:
@@ -205,18 +205,21 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         except Exception as e:
             ret_vals.append('Problem when choosing element in kernel: ' + str(e.message))
             continue
-        xgen = o
+        xgenlist = o
         found = False
         while not found:
             try:
-                xi1, xi2 = lattice_homology_cycle(G,xgen,working_prec,outfile = outfile)
+                xi1, xi2 = lattice_homology_cycle(G,xgenlist,working_prec,outfile = outfile)
                 found = True
             except PrecisionError:
                 working_prec  = 2 * working_prec
                 verbose('Setting working_prec to %s'%working_prec)
             except Exception as e:
                 ret_vals.append('Problem when computing homology cycle: ' + str(e.message))
+                verbose('Exception occurred: ' + str(e.message))
                 break
+        if not found:
+            continue
         # try:
         qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
         qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)

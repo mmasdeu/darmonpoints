@@ -541,7 +541,7 @@ class BigArithGroup_class(AlgebraicGroup):
             ans = C(0)
             for g, v in zip(group.gens(), x.values()):
                 if not self.use_shapiro():
-                    ans += C((Gn(wp**-1 * g * wp), v))
+                    ans += C((Gn(wp**-1 * g.quaternion_rep * wp), v))
                 else:
                     for a, ti in zip(v.values(), self.coset_reps()):
                         # We are considering a * (g tns t_i)
@@ -566,16 +566,20 @@ class BigArithGroup_class(AlgebraicGroup):
         Gn = self.large_group()
         B = ArithHomology(self, ZZ**1, trivial_action = True)
         group = B.group()
-        ans = 1
+        ans = []
         for g, v in zip(group.gens(), x.values()):
             if not self.use_shapiro():
-                ans *= group(g)**ZZ(v[0])
+                if v[0] == 0:
+                    continue
+                ans.append((group(g), ZZ(v[0])))
             else:
                 for a, ti in zip(v.values(), self.coset_reps()):
+                    if a[0] == 0:
+                        continue
                     # We are considering a * (g tns t_i)
                     g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
-                    ans *= Gn(g0)**ZZ(a[0])
-        return ans
+                    ans.append((Gn(g0), ZZ(a[0])))
+        return ans #[(ans,1)]
 
     def get_pseudo_orthonormal_homology(self, cocycles, hecke_data = None):
         from sage.rings.arith import GCD

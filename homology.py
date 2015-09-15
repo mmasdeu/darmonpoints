@@ -92,7 +92,7 @@ def construct_homology_cycle(G, D, prec, hecke_poly_getter, outfile = None, max_
     ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
     return ans, n * f(a_ell), q1
 
-def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
+def lattice_homology_cycle(G, xlist, prec, outfile = None, smoothen = None):
     p = G.prime()
     Gn = G.large_group()
     Cp = Qq(p**2,prec,names = 'g')
@@ -102,8 +102,13 @@ def lattice_homology_cycle(G, x, prec, outfile = None, smoothen = None):
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
     H1 = OneChains(Gn,Div)
-    xi1 = H1(dict([(Gn(x.quaternion_rep),Div(tau1))])).zero_degree_equivalent(prec = prec)
-    xi2 = H1(dict([(Gn(wp**-1 * x.quaternion_rep * wp),Div(tau1).left_act_by_matrix(wpmat))])).zero_degree_equivalent(prec = prec)
+    xi1 = H1(dict([]))
+    xi2 = H1(dict([]))
+    for x, a in xlist:
+        xi1 += H1(dict([(Gn(x.quaternion_rep), Div(tau1))])).__rmul__(a)
+        xi2 += H1(dict([(Gn(wp**-1 * x.quaternion_rep * wp), Div(tau1).left_act_by_matrix(wpmat))])).__rmul__(a)
+    xi1 = xi1.zero_degree_equivalent(prec = prec)
+    xi2 = xi2.zero_degree_equivalent(prec = prec)
     if smoothen is not None:
         xi1 = xi1.hecke_smoothen(smoothen)
         xi2 = xi2.hecke_smoothen(smoothen)
@@ -549,7 +554,6 @@ class OneChains_element(ModuleElement):
         return self.parent()(newdict)
 
 class OneChains(Parent):
-
     Element = OneChains_element
 
     def __init__(self,G,V):
