@@ -345,7 +345,10 @@ class ArithCoh(CohomologyGroup):
                         ap = getap(qq)
                     except (ValueError,ArithmeticError):
                         continue
-                    K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma)-ap).right_kernel()
+                    try:
+                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma)-ap).right_kernel()
+                    except RuntimeError:
+                        continue
                     K = K.intersection(K1)
         if K.dimension() != 1:
             raise ValueError,'Did not obtain a one-dimensional space corresponding to E'
@@ -379,7 +382,10 @@ class ArithCoh(CohomologyGroup):
                         ap = getap(qq)
                     except (ValueError,ArithmeticError):
                         continue
-                    K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma)-ap).right_kernel()
+                    try:
+                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma)-ap).right_kernel()
+                    except RuntimeError:
+                        continue
                     K = K.intersection(K1)
         if K.dimension() != 1:
             raise ValueError,'Group does not have the required system of eigenvalues'
