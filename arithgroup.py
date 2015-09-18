@@ -1607,9 +1607,11 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         elif len(NK2f) == 2:
             candidate = phi2(NK2f[0][0].gens_reduced()[0])
         else:
-            raise RuntimeError('Not found')
-            elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,Nideal))
-            candidate = magma_quaternion_to_sage(self.B,elt_magma,self.magma)
+            if return_all:
+                elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,Nideal))
+                candidate = magma_quaternion_to_sage(self.B,elt_magma,self.magma)
+            else:
+                raise RuntimeError('Not found')
         self._element_of_norm[Nideal.gens_reduced()[0]] = candidate
         if force_sign:
             candidate = self._fix_sign(candidate,N)
