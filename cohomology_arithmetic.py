@@ -313,7 +313,7 @@ class ArithCoh(CohomologyGroup):
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo)-sign).transpose().right_kernel().change_ring(QQ)
+            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
         disc = self.group()._O_discriminant
@@ -358,7 +358,7 @@ class ArithCoh(CohomologyGroup):
     def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = True):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo)-sign).transpose().right_kernel().change_ring(QQ)
+            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
 
@@ -396,7 +396,7 @@ class ArithCoh(CohomologyGroup):
     def get_rational_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature()[1] == 1 and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo)-sign).transpose().right_kernel().change_ring(QQ)
+            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
 
@@ -470,7 +470,7 @@ class ArithCoh(CohomologyGroup):
     def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 3, pol = None, return_all = False):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo)-sign).transpose().right_kernel().change_ring(QQ)
+            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
 
