@@ -389,7 +389,7 @@ class ArithCoh(CohomologyGroup):
 
     def get_rational_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
         F = self.group().base_ring()
-        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
+        if F.signature()[1] == 0 or (F.signature()[1] == 1 and 'G' not in self.group()._grouptype):
             K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
