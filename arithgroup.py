@@ -702,6 +702,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
             if force_sign:
                 candidate = self._fix_sign(candidate,N)
+            assert candidate.reduced_norm() == N
             self._element_of_norm[N] = candidate
             if return_all:
                 return [candidate]
@@ -719,7 +720,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 verbose('v = %s'%list(v))
                 for a0,an in product(range(M),product(range(-M,M+1),repeat = len(v)-1)):
                     candidate = sum((ZZ(ai) * vi for ai,vi in  zip([a0]+list(an),v)),self.B(0))
-                    #candidate = sum((ZZ(ai) * vi for ai,vi in  zip(an,v)),self.B(0))
                     if candidate.reduced_norm() == N:
                         if not return_all:
                             self._element_of_norm[N] = candidate
@@ -1545,7 +1545,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         except AttributeError:
             pass
         if emb(x.reduced_norm()).sign() != emb(N).sign():
-            # x = x * self.element_of_norm(-1,use_magma = False)
             x = x * self.non_positive_unit()
         if emb(x.reduced_norm()).sign() != emb(N).sign():
             raise RuntimeError('Error in fix_sign')
