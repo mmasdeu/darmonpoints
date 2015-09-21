@@ -40,7 +40,7 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.rings.infinity import Infinity
-from sage.rings.arith import GCD
+from sage.rings.arith import GCD, LCM
 from util import *
 import os
 from ocmodule import OCVn
@@ -116,7 +116,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
         F = P.number_field()
 
     if method is None:
-        method = 'bigmatrix'
+        method = 'naive'
     else:
         if method != 'naive' and method != 'bigmatrix':
             raise ValueError('method should be either "naive" or "bigmatrix"')
@@ -289,7 +289,7 @@ class ArithCoh(CohomologyGroup):
                     current_val = min([(u-v).valuation() for u,v in zip(h2.values(),h1.values())])
                 if ii == 2 and current_val <= old_val:
                     raise RuntimeError("Not converging, maybe ap sign is wrong?")
-                if progress_bar:
+                if progress_bar and ii + 1 <= prec:
                     update_progress(float(ii+1)/float(prec),'f|Up')
                 else:
                     verbose('Applied Up %s times (val = %s)'%(ii+2,current_val))
@@ -469,15 +469,19 @@ class ArithCoh(CohomologyGroup):
 
     def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 3, pol = None, return_all = False):
         F = self.group().base_ring()
-        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
-        else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
-
         component_list = []
         good_components = []
-        if K.dimension() >= 2:
-            component_list.append((K, []))
+
+        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
+            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
+            if K.dimension() >= 2:
+                component_list.append((K, [(oo,self.hecke_matrix(oo).transpose())]))
+
+        else:
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+            if K.dimension() >= 2:
+                component_list.append((K, []))
+
 
         disc = self.group()._O_discriminant
         discnorm = disc.norm()
@@ -515,11 +519,13 @@ class ArithCoh(CohomologyGroup):
                                 if pol is None or Aq.restrict(U0).charpoly() == pol:
                                     good_components.append((U0.denominator() * U0,hecke_data+[(qq.gens_reduced()[0],Aq)]))
                             else: # U0.dimension() > 2 or not is_irred
-                                component_list.append((U0,hecke_data + [(qq.gens_reduced()[0],Aq)]))
+                                component_list.append((U0.denominator() * U0,hecke_data + [(qq.gens_reduced()[0],Aq)]))
                     if len(good_components) > 0 and not return_all:
                         flist = []
                         for row0 in good_components[0][0].matrix().rows():
-                            col0 = [ZZ(o) for o in row0.list()]
+                            col0 = [QQ(o) for o in row0.list()]
+                            clcm = LCM([o.denominator() for o in col0])
+                            col0 = [ZZ(clcm * o ) for o in col0]
                             flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
                         return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
                     if len(component_list) == 0 or num_hecke_operators >= bound:

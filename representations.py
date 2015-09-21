@@ -36,6 +36,8 @@ from ocmodule import our_adjuster, Sigma0Action
 from sage.rings.arith import XGCD
 from sage.modules.free_module_element import vector
 from sage.modules.vector_integer_dense import Vector_integer_dense
+from sage.modules.vector_rational_dense import Vector_rational_dense
+from sage.modules.free_module_element import FreeModuleElement_generic_dense
 
 class CoIndAction(Action):
     def __init__(self, algebra , V, G, trivial_action = False):
@@ -82,7 +84,7 @@ class CoIndElement(ModuleElement):
                 if hasattr(self._val[0],'lift'):
                     prec = self._val[0].parent().precision_cap()
                     self._val = [o.lift(M = prec) for o in self._val]
-            elif isinstance(data, Vector_integer_dense):
+            elif isinstance(data, Vector_integer_dense) or isinstance(data, Vector_rational_dense):
                 data = list(data)
                 dim = len(V.gens())
                 self._val = []

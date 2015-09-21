@@ -42,7 +42,10 @@ def direct_sum_of_maps(v):
     W = V.submodule(matrix.block_diagonal([FGP_W(o).matrix() for o in vv]))
     codomain = V.quotient(W)
     V = v[0].domain()
-    imgens = [codomain(codomain.V()(sum([f(g).lift().list() for f in v],[]))) for g in V.gens()]
+    try:
+        imgens = [codomain(codomain.V()(sum([(f(g).lift()).list() for f in v],[]))) for g in V.gens()]
+    except AttributeError:
+        imgens = [codomain(codomain.V()(sum([f(g).list() for f in v],[]))) for g in V.gens()]
     return V.hom(imgens,codomain = codomain)
 
 def is_in_principal_affinoid(p,z):
