@@ -525,6 +525,7 @@ class BigArithGroup_class(AlgebraicGroup):
         B = ArithHomology(self, ZZ**1, trivial_action = True)
         C = HomologyGroup(Gn, ZZ**1, trivial_action = True)
         group = B.group()
+        Bsp = B.space()
         def phif(x):
             ans = C(0)
             for g, v in zip(group.gens(), x.values()):
@@ -536,7 +537,7 @@ class BigArithGroup_class(AlgebraicGroup):
                         g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
                         ans += C((Gn(g0), a))
             return ans
-        f = B.space().hom([vector(C(phif(o))) for o in B.gens()])
+        f = Bsp.hom([vector(C(phif(o))) for o in B.gens()])
         def phig(x):
             ans = C(0)
             for g, v in zip(group.gens(), x.values()):
@@ -548,17 +549,28 @@ class BigArithGroup_class(AlgebraicGroup):
                         g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
                         ans += C((Gn(wp**-1 * g0 * wp), a))
             return ans
-        g = B.space().hom([vector(C(phig(o))) for o in B.gens()])
+        g = Bsp.hom([vector(C(phig(o))) for o in B.gens()])
         maplist = [f, g]
-        Bsp = B.space()
+
         for ell, T in hecke_data:
             Aq = B.hecke_matrix(ell, with_torsion = True)
             tmap = Bsp.hom([sum([ZZ(a) * o for a, o in zip(col, Bsp.gens())]) for col in T.charpoly()(Aq).columns()])
             maplist.append(tmap)
         fg = direct_sum_of_maps(maplist)
         ker = fg.kernel()
-        good_ker = ker.V().span_of_basis([o.lift() for o in ker.gens()]).LLL().rows()
-        good_ker = [B(o) for o in good_ker]
+        try:
+            kerV = ker.V()
+            good_ker = [o.lift() for o in ker.gens()]
+        except AttributeError:
+            kerV = ker
+            try:
+                good_ker = [kerV.lift(o) for o in ker.gens()]
+            except AttributeError:
+                good_ker = ker.gens()
+        kerVZ_amb = ZZ**(kerV.ambient_module().dimension())
+        kerVZ = kerVZ_amb.submodule([kerVZ_amb(o.denominator() * o) for o in kerV.basis()])
+        good_ker = kerVZ.span_of_basis([kerVZ((o.denominator() * o).change_ring(ZZ)) for o in good_ker])
+        good_ker = [B(o.denominator() * o) for o in good_ker.LLL().rows()]
         set_verbose(verb)
         return good_ker
 
@@ -583,6 +595,8 @@ class BigArithGroup_class(AlgebraicGroup):
 
     def get_pseudo_orthonormal_homology(self, cocycles, hecke_data = None):
         from sage.rings.arith import GCD
+        if hecke_data is None:
+            hecke_data = []
         ker = self.get_homology_kernel(hecke_data = tuple(hecke_data))
         assert len(ker) == 2
         f0, f1 = cocycles

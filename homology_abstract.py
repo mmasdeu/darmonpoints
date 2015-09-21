@@ -44,7 +44,13 @@ class HomologyElement(ModuleElement):
 
     def _vector_(self, R = None):
         ambient = self.parent().space()
-        return ambient(vector(sum([list(o) for o in self._val], [])))
+        ans = vector(sum([list(o) for o in self._val], []))
+        V = ambient
+        try:
+            V = V.V()
+        except AttributeError:
+            pass
+        return ambient(V(ans))
 
     def _repr_(self):
         return 'Homology class in %s'%self.parent()
@@ -177,6 +183,9 @@ class HomologyGroup(Parent):
         else:
             vi = self.space()(x)
             try:
+                vi = self.space().lift(vi)
+            except AttributeError: pass
+            try:
                 vi = vi.lift()
             except AttributeError: pass
             vi = list(vi)
@@ -197,6 +206,9 @@ class HomologyGroup(Parent):
     def gen(self,i):
         vi = self.space().gen(i)
         try:
+            vi = self.space().lift(vi)
+        except AttributeError: pass
+        try:
             vi = vi.lift()
         except AttributeError: pass
         vi = list(vi)
@@ -211,7 +223,11 @@ class HomologyGroup(Parent):
     def free_gens(self):
         ans = []
         for i, g in enumerate(self.space().gens()):
-            if self.space().invariants()[i] == 0:
+            try:
+                good = self.space().invariants()[i] == 0
+            except AttributeError:
+                good = True
+            if good:
                 ans.append(self.gen(i))
         return ans
 
@@ -315,14 +331,18 @@ class ArithHomology(HomologyGroup):
         R = self.coefficient_module().base_ring()
         M = matrix(R,dim,dim,0)
         coeff_dim = self.coefficient_module().dimension()
-        invs = self.space().invariants()
+
         for j,cycle in enumerate(gens):
             # Construct column j of the matrix
             new_col = vector(self.apply_hecke_operator(cycle, l, use_magma = use_magma, g0 = g0))
             if with_torsion:
                 M.set_column(j,list(new_col))
             else:
-                M.set_column(j,[o for o,a in zip(new_col,invs) if a == 0])
+                try:
+                    invs = self.space().invariants()
+                    M.set_column(j,[o for o,a in zip(new_col,invs) if a == 0])
+                except AttributeError:
+                    M.set_column(j,list(new_col))
         set_verbose(verb)
         return M
 

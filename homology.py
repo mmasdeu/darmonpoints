@@ -109,6 +109,9 @@ def lattice_homology_cycle(G, xlist, prec, outfile = None, smoothen = None):
         xi2 += H1(dict([(Gn(wp**-1 * x.quaternion_rep * wp), Div(tau1).left_act_by_matrix(wpmat))])).__rmul__(a)
     xi1 = xi1.zero_degree_equivalent(prec = prec)
     xi2 = xi2.zero_degree_equivalent(prec = prec)
+    # m = GCD(n1, n2)
+    # xi1 = xi1.mult_by(ZZ(n2/m))
+    # xi2 = xi2.mult_by(ZZ(n1/m))
     if smoothen is not None:
         xi1 = xi1.hecke_smoothen(smoothen)
         xi2 = xi2.hecke_smoothen(smoothen)
