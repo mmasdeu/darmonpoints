@@ -560,7 +560,7 @@ class BigArithGroup_class(AlgebraicGroup):
         ker = fg.kernel()
         try:
             kerV = ker.V()
-            good_ker = [o.lift() for o in ker.gens()]
+            good_ker = [o.lift() for o,inv in zip(ker.gens(), ker.invariants()) if inv == 0]
         except AttributeError:
             kerV = ker
             try:
