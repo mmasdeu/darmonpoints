@@ -471,7 +471,6 @@ class ArithCoh(CohomologyGroup):
         F = self.group().base_ring()
         component_list = []
         good_components = []
-
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
             if K.dimension() >= 2:
@@ -482,8 +481,7 @@ class ArithCoh(CohomologyGroup):
             if K.dimension() >= 2:
                 component_list.append((K, []))
 
-
-        disc = self.group()._O_discriminant
+        disc = self.S_arithgroup().Gpn._O_discriminant
         discnorm = disc.norm()
         try:
             N = ZZ(discnorm.gen())
@@ -501,6 +499,8 @@ class ArithCoh(CohomologyGroup):
             verbose('len(components_list) = %s'%len(component_list))
             q = q.next_prime()
             for qq,e in F.ideal(q).factor():
+                if qq in [o for o,_ in disc.factor()]:
+                    continue
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
                     try:
                         Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
