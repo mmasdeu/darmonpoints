@@ -702,7 +702,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
             if force_sign:
                 candidate = self._fix_sign(candidate,N)
-            assert candidate.reduced_norm() == N
+            # assert candidate.reduced_norm() == N
             self._element_of_norm[N] = candidate
             if return_all:
                 return [candidate]
@@ -1595,12 +1595,18 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         x = QQ['x'].gen()
         B = self.B
         F = self.B.base_ring()
-        K1 = F.extension(x*x - B.invariants()[0], names = 'y1')
-        K2 = F.extension(x*x - B.invariants()[1], names = 'y2')
-        phi1 = lambda z: list(z)[0] + list(z)[1] * B.gen(0)
-        phi2 = lambda z: list(z)[0] + list(z)[1] * B.gen(1)
-        NK1f = K1.ideal(Nideal.gens_reduced()[0]).factor()
-        NK2f = K2.ideal(Nideal.gens_reduced()[0]).factor()
+        try:
+            K1 = F.extension(x*x - B.invariants()[0], names = 'y1')
+            phi1 = lambda z: list(z)[0] + list(z)[1] * B.gen(0)
+            NK1f = K1.ideal(Nideal.gens_reduced()[0]).factor()
+        except ValueError:
+            NK1f = []
+        try:
+            K2 = F.extension(x*x - B.invariants()[1], names = 'y2')
+            phi2 = lambda z: list(z)[0] + list(z)[1] * B.gen(1)
+            NK2f = K2.ideal(Nideal.gens_reduced()[0]).factor()
+        except ValueError:
+            NK2f = []
         if len(NK1f) == 2:
             candidate = phi1(NK1f[0][0].gens_reduced()[0])
         elif len(NK2f) == 2:
