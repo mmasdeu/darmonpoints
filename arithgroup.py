@@ -1607,11 +1607,18 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             NK2f = K2.ideal(Nideal.gens_reduced()[0]).factor()
         except ValueError:
             NK2f = []
+        found_candidate = False
         if len(NK1f) == 2:
-            candidate = phi1(NK1f[0][0].gens_reduced()[0])
+            gr = NK1f[0][0].gens_reduced()
+            if len(gr) == 1:
+                found_candidate = True
+                candidate = phi1(NK1f[0][0].gens_reduced()[0])
         elif len(NK2f) == 2:
-            candidate = phi2(NK2f[0][0].gens_reduced()[0])
-        else:
+            gr = NK2f[0][0].gens_reduced()
+            if len(gr) == 1:
+                found_candidate = True
+                candidate = phi2(NK2f[0][0].gens_reduced()[0])
+        if not found_candidate:
             if return_all:
                 elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,Nideal))
                 candidate = magma_quaternion_to_sage(self.B,elt_magma,self.magma)
@@ -1624,33 +1631,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             return [candidate]
         else:
             return candidate
-
-        # Below is the old code
-        v = self.Obasis
-        verbose('Doing long enumeration...')
-        M = 0
-        if return_all:
-            all_candidates = []
-        while M != radius:
-            M += 1
-            verbose('M = %s,radius = %s'%(M,radius))
-            for a0,an in product(range(M),product(range(-M+1,M),repeat = len(v)-1)):
-                candidate = self.B(sum(ai*vi for ai,vi in  zip([a0]+list(an),v)))
-                if candidate.reduced_norm() == N:
-                    if not return_all:
-                        self._element_of_norm[N] = candidate
-                        return candidate
-                    else:
-                        self._element_of_norm[N] = candidate
-                        all_candidates.append(candidate)
-                        if len(all_candidates) == max_elements:
-                            verbose('Found %s elements of requested norm'%len(all_candidates))
-                            return all_candidates
-        if return_all:
-            verbose('Found %s elements of requested norm'%len(all_candidates))
-            return all_candidates
-        else:
-            raise RuntimeError('Not found')
 
     def non_positive_unit(self,radius = -1):
         try:
