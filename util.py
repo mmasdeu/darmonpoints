@@ -1034,6 +1034,16 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
         raise ValueError, 'Number of ramified places must be even'
     if any([ri > 1 for _,ri in P]):
         raise ValueError, 'All exponents in the discriminant factorization must be odd'
+
+    if optimize_through_magma and len(S) == len(F.real_places()):
+        from sage.interfaces.magma import magma
+        Fm = magma.NumberField(F.gen().minpoly())
+        Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), Fm.RealPlaces())
+        a,b = Bm.StandardForm(nvals = 2)
+        a = magma_F_elt_to_sage(F,a,magma)
+        b = magma_F_elt_to_sage(F,b,magma)
+        return a, b
+
     Foo = F.real_places(prec = Infinity)
     T = F.real_places(prec = Infinity)
     Sold,S = S,[]
