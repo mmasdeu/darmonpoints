@@ -398,7 +398,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     config = ConfigParser.ConfigParser()
     config.read('config.ini')
     param_dict = config_section_map(config, 'General')
-    param_dict.update(config_section_map(config, 'DarmonPoint'))
+    param_dict.update(config_section_map(config, 'GuessEquation'))
     param_dict.update(kwargs)
     param = Bunch(**param_dict)
 
@@ -413,6 +413,11 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     use_magma = param.use_magma
     progress_bar = param.progress_bar
     sign_at_infinity = param.sign_at_infinity
+
+    # Get find_curve specific parameters
+    grouptype = param.grouptype
+    hecke_bound = param.hecke_bound
+    timeout = param.timeout
 
     if Up_method == "bigmatrix" and use_shapiro == True:
         import warnings
@@ -453,10 +458,10 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         return 'Giving up, prime norm is too large (Pnrm = %s)'%Pnrm
     fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,Sinf)),outfile)
 
-    G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None)
+    G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None, timeout = timeout, grouptype = grouptype)
     Coh = ArithCoh(G)
     fwrite('Computed Cohomology group',outfile)
-    all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, return_all = True)
+    all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, bound = hecke_bound, return_all = True)
     if len(all_twodim_cocycles) == 0:
         fwrite('Group not attached to surface',outfile)
         fwrite('DONE WITH COMPUTATION',outfile)
