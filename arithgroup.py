@@ -1611,13 +1611,15 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         if len(NK1f) == 2:
             gr = NK1f[0][0].gens_reduced()
             if len(gr) == 1:
-                found_candidate = True
-                candidate = phi1(NK1f[0][0].gens_reduced()[0])
-        elif len(NK2f) == 2:
+                candidate = phi1(gr[0])
+                if self._is_in_order(candidate):
+                    found_candidate = True
+        if not found_candidate and len(NK2f) == 2:
             gr = NK2f[0][0].gens_reduced()
             if len(gr) == 1:
-                found_candidate = True
-                candidate = phi2(NK2f[0][0].gens_reduced()[0])
+                candidate = phi2(gr[0])
+                if self._is_in_order(candidate):
+                    found_candidate = True
         if not found_candidate:
             if return_all:
                 elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,Nideal))
