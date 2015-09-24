@@ -436,7 +436,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         Sinv_places = []
         abtuple = QuaternionAlgebra(D).invariants()
         if outfile is None:
-            outfile = 'atr_surface_%s_%s_%s_%s.txt'%(1,P,D,(P*D*Np))
+            outfile = 'atr_surface_%s_%s_%s_%s_%s.txt'%(code,1,P,D,(P*D*Np))
     else:
         F.<r> = NumberField(pol)
         r = F.gen()
@@ -450,7 +450,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         Sinf_places = [v for v,o in zip(F.real_places(prec = Infinity),Sinf) if o == -1]
         abtuple = quaternion_algebra_invariants_from_ramification(F,D,Sinf_places)
         if outfile is None:
-            outfile = 'atr_surface_%s_%s_%s_%s.txt'%(F.discriminant().abs(),Pnrm,D.norm(),(P*D*Np).norm())
+            outfile = 'atr_surface_%s_%s_%s_%s_%s.txt'%(code,F.discriminant().abs(),Pnrm,D.norm(),(P*D*Np).norm())
     if os.path.isfile(outfile):
         return 'Skipping because outfile exists'
 
