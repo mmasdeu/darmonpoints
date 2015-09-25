@@ -604,8 +604,7 @@ class BigArithGroup_class(AlgebraicGroup):
         a01 = f0.pair_with_cycle(ker[1])
         a10 = f1.pair_with_cycle(ker[0])
         a11 = f1.pair_with_cycle(ker[1])
-        den = GCD([a00, a01, a10, a11])
-        a00, a01, a10, a11 = ZZ(a00/den), ZZ(a01/den), ZZ(a10/den), ZZ(a11/den)
+        a00, a01, a10, a11 = ZZ(a00), ZZ(a01), ZZ(a10), ZZ(a11)
         return [self.inverse_shapiro(a11 * ker[0] - a10 * ker[1]), self.inverse_shapiro(-a01 * ker[0] + a00 * ker[1])]
 
     def get_pseudo_orthonormal_homology_old(self, cocycles, hecke_data = None):
