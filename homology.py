@@ -107,15 +107,23 @@ def lattice_homology_cycle(G, xlist, prec, outfile = None, smoothen = None):
     for x, a in xlist:
         xi1 += H1(dict([(Gn(x.quaternion_rep), Div(tau1))])).__rmul__(a)
         xi2 += H1(dict([(Gn(wp**-1 * x.quaternion_rep * wp), Div(tau1).left_act_by_matrix(wpmat))])).__rmul__(a)
-    xi1 = xi1.zero_degree_equivalent(prec = prec)
-    xi2 = xi2.zero_degree_equivalent(prec = prec)
+    xi10 = xi1
+    xi20 = xi2
+    while True:
+        try:
+            newxi1 = xi1.zero_degree_equivalent(prec = prec)
+            newxi2 = xi2.zero_degree_equivalent(prec = prec)
+            break
+        except ValueError:
+            xi1 = xi1 + xi10
+            xi2 = xi2 + xi20
     # m = GCD(n1, n2)
     # xi1 = xi1.mult_by(ZZ(n2/m))
     # xi2 = xi2.mult_by(ZZ(n1/m))
     if smoothen is not None:
-        xi1 = xi1.hecke_smoothen(smoothen)
-        xi2 = xi2.hecke_smoothen(smoothen)
-    return xi1, xi2
+        newxi1 = newxi1.hecke_smoothen(smoothen)
+        newxi2 = newxi2.hecke_smoothen(smoothen)
+    return newxi1, newxi2
 
 
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)
