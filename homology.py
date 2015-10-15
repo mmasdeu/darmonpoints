@@ -544,7 +544,7 @@ class OneChains_element(ModuleElement):
         if len(facts) == 1:
             verbose('Acting by f = %s and r = %s'%(f.factor(),r))
             x = f.parent().gen()
-            V = f.coefficients(sparse = False)
+            V = [ZZ(o) for o in f.coefficients(sparse = False)]
             ans = self.mult_by(V[-1])
             for c in reversed(V[:-1]):
                 ans = ans.act_by_hecke(r,prec = prec)

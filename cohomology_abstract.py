@@ -86,6 +86,12 @@ class CohomologyElement(ModuleElement):
     def __rmul__(self,right):
         return self.__class__(self.parent(), [ ZZ(right) * a for a in self._val ])
 
+    def is_zero(self):
+        for u in self.values():
+            if not u.is_zero():
+                return False
+        return True
+
     def valuation(self, p = None):
         return min([ u.valuation(p) for u in self._val ])
 

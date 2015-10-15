@@ -25,6 +25,31 @@ from sage.misc.functional import cyclotomic_polynomial
 from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
 import sys
 
+
+def JtoP(H,MR,p = None):
+    CC = MR.base_ring()
+    RR = H.base_ring()
+    I = CC.gen()
+    if p is None:
+        p = RR(17)/RR(5) * H.gen(1) - RR(1)/RR(2) * H.gen(0) + H(RR(1)/RR(3))
+    pp = p.coefficient_tuple()
+    a = CC(pp[:2])
+    st = CC(pp[2]).sqrt()
+    stinv = st**-1
+    return MR([st,a * stinv,CC(0),stinv]),MR([stinv,-a * stinv,CC(0),st])
+
+def act_H3(g,w):
+    A,B,C,D = g.list()
+    HH = w.parent()
+    RR = HH.base_ring()
+    gw =  (A*w+B) * (C*w+D)**-1
+    sqrnormgw = sum((o**2 for o in gw.coefficient_tuple()))
+    assert not sqrnormgw < 0,'g = %s, w = %s\ngw = %s, sqrnorm = %s'%(g,w,gw,sqrnormgw)
+    if sqrnormgw >= 1:
+        gw = gw / sqrnormgw.sqrt()
+        gw *= HH(1-RR(1)/RR(2)**HH.base_ring().precision())
+    return gw
+
 def M2Z(v):
     return Matrix(ZZ,2,2,v)
 
@@ -1035,14 +1060,23 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
     if any([ri > 1 for _,ri in P]):
         raise ValueError, 'All exponents in the discriminant factorization must be odd'
 
-    if optimize_through_magma and len(S) == len(F.real_places()):
+    if optimize_through_magma:
         from sage.interfaces.magma import magma
         Fm = magma.NumberField(F.gen().minpoly())
-        Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), Fm.RealPlaces())
-        a,b = Bm.StandardForm(nvals = 2)
-        a = magma_F_elt_to_sage(F,a,magma)
-        b = magma_F_elt_to_sage(F,b,magma)
-        return a, b
+        if len(S) == len(F.real_places()):
+            Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), Fm.RealPlaces())
+            return_ans = True
+        elif len(S) == len(F.real_places()) - 1:
+            v = Fm.RealPlaces()
+            Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), [v[i] for i in range(1,len(v))])
+            return_ans = True
+        else:
+            return_ans = False
+        if return_ans:
+            a,b = Bm.StandardForm(nvals = 2)
+            a = magma_F_elt_to_sage(F,a,magma)
+            b = magma_F_elt_to_sage(F,b,magma)
+            return a, b
 
     Foo = F.real_places(prec = Infinity)
     T = F.real_places(prec = Infinity)

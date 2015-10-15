@@ -45,7 +45,7 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None):
         if magma is None:
             from sage.interfaces.magma import Magma
             magma = Magma(logfile = logfile)
@@ -88,13 +88,13 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
                 newobj = db(fname)
             except IOError:
                 verbose('Group not found in database. Computing from scratch.')
-                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro)
+                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character)
                 newobj.save_to_db()
         else:
             if a is not None:
-                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro)
+                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character)
             else:
-                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro)
+                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character)
         return newobj
 
 
@@ -124,7 +124,7 @@ class BigArithGroup_class(AlgebraicGroup):
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None):
         self.seed = seed
         self.magma = magma
         self._use_shapiro = use_shapiro
@@ -138,8 +138,8 @@ class BigArithGroup_class(AlgebraicGroup):
             self.norm_p = ZZ(p.norm())
             self.discriminant = Fideal(discriminant)
             self.level = Fideal(level)
-            if self.ideal_p.ramification_index() > 1:
-                raise NotImplementedError("p must be unramified")
+            # if self.ideal_p.ramification_index() > 1:
+            #     raise NotImplementedError("p must be unramified")
         else:
             self.ideal_p = ZZ(p)
             self.norm_p = ZZ(p)
@@ -151,20 +151,30 @@ class BigArithGroup_class(AlgebraicGroup):
             raise ValueError('p (=%s) must be prime'%self.p)
 
         verbose('Initializing arithmetic group G(pn)...')
-        covol = covolume(self.F,self.discriminant,self.ideal_p * self.level)
+        if self._use_shapiro:
+            covol = covolume(self.F,self.discriminant,self.level)
+        else:
+            covol = covolume(self.F,self.discriminant,self.ideal_p * self.level)
         verbose('Estimated Covolume = %s'%covol)
         difficulty = covol**2
         verbose('Estimated Difficulty = %s'%difficulty)
         t = walltime()
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,self.ideal_p*self.level,grouptype = grouptype,magma = magma, compute_presentation = not self._use_shapiro, timeout = timeout)
-        t = walltime(t)
-        verbose('Time for calculation T = %s'%t)
-        verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
+        lev = self.ideal_p*self.level
+        if character is not None:
+            lev = [lev, character]
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,grouptype = grouptype,magma = magma, compute_presentation = not self._use_shapiro, timeout = timeout)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
 
         verbose('Initializing arithmetic group G(n)...')
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,self.level,info_magma = self.Gpn,grouptype = grouptype,magma = magma, compute_presentation = True, timeout = timeout)
+        lev = self.level
+        if character is not None:
+            lev = [lev, character]
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev,info_magma = self.Gpn,grouptype = grouptype,magma = magma, compute_presentation = True, timeout = timeout)
+        t = walltime(t)
+        verbose('Time for calculation T = %s'%t)
+        verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
+
         self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
         if hasattr(self.Gn.B,'is_division_algebra'):
@@ -304,10 +314,15 @@ class BigArithGroup_class(AlgebraicGroup):
             new_inv = elt**(-1)
             embelt = emb(elt)
             if (embelt[0,0]-1).valuation() > 0 and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
+                if hasattr(self.Gpn,'nebentypus'):
+                    tmp = embelt
+                    tmp = tmp[0,0] / (self.p**tmp[0,0].valuation())
+                    tmp = ZZ(tmp.lift() % self.Gpn.level)
+                    if tmp not in self.Gpn.nebentypus:
+                        continue
                 for idx,o1 in enumerate(matrices):
                     i,mat = o1
-                    tmp = embelt * mat
-                    if is_in_Gamma0loc(tmp, det_condition = False):
+                    if is_in_Gamma0loc(embelt * mat, det_condition = False):
                         reps[i] = set_immutable(elt)
                         del matrices[idx]
                         # update_progress(float((self.p+1-len(matrices)))/float(self.p+1),'Getting BT representatives (%s iterations)'%(n_iters))
@@ -534,7 +549,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 else:
                     for a, ti in zip(v.values(), self.coset_reps()):
                         # We are considering a * (g tns t_i)
-                        g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                        g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep ))
                         ans += C((Gn(g0), a))
             return ans
         f = Bsp.hom([vector(C(phif(o))) for o in B.gens()])
@@ -546,7 +561,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 else:
                     for a, ti in zip(v.values(), self.coset_reps()):
                         # We are considering a * (g tns t_i)
-                        g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                        g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep ))
                         ans += C((Gn(wp**-1 * g0 * wp), a))
             return ans
         g = Bsp.hom([vector(C(phig(o))) for o in B.gens()])
@@ -589,7 +604,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     if a[0] == 0:
                         continue
                     # We are considering a * (g tns t_i)
-                    g0, _ = self.get_coset_ti( ti * g.quaternion_rep )
+                    g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep))
                     ans.append((Gn(g0), ZZ(a[0])))
         return ans #[(ans,1)]
 
@@ -606,39 +621,6 @@ class BigArithGroup_class(AlgebraicGroup):
         a11 = f1.pair_with_cycle(ker[1])
         a00, a01, a10, a11 = ZZ(a00), ZZ(a01), ZZ(a10), ZZ(a11)
         return [self.inverse_shapiro(a11 * ker[0] - a10 * ker[1]), self.inverse_shapiro(-a01 * ker[0] + a00 * ker[1])]
-
-    def get_pseudo_orthonormal_homology_old(self, cocycles, hecke_data = None):
-        ker = self.get_homology_kernel(hecke_data = tuple(hecke_data))
-        dim = cocycles[0].parent().coefficient_module().dimension() * len(cocycles)
-        A = Matrix(ZZ,dim,0)
-        for vec0 in ker:
-            A = A.augment(vector(sum([list(vector(f.evaluate(vec0))) for f in cocycles],[])))
-        Gab = self.Gpn.abelianization()
-        kernrms = [ vector(Gab(o)) for o in ker]
-        custom_norm = lambda B: max([(sum(ZZ(i) * o for o,i in zip(list(kernrms),col.list()))).norm(1) for col in B.columns()])
-
-        min_norm = 10**100 # Or infinity...
-        minB = None
-        for i in range(len(A.columns())):
-            B0 = A.submatrix(col = i,ncols = 1)
-            if B0.is_zero():
-                continue
-            for j in range(i+1,len(A.columns())):
-                if A.column(j).is_zero():
-                    continue
-                B1 = B0.augment(A.column(j))
-                if B1.determinant().is_zero():
-                    continue
-                B = B1.adjoint()
-                B = B.parent()(1/B.gcd() * B)
-                Bnrm = custom_norm(B)
-                if Bnrm < min_norm:
-                    min_norm = Bnrm
-                    minB = B
-                    minij = (i,j)
-        assert minB is not None
-        ker = [ker[o] for o in minij]
-        return [ Gab.ab_to_G(sum(ZZ(i) * Gab(self.Gpn(o)) for o,i in zip(ker,col.list()))) for col in minB.columns() ]
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0):
     if base == QQ:

@@ -192,7 +192,7 @@ def _find_initial_embedding_list(v0,M,W,orientation,OD,u):
     Blist = [ M2Z([1,0,0,1]) ] + [ M2Z([ZZ(M/d1),i,0,d1]) for d1 in ZZ(M).divisors() for i in range(-2*ZZ(QQ(d1/2).ceil()),2*ZZ(QQ(d1/2).ceil()) + 1) ]
     for B in Blist:
         W_M = B * W * B**-1
-        if all([x.is_integral() == 1 for x in W_M.list()]) and ZZ(W_M[1,0]) % M == 0:
+        if all([x.is_integral() for x in W_M.list()]) and ZZ(W_M[1,0]) % M == 0:
             if orientation is not None:
                 for ell,r in ZZ(M).factor():
                     if W_M[0,0] % ell != orientation % ell:

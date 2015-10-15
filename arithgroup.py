@@ -33,31 +33,6 @@ from sage.rings.infinity import Infinity
 from homology_abstract import HomologyGroup
 oo = Infinity
 
-
-def JtoP(H,MR,p = None):
-    CC = MR.base_ring()
-    RR = H.base_ring()
-    I = CC.gen()
-    if p is None:
-        p = RR(17)/RR(5) * H.gen(1) - RR(1)/RR(2) * H.gen(0) + H(RR(1)/RR(3))
-    pp = p.coefficient_tuple()
-    a = CC(pp[:2])
-    st = CC(pp[2]).sqrt()
-    stinv = st**-1
-    return MR([st,a * stinv,CC(0),stinv]),MR([stinv,-a * stinv,CC(0),st])
-
-def act_H3(g,w):
-    A,B,C,D = g.list()
-    HH = w.parent()
-    RR = HH.base_ring()
-    gw =  (A*w+B) * (C*w+D)**-1
-    sqrnormgw = sum((o**2 for o in gw.coefficient_tuple()))
-    assert not sqrnormgw < 0,'g = %s, w = %s\ngw = %s, sqrnorm = %s'%(g,w,gw,sqrnormgw)
-    if sqrnormgw >= 1:
-        gw = gw / sqrnormgw.sqrt()
-        gw *= HH(1-RR(1)/RR(2)**HH.base_ring().precision())
-    return gw
-
 class ArithGroup_generic(AlgebraicGroup):
     def __init__(self):
         if self._compute_presentation:
@@ -80,26 +55,6 @@ class ArithGroup_generic(AlgebraicGroup):
 
     def _an_element_(self):
         return self.gen(0)
-
-    def check_left_coset_reps(self,V):
-        r'''
-        Checks that G gi != G gj for all gi,gj in V
-        '''
-        for i in xrange(len(V)):
-            vi_inv = V[i]**-1
-            if any([self._is_in_order(V[j] * vi_inv) for j in range(i)+range(i+1,len(V))]):
-                return False
-        return True
-
-    def check_right_coset_reps(self,V):
-        r'''
-        Checks that gi G != gj G for all gi,gj in V
-        '''
-        for i in range(len(V)):
-            vi_inv = V[i]**-1
-            if any([self._is_in_order(vi_inv * V[j]) for j in range(i)+range(i+1,len(V))]):
-                return False
-        return True
 
     def get_relation_words(self):
         return self._relation_words
@@ -276,11 +231,12 @@ class ArithGroup_generic(AlgebraicGroup):
                 if n_iters % 100 == 0:
                     update_progress(float(len(reps))/float(num_reps),'Getting Hecke representatives (%s iterations)'%(n_iters))
             update_progress(float(1.0),'Getting Hecke representatives (%s iterations)'%(n_iters))
+        reps = [set_immutable(o) for o in reps]
         self._cache_hecke_reps[l] = reps
         return reps
 
     @cached_method
-    def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False):
+    def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False, conservative = True):
         r"""
 
         INPUT:
@@ -299,17 +255,27 @@ class ArithGroup_generic(AlgebraicGroup):
             reps = self.get_Up_reps()
         else:
             reps = self.get_hecke_reps(l,use_magma = use_magma)
+        ans = None
         for gk2 in reps:
             ti = elt * gk2
             is_in_order = self._is_in_order(ti)
             if self._is_in_order(ti):
-                if l is None:
+                if l is None: # Up
                     if self.embed(set_immutable(ti),20)[1,0].valuation() > 0:
-                        return self(ti)
+                        assert ans is None
+                        ans = self(ti)
+                        if not conservative:
+                            return ans
                 else:
-                    return self(ti)
-        verbose("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
-        raise RuntimeError("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
+                    assert ans is None
+                    ans = self(ti)
+                    if not conservative:
+                        return ans
+        if ans is None:
+            verbose("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
+            raise RuntimeError("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
+        else:
+            return ans
 
     def gen(self,i):
         return self._gens[i]
@@ -421,7 +387,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         self.basis_invmat = matrix(QQ,4,4,[list(self.O.gen(n)) for n in xrange(4)]).transpose().inverse()
         if self._compute_presentation:
             self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1))),self.magma) for n in xrange(len(self._U_magma.gens()))]
-            self.F_unit_offset = len(self.Ugens)
 
             Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
             mside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsMap')
@@ -757,16 +722,22 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 class ArithGroup_rationalmatrix(ArithGroup_generic):
     Element = ArithGroupElement #Matrix
     def __init__(self,level,info_magma = None,grouptype = None,magma = None, compute_presentation = True):
-        from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor
+        from sage.modular.arithgroup.congroup_gammaH import GammaH_constructor
         assert grouptype in ['SL2','PSL2']
         self._grouptype = grouptype
         self._compute_presentation = compute_presentation
         self.magma = magma
         self.F = QQ
         self.discriminant = ZZ(1)
-        self.level = ZZ(level)
+        try:
+            self.level = ZZ(level)
+            self._Gamma0_farey = GammaH_constructor(self.level, 0).farey_symbol()
+        except TypeError:
+            self.level = ZZ(level[0])
+            self.nebentypus = level[1]
+            self._Gamma0_farey = GammaH_constructor(self.level, level[1]).farey_symbol()
         self.F_units = []
-        self._Gamma0_farey = Gamma0_constructor(self.level).farey_symbol()
+
         self._prec_inf = -1
 
         self.B = MatrixSpace(QQ,2,2)
@@ -805,7 +776,8 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             else:
                 assert g.matrix()**24 != I.matrix()
         self.F_unit_offset = len(self.Ugens)
-        self.minus_one_long = syllables_to_tietze(self.minus_one)
+        if self.minus_one is not None:
+            self.minus_one_long = syllables_to_tietze(self.minus_one)
         self._relation_words = []
         for rel in temp_relation_words:
             sign = prod((self._gens[g].quaternion_rep**a for g,a in rel), z = self.B(1))
@@ -828,69 +800,69 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         a,b,c,d = x.list()
         return [a, b, QQ(c)/self.level, d]
 
-    # rationalmatrix
-    def embed_order(self,p,K,prec,outfile = None,return_all = False):
-        r'''
-        '''
-        from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
+    # # rationalmatrix
+    # def embed_order(self,p,K,prec,outfile = None,return_all = False):
+    #     r'''
+    #     '''
+    #     from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
 
-        verbose('Computing quadratic embedding to precision %s'%prec)
-        mu = find_optimal_embeddings(K,use_magma = True, extra_conductor = 1)[-1]
-        verbose('Finding module generators')
-        w = module_generators(K)[1]
-        verbose('Done')
-        w_minpoly = w.minpoly().change_ring(Qp(p,prec))
-        Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
-        wl = w.list()
-        assert len(wl) == 2
-        r0 = -wl[0]/wl[1]
-        r1 = 1/wl[1]
-        assert r0+r1*w == K.gen()
-        padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
-        try:
-            fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
-        except NotImplementedError: pass
-        fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
-        mu = r0 + r1*mu
-        assert K.gen(0).trace() == mu.trace() and K.gen(0).norm() == mu.determinant()
+    #     verbose('Computing quadratic embedding to precision %s'%prec)
+    #     mu = find_optimal_embeddings(K,use_magma = True, extra_conductor = 1)[-1]
+    #     verbose('Finding module generators')
+    #     w = module_generators(K)[1]
+    #     verbose('Done')
+    #     w_minpoly = w.minpoly().change_ring(Qp(p,prec))
+    #     Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
+    #     wl = w.list()
+    #     assert len(wl) == 2
+    #     r0 = -wl[0]/wl[1]
+    #     r1 = 1/wl[1]
+    #     assert r0+r1*w == K.gen()
+    #     padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
+    #     try:
+    #         fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+    #     except NotImplementedError: pass
+    #     fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
+    #     mu = r0 + r1*mu
+    #     assert K.gen(0).trace() == mu.trace() and K.gen(0).norm() == mu.determinant()
 
-        iotap = self.get_embedding(prec)
-        a,b,c,d = iotap(mu).list()
-        X = PolynomialRing(Cp,names = 'X').gen()
-        tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
-        tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
-        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
-        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
+    #     iotap = self.get_embedding(prec)
+    #     a,b,c,d = iotap(mu).list()
+    #     X = PolynomialRing(Cp,names = 'X').gen()
+    #     tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
+    #     tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
+    #     assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
+    #     assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
 
-        found = False
-        u = K.units()[0]**2
-        # u = find_the_unit_of(self.F,K)
-        # verbose('u = %s'%u)
-        # assert u.is_integral() and (1/u).is_integral()
-        gammalst = u.list()
-        assert len(gammalst) == 2
-        gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
-        verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.trace(),gammaquatrep.determinant()))
-        verbose('u trace = %s and unorm = %s'%(u.trace(),u.norm()))
-        assert gammaquatrep.trace() == u.trace() and gammaquatrep.determinant() == u.norm()
-        gammaq = gammaquatrep
-        while True:
-            try:
-                gamma = self(gammaq)
-                break
-            except ValueError:
-                gammaq *= gammaquatrep
+    #     found = False
+    #     u = K.units()[0]**2
+    #     # u = find_the_unit_of(self.F,K)
+    #     # verbose('u = %s'%u)
+    #     # assert u.is_integral() and (1/u).is_integral()
+    #     gammalst = u.list()
+    #     assert len(gammalst) == 2
+    #     gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
+    #     verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.trace(),gammaquatrep.determinant()))
+    #     verbose('u trace = %s and unorm = %s'%(u.trace(),u.norm()))
+    #     assert gammaquatrep.trace() == u.trace() and gammaquatrep.determinant() == u.norm()
+    #     gammaq = gammaquatrep
+    #     while True:
+    #         try:
+    #             gamma = self(gammaq)
+    #             break
+    #         except ValueError:
+    #             gammaq *= gammaquatrep
 
-        a, b, c, d = iotap(gamma.quaternion_rep).list()
-        assert (c*tau1**2 + (d-a)*tau1 - b) == 0
-        fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
-        fwrite('gamma_psi = %s'%gamma,outfile)
-        fwrite('tau_psi = %s'%tau1,outfile)
-        fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
-        if return_all:
-            return gamma, tau1, tau2
-        else:
-            return gamma, tau1
+    #     a, b, c, d = iotap(gamma.quaternion_rep).list()
+    #     assert (c*tau1**2 + (d-a)*tau1 - b) == 0
+    #     fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
+    #     fwrite('gamma_psi = %s'%gamma,outfile)
+    #     fwrite('tau_psi = %s'%tau1,outfile)
+    #     fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
+    #     if return_all:
+    #         return gamma, tau1, tau2
+    #     else:
+    #         return gamma, tau1
 
     # rationalmatrix
     def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False):
@@ -926,7 +898,11 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
 
     def get_word_rep(self,delta):
         level = self.level
-        ans = list(self._Gamma0_farey.word_problem(SL2Z(delta.list()),output = 'standard'))
+        try:
+            ans = list(self._Gamma0_farey.word_problem(SL2Z(delta.list()),output = 'standard'))
+        except RuntimeError:
+            print delta
+            assert 0
         tmp = self.B(1)
         for i,a in shorten_word(ans):
             tmp *= self.gen(i).quaternion_rep**a
@@ -979,40 +955,24 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             pass
         if not hasattr(self,'_element_of_norm'):
             self._element_of_norm  = dict([])
-        candidate = self.B([N,0,0,1])
+        candidate = self.B([1,0,0,N]) # DEBUG
         self._element_of_norm[N] = candidate
         return candidate
 
-    def get_hecke_reps(self,l,use_magma = False,g0 = None): # rationalmatrix
-        r'''
-        TESTS:
-
-        sage: magma.eval('SetSeed(2000000)')
-        sage: G = ArithGroup(6,5)
-        sage: reps = G.get_hecke_reps(11)
-        '''
-        try:
-            return self._cache_hecke_reps[l]
-        except KeyError: pass
-        if use_magma:
-            verbose("Warning: asked to use Magma to get hecke reps, but trivial to do without!")
-        if l == oo:
-            ans = [self.non_positive_unit()]
-        else:
-            ans = [self.B([l,i,0,1]) for i in xrange(l)] + [self.B([1,0,0,l])]
-        for o in ans:
-            o.set_immutable()
-        self._cache_hecke_reps[l] = ans
-        return ans
-
     def non_positive_unit(self):
-        return self.B([-1,0,0,1])
+        return self.B([1,0,0,-1])
 
     def _is_in_order(self,x):
         entries = x.list()
         if all([o.denominator() == 1 for o in entries]):
             if entries[2] % self.level == 0:
-                return True
+                if hasattr(self,'nebentypus'):
+                    if ZZ(entries[0]) % self.level in self.nebentypus:  # DEBUG
+                        return True
+                    else:
+                        return False
+                else:
+                    return True
             else:
                 return False
         else:
@@ -1110,7 +1070,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 assert prod((self.Ugens[g]**a for g,a in newrel), z = self.B(1)) == 1
                 self._relation_words.append(newrel)
 
-    def _init_aurel_data(self,prec = 300,periodenum = 10, timeout = 0):
+    def _init_aurel_data(self,prec = 100,periodenum = 20, timeout = 0):
         verbose('Computing normalized basis')
         if 'GL' in self._grouptype:
             # raise NotImplementedError,'This implementation has bugs'
