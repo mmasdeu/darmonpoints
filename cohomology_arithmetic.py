@@ -62,7 +62,10 @@ from representations import *
 def find_newans(Coh,glocs,ti):
     gens = Coh.group().gens()
     V = Coh.coefficient_module()
-    N = len(V(0)._moments.list())
+    try:
+        N = len(V(0)._moments.list())
+    except AttributeError:
+        N = 1
     newans = [V.acting_matrix(glocs[0].matrix(), N).new_matrix() for u in gens]
     for gk0,tik in zip(glocs,ti):
         gk = V.acting_matrix(gk0.matrix(), N)
@@ -139,8 +142,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
         except IOError: pass
     verbose('Computing moments...')
     CohOC = ArithCoh(G,overconvergent = True,base = base_ring,use_ps_dists = use_ps_dists)
-    VOC = CohOC.coefficient_module()
-    Phi0 = CohOC(phiE) # [VOC(o) for o in phiE.values()])
+    Phi0 = CohOC(phiE)
     verbose('Now lifting...')
     Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
     if use_sage_db:
@@ -260,7 +262,7 @@ class ArithCoh(CohomologyGroup):
             if progress_bar:
                 update_progress(float(0)/float(prec),'f|Up')
             else:
-                verbose('Applied Up %s times')
+                verbose('Applied Up once')
 
             h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
             if progress_bar:
@@ -310,13 +312,23 @@ class ArithCoh(CohomologyGroup):
             M.set_column(j,list(vector(fvals)))
         return M
 
+    def Up_matrix(self):
+        dim = self.dimension()
+        R = self.coefficient_module().base_ring()
+        M = matrix(R,dim,dim,0)
+        for j,cocycle in enumerate(self.gens()):
+            # Construct column j of the matrix
+            fvals = self.apply_Up(cocycle)
+            M.set_column(j,list(vector(fvals)))
+        return M
+
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
-        disc = self.group()._O_discriminant
+        disc = self.S_arithgroup().Gpn._O_discriminant
         discnorm = disc.norm()
         try:
             N = ZZ(discnorm.gen())
@@ -362,7 +374,7 @@ class ArithCoh(CohomologyGroup):
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
 
-        disc = self.group()._O_discriminant
+        disc = self.S_arithgroup().Gpn._O_discriminant
         discnorm = disc.norm()
         try:
             N = ZZ(discnorm.gen())
@@ -407,7 +419,7 @@ class ArithCoh(CohomologyGroup):
         else:
             component_list.append(K)
 
-        disc = self.group()._O_discriminant
+        disc = self.S_arithgroup().Gpn._O_discriminant
         discnorm = disc.norm()
         try:
             N = ZZ(discnorm.gen())
@@ -480,7 +492,6 @@ class ArithCoh(CohomologyGroup):
             K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
             if K.dimension() >= 2:
                 component_list.append((K, []))
-
         disc = self.S_arithgroup().Gpn._O_discriminant
         discnorm = disc.norm()
         try:
@@ -589,16 +600,18 @@ class ArithCoh(CohomologyGroup):
         return scale * self(vals)
 
     def get_Up_reps_local(self,prec):
-        assert prec is not None
+        Up_reps = self.S_arithgroup().get_Up_reps()
+        if prec is None:
+            return Up_reps
         V = self.coefficient_module()
         try:
             V = V.coefficient_module()
         except AttributeError:
             pass
         S0 = V.Sigma0()
-        return [S0(self.group().embed(g,prec), check = False) for g in self.S_arithgroup().get_Up_reps()]
+        return [S0(self.group().embed(g,prec), check = False) for g in Up_reps]
 
-    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'bigmatrix', repslocal = None):
+    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive', repslocal = None):
         r"""
         Apply the Up Hecke operator operator to ``c``.
 
@@ -623,8 +636,13 @@ class ArithCoh(CohomologyGroup):
             G = self.S_arithgroup()
             Gn = G.large_group()
             if self.use_shapiro():
-                def calculate_Up_contribution(lst, c, i, j):
-                    return sum([sk * c.evaluate_and_identity(tt) for sk, tt in lst])
+                if self.trivial_action():
+                    def calculate_Up_contribution(lst, c, i, j):
+                        return sum([c.evaluate_and_identity(tt) for sk, tt in lst])
+                else:
+                    def calculate_Up_contribution(lst, c, i, j):
+                        return sum([sk * c.evaluate_and_identity(tt) for sk, tt in lst])
+
                 input_vec = []
                 for j, gamma in enumerate(gammas):
                     for i, xi in enumerate(G.coset_reps()):
@@ -641,8 +659,12 @@ class ArithCoh(CohomologyGroup):
                 ans = self([V(o) for o in vals])
             else:
                 Gpn = G.small_group()
-                def calculate_Up_contribution(lst,c,num_gamma):
-                    return sum([sk * c.evaluate(tt) for sk, tt in lst])
+                if self.trivial_action():
+                    def calculate_Up_contribution(lst,c,num_gamma):
+                        return sum([c.evaluate(tt) for sk, tt in lst])
+                else:
+                    def calculate_Up_contribution(lst,c,num_gamma):
+                        return sum([sk * c.evaluate(tt) for sk, tt in lst])
                 input_vec = []
                 for j,gamma in enumerate(gammas):
                     input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma)) for sk, g in zip(repslocal, Up_reps)], c, j))
@@ -661,7 +683,10 @@ class ArithCoh(CohomologyGroup):
         else:
             assert method == 'bigmatrix'
             verbose('Getting Up matrices...')
-            N = len(V(0)._moments.list())
+            try:
+                N = len(V(0)._moments.list())
+            except AttributeError:
+                N = 1
             nreps = len(Up_reps)
             ngens = len(self.group().gens())
             NN = ngens * N
