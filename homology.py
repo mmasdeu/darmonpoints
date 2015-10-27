@@ -409,7 +409,7 @@ class OneChains_element(ModuleElement):
         oldvals = self._data.values()
         Gab = G.abelianization()
         xlist = [(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)]
-        abxlist = [n * Gab(x) for x,n in xlist]
+        abxlist = [ Gab((x,n)) for x,n in xlist]
         sum_abxlist = vector(sum(abxlist))
         x_ord = sum_abxlist.order()
         if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
@@ -507,7 +507,10 @@ class OneChains_element(ModuleElement):
             gk1inv0 = G.embed(gk1inv, prec)
             for g,v in self._data.iteritems():
                 ti = G.get_hecke_ti(gk1,g,l,True)
-                newv = v.left_act_by_matrix(gk1inv0)
+                try:
+                    newv = v.left_act_by_matrix(gk1inv0)
+                except AttributeError:
+                    newv = v
                 try:
                     newdict[ti] += newv
                     if newdict[ti].is_zero():
