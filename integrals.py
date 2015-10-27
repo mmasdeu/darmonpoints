@@ -343,9 +343,9 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
                 continue
             if not rev:
-                newgamma, wd = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = True)
+                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)
             else:
-                newgamma, wd = G.reduce_in_amalgam(h * gamma.quaternion_rep).conjugate_by(G.wp(), return_word = True)
+                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False).conjugate_by(G.wp())
             if G.use_shapiro():
                 mu_e = hc.evaluate_and_identity(newgamma, parallelize)
             else:
