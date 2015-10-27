@@ -537,7 +537,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
 
 def all_possible_ordmats(Lpmat, N):
     ans = []
-    for x, y, t in product(range(-N,N+1), repeat = 3):
+    for x, y, t in product(range(N+1),range(-N,N+1),range(-N,N+1)):
         if x*t == y*y:
             continue
         M = matrix(ZZ,2,2,[x,y,y,t])
