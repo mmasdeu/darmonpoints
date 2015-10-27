@@ -531,7 +531,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
             inp_vec = [(Lp, ordmat, prec, Pring, None, phi) for ordmat in all_possible_ordmats(Lp,10)]
             for inpt, outt in find_igusa_invariants_from_L_inv(inp_vec):
                 if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt:
-                    fwrite(str(inpt[0][0].list()) + ' ' + str(ans), outfile)
+                    fwrite(str(inpt[0][0].list()) + ' ' + str(outt), outfile)
     fwrite('DONE WITH COMPUTATION', outfile)
     return('DONE')
 
