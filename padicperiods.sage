@@ -315,23 +315,23 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
     raise ValueError('Unrecognized')
 
 @parallel
-def find_igusa_invariants_from_L_inv(a,b,T,qords,prec,base = QQ,cheatjs = None,phi = None):
-    F = a.parent()
-    TF = T.change_ring(F)
+def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None):
+    F = Lpmat.parent().base_ring()
     p = F.prime()
     x = QQ['x'].gen()
     K.<y> = F.extension(x^2 + p)
     deg = base.degree()
-    oq1, oq2, oq3 = [ZZ(o) for o in qords]
-    q10, q20, q30 = [o.exp() for o in qlogs_from_Lp_and_ords(a,b,TF,oq1,oq2,oq3)]
+    logmat = ordmat * Lpmat
+    oq1, oq2, oq3 = [ ordmat[1,0] + ordmat[1,1], ordmat[0,0] + ordmat[0,1], -ordmat[0,1]]
+    q10 = (logmat[1,0] + logmat[1,1]).exp()
+    q20 = (logmat[0,0] + logmat[0,1]).exp()
+    q30 = (-logmat[0,1]).exp()
     for s1, s2, s3 in product(F.teichmuller_system(),repeat = 3):
-        q1 = K(s1 * q10 * p**oq1)
-        q2 = K(s2 * q20 * p**oq2)
-        q3 = K(s3 * q30 * p**oq3)
-        # Know that q3^r = q1^z q2^-y
-        x,y,z,t = [ZZ(o) for o in T.list()]
-        r = x+y-z-t
-        if q3**r != q1**z * q2**-y:
+        try:
+            q1 = K(s1 * q10 * p**oq1)
+            q2 = K(s2 * q20 * p**oq2)
+            q3 = K(s3 * q30 * p**oq3)
+        except ValueError:
             continue
         try:
             p1,p2,p3 = our_sqrt(q1,K),our_sqrt(q2,K),our_sqrt(q3,K)
@@ -368,8 +368,8 @@ def find_igusa_invariants_from_L_inv(a,b,T,qords,prec,base = QQ,cheatjs = None,p
                 return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.85,prec = prec), 1, 1, 1)
         except ValueError:
             pass
-        except Exception as e:
-            return str(e.message)
+        except RuntimeError:
+            pass
     return 'Nope'
 
 def euler_factor_twodim(p,T):
@@ -529,7 +529,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
             fwrite('Trying to recognize invariants...',outfile)
             phi = G._F_to_local
             inp_vec = [(Lp, ordmat, prec, Pring, None, phi) for ordmat in all_possible_ordmats(Lp,10)]
-            for inpt, outt in find_igusa_invariants_from_L_inv(*inpt):
+            for inpt, outt in find_igusa_invariants_from_L_inv(inp_vec):
                 if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt:
                     fwrite(str(inpt[0][0].list()) + ' ' + str(ans), outfile)
     fwrite('DONE WITH COMPUTATION', outfile)
