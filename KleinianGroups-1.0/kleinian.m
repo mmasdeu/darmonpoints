@@ -213,7 +213,7 @@ intrinsic Covolume(B :: AlgQuat : Precision := DefaultPrecision div 10, zK2 := 0
 		phi := 1;
 	end if;
 	n := Degree(K);
-	
+
 	return Abs(R!DK)^(3/2) * zK2 * phi / (4*pi^2)^(n-1);
 end intrinsic;
 
