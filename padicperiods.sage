@@ -181,12 +181,13 @@ def IgusaClebschFromHalfPeriods(a, b, c, prec = None, padic = True):
 # D = <gamma_2,gamma_2>
 # Tmatrix is the matrix of the T_ell operator with respect to the basis (gamma_1,gamma_2)
 # the output is (a,b), where L_p = a + bT
-def p_adic_l_invariant(A,B,D,Tmatrix):
+def p_adic_l_invariant(A,B, Tmatrix):
     K = A.parent()
+    A, B = K(A), K(B)
     x,y,z,t = Tmatrix.change_ring(K).list()
-    alpha,beta,delta = A.ordp(),B.ordp(),D.ordp()
-    M = Matrix(K,3,2,[alpha,x*alpha+z*beta,beta,y*alpha+t*beta,delta,y*beta+t*delta])
-    n  = Matrix(K,3,1,[A.log(0),B.log(0),D.log(0)])
+    alpha,beta = A.ordp(),B.ordp()
+    M = Matrix(K,2,2,[alpha,x*alpha+z*beta,beta, y*alpha+t*beta])
+    n  = Matrix(K,2,1,[A.log(0),B.log(0)])
     return M.solve_right(n).list()
 
 def qlogs_from_Lp_and_ords(a,b,Tmatrix,q1ord, q2ord, q3ord):
@@ -314,23 +315,23 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
     raise ValueError('Unrecognized')
 
 @parallel
-def find_igusa_invariants_from_L_inv(a,b,T,qords,prec,base = QQ,cheatjs = None,phi = None):
-    F = a.parent()
-    TF = T.change_ring(F)
+def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None):
+    F = Lpmat.parent().base_ring()
     p = F.prime()
     x = QQ['x'].gen()
     K.<y> = F.extension(x^2 + p)
     deg = base.degree()
-    oq1, oq2, oq3 = [ZZ(o) for o in qords]
-    q10, q20, q30 = [o.exp() for o in qlogs_from_Lp_and_ords(a,b,TF,oq1,oq2,oq3)]
+    logmat = ordmat * Lpmat
+    oq1, oq2, oq3 = [ ordmat[1,0] + ordmat[1,1], ordmat[0,0] + ordmat[0,1], -ordmat[0,1]]
+    q10 = (logmat[1,0] + logmat[1,1]).exp()
+    q20 = (logmat[0,0] + logmat[0,1]).exp()
+    q30 = (-logmat[0,1]).exp()
     for s1, s2, s3 in product(F.teichmuller_system(),repeat = 3):
-        q1 = K(s1 * q10 * p**oq1)
-        q2 = K(s2 * q20 * p**oq2)
-        q3 = K(s3 * q30 * p**oq3)
-        # Know that q3^r = q1^z q2^-y
-        x,y,z,t = [ZZ(o) for o in T.list()]
-        r = x+y-z-t
-        if q3**r != q1**z * q2**-y:
+        try:
+            q1 = K(s1 * q10 * p**oq1)
+            q2 = K(s2 * q20 * p**oq2)
+            q3 = K(s3 * q30 * p**oq3)
+        except ValueError:
             continue
         try:
             p1,p2,p3 = our_sqrt(q1,K),our_sqrt(q2,K),our_sqrt(q3,K)
@@ -367,8 +368,8 @@ def find_igusa_invariants_from_L_inv(a,b,T,qords,prec,base = QQ,cheatjs = None,p
                 return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.85,prec = prec), 1, 1, 1)
         except ValueError:
             pass
-        except Exception as e:
-            return str(e.message)
+        except RuntimeError:
+            pass
     return 'Nope'
 
 def euler_factor_twodim(p,T):
@@ -424,7 +425,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         warnings.warn('Use of "bigmatrix" for Up iteration is incompatible with Shapiro Lemma trick. Using "naive" method for Up.')
         Up_method = 'naive'
 
-    global G, Coh, flist, hecke_data, g0, g1, A, B, D, a, b
+    global G, Coh, flist, hecke_data, g0, g1, A, B, a, b, T, xi10, xi20, xi11, xi21, Phif
 
     if pol is None or pol.degree() == 1:
         F = QQ
@@ -443,6 +444,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         P = F.ideal(Pgen)
         Pnrm = P.norm()
         Pring = P.ring()
+
         D = F.ideal(Dgen)
         Np = F.ideal(Npgen)
         if Sinf is None:
@@ -469,21 +471,21 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     fwrite('Obtained cocycles',outfile)
     for flist, hecke_data in all_twodim_cocycles:
         g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
+        g0_shapiro, g1_shapiro = G.inverse_shapiro(g0), G.inverse_shapiro(g1)
         fwrite('Obtained homology generators',outfile)
         if working_prec is None:
             working_prec = max([2 * prec + 10, 30])
         found = False
         while not found:
             try:
-                xi10,xi20 = lattice_homology_cycle(G, g0, working_prec)
-                xi11,xi21 = lattice_homology_cycle(G, g1, working_prec)
+                xi10,xi20 = lattice_homology_cycle(G, g0_shapiro, working_prec)
+                xi11,xi21 = lattice_homology_cycle(G, g1_shapiro, working_prec)
                 found = True
             except PrecisionError:
                 working_prec *= 2
                 fwrite('Raising working precision to %s and trying again'%working_prec, outfile)
         fwrite('Defined homology cycles', outfile)
         Phif = get_overconvergent_class_quaternionic(P, flist[0], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
-        Phig = get_overconvergent_class_quaternionic(P, flist[1], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
         fwrite('Overconvergent lift completed', outfile)
 
         from integrals import integrate_H1
@@ -492,7 +494,6 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         A = num / den
         fwrite('Finished computation of A period', outfile)
         A = A.add_bigoh(prec + A.valuation())
-        # A = A.trace() / A.parent().degree()
         fwrite('A = %s'%A, outfile)
 
         num = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
@@ -500,16 +501,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         B = num / den
         fwrite('Finished computation of B period', outfile)
         B = B.add_bigoh(prec + B.valuation())
-        # B = B.trace() / B.parent().degree()
         fwrite('B = %s'%B, outfile)
-
-        num = integrate_H1(G, xi11, Phig, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar)
-        den = integrate_H1(G, xi21, Phig, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar)
-        D = num / den
-        fwrite('Finished computation of D period', outfile)
-        D = D.add_bigoh(prec + D.valuation())
-        # D = D.trace() / D.parent().degree()
-        fwrite('D = %s'%D, outfile)
 
         found = False
         for ell, T0 in hecke_data:
@@ -525,23 +517,31 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
 
         F = A.parent()
         TF = T.change_ring(F)
-        a,b = p_adic_l_invariant(A, B, D, TF)
-
-        fwrite('a = %s'%a, outfile)
-        fwrite('b = %s'%b, outfile)
+        a, b = p_adic_l_invariant(A, B, TF)
 
         a = a.trace()/a.parent().degree()
         b = b.trace()/b.parent().degree()
 
+        Lp = a + b * TF
+        fwrite('Lp = %s'%str(Lp.list()), outfile)
+
         if recognize_invariants:
-            from sage.matrix.constructor import companion_matrix
             fwrite('Trying to recognize invariants...',outfile)
             phi = G._F_to_local
-            T = companion_matrix(T.charpoly()).change_ring(ZZ)
-            inp_vec = [(a, b, T.transpose(), qords, prec, Pring, None, phi) for qords in all_possible_qords(T.transpose().change_ring(ZZ), 20)]
-            for inpt in inp_vec:
-                ans = find_igusa_invariants_from_L_inv(*inpt)
-                if ans != 'Nope' and ans != '' and 'indistinguishable' not in ans:
-                    fwrite(str(ans), outfile)
+            inp_vec = [(Lp, ordmat, prec, Pring, None, phi) for ordmat in all_possible_ordmats(Lp,10)]
+            for inpt, outt in find_igusa_invariants_from_L_inv(inp_vec):
+                if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt:
+                    fwrite(str(inpt[0][0].list()) + ' ' + str(ans), outfile)
     fwrite('DONE WITH COMPUTATION', outfile)
     return('DONE')
+
+def all_possible_ordmats(Lpmat, N):
+    ans = []
+    for x, y, t in product(range(N+1),range(-N,N+1),range(-N,N+1)):
+        if x*t == y*y:
+            continue
+        M = matrix(ZZ,2,2,[x,y,y,t])
+        logmat = M * Lpmat
+        if logmat.is_symmetric():
+            ans.append(M)
+    return sorted(ans, key = lambda x: max([x[0,0].abs(),x[0,1].abs(),x[1,1].abs()]))

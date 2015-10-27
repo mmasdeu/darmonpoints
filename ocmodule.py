@@ -437,7 +437,7 @@ class OCVn(Module,UniqueRepresentation):
         xlist = [1] + [0 for o in range(self._depth - 1)]
         for ii in range(1,self._depth):
             y *= ratio
-            ylist = y.list()
+            ylist = y.list()[:self._depth]
             xlist.extend(ylist)
             xlist.extend([ZZ(0) for o in range(self._depth - len(ylist))])
         x = Matrix(R.base_ring(),self._depth,self._depth, xlist).apply_map(ZZ)

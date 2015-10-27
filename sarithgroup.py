@@ -315,9 +315,9 @@ class BigArithGroup_class(AlgebraicGroup):
             embelt = emb(elt)
             if (embelt[0,0]-1).valuation() > 0 and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
                 if hasattr(self.Gpn,'nebentypus'):
-                    tmp = embelt
-                    tmp = tmp[0,0] / (self.p**tmp[0,0].valuation())
-                    tmp = ZZ(tmp.lift() % self.Gpn.level)
+                    tmp = self.do_tilde(embelt)**-1
+                    tmp = tmp[0,0] / (self.p**tmp[0,0].valuation()) # DEBUG
+                    tmp = ZZ(tmp.lift()) % self.Gpn.level
                     if tmp not in self.Gpn.nebentypus:
                         continue
                 for idx,o1 in enumerate(matrices):
@@ -391,10 +391,10 @@ class BigArithGroup_class(AlgebraicGroup):
                 p = self.ideal_p
                 m = self.level
                 g,w,z = XGCD(p,-m)
-                ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
+                ans = matrix(QQ,2,2,[p,1,p*m*z,p*w]) # This worked
             ans.set_immutable()
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            assert is_in_Gamma0loc(epsinv * ans, det_condition = False,p = self.p),"Check that epsinv * ans is in Gamma0"
+            # assert is_in_Gamma0loc(epsinv * ans, det_condition = False,p = self.p),"Check that epsinv * ans is in Gamma0"
             return ans
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
@@ -472,6 +472,7 @@ class BigArithGroup_class(AlgebraicGroup):
             rednrm = x.reduced_norm()
         rednrm_Q = rednrm.abs() if self.F == QQ else rednrm.norm().abs()
         a,wd = self._reduce_in_amalgam(set_immutable(x))
+        assert self.is_in_Gpn_order(a)
         if return_word:
             return a,wd
         else:
@@ -606,7 +607,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     # We are considering a * (g tns t_i)
                     g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep))
                     ans.append((Gn(g0), ZZ(a[0])))
-        return ans #[(ans,1)]
+        return ans
 
     def get_pseudo_orthonormal_homology(self, cocycles, hecke_data = None):
         from sage.rings.arith import GCD
@@ -620,7 +621,7 @@ class BigArithGroup_class(AlgebraicGroup):
         a10 = f1.pair_with_cycle(ker[0])
         a11 = f1.pair_with_cycle(ker[1])
         a00, a01, a10, a11 = ZZ(a00), ZZ(a01), ZZ(a10), ZZ(a11)
-        return [self.inverse_shapiro(a11 * ker[0] - a10 * ker[1]), self.inverse_shapiro(-a01 * ker[0] + a00 * ker[1])]
+        return [a11 * ker[0] - a10 * ker[1], -a01 * ker[0] + a00 * ker[1]]
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0):
     if base == QQ:

@@ -1270,7 +1270,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     addpart0 = Jlog/known_multiple
     candidate = None
     if twopowlist is None:
-        twopowlist = [2, 1, 1/2]
+        twopowlist = [2, 1, QQ(1)/QQ(2)]
     HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
     # Precalculate powers of qE
     qEpows = [Cp(1)]
@@ -1408,10 +1408,9 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
 
     if F != QQ:
         M = F.ideal(M)
-        Phi = QQ(D.norm().abs())
+        Phi = QQ(1)
         for P,_ in D.factor():
-            np = P.norm()
-            Phi *= QQ(1)-QQ(1)/np
+            Phi *= QQ(P.norm().abs() - 1)
         Psi = QQ(M.norm()).abs()
         for P,e in M.factor():
             np = QQ(P.norm())
@@ -1426,7 +1425,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
             Psi *= np**(ZZ(e)-1) * (np + 1)
     RR = RealField(prec)
     pi = RR(pi)
-    covol =  (RR(disc).abs()**(3/2) * zetaf * Phi)/((4 * pi**2)**(F.degree()-1))
+    covol =  (RR(disc).abs()**(3.0/2.0) * zetaf * Phi)/((4 * pi**2)**(F.degree()-1))
     index = RR(Psi)
     indexunits = 1 # There is a factor missing here, due to units.
     return covol * index / indexunits

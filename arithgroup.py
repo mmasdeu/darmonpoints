@@ -287,6 +287,8 @@ class ArithGroup_generic(AlgebraicGroup):
         relmat = self.get_relation_matrix()
         relwords = self.get_relation_words()
         num_rels = len(relwords)
+        if num_rels == 0:
+            return []
         f= (ZZ**num_rels).hom(relmat.rows())
         linear_combination = f.lift(wt)
         ans = []
@@ -533,7 +535,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         else:
             return gamma, tau1
 
-    def get_word_rep(self,delta):
+    def get_word_rep(self,delta): # rationalquaternion
         if not self._is_in_order(delta):
             raise RuntimeError('delta (= %s) is not in order!'%delta)
         try:
@@ -650,56 +652,122 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         return x
 
     def element_of_norm(self,N,use_magma = True,return_all = False,radius = -1,max_elements = -1): # in rationalquaternion
-        N = ZZ(N)
+        Nideal = self.F.ideal(N)
+        try:
+            N = N.gens_reduced()[0]
+        except AttributeError:
+            pass
+        force_sign = not 'P' in self._grouptype
         if return_all == False:
             try:
-                return self._element_of_norm[N]
+                if use_magma:
+                    if force_sign:
+                        return self._fix_sign(self._element_of_norm[Nideal.gens_reduced()[0]],N)
+                    else:
+                        return self._element_of_norm[Nideal.gens_reduced()[0]]
+                else:
+                    return self._element_of_norm[N]
             except (AttributeError,KeyError):
                 pass
+        else:
+            if radius < 0 and max_elements < 0:
+                raise ValueError('Radius must be positive')
+
         if not hasattr(self,'_element_of_norm'):
             self._element_of_norm  = dict([])
 
-        force_sign = not 'P' in self._grouptype
-        if use_magma:
-            # assert return_all == False
-            elt_magma = self._O_magma.ElementOfNorm(N * self._F_magma.Integers())
-            candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1],self.magma) for m in xrange(4)])
-
-            if force_sign:
-                candidate = self._fix_sign(candidate,N)
-            # assert candidate.reduced_norm() == N
-            self._element_of_norm[N] = candidate
+        x = QQ['x'].gen()
+        B = self.B
+        F = self.B.base_ring()
+        try:
+            K1 = F.extension(x*x - B.invariants()[0], names = 'y1')
+            phi1 = lambda z: list(z)[0] + list(z)[1] * B.gen(0)
+            NK1f = K1.ideal(Nideal.gens_reduced()[0]).factor()
+        except ValueError:
+            NK1f = []
+        try:
+            K2 = F.extension(x*x - B.invariants()[1], names = 'y2')
+            phi2 = lambda z: list(z)[0] + list(z)[1] * B.gen(1)
+            NK2f = K2.ideal(Nideal.gens_reduced()[0]).factor()
+        except ValueError:
+            NK2f = []
+        found_candidate = False
+        if len(NK1f) == 2:
+            gr = NK1f[0][0].gens_reduced()
+            if len(gr) == 1:
+                candidate = phi1(gr[0])
+                if self._is_in_order(candidate):
+                    found_candidate = True
+        if not found_candidate and len(NK2f) == 2:
+            gr = NK2f[0][0].gens_reduced()
+            if len(gr) == 1:
+                candidate = phi2(gr[0])
+                if self._is_in_order(candidate):
+                    found_candidate = True
+        if not found_candidate:
             if return_all:
-                return [candidate]
-            else:
-                return candidate
-        else:
-            v = list(self.Obasis)
-            verbose('Doing long enumeration...')
-            M = 0
-            if return_all:
-                all_candidates = []
-            while M != radius:
-                M += 1
-                verbose('M = %s,radius = %s'%(M,radius))
-                verbose('v = %s'%list(v))
-                for a0,an in product(range(M),product(range(-M,M+1),repeat = len(v)-1)):
-                    candidate = sum((ZZ(ai) * vi for ai,vi in  zip([a0]+list(an),v)),self.B(0))
-                    if candidate.reduced_norm() == N:
-                        if not return_all:
-                            self._element_of_norm[N] = candidate
-                            return candidate
-                        else:
-                            self._element_of_norm[N] = candidate
-                            all_candidates.append(candidate)
-                            if len(all_candidates) == max_elements:
-                                verbose('Found %s elements of requested norm'%len(all_candidates))
-                                return all_candidates
-            if return_all:
-                verbose('Found %s elements of requested norm'%len(all_candidates))
-                return all_candidates
+                elt_magma = self._O_magma.ElementOfNorm(sage_F_ideal_to_magma(self._F_magma,Nideal))
+                candidate = magma_quaternion_to_sage(self.B,elt_magma,self.magma)
             else:
                 raise RuntimeError('Not found')
+        self._element_of_norm[Nideal.gens_reduced()[0]] = candidate
+        if force_sign:
+            candidate = self._fix_sign(candidate,N)
+        if return_all:
+            return [candidate]
+        else:
+            return candidate
+
+    # def element_of_norm(self,N,use_magma = True,return_all = False,radius = -1,max_elements = -1): # in rationalquaternion
+    #     N = ZZ(N)
+    #     if return_all == False:
+    #         try:
+    #             return self._element_of_norm[N]
+    #         except (AttributeError,KeyError):
+    #             pass
+    #     if not hasattr(self,'_element_of_norm'):
+    #         self._element_of_norm  = dict([])
+    #     force_sign = not 'P' in self._grouptype
+    #     if use_magma:
+    #         # assert return_all == False
+    #         elt_magma = self._O_magma.ElementOfNorm(N * self._F_magma.Integers())
+    #         candidate = self.B([magma_F_elt_to_sage(self.F,elt_magma.Vector()[m+1],self.magma) for m in xrange(4)])
+
+    #         if force_sign:
+    #             candidate = self._fix_sign(candidate,N)
+    #         # assert candidate.reduced_norm() == N
+    #         self._element_of_norm[N] = candidate
+    #         if return_all:
+    #             return [candidate]
+    #         else:
+    #             return candidate
+    #     else:
+    #         v = list(self.Obasis)
+    #         verbose('Doing long enumeration...')
+    #         M = 0
+    #         if return_all:
+    #             all_candidates = []
+    #         while M != radius:
+    #             M += 1
+    #             verbose('M = %s,radius = %s'%(M,radius))
+    #             verbose('v = %s'%list(v))
+    #             for a0,an in product(range(M),product(range(-M,M+1),repeat = len(v)-1)):
+    #                 candidate = sum((ZZ(ai) * vi for ai,vi in  zip([a0]+list(an),v)),self.B(0))
+    #                 if candidate.reduced_norm() == N:
+    #                     if not return_all:
+    #                         self._element_of_norm[N] = candidate
+    #                         return candidate
+    #                     else:
+    #                         self._element_of_norm[N] = candidate
+    #                         all_candidates.append(candidate)
+    #                         if len(all_candidates) == max_elements:
+    #                             verbose('Found %s elements of requested norm'%len(all_candidates))
+    #                             return all_candidates
+    #         if return_all:
+    #             verbose('Found %s elements of requested norm'%len(all_candidates))
+    #             return all_candidates
+    #         else:
+    #             raise RuntimeError('Not found')
 
     def non_positive_unit(self,radius = -1):
         try:
@@ -800,94 +868,94 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         a,b,c,d = x.list()
         return [a, b, QQ(c)/self.level, d]
 
-    # # rationalmatrix
-    # def embed_order(self,p,K,prec,outfile = None,return_all = False):
-    #     r'''
-    #     '''
-    #     from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
-
-    #     verbose('Computing quadratic embedding to precision %s'%prec)
-    #     mu = find_optimal_embeddings(K,use_magma = True, extra_conductor = 1)[-1]
-    #     verbose('Finding module generators')
-    #     w = module_generators(K)[1]
-    #     verbose('Done')
-    #     w_minpoly = w.minpoly().change_ring(Qp(p,prec))
-    #     Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
-    #     wl = w.list()
-    #     assert len(wl) == 2
-    #     r0 = -wl[0]/wl[1]
-    #     r1 = 1/wl[1]
-    #     assert r0+r1*w == K.gen()
-    #     padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
-    #     try:
-    #         fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
-    #     except NotImplementedError: pass
-    #     fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
-    #     mu = r0 + r1*mu
-    #     assert K.gen(0).trace() == mu.trace() and K.gen(0).norm() == mu.determinant()
-
-    #     iotap = self.get_embedding(prec)
-    #     a,b,c,d = iotap(mu).list()
-    #     X = PolynomialRing(Cp,names = 'X').gen()
-    #     tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
-    #     tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
-    #     assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
-    #     assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
-
-    #     found = False
-    #     u = K.units()[0]**2
-    #     # u = find_the_unit_of(self.F,K)
-    #     # verbose('u = %s'%u)
-    #     # assert u.is_integral() and (1/u).is_integral()
-    #     gammalst = u.list()
-    #     assert len(gammalst) == 2
-    #     gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
-    #     verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.trace(),gammaquatrep.determinant()))
-    #     verbose('u trace = %s and unorm = %s'%(u.trace(),u.norm()))
-    #     assert gammaquatrep.trace() == u.trace() and gammaquatrep.determinant() == u.norm()
-    #     gammaq = gammaquatrep
-    #     while True:
-    #         try:
-    #             gamma = self(gammaq)
-    #             break
-    #         except ValueError:
-    #             gammaq *= gammaquatrep
-
-    #     a, b, c, d = iotap(gamma.quaternion_rep).list()
-    #     assert (c*tau1**2 + (d-a)*tau1 - b) == 0
-    #     fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
-    #     fwrite('gamma_psi = %s'%gamma,outfile)
-    #     fwrite('tau_psi = %s'%tau1,outfile)
-    #     fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
-    #     if return_all:
-    #         return gamma, tau1, tau2
-    #     else:
-    #         return gamma, tau1
-
     # rationalmatrix
-    def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False):
+    def embed_order(self,p,K,prec,outfile = None,return_all = False):
+        r'''
+        '''
         from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
-        M = self.level
-        r = K.gen()
-        w = K.maximal_order().ring_generators()[0]
-        r0,r1 = w.coordinates_in_terms_of_powers()(K.gen())
-        QQp = Qp(p,prec)
-        Cp = QQp.extension(w.minpoly(),names = 'g')
-        v0 = K.hom([r0+r1*Cp.gen()])
-        Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = 1)
-        emblist = []
-        for W in Wlist:
-            assert w.minpoly() == W.minpoly()
-            OD,u = order_and_unit(K,1) # 1 = extra_conductor
-            wD = OD.ring_generators()[0]
-            wDvec = w.coordinates_in_terms_of_powers()(wD)
-            WD = wDvec[0] + wDvec[1] * W
-            assert all([o.is_integral() for o in WD.list()])
-            assert WD.minpoly() == wD.minpoly()
-            emblist.extend([emb for sgn in [+1,-1] for emb in _find_initial_embedding_list(v0,M,WD,orientation,OD,sgn * u)])
-        tau, gamma = emblist[0]
-        gamma.set_immutable()
-        return self(gamma), v0(tau)
+
+        verbose('Computing quadratic embedding to precision %s'%prec)
+        mu = find_optimal_embeddings(K,use_magma = True, extra_conductor = 1)[-1]
+        verbose('Finding module generators')
+        w = module_generators(K)[1]
+        verbose('Done')
+        w_minpoly = w.minpoly().change_ring(Qp(p,prec))
+        Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
+        wl = w.list()
+        assert len(wl) == 2
+        r0 = -wl[0]/wl[1]
+        r1 = 1/wl[1]
+        assert r0+r1*w == K.gen()
+        padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
+        try:
+            fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+        except NotImplementedError: pass
+        fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
+        mu = r0 + r1*mu
+        assert K.gen(0).trace() == mu.trace() and K.gen(0).norm() == mu.determinant()
+
+        iotap = self.get_embedding(prec)
+        a,b,c,d = iotap(mu).list()
+        X = PolynomialRing(Cp,names = 'X').gen()
+        tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
+        tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
+        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
+        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
+
+        found = False
+        u = K.units()[0]**2
+        # u = find_the_unit_of(self.F,K)
+        # verbose('u = %s'%u)
+        # assert u.is_integral() and (1/u).is_integral()
+        gammalst = u.list()
+        assert len(gammalst) == 2
+        gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
+        verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.trace(),gammaquatrep.determinant()))
+        verbose('u trace = %s and unorm = %s'%(u.trace(),u.norm()))
+        assert gammaquatrep.trace() == u.trace() and gammaquatrep.determinant() == u.norm()
+        gammaq = gammaquatrep
+        while True:
+            try:
+                gamma = self(gammaq)
+                break
+            except ValueError:
+                gammaq *= gammaquatrep
+
+        a, b, c, d = iotap(gamma.quaternion_rep).list()
+        assert (c*tau1**2 + (d-a)*tau1 - b) == 0
+        fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
+        fwrite('gamma_psi = %s'%gamma,outfile)
+        fwrite('tau_psi = %s'%tau1,outfile)
+        fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
+        if return_all:
+            return gamma, tau1, tau2
+        else:
+            return gamma, tau1
+
+    # # rationalmatrix
+    # def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False):
+    #     from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
+    #     M = self.level
+    #     r = K.gen()
+    #     w = K.maximal_order().ring_generators()[0]
+    #     r0,r1 = w.coordinates_in_terms_of_powers()(K.gen())
+    #     QQp = Qp(p,prec)
+    #     Cp = QQp.extension(w.minpoly(),names = 'g')
+    #     v0 = K.hom([r0+r1*Cp.gen()])
+    #     Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = 1)
+    #     emblist = []
+    #     for W in Wlist:
+    #         assert w.minpoly() == W.minpoly()
+    #         OD,u = order_and_unit(K,1) # 1 = extra_conductor
+    #         wD = OD.ring_generators()[0]
+    #         wDvec = w.coordinates_in_terms_of_powers()(wD)
+    #         WD = wDvec[0] + wDvec[1] * W
+    #         assert all([o.is_integral() for o in WD.list()])
+    #         assert WD.minpoly() == wD.minpoly()
+    #         emblist.extend([emb for sgn in [+1,-1] for emb in _find_initial_embedding_list(v0,M,WD,orientation,OD,sgn * u)])
+    #     tau, gamma = emblist[0]
+    #     gamma.set_immutable()
+    #     return self(gamma), v0(tau)
 
     def check_word(self,delta,wd):
         tmp = self.B(1)
@@ -896,7 +964,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         assert tmp == delta,"tmp = %s, delta = %s, wd = %s"%(tmp,delta,wd)
         return wd
 
-    def get_word_rep(self,delta):
+    def get_word_rep(self,delta): # rationalmatrix
         level = self.level
         try:
             ans = list(self._Gamma0_farey.word_problem(SL2Z(delta.list()),output = 'standard'))

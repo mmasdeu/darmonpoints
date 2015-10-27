@@ -244,7 +244,7 @@ class ArithCoh(CohomologyGroup):
             V = self.coefficient_module()
             return self.element_class(self, [V(data) for g in G.gens()])
 
-    def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'bigmatrix'):
+    def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'bigmatrix', steps = 1):
         r"""
         Repeatedly applies U_p.
 
@@ -258,33 +258,33 @@ class ArithCoh(CohomologyGroup):
         assert prec is not None
         repslocal = self.get_Up_reps_local(prec)
         if method == 'naive':
-            h2 = self.apply_Up(Phi, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
+            h2 = self.apply_Up(Phi, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', steps = steps)
             if progress_bar:
                 update_progress(float(0)/float(prec),'f|Up')
             else:
                 verbose('Applied Up once')
 
-            h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
-            if progress_bar:
-                update_progress(1.0/float(prec),'f|Up')
-            else:
-                verbose("Applied Up twice")
+            h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', steps = steps)
             ii = 0
             try:
                 current_val = min([(u-v).valuation() for u,v in zip([o for w in h2.values() for o in w.values()],[o for w in Phi.values() for o in w.values()])])
             except AttributeError:
                 current_val = min([(u-v).valuation() for u,v in zip(h2.values(),Phi.values())])
+            if progress_bar:
+                update_progress(float(current_val)/float(prec),'f|Up')
+            else:
+                verbose("Applied Up twice")
             old_val = current_val - 1
             while current_val < prec and current_val > old_val:
                 h1 = h2
                 old_val = current_val
                 ii += 2
-                h2 = self.apply_Up(h1, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
+                h2 = self.apply_Up(h1, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', steps = steps)
                 if progress_bar:
-                    update_progress(float(ii)/float(prec),'f|Up')
+                    update_progress(float(current_val)/float(prec),'f|Up')
                 else:
                     verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
-                h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive')
+                h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', steps = steps)
                 try:
                     current_val = min([(u-v).valuation() for u,v in zip([o for w in h2.values() for o in w.values()],[o for w in h1.values() for o in w.values()])])
                 except AttributeError:
@@ -292,14 +292,16 @@ class ArithCoh(CohomologyGroup):
                 if ii == 2 and current_val <= old_val:
                     raise RuntimeError("Not converging, maybe ap sign is wrong?")
                 if progress_bar and ii + 1 <= prec:
-                    update_progress(float(ii+1)/float(prec),'f|Up')
+                    update_progress(float(current_val)/float(prec),'f|Up')
                 else:
                     verbose('Applied Up %s times (val = %s)'%(ii+2,current_val))
             Phi._val = h2._val
+            if progress_bar:
+                update_progress(float(1.0),'f|Up')
             return h2
         else:
             assert method == 'bigmatrix'
-            return self.apply_Up(Phi, group = group, scale = 1, parallelize = parallelize,times = len(ZZ(prec-1).bits()),progress_bar = progress_bar,method = 'bigmatrix',repslocal = repslocal)
+            return self.apply_Up(Phi, group = group, scale = 1, parallelize = parallelize,times = len(ZZ(prec-1).bits()),progress_bar = progress_bar,method = 'bigmatrix',repslocal = repslocal, steps = steps)
 
     @cached_method
     def hecke_matrix(self, l, use_magma = True, g0 = None): # l can be oo
@@ -481,6 +483,8 @@ class ArithCoh(CohomologyGroup):
 
     def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 3, pol = None, return_all = False):
         F = self.group().base_ring()
+        if F == QQ:
+            F = NumberField(PolynomialRing(QQ,'x').gen(),names='r')
         component_list = []
         good_components = []
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
@@ -509,13 +513,19 @@ class ArithCoh(CohomologyGroup):
             verbose('num_hecke_ops = %s'%num_hecke_operators)
             verbose('len(components_list) = %s'%len(component_list))
             q = q.next_prime()
-            for qq,e in F.ideal(q).factor():
-                if qq in [o for o,_ in disc.factor()]:
+            verbose('q = %s'%q)
+            fact = F.ideal(q).factor()
+            dfact = F.ideal(disc.gens_reduced()[0]).factor()
+            for qq,e in fact:
+                verbose('Trying qq = %s'%qq)
+                if qq in [o for o,_ in dfact]:
+                    verbose('Skipping because qq divides D...')
                     continue
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
                     try:
                         Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
                     except (RuntimeError,TypeError) as e:
+                        verbose('Skipping qq (=%s) because Hecke matrix could not be computed...'%qq.gens_reduced()[0])
                         continue
                     verbose('Computed hecke matrix at qq = %s'%qq)
                     old_component_list = component_list
@@ -611,13 +621,14 @@ class ArithCoh(CohomologyGroup):
         S0 = V.Sigma0()
         return [S0(self.group().embed(g,prec), check = False) for g in Up_reps]
 
-    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive', repslocal = None):
+    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive', repslocal = None, steps = 1):
         r"""
         Apply the Up Hecke operator operator to ``c``.
 
         EXAMPLES::
 
         """
+        assert steps >= 1
         Up_reps = self.S_arithgroup().get_Up_reps()
 
         V = self.coefficient_module()
@@ -679,7 +690,6 @@ class ArithCoh(CohomologyGroup):
                 ans = self(vals)
             if scale != 1:
                 ans = scale * ans
-            return ans
         else:
             assert method == 'bigmatrix'
             verbose('Getting Up matrices...')
@@ -720,4 +730,8 @@ class ArithCoh(CohomologyGroup):
                 bvec = scale_factor * bvec
             valmat = A * bvec
             appr_module = V.approx_module(N)
-            return self([V(appr_module(valmat.submatrix(row=i,nrows = N).list())) for i in xrange(0,valmat.nrows(),N)])
+            ans = self([V(appr_module(valmat.submatrix(row=i,nrows = N).list())) for i in xrange(0,valmat.nrows(),N)])
+        if steps <= 1:
+            return ans
+        else:
+            return self.apply_Up(ans, group = group,scale = scale,parallelize = parallelize,times = times,progress_bar = progress_bar,method = method, repslocal = repslocal, steps = steps -1)
