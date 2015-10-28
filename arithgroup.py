@@ -206,6 +206,8 @@ class ArithGroup_generic(AlgebraicGroup):
         except KeyError: pass
         if l == oo:
             reps = [self.non_positive_unit()]
+        elif l == -oo:
+            reps = [self.wp]
         else:
             if g0 is None:
                 g0 = self.element_of_norm(l,use_magma = use_magma)
@@ -231,12 +233,12 @@ class ArithGroup_generic(AlgebraicGroup):
                 if n_iters % 100 == 0:
                     update_progress(float(len(reps))/float(num_reps),'Getting Hecke representatives (%s iterations)'%(n_iters))
             update_progress(float(1.0),'Getting Hecke representatives (%s iterations)'%(n_iters))
-        reps = [set_immutable(o) for o in reps]
+        reps = tuple([set_immutable(o) for o in reps])
         self._cache_hecke_reps[l] = reps
         return reps
 
     @cached_method
-    def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False, conservative = True):
+    def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False, conservative = False, reps = None):
         r"""
 
         INPUT:
@@ -251,10 +253,11 @@ class ArithGroup_generic(AlgebraicGroup):
 
         """
         elt = gk1**-1 * gamma.quaternion_rep
-        if l is None:
-            reps = self.get_Up_reps()
-        else:
-            reps = self.get_hecke_reps(l,use_magma = use_magma)
+        if reps is None:
+            if l is None:
+                reps = self.get_Up_reps()
+            else:
+                reps = self.get_hecke_reps(l,use_magma = use_magma)
         ans = None
         for gk2 in reps:
             ti = elt * gk2

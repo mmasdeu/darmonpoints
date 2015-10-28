@@ -586,7 +586,7 @@ class ArithCoh(CohomologyGroup):
         """
         # verbose('Entering apply_hecke_operator')
         if hecke_reps is None:
-            hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma) # Assume l != p here!
+            hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma)
         # verbose('Got hecke reps')
         V = self.coefficient_module()
         padic = not V.base_ring().is_exact()
@@ -604,9 +604,9 @@ class ArithCoh(CohomologyGroup):
         for j, gamma in enumerate(gammas):
             for g in hecke_reps:
                 if self.trivial_action():
-                    vals[j] += c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma))
+                    vals[j] += c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
                 else:
-                    vals[j] += g * c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma))
+                    vals[j] += g * c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
         return scale * self(vals)
 
     def get_Up_reps_local(self,prec):
