@@ -196,6 +196,8 @@ class BigArithGroup_class(AlgebraicGroup):
         if not self.use_shapiro():
             fwrite('R(p) with basis %s'%basis_data_p,outfile)
             self.Gpn.get_Up_reps = self.get_Up_reps
+        self.Gn.wp = self.wp()
+        self.Gpn.wp = self.wp()
         verbose('Done initializing arithmetic groups')
         verbose('Done initialization of BigArithmeticGroup')
 
