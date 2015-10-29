@@ -522,7 +522,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         a = a.trace()/a.parent().degree()
         b = b.trace()/b.parent().degree()
 
-        Lp = a + b * TF
+        Lp = a + b * T
         fwrite('Lp = %s'%str(Lp.list()), outfile)
 
         if recognize_invariants:
