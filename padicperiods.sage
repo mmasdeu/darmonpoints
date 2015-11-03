@@ -430,7 +430,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     if pol is None or pol.degree() == 1:
         F = QQ
         P = Pgen
-        Pnrm = P
+        Pnrm = Pgen
         Pring = QQ
         D = Dgen
         Np = Npgen
@@ -456,7 +456,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     if os.path.isfile(outfile):
         return 'Skipping because outfile exists'
 
-    if Pnrm > 29:
+    if Pnrm > 31:
         return 'Giving up, prime norm is too large (Pnrm = %s)'%Pnrm
     fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,Sinf)),outfile)
 
@@ -527,11 +527,24 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
 
         if recognize_invariants:
             fwrite('Trying to recognize invariants...',outfile)
+            Tlist = []
+            fT = T.charpoly()
+            fT_trace = -fT.list()[1]
+            for x0,y,z in product(range(-6,7), range(-6,7), range(-6,7)):
+                t = fT_trace - x0
+                if x0*t - y*z == fT.list()[0]:
+                    M = matrix(ZZ,2,2,[x0,y,z,t])
+                    assert fT == M.charpoly()
+                    Tlist.append(M)
+            Tlist = sorted(Tlist, key = lambda x: max(x[0,0].abs(), x[0,1].abs(), x[1,0].abs(), x[1,1].abs()))
             phi = G._F_to_local
-            inp_vec = [(Lp, ordmat, prec, Pring, None, phi) for ordmat in all_possible_ordmats(Lp,10)]
-            for inpt, outt in find_igusa_invariants_from_L_inv(inp_vec):
-                if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt:
-                    fwrite('%s %s %s'%(str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
+            for ii, tt in enumerate(Tlist):
+                fwrite('Doing matrix %s / %s ( = %s)'%(ii,len(Tlist),tt.list()),outfile)
+                Lp = a + b * tt
+                inp_vec = [(Lp, ordmat, prec, Pring, None, phi) for ordmat in all_possible_ordmats(Lp,20)]
+                for inpt, outt in find_igusa_invariants_from_L_inv(inp_vec):
+                    if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt:
+                        fwrite('%s %s %s'%(str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
     fwrite('DONE WITH COMPUTATION', outfile)
     return('DONE')
 
