@@ -280,17 +280,18 @@ def get_j_invariant(qE,prec):
     j = ((E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7))
     return j(qE)
 
-def getcoords(E, u, prec = 20, R = None, qE = None, qEpows = None, C = None):
+def getcoords(E, u, prec = None, R = None, qE = None, qEpows = None, C = None):
     if R is None:
         R = u.parent()
         u = R(u)
     p = R.prime()
+    if prec is None:
+        prec = u.precision_relative()
     if qE is None:
         if qEpows is not None:
             qE = qEpows[1]
         else:
             jE = E.j_invariant()
-
             # Calculate the Tate parameter
             E4 = EisensteinForms(weight=4).basis()[0]
             Delta = CuspForms(weight=12).basis()[0]
@@ -304,8 +305,8 @@ def getcoords(E, u, prec = 20, R = None, qE = None, qEpows = None, C = None):
     qpow = -(u.valuation()/qEval).floor()
 
     if qEpows is None:
-        qEpows = [ R(1) ]
-        for i in range(len(qEpows) - max([precn,precp + 1,qpow.abs()])):
+        qEpows = [ R(1), qE]
+        for i in range(abs(len(qEpows) - max([precn,precp + 1,qpow.abs()]))):
             qEpows.append(qE * qEpows[-1])
     if len(qEpows) < qpow.abs() + 1:
         for i in range(qpow.abs() + 1 - len(qEpows)):
@@ -328,7 +329,7 @@ def getcoords(E, u, prec = 20, R = None, qE = None, qEpows = None, C = None):
         qEn_times_un = qEn * un
         first_sum = qEn_times_un/(1-qEn_times_un)**2
         second_sum = first_sum**2 * (1 - qEn_times_un)
-        den_un = 1- qEn/un
+        den_un = 1 - qEn/un
         den_un_2 = den_un ** 2
         qEn_over_un_den_un_2 = qEn/(un * den_un_2)
         rat = qEn/(1-qEn)**2
@@ -375,7 +376,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reverse()(R(1/jE))
+    qE =  j.inverse().power_series().reverse()(R(1/jE))
     sk = lambda q,k,pprec: sum( [n**k*q**n/(1-q**n) for n in range(1,pprec+1)] )
     n = qE.valuation()
     precp = ((prec+4)/n).floor() + 2;
@@ -383,7 +384,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     tate_a6 = (tate_a4 - 7 * sk(qE,5,precp) )/12
     Eq = EllipticCurve([R(1),R(0),R(0),tate_a4,tate_a6])
 
-    C2 = (Eq.c4() * R(E.c6())) / (Eq.c6() * R(E.c4()))
+    C2 = (Eq.c6() * R(E.c4())) / (Eq.c4() * R(E.c6()))
     C = our_sqrt(R(C2),R) #.square_root()
     s = (C * R(E.a1()) -R(1))/R(2)
     r = (C**2*R(E.a2()) +s +s**2)/R(3)
