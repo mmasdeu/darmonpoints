@@ -219,17 +219,17 @@ class Divisor_element(ModuleElement):
     def _add_(self,right):
         newdict = defaultdict(ZZ)
         newdict.update(self._data)
-        newptdata = {}
-        newptdata.update(self._ptdict)
-        newptdata.update(right._ptdict)
+        new_ptdata = {}
+        new_ptdata.update(self._ptdict)
+        new_ptdata.update(right._ptdict)
         for hP,n in right._data.iteritems():
             newdict[hP] += n
             if newdict[hP] == 0:
                 del newdict[hP]
-                del newptdata[hP]
+                del new_ptdata[hP]
             else:
-                newptdata[hP] = right._ptdict[hP]
-        return self.__class__(self.parent(),newdict,ptdata = newptdata)
+                new_ptdata[hP] = right._ptdict[hP]
+        return self.__class__(self.parent(),newdict,ptdata = new_ptdata)
 
     def radius(self):
         ans = 0
@@ -240,49 +240,49 @@ class Divisor_element(ModuleElement):
     def _sub_(self,right):
         newdict = defaultdict(ZZ)
         newdict.update(self._data)
-        newptdata = {}
-        newptdata.update(self._ptdict)
-        newptdata.update(right._ptdict)
+        new_ptdata = {}
+        new_ptdata.update(self._ptdict)
+        new_ptdata.update(right._ptdict)
         for hP,n in right._data.iteritems():
             newdict[hP] -= n
             if newdict[hP] == 0:
                 del newdict[hP]
-                del newptdata[hP]
+                del new_ptdata[hP]
             else:
-                newptdata[hP] = right._ptdict[hP]
-        return self.__class__(self.parent(),newdict,ptdata = newptdata)
+                new_ptdata[hP] = right._ptdict[hP]
+        return self.__class__(self.parent(),newdict,ptdata = new_ptdata)
 
     def _neg_(self):
         newdict = defaultdict(ZZ)
-        newptdata = {}
-        newptdata.update(self._ptdict)
+        new_ptdata = {}
+        new_ptdata.update(self._ptdict)
         for P,n in self._data.iteritems():
             newdict[P] = -n
-        return self.__class__(self.parent(),newdict,ptdata = newptdata)
+        return self.__class__(self.parent(),newdict,ptdata = new_ptdata)
 
     def left_act_by_matrix(self,g):
         a,b,c,d = g.list()
         gp = self.parent()
         K = self.parent().base_ring()
         newdict = defaultdict(ZZ)
-        newptdata = {}
+        new_ptdata = {}
         for P,n in self:
             if P == Infinity:
                 try:
-                    newpt = K(a)/K(c)
+                    new_pt = K(a)/K(c)
                 except ZeroDivisionError:
-                    newpt = Infinity
+                    new_pt = Infinity
             else:
-                newpt = (K(a)*P+K(b))/(K(c)*P+K(d))
-            hnewpt = _hash(newpt)
-            newdict[hnewpt] += n
-            newptdata[hnewpt] = newpt
-            if newdict[hnewpt] == 0:
-                del newdict[hnewpt]
-                del newptdata[hnewpt]
+                new_pt = (K(a)*P+K(b))/(K(c)*P+K(d))
+            hnew_pt = _hash(new_pt)
+            newdict[hnew_pt] += n
+            new_ptdata[hnew_pt] = new_pt
+            if newdict[hnew_pt] == 0:
+                del newdict[hnew_pt]
+                del new_ptdata[hnew_pt]
             else:
-                newptdata[hnewpt] = newpt
-        return self.__class__(gp,newdict,ptdata = newptdata)
+                new_ptdata[hnew_pt] = new_pt
+        return self.__class__(gp,newdict,ptdata = new_ptdata)
 
     @cached_method
     def degree(self):
@@ -339,16 +339,16 @@ class ArithGroupAction(Action):
         G = g.parent()
         a,b,c,d = [K(o) for o in G.embed(g.quaternion_rep,prec).list()]
         newdict = defaultdict(ZZ)
-        newpts = {}
+        new_pts = {}
         for P,n in v:
-            newpt = (a*P+b) / (c*P+d)
-            hp = _hash(newpt)
+            new_pt = (a*P+b) / (c*P+d)
+            hp = _hash(new_pt)
             newdict[hp] += n
-            newpts[hp] = newpt
+            new_pts[hp] = new_pt
             if newdict[hp] == 0:
                 del newdict[hp]
-                del newpts[hp]
-        return v.parent()(newdict,newpts)
+                del new_pts[hp]
+        return v.parent()(newdict,new_pts)
 
 class OneChains_element(ModuleElement):
     def __init__(self, parent, data):
@@ -533,16 +533,20 @@ class OneChains_element(ModuleElement):
     def mult_by(self,a):
         return self.__rmul__(a)
 
-    def hecke_smoothen(self,r,prec = 20):
+    def hecke_smoothen(self,r,prec = None):
+        if prec is None:
+            prec = self.parent().coefficient_module().base_ring().precision_cap()
         rnorm = r
         try:
             rnorm = r.norm()
         except AttributeError: pass
         return self.act_by_hecke(r,prec = prec) - self.mult_by(ZZ(rnorm + 1))
 
-    def act_by_poly_hecke(self,r,f,prec = 20):
+    def act_by_poly_hecke(self,r,f,prec = None):
         if f == 1:
             return self
+        if prec is None:
+            prec = self.parent().coefficient_module().base_ring().precision_cap()
         facts = f.factor()
         if len(facts) == 1:
             verbose('Acting by f = %s and r = %s'%(f.factor(),r))
