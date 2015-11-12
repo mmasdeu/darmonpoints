@@ -591,12 +591,12 @@ class BigArithGroup_class(AlgebraicGroup):
             ans = C(0)
             for g, v in zip(group.gens(), x.values()):
                 if not self.use_shapiro():
-                    ans += C((Gn(self.do_tilde(g.quaternion_rep)), v))
+                    ans += C((Gn(self.wp() **-1 * g.quaternion_rep * self.wp()), v))
                 else:
                     for a, ti in zip(v.values(), self.coset_reps()):
                         # We are considering a * (g tns t_i)
                         g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep ))
-                        ans += C((Gn(self.do_tilde(g0)), a))
+                        ans += C((Gn(self.wp()**-1 * g0 * self.wp()), a))
             return ans
         g = Bsp.hom([vector(C(phig(o))) for o in B.gens()])
         maplist = [f, g]
