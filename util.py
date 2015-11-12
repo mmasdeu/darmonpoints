@@ -240,7 +240,7 @@ def tate_parameter(E,R):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reverse()(R(1/jE))
+    qE =  j.inverse().power_series().reverse()(R(1/jE))
     return qE
 
 def get_C_and_C2(E,qEpows,R,prec):
@@ -256,7 +256,7 @@ def get_C_and_C2(E,qEpows,R,prec):
     tate_a4 = -5  * sk3
     tate_a6 = (tate_a4 - 7 * sk5 )/12
     Eqc4, Eqc6 = 1-48*tate_a4, -1 + 72 * tate_a4 - 864 * tate_a6
-    C2 = (R(Eqc4) * R(E.c6())) / (R(Eqc6) * R(E.c4()))
+    C2 = ((R(Eqc4) * R(E.c6())) / (R(Eqc6) * R(E.c4())))
     return our_sqrt(R(C2),R),C2
 
 def get_c4_and_c6(qE,prec):
@@ -296,7 +296,7 @@ def getcoords(E, u, prec = None, R = None, qE = None, qEpows = None, C = None):
             E4 = EisensteinForms(weight=4).basis()[0]
             Delta = CuspForms(weight=12).basis()[0]
             j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-            qE =  (1/j).power_series().reverse()(R(1/jE))
+            qE =  j.inverse().power_series().reverse()(R(1/jE))
 
     qEval = qE.valuation()
 
@@ -1250,7 +1250,7 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
                 return a*u
     assert 0,'Signs not compatible'
 
-def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None):
+def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None, qEpows = None):
     p = J.parent().prime()
     if prec is None:
         prec = J.parent().precision_cap()
@@ -1260,7 +1260,10 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     hK = K.class_number()
     Eloc = E.change_ring(local_embedding)
     # Tate parameter
-    qE = tate_parameter(Eloc,QQp)
+    if qEpows is None:
+        qE = tate_parameter(Eloc,QQp)
+    else:
+        qE = qEpows[1]
 
     valqE = QQ(qE.valuation())
     numqE,denqE = valqE.numerator(),valqE.denominator()
@@ -1274,10 +1277,11 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
         twopowlist = [2, 1, QQ(1)/QQ(2)]
     HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
     # Precalculate powers of qE
-    qEpows = [Cp(1)]
     precp = max((prec/valqE).floor() + 4, ((prec+4)/valqE).floor() + 2)
-    for i in range(precp):
-        qEpows.append( qE * qEpows[-1])
+    if qEpows is None:
+        qEpows = [Cp(1)]
+        for i in range(precp):
+            qEpows.append( qE * qEpows[-1])
 
     CEloc,_ = get_C_and_C2(Eloc,qEpows,Cp,precp)
     EH = E.change_ring(HCF)
