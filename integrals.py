@@ -324,17 +324,17 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                     if P == Infinity:
                         continue
                     else:
-                        hp0 = b + a * P
-                        hp1 = d + c * P
+                        hp0 = K(b + a * P)
+                        hp1 = K(d + c * P)
                         if hp1.valuation() <= hp0.valuation():
                             raise ValueError
-                    x = hp1/hp0
-                    v = [K.zero(),x]
-                    xpow = x
+                    x = hp1 / hp0
+                    v = [K.zero(),K(x)]
+                    xpow = K(x)
                     for m in xrange(2, coeff_depth + 1):
                         xpow *= x
-                        v.append( xpow / m )
-                    pol -= n * R(v)
+                        v.append( xpow / QQ(m) )
+                    pol -= QQ(n) * R(v)
                     c0 *= (-hp0) ** n
                 pol += c0.log( p_branch = 0 )
                 newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)

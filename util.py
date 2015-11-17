@@ -1063,7 +1063,10 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
 
     if optimize_through_magma:
         from sage.interfaces.magma import magma
-        Fm = magma.NumberField(F.gen().minpoly())
+        if F.gen().minpoly().degree() == 1:
+            Fm = magma.RationalsAsNumberField()
+        else:
+            Fm = magma.NumberField(F.gen().minpoly())
         if len(S) == len(F.real_places()):
             Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), Fm.RealPlaces())
             return_ans = True
@@ -1158,7 +1161,10 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
             if passed:
                 if optimize_through_magma:
                     from sage.interfaces.magma import magma
-                    Fm = magma.NumberField(F.gen().minpoly())
+                    if F.gen().minpoly().degree() == 1:
+                        Fm = magma.RationalsAsNumberField()
+                    else:
+                        Fm = magma.NumberField(F.gen().minpoly())
                     Bm = magma.QuaternionAlgebra(Fm,sage_F_elt_to_magma(Fm,a),sage_F_elt_to_magma(Fm,b)).OptimizedRepresentation()
                     a,b = Bm.StandardForm(nvals = 2)
                     a = magma_F_elt_to_sage(F,a,magma)
