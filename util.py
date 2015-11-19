@@ -256,7 +256,7 @@ def get_C_and_C2(E,qEpows,R,prec):
     tate_a4 = -5  * sk3
     tate_a6 = (tate_a4 - 7 * sk5 )/12
     Eqc4, Eqc6 = 1-48*tate_a4, -1 + 72 * tate_a4 - 864 * tate_a6
-    C2 = ((R(Eqc4) * R(E.c6())) / (R(Eqc6) * R(E.c4())))
+    C2 = (R(Eqc4) * R(E.c6())) / (R(Eqc6) * R(E.c4()))
     return our_sqrt(R(C2),R),C2
 
 def get_c4_and_c6(qE,prec):

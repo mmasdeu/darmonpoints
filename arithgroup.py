@@ -805,68 +805,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         return [a, b, QQ(c)/self.level, d]
 
     # rationalmatrix
-    def embed_order_1(self,p,K,prec,outfile = None,return_all = False):
-        r'''
-        '''
-        from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit, find_the_unit_of
-
-        verbose('Computing quadratic embedding to precision %s'%prec)
-        mu = find_optimal_embeddings(K,use_magma = True, extra_conductor = 1)[-1]
-        verbose('Finding module generators')
-        w = module_generators(K)[1]
-        verbose('Done')
-        w_minpoly = w.minpoly().change_ring(Qp(p,prec))
-        Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
-        wl = w.list()
-        assert len(wl) == 2
-        r0 = -wl[0]/wl[1]
-        r1 = 1/wl[1]
-        assert r0 + r1 * w == K.gen()
-        padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
-        try:
-            fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
-        except NotImplementedError: pass
-        fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
-        mu = r0 + r1*mu
-        assert K.gen(0).trace() == mu.trace() and K.gen(0).norm() == mu.determinant()
-
-        iotap = self.get_embedding(prec)
-        a,b,c,d = iotap(mu).list()
-        X = PolynomialRing(Cp,names = 'X').gen()
-        tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
-        tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
-        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
-        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
-
-        u = K.units()[0]**2
-        # u = find_the_unit_of(self.F,K)
-
-        gammalst = u.list()
-        assert len(gammalst) == 2
-        gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
-        verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.trace(),gammaquatrep.determinant()))
-        verbose('u trace = %s and unorm = %s'%(u.trace(),u.norm()))
-        assert gammaquatrep.trace() == u.trace() and gammaquatrep.determinant() == u.norm()
-        gammaq = gammaquatrep
-        while True:
-            try:
-                gamma = self(gammaq)
-                break
-            except ValueError:
-                gammaq *= gammaquatrep
-        a, b, c, d = iotap(gamma.quaternion_rep).list()
-        assert (c*tau1**2 + (d-a)*tau1 - b) == 0
-        fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
-        fwrite('gamma_psi = %s'%gamma,outfile)
-        fwrite('tau_psi = %s'%tau1,outfile)
-        fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
-        if return_all:
-            return gamma, tau1, tau2
-        else:
-            return gamma, tau1
-
-    # rationalmatrix
-    def embed_order_2(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1):
+    def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1):
         from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
         M = self.level
         extra_conductor = ZZ(extra_conductor)
@@ -884,8 +823,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         tau, gamma = _find_initial_embedding_list(v0, M, WD, orientation, OD, u)[0]
         gamma.set_immutable()
         return self(gamma), v0(tau)
-
-    embed_order = embed_order_1
 
     def check_word(self,delta,wd):
         tmp = self.B(1)
@@ -956,7 +893,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             pass
         if not hasattr(self,'_element_of_norm'):
             self._element_of_norm  = dict([])
-        candidate = self.B([1,0,0,N])
+        candidate = self.B([N,0,0,1])
         set_immutable(candidate)
         self._element_of_norm[N] = candidate
         if return_all:
