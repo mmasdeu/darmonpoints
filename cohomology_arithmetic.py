@@ -587,7 +587,7 @@ class ArithCoh(CohomologyGroup):
         """
         # verbose('Entering apply_hecke_operator')
         if hecke_reps is None:
-            hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma)
+            hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma, g0 = g0)
         # verbose('Got hecke reps')
         V = self.coefficient_module()
         padic = not V.base_ring().is_exact()

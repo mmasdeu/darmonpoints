@@ -853,6 +853,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             ans = shorten_word(self.minus_one_long + ans)
             return self.check_word(delta.matrix(),ans)
         else:
+            assert 0,'delta = %s, err = %s'%(delta, err)
             try:
                 i = gens.index(err)
             except ValueError:

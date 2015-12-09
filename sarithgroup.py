@@ -384,6 +384,7 @@ class BigArithGroup_class(AlgebraicGroup):
     def wp(self):
         verbose('Finding a suitable wp...')
         if self.F == QQ and self.discriminant == 1:
+            epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             if self.level == 1:
                 try:
                     ans = matrix(QQ,2,2,[0,-1,self.ideal_p.gens_reduced()[0],0])
@@ -395,7 +396,6 @@ class BigArithGroup_class(AlgebraicGroup):
                 p = self.ideal_p
                 m = self.level
                 g,w,z = XGCD(p,-m)
-                epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
                 ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
                 i = 0
                 all_initial = []
