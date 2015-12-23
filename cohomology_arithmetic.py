@@ -296,7 +296,7 @@ class ArithCoh(CohomologyGroup):
                 else:
                     verbose('Applied Up %s times (val = %s)'%(ii+2,current_val))
             Phi._val = h2._val
-            if progress_bar:
+            if progress_bar and current_val < 1:
                 update_progress(float(1.0),'f|Up')
             return h2
         else:
@@ -327,9 +327,9 @@ class ArithCoh(CohomologyGroup):
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
+            K = (self.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
         else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
         disc = self.S_arithgroup().Gpn._O_discriminant
         discnorm = disc.norm()
         try:
@@ -360,7 +360,7 @@ class ArithCoh(CohomologyGroup):
                     except (ValueError,ArithmeticError):
                         continue
                     try:
-                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma)-ap).right_kernel()
+                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose()-ap).kernel()
                     except RuntimeError:
                         continue
                     K = K.intersection(K1)
@@ -372,9 +372,9 @@ class ArithCoh(CohomologyGroup):
     def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = True):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
+            K = (self.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
         else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
 
         disc = self.S_arithgroup().Gpn._O_discriminant
         discnorm = disc.norm()
@@ -397,7 +397,7 @@ class ArithCoh(CohomologyGroup):
                     except (ValueError,ArithmeticError):
                         continue
                     try:
-                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma)-ap).right_kernel()
+                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose()-ap).kernel()
                     except RuntimeError:
                         continue
                     K = K.intersection(K1)
@@ -410,9 +410,9 @@ class ArithCoh(CohomologyGroup):
     def get_rational_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature()[1] == 1 and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
+            K = (self.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
         else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
 
         component_list = []
         good_components = []
@@ -488,12 +488,13 @@ class ArithCoh(CohomologyGroup):
         component_list = []
         good_components = []
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo)-sign).right_kernel().change_ring(QQ)
+            Tinf = self.hecke_matrix(oo).transpose()
+            K = (Tinf-sign).kernel().change_ring(QQ)
             if K.dimension() >= 2:
-                component_list.append((K, [(oo,self.hecke_matrix(oo).transpose())]))
+                component_list.append((K, [(oo,Tinf)]))
 
         else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).right_kernel()
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
             if K.dimension() >= 2:
                 component_list.append((K, []))
         disc = self.S_arithgroup().Gpn._O_discriminant
@@ -586,7 +587,7 @@ class ArithCoh(CohomologyGroup):
         """
         # verbose('Entering apply_hecke_operator')
         if hecke_reps is None:
-            hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma)
+            hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma, g0 = g0)
         # verbose('Got hecke reps')
         V = self.coefficient_module()
         padic = not V.base_ring().is_exact()
@@ -647,7 +648,7 @@ class ArithCoh(CohomologyGroup):
             G = self.S_arithgroup()
             Gn = G.large_group()
             if self.use_shapiro():
-                if self.trivial_action():
+                if self.coefficient_module().trivial_action():
                     def calculate_Up_contribution(lst, c, i, j):
                         return sum([c.evaluate_and_identity(tt) for sk, tt in lst])
                 else:

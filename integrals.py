@@ -205,7 +205,7 @@ def sample_point(G,e,prec = 20):
      Returns a point in U_h = (e)^{-1} Z_p.
     '''
     rev, h = e
-    hemb = G.embed(h**-1,prec)
+    hemb = G.embed(set_immutable(h**-1),prec)
     wploc = G.embed(G.wp(),prec)
     if rev == True:
         hemb = hemb * wploc
@@ -217,17 +217,18 @@ def sample_point(G,e,prec = 20):
 r'''
 Integration pairing of a function with an harmonic cocycle.
 '''
-def riemann_sum(G,phi,hc,depth = 1,mult = False, progress_bar = False):
+def riemann_sum(G,phi,hc,depth = 1,mult = False, progress_bar = False, K = None):
     prec = max([20,2*depth])
     res = 1 if mult else 0
-    K = phi.parent().base_ring()
+    if K is None:
+        K = phi.parent().base_ring()
     cover = G.get_covering(depth)
     n_ints = 0
     for e in cover:
         if n_ints % 500 == 499:
             verbose('Done %s percent'%(100*RealField(10)(n_ints)/len(cover)))
-        if progress_bar and n_ints % 10 == 0:
-            update_progress(float(RealField(10)(n_ints)/len(cover)),'Riemann sum')
+        if progress_bar:
+            update_progress(float(RealField(10)(n_ints+1)/len(cover)),'Riemann sum')
         n_ints += 1
         val = hc(e)
         vmom = val[0] #.moment(0)
@@ -284,35 +285,32 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     K = divisor.parent().base_ring()
     R = PolynomialRing(K,names = 't').fraction_field()
     t = R.gen()
-    phi = prod([(t - P)**ZZ(n) for P,n in divisor],R(1))
+    phi = lambda t: prod([(t - P)**ZZ(n) for P,n in divisor],K(1))
     try:
         hc = hc.get_liftee()
     except AttributeError:
         pass
-    ans = riemann_sum(G,phi,ShapiroImage(G,hc)(gamma.quaternion_rep),depth,mult = multiplicative,progress_bar = progress_bar)
+    ans = K(riemann_sum(G,phi,ShapiroImage(G,hc)(gamma.quaternion_rep),depth,mult = multiplicative,progress_bar = progress_bar, K = K))
     return ans, ans.log(p_branch = 0)
 
 def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize,multiplicative):
     # verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
     HOC = hc.parent()
-    assert depth == 1
     if prec is None:
         prec = HOC.coefficient_module().precision_cap()
     try:
-        depth = HOC.coefficient_module().precision_cap()
+        coeff_depth = HOC.coefficient_module().precision_cap()
     except AttributeError:
-        depth = HOC.coefficient_module().coefficient_module().precision_cap()
+        coeff_depth = HOC.coefficient_module().coefficient_module().precision_cap()
     K = divisor.parent().base_ring()
     QQp = Qp(p,prec)
     R = PolynomialRing(K,'r')
     divisor_list = [(P,n) for P,n in divisor]
     resadd = ZZ(0)
     resmul = ZZ(1)
-    edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
-    tilist = G.coset_reps()
+    edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(depth)]
     while len(edgelist) > 0:
-        # verbose('Remaining %s edges'%len(edgelist))
         newedgelist = []
         ii = 0
         for parity, edge, wt in edgelist:
@@ -326,34 +324,34 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                     if P == Infinity:
                         continue
                     else:
-                        hp0 = b + a*P
-                        hp1 = d + c*P
+                        hp0 = K(b + a * P)
+                        hp1 = K(d + c * P)
                         if hp1.valuation() <= hp0.valuation():
                             raise ValueError
-                    x = hp1/hp0
-                    v = [K.zero(),x]
-                    xpow = x
-                    for m in xrange(2, depth + 1):
+                    x = hp1 / hp0
+                    v = [K.zero(),K(x)]
+                    xpow = K(x)
+                    for m in xrange(2, coeff_depth + 1):
                         xpow *= x
-                        v.append(xpow/m)
-                    pol -= n * R(v)
+                        v.append( xpow / QQ(m) )
+                    pol -= QQ(n) * R(v)
                     c0 *= (-hp0) ** n
-                pol += c0.log(p_branch = 0)
-            except ValueError:
+                pol += c0.log( p_branch = 0 )
+                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)
+                if rev:
+                    newgamma = newgamma.conjugate_by(G.wp())
+                if G.use_shapiro():
+                    mu_e = hc.evaluate_and_identity(newgamma, parallelize)
+                else:
+                    mu_e = hc.evaluate(newgamma,parallelize)
+            except(ValueError):
+                verbose('Subdividing...')
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
                 continue
-            if not rev:
-                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)
-            else:
-                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False).conjugate_by(G.wp())
-            if G.use_shapiro():
-                mu_e = hc.evaluate_and_identity(newgamma, parallelize)
-            else:
-                mu_e = hc.evaluate(newgamma,parallelize)
             if HOC._use_ps_dists:
                 resadd += sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
-                resadd += mu_e.evaluate_at_poly(pol, K, depth)
+                resadd += mu_e.evaluate_at_poly(pol, K, coeff_depth)
             if multiplicative:
                 try:
                     if G.use_shapiro():

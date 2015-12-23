@@ -333,12 +333,14 @@ class BigArithGroup_class(AlgebraicGroup):
                             return reps
                         break
 
-    def do_tilde(self,g):
+    def do_tilde(self, g, wp = None):
+        if wp is None:
+            wp = self.wp()
         if self.F == QQ and self.discriminant == 1:
-            lam = -self.wp().determinant()
+            lam = -wp.determinant()
         else:
-            lam = -self.wp().reduced_norm()
-        ans = 1/lam * self.wp() * g * self.wp()
+            lam = -wp.reduced_norm()
+        ans = 1/lam * wp * g * wp
         set_immutable(ans)
         return ans
 
@@ -382,6 +384,7 @@ class BigArithGroup_class(AlgebraicGroup):
     def wp(self):
         verbose('Finding a suitable wp...')
         if self.F == QQ and self.discriminant == 1:
+            epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             if self.level == 1:
                 try:
                     ans = matrix(QQ,2,2,[0,-1,self.ideal_p.gens_reduced()[0],0])
@@ -393,10 +396,32 @@ class BigArithGroup_class(AlgebraicGroup):
                 p = self.ideal_p
                 m = self.level
                 g,w,z = XGCD(p,-m)
-                ans = matrix(QQ,2,2,[p,1,p*m*z,p*w]) # This worked
+                ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
+                i = 0
+                all_initial = []
+                for t in sorted(range(-8,7)):
+                    g, tinv, k = XGCD(t, -p * m)
+                    if g == 1:
+                        new_initial =  ans * matrix(QQ,2,2,[t, k, p*m, tinv])
+                        all_initial.append(new_initial)
+                for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
+                    if i % 50000 == 0:
+                        verbose('Done %s iterations'%i)
+                        if i > 0 and i % (50 * 50000) == 0:
+                            raise RuntimeError('Trouble finding wp by enumeration')
+                    i += 1
+                    for tmp in all_initial:
+                        new_candidate =  v1 * tmp * v2
+                        set_immutable(new_candidate)
+                        if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False):
+                            try:
+                                aa = [ self.Gpn( self.do_tilde(g.quaternion_rep,new_candidate)).word_rep for g in self.Gpn.gens()]
+                                return new_candidate
+                            except (ValueError, TypeError, AssertionError):
+                                pass
+
             ans.set_immutable()
-            epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            # assert is_in_Gamma0loc(epsinv * ans, det_condition = False,p = self.p),"Check that epsinv * ans is in Gamma0"
+            assert is_in_Gamma0loc(epsinv * ans, det_condition = False, p = self.p),"Check that epsinv * ans is in Gamma0"
             return ans
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
@@ -417,11 +442,12 @@ class BigArithGroup_class(AlgebraicGroup):
             for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
                 if i % 50000 == 0:
                     verbose('Done %s iterations'%i)
-                    if i > 0 and i % 2 * 50000 == 0:
+                    if i > 0 and i % (2 * 50000) == 0:
                         raise RuntimeError('Trouble finding wp by enumeration')
                 i += 1
                 for tmp in all_initial:
                     new_candidate =  v1 * tmp * v2
+                    set_immutable(new_candidate)
                     if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.is_in_Gpn_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn_Obasis())) and self.is_in_Gpn_order(new_candidate):
                         verbose('wp = %s'%new_candidate)
                         return new_candidate
@@ -467,14 +493,15 @@ class BigArithGroup_class(AlgebraicGroup):
             f = self._F_to_local
             return set_immutable((f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K).change_ring(Qp(self.p, prec)))
 
-    def reduce_in_amalgam(self,x,return_word = False):
-        if self.F == QQ and self.discriminant == 1:
-            rednrm = x.determinant()
-        else:
-            rednrm = x.reduced_norm()
-        rednrm_Q = rednrm.abs() if self.F == QQ else rednrm.norm().abs()
+    def reduce_in_amalgam(self,x,return_word = False, check = False):
         a,wd = self._reduce_in_amalgam(set_immutable(x))
-        assert self.is_in_Gpn_order(a)
+        if check:
+            assert self.is_in_Gpn_order(a)
+            tmp = a
+            reps = [ self.get_BT_reps(), self.get_BT_reps_twisted() ]
+            for i, j in wd:
+                tmp = tmp * reps[j][i]
+            assert tmp == x
         if return_word:
             return a,wd
         else:
@@ -495,37 +522,41 @@ class BigArithGroup_class(AlgebraicGroup):
             return a, wd[0][0]
 
     def _reduce_in_amalgam(self,x):
-        x0 = x
         p = self.p
-        denval = self.Gn._denominator_valuation
-        if self.Gpn_denominator(x) == 1:
+        denval = lambda y, val: self.Gn._denominator_valuation(y, p) < val
+        if self.Gpn._is_in_order(x):
             return x, []
         else:
-            gis = [ g**-1 for g in self.get_BT_reps()]
+            gis = [ g**-1 for g in self.get_BT_reps() ]
             gitildes = [self.Gn.B(1)] + [ g**-1 for g in self.get_BT_reps_twisted()[1:]]
 
             xtilde = self.do_tilde(x)
-            valx = denval(xtilde,p)
+            valx = self.Gn._denominator_valuation(xtilde, p)
             if valx == 0:
                 valx = 1
-            found = False
-
-            i = next((i for i,g in enumerate(gitildes) if denval(xtilde * g,p) < valx),0)
-            wd0 = (i,0)
-            x = x * gis[i]
-
-            valx = denval(x,p)
+            i = next((i for i,g in enumerate(gitildes) if denval(xtilde * g,valx)),0)
+            if i:
+                x = x * gis[i]
+                new_wd = [(i,0)]
+            else:
+                new_wd = []
+            valx = self.Gn._denominator_valuation(x,p)
             if valx == 0:
                 valx = 1
 
-            if self.Gpn_denominator(x) == 1:
-                return set_immutable(x), [wd0]
-            i = next((i for i,g in enumerate(gitildes) if denval(x * g,p) < valx),0)
-            assert i > 0
-            wd1 = (i,1)
-            x = set_immutable(x * gitildes[i])
+            if self.Gpn._is_in_order(x):
+                return set_immutable(x), new_wd
+
+            i = next((i for i,g in enumerate(gitildes) if denval(x * g,valx)),0)
+            if i:
+                wd1 = (i,1)
+                x = set_immutable(x * gitildes[i])
+                new_wd = [wd1] + new_wd
+            if len(new_wd) == 0:
+                print 'Offending input: %s'%x
+                raise RuntimeError
             a, wd = self._reduce_in_amalgam(x)
-            return set_immutable(a), wd + [wd1,wd0]
+            return set_immutable(a), wd + new_wd
 
     def smoothen(self,gi,ell):
         hecke_reps = gi.parent().group().get_hecke_reps(ell,use_magma = True)
@@ -560,12 +591,12 @@ class BigArithGroup_class(AlgebraicGroup):
             ans = C(0)
             for g, v in zip(group.gens(), x.values()):
                 if not self.use_shapiro():
-                    ans += C((Gn(wp**-1 * g.quaternion_rep * wp), v))
+                    ans += C((Gn(self.wp() **-1 * g.quaternion_rep * self.wp()), v))
                 else:
                     for a, ti in zip(v.values(), self.coset_reps()):
                         # We are considering a * (g tns t_i)
                         g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep ))
-                        ans += C((Gn(wp**-1 * g0 * wp), a))
+                        ans += C((Gn(self.wp()**-1 * g0 * self.wp()), a))
             return ans
         g = Bsp.hom([vector(C(phig(o))) for o in B.gens()])
         maplist = [f, g]

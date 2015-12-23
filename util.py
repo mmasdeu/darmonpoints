@@ -240,7 +240,7 @@ def tate_parameter(E,R):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reverse()(R(1/jE))
+    qE =  j.inverse().power_series().reverse()(R(1/jE))
     return qE
 
 def get_C_and_C2(E,qEpows,R,prec):
@@ -280,22 +280,23 @@ def get_j_invariant(qE,prec):
     j = ((E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7))
     return j(qE)
 
-def getcoords(E, u, prec = 20, R = None, qE = None, qEpows = None, C = None):
+def getcoords(E, u, prec = None, R = None, qE = None, qEpows = None, C = None):
     if R is None:
         R = u.parent()
         u = R(u)
     p = R.prime()
+    if prec is None:
+        prec = u.precision_relative()
     if qE is None:
         if qEpows is not None:
             qE = qEpows[1]
         else:
             jE = E.j_invariant()
-
             # Calculate the Tate parameter
             E4 = EisensteinForms(weight=4).basis()[0]
             Delta = CuspForms(weight=12).basis()[0]
             j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-            qE =  (1/j).power_series().reverse()(R(1/jE))
+            qE =  j.inverse().power_series().reverse()(R(1/jE))
 
     qEval = qE.valuation()
 
@@ -304,8 +305,8 @@ def getcoords(E, u, prec = 20, R = None, qE = None, qEpows = None, C = None):
     qpow = -(u.valuation()/qEval).floor()
 
     if qEpows is None:
-        qEpows = [ R(1) ]
-        for i in range(len(qEpows) - max([precn,precp + 1,qpow.abs()])):
+        qEpows = [ R(1), qE]
+        for i in range(abs(len(qEpows) - max([precn,precp + 1,qpow.abs()]))):
             qEpows.append(qE * qEpows[-1])
     if len(qEpows) < qpow.abs() + 1:
         for i in range(qpow.abs() + 1 - len(qEpows)):
@@ -328,7 +329,7 @@ def getcoords(E, u, prec = 20, R = None, qE = None, qEpows = None, C = None):
         qEn_times_un = qEn * un
         first_sum = qEn_times_un/(1-qEn_times_un)**2
         second_sum = first_sum**2 * (1 - qEn_times_un)
-        den_un = 1- qEn/un
+        den_un = 1 - qEn/un
         den_un_2 = den_un ** 2
         qEn_over_un_den_un_2 = qEn/(un * den_un_2)
         rat = qEn/(1-qEn)**2
@@ -375,7 +376,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec+7))**3/Delta.q_expansion(prec+7)
-    qE =  (1/j).power_series().reverse()(R(1/jE))
+    qE =  j.inverse().power_series().reverse()(R(1/jE))
     sk = lambda q,k,pprec: sum( [n**k*q**n/(1-q**n) for n in range(1,pprec+1)] )
     n = qE.valuation()
     precp = ((prec+4)/n).floor() + 2;
@@ -383,7 +384,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     tate_a6 = (tate_a4 - 7 * sk(qE,5,precp) )/12
     Eq = EllipticCurve([R(1),R(0),R(0),tate_a4,tate_a6])
 
-    C2 = (Eq.c4() * R(E.c6())) / (Eq.c6() * R(E.c4()))
+    C2 = (Eq.c6() * R(E.c4())) / (Eq.c4() * R(E.c6()))
     C = our_sqrt(R(C2),R) #.square_root()
     s = (C * R(E.a1()) -R(1))/R(2)
     r = (C**2*R(E.a2()) +s +s**2)/R(3)
@@ -1062,7 +1063,10 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
 
     if optimize_through_magma:
         from sage.interfaces.magma import magma
-        Fm = magma.NumberField(F.gen().minpoly())
+        if F.gen().minpoly().degree() == 1:
+            Fm = magma.RationalsAsNumberField()
+        else:
+            Fm = magma.NumberField(F.gen().minpoly())
         if len(S) == len(F.real_places()):
             Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), Fm.RealPlaces())
             return_ans = True
@@ -1157,7 +1161,10 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
             if passed:
                 if optimize_through_magma:
                     from sage.interfaces.magma import magma
-                    Fm = magma.NumberField(F.gen().minpoly())
+                    if F.gen().minpoly().degree() == 1:
+                        Fm = magma.RationalsAsNumberField()
+                    else:
+                        Fm = magma.NumberField(F.gen().minpoly())
                     Bm = magma.QuaternionAlgebra(Fm,sage_F_elt_to_magma(Fm,a),sage_F_elt_to_magma(Fm,b)).OptimizedRepresentation()
                     a,b = Bm.StandardForm(nvals = 2)
                     a = magma_F_elt_to_sage(F,a,magma)
@@ -1249,7 +1256,7 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
                 return a*u
     assert 0,'Signs not compatible'
 
-def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None):
+def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None, qEpows = None):
     p = J.parent().prime()
     if prec is None:
         prec = J.parent().precision_cap()
@@ -1259,7 +1266,10 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     hK = K.class_number()
     Eloc = E.change_ring(local_embedding)
     # Tate parameter
-    qE = tate_parameter(Eloc,QQp)
+    if qEpows is None:
+        qE = tate_parameter(Eloc,QQp)
+    else:
+        qE = qEpows[1]
 
     valqE = QQ(qE.valuation())
     numqE,denqE = valqE.numerator(),valqE.denominator()
@@ -1273,10 +1283,11 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
         twopowlist = [2, 1, QQ(1)/QQ(2)]
     HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
     # Precalculate powers of qE
-    qEpows = [Cp(1)]
     precp = max((prec/valqE).floor() + 4, ((prec+4)/valqE).floor() + 2)
-    for i in range(precp):
-        qEpows.append( qE * qEpows[-1])
+    if qEpows is None:
+        qEpows = [Cp(1)]
+        for i in range(precp):
+            qEpows.append( qE * qEpows[-1])
 
     CEloc,_ = get_C_and_C2(Eloc,qEpows,Cp,precp)
     EH = E.change_ring(HCF)

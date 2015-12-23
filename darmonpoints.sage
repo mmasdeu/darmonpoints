@@ -200,8 +200,8 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                         magma.quit()
                     return G
             eisenstein_constant = -ZZ(E.reduction(ell).count_points())
-            fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,eisenstein_constant),outfile)
-            fwrite('exponent = %s'%nn,outfile)
+            fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,eisenstein_constant), outfile)
+            fwrite('exponent = %s'%nn, outfile)
             phiE = Coh.get_cocycle_from_elliptic_curve(E, sign = sign_at_infinity)
             if hasattr(E,'ap'):
                 sign_ap = E.ap(P)
@@ -285,7 +285,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         local_embedding = Qp(p,working_prec)
         twopowlist = [4, 3, 2, 1, 1/2, 3/2, 1/3, 2/3, 1/4, 3/4, 5/2, 4/3]
 
-    known_multiple = eisenstein_constant * nn
+    known_multiple = nn # * eisenstein_constant # It seems that we are not getting it with present algorithm.
     while known_multiple % p == 0:
         known_multiple = ZZ(known_multiple / p)
 

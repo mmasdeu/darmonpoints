@@ -179,7 +179,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         assert self.has_quaternion_rep
         return self.parent().embed(self.quaternion_rep,prec)
 
-    def conjugate_by(self, wp):
+    def conjugate_by(self, w):
         word_rep = None
         quat_rep = None
         if self.has_word_rep:
@@ -187,16 +187,16 @@ class ArithGroupElement(MultiplicativeGroupElement):
                 return self
             elif len(self.word_rep) == 1:
                 i, a = self.word_rep[0]
-                return self.parent()(wp**-1 * self.parent().gen(i).quaternion_rep * wp) ** a
+                return self.parent()(w**-1 * self.parent().gen(i).quaternion_rep * w) ** a
             else:
                 word_rep = []
                 for i,a in self.word_rep:
                     if a > 0:
-                        word_rep += self.parent().gen(i).conjugate_by(wp).word_rep * a
+                        word_rep += self.parent().gen(i).conjugate_by(w).word_rep * a
                     else:
-                        word_rep += (self.parent().gen(i)**-1).conjugate_by(wp).word_rep * (-a)
+                        word_rep += (self.parent().gen(i)**-1).conjugate_by(w).word_rep * (-a)
         if self.has_quaternion_rep:
-            quat_rep = wp**-1 * self.quaternion_rep * wp
+            quat_rep = w**-1 * self.quaternion_rep * w
         return self.parent().element_class(self.parent(), word_rep = word_rep, quaternion_rep = quat_rep, check = False)
 
     def is_trivial_in_abelianization(self):
