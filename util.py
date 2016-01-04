@@ -772,17 +772,20 @@ def reduce_word(word):
     Simplifies the given word by cancelling out [g^a, g^b] -> [g^(a+b)],
     and [g^0] -> []
     '''
-    new_word = [(g,a) for g,a in word]
+    new_word = [(g,a) for g,a in word if a != 0]
     old_word = []
-    while len(new_word) != len(old_word):
+    changed = True
+    while changed:
+        changed = False
         old_word = new_word
-        for i in range(len(old_word)-1):
+        for i in range(len(old_word) - 1):
             if old_word[i][0] == old_word[i+1][0]:
-                new_exp = old_word[i][1]+old_word[i+1][1]
+                changed = True
+                new_exp = old_word[i][1] + old_word[i+1][1]
                 if new_exp != 0:
-                    new_word = old_word[:i]+[(old_word[i][0],new_exp)]+old_word[i+2:]
+                    new_word = old_word[:i] + [(old_word[i][0],new_exp)] + old_word[i+2:]
                 else:
-                    new_word = old_word[:i]+old_word[i+2:]
+                    new_word = old_word[:i] + old_word[i+2:]
                 break
     return new_word
 

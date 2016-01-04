@@ -315,7 +315,7 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
     raise ValueError('Unrecognized')
 
 @parallel
-def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None):
+def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3):
     F = Lpmat.parent().base_ring()
     p = F.prime()
     x = QQ['x'].gen()
@@ -361,7 +361,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             j1, j2, j3 = j1n, j2n, j3n
 
             if cheatjs is not None:
-                if all([(u-v).valuation() - u.valuation() > 3 for u,v in zip([j1,j2,j3],cheatjs)]):
+                if all([(u-v).valuation() - u.valuation() > minval for u,v in zip([j1,j2,j3],cheatjs)]):
                     return (oq1,oq2,oq3,1)
             else:
                 # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
@@ -376,6 +376,10 @@ def euler_factor_twodim(p,T):
     x = QQ['x'].gen()
     t = T.trace()
     n = T.determinant()
+    return x**4 - t*x**3 + (2*p+n)*x**2 - p*t*x + p*p
+
+def euler_factor_twodim_tn(p,t,n):
+    x = QQ['x'].gen()
     return x**4 - t*x**3 + (2*p+n)*x**2 - p*t*x + p*p
 
 def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_poly = None, working_prec = None, recognize_invariants = True, **kwargs):
