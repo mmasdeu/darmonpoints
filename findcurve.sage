@@ -220,12 +220,12 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
                 break
         if not found:
             continue
-        # try:
-        qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
-        qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
-        # except Exception as e:
-        #     ret_vals.append('Problem with integration: %s'%str(e.message))
-        #     continue
+        try:
+            qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
+            qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
+        except Exception as e:
+            ret_vals.append('Problem with integration: %s'%str(e.message))
+            continue
 
         qE = qE1/qE2
         qE = qE.add_bigoh(prec + qE.valuation())
