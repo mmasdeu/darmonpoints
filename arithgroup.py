@@ -1120,7 +1120,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         Hm,GtoHm = self.magma.ReduceGenerators(G,nvals = 2)
         r = self.F.gen()
         i,j,k = self.B.gens()
-        chunk_length = 20
+        chunk_length = 1
         ngens = len(gens)
         assert ngens == len(G.gens())
         nchunks = (QQ(ngens)/QQ(chunk_length)).ceil()
