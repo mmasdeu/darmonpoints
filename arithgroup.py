@@ -33,6 +33,55 @@ from sage.rings.infinity import Infinity
 from homology_abstract import HomologyGroup
 oo = Infinity
 
+def _get_word_jv(G,delta):
+    B = delta.parent()
+    CC = ComplexField(300)
+    P = CC(90)/CC(100) * CC.gen()
+    emb = G.get_archimedean_embedding(300)
+    ngquats = G.ngquats
+    gammas = G.gquats
+    embgammas = G.embgquats
+    pi = G.pi
+    findex = G.findex
+    fdargs = G.fdargs
+    ans = []
+    oldji = 0
+    while delta != B(1):
+        if delta == B(-1):
+            if 'P' not in G._grouptype:
+                ans += G.minus_one_long
+            delta = B(1)
+            continue
+        z0 = act_flt_in_disc(emb(delta),CC(0),P)
+        az0 = CC(z0).argument()
+        if az0 < fdargs[0]:
+            az0 += 2*pi
+        if az0 > fdargs[-1]:
+            ji = findex[0]
+            embgg = embgammas[ji]
+            if act_flt_in_disc(embgg,z0,P).abs() > z0.abs():
+                ji = findex[1]
+                embgg = embgammas[ji]
+        else:
+            i = next((j for j,fda in enumerate(fdargs) if az0 < fda))
+            ji = findex[i+1]
+            embgg = embgammas[ji]
+        z0 = act_flt_in_disc(embgg,CC(0),P)
+        z0abs = z0.abs()
+        if ji == -oldji:
+            ji = next((j for j in range(-ngquats,0) + range(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()),None)
+        if ji > 0:
+            gg = gammas[ji]
+            newcs = G.translate[ji]
+        else:
+            gg = gammas[-ji]**-1
+            newcs = [-o for o in reversed(G.translate[-ji])]
+        delta = gg * delta
+        oldji = ji
+        ans = ans + newcs
+    return ans
+
+
 class ArithGroup_generic(AlgebraicGroup):
     def __init__(self):
         if self._compute_presentation:
@@ -541,11 +590,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
     def get_word_rep(self,delta): # rationalquaternion
         if not self._is_in_order(delta):
             raise RuntimeError('delta (= %s) is not in order!'%delta)
-        try:
-            c = self._get_word_recursive(delta,0)
-        except RuntimeError:
-            # verbose('!! Resorted to Magma, indicates a bug (delta = %s,norm = %s)!!'%(delta,delta.reduced_norm()))
-            c = self.__magma_word_problem_jv(delta)
+        c = _get_word_jv(self, delta)
         tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)] # shorten_word(c)
         if 'P' not in self._grouptype:
             delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
@@ -553,57 +598,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 tmp.extend(self.minus_one)
                 delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
                 assert delta1 == delta
-        return tmp
-
-    def _get_word_recursive(self,delta,oldji,depth = 0):
-        if depth > 200:
-            raise RuntimeError('Reached max depth of 200')
-        B = delta.parent()
-        if delta == B(1):
-            return []
-        elif delta == B(-1):
-            if 'P' not in self._grouptype:
-                return self.minus_one_long
-            else:
-                return []
-        else:
-            CC = ComplexField(300)
-            P = CC(91)/CC(100) * CC.gen()
-            emb = self.get_archimedean_embedding(300)
-            ngquats = self.ngquats
-            gammas = self.gquats
-            embgammas = self.embgquats
-            pi = self.pi
-
-            findex = self.findex
-            fdargs = self.fdargs
-            z0 = act_flt_in_disc(emb(delta),CC(0),P)
-            az0 = CC(z0).argument()
-            if az0 < fdargs[0]:
-                az0 += 2*pi
-            if az0 > fdargs[-1]:
-                ji = findex[0]
-                embgg = embgammas[ji]
-                if act_flt_in_disc(embgg,z0,P).abs() >= z0.abs():
-                    ji = findex[1]
-                    embgg = embgammas[ji]
-            else:
-                i = next((j for j,fda in enumerate(fdargs) if az0 <= fda))
-                ji = findex[i + 1]
-                embgg = embgammas[ji]
-
-            z0 = act_flt_in_disc(embgg,CC(0),P)
-            z0abs = z0.abs()
-            if ji == -oldji:
-                ji = next((j for j in range(-ngquats,0) + range(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
-
-            gg = gammas[ji]
-            newcs = self.translate[ji]
-            olddelta = delta
-            delta = gg * delta
-            oldji = ji
-            tmp = newcs + self._get_word_recursive(delta,oldji,depth = depth + 1)
-            return tmp
+        return reduce_word(tmp)
 
     def __magma_word_problem_jv(self,x):
         r'''
@@ -630,7 +625,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 raise ValueError('x (=%s) should be a list of length 4'%x)
             x = quaternion_to_magma_quaternion(self._B_magma,self.B(sum(a*b for a,b in zip(self.Obasis,x))))
         x_magma = self._G_magma(x)
-        #verbose('Calling _magma_word_problem_jv with x = %s'%x)
         V = self.magma.WordProblem(x_magma).ElementToSequence()._sage_()
         delta1 = self.B(1)
         for v in V:
@@ -1243,7 +1237,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             while True:
                 d = R(1)
                 i0 = None
-                #verbose('gammaz = %s'%gammaz)
                 for i,b in enumerate(boundary):
                     d1 = sum((o**2 for o in (gammaz - b.center).coefficient_tuple()))/b.radius**2
                     if d >= (1+eps)*d1:
@@ -1252,14 +1245,11 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                         # break # This might yield longer words, but should be faster!
                 if i0 is None:
                     break
-                # gammainv = prod((self.Ugens[o] for o in self._simplification_iso[i0]),1) * gammainv
                 gammaz = act_H3(boundary[i0].mat,gammaz)
                 deltaword.append(i0+1)
-                #verbose('deltaword = %s'%deltaword)
                 lengthw += 1
             correct = ( -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 5.0)
             if not correct:
-                # verbose('Error in word problem from Aurel 1?')
                 verbose('Error in word problem:')
                 verbose('gamma = %s'%gamma)
                 verbose('err = %s'%-(sum((o**2 for o in gammaz.coefficient_tuple()))))
@@ -1268,11 +1258,9 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         try:
             c = sum((list(self._simplification_iso[o-1]) for o in deltaword),[])
         except IndexError:
-            raise RuntimeError('Error in word problem from Aurel 1')
+            raise RuntimeError('Error in word problem from Aurel 2')
         tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)]
-        ans = reduce_word(tmp)
-        return ans
-
+        return reduce_word(tmp)
 
     def _kleinianmatrix(self,gamma):
         B = gamma.parent()
@@ -1302,11 +1290,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
     def get_word_rep_jv(self,delta):
         if not self._is_in_order(delta):
             raise RuntimeError('delta (= %s) is not in order!'%delta)
-        try:
-            c = self._get_word_recursive_jv(delta,0)
-        except RuntimeError:
-            verbose('!! Resorted to Magma, indicates a bug (delta = %s,norm = %s)!!'%(delta,delta.reduced_norm()))
-            c = self.__magma_word_problem_jv(delta)
+        c = _get_word_jv(self, delta)
         tmp = [(g-1,len(list(a))) if g > 0 else (-g-1,-len(list(a))) for g,a in groupby(c)] # shorten_word(c)
         if 'P' not in self._grouptype:
             delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
@@ -1314,57 +1298,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 tmp.extend(self.minus_one)
                 delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
                 assert delta1 == delta
-        return tmp
-
-    def _get_word_recursive_jv(self,delta,oldji,depth = 0):
-        if depth > 1000:
-            raise RuntimeError('Reached max depth of 1000')
-        B = delta.parent()
-        if delta == B(1):
-            return []
-        elif delta == B(-1):
-            if 'P' not in self._grouptype:
-                return self.minus_one_long
-            else:
-                return []
-        else:
-            CC = ComplexField(300)
-            P = CC(91)/CC(100) * CC.gen()
-            emb = self.get_archimedean_embedding(300)
-            ngquats = self.ngquats
-            gammas = self.gquats
-            embgammas = self.embgquats
-            pi = self.pi
-
-            findex = self.findex
-            fdargs = self.fdargs
-            z0 = act_flt_in_disc(emb(delta),CC(0),P)
-            az0 = CC(z0).argument()
-            if az0 < fdargs[0]:
-                az0 += 2*pi
-            if az0 > fdargs[-1]:
-                ji = findex[0]
-                embgg = embgammas[ji]
-                if act_flt_in_disc(embgg,z0,P).abs() >= z0.abs():
-                    ji = findex[1]
-                    embgg = embgammas[ji]
-            else:
-                i = next((j for j,fda in enumerate(fdargs) if az0 <= fda))
-                ji = findex[i + 1]
-                embgg = embgammas[ji]
-
-            z0 = act_flt_in_disc(embgg,CC(0),P)
-            z0abs = z0.abs()
-            if ji == -oldji:
-                ji = next((j for j in range(-ngquats,0) + range(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs),None)
-
-            gg = gammas[ji]
-            newcs = self.translate[ji]
-            olddelta = delta
-            delta = gg * delta
-            oldji = ji
-            tmp = newcs + self._get_word_recursive_jv(delta,oldji,depth = depth + 1)
-            return tmp
+        return reduce_word(tmp)
 
     def __magma_word_problem_jv(self,x):
         r'''
@@ -1390,7 +1324,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 raise ValueError('x (=%s) should be a list of length 4'%x)
             x = quaternion_to_magma_quaternion(self._B_magma,self.B(sum(a*b for a,b in zip(self.Obasis,x))))
         x_magma = self._G_magma(x)
-        #verbose('Calling _magma_word_problem_jv with x = %s'%x)
         V = self.magma.WordProblem(x_magma).ElementToSequence()._sage_()
         delta1 = self.B(1)
         for v in V:
