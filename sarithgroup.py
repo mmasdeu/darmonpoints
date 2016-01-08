@@ -196,8 +196,8 @@ class BigArithGroup_class(AlgebraicGroup):
         if not self.use_shapiro():
             fwrite('R(p) with basis %s'%basis_data_p,outfile)
             self.Gpn.get_Up_reps = self.get_Up_reps
-        self.Gn.wp = self.wp()
-        self.Gpn.wp = self.wp()
+        self.Gn.wp = lambda : self.wp()
+        self.Gpn.wp = lambda : self.wp()
         verbose('Done initializing arithmetic groups')
         verbose('Done initialization of BigArithmeticGroup')
 
@@ -353,11 +353,12 @@ class BigArithGroup_class(AlgebraicGroup):
 
     @cached_method
     def get_Up_reps(self):
+        wp = self.wp()
         if self.F == QQ and self.discriminant == 1:
-            lam = -self.wp().determinant()
+            lam = -wp.determinant()
         else:
-            lam = -self.wp().reduced_norm()
-        tmp = [ lam * o**-1 * self.wp()**-1 for o in self.get_BT_reps()[1:]]
+            lam = -wp.reduced_norm()
+        tmp = [ lam * o**-1 * wp**-1 for o in self.get_BT_reps()[1:]]
         for o in tmp:
             set_immutable(o)
         return tmp
@@ -591,12 +592,12 @@ class BigArithGroup_class(AlgebraicGroup):
             ans = C(0)
             for g, v in zip(group.gens(), x.values()):
                 if not self.use_shapiro():
-                    ans += C((Gn(self.wp() **-1 * g.quaternion_rep * self.wp()), v))
+                    ans += C((Gn(wp**-1 * g.quaternion_rep * wp), v))
                 else:
                     for a, ti in zip(v.values(), self.coset_reps()):
                         # We are considering a * (g tns t_i)
                         g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep ))
-                        ans += C((Gn(self.wp()**-1 * g0 * self.wp()), a))
+                        ans += C((Gn(wp**-1 * g0 * wp), a))
             return ans
         g = Bsp.hom([vector(C(phig(o))) for o in B.gens()])
         maplist = [f, g]

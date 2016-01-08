@@ -256,7 +256,7 @@ class ArithGroup_generic(AlgebraicGroup):
         if l == oo:
             reps = [self.non_positive_unit()]
         elif l == -oo:
-            reps = [self.wp]
+            reps = [self.wp()]
         else:
             if g0 is None:
                 g0 = self.element_of_norm(l,use_magma = use_magma)
