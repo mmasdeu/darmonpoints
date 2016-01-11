@@ -381,8 +381,11 @@ class BigArithGroup_class(AlgebraicGroup):
                 newEgood.extend([BTEdge(not rev, e * gamma) for e in self.get_BT_reps()[1:]])
         return self.subdivide(newEgood,1-parity,depth - 1)
 
-    @cached_method
     def wp(self):
+        try:
+            return self._wp
+        except AttributeError:
+            pass
         verbose('Finding a suitable wp...')
         if self.F == QQ and self.discriminant == 1:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
@@ -417,12 +420,14 @@ class BigArithGroup_class(AlgebraicGroup):
                         if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False):
                             try:
                                 aa = [ self.Gpn( self.do_tilde(g.quaternion_rep,new_candidate)).word_rep for g in self.Gpn.gens()]
+                                self._wp = new_candidate
                                 return new_candidate
                             except (ValueError, TypeError, AssertionError):
                                 pass
 
             ans.set_immutable()
             assert is_in_Gamma0loc(epsinv * ans, det_condition = False, p = self.p),"Check that epsinv * ans is in Gamma0"
+            self._wp = ans
             return ans
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
@@ -451,6 +456,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     set_immutable(new_candidate)
                     if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.is_in_Gpn_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn_Obasis())) and self.is_in_Gpn_order(new_candidate):
                         verbose('wp = %s'%new_candidate)
+                        self._wp = new_candidate
                         return new_candidate
             raise RuntimeError('Could not find wp')
 
