@@ -381,7 +381,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 newEgood.extend([BTEdge(not rev, e * gamma) for e in self.get_BT_reps()[1:]])
         return self.subdivide(newEgood,1-parity,depth - 1)
 
-    def wp(self):
+    def wp(self, max_iterations = -1):
         try:
             return self._wp
         except AttributeError:
@@ -396,22 +396,22 @@ class BigArithGroup_class(AlgebraicGroup):
                     ans = matrix(QQ,2,2,[0,-1,self.ideal_p,0])
             else:
                 # Follow Atkin--Li
-                from sage.rings.arith import XGCD
+                from sage.rings.arith import xgcd
                 p = self.ideal_p
                 m = self.level
-                g,w,z = XGCD(p,-m)
+                g,w,z = xgcd(p,-m)
                 ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
                 i = 0
                 all_initial = []
                 for t in sorted(range(-8,7)):
-                    g, tinv, k = XGCD(t, -p * m)
+                    g, tinv, k = xgcd(t, -p * m)
                     if g == 1:
                         new_initial =  ans * matrix(QQ,2,2,[t, k, p*m, tinv])
                         all_initial.append(new_initial)
                 for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
                     if i % 50000 == 0:
                         verbose('Done %s iterations'%i)
-                        if i > 0 and i % (50 * 50000) == 0:
+                        if i == max_iterations:
                             raise RuntimeError('Trouble finding wp by enumeration')
                     i += 1
                     for tmp in all_initial:

@@ -55,7 +55,7 @@ import operator
 from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
 from ocmodule import our_adjuster, Sigma0Action
-from sage.rings.arith import XGCD
+from sage.rings.arith import xgcd
 from sage.modules.free_module_element import free_module_element, vector
 from representations import *
 

@@ -33,7 +33,7 @@ import operator
 from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
 from ocmodule import our_adjuster, Sigma0Action
-from sage.rings.arith import XGCD
+from sage.rings.arith import xgcd
 from sage.modules.free_module_element import vector
 from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.modules.vector_rational_dense import Vector_rational_dense
