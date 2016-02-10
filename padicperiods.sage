@@ -348,10 +348,13 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                 assert n_iters < 5
 
             I2c, I4c, I6c, I10c = IC
-            # Get absolute invariants j1, j2, j3
-            j1 = I2c**5 / I10c
-            j2 = I2c**3 * I4c / I10c
-            j3 = I2c**2 * I6c / I10c
+            # # Get absolute invariants j1, j2, j3 OLD ONES, MORE STANDARD
+            # j1 = I2c**5 / I10c
+            # j2 = I2c**3 * I4c / I10c
+            # j3 = I2c**2 * I6c / I10c
+            j1 = I2c**2 / I4c
+            j2 = I2c * I4c / I6c
+            j3 = I4c * I6c / I10c
             j1n = j1.trace() / j1.parent().degree()
             j2n = j2.trace() / j2.parent().degree()
             j3n = j3.trace() / j3.parent().degree()
@@ -365,7 +368,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                     return (oq1,oq2,oq3,1)
             else:
                 # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
-                return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.85,prec = prec), 1, 1, 1)
+                return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.9,prec = prec), 1, 1, 1)
         except ValueError:
             pass
         except RuntimeError:
