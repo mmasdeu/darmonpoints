@@ -481,7 +481,7 @@ class ArithCoh(CohomologyGroup):
                 col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
                 return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self(0))
 
-    def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 3, pol = None, return_all = False):
+    def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 5, pol = None, return_all = False):
         F = self.group().base_ring()
         if F == QQ:
             F = NumberField(PolynomialRing(QQ,'x').gen(),names='r')
@@ -527,6 +527,11 @@ class ArithCoh(CohomologyGroup):
                         Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
                     except (RuntimeError,TypeError) as e:
                         verbose('Skipping qq (=%s) because Hecke matrix could not be computed...'%qq.gens_reduced()[0])
+                        continue
+                    except KeyboardInterrupt:
+                        verbose('Skipping qq (=%s) by user request...'%qq.gens_reduced()[0])
+                        num_hecke_operators += 1
+                        sleep(1)
                         continue
                     verbose('Computed hecke matrix at qq = %s'%qq)
                     old_component_list = component_list

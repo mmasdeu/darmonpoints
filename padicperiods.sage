@@ -376,10 +376,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
     return 'Nope'
 
 def euler_factor_twodim(p,T):
-    x = QQ['x'].gen()
-    t = T.trace()
-    n = T.determinant()
-    return x**4 - t*x**3 + (2*p+n)*x**2 - p*t*x + p*p
+    return euler_factor_towdim_tn(p, T.trace(), T.determinant())
 
 def euler_factor_twodim_tn(p,t,n):
     x = QQ['x'].gen()
