@@ -58,6 +58,7 @@ from ocmodule import our_adjuster, Sigma0Action
 from sage.rings.arith import xgcd
 from sage.modules.free_module_element import free_module_element, vector
 from representations import *
+from time import sleep
 
 def find_newans(Coh,glocs,ti):
     gens = Coh.group().gens()
