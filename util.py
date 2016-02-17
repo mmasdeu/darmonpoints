@@ -1,5 +1,5 @@
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.all import ZZ,QQ,algdep,kronecker_symbol,Qp,RR,CC,RealField
+from sage.rings.all import ZZ,QQ,Qp,RR,CC,RealField
 from sage.matrix.all import matrix,Matrix
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
@@ -10,7 +10,7 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
 from sage.rings.arith import next_prime
-from sage.arith.all import divisors
+from sage.arith.all import divisors, algdep, kronecker_symbol
 from sage.interfaces.gp import gp
 from sage.libs.pari.pari_instance import pari
 from sage.rings.infinity import Infinity

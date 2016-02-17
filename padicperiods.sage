@@ -1,5 +1,5 @@
 from itertools import product
-from sage.arith.misc import algdep
+from sage.arith.all import algdep
 from util import *
 
 # Theta functions of (25) in Teitelbaum's
