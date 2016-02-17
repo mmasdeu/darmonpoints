@@ -314,8 +314,7 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
                     return (I2, I4, I6, I10)
     raise ValueError('Unrecognized')
 
-@parallel
-def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3):
+def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None):
     F = Lpmat.parent().base_ring()
     p = F.prime()
     x = QQ['x'].gen()
@@ -348,32 +347,68 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                 assert n_iters < 5
 
             I2c, I4c, I6c, I10c = IC
-            # # Get absolute invariants j1, j2, j3 OLD ONES, MORE STANDARD
-            # j1 = I2c**5 / I10c
-            # j2 = I2c**3 * I4c / I10c
-            # j3 = I2c**2 * I6c / I10c
-            j1 = I2c**2 / I4c
-            j2 = I2c * I4c / I6c
-            j3 = I4c * I6c / I10c
-            j1n = j1.trace() / j1.parent().degree()
-            j2n = j2.trace() / j2.parent().degree()
-            j3n = j3.trace() / j3.parent().degree()
-            assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
-            assert (j2 - j2n).valuation() - j2.valuation() > 5,'j2 = %s, j2n = %s'%(j2,j2n)
-            assert (j3 - j3n).valuation() - j3.valuation() > 5,'j3 = %s, j3n = %s'%(j3,j3n)
-            j1, j2, j3 = j1n, j2n, j3n
+            if list_I10 is None:
+                # # Get absolute invariants j1, j2, j3 OLD ONES, MORE STANDARD
+                # j1 = I2c**5 / I10c
+                # j2 = I2c**3 * I4c / I10c
+                # j3 = I2c**2 * I6c / I10c
+                j1 = I2c**2 / I4c
+                j2 = I2c * I4c / I6c
+                j3 = I4c * I6c / I10c
+                j1n = j1.trace() / j1.parent().degree()
+                j2n = j2.trace() / j2.parent().degree()
+                j3n = j3.trace() / j3.parent().degree()
+                assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
+                assert (j2 - j2n).valuation() - j2.valuation() > 5,'j2 = %s, j2n = %s'%(j2,j2n)
+                assert (j3 - j3n).valuation() - j3.valuation() > 5,'j3 = %s, j3n = %s'%(j3,j3n)
+                j1, j2, j3 = j1n, j2n, j3n
 
-            if cheatjs is not None:
-                if all([(u-v).valuation() - u.valuation() > minval for u,v in zip([j1,j2,j3],cheatjs)]):
-                    return (oq1,oq2,oq3,1)
+                if cheatjs is not None:
+                    if all([(u-v).valuation() - u.valuation() > minval for u,v in zip([j1,j2,j3],cheatjs)]):
+                        return (oq1,oq2,oq3,1)
+                else:
+                    # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
+                    return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.9,prec = prec), 1, 1, 1)
             else:
-                # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
-                return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.9,prec = prec), 1, 1, 1)
+                j1 = (I2c**5 / I10c) * Pgen**I10c.valuation()
+                j1n = j1.trace() / j1.parent().degree()
+                assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
+                j1 = j1n
+                for I10 in list_I10:
+                    try:
+                        I2c_list = our_nroot( j1c * I10, 5, return_all = True)
+                    except ValueError:
+                        continue
+                    for I2c in I2c_list:
+                        try:
+                            return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = 0.9,prec = prec), 1, 1, 1)
+                        except ValueError:
+                            continue
         except ValueError:
             pass
         except RuntimeError:
             pass
     return 'Nope'
+
+def find_igusa_invariants(a, b, T, embedding, outfile = None, list_I10 = None, Pgen = None, N = 6):
+    fwrite('Trying to recognize invariants...',outfile)
+    Tlist = []
+    fT = T.charpoly()
+    fT_trace = -fT.list()[1]
+    for x0,y,z in product(range(-N, N+1), range(-N, N+1), range(-N, N+1)):
+        t = fT_trace - x0
+        if x0*t - y*z == fT.list()[0]:
+            M = matrix(ZZ,2,2,[x0,y,z,t])
+            assert fT == M.charpoly()
+            Tlist.append(M)
+    Tlist = sorted(Tlist, key = lambda x: max(x[0,0].abs(), x[0,1].abs(), x[1,0].abs(), x[1,1].abs()))
+    for ii, tt in enumerate(Tlist):
+        fwrite('Doing matrix %s / %s ( = %s)'%(ii,len(Tlist),tt.list()),outfile)
+        Lp = a + b * tt
+        inp_vec = [(Lp, ordmat, prec, Pring, None, embedding, 3, list_I10, Pgen) for ordmat in all_possible_ordmats(Lp,20)]
+        for inpt, outt in parallel(find_igusa_invariants_from_L_inv)(inp_vec):
+            if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt:
+                fwrite('%s %s %s'%(str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
 
 def euler_factor_twodim(p,T):
     return euler_factor_towdim_tn(p, T.trace(), T.determinant())
@@ -382,7 +417,7 @@ def euler_factor_twodim_tn(p,t,n):
     x = QQ['x'].gen()
     return x**4 - t*x**3 + (2*p+n)*x**2 - p*t*x + p*p
 
-def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_poly = None, working_prec = None, recognize_invariants = True, **kwargs):
+def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_poly = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, **kwargs):
     from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
     from sarithgroup import BigArithGroup
     from homology import lattice_homology_cycle
@@ -467,7 +502,13 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None, timeout = timeout, grouptype = grouptype)
     Coh = ArithCoh(G)
     fwrite('Computed Cohomology group',outfile)
-    all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, bound = hecke_bound, return_all = True)
+    if return_all:
+        all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, bound = hecke_bound, return_all = True)
+    else:
+        try:
+            all_twodim_cocycles = [ Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, bound = hecke_bound, return_all = False) ]
+        except ValueError:
+            all_twodim_cocycles = []
     if len(all_twodim_cocycles) == 0:
         fwrite('Group not attached to surface',outfile)
         fwrite('DONE WITH COMPUTATION',outfile)
@@ -530,25 +571,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         fwrite('Lp = %s'%str(Lp.list()), outfile)
 
         if recognize_invariants:
-            fwrite('Trying to recognize invariants...',outfile)
-            Tlist = []
-            fT = T.charpoly()
-            fT_trace = -fT.list()[1]
-            for x0,y,z in product(range(-6,7), range(-6,7), range(-6,7)):
-                t = fT_trace - x0
-                if x0*t - y*z == fT.list()[0]:
-                    M = matrix(ZZ,2,2,[x0,y,z,t])
-                    assert fT == M.charpoly()
-                    Tlist.append(M)
-            Tlist = sorted(Tlist, key = lambda x: max(x[0,0].abs(), x[0,1].abs(), x[1,0].abs(), x[1,1].abs()))
-            phi = G._F_to_local
-            for ii, tt in enumerate(Tlist):
-                fwrite('Doing matrix %s / %s ( = %s)'%(ii,len(Tlist),tt.list()),outfile)
-                Lp = a + b * tt
-                inp_vec = [(Lp, ordmat, prec, Pring, None, phi) for ordmat in all_possible_ordmats(Lp,20)]
-                for inpt, outt in find_igusa_invariants_from_L_inv(inp_vec):
-                    if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt:
-                        fwrite('%s %s %s'%(str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
+            find_igusa_invariants(a, b, T, embedding = G._F_to_local, outfile = outfile, list_I10 = list_I10, Pgen = G._F_to_local(Pgen))
     fwrite('DONE WITH COMPUTATION', outfile)
     return('DONE')
 
