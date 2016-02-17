@@ -12,11 +12,9 @@ from sage.matrix.constructor import Matrix,matrix
 from sage.misc.cachefunc import cached_method
 from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Qp,Zp,Zmod
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Qp,Zp,Zmod, gcd, Infinity
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.infinity import Infinity
-from sage.rings.arith import GCD
 from util import *
 import os
 from ocmodule import OCVn

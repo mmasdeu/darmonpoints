@@ -35,12 +35,12 @@ from sage.matrix.constructor import Matrix,matrix
 from sage.misc.cachefunc import cached_method
 from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Qp,Zp,Zmod
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.rings.infinity import Infinity
-from sage.rings.arith import GCD, LCM
+from sage.arith.all import gcd, lcm xgcd
 from util import *
 import os
 from ocmodule import OCVn
@@ -55,7 +55,6 @@ import operator
 from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
 from ocmodule import our_adjuster, Sigma0Action
-from sage.rings.arith import xgcd
 from sage.modules.free_module_element import free_module_element, vector
 from representations import *
 from time import sleep
@@ -99,7 +98,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
         phi0 = phi0.plus_part()
     else:
         phi0 = phi0.minus_part()
-    phi0 = 1/GCD([val.moment(0) for val in phi0.values()]) * phi0
+    phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0
     if progress_bar:
         progress_bar = update_progress
     else:
@@ -552,7 +551,7 @@ class ArithCoh(CohomologyGroup):
                         flist = []
                         for row0 in good_components[0][0].matrix().rows():
                             col0 = [QQ(o) for o in row0.list()]
-                            clcm = LCM([o.denominator() for o in col0])
+                            clcm = lcm([o.denominator() for o in col0])
                             col0 = [ZZ(clcm * o ) for o in col0]
                             flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
                         return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
@@ -570,7 +569,7 @@ class ArithCoh(CohomologyGroup):
                 flist = []
                 for row0 in K.matrix().rows():
                     col0 = [QQ(o) for o in row0.list()]
-                    clcm = LCM([o.denominator() for o in col0])
+                    clcm = lcm([o.denominator() for o in col0])
                     col0 = [ZZ(clcm * o ) for o in col0]
                     flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
                 ans.append((flist,[(ell, o.restrict(K)) for ell, o in hecke_data]))
@@ -579,7 +578,7 @@ class ArithCoh(CohomologyGroup):
             flist = []
             for row0 in good_components[0][0].matrix().rows():
                 col0 = [QQ(o) for o in row0.list()]
-                clcm = LCM([o.denominator() for o in col0])
+                clcm = lcm([o.denominator() for o in col0])
                 col0 = [ZZ(clcm * o ) for o in col0]
                 flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
             return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]

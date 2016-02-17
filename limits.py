@@ -5,11 +5,11 @@ from functools import wraps
 import os.path
 import gc,errno,signal,os,types
 from util import *
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,Zmod,gcd,divisors
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,Zmod
 from sage.groups.generic import discrete_log
 from sage.all import prod
 from random import shuffle
-from sage.rings.arith import GCD
+from sage.arith.all import gcd, divisors
 
 ##########################################################################################
 # now the new functions that we need...they follow pretty close the article we're writting

@@ -13,7 +13,7 @@ from sage.structure.parent import Parent
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ,ZZ,Qp,Zmod
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp,Zmod
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
 from collections import defaultdict
@@ -396,7 +396,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     ans = matrix(QQ,2,2,[0,-1,self.ideal_p,0])
             else:
                 # Follow Atkin--Li
-                from sage.rings.arith import xgcd
+                from sage.arith.all import xgcd
                 p = self.ideal_p
                 m = self.level
                 g,w,z = xgcd(p,-m)
@@ -650,7 +650,6 @@ class BigArithGroup_class(AlgebraicGroup):
         return ans
 
     def get_pseudo_orthonormal_homology(self, cocycles, hecke_data = None):
-        from sage.rings.arith import GCD
         if hecke_data is None:
             hecke_data = []
         ker = self.get_homology_kernel(hecke_data = tuple(hecke_data))

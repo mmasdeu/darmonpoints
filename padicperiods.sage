@@ -1,4 +1,5 @@
 from itertools import product
+from sage.arith.misc import algdep
 from util import *
 
 # Theta functions of (25) in Teitelbaum's
@@ -376,7 +377,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                 j1 = j1n
                 for I10 in list_I10:
                     try:
-                        I2c_list = our_nroot( j1c * I10, 5, return_all = True)
+                        I2c_list = our_nroot( j1 * I10, 5, return_all = True)
                     except ValueError:
                         continue
                     for I2c in I2c_list:

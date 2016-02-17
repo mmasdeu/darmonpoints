@@ -17,15 +17,12 @@ from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRi
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sigma0 import Sigma0,Sigma0ActionAdjuster
-from sage.rings.infinity import Infinity
-from sage.rings.arith import GCD
 from util import *
 import os
 from ocmodule import OCVn
 from sage.misc.persist import db,db_save
 from sage.schemes.plane_curves.constructor import Curve
 from sage.parallel.decorate import fork,parallel
-oo = Infinity
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 from sage.categories.action import Action
@@ -33,7 +30,6 @@ import operator
 from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
 from ocmodule import our_adjuster, Sigma0Action
-from sage.rings.arith import xgcd
 from sage.modules.free_module_element import vector
 from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.modules.vector_rational_dense import Vector_rational_dense
