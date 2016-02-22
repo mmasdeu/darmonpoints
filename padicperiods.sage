@@ -323,9 +323,12 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
     deg = base.degree()
     logmat = ordmat * Lpmat
     oq1, oq2, oq3 = [ ordmat[1,0] + ordmat[1,1], ordmat[0,0] + ordmat[0,1], -ordmat[0,1]]
-    q10 = (logmat[1,0] + logmat[1,1]).exp()
-    q20 = (logmat[0,0] + logmat[0,1]).exp()
-    q30 = (-logmat[0,1]).exp()
+    try:
+        q10 = (logmat[1,0] + logmat[1,1]).exp()
+        q20 = (logmat[0,0] + logmat[0,1]).exp()
+        q30 = (-logmat[0,1]).exp()
+    except ValueError:
+        return 'Nope'
     for s1, s2, s3 in product(F.teichmuller_system(),repeat = 3):
         try:
             q1 = K(s1 * q10 * p**oq1)
@@ -371,10 +374,10 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                     # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
                     return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.9,prec = prec), 1, 1, 1)
             else:
-                j1 = (I2c**5 / I10c) * Pgen**I10c.valuation()
+                j1 = (I2c**5 / I10c)
                 j1n = j1.trace() / j1.parent().degree()
                 assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
-                j1 = j1n
+                j1 = j1n * Pgen**I10c.valuation()
                 for I10 in list_I10:
                     try:
                         I2c_list = our_nroot( j1 * I10, 5, return_all = True)
