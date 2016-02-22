@@ -396,6 +396,8 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
 
 def find_igusa_invariants(a, b, T, embedding, outfile = None, list_I10 = None, Pgen = None, N = 6):
     fwrite('Trying to recognize invariants...',outfile)
+    Pring = embedding.domain()
+    prec = a.parent().precision_cap()
     Tlist = []
     fT = T.charpoly()
     fT_trace = -fT.list()[1]
