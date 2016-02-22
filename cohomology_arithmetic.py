@@ -40,7 +40,7 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.rings.infinity import Infinity
-from sage.arith.all import gcd, lcm xgcd
+from sage.arith.all import gcd, lcm, xgcd
 from util import *
 import os
 from ocmodule import OCVn
