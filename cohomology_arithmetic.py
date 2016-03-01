@@ -310,6 +310,7 @@ class ArithCoh(CohomologyGroup):
         M = matrix(R,dim,dim,0)
         for j,cocycle in enumerate(self.gens()):
             # Construct column j of the matrix
+            verbose('Constructing column %s of the matrix'%j)
             fvals = self.apply_hecke_operator(cocycle, l, use_magma = use_magma, g0 = g0)
             M.set_column(j,list(vector(fvals)))
         return M
@@ -590,10 +591,10 @@ class ArithCoh(CohomologyGroup):
         EXAMPLES::
 
         """
-        # verbose('Entering apply_hecke_operator')
+        verbose('Entering apply_hecke_operator')
         if hecke_reps is None:
             hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma, g0 = g0)
-        # verbose('Got hecke reps')
+        verbose('Got hecke reps')
         V = self.coefficient_module()
         padic = not V.base_ring().is_exact()
         group = self.group()
@@ -606,8 +607,9 @@ class ArithCoh(CohomologyGroup):
         gammas = group.gens()
         vals = [V(0) for gamma in gammas]
         input_vector = []
-        # verbose('Calculating action')
+        verbose('Calculating action')
         for j, gamma in enumerate(gammas):
+            verbose('generator %s/%s...'%(j+1,len(gammas)))
             for g in hecke_reps:
                 if self.trivial_action():
                     vals[j] += c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
