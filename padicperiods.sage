@@ -255,7 +255,7 @@ def ComputeRootFromApprox(f,x0, prec):
         xn = xnn
     return xn
 
-def recognize_absolute_invariant(j_invariant,base = QQ,phi = None,threshold = 0.9,prec = None):
+def recognize_absolute_invariant(j_invariant,base = QQ,phi = None,threshold = 0.9,prec = None, outfile = None):
     deg = base.degree()
     Kp = j_invariant.parent()
     p = Kp.prime()
@@ -267,9 +267,12 @@ def recognize_absolute_invariant(j_invariant,base = QQ,phi = None,threshold = 0.
     if prec is not None:
         j_invariant = Qp(p,prec)(j_invariant.lift())
     fx = algdep(j_invariant,deg)
-    if height_polynomial(fx) < threshold * j_invariant.precision_relative():
+    hfx = height_polynomial(fx)
+    trash_height = threshold * j_invariant.precision_relative()
+    if hfx < trash_height:
         try:
-            return p**j_invariant_val * fx.roots(base)[0][0]
+            fwrite('%s (deg = %s)'%(RealField(20)(hfx)/RealField(20)(trash_height), fx.degree()),outfile)
+            return p**j_invariant_val * fx.change_ring(base).roots()[0][0]
         except IndexError:
             raise ValueError('No roots')
     raise ValueError('Unrecognized')
@@ -315,7 +318,7 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
                     return (I2, I4, I6, I10)
     raise ValueError('Unrecognized')
 
-def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None):
+def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None):
     F = Lpmat.parent().base_ring()
     p = F.prime()
     x = QQ['x'].gen()
@@ -334,70 +337,76 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             q1 = K(s1 * q10 * p**oq1)
             q2 = K(s2 * q20 * p**oq2)
             q3 = K(s3 * q30 * p**oq3)
-        except ValueError:
-            continue
-        try:
             p1,p2,p3 = our_sqrt(q1,K),our_sqrt(q2,K),our_sqrt(q3,K)
-            prec0 = prec
+        except (RuntimeError, ValueError):
+            continue
+        prec0 = prec
+        try:
             IC1 = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec0,padic = True)
-            n_iters = 0
-            while True:
-                prec0 *= 2
-                IC = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec0,padic = True)
-                if min([(u-v).valuation() - v.valuation() for u,v in zip(IC,IC1)]) >= prec:
-                    break
-                n_iters += 1
-                IC1 = IC
-                assert n_iters < 5
+        except (ValueError,RuntimeError):
+            continue
+        # fwrite('.',outfile)
+        # n_iters = 0
+        # while n_iters < 3:
+        #     prec0 *= 2
+        #     IC = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec0,padic = True)
+        #     if min([(u-v).ordp() - v.ordp() for u,v in zip(IC,IC1)]) >= prec-2:
+        #         break
+        #     fwrite('(%s) %s'%(n_iters, min([(u-v).ordp() - v.ordp() for u,v in zip(IC,IC1)])),outfile)
+        #     n_iters += 1
+        #     IC1 = IC
+        # if n_iters >= 3:
+        #     continue
+        IC = IC1
 
-            I2c, I4c, I6c, I10c = IC
-            if list_I10 is None:
-                # # Get absolute invariants j1, j2, j3 OLD ONES, MORE STANDARD
-                # j1 = I2c**5 / I10c
-                # j2 = I2c**3 * I4c / I10c
-                # j3 = I2c**2 * I6c / I10c
-                j1 = I2c**2 / I4c
-                j2 = I2c * I4c / I6c
-                j3 = I4c * I6c / I10c
-                j1n = j1.trace() / j1.parent().degree()
-                j2n = j2.trace() / j2.parent().degree()
-                j3n = j3.trace() / j3.parent().degree()
-                assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
-                assert (j2 - j2n).valuation() - j2.valuation() > 5,'j2 = %s, j2n = %s'%(j2,j2n)
-                assert (j3 - j3n).valuation() - j3.valuation() > 5,'j3 = %s, j3n = %s'%(j3,j3n)
-                j1, j2, j3 = j1n, j2n, j3n
+        I2c, I4c, I6c, I10c = IC
+        if list_I10 is None:
+            # # Get absolute invariants j1, j2, j3 OLD ONES, MORE STANDARD
+            # j1 = I2c**5 / I10c
+            # j2 = I2c**3 * I4c / I10c
+            # j3 = I2c**2 * I6c / I10c
+            j1 = I2c**2 / I4c
+            j2 = I2c * I4c / I6c
+            j3 = I4c * I6c / I10c
+            j1n = j1.trace() / j1.parent().degree()
+            j2n = j2.trace() / j2.parent().degree()
+            j3n = j3.trace() / j3.parent().degree()
+            assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
+            assert (j2 - j2n).valuation() - j2.valuation() > 5,'j2 = %s, j2n = %s'%(j2,j2n)
+            assert (j3 - j3n).valuation() - j3.valuation() > 5,'j3 = %s, j3n = %s'%(j3,j3n)
+            j1, j2, j3 = j1n, j2n, j3n
 
-                if cheatjs is not None:
-                    if all([(u-v).valuation() - u.valuation() > minval for u,v in zip([j1,j2,j3],cheatjs)]):
-                        return (oq1,oq2,oq3,1)
-                else:
-                    # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
-                    return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.9,prec = prec), 1, 1, 1)
+            if cheatjs is not None:
+                if all([(u-v).valuation() - u.valuation() > minval for u,v in zip([j1,j2,j3],cheatjs)]):
+                    return (oq1,oq2,oq3,1)
             else:
-                j1 = (I2c**5 / I10c)
-                j1n = j1.trace() / j1.parent().degree()
-                assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
-                j1 = j1n * Pgen**I10c.valuation()
-                for I10 in list_I10:
+                # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
+                return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.9,prec = prec, outfile = outfile), 1, 1, 1)
+        else:
+            j1 = (I2c**5 / I10c)
+            j1n = j1.trace() / j1.parent().degree()
+            assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
+            try:
+                j1 = j1n * Pgen**ZZ(I10c.ordp())
+            except ValueError:
+                continue
+            for I10 in list_I10:
+                try:
+                    I2c_list = our_nroot( j1 * I10, 5, return_all = True)
+                except ValueError:
+                    continue
+                for I2c in I2c_list:
                     try:
-                        I2c_list = our_nroot( j1 * I10, 5, return_all = True)
+                        return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = .9,prec = prec,  outfile = outfile), 1, 1, 1)
                     except ValueError:
                         continue
-                    for I2c in I2c_list:
-                        try:
-                            return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = 0.9,prec = prec), 1, 1, 1)
-                        except ValueError:
-                            continue
-        except ValueError:
-            pass
-        except RuntimeError:
-            pass
     return 'Nope'
 
-def find_igusa_invariants(a, b, T, embedding, outfile = None, list_I10 = None, Pgen = None, N = 6):
+def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_I10 = None, Pgen = None, N = 6):
     fwrite('Trying to recognize invariants...',outfile)
     Pring = embedding.domain()
-    prec = a.parent().precision_cap()
+    if prec is None:
+        prec = a.parent().precision_cap()
     Tlist = []
     fT = T.charpoly()
     fT_trace = -fT.list()[1]
@@ -411,10 +420,25 @@ def find_igusa_invariants(a, b, T, embedding, outfile = None, list_I10 = None, P
     for ii, tt in enumerate(Tlist):
         fwrite('Doing matrix %s / %s ( = %s)'%(ii,len(Tlist),tt.list()),outfile)
         Lp = a + b * tt
-        inp_vec = [(Lp, ordmat, prec, Pring, None, embedding, 3, list_I10, Pgen) for ordmat in all_possible_ordmats(Lp,20)]
+        inp_vec = [(Lp, ordmat, prec, Pring, None, embedding, 3, list_I10, Pgen, outfile) for ordmat in all_possible_ordmats(Lp,20)]
+
+        num_inpts = len(inp_vec)
+        jj = 0
         for inpt, outt in parallel(find_igusa_invariants_from_L_inv)(inp_vec):
-            if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt:
-                fwrite('%s %s %s'%(str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
+            jj += 1
+            if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt and 'Error' not in outt:
+                fwrite('(%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
+            else:
+                fwrite('(%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
+
+def frobenius_polynomial(C):
+    q = len(C.base_ring())
+    N1, N2 = C.count_points(2)
+    ap1 = q + 1 - N1
+    ap2 = q*q +1 - N2
+    r = (ap1*ap1 - ap2)/2
+    x = QQ['x'].gen()
+    return x**4 - ap1 * x**3 + r * x**2 - ap1*q * x + q*q
 
 def euler_factor_twodim(p,T):
     return euler_factor_towdim_tn(p, T.trace(), T.determinant())
