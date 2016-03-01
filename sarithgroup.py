@@ -229,35 +229,41 @@ class BigArithGroup_class(AlgebraicGroup):
             self.magma.eval('SetSeed(%s)'%self.seed)
         R = Qp(prime,prec+10) #Zmod(prime**prec) #
         B_magma = self.Gn._B_magma
-        verbose('Calling magma pMatrixRing')
-        if self.F == QQ:
-            M,f = self.magma.pMatrixRing(self.Gn._O_magma,prime*self.Gn._O_magma.BaseRing(),Precision = 20,nvals = 2)
-            self._F_to_local = QQ.hom([R(1)])
+        a,b = self.Gn.B.invariants()
+        if (a,b) == (1,1):
+            self._II = matrix(R,2,2,[1,0,0,-1])
+            self._JJ = matrix(R,2,2,[0,1,1,0])
+            goodroot = self.F.gen().minpoly().change_ring(R).roots()[0][0]
+            self._F_to_local = self.F.hom([goodroot])
         else:
-            M,f = self.magma.pMatrixRing(self.Gn._O_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
-            try:
-                self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
-            except SyntaxError:
-                raise SyntaxError("Magma has trouble finding local splitting")
-            self._F_to_local = None
-            for o in self.F.gen().minpoly().change_ring(R).roots():
-                if (o[0] - self._goodroot).valuation() > 10:
-                    self._F_to_local = self.F.hom([o[0]])
-                    break
-            assert self._F_to_local is not None
+            verbose('Calling magma pMatrixRing')
+            if self.F == QQ:
+                _,f = self.magma.pMatrixRing(self.Gn._O_magma,prime*self.Gn._O_magma.BaseRing(),Precision = 20,nvals = 2)
+                self._F_to_local = QQ.hom([R(1)])
+            else:
+                _,f = self.magma.pMatrixRing(self.Gn._O_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
+                try:
+                    self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
+                except SyntaxError:
+                    raise SyntaxError("Magma has trouble finding local splitting")
+                self._F_to_local = None
+                for o,_ in self.F.gen().minpoly().change_ring(R).roots():
+                    if (o - self._goodroot).valuation() > 5:
+                        self._F_to_local = self.F.hom([o])
+                        break
+                assert self._F_to_local is not None
+            verbose('Initializing II,JJ,KK')
+            v = f.Image(B_magma.gen(1)).Vector()
+            self._II = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
+            v = f.Image(B_magma.gen(2)).Vector()
+            self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
+            v = f.Image(B_magma.gen(3)).Vector()
+            self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
+            self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
         self.Gn._F_to_local = self._F_to_local
         if not self.use_shapiro():
             self.Gpn._F_to_local = self._F_to_local
-        verbose('Initializing II,JJ,KK')
-        v = f.Image(B_magma.gen(1)).Vector()
-        self._II = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
-        v = f.Image(B_magma.gen(2)).Vector()
-        self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
-        v = f.Image(B_magma.gen(3)).Vector()
-        self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
 
-        a,b = self.Gn.B.invariants()
-        self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
         self._KK = self._II * self._JJ
         self._prec = prec
         return self._II, self._JJ, self._KK
@@ -381,6 +387,14 @@ class BigArithGroup_class(AlgebraicGroup):
                 newEgood.extend([BTEdge(not rev, e * gamma) for e in self.get_BT_reps()[1:]])
         return self.subdivide(newEgood,1-parity,depth - 1)
 
+    def set_wp(self, wp, check = True):
+        epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
+        assert is_in_Gamma0loc(epsinv * self.embed(wp,20), det_condition = False)
+        if check:
+            assert all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn_Obasis()))
+            assert self.is_in_Gpn_order(wp)
+        self._wp = wp
+
     def wp(self, max_iterations = -1):
         try:
             return self._wp
@@ -482,7 +496,8 @@ class BigArithGroup_class(AlgebraicGroup):
                 R=I.parent()
                 try:
                     q = q.coefficient_tuple()
-                except AttributeError: pass
+                except AttributeError:
+                    q = q.list()
                 return sum(self._F_to_local(a)*b for a,b in zip(q,mats))
         return iota
 

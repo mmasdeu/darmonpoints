@@ -176,7 +176,7 @@ class ArithGroup_generic(AlgebraicGroup):
 
     def _splitting_at_infinity(self,prec):
         r"""
-        Finds an embedding of the definite quaternion algebra
+        Finds an embedding of the quaternion algebra
         into the algebra of 2x2 matrices with coefficients in `\RR`.
 
         INPUT:
@@ -1002,13 +1002,19 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
         self.B = QuaternionAlgebra(self.F,self.a,self.b)
 
-        magma_ZBasis = self._O_magma.ZBasis()
-        tmpObasis = [magma_quaternion_to_sage(self.B,o,self.magma) for o in magma_ZBasis]
+        if info_magma is None and self.B.invariants() == (1,1) and not self._compute_presentation:
+            i, j, k = self.B.gens()
+            Pgen = level.gens_reduced()[0]
+            tmpObasis_F = [self.B(1), (1 + i)/2, (j+k)/2, (Pgen/2)*(j-k)]
+            tmpObasis = [self.F.gen()**i * o for o in tmpObasis_F for i in range(self.F.degree())]
+            self._O_discriminant = self.F.ideal(self.B.discriminant()) * level
+        else:
+            magma_ZBasis = self._O_magma.ZBasis()
+            tmpObasis = [magma_quaternion_to_sage(self.B,o,self.magma) for o in magma_ZBasis]
+            self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant(),self.magma)
         self.Obasis = tmpObasis
         Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
         self.basis_invmat = matrix(QQ,4*self.F.degree(),4*self.F.degree(),Obasis).transpose().inverse()
-
-        self._O_discriminant = magma_F_ideal_to_sage(self.F,self._O_magma.Discriminant(),self.magma)
 
         if self._compute_presentation:
             if self.algorithm == 'aurel':
@@ -1075,9 +1081,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         verbose('Grouptype = %s, prec = %s'%(grouptype,prec))
         _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, PeriodEnum = periodenum, max_time = timeout)
         verbose('Done normalizedbasis')
-        # magma_str = "_,f,e := NormalizedBasis(%s : GroupType := %s, pr := %s);"%(self._O_magma.name(),grouptype,prec)
-        # verbose('Calling magma.eval: ' + magma_str)
-        # self.magma.eval(magma_str)
         if f == self.magma(False):
             raise RuntimeError("Timed out (%s sec) in NormalizedBasis"%timeout)
         matlist = self.magma.GetMatrixList(f)
@@ -1114,7 +1117,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         Hm,GtoHm = self.magma.ReduceGenerators(G,nvals = 2)
         r = self.F.gen()
         i,j,k = self.B.gens()
-        chunk_length = 1
+        chunk_length = 10
         ngens = len(gens)
         assert ngens == len(G.gens())
         nchunks = (QQ(ngens)/QQ(chunk_length)).ceil()
@@ -1195,6 +1198,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self._Omax_magma = info_magma._Omax_magma
             if self.level != self.F.ideal(1):
                 P = sage_F_ideal_to_magma(self._F_magma,info_magma.level/self.level)
+                Pgen = sage_F_elt_to_magma(self._F_magma,(info_magma.level/self.level).gens_reduced()[0])
                 self._O_magma = info_magma._O_magma.pMaximalOrder(P)
             else:
                 self._O_magma = self._Omax_magma
@@ -1242,7 +1246,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                     if d >= (1+eps)*d1:
                         d = d1
                         i0 = i
-                        # break # This might yield longer words, but should be faster!
+                        break # This might yield longer words, but should be faster!
                 if i0 is None:
                     break
                 gammaz = act_H3(boundary[i0].mat,gammaz)
