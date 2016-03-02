@@ -13,7 +13,8 @@ from sage.structure.parent import Parent
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ,ZZ,Qp
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp
+from sage.arith.all import lcm
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
 from collections import defaultdict
@@ -224,7 +225,6 @@ class ArithGroup_generic(AlgebraicGroup):
     def _denominator_valuation(self,x,l):
         return max((o.denominator().valuation(l) for o in self._quaternion_to_list(x)))
 
-
     def quaternion_algebra(self):
         return self.B
 
@@ -236,11 +236,12 @@ class ArithGroup_generic(AlgebraicGroup):
                 ngens = len(self.gens())
         else:
             ngens = len(self.gens())
-        for v in enumerate_words(range(ngens)):
+        Ugens = [o for o in self.Ugens] + [o**-1 for o in self.Ugens if o != 1]
+        for v in enumerate_words(range(2*ngens)):
             if max_length is not None and len(v) > max_length:
                 raise StopIteration
             else:
-                yield prod([self.Ugens[i] for i in v],self.B(1))
+                yield prod([Ugens[i] for i in v],self.B(1))
 
     def get_hecke_reps(self,l,use_magma = True,g0 = None): # generic
         r'''
@@ -432,9 +433,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         self.__init_magma_objects(info_magma)
 
         self.B = QuaternionAlgebra((self._B_magma.gen(1)**2)._sage_(),(self._B_magma.gen(2)**2)._sage_())
-        if self.B.discriminant() != self.discriminant:
-            print 'Error while constructing quaternion algebra...'
-            assert 0
+        assert self.B.discriminant() == self.discriminant, "Error while constructing quaternion algebra"
         self.O = self.B.quaternion_order([self.B([QQ(self._O_magma.ZBasis()[n+1].Vector()[m+1]) for m in xrange(4)]) for n in xrange(4)])
         self.Obasis = self.O.basis()
         self._O_discriminant = ZZ.ideal(self.O.discriminant())
@@ -483,7 +482,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
     def _repr_(self):
         return 'Arithmetic Group attached to rational quaternion algebra, disc = %s, level = %s'%(self.discriminant,self.level)
 
-    def __init_magma_objects(self,info_magma = None):
+    def __init_magma_objects(self,info_magma = None): # Rational quaternions
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
@@ -493,7 +492,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                 self._B_magma = self.magma.QuaternionAlgebra('%s'%QQ_magma.name(),self.abtuple[0],self.abtuple[1])
             else:
                 self._B_magma = self.magma.QuaternionAlgebra('%s*%s'%(self.discriminant,ZZ_magma.name()))
-
             self._Omax_magma = self._B_magma.MaximalOrder()
             if self.level != ZZ(1):
                 self._O_magma = self._Omax_magma.Order('%s*%s'%(self.level,ZZ_magma.name()))
@@ -794,7 +792,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
     def _repr_(self):
         return 'Matrix Arithmetic Group of level = %s'%(self.level)
 
-    def _quaternion_to_list(self,x):
+
         a,b,c,d = x.list()
         return [a, b, QQ(c)/self.level, d]
 
@@ -998,15 +996,15 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self.F = base
         self.level = base.ideal(level)
         self.a,self.b = base(a),base(b)
+        self.abtuple = (self.a, self.b)
         self.__init_magma_objects(info_magma)
-
         self.B = QuaternionAlgebra(self.F,self.a,self.b)
 
-        if info_magma is None and self.B.invariants() == (1,1) and not self._compute_presentation:
+        if self.B.invariants() == (1,1):
             i, j, k = self.B.gens()
             Pgen = level.gens_reduced()[0]
-            tmpObasis_F = [self.B(1), (1 + i)/2, (j+k)/2, (Pgen/2)*(j-k)]
-            tmpObasis = [self.F.gen()**i * o for o in tmpObasis_F for i in range(self.F.degree())]
+            tmpObasis_F = [(1 + i)/2, (j+k)/2, (Pgen/2)*(j-k), (1-i)/2]
+            tmpObasis = [self.F.gen()**i * o  for o in tmpObasis_F for i in range(self.F.degree())] # DEBUG
             self._O_discriminant = self.F.ideal(self.B.discriminant()) * level
         else:
             magma_ZBasis = self._O_magma.ZBasis()
@@ -1167,7 +1165,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
     def _repr_(self):
         return 'Arithmetic Group attached to quaternion algebra with a = %s, b = %s and level = %s'%(self.a,self.b,self.level)
 
-    def __init_magma_objects(self,info_magma = None):
+    def __init_magma_objects(self,info_magma = None): # NF quaternion
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
@@ -1184,9 +1182,23 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             am, bm = sage_F_elt_to_magma(self._F_magma,self.a),sage_F_elt_to_magma(self._F_magma,self.b)
             self._B_magma = self.magma.QuaternionAlgebra(FF_magma,am,bm)
 
-            self._Omax_magma = self._B_magma.MaximalOrder()
+            if self.abtuple == (1,1):
+                i, j = self._B_magma.gen(1), self._B_magma.gen(2)
+                k = i * j
+                on = self._B_magma.One()
+                self._Omax_magma = self.magma.Order([(on + i)/2, (j+k)/2, (j-k)/2, (on - i)/2, ])
+                # assert self._Omax_magma.IsPrincipal()._sage_()
+            else:
+                self._Omax_magma = self._B_magma.MaximalOrder()
             if self.level != self.F.ideal(1):
-                self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
+                if self.abtuple == (1,1):
+                    i, j = self._B_magma.gen(1), self._B_magma.gen(2)
+                    k = i * j
+                    levgen = sage_F_elt_to_magma(self._B_magma.BaseRing(), self.level.gens_reduced()[0])
+                    on = self._B_magma.One()
+                    self._O_magma = self.magma.Order([(on + i)/2, (j+k)/2, levgen * (j-k)/2, (on-i)/2])
+                else:
+                    self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
             else:
                 self._O_magma = self._Omax_magma
             if self._compute_presentation:
@@ -1197,9 +1209,15 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self._B_magma = info_magma._B_magma
             self._Omax_magma = info_magma._Omax_magma
             if self.level != self.F.ideal(1):
-                P = sage_F_ideal_to_magma(self._F_magma,info_magma.level/self.level)
-                Pgen = sage_F_elt_to_magma(self._F_magma,(info_magma.level/self.level).gens_reduced()[0])
-                self._O_magma = info_magma._O_magma.pMaximalOrder(P)
+                if self.abtuple == (1,1):
+                    i, j = self._B_magma.gen(1), self._B_magma.gen(2)
+                    k = i * j
+                    Pgen = sage_F_elt_to_magma(self._F_magma, self.level.gens_reduced()[0])
+                    on = self._B_magma.One()
+                    self._O_magma = self.magma.Order([(on + i)/2, (j+k)/2,  Pgen * (j-k)/2, (on-i)/2])
+                else:
+                    P = sage_F_ideal_to_magma(self._F_magma,info_magma.level/self.level)
+                    self._O_magma = info_magma._O_magma.pMaximalOrder(P)
             else:
                 self._O_magma = self._Omax_magma
             if self._compute_presentation:
@@ -1212,11 +1230,13 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
                 FDom_magma = self._G_magma.FundamentalDomain(self._D_magma.name())
                 self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
+
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
 
     def _quaternion_to_list(self,x):
         xlist = [u for o in x.coefficient_tuple() for u in o.list()]
-        return (self.basis_invmat * matrix(QQ,4 * self.F.degree() ,1,xlist)).list()
+        V = (self.basis_invmat * matrix(QQ,4 * self.F.degree() ,1,xlist)).list()
+        return [self.F(y) for y in izip(*[iter(V)]*self.F.degree())]
 
     def get_word_rep_aurel(self,gamma):
         # if not self._is_in_order(gamma):

@@ -371,9 +371,9 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             j1n = j1.trace() / j1.parent().degree()
             j2n = j2.trace() / j2.parent().degree()
             j3n = j3.trace() / j3.parent().degree()
-            assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
-            assert (j2 - j2n).valuation() - j2.valuation() > 5,'j2 = %s, j2n = %s'%(j2,j2n)
-            assert (j3 - j3n).valuation() - j3.valuation() > 5,'j3 = %s, j3n = %s'%(j3,j3n)
+            assert (j1 - j1n).valuation() - j1.valuation() > 2,'j1 = %s, j1n = %s'%(j1,j1n)
+            assert (j2 - j2n).valuation() - j2.valuation() > 2,'j2 = %s, j2n = %s'%(j2,j2n)
+            assert (j3 - j3n).valuation() - j3.valuation() > 2,'j3 = %s, j3n = %s'%(j3,j3n)
             j1, j2, j3 = j1n, j2n, j3n
 
             if cheatjs is not None:
@@ -438,14 +438,16 @@ def frobenius_polynomial(C):
     ap2 = q*q +1 - N2
     r = (ap1*ap1 - ap2)/2
     x = QQ['x'].gen()
+    print 'trace = %s'%ap1
+    print 'norm = %s'%(r - 2*q)
     return x**4 - ap1 * x**3 + r * x**2 - ap1*q * x + q*q
 
 def euler_factor_twodim(p,T):
     return euler_factor_towdim_tn(p, T.trace(), T.determinant())
 
-def euler_factor_twodim_tn(p,t,n):
+def euler_factor_twodim_tn(q,t,n):
     x = QQ['x'].gen()
-    return x**4 - t*x**3 + (2*p+n)*x**2 - p*t*x + p*p
+    return x**4 - t*x**3 + (2*q+n)*x**2 - q*t*x + q*q
 
 def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_poly = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, **kwargs):
     from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic

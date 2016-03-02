@@ -138,8 +138,6 @@ class BigArithGroup_class(AlgebraicGroup):
             self.norm_p = ZZ(p.norm())
             self.discriminant = Fideal(discriminant)
             self.level = Fideal(level)
-            # if self.ideal_p.ramification_index() > 1:
-            #     raise NotImplementedError("p must be unramified")
         else:
             self.ideal_p = ZZ(p)
             self.norm_p = ZZ(p)
@@ -150,7 +148,6 @@ class BigArithGroup_class(AlgebraicGroup):
         if not self.ideal_p.is_prime():
             raise ValueError('p (=%s) must be prime'%self.p)
 
-        verbose('Initializing arithmetic group G(pn)...')
         if self._use_shapiro:
             covol = covolume(self.F,self.discriminant,self.level)
         else:
@@ -158,6 +155,7 @@ class BigArithGroup_class(AlgebraicGroup):
         verbose('Estimated Covolume = %s'%covol)
         difficulty = covol**2
         verbose('Estimated Difficulty = %s'%difficulty)
+        verbose('Initializing arithmetic group G(pn)...')
         t = walltime()
         lev = self.ideal_p*self.level
         if character is not None:
@@ -165,7 +163,6 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,grouptype = grouptype,magma = magma, compute_presentation = not self._use_shapiro, timeout = timeout)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
-
         verbose('Initializing arithmetic group G(n)...')
         lev = self.level
         if character is not None:
@@ -230,7 +227,7 @@ class BigArithGroup_class(AlgebraicGroup):
         R = Qp(prime,prec+10) #Zmod(prime**prec) #
         B_magma = self.Gn._B_magma
         a,b = self.Gn.B.invariants()
-        if (a,b) == (1,1):
+        if (a,b) == (1,1): # DEBUG
             self._II = matrix(R,2,2,[1,0,0,-1])
             self._JJ = matrix(R,2,2,[0,1,1,0])
             goodroot = self.F.gen().minpoly().change_ring(R).roots()[0][0]
@@ -389,39 +386,46 @@ class BigArithGroup_class(AlgebraicGroup):
 
     def set_wp(self, wp, check = True):
         epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-        assert is_in_Gamma0loc(epsinv * self.embed(wp,20), det_condition = False)
+        set_immutable(wp)
         if check:
+            assert is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False)
             assert all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn_Obasis()))
+            # assert all((self.Gn._is_in_order(wp**-1 * g * wp) for g in self.Gn.Obasis))
             assert self.is_in_Gpn_order(wp)
         self._wp = wp
+        return self._wp
 
-    def wp(self, max_iterations = -1):
+    def wp(self, max_iterations = -1, initial_wp = None):
         try:
             return self._wp
         except AttributeError:
             pass
         verbose('Finding a suitable wp...')
-        if self.F == QQ and self.discriminant == 1:
+        if self.discriminant == 1: # and self.F == QQ # DEBUG
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             if self.level == 1:
                 try:
                     ans = matrix(QQ,2,2,[0,-1,self.ideal_p.gens_reduced()[0],0])
                 except AttributeError:
                     ans = matrix(QQ,2,2,[0,-1,self.ideal_p,0])
+                return self.set_wp(ans, check = True)
             else:
                 # Follow Atkin--Li
-                from sage.arith.all import xgcd
-                p = self.ideal_p
-                m = self.level
-                g,w,z = xgcd(p,-m)
-                ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
+                if initial_wp is None:
+                    from sage.arith.all import xgcd
+                    p = self.ideal_p
+                    m = self.level
+                    g,w,z = xgcd(p,-m)
+                    ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
+                    all_initial = []
+                    for t in sorted(range(-8,7)):
+                        g, tinv, k = xgcd(t, -p * m)
+                        if g == 1:
+                            new_initial =  ans * matrix(QQ,2,2,[t, k, p*m, tinv])
+                            all_initial.append(new_initial)
+                else:
+                    all_initial = [initial_wp]
                 i = 0
-                all_initial = []
-                for t in sorted(range(-8,7)):
-                    g, tinv, k = xgcd(t, -p * m)
-                    if g == 1:
-                        new_initial =  ans * matrix(QQ,2,2,[t, k, p*m, tinv])
-                        all_initial.append(new_initial)
                 for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
                     if i % 50000 == 0:
                         verbose('Done %s iterations'%i)
@@ -430,19 +434,10 @@ class BigArithGroup_class(AlgebraicGroup):
                     i += 1
                     for tmp in all_initial:
                         new_candidate =  v1 * tmp * v2
-                        set_immutable(new_candidate)
-                        if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False):
-                            try:
-                                aa = [ self.Gpn( self.do_tilde(g.quaternion_rep,new_candidate)).word_rep for g in self.Gpn.gens()]
-                                self._wp = new_candidate
-                                return new_candidate
-                            except (ValueError, TypeError, AssertionError):
-                                pass
-
-            ans.set_immutable()
-            assert is_in_Gamma0loc(epsinv * ans, det_condition = False, p = self.p),"Check that epsinv * ans is in Gamma0"
-            self._wp = ans
-            return ans
+                        try:
+                            return self.set_wp(new_candidate, check = True)
+                        except AssertionError:
+                            continue
         else:
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             if self.F == QQ:
@@ -467,11 +462,10 @@ class BigArithGroup_class(AlgebraicGroup):
                 i += 1
                 for tmp in all_initial:
                     new_candidate =  v1 * tmp * v2
-                    set_immutable(new_candidate)
-                    if is_in_Gamma0loc(epsinv * self.embed(new_candidate,20), det_condition = False) and all((self.is_in_Gpn_order(new_candidate**-1 * g * new_candidate) for g in self.Gpn_Obasis())) and self.is_in_Gpn_order(new_candidate):
-                        verbose('wp = %s'%new_candidate)
-                        self._wp = new_candidate
-                        return new_candidate
+                    try:
+                        return self.set_wp(new_candidate, check = True)
+                    except AssertionError:
+                        pass
             raise RuntimeError('Could not find wp')
 
     def get_embedding(self,prec):
