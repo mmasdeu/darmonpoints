@@ -401,7 +401,7 @@ class BigArithGroup_class(AlgebraicGroup):
         except AttributeError:
             pass
         verbose('Finding a suitable wp...')
-        if self.discriminant == 1: # and self.F == QQ # DEBUG
+        if self.discriminant == 1 and self.F == QQ: # DEBUG
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
             if self.level == 1:
                 try:

@@ -361,13 +361,13 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
 
         I2c, I4c, I6c, I10c = IC
         if list_I10 is None:
-            # # Get absolute invariants j1, j2, j3 OLD ONES, MORE STANDARD
-            # j1 = I2c**5 / I10c
-            # j2 = I2c**3 * I4c / I10c
-            # j3 = I2c**2 * I6c / I10c
-            j1 = I2c**2 / I4c
-            j2 = I2c * I4c / I6c
-            j3 = I4c * I6c / I10c
+            # # Get absolute invariants j1, j2, j3
+            j1 = I2c**5 / I10c
+            j2 = I2c**3 * I4c / I10c
+            j3 = I2c**2 * I6c / I10c
+            # j1 = I2c**2 / I4c
+            # j2 = I2c * I4c / I6c
+            # j3 = I4c * I6c / I10c
             j1n = j1.trace() / j1.parent().degree()
             j2n = j2.trace() / j2.parent().degree()
             j3n = j3.trace() / j3.parent().degree()
