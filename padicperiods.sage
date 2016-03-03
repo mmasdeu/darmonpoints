@@ -362,12 +362,12 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
         I2c, I4c, I6c, I10c = IC
         if list_I10 is None:
             # # Get absolute invariants j1, j2, j3
-            # j1 = I2c**5 / I10c
-            # j2 = I2c**3 * I4c / I10c
-            # j3 = I2c**2 * I6c / I10c
-            j1 = I2c**2 / I4c
-            j2 = I2c * I4c / I6c
-            j3 = I4c * I6c / I10c
+            j1 = I2c**5 / I10c
+            j2 = I2c**3 * I4c / I10c
+            j3 = I2c**2 * I6c / I10c
+            # j1 = I2c**2 / I4c
+            # j2 = I2c * I4c / I6c
+            # j3 = I4c * I6c / I10c
             j1n = j1.trace() / j1.parent().degree()
             j2n = j2.trace() / j2.parent().degree()
             j3n = j3.trace() / j3.parent().degree()
@@ -381,7 +381,10 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                     return (oq1,oq2,oq3,1)
             else:
                 # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
-                return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.9,prec = prec, outfile = outfile), 1, 1, 1)
+                try:
+                    return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.9,prec = prec, outfile = outfile), 1, 1, 1)
+                except ValueError:
+                    continue
         else:
             j1 = (I2c**5 / I10c)
             j1n = j1.trace() / j1.parent().degree()
@@ -402,7 +405,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                         continue
     return 'Nope'
 
-def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_I10 = None, Pgen = None, N = 6):
+def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_I10 = None, Pgen = None, N = 6, cheatjs = None, parallelize = True):
     fwrite('Trying to recognize invariants...',outfile)
     Pring = embedding.domain()
     if prec is None:
@@ -420,16 +423,26 @@ def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_
     for ii, tt in enumerate(Tlist):
         fwrite('Doing matrix %s / %s ( = %s)'%(ii,len(Tlist),tt.list()),outfile)
         Lp = a + b * tt
-        inp_vec = [(Lp, ordmat, prec, Pring, None, embedding, 3, list_I10, Pgen, outfile) for ordmat in all_possible_ordmats(Lp,20)]
+        inp_vec = [(Lp, ordmat, prec, Pring, cheatjs, embedding, 3, list_I10, Pgen, outfile) for ordmat in all_possible_ordmats(Lp,20)]
 
         num_inpts = len(inp_vec)
         jj = 0
-        for inpt, outt in parallel(find_igusa_invariants_from_L_inv)(inp_vec):
-            jj += 1
-            if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt and 'Error' not in outt:
-                fwrite('(%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
-            else:
-                fwrite('(%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
+        if parallelize:
+            for inpt, outt in parallel(find_igusa_invariants_from_L_inv)(inp_vec):
+                jj += 1
+                if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt and 'Error' not in outt:
+                    fwrite('(%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
+                else:
+                    fwrite('(%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
+        else:
+            for inpt in inp_vec:
+                outt = find_igusa_invariants_from_L_inv(*inpt)
+                jj += 1
+                if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt and 'Error' not in outt:
+                    fwrite('(%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
+                else:
+                    fwrite('(%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
+
 
 def frobenius_polynomial(C):
     q = len(C.base_ring())
@@ -449,7 +462,7 @@ def euler_factor_twodim_tn(q,t,n):
     x = QQ['x'].gen()
     return x**4 - t*x**3 + (2*q+n)*x**2 - q*t*x + q*q
 
-def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_poly = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, **kwargs):
+def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, **kwargs):
     from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
     from sarithgroup import BigArithGroup
     from homology import lattice_homology_cycle
@@ -535,10 +548,10 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     Coh = ArithCoh(G)
     fwrite('Computed Cohomology group',outfile)
     if return_all:
-        all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, bound = hecke_bound, return_all = True)
+        all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = True)
     else:
         try:
-            all_twodim_cocycles = [ Coh.get_twodim_cocycle(sign_at_infinity, pol = hecke_poly, bound = hecke_bound, return_all = False) ]
+            all_twodim_cocycles = [ Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = False) ]
         except ValueError:
             all_twodim_cocycles = []
     if len(all_twodim_cocycles) == 0:

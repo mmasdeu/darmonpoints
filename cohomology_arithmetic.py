@@ -482,7 +482,7 @@ class ArithCoh(CohomologyGroup):
                 col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
                 return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self(0))
 
-    def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 5, pol = None, return_all = False):
+    def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 5, hecke_data = None, return_all = False):
         F = self.group().base_ring()
         if F == QQ:
             F = NumberField(PolynomialRing(QQ,'x').gen(),names='r')
@@ -511,6 +511,26 @@ class ArithCoh(CohomologyGroup):
         q = ZZ(1)
         g0 = None
         num_hecke_operators = 0
+        if hecke_data is not None:
+            qq = F.ideal(hecke_data[0])
+            pol = hecke_data[1]
+            Aq = self.hecke_matrix(qq.gens_reduced()[0], use_magma = use_magma).transpose().change_ring(QQ)
+            V = Aq.decomposition_of_subspace(component_list[0][0])
+            for U0,is_irred in V:
+                if U0.dimension() == 1:
+                    continue
+                if U0.dimension() == 2 and is_irred:
+                    good_components.append((U0.denominator() * U0,hecke_data+[(qq.gens_reduced()[0],Aq)]))
+                if len(good_components) != 1:
+                    raise ValueError('Hecke data does not suffice to cut out space')
+            flist = []
+            good_component = good_components[0]
+            for row0 in good_component[0].matrix().rows():
+                col0 = [QQ(o) for o in row0.list()]
+                clcm = lcm([o.denominator() for o in col0])
+                col0 = [ZZ(clcm * o ) for o in col0]
+                flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
+            return flist,[(ell, o.restrict(good_component[0])) for ell, o in good_component[1]]
         while len(component_list) > 0 and num_hecke_operators < bound:
             verbose('num_hecke_ops = %s'%num_hecke_operators)
             verbose('len(components_list) = %s'%len(component_list))
@@ -544,8 +564,7 @@ class ArithCoh(CohomologyGroup):
                             if U0.dimension() == 1:
                                 continue
                             if U0.dimension() == 2 and is_irred:
-                                if pol is None or Aq.restrict(U0).charpoly() == pol:
-                                    good_components.append((U0.denominator() * U0,hecke_data+[(qq.gens_reduced()[0],Aq)]))
+                                good_components.append((U0.denominator() * U0,hecke_data+[(qq.gens_reduced()[0],Aq)]))
                             else: # U0.dimension() > 2 or not is_irred
                                 component_list.append((U0.denominator() * U0,hecke_data + [(qq.gens_reduced()[0],Aq)]))
                     if len(good_components) > 0 and not return_all:

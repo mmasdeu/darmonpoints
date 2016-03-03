@@ -1087,7 +1087,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self._facerels = []
         verbose('Getting precision from Magma')
         try:
-            self._RR = RR = RealField((len(str(f[1].Radius)) * RealField(20)(10).log()/RealField(20)(2).log()).ceil()-10)
+            self._RR = RR = RealField((len(str(f[1].Radius)) * RealField(20)(10).log()/RealField(20)(2).log()).ceil()-13)
         except:
             self._RR = RR = RealField(100)
         verbose('Getting precision done')
