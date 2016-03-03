@@ -390,7 +390,6 @@ class BigArithGroup_class(AlgebraicGroup):
         if check:
             assert is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False)
             assert all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn_Obasis()))
-            # assert all((self.Gn._is_in_order(wp**-1 * g * wp) for g in self.Gn.Obasis))
             assert self.is_in_Gpn_order(wp)
         self._wp = wp
         return self._wp

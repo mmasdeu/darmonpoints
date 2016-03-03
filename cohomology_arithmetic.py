@@ -515,16 +515,11 @@ class ArithCoh(CohomologyGroup):
             qq = F.ideal(hecke_data[0])
             pol = hecke_data[1]
             Aq = self.hecke_matrix(qq.gens_reduced()[0], use_magma = use_magma).transpose().change_ring(QQ)
-            V = Aq.decomposition_of_subspace(component_list[0][0])
-            for U0,is_irred in V:
-                if U0.dimension() == 1:
-                    continue
-                if U0.dimension() == 2 and is_irred:
-                    good_components.append((U0.denominator() * U0,hecke_data+[(qq.gens_reduced()[0],Aq)]))
-                if len(good_components) != 1:
-                    raise ValueError('Hecke data does not suffice to cut out space')
+            U0 = component_list[0][0].intersection(pol.subs(Aq).left_kernel())
+            if U0.dimension() != 2:
+                raise ValueError('Hecke data does not suffice to cut out space')
+            good_component = (U0.denominator() * U0,[(qq.gens_reduced()[0],Aq)])
             flist = []
-            good_component = good_components[0]
             for row0 in good_component[0].matrix().rows():
                 col0 = [QQ(o) for o in row0.list()]
                 clcm = lcm([o.denominator() for o in col0])
