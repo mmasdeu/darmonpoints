@@ -71,7 +71,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
 
     @cached_method
     def __hash__(self):
-        return hash((hash(self.parent()), hash(tuple(self.quaternion_rep))))
+        return hash((hash(self.parent()), hash(self.quaternion_rep)))
 
     def _repr_(self):
         return str(self.quaternion_rep)

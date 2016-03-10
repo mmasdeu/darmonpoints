@@ -416,9 +416,9 @@ class OneChains_element(ModuleElement):
             raise ValueError('Must yield torsion element in abelianization (%s)'%(sum_abxlist))
         else:
             xlist = [(x,x_ord * n) for x,n in xlist]
-        gwordlist, rel = G.calculate_weight_zero_word(xlist)
-        gwordlist.append(rel)
-        oldvals.append(V(V.base_field().gen()))
+        gwordlist, rel = G.calculate_weight_zero_word(xlist, separated = True)
+        #  gwordlist.append(rel)
+        # oldvals.append(V(V.base_field().gen()))
         counter = 0
         assert len(gwordlist) == len(oldvals)
         newdict = defaultdict(V)
@@ -438,6 +438,20 @@ class OneChains_element(ModuleElement):
                     oldv = (g**-1) * oldv
             counter += 1
             update_progress(float(QQ(counter)/QQ(len(oldvals))),'Reducing to degree zero equivalent')
+        for b, r in rel:
+            newv = V(V.base_field().gen())
+            for i, a in r:
+                oldv = V(newv)
+                g = G.gen(i)
+                newv = (g**-a) * V(oldv)
+                sign = 1
+                if a < 0:
+                    a = -a
+                    oldv = (g**a) * V(oldv)
+                    sign = -1
+                for j in range(a):
+                    newdict[g] += ZZ(sign) * ZZ(b) * oldv
+                    oldv = (g**-1) * oldv
         verbose('Done zero_degree_equivalent')
         ans = HH(newdict)
         assert ans.is_degree_zero_valued()

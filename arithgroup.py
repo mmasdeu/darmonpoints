@@ -372,14 +372,14 @@ class ArithGroup_generic(AlgebraicGroup):
             weight_vector[i] += a
         return weight_vector
 
-    def calculate_weight_zero_word(self, xlist):
+    def calculate_weight_zero_word(self, xlist, separated = False):
         Gab = self.abelianization()
         abxlist = [n * Gab(x) for x,n in xlist]
         sum_abxlist = vector(sum(abxlist))
         if not sum_abxlist == 0:
             raise ValueError('Must yield trivial element in the abelianization (%s)'%(sum_abxlist))
         oldwordlist = [copy(x.word_rep) for x,n in xlist]
-        return oldwordlist, self._calculate_relation(sum(n * self.get_weight_vector(x) for x,n in xlist))
+        return oldwordlist, self._calculate_relation(sum(n * self.get_weight_vector(x) for x,n in xlist), separated = separated)
 
     def decompose_into_commutators(self,x):
         oldwordlist, rel = self.calculate_weight_zero_word([x])
@@ -791,10 +791,11 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
 
     def _repr_(self):
         return 'Matrix Arithmetic Group of level = %s'%(self.level)
-
-
         a,b,c,d = x.list()
         return [a, b, QQ(c)/self.level, d]
+
+    def _quaternion_to_list(self,x):
+        return x.list()
 
     # rationalmatrix
     def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1):
@@ -883,7 +884,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         level = self.level
         try:
             ans = list(self._Gamma0_farey.word_problem(SL2Z(delta.list()),output = 'standard'))
-        except RuntimeError:
+        except (RuntimeError,AssertionError):
             print delta
             assert 0
         tmp = self.B(1)
