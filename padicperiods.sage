@@ -462,7 +462,7 @@ def euler_factor_twodim_tn(q,t,n):
     x = QQ['x'].gen()
     return x**4 - t*x**3 + (2*q+n)*x**2 - q*t*x + q*q
 
-def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, **kwargs):
+def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, compute_G = True, compute_cohomology = True, abtuple = None, **kwargs):
     from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
     from sarithgroup import BigArithGroup
     from homology import lattice_homology_cycle
@@ -519,7 +519,11 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         D = Dgen
         Np = Npgen
         Sinv_places = []
-        abtuple = QuaternionAlgebra(D).invariants()
+        if abtuple is None:
+            abtuple = QuaternionAlgebra(D).invariants()
+        else:
+            abtuple = (QQ(abtuple[0]), QQ(abtuple[1]))
+
         if outfile is None:
             outfile = 'atr_surface_%s_%s_%s_%s_%s.txt'%(code,1,P,D,(P*D*Np))
     else:
@@ -534,7 +538,10 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         if Sinf is None:
             Sinf = [-1 for i in F.real_places()]
         Sinf_places = [v for v,o in zip(F.real_places(prec = Infinity),Sinf) if o == -1]
-        abtuple = quaternion_algebra_invariants_from_ramification(F,D,Sinf_places)
+        if abtuple is None:
+            abtuple = quaternion_algebra_invariants_from_ramification(F,D,Sinf_places)
+        else:
+            abtuple = (F(abtuple[0]), F(abtuple[1]))
         if outfile is None:
             outfile = 'atr_surface_%s_%s_%s_%s_%s.txt'%(code,F.discriminant().abs(),Pnrm,D.norm(),(P*D*Np).norm())
     if os.path.isfile(outfile):
@@ -544,9 +551,11 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         return 'Giving up, prime norm is too large (Pnrm = %s)'%Pnrm
     fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,Sinf)),outfile)
 
-    G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None, timeout = timeout, grouptype = grouptype)
-    Coh = ArithCoh(G)
-    fwrite('Computed Cohomology group',outfile)
+    if compute_G:
+        G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None, timeout = timeout, grouptype = grouptype)
+    if compute_cohomology:
+        Coh = ArithCoh(G)
+        fwrite('Computed Cohomology group',outfile)
     if return_all:
         all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = True)
     else:
