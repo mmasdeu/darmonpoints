@@ -462,7 +462,7 @@ def euler_factor_twodim_tn(q,t,n):
     x = QQ['x'].gen()
     return x**4 - t*x**3 + (2*q+n)*x**2 - q*t*x + q*q
 
-def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, compute_G = True, compute_cohomology = True, abtuple = None, **kwargs):
+def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, compute_G = True, compute_cohomology = True, abtuple = None, logfile = None, **kwargs):
     from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
     from sarithgroup import BigArithGroup
     from homology import lattice_homology_cycle
@@ -552,7 +552,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,Sinf)),outfile)
 
     if compute_G:
-        G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None, timeout = timeout, grouptype = grouptype)
+        G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None, timeout = timeout, grouptype = grouptype, logfile = logfile)
     if compute_cohomology:
         Coh = ArithCoh(G)
         fwrite('Computed Cohomology group',outfile)
@@ -569,7 +569,8 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         return 'DONE'
     fwrite('Obtained cocycles',outfile)
     for flist, hecke_data in all_twodim_cocycles:
-        g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
+        g0, g1 = G.get_homology_kernel(hecke_data = tuple(hecke_data))
+        # g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
         g0_shapiro, g1_shapiro = G.inverse_shapiro(g0), G.inverse_shapiro(g1)
         fwrite('Obtained homology generators',outfile)
         if working_prec is None:

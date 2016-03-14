@@ -366,5 +366,10 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
         edgelist = newedgelist
     if multiplicative:
         val =  resmul.valuation()
-        resmul = p**val * K.teichmuller(p**(-val)*resmul)
+        try:
+            resmul = p**val * K.teichmuller(p**(-val)*resmul)
+        except MemoryError:
+            print 'val = %s'%val
+            print 'resmul = %s'%resmul
+            assert 0
     return resmul, resadd
