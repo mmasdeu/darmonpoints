@@ -456,7 +456,7 @@ def frobenius_polynomial(C):
     return x**4 - ap1 * x**3 + r * x**2 - ap1*q * x + q*q
 
 def euler_factor_twodim(p,T):
-    return euler_factor_towdim_tn(p, T.trace(), T.determinant())
+    return euler_factor_twodim_tn(p, T.trace(), T.determinant())
 
 def euler_factor_twodim_tn(q,t,n):
     x = QQ['x'].gen()
@@ -556,6 +556,10 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     if compute_cohomology:
         Coh = ArithCoh(G)
         fwrite('Computed Cohomology group',outfile)
+    if hecke_data_init is not None and return_all:
+        fwrite('Warning: setting return_all to False because user passed hecke_data_init value', outfile)
+        return_all = False
+
     if return_all:
         all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = True)
     else:
@@ -569,8 +573,8 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         return 'DONE'
     fwrite('Obtained cocycles',outfile)
     for flist, hecke_data in all_twodim_cocycles:
-        g0, g1 = G.get_homology_kernel(hecke_data = tuple(hecke_data))
-        # g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
+        # g0, g1 = G.get_homology_kernel(hecke_data = tuple(hecke_data))
+        g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
         g0_shapiro, g1_shapiro = G.inverse_shapiro(g0), G.inverse_shapiro(g1)
         fwrite('Obtained homology generators',outfile)
         if working_prec is None:

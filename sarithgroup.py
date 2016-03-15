@@ -580,6 +580,7 @@ class BigArithGroup_class(AlgebraicGroup):
         return ans
 
     def get_homology_kernel(self, hecke_data = None):
+        verbose('Entering get_homology_kernel...')
         verb = get_verbose()
         set_verbose(0)
         if hecke_data is None:
@@ -636,6 +637,7 @@ class BigArithGroup_class(AlgebraicGroup):
         good_ker = kerVZ.span_of_basis([kerVZ((o.denominator() * o).change_ring(ZZ)) for o in good_ker])
         good_ker = [B(o.denominator() * o) for o in good_ker.LLL().rows()]
         set_verbose(verb)
+        verbose('Done with get_homology_kernel')
         return good_ker
 
     def inverse_shapiro(self, x):
