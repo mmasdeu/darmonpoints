@@ -163,14 +163,17 @@ def ICI_static(x1,x2,x3):
     return I2, I4, I6, I10
 
 def IgusaClebschFromHalfPeriods(a, b, c, prec = None, padic = True):
-    if a.valuation() == 0:
-        a, c = c, a
-    elif b.valuation() == 0:
-        b, c = c, b
-    if a.valuation() < 0:
+    if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
         a,b,c = 1/a, 1/b, 1/c
-    if a.valuation() <= 0 or b.valuation() <= 0 or c.valuation() < 0:
+        if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
+            raise RuntimeError
+    if sum(1 for u in [a,b,c] if u.valuation() == 0) > 1:
         raise RuntimeError
+    if b.valuation() == 0:
+        a, b, c = b, c, a
+    if a.valuation() == 0:
+        a, b, c = b, c, a
+    assert a.valuation() > 0 and b.valuation() > 0 and c.valuation() >= 0
     if padic or prec is None:
         return ICI_static(*xvec_padic(a,b,c,prec))
     else:
@@ -264,14 +267,14 @@ def recognize_absolute_invariant(j_invariant,base = QQ,phi = None,threshold = 0.
     threshold = threshold * RR(p).log(10)
     j_invariant_val = j_invariant.valuation()
     j_invariant = p**-j_invariant_val * j_invariant
-    if prec is not None:
-        j_invariant = Qp(p,prec)(j_invariant.lift())
+    # if prec is not None:
+    #     j_invariant = Qp(p,prec)(j_invariant.lift())
     fx = algdep(j_invariant,deg)
     hfx = height_polynomial(fx)
     trash_height = threshold * j_invariant.precision_relative()
     if hfx < trash_height:
         try:
-            fwrite('%s (deg = %s)'%(RealField(20)(hfx)/RealField(20)(trash_height), fx.degree()),outfile)
+            fwrite('%s (deg = %s, relprec = %s, threshold = %s)'%(RealField(20)(hfx)/RealField(20)(trash_height), fx.degree(), j_invariant.precision_relative(), threshold),outfile)
             return p**j_invariant_val * fx.change_ring(base).roots()[0][0]
         except IndexError:
             raise ValueError('No roots')
@@ -318,7 +321,7 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
                     return (I2, I4, I6, I10)
     raise ValueError('Unrecognized')
 
-def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None):
+def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None, threshold = 0.85):
     F = Lpmat.parent().base_ring()
     p = F.prime()
     x = QQ['x'].gen()
@@ -382,7 +385,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             else:
                 # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
                 try:
-                    return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = 0.9,prec = prec, outfile = outfile), 1, 1, 1)
+                    return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = threshold,prec = prec, outfile = outfile), 1, 1, 1)
                 except ValueError:
                     continue
         else:
@@ -400,7 +403,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                     continue
                 for I2c in I2c_list:
                     try:
-                        return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = .9,prec = prec,  outfile = outfile), 1, 1, 1)
+                        return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = threshold,prec = prec,  outfile = outfile), 1, 1, 1)
                     except ValueError:
                         continue
     return 'Nope'
