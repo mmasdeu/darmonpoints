@@ -100,13 +100,18 @@ def lambdavec(p1, p2, p3, prec):
         pass
     l2 = (num/den)**2
 
-    num = th['2p2m'] * th['1m2p']
-    den = th['1p1m'] * th['1p2m']
+    num = th['2p2m']
+    num,_ = num.quo_rem(1-p3)
+    num *= th['1m2p']
+    den = th['1p1m']
+    den,_ = den.quo_rem(1+p3)
+    den *= th['1p2m']
     try:
         den.parent()._bg_ps_ring().set_default_prec(prec)
     except AttributeError:
         pass
-    l3 = (num/den)**2
+    l3 = num/den
+    l3 *= l3
     return matrix(3,1,[l1,l2,l3])
 
 def lambdavec_padic(p1, p2, p3,prec = None):
@@ -117,8 +122,8 @@ def lambdavec_padic(p1, p2, p3,prec = None):
     num = th['1p1m'] * th['3m1p']
     den = th['3p3m'] * th['3p1m']
     l2 = (num/den)**2
-    num = th['2p2m'] * th['1m2p']
-    den = th['1p1m'] * th['1p2m']
+    num = th['2p2m'] * th['1m2p'] / (1-p3) # Watch
+    den = th['1p1m'] * th['1p2m'] / (1+p3)
     l3 = (num/den)**2
     return matrix(3,1,[l1,l2,l3])
 
@@ -654,20 +659,24 @@ def jacobian_matrix(fvec):
 def twisted_jacobian_matrix(fvec):
     f1, f2, f3 = fvec.list()
     x, y, z = f1.variables()
-    Mlist =  [f1.derivative(x), f1.derivative(y), f1.derivative(z),f2.derivative(x), f2.derivative(y), f2.derivative(z),()f3.derivative(x), f3.derivative(y), f3.derivative(z)]
+    Mlist = [f1.derivative(x), f1.derivative(y), f1.derivative(z),f2.derivative(x), f2.derivative(y), f2.derivative(z), f3.derivative(x), f3.derivative(y), f3.derivative(z)]
     def ev(p1,p2,p3):
-        h1 = Mlist[6]
-        h2 = Mlist[7]
-        h3 = Mlist[8]
+        retvec = []
+        for i in range(6):
+            retvec.append(Mlist[i].polynomial()(p1,p2,p3))
+        h1 = Mlist[6].polynomial()(p1,p2,p3)
+        h2 = Mlist[7].polynomial()(p1,p2,p3)
+        h3 = Mlist[8].polynomial()(p1,p2,p3)
         ll = ((1-p3)/(1+p3))**2
         h1 = ll * h1
         h2 = ll * h2
-        h3 = -4*(1-p3)/(1+p3)**3 * f3 + ll * h3
-        return Matrix(3,3,[Mlist[:3],Mlist[3:6],[h1, h2, h3]])
+        h3 = -4*(1-p3)/(1+p3)**3 * f3.polynomial()(p1,p2,p3) + ll * h3
+        retvec.extend([h1,h2,h3])
+        return Matrix(3,3,retvec)
     return ev
 
 # given a triple of lambda's returns the corresponding half periods
-def HalfPeriodsInTermsOfLambdas(L1, L2, L3, prec, lvec = None,p30 = 0):
+def HalfPeriodsInTermsOfLambdas(L1, L2, L3, prec, lvec = None, J = None, p30 = 0):
     K = L1.parent()
     L0 = Matrix(K, 3, 1, [L1, L2, L3])
     if lvec is None:
@@ -676,19 +685,24 @@ def HalfPeriodsInTermsOfLambdas(L1, L2, L3, prec, lvec = None,p30 = 0):
         R.set_default_prec(2 * prec)
         R._bg_ps_ring().set_default_prec(2 * prec)
         lvec = lambdavec(p1, p2, p3, prec)
-    J = twisted_jacobian_matrix(lvec)
+    if J is None:
+        J = twisted_jacobian_matrix(lvec)
     # Evaluates a matrix M with entries in Z[[x,y,z]] at points x0,y0,z0
-    evaluate_matrix = lambda M, x0, y0, z0: M.apply_map(lambda f:f.polynomial()(x0,y0,z0))
-    Pn = J(K(0),K(0),K(p30)).inverse()*(L0 - evaluate_matrix(lvec,K(0),K(0),K(p30)))
+    def ev(M,x0,y0,z0):
+        a,b,c = M.list()
+        return matrix(3,1,[a.polynomial()(x0,y0,z0), b.polynomial()(x0,y0,z0), ((1-z0)/(1+z0))**2 * c.polynomial()(x0,y0,z0)])
+
+    Pn = J(K(0),K(0),K(p30)).inverse()*(L0 - ev(lvec,K(0),K(0),K(p30)))
     a,b,c = Pn.list()
-    assert all([o.valuation() >= 2*J(Pn[0][0],Pn[1][0],Pn[2][0]).determinant().valuation() for o in evaluate_matrix(lvec, a,b,c).list()])
+    assert all([o.valuation() >= 2*J(Pn[0][0],Pn[1][0],Pn[2][0]).determinant().valuation() for o in ev(lvec, a,b,c).list()])
     n_iters = 0
-    while True:
+    while n_iters < 20:
         n_iters += 1
         print 'n_iters = %s'%n_iters
         a, b, c = Pn.list()
-        Pnn = Pn - J(a,b,c).inverse()*(evaluate_matrix(lvec, a, b, c)-L0)
+        Pnn = Pn - J(a,b,c).inverse()*(ev(lvec, a, b, c)-L0)
         if all([(Pn[i][0]-Pnn[i][0]).valuation() >= prec for i in range(3)]):
             return Pn
         print [(Pn[i][0]-Pnn[i][0]).valuation() for i in range(3)]
         Pn = Pnn
+    raise RuntimeError,"Does not converge"
