@@ -482,6 +482,29 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
     R = Qp(p,prec)
     return newII.change_ring(R),newJJ.change_ring(R)
 
+
+# use hensel lemma to lift an approximate root x0 of the polynomial f to a root to the desired precision
+def hensel_lift(f,x0, prec):
+    xn = x0
+    n_iters = 0
+    fder = f.derivative()
+    if f(xn).valuation() <= 2 * fder(xn).valuation():
+        raise ValueError,"Approximation is not good enough"
+    while n_iters < prec + 5:
+        n_iters += 1
+        xnn = xn - f(xn)/fder(xn)
+        if (xnn-xn).valuation() >= prec:
+            return xn
+        xn = xnn
+    raise RuntimeError,"Does not seem to converge"
+
+# Returns the change of coordinates function resulting of sending
+# x1p |-> oo
+# x2p |-> 0
+# x3p |-> 1
+def affine_transformation(x1p, x2p, x3p):
+    return lambda x: (x-x2p)*(x3p-x1p)/((x-x1p)*(x3p-x2p))
+
 def height_polynomial(x,base = 10):
     return sum(((RR(o).abs()+1).log(base) for o in x.coefficients()))
 

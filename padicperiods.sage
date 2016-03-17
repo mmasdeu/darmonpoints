@@ -10,9 +10,9 @@ def Theta(p1,p2,p3,version = None,prec = None):
         prec = 2 * p1.parent().precision_cap()
     # imax = ((1+(1+4*RR(prec/min_val)).sqrt())/2).ceiling()
     imax = (RR(1)/2 + RR(prec + RR(1)/2).sqrt()).ceiling()
-    a = p1.valuation().abs()
-    b = p2.valuation().abs()
-    c = p3.valuation().abs()
+    a = 1/2 # p1.valuation().abs()
+    b = 1/2 # p2.valuation().abs()
+    c = 0 # p3.valuation().abs()
     # print 'Entering Theta %s %s %s'%(a,b,c)
     # Define the different conditions and term forms
     if version is None:
@@ -61,12 +61,9 @@ def Theta(p1,p2,p3,version = None,prec = None):
         for j in range(-jmax,jmax + 1):
             newterm = p2**(i**2) * p1**(j**2) * p3**((i-j)**2)
             if version is None:
-                p1l = p1**j
-                p2l = p2**i
-                p3l = p3**(i-j)
-                p2l_inv_p1l_inv_term = newterm * (p2l*p1l)**-1
-                p2lp3l_term = newterm * p2l * p3l
-                p1lp3l_inv_term = newterm * p1l * p3l**-1
+                p2l_inv_p1l_inv_term = p2**(i**2 -i) * p1**(j**2-j) * p3**((i-j)**2)
+                p2lp3l_term = p2**(i**2+i) * p1**(j**2) * p3**((i-j)**2 + (i-j))
+                p1lp3l_inv_term = p2**(i**2) * p1**(j**2 + j) * p3**((i-j)**2- (i-j))
 
                 resdict['1p1m'] += newterm * (-1)**j
                 resdict['1p2m'] += p2l_inv_p1l_inv_term
@@ -110,7 +107,7 @@ def lambdavec(p1, p2, p3, prec):
     except AttributeError:
         pass
     l3 = (num/den)**2
-    return (l1,l2,l3)
+    return matrix(3,1,[l1,l2,l3])
 
 def lambdavec_padic(p1, p2, p3,prec = None):
     th = Theta(p1,p2,p3,prec = prec)
@@ -123,12 +120,12 @@ def lambdavec_padic(p1, p2, p3,prec = None):
     num = th['2p2m'] * th['1m2p']
     den = th['1p1m'] * th['1p2m']
     l3 = (num/den)**2
-    return (l1,l2,l3)
+    return matrix(3,1,[l1,l2,l3])
 
 
 def xvec(p1, p2, p3, prec):
-    l1,l2,l3 = lambdavec(p1,p2,p3,prec)
-    x3 = l3
+    l1,l2,l3 = lambdavec(p1,p2,p3,prec).list()
+    x3 = l3 * ((p3-1)/(p3+1))**2
     den = l2
     try:
         den.parent()._bg_ps_ring().set_default_prec(prec)
@@ -144,8 +141,9 @@ def xvec(p1, p2, p3, prec):
     return (x1,x2,x3)
 
 def xvec_padic(p1, p2, p3,prec = None):
-    l1,l2,l3 = lambdavec_padic(p1,p2,p3,prec)
-    return (1/(1-l1),1 - 1/l2,l3)
+    l1,l2,l3 = lambdavec_padic(p1,p2,p3,prec).list()
+    return (1/(1-l1),1 - 1/l2,l3 * ((p3-1)/(p3+1))**2 )
+
 
 def ICI_static(x1,x2,x3):
     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
@@ -647,3 +645,50 @@ def all_possible_ordmats(Lpmat, N):
         if logmat.is_symmetric():
             ans.append(M)
     return sorted(ans, key = lambda x: max([x[0,0].abs(),x[0,1].abs(),x[1,1].abs()]))
+
+def jacobian_matrix(fvec):
+    f1, f2, f3 = fvec.list()
+    x, y, z = f1.variables()
+    return Matrix(3,3,[f1.derivative(x), f1.derivative(y), f1.derivative(z),f2.derivative(x), f2.derivative(y), f2.derivative(z),f3.derivative(x), f3.derivative(y), f3.derivative(z)])
+
+def twisted_jacobian_matrix(fvec):
+    f1, f2, f3 = fvec.list()
+    x, y, z = f1.variables()
+    Mlist =  [f1.derivative(x), f1.derivative(y), f1.derivative(z),f2.derivative(x), f2.derivative(y), f2.derivative(z),()f3.derivative(x), f3.derivative(y), f3.derivative(z)]
+    def ev(p1,p2,p3):
+        h1 = Mlist[6]
+        h2 = Mlist[7]
+        h3 = Mlist[8]
+        ll = ((1-p3)/(1+p3))**2
+        h1 = ll * h1
+        h2 = ll * h2
+        h3 = -4*(1-p3)/(1+p3)**3 * f3 + ll * h3
+        return Matrix(3,3,[Mlist[:3],Mlist[3:6],[h1, h2, h3]])
+    return ev
+
+# given a triple of lambda's returns the corresponding half periods
+def HalfPeriodsInTermsOfLambdas(L1, L2, L3, prec, lvec = None,p30 = 0):
+    K = L1.parent()
+    L0 = Matrix(K, 3, 1, [L1, L2, L3])
+    if lvec is None:
+        R = PowerSeriesRing(QQ,names = 'p', num_gens = 3)
+        p1, p2, p3 = R.gens()
+        R.set_default_prec(2 * prec)
+        R._bg_ps_ring().set_default_prec(2 * prec)
+        lvec = lambdavec(p1, p2, p3, prec)
+    J = twisted_jacobian_matrix(lvec)
+    # Evaluates a matrix M with entries in Z[[x,y,z]] at points x0,y0,z0
+    evaluate_matrix = lambda M, x0, y0, z0: M.apply_map(lambda f:f.polynomial()(x0,y0,z0))
+    Pn = J(K(0),K(0),K(p30)).inverse()*(L0 - evaluate_matrix(lvec,K(0),K(0),K(p30)))
+    a,b,c = Pn.list()
+    assert all([o.valuation() >= 2*J(Pn[0][0],Pn[1][0],Pn[2][0]).determinant().valuation() for o in evaluate_matrix(lvec, a,b,c).list()])
+    n_iters = 0
+    while True:
+        n_iters += 1
+        print 'n_iters = %s'%n_iters
+        a, b, c = Pn.list()
+        Pnn = Pn - J(a,b,c).inverse()*(evaluate_matrix(lvec, a, b, c)-L0)
+        if all([(Pn[i][0]-Pnn[i][0]).valuation() >= prec for i in range(3)]):
+            return Pn
+        print [(Pn[i][0]-Pnn[i][0]).valuation() for i in range(3)]
+        Pn = Pnn
