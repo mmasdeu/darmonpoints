@@ -158,6 +158,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',prec = None,parall
     input_vec = []
     res = Cp(1)
     resadd = Cp(0)
+    resval = ZZ(0)
     for g,divisor in cycle.get_data():
         jj += 1
         if divisor.degree() != 0:
@@ -165,11 +166,12 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',prec = None,parall
         if twist:
             divisor = divisor.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
             g = g.conjugate_by(G.wp()**-1)
-        newres,newresadd = integrate_H0(G,divisor,cocycle,depth,g,prec,jj,total_integrals,progress_bar,parallelize,multiplicative)
+        newres, newresval, newresadd = integrate_H0(G,divisor,cocycle,depth,g,prec,jj,total_integrals,progress_bar,parallelize,multiplicative)
         res *= newres
+        resval += newresval
         resadd += newresadd
     if not multiplicative:
-        return resadd
+        return res, resval, resadd
     elif resadd == 0:
         return res
     else:
@@ -309,6 +311,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     divisor_list = [(P,n) for P,n in divisor]
     resadd = ZZ(0)
     resmul = ZZ(1)
+    resval = ZZ(0)
     edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(depth)]
     while len(edgelist) > 0:
         newedgelist = []
@@ -352,24 +355,18 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 resadd += sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
                 resadd += mu_e.evaluate_at_poly(pol, K, coeff_depth)
-            if multiplicative:
-                try:
-                    if G.use_shapiro():
-                        tmp = hc.get_liftee().evaluate_and_identity(newgamma)
-                    else:
-                        tmp = hc.get_liftee().evaluate(newgamma)
-                    resmul *= c0**ZZ(tmp[0])
-                except IndexError: pass
+            try:
+                if G.use_shapiro():
+                    tmp = hc.get_liftee().evaluate_and_identity(newgamma)
+                else:
+                    tmp = hc.get_liftee().evaluate(newgamma)
+                resmul *= c0.unit_part()**ZZ(tmp[0])
+                resval += ZZ(tmp[0]) * c0.valuation()
+            except IndexError: pass
             if progress_bar:
                 update_progress(float(QQ(ii)/QQ(len(edgelist))),'Integration %s/%s'%(counter,total_counter))
 
         edgelist = newedgelist
-    if multiplicative:
-        val =  resmul.valuation()
-        try:
-            resmul = p**val * K.teichmuller(p**(-val)*resmul)
-        except MemoryError:
-            print 'val = %s'%val
-            print 'resmul = %s'%resmul
-            assert 0
-    return resmul, resadd
+    #resmul = p**resval * K.teichmuller(p**(-resval)*resmul)
+    # The real result is p**resval * resmul * resadd.exp()
+    return resmul, resval, resadd
