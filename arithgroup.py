@@ -885,8 +885,11 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         try:
             ans = list(self._Gamma0_farey.word_problem(SL2Z(delta.list()),output = 'standard'))
         except (RuntimeError,AssertionError):
-            print delta
-            assert 0
+            try:
+                ans = list(self._Gamma0_farey.word_problem(SL2Z((-delta).list()),output = 'standard'))
+            except (RuntimeError, AssertionError):
+                print delta
+                assert 0
         tmp = self.B(1)
         for i,a in shorten_word(ans):
             tmp *= self.gen(i).quaternion_rep**a
