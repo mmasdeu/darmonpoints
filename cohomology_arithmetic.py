@@ -518,7 +518,7 @@ class ArithCoh(CohomologyGroup):
             U0 = component_list[0][0].intersection(pol.subs(Aq).left_kernel())
             if U0.dimension() != 2:
                 raise ValueError('Hecke data does not suffice to cut out space')
-            good_component = (U0.denominator() * U0,[(qq.gens_reduced()[0],Aq)])
+            good_component = (U0.denominator() * U0,component_list[0][1] + [(qq.gens_reduced()[0],Aq)])
             flist = []
             for row0 in good_component[0].matrix().rows():
                 col0 = [QQ(o) for o in row0.list()]
@@ -605,10 +605,10 @@ class ArithCoh(CohomologyGroup):
         EXAMPLES::
 
         """
-        verbose('Entering apply_hecke_operator')
+        # verbose('Entering apply_hecke_operator')
         if hecke_reps is None:
             hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma, g0 = g0)
-        verbose('Got hecke reps')
+        # verbose('Got hecke reps')
         V = self.coefficient_module()
         padic = not V.base_ring().is_exact()
         group = self.group()
@@ -621,9 +621,9 @@ class ArithCoh(CohomologyGroup):
         gammas = group.gens()
         vals = [V(0) for gamma in gammas]
         input_vector = []
-        verbose('Calculating action')
+        # verbose('Calculating action')
         for j, gamma in enumerate(gammas):
-            verbose('generator %s/%s...'%(j+1,len(gammas)))
+            # verbose('generator %s/%s...'%(j+1,len(gammas)))
             for g in hecke_reps:
                 if self.trivial_action():
                     vals[j] += c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
