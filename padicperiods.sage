@@ -197,13 +197,12 @@ def p_adic_l_invariant(A,B, Tmatrix):
     n  = Matrix(K,2,1,[A.log(0),B.log(0)])
     return M.solve_right(n).list()
 
-def p_adic_l_invariant_additive_periods(Alog, Aval, Blog, Bval, Tmatrix):
-    K = Alog.parent()
-    Alog, Blog = K(Alog), K(Blog)
+def p_adic_l_invariant_additive(A,B, alpha, beta, Tmatrix):
+    K = A.parent()
+    A, B = K(A), K(B)
     x,y,z,t = Tmatrix.change_ring(K).list()
-    alpha,beta = Aval, Bval
     M = Matrix(K,2,2,[alpha,x*alpha+z*beta,beta, y*alpha+t*beta])
-    n  = Matrix(K,2,1,[Alog, Blog])
+    n  = Matrix(K,2,1,[A, B])
     return M.solve_right(n).list()
 
 def qlogs_from_Lp_and_ords(a,b,Tmatrix,q1ord, q2ord, q3ord):
@@ -524,7 +523,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         warnings.warn('Use of "bigmatrix" for Up iteration is incompatible with Shapiro Lemma trick. Using "naive" method for Up.')
         Up_method = 'naive'
 
-    global G, Coh, flist, hecke_data, g0, g1, A, B, a, b, T, xi10, xi20, xi11, xi21, Phif, Alog, Blog, Aval, Bval
+    global G, Coh, flist, hecke_data, g0, g1, A, B, a, b, T, xi10, xi20, xi11, xi21, Phif
 
     if pol is None or pol.degree() == 1:
         F = QQ
@@ -608,22 +607,21 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         fwrite('Overconvergent lift completed', outfile)
 
         from integrals import integrate_H1
-        num, numval, numadd = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False)
-        den, denval, denadd = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar,  multiplicative = False)
-        Alog = numadd - denadd
+        num, numval = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        den, denval = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        A = num - den
         Aval = numval - denval
-        # A = num / den
         fwrite('Finished computation of A period', outfile)
-        Alog = Alog.add_bigoh(prec + Alog.valuation())
-        fwrite('Alog = %s (val = %s)'%(Alog, Aval), outfile)
+        # A = A.add_bigoh(prec + A.valuation())
+        fwrite('A = %s (%s)'%(A,Aval), outfile)
 
-        num, numval, numadd = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False)
-        den, denval, denadd = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False)
-        Blog = numadd - denadd
+        num, numval = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        den, denval = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        B = num - den
         Bval = numval - denval
         fwrite('Finished computation of B period', outfile)
-        Blog = Blog.add_bigoh(prec + Blog.valuation())
-        fwrite('Blog = %s (val = %s)'%(Blog, Bval), outfile)
+        # B = B.add_bigoh(prec + B.valuation())
+        fwrite('B = %s (%s)'%(B,Bval), outfile)
 
         found = False
         for ell, T0 in hecke_data:
@@ -637,9 +635,9 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
             fwrite('Good T not found...', outfile)
             return('DONE WITH ERROR')
 
-        F = Alog.parent()
+        F = A.parent()
         TF = T.change_ring(F)
-        a, b = p_adic_l_invariant_additive_periods(Alog, Aval, Blog, Bval, TF)
+        a, b = p_adic_l_invariant_additive(A, B, Aval, Bval, TF)
 
         a = a.trace()/a.parent().degree()
         b = b.trace()/b.parent().degree()
