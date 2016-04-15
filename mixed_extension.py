@@ -66,6 +66,19 @@ class QuadExtElement(FieldElement):
         a, b = self._value
         return self.valuation(p)/2
 
+    def trace_relative(self):
+        a, b = self._value
+        base = self.base()
+        r, _ = self.parent()._rs
+        return base(a) - base(b) * base(r)
+
+    def trace_absolute(self):
+        y = self.trace_relative()
+        if hasattr(y,'trace'):
+            return y.trace()
+        else:
+            return y.trace_absolute()
+
 class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x + s
     r"""
     A quadratic extension of a p-adic field.
@@ -161,3 +174,9 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
 
     def ramification_index(self):
         return self.polynomial().degree()
+
+    def relative_degree(self):
+        return self.polynomial().degree()
+
+    def absolute_degree(self):
+        return self.relative_degree() * self.base().degree()
