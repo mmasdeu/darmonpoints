@@ -344,7 +344,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
     F = Lpmat.parent().base_ring()
     p = F.prime()
     x = QQ['x'].gen()
-    from mixed_extension import *
+    from mixed_extension import QuadExt
     F.<r> = Qq(p**2, prec)
     r = F.gen()
     K = QuadExt(F,p)
