@@ -340,6 +340,12 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
 def teichmuller_system(self):
     return [self.teichmuller(self(i).lift_to_precision(self.precision_cap())) for i in self.residue_class_field() if i != 0]
 
+def take_to_Qp(x):
+    if hasattr(x,'trace'):
+        return x.trace()/x.parent().degree()
+    else:
+        return x.trace_absolute()/x.parent().absolute_degree()
+
 def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None, threshold = 0.85):
     F = Lpmat.parent().base_ring()
     p = F.prime()
@@ -379,9 +385,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             j1 = I2c**5 / I10c
             j2 = I2c**3 * I4c / I10c
             j3 = I2c**2 * I6c / I10c
-            j1n = j1.trace() / j1.parent().degree()
-            j2n = j2.trace() / j2.parent().degree()
-            j3n = j3.trace() / j3.parent().degree()
+            j1n, j2n, j3n = take_to_Qp(j1), take_to_Qp(j2), take_to_Qp(j3)
             assert (j1 - j1n).valuation() - j1.valuation() > 2,'j1 = %s, j1n = %s'%(j1,j1n)
             assert (j2 - j2n).valuation() - j2.valuation() > 2,'j2 = %s, j2n = %s'%(j2,j2n)
             assert (j3 - j3n).valuation() - j3.valuation() > 2,'j3 = %s, j3n = %s'%(j3,j3n)
@@ -398,7 +402,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                     continue
         else:
             j1 = (I2c**5 / I10c)
-            j1n = j1.trace() / j1.parent().degree()
+            j1n = take_to_Qp(j1)
             assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
             try:
                 j1 = j1n * Pgen**ZZ(I10c.ordp())
@@ -636,8 +640,8 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         TF = T.change_ring(F)
         a, b = p_adic_l_invariant_additive(A, B, Aval, Bval, TF)
 
-        a = a.trace()/a.parent().degree()
-        b = b.trace()/b.parent().degree()
+        a = take_to_Qp(a)
+        b = take_to_Qp(b)
 
         Lp = a + b * T
         fwrite('Lp = %s'%str(Lp.list()), outfile)
