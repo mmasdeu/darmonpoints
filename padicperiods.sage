@@ -337,6 +337,9 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
                     return (I2, I4, I6, I10)
     raise ValueError('Unrecognized')
 
+def teichmuller_system(self):
+    return [self.teichmuller(self(i).lift_to_precision(self.precision_cap())) for i in self.residue_class_field() if i != 0]
+
 def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None, threshold = 0.85):
     F = Lpmat.parent().base_ring()
     p = F.prime()
@@ -355,7 +358,10 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
         q30 = (-logmat[0,1]).exp()
     except ValueError:
         return 'Nope'
-    for s1, s2, s3 in product(F.teichmuller_system(),repeat = 3):
+    F0 = F.residue_field()
+    F0.lift = lambda t:F(t).lift_to_precision(F.precision_cap())
+    teichF = teichmuller_system(F)
+    for s1, s2, s3 in product(teichF,repeat = 3):
         try:
             q1 = K(s1 * q10 * p**oq1)
             q2 = K(s2 * q20 * p**oq2)
