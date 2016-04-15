@@ -310,7 +310,7 @@ class ArithCoh(CohomologyGroup):
         M = matrix(R,dim,dim,0)
         for j,cocycle in enumerate(self.gens()):
             # Construct column j of the matrix
-            verbose('Constructing column %s of the matrix'%j)
+            verbose('Constructing column %s/%s of the matrix'%(j,dim))
             fvals = self.apply_hecke_operator(cocycle, l, use_magma = use_magma, g0 = g0)
             M.set_column(j,list(vector(fvals)))
         return M
