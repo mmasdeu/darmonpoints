@@ -902,7 +902,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             ans = shorten_word(ans)
             return self.check_word(delta.matrix(),ans)
         else:
-            assert err == E:
+            assert err == E
             ans = shorten_word(self.minus_one_long + ans)
             return self.check_word(delta.matrix(),ans)
 
