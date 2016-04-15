@@ -8,11 +8,10 @@ from util import *
 def Theta(p1,p2,p3,version = None,prec = None):
     if prec is None:
         prec = 2 * p1.parent().precision_cap()
-    # imax = ((1+(1+4*RR(prec/min_val)).sqrt())/2).ceiling()
-    imax = (RR(1)/2 + RR(prec + RR(1)/2).sqrt()).ceiling()
-    a = 1/2 # p1.valuation().abs()
-    b = 1/2 # p2.valuation().abs()
-    c = 0 # p3.valuation().abs()
+    imax = (RR(1)/2 + RR(2*prec + RR(1)/2).sqrt()).ceiling() # note the 2!
+    a = QQ(1)/QQ(2)
+    b = QQ(1)/QQ(2)
+    c = 0
     # print 'Entering Theta %s %s %s'%(a,b,c)
     # Define the different conditions and term forms
     if version is None:
@@ -53,12 +52,12 @@ def Theta(p1,p2,p3,version = None,prec = None):
         raise ValueError("Wrong version? version = %s"%version)
     res = 0
     assert imax > 0
-    for i in range(-imax,imax + 1):
-        jmax = RR(prec - .25 - i**2 +RR(i).abs())
+    for i in xrange(-imax,imax + 1):
+        jmax = RR(2*prec - .25 - i**2 + RR(i).abs())
         if jmax < 0:
             continue
         jmax = (jmax.sqrt()+.5).ceiling()
-        for j in range(-jmax,jmax + 1):
+        for j in xrange(-jmax,jmax + 1):
             newterm = p2**(i**2) * p1**(j**2) * p3**((i-j)**2)
             if version is None:
                 p2l_inv_p1l_inv_term = p2**(i**2 -i) * p1**(j**2-j) * p3**((i-j)**2)
@@ -81,35 +80,42 @@ def Theta(p1,p2,p3,version = None,prec = None):
     else:
         return res
 
-def lambdavec(p1, p2, p3, prec):
-    th = Theta(p1,p2,p3,prec = prec)
+def compare_thetas(th1,th2):
+    minval = None
+    for ky in th1.iterkeys():
+        difference = th1[ky] - th2[ky]
+        val = min([QQ(i+j)/2 for i,j,k in difference.exponents()]+[Infinity])
+        print ky,": ", val
+        if minval is None or val < minval:
+            minval = val
+    return minval
+
+def lambdavec(p1, p2, p3, prec = None, theta = None, prec_pseries = None):
+    if theta is None:
+        assert prec is not None
+        th = Theta(p1,p2,p3,prec = prec)
+    else:
+        th = theta
 
     num = th['3p3m'] * th['2m3p']
     den = th['2p2m'] * th['2p3m']
-    try:
-        den.parent()._bg_ps_ring().set_default_prec(prec)
-    except AttributeError:
-        pass
+    if prec_pseries is not None:
+        try:
+            den.parent()._bg_ps_ring().set_default_prec(prec_pseries)
+        except AttributeError:
+            pass
     l1 = (num/den)**2
-
     num = th['1p1m'] * th['3m1p']
     den = th['3p3m'] * th['3p1m']
-    try:
-        den.parent()._bg_ps_ring().set_default_prec(prec)
-    except AttributeError:
-        pass
     l2 = (num/den)**2
-
     num = th['2p2m']
-    num,_ = num.quo_rem(1-p3)
+    num,rem = num.quo_rem(1-p3)
+    assert rem == 0
     num *= th['1m2p']
     den = th['1p1m']
-    den,_ = den.quo_rem(1+p3)
+    den,rem = den.quo_rem(1+p3)
+    assert rem == 0
     den *= th['1p2m']
-    try:
-        den.parent()._bg_ps_ring().set_default_prec(prec)
-    except AttributeError:
-        pass
     l3 = num/den
     l3 *= l3
     return matrix(3,1,[l1,l2,l3])
@@ -126,7 +132,6 @@ def lambdavec_padic(p1, p2, p3,prec = None):
     den = th['1p1m'] * th['1p2m'] / (1+p3)
     l3 = (num/den)**2
     return matrix(3,1,[l1,l2,l3])
-
 
 def xvec(p1, p2, p3, prec):
     l1,l2,l3 = lambdavec(p1,p2,p3,prec).list()
@@ -379,9 +384,6 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             j1 = I2c**5 / I10c
             j2 = I2c**3 * I4c / I10c
             j3 = I2c**2 * I6c / I10c
-            # j1 = I2c**2 / I4c
-            # j2 = I2c * I4c / I6c
-            # j3 = I4c * I6c / I10c
             j1n = j1.trace() / j1.parent().degree()
             j2n = j2.trace() / j2.parent().degree()
             j3n = j3.trace() / j3.parent().degree()
@@ -446,7 +448,7 @@ def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_
                 jj += 1
                 if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt and 'Error' not in outt:
                     fwrite('(%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
-                else:
+                elif outt != 'Nope':
                     fwrite('(%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
         else:
             for inpt in inp_vec:
@@ -454,7 +456,7 @@ def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_
                 jj += 1
                 if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt and 'Error' not in outt:
                     fwrite('(%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
-                else:
+                elif out != 'Nope':
                     fwrite('(%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
 
 
@@ -588,7 +590,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     fwrite('Obtained cocycles',outfile)
     for flist, hecke_data in all_twodim_cocycles:
         # g0, g1 = G.get_homology_kernel(hecke_data = tuple(hecke_data))
-        g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data)
+        g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data, outfile = outfile)
         g0_shapiro, g1_shapiro = G.inverse_shapiro(g0), G.inverse_shapiro(g1)
         fwrite('Obtained homology generators',outfile)
         if working_prec is None:
@@ -666,53 +668,85 @@ def jacobian_matrix(fvec):
     x, y, z = f1.variables()
     return Matrix(3,3,[f1.derivative(x), f1.derivative(y), f1.derivative(z),f2.derivative(x), f2.derivative(y), f2.derivative(z),f3.derivative(x), f3.derivative(y), f3.derivative(z)])
 
-def twisted_jacobian_matrix(fvec):
+def compute_lvec_and_Mlist(prec):
+    R = PowerSeriesRing(QQ,names = 'p', num_gens = 3)
+    p1, p2, p3 = R.gens()
+    R.set_default_prec(prec)
+    R._bg_ps_ring().set_default_prec(prec)
+    theta = Theta(p1,p2, p3,prec = prec)
+    lvec = lambdavec(p1, p2, p3, theta = theta,prec_pseries = prec)
+    Mlist = compute_twisted_jacobian_data(lvec)
+    lvec = [o.polynomial() for o in lvec.list()]
+    save((lvec,Mlist),'lvec_and_Mlist_%s.sobj'%prec)
+    return (lvec,Mlist)
+
+def load_lvec_and_Mlist(prec):
+    try:
+        lvec, Mlist = load('lvec_and_Mlist_%s.sobj'%prec)
+    except:
+        lvec, Mlist = compute_lvec_and_Mlist(prec)
+    return (lvec, Mlist)
+
+def evaluate_twisted_jacobian_matrix(p1,p2,p3,Mlist):
+    retvec = []
+    for i in range(6):
+        retvec.append(Mlist[i](p1,p2,p3))
+    h1 = Mlist[6](p1,p2,p3)
+    h2 = Mlist[7](p1,p2,p3)
+    h3 = Mlist[8](p1,p2,p3)
+    ll = ((1-p3)/(1+p3))**2
+    h1 = ll * h1
+    h2 = ll * h2
+    h3 = -4*(1-p3)/(1+p3)**3 * Mlist[9](p1,p2,p3) + ll * h3
+    retvec.extend([h1,h2,h3])
+    return Matrix(3,3,retvec)
+
+def compute_twisted_jacobian_data(fvec):
     f1, f2, f3 = fvec.list()
     x, y, z = f1.variables()
-    Mlist = [f1.derivative(x), f1.derivative(y), f1.derivative(z),f2.derivative(x), f2.derivative(y), f2.derivative(z), f3.derivative(x), f3.derivative(y), f3.derivative(z)]
-    def ev(p1,p2,p3):
-        retvec = []
-        for i in range(6):
-            retvec.append(Mlist[i].polynomial()(p1,p2,p3))
-        h1 = Mlist[6].polynomial()(p1,p2,p3)
-        h2 = Mlist[7].polynomial()(p1,p2,p3)
-        h3 = Mlist[8].polynomial()(p1,p2,p3)
-        ll = ((1-p3)/(1+p3))**2
-        h1 = ll * h1
-        h2 = ll * h2
-        h3 = -4*(1-p3)/(1+p3)**3 * f3.polynomial()(p1,p2,p3) + ll * h3
-        retvec.extend([h1,h2,h3])
-        return Matrix(3,3,retvec)
-    return ev
+    Mlist = [o.polynomial() for o in [f1.derivative(x), f1.derivative(y), f1.derivative(z),f2.derivative(x), f2.derivative(y), f2.derivative(z), f3.derivative(x), f3.derivative(y), f3.derivative(z)]] + [f3.polynomial()]
+    return Mlist
+
+def find_initial_approx(L1, L2, L3, lvec):
+    # Evaluates a matrix M with entries in Z[[x,y,z]] at points x0,y0,z0
+    def ev(x0,y0,z0):
+        return [lvec[0](x0,y0,z0), lvec[1](x0,y0,z0), ((1-z0)/(1+z0))**2 * lvec[2](x0,y0,z0)]
+    K = L1.parent()
+    n_tries = 0
+    for V in product(product(range(K.base().prime()), repeat = 3), repeat = 3):
+        n_tries += 1
+        if n_tries % 100 == 0:
+            print 'n_tries = %s'%n_tries
+        P = [a+b*K.gen()+c*K.base().gen() for a,b,c in V]
+        FP = ev(*P)
+        if min([(u-v).valuation() for u,v in zip(FP,[L1,L2,L3])]) > 1/2:
+            good_P = P
+            print P, [(u-v).valuation() for u,v in zip(FP,[L1,L2,L3])]
+    return good_P
 
 # given a triple of lambda's returns the corresponding half periods
-def HalfPeriodsInTermsOfLambdas(L1, L2, L3, prec, lvec = None, J = None, p30 = 0):
+def HalfPeriodsInTermsOfLambdas(L1, L2, L3, lvec_and_Mlist = None, HP0 = None, prec = None, max_iters = 20):
     K = L1.parent()
     L0 = Matrix(K, 3, 1, [L1, L2, L3])
-    if lvec is None:
-        R = PowerSeriesRing(QQ,names = 'p', num_gens = 3)
-        p1, p2, p3 = R.gens()
-        R.set_default_prec(2 * prec)
-        R._bg_ps_ring().set_default_prec(2 * prec)
-        lvec = lambdavec(p1, p2, p3, prec)
-    if J is None:
-        J = twisted_jacobian_matrix(lvec)
+    if lvec_and_Mlist is None:
+        assert prec is not None
+        lvec, Mlist = load_lvec_and_Mlist(prec)
+    else:
+        lvec, Mlist = lvec_and_Mlist
     # Evaluates a matrix M with entries in Z[[x,y,z]] at points x0,y0,z0
-    def ev(M,x0,y0,z0):
-        a,b,c = M.list()
-        return matrix(3,1,[a.polynomial()(x0,y0,z0), b.polynomial()(x0,y0,z0), ((1-z0)/(1+z0))**2 * c.polynomial()(x0,y0,z0)])
-
-    Pn = J(K(0),K(0),K(p30)).inverse()*(L0 - ev(lvec,K(0),K(0),K(p30)))
-    a,b,c = Pn.list()
-    assert all([o.valuation() >= 2*J(Pn[0][0],Pn[1][0],Pn[2][0]).determinant().valuation() for o in ev(lvec, a,b,c).list()])
+    def ev(x0,y0,z0):
+        return [lvec[0](x0,y0,z0), lvec[1](x0,y0,z0), ((1-z0)/(1+z0))**2 * lvec[2](x0,y0,z0)]
+    if HP0 is None:
+        HP0 = [K(0),K(0),K(0)]
+    Pn = Matrix(K,3,1,HP0) # 0th approximation
     n_iters = 0
     while n_iters < 20:
         n_iters += 1
-        print 'n_iters = %s'%n_iters
-        a, b, c = Pn.list()
-        Pnn = Pn - J(a,b,c).inverse()*(ev(lvec, a, b, c)-L0)
-        if all([(Pn[i][0]-Pnn[i][0]).valuation() >= prec for i in range(3)]):
+        Jinv = evaluate_twisted_jacobian_matrix(*Pn.list(),Mlist = Mlist).inverse()
+        FPn = matrix(3,1, ev(*Pn.list()))
+        Pnn = Pn - Jinv * (FPn - L0)
+        print '(%s)'%n_iters, [(u-v).valuation() for u,v in zip(Pn.list(), Pnn.list())]
+        if all([u == v for u,v in zip(Pn.list(), Pnn.list())]):
             return Pn
-        print [(Pn[i][0]-Pnn[i][0]).valuation() for i in range(3)]
         Pn = Pnn
     raise RuntimeError,"Does not converge"
