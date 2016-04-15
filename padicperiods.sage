@@ -338,7 +338,7 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
     raise ValueError('Unrecognized')
 
 def teichmuller_system(self):
-    return [self.teichmuller(self(i).lift_to_precision(self.precision_cap())) for i in self.residue_class_field() if i != 0]
+    return [self.teichmuller(self(i).lift_to_precision(self.precision_cap())) for i in self.residue_field() if i != 0]
 
 def take_to_Qp(x):
     if hasattr(x,'trace'):

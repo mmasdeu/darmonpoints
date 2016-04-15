@@ -68,7 +68,7 @@ class QuadExtElement(FieldElement):
 
     def trace_relative(self):
         a, b = self._value
-        base = self.base()
+        base = self.parent().base()
         r, _ = self.parent()._rs
         return base(a) - base(b) * base(r)
 
