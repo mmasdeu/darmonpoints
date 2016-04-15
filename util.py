@@ -484,16 +484,18 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
 
 
 # use hensel lemma to lift an approximate root x0 of the polynomial f to a root to the desired precision
-def hensel_lift(f,x0, prec):
+def hensel_lift(f,x0, prec = None):
     xn = x0
     n_iters = 0
     fder = f.derivative()
+    if prec is None:
+        prec = x0.parent().precision_cap()
     if f(xn).valuation() <= 2 * fder(xn).valuation():
         raise ValueError,"Approximation is not good enough"
-    while n_iters < prec + 5:
+    while n_iters < prec:
         n_iters += 1
         xnn = xn - f(xn)/fder(xn)
-        if (xnn-xn).valuation() >= prec:
+        if xn == xnn:
             return xn
         xn = xnn
     raise RuntimeError,"Does not seem to converge"
@@ -571,7 +573,7 @@ def our_sqrt(xx,K = None,return_all = False):
     xx=K(xx)
     p=K.base_ring().prime()
     prec = K.precision_cap()
-    valp = xx.valuation(p)
+    valp = xx.valuation()
     valpi = xx.ordp()
     try:
         eK = K.ramification_index()
@@ -583,7 +585,10 @@ def our_sqrt(xx,K = None,return_all = False):
         else:
             raise ValueError,'Not a square'
     x = K.uniformizer()**(-valp) * xx
-    z = K.gen()
+    try:
+        z = K.unramified_generator()
+    except AttributeError:
+        z = K.gen()
     deg = K.residue_class_degree()
     found = False
     ppow = p if p != 2 else 8
@@ -592,7 +597,7 @@ def our_sqrt(xx,K = None,return_all = False):
         y0 = avec[0]
         for a in avec[1:]:
             y0 = y0*z + a
-        if (y0**2-x).valuation(p) >= minval:
+        if (y0**2-x).valuation() >= minval:
             found = True
             break
     if found == False:
