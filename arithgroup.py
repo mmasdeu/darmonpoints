@@ -901,40 +901,10 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         if err == I:
             ans = shorten_word(ans)
             return self.check_word(delta.matrix(),ans)
-        elif err == E:
+        else:
+            assert err == E:
             ans = shorten_word(self.minus_one_long + ans)
             return self.check_word(delta.matrix(),ans)
-        else:
-            assert 0,'delta = %s, err = %s'%(delta, err)
-            try:
-                i = gens.index(err)
-            except ValueError:
-                pass
-            else:
-                ans =  shorten_word([i+1] + ans)
-                return self.check_word(delta.matrix(),ans)
-            try:
-                i = gens.index(E*err)
-            except ValueError:
-                pass
-            else:
-                ans =  shorten_word(self.minus_one_long + [i+1] + ans)
-                return self.check_word(delta.matrix(),ans)
-            try:
-                i = gens.index(err**-1)
-            except ValueError:
-                pass
-            else:
-                ans = shorten_word([-i-1] + ans)
-                return self.check_word(delta.matrix(),ans)
-            try:
-                i = gens.index(E*err**-1)
-            except ValueError:
-                pass
-            else:
-                ans = shorten_word(self.minus_one_long + [-i-1] + ans)
-                return self.check_word(delta.matrix(),ans)
-            raise RuntimeError('Word problem failed')
 
     def element_of_norm(self,N,use_magma = False,return_all = False, radius = None, max_elements = None, local_condition = None): # in rationalmatrix
         try:
