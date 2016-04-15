@@ -341,7 +341,9 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
     F = Lpmat.parent().base_ring()
     p = F.prime()
     x = QQ['x'].gen()
-    K.<y> = F.extension(x^2 + p)
+    from mixed_extension import *
+    K = QuadExt(Qq(p**2, prec),p)
+    y = K.gen()
     deg = base.degree()
     logmat = ordmat * Lpmat
     oq1, oq2, oq3 = [ ordmat[1,0] + ordmat[1,1], ordmat[0,0] + ordmat[0,1], -ordmat[0,1]]
@@ -361,24 +363,9 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             continue
         prec0 = prec
         try:
-            IC1 = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec0,padic = True)
+            I2c, I4c, I6c, I10c = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec0,padic = True)
         except (ValueError,RuntimeError):
             continue
-        # fwrite('.',outfile)
-        # n_iters = 0
-        # while n_iters < 3:
-        #     prec0 *= 2
-        #     IC = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec0,padic = True)
-        #     if min([(u-v).ordp() - v.ordp() for u,v in zip(IC,IC1)]) >= prec-2:
-        #         break
-        #     fwrite('(%s) %s'%(n_iters, min([(u-v).ordp() - v.ordp() for u,v in zip(IC,IC1)])),outfile)
-        #     n_iters += 1
-        #     IC1 = IC
-        # if n_iters >= 3:
-        #     continue
-        IC = IC1
-
-        I2c, I4c, I6c, I10c = IC
         if list_I10 is None:
             # # Get absolute invariants j1, j2, j3
             j1 = I2c**5 / I10c
