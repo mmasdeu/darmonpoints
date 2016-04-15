@@ -659,7 +659,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     ans.append((Gn(g0), ZZ(a[0])))
         return ans
 
-    def get_pseudo_orthonormal_homology(self, cocycles, hecke_data = None):
+    def get_pseudo_orthonormal_homology(self, cocycles, hecke_data = None, outfile = None):
         if hecke_data is None:
             hecke_data = []
         ker = self.get_homology_kernel(hecke_data = tuple(hecke_data))
@@ -670,6 +670,8 @@ class BigArithGroup_class(AlgebraicGroup):
         a10 = f1.pair_with_cycle(ker[0])
         a11 = f1.pair_with_cycle(ker[1])
         a00, a01, a10, a11 = ZZ(a00), ZZ(a01), ZZ(a10), ZZ(a11)
+        determinant = a00*a11 - a01*a10
+        fwrite('Scaling = %s (mat = [%s, %s, %s, %s])'%(determinant, a00, a01, a10, a11), outfile)
         return [a11 * ker[0] - a10 * ker[1], -a01 * ker[0] + a00 * ker[1]]
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0):
