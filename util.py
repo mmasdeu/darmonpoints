@@ -740,7 +740,11 @@ def our_nroot(xx,n,K = None,return_all = False):
         t = PolynomialRing(QQ,'t').gen()
         newans = []
         for d in divisors(n):
-            newans.extend([K(o[0])*ans for o in cyclotomic_polynomial(d).roots(K)])
+            try:
+                newans.extend([K(o[0])*ans for o in cyclotomic_polynomial(d).roots(K)])
+            except:
+                K0 = K.base_ring()
+                newans.extend([K(o[0])*ans for o in cyclotomic_polynomial(d).roots(K0)])
         return newans
     return ans
 
