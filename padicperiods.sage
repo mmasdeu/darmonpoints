@@ -460,7 +460,7 @@ def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_
                 jj += 1
                 if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt and 'Error' not in outt:
                     fwrite('(%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
-                elif out != 'Nope':
+                elif outt != 'Nope':
                     fwrite('(%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
 
 
