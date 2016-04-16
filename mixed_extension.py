@@ -1,7 +1,7 @@
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.structure.element import Element
 from sage.modules.free_module_element import FreeModuleElement_generic_dense, vector
-from sage.categories.algebras import Algebras
+from sage.categories.fields import Fields
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.element import FieldElement
 from sage.rings.ring import Field
@@ -9,50 +9,55 @@ from sage.rings.integer_ring import Z as ZZ
 from sage.rings.all import QQ
 
 class QuadExtElement(FieldElement):
-    def __init__(self, parent, x, y = None):
-        FieldElement.__init__(self, parent)
+    def __init__(self, parent, x, y = None, check = True):
         self._p = parent._p
-        if y is None:
-            try:
-                x = self.parent().base()(x)
-            except TypeError:
-                pass
-            if isinstance(x,(list, tuple, FreeModuleElement_generic_dense)):
-                self._value = vector(self.parent().base(), 2, x)
-            else:
-                self._value = vector(self.parent().base(), 2, [x,0])
+        if parent is None:
+            raise ValueError("The parent must be provided")
+        if not check:
+            self._value = x
         else:
-                self._value = vector(self.parent().base(), 2, [x,y])
+            B = parent.base()
+            if y is None:
+                y = B.zero()
+            if x not in B or y not in B:
+                raise ValueError("Both arguments must be elements of %s"%B)
+            x = B(x)
+            y = B(y)
+            self._value = vector(B, 2, [x, y])
+        FieldElement.__init__(self, parent)
 
+    # Needed for the class
     def _repr_(self):
         return '%s + ( %s )*pi'%(self._value[0], self._value[1])
+
+    def __nonzero__(self):
+        return self._value.__nonzero__()
 
     def list(self):
         return self._value.list()
 
+    # Arithmetic
     def _add_(self, right):
-        return self.__class__(self.parent(), self._value + right._value)
+        return self.__class__(self.parent(), self._value + right._value, check = False)
 
     def _sub_(self, right):
-        return self.__class__(self.parent(), self._value - right._value)
+        return self.__class__(self.parent(), self._value - right._value, check = False)
 
     def _mul_(self, right):
         a, b = self._value.list()
         c, d = right._value.list()
         r, s = self.parent()._rs
         bd = b*d
-        return self.__class__(self.parent(),[a*c - bd*s, a*d+b*c-bd*r])
-
-    def _rmul_(self, other):
-        c, d = self._value
-        return self.__class__(self.parent(), [other * c, other * d])
+        base = self.parent().base()
+        return self.__class__(self.parent(),vector(base,2,[a*c - bd*s, a*d+b*c-bd*r]), check = False)
 
     def _div_(self, right):
         a, b = self._value
         c, d = right._value
         r, s = self.parent()._rs
         den = c*c - c*d*r + d*d*s
-        return self.__class__(self.parent(), [(a*c-a*d*r+b*d*s) / den, (b*c-a*d) / den])
+        base = self.parent().base()
+        return self.__class__(self.parent(), vector(base,2,[(a*c-a*d*r+b*d*s) / den, (b*c-a*d) / den]), check = False)
 
     def _cmp_(self, right):
         return cmp(self._value,right._value)
@@ -85,6 +90,7 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
 
     EXAMPLES::
 
+        sage: from mixed_extension import *
         sage: p = 7
         sage: K0.<z> = Qq(p**2,20)
         sage: K = QuadExt(K0, p)
@@ -113,12 +119,13 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
         sage: f = x^2 - 3*x + 1
         sage: print f(K.gen())
         1 + 7 + O(7^20) + ( 4 + 6*7 + 6*7^2 + 6*7^3 + 6*7^4 + 6*7^5 + 6*7^6 + 6*7^7 + 6*7^8 + 6*7^9 + 6*7^10 + 6*7^11 + 6*7^12 + 6*7^13 + 6*7^14 + 6*7^15 + 6*7^16 + 6*7^17 + 6*7^18 + 6*7^19 + O(7^20) )*pi
+        sage: print K(K.base_ring()(0))
+        0 + ( 0 )*pi
 
 """
     Element = QuadExtElement
     def __init__(self, base, polynomial, category = None):
-        Field.__init__(self,base, category = category or Algebras(base))
-
+        Field.__init__(self,base, category = category or Fields())
         self._p = base.prime()
         try:
             polynomial = ZZ(polynomial)
@@ -131,6 +138,7 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
         self._prec = base.precision_cap()
         self._rs = self._polynomial[1], self._polynomial[0]
 
+
     def precision_cap(self):
         return self._prec
 
@@ -140,8 +148,11 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
     def base_ring(self):
         return self.base().base_ring()
 
+    def characteristic(self):
+        return self.base().characteristic()
+
     def gen(self):
-        return self.element_class(self, 0, 1)
+        return self.element_class(self, self.base()(0), self.base()(1))
 
     def unramified_generator(self):
         return self.element_class(self, self.base().gen())
@@ -152,16 +163,32 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
     def polynomial(self):
         return self._polynomial
 
-    def coerce(self, x):
-        return self.element_class(self, x)
-
-    def _coerce_map_from_(self, S):
-        if S is self.base() or S == self.base_ring():
-            return True
-        elif self.base().has_coerce_map_from(S):
-            return True
+    def _element_constructor_(self, *args, **kwds):
+        if len(args)!=1:
+           return self.element_class(self, *args, **kwds)
+        x = args[0]
+        try:
+            P = x.parent()
+        except AttributeError:
+            return self.element_class(self, x, **kwds)
+        if isinstance(x,list) or isinstance(P,FreeModuleElement_generic_dense):
+            return self.element_class(self, x[0],x[1], **kwds)
         else:
-            return False
+            return self.element_class(self, x, *kwds)
+
+    # Implement coercion from the base and from fraction fields
+    def _coerce_map_from_(self, S):
+        if self.base().has_coerce_map_from(S):
+            return True
+
+    # return some elements of this parent
+    def _an_element_(self):
+        a = self.base().an_element()
+        b = self.base_ring().an_element()
+        return self.element_class(self,a,b)
+
+    def some_elements(self):
+        return [self.an_element(),self.element_class(self,self.base().an_element()),self.element_class(self, self.base_ring().an_element())]
 
     def _repr_(self):
         return 'Quadratic extension of %s by %s'%(self._base, self._polynomial)
