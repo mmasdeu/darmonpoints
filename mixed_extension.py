@@ -75,7 +75,7 @@ class QuadExtElement(FieldElement):
         a, b = self._value
         base = self.parent().base()
         r, _ = self.parent()._rs
-        return self.relative_degree()*base(a) - base(b) * base(r)
+        return self.parent().relative_degree()*base(a) - base(b) * base(r)
 
     def trace_absolute(self):
         y = self.trace_relative()
