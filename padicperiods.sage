@@ -171,17 +171,17 @@ def ICI_static(x1,x2,x3):
     return I2, I4, I6, I10
 
 def IgusaClebschFromHalfPeriods(a, b, c, prec = None, padic = True):
-    if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
-        a,b,c = 1/a, 1/b, 1/c
-        if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
-            raise RuntimeError
-    if sum(1 for u in [a,b,c] if u.valuation() == 0) > 1:
-        raise RuntimeError
-    if b.valuation() == 0:
-        a, b, c = b, c, a
-    if a.valuation() == 0:
-        a, b, c = b, c, a
-    assert a.valuation() > 0 and b.valuation() > 0 and c.valuation() >= 0
+    # if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
+    #     a,b,c = 1/a, 1/b, 1/c
+    #     if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
+    #         raise RuntimeError
+    # if sum(1 for u in [a,b,c] if u.valuation() == 0) > 1:
+    #     raise RuntimeError
+    # if b.valuation() == 0:
+    #     a, b, c = b, c, a
+    # if a.valuation() == 0:
+    #     a, b, c = b, c, a
+    # assert a.valuation() > 0 and b.valuation() > 0 and c.valuation() >= 0
     if padic or prec is None:
         return ICI_static(*xvec_padic(a,b,c,prec))
     else:
@@ -390,12 +390,11 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             j1 = I2c**5 / I10c
             j2 = I2c**3 * I4c / I10c
             j3 = I2c**2 * I6c / I10c
-            j1n, j2n, j3n = take_to_Qp(j1), take_to_Qp(j2), take_to_Qp(j3)
-            assert (j1 - j1n).valuation() - j1.valuation() > 2,'j1 = %s, j1n = %s'%(j1,j1n)
-            assert (j2 - j2n).valuation() - j2.valuation() > 2,'j2 = %s, j2n = %s'%(j2,j2n)
-            assert (j3 - j3n).valuation() - j3.valuation() > 2,'j3 = %s, j3n = %s'%(j3,j3n)
-            j1, j2, j3 = j1n, j2n, j3n
-
+            tol = prec/3
+            try:
+                j1, j2, j3 = take_to_Qp(j1, tolerance = tol), take_to_Qp(j2, tol), take_to_Qp(j3, tol)
+            except ValueError:
+                continue
             if cheatjs is not None:
                 if all([(u-v).valuation() - u.valuation() > minval for u,v in zip([j1,j2,j3],cheatjs)]):
                     return (oq1,oq2,oq3,1)
@@ -407,9 +406,8 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                     continue
         else:
             j1 = (I2c**5 / I10c)
-            j1n = take_to_Qp(j1)
-            assert (j1 - j1n).valuation() - j1.valuation() > 5,'j1 = %s, j1n = %s'%(j1,j1n)
             try:
+                j1n = take_to_Qp(j1, tolerance = prec/3)
                 j1 = j1n * Pgen**ZZ(I10c.ordp())
             except ValueError:
                 continue
