@@ -635,9 +635,12 @@ def our_cuberoot(xx,K = None,return_all = False):
     valpi = eK * valp
     if valpi % 3 != 0:
         raise ValueError,'Not a cube'
-    x = p**(-valp) * xx
-    z = K.gen()
-    deg = K.degree()
+    x = K.uniformizer()**(-valp) * xx
+    try:
+        z = K.unramified_generator()
+    except AttributeError:
+        z = K.gen()
+    deg = K.residue_class_degree()
     found = False
     ppow = p if p != 3 else 9
     minval = 1 if p != 3 else 2
@@ -696,9 +699,12 @@ def our_nroot(xx,n,K = None,return_all = False):
     valpi = eK * valp
     if valpi % n != 0:
         raise ValueError,'Not an n-th power'
-    x = p**(-valp) * xx
-    z = K.gen()
-    deg = K.degree()
+    x = K.uniformizer()**(-valp) * xx
+    try:
+        z = K.unramified_generator()
+    except AttributeError:
+        z = K.gen()
+    deg = K.residue_class_degree()
     found = False
     if n % p == 0:
         minval = 3 if p == 2 else 2
