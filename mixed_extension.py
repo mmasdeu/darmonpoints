@@ -207,3 +207,6 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
 
     def absolute_degree(self):
         return self.relative_degree() * self.base().degree()
+
+    def is_finite(self):
+        return self.base().is_finite()
