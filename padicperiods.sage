@@ -340,11 +340,16 @@ def recognize_invariants(j1,j2,j3,pval,base = QQ,phi = None):
 def teichmuller_system(self):
     return [self.teichmuller(self(i).lift_to_precision(self.precision_cap())) for i in self.residue_field() if i != 0]
 
-def take_to_Qp(x):
+def take_to_Qp(x, tolerance = None):
     if hasattr(x,'trace'):
-        return x.trace()/x.parent().degree()
+        ans = x.trace()/x.parent().degree()
     else:
-        return x.trace_absolute()/x.parent().absolute_degree()
+        ans = x.trace_absolute()/x.parent().absolute_degree()
+    if tolerance is None:
+        tolerance = 3
+    if (x.parent()(ans) - x).ordp() - x.ordp() <= tolerance:
+        raise ValueError('Input does not look p-adic')
+    return ans
 
 def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None, threshold = 0.85):
     F = Lpmat.parent().base_ring()
