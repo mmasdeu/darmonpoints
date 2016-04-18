@@ -396,8 +396,9 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             except ValueError:
                 continue
             if cheatjs is not None:
-                if all([(u-v).valuation() - u.valuation() > minval for u,v in zip([j1,j2,j3],cheatjs)]):
-                    return (oq1,oq2,oq3,1)
+                vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
+                if all([o > minval for o in vals]):
+                    return (oq1,oq2,oq3,min(vals))
             else:
                 # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
                 try:
