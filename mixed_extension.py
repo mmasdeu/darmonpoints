@@ -1,6 +1,5 @@
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.structure.element import Element
-from sage.modules.free_module_element import FreeModuleElement_generic_dense, vector
 from sage.categories.fields import Fields
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.element import FieldElement
@@ -23,7 +22,7 @@ class QuadExtElement(FieldElement):
                 raise ValueError("Both arguments must be elements of %s"%B)
             x = B(x)
             y = B(y)
-            self._value = vector(B, 2, [x, y])
+            self._value = (x, y)
         FieldElement.__init__(self, parent)
 
     # Needed for the class
@@ -31,33 +30,46 @@ class QuadExtElement(FieldElement):
         return '%s + ( %s )*pi'%(self._value[0], self._value[1])
 
     def __nonzero__(self):
-        return self._value.__nonzero__()
+        a, b = self._value
+        return a.__nonzero__() or b.__nonzero__()
 
     def list(self):
-        return self._value.list()
+        return list(self._value)
 
     # Arithmetic
     def _add_(self, right):
-        return self.__class__(self.parent(), self._value + right._value, check = False)
+        a,b = self._value
+        c,d = right._value
+        return self.__class__(self.parent(), (a+c, b+d), check = False)
 
     def _sub_(self, right):
-        return self.__class__(self.parent(), self._value - right._value, check = False)
+        a,b = self._value
+        c,d = right._value
+        return self.__class__(self.parent(), (a-c, b-d), check = False)
 
     def _mul_(self, right):
-        a, b = self._value.list()
-        c, d = right._value.list()
-        r, s = self.parent()._rs
+        a, b = self._value
+        c, d = right._value
+        parent = self.parent()
+        r, s = parent._rs
+        ac = a*c
         bd = b*d
-        base = self.parent().base()
-        return self.__class__(self.parent(),vector(base,2,[a*c - bd*s, a*d+b*c-bd*r]), check = False)
+        ab_times_cd = (a+b)*(c+d)
+        if r is None:
+            return self.__class__(parent,(ac - bd*s, ab_times_cd - (ac + bd)), check = False)
+        else:
+            return self.__class__(parent,(ac - bd*s, ab_times_cd - ac - bd + bd*r), check = False)
 
     def _div_(self, right):
         a, b = self._value
         c, d = right._value
         r, s = self.parent()._rs
-        den = c*c - c*d*r + d*d*s
-        base = self.parent().base()
-        return self.__class__(self.parent(), vector(base,2,[(a*c-a*d*r+b*d*s) / den, (b*c-a*d) / den]), check = False)
+        if r is None:
+            den = c*c + d*d*s
+            return self.__class__(self.parent(), ((a*c+b*d*s) / den, (b*c-a*d) / den), check = False)
+        else:
+            den = c*c + c*d*r + d*d*s
+            return self.__class__(self.parent(), ((a*c+a*d*r+b*d*s) / den, (b*c-a*d) / den), check = False)
 
     def _cmp_(self, right):
         return cmp(self._value,right._value)
@@ -69,13 +81,17 @@ class QuadExtElement(FieldElement):
 
     def ordp(self, p = None):
         a, b = self._value
-        return self.valuation(p)/2
+        return self.valuation(p) / 2
 
     def trace_relative(self):
         a, b = self._value
-        base = self.parent().base()
-        r, _ = self.parent()._rs
-        return self.parent().relative_degree()*base(a) - base(b) * base(r)
+        parent = self.parent()
+        base = parent.base()
+        r = parent._rs[0]
+        if r is None:
+            return parent.relative_degree()*base(a)
+        else:
+            return parent.relative_degree()*base(a) + base(b) * base(r)
 
     def trace_absolute(self):
         y = self.trace_relative()
@@ -84,7 +100,7 @@ class QuadExtElement(FieldElement):
         else:
             return y.trace_absolute()
 
-class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x + s
+class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 - r*x + s
     r"""
     A quadratic extension of a p-adic field.
 
@@ -136,8 +152,10 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
         if not self._polynomial.is_monic():
             raise ValueError("Polynomial must be monic")
         self._prec = base.precision_cap()
-        self._rs = self._polynomial[1], self._polynomial[0]
-
+        if self._polynomial[1] == 0:
+            self._rs = None, self._polynomial[0]
+        else:
+            self._rs = -self._polynomial[1], self._polynomial[0]
 
     def precision_cap(self):
         return self._prec
@@ -171,10 +189,10 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
             P = x.parent()
         except AttributeError:
             return self.element_class(self, x, **kwds)
-        if isinstance(x,list) or isinstance(P,FreeModuleElement_generic_dense):
-            return self.element_class(self, x[0],x[1], **kwds)
+        if isinstance(x,list):
+            return self.element_class(self, x[0], x[1], **kwds)
         else:
-            return self.element_class(self, x, *kwds)
+            return self.element_class(self, x, **kwds)
 
     # Implement coercion from the base and from fraction fields
     def _coerce_map_from_(self, S):
@@ -191,7 +209,7 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 + r*x +
         return [self.an_element(),self.element_class(self,self.base().an_element()),self.element_class(self, self.base_ring().an_element())]
 
     def _repr_(self):
-        return 'Quadratic extension of %s by %s'%(self._base, self._polynomial)
+        return 'Quadratic extension defined by %s over its base.'%self._polynomial
 
     def uniformizer(self):
         return self.gen()

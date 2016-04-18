@@ -682,20 +682,19 @@ def our_nroot(xx,n,K = None,return_all = False):
             return [xx]
         else:
             return xx
+    n = ZZ(n)
     if n == 1:
-        if return_all:
-            return [xx]
-        else:
-            return xx
-    xx=K(xx)
+        return [xx] if return_all else xx
+    elif n == -1:
+        return [xx**-1] if return_all else xx**-1
+    sgn = n.sign()
+    n = n.abs()
+    xx = K(xx)
     prec = K.precision_cap()
     x_orig = xx
-    p=K.base_ring().prime()
+    p = K.base_ring().prime()
     valp = xx.valuation()
-    try:
-        eK = K.ramification_index()
-    except AttributeError:
-        eK = 1
+    eK = K.ramification_index() if hasattr(K,'ramification_index') else 1
     valpi = eK * valp
     if valpi % n != 0:
         raise ValueError,'Not an n-th power'
@@ -745,8 +744,11 @@ def our_nroot(xx,n,K = None,return_all = False):
             except:
                 K0 = K.base_ring()
                 newans.extend([K(o[0])*ans for o in cyclotomic_polynomial(d).roots(K0)])
-        return newans
-    return ans
+        if sgn == 1:
+            return newans
+        else:
+            return [o**-1 for o in newans]
+    return ans if sgn == 1 else ans**-1
 
 def enumerate_words(v, n = None,max_length = -1):
     if n is None:
