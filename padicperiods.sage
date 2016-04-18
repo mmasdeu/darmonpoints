@@ -374,8 +374,7 @@ def find_igusa_invariants_from_AB(A, B, T, prec, base=QQ, cheatjs=None, phi=None
             p2,p3 = our_sqrt(q2,K),our_sqrt(q3,K)
         except (ValueError):
             continue
-        p1candidates = [o**(ZZ(2*z).sign()) for o in our_nroot(q1z, ZZ(2*z).abs(), return_all = True)]
-        for p1 in p1candidates:
+        for p1 in our_nroot(q1z, ZZ(2*z), return_all = True):
             try:
                 I2c, I4c, I6c, I10c = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec,padic = True)
             except (ValueError,RuntimeError):
@@ -385,7 +384,7 @@ def find_igusa_invariants_from_AB(A, B, T, prec, base=QQ, cheatjs=None, phi=None
                 j1 = I2c**5 / I10c
                 j2 = I2c**3 * I4c / I10c
                 j3 = I2c**2 * I6c / I10c
-                tol = prec/3
+                tol = prec / 3
                 try:
                     j1, j2, j3 = take_to_Qp(j1, tolerance = tol), take_to_Qp(j2, tol), take_to_Qp(j3, tol)
                 except ValueError:
