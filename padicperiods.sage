@@ -364,7 +364,11 @@ def find_igusa_invariants_from_AB(A, B, T, prec, base=QQ, cheatjs=None, phi=None
     teichF = teichmuller_system(F)
     x, y, z, t = T.list()
     r = x + y - z - t
+    total_tries = len(teichF)**2
+    num_tries = 0
     for s1, s2 in product(teichF,repeat = 2):
+        print 'Tries = %s/%s'%(num_tries,total_tries)
+        num_tries += 1
         A1 = A * s1
         B1 = B * s2
         q2 = K(A1 * B1)
