@@ -481,7 +481,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             j1 = (I2c**5 / I10c)
             try:
                 j1n = take_to_Qp(j1, tolerance = prec/3)
-                j1 = j1n * Pgen**ZZ(I10c.ordp())
+                j1 = j1n # * Pgen**ZZ(I10c.ordp())
             except ValueError:
                 continue
             for I10 in list_I10:
