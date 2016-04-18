@@ -361,7 +361,7 @@ def find_igusa_invariants_from_AB(A, B, T, prec, base=QQ, cheatjs=None, phi=None
     deg = base.degree()
     F0 = F.residue_field()
     F0.lift = lambda t:F(t).lift_to_precision(F.precision_cap())
-    teichF = teichmuller_system(F)
+    teichF = teichmuller_system(F.base_ring())
     x, y, z, t = T.list()
     r = x + y - z - t
     total_tries = len(teichF)**2
@@ -443,7 +443,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
         return 'Nope'
     F0 = F.residue_field()
     F0.lift = lambda t:F(t).lift_to_precision(F.precision_cap())
-    teichF = teichmuller_system(F)
+    teichF = teichmuller_system(F.base_ring())
     for s1, s2, s3 in product(teichF,repeat = 3):
         try:
             q1 = K(s1 * q10 * p**oq1)
