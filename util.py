@@ -484,15 +484,15 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
 
 
 # use hensel lemma to lift an approximate root x0 of the polynomial f to a root to the desired precision
-def hensel_lift(f,x0, prec = None):
+def hensel_lift(f, x0, max_iters=None):
     xn = x0
     n_iters = 0
     fder = f.derivative()
-    if prec is None:
-        prec = x0.parent().precision_cap()
+    if max_iters is None:
+        max_iters = 1 + RR(x0.parent().max_itersision_cap()).log(2).ceiling()
     if f(xn).valuation() <= 2 * fder(xn).valuation():
         raise ValueError,"Approximation is not good enough"
-    while n_iters < prec:
+    while n_iters < max_iters:
         n_iters += 1
         xnn = xn - f(xn)/fder(xn)
         if xn == xnn:
