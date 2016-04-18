@@ -351,6 +351,74 @@ def take_to_Qp(x, tolerance = None):
         raise ValueError('Input does not look p-adic')
     return ans
 
+def find_igusa_invariants_from_AB(A, B, T, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85):
+    F = A.parent().base_ring()
+    p = F.prime()
+    x = QQ['x'].gen()
+    from mixed_extension import QuadExt
+    F.<r> = Qq(p**2, prec)
+    K = QuadExt(F,p)
+    deg = base.degree()
+    F0 = F.residue_field()
+    F0.lift = lambda t:F(t).lift_to_precision(F.precision_cap())
+    teichF = teichmuller_system(F)
+    x, y, z, t = T.list()
+    r = x + y - z - t
+    for s1, s2 in product(teichF,repeat = 2):
+        A1 = A * s1
+        B1 = B * s2
+        q2 = K(A1 * B1)
+        q3 = K(B1**-1)
+        q1z = q2**y * q3**r
+        try:
+            p2,p3 = our_sqrt(q2,K),our_sqrt(q3,K)
+        except (ValueError):
+            continue
+        for p1 in our_nroot(q1z, 2*z, return_all = True):
+            try:
+                I2c, I4c, I6c, I10c = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec,padic = True)
+            except (ValueError,RuntimeError):
+                continue
+            if list_I10 is None:
+                # # Get absolute invariants j1, j2, j3
+                j1 = I2c**5 / I10c
+                j2 = I2c**3 * I4c / I10c
+                j3 = I2c**2 * I6c / I10c
+                tol = prec/3
+                try:
+                    j1, j2, j3 = take_to_Qp(j1, tolerance = tol), take_to_Qp(j2, tol), take_to_Qp(j3, tol)
+                except ValueError:
+                    continue
+                if cheatjs is not None:
+                    vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
+                    if all([o > minval for o in vals]):
+                        return (oq1,oq2,oq3,min(vals))
+                else:
+                    # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
+                    try:
+                        return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = threshold,prec = prec, outfile = outfile), 1, 1, 1)
+                    except ValueError:
+                        continue
+            else:
+                j1 = (I2c**5 / I10c)
+                try:
+                    j1n = take_to_Qp(j1, tolerance = prec/3)
+                    j1 = j1n * Pgen**ZZ(I10c.ordp())
+                except ValueError:
+                    continue
+                for I10 in list_I10:
+                    try:
+                        I2c_list = our_nroot( j1 * I10, 5, return_all = True)
+                    except ValueError:
+                        continue
+                    for I2c in I2c_list:
+                        try:
+                            return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = threshold,prec = prec,  outfile = outfile), 1, 1, 1)
+                        except ValueError:
+                            continue
+    return 'Nope'
+
+
 def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None, threshold = 0.85):
     F = Lpmat.parent().base_ring()
     p = F.prime()
