@@ -459,9 +459,12 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             continue
         if list_I10 is None:
             # # Get absolute invariants j1, j2, j3
-            j1 = I2c**5 / I10c
-            j2 = I2c**3 * I4c / I10c
-            j3 = I2c**2 * I6c / I10c
+            try:
+                j1 = I2c**5 / I10c
+                j2 = I2c**3 * I4c / I10c
+                j3 = I2c**2 * I6c / I10c
+            except PrecisionError:
+                continue
             tol = prec/3
             try:
                 j1, j2, j3 = take_to_Qp(j1, tolerance = tol), take_to_Qp(j2, tol), take_to_Qp(j3, tol)
@@ -478,7 +481,10 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                 except ValueError:
                     continue
         else:
-            j1 = (I2c**5 / I10c)
+            try:
+                j1 = (I2c**5 / I10c)
+            except PrecisionError:
+                continue
             try:
                 j1n = take_to_Qp(j1, tolerance = prec/3)
                 j1 = j1n # * Pgen**ZZ(I10c.ordp())
