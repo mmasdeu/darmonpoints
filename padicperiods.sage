@@ -1,5 +1,6 @@
 from itertools import product
 from sage.arith.all import algdep
+from sage.rings.padics.precision_error import PrecisionError
 from util import *
 
 # Theta functions of (25) in Teitelbaum's
@@ -154,7 +155,6 @@ def xvec_padic(p1, p2, p3,prec = None):
     l1,l2,l3 = lambdavec_padic(p1,p2,p3,prec).list()
     return (1/(1-l1),1 - 1/l2,l3 * ((p3-1)/(p3+1))**2 )
 
-
 def ICI_static(x1,x2,x3):
     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
     x13, x23, x33 = x1 * x12, x2 * x22, x3 * x32
@@ -170,22 +170,11 @@ def ICI_static(x1,x2,x3):
     I10 = x18*x26*x34 - 2*x17*x27*x34 + x16*x28*x34 - 2*x18*x25*x35 + 2*x17*x26*x35 + 2*x16*x27*x35 - 2*x15*x28*x35 + x18*x24*x36 + 2*x17*x25*x36 - 6*x16*x26*x36 + 2*x15*x27*x36 + x14*x28*x36 - 2*x17*x24*x37 + 2*x16*x25*x37 + 2*x15*x26*x37 - 2*x14*x27*x37 + x16*x24*x38 - 2*x15*x25*x38 + x14*x26*x38 - 2*x18*x26*x33 + 4*x17*x27*x33 - 2*x16*x28*x33 + 2*x18*x25*x34 - 2*x17*x26*x34 - 2*x16*x27*x34 + 2*x15*x28*x34 + 2*x18*x24*x35 - 4*x17*x25*x35 + 4*x16*x26*x35 - 4*x15*x27*x35 + 2*x14*x28*x35 - 2*x18*x23*x36 - 2*x17*x24*x36 + 4*x16*x25*x36 + 4*x15*x26*x36 - 2*x14*x27*x36 - 2*x13*x28*x36 + 4*x17*x23*x37 - 2*x16*x24*x37 - 4*x15*x25*x37 - 2*x14*x26*x37 + 4*x13*x27*x37 - 2*x16*x23*x38 + 2*x15*x24*x38 + 2*x14*x25*x38 - 2*x13*x26*x38 + x18*x26*x32 - 2*x17*x27*x32 + x16*x28*x32 + 2*x18*x25*x33 - 2*x17*x26*x33 - 2*x16*x27*x33 + 2*x15*x28*x33 - 6*x18*x24*x34 + 4*x17*x25*x34 + 4*x16*x26*x34 + 4*x15*x27*x34 - 6*x14*x28*x34 + 2*x18*x23*x35 + 4*x17*x24*x35 - 6*x16*x25*x35 - 6*x15*x26*x35 + 4*x14*x27*x35 + 2*x13*x28*x35 + x18*x22*x36 - 2*x17*x23*x36 + 4*x16*x24*x36 - 6*x15*x25*x36 + 4*x14*x26*x36 - 2*x13*x27*x36 + x12*x28*x36 - 2*x17*x22*x37 - 2*x16*x23*x37 + 4*x15*x24*x37 + 4*x14*x25*x37 - 2*x13*x26*x37 - 2*x12*x27*x37 + x16*x22*x38 + 2*x15*x23*x38 - 6*x14*x24*x38 + 2*x13*x25*x38 + x12*x26*x38 - 2*x18*x25*x32 + 2*x17*x26*x32 + 2*x16*x27*x32 - 2*x15*x28*x32 + 2*x18*x24*x33 - 4*x17*x25*x33 + 4*x16*x26*x33 - 4*x15*x27*x33 + 2*x14*x28*x33 + 2*x18*x23*x34 + 4*x17*x24*x34 - 6*x16*x25*x34 - 6*x15*x26*x34 + 4*x14*x27*x34 + 2*x13*x28*x34 - 2*x18*x22*x35 - 4*x17*x23*x35 - 6*x16*x24*x35 + 24*x15*x25*x35 - 6*x14*x26*x35 - 4*x13*x27*x35 - 2*x12*x28*x35 + 2*x17*x22*x36 + 4*x16*x23*x36 - 6*x15*x24*x36 - 6*x14*x25*x36 + 4*x13*x26*x36 + 2*x12*x27*x36 + 2*x16*x22*x37 - 4*x15*x23*x37 + 4*x14*x24*x37 - 4*x13*x25*x37 + 2*x12*x26*x37 - 2*x15*x22*x38 + 2*x14*x23*x38 + 2*x13*x24*x38 - 2*x12*x25*x38 + x18*x24*x32 + 2*x17*x25*x32 - 6*x16*x26*x32 + 2*x15*x27*x32 + x14*x28*x32 - 2*x18*x23*x33 - 2*x17*x24*x33 + 4*x16*x25*x33 + 4*x15*x26*x33 - 2*x14*x27*x33 - 2*x13*x28*x33 + x18*x22*x34 - 2*x17*x23*x34 + 4*x16*x24*x34 - 6*x15*x25*x34 + 4*x14*x26*x34 - 2*x13*x27*x34 + x12*x28*x34 + 2*x17*x22*x35 + 4*x16*x23*x35 - 6*x15*x24*x35 - 6*x14*x25*x35 + 4*x13*x26*x35 + 2*x12*x27*x35 - 6*x16*x22*x36 + 4*x15*x23*x36 + 4*x14*x24*x36 + 4*x13*x25*x36 - 6*x12*x26*x36 + 2*x15*x22*x37 - 2*x14*x23*x37 - 2*x13*x24*x37 + 2*x12*x25*x37 + x14*x22*x38 - 2*x13*x23*x38 + x12*x24*x38 - 2*x17*x24*x32 + 2*x16*x25*x32 + 2*x15*x26*x32 - 2*x14*x27*x32 + 4*x17*x23*x33 - 2*x16*x24*x33 - 4*x15*x25*x33 - 2*x14*x26*x33 + 4*x13*x27*x33 - 2*x17*x22*x34 - 2*x16*x23*x34 + 4*x15*x24*x34 + 4*x14*x25*x34 - 2*x13*x26*x34 - 2*x12*x27*x34 + 2*x16*x22*x35 - 4*x15*x23*x35 + 4*x14*x24*x35 - 4*x13*x25*x35 + 2*x12*x26*x35 + 2*x15*x22*x36 - 2*x14*x23*x36 - 2*x13*x24*x36 + 2*x12*x25*x36 - 2*x14*x22*x37 + 4*x13*x23*x37 - 2*x12*x24*x37 + x16*x24*x32 - 2*x15*x25*x32 + x14*x26*x32 - 2*x16*x23*x33 + 2*x15*x24*x33 + 2*x14*x25*x33 - 2*x13*x26*x33 + x16*x22*x34 + 2*x15*x23*x34 - 6*x14*x24*x34 + 2*x13*x25*x34 + x12*x26*x34 - 2*x15*x22*x35 + 2*x14*x23*x35 + 2*x13*x24*x35 - 2*x12*x25*x35 + x14*x22*x36 - 2*x13*x23*x36 + x12*x24*x36
     return I2, I4, I6, I10
 
-def IgusaClebschFromHalfPeriods(a, b, c, prec = None, padic = True):
-    # if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
-    #     a,b,c = 1/a, 1/b, 1/c
-    #     if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
-    #         raise RuntimeError
-    # if sum(1 for u in [a,b,c] if u.valuation() == 0) > 1:
-    #     raise RuntimeError
-    # if b.valuation() == 0:
-    #     a, b, c = b, c, a
-    # if a.valuation() == 0:
-    #     a, b, c = b, c, a
-    # assert a.valuation() > 0 and b.valuation() > 0 and c.valuation() >= 0
+def IgusaClebschFromHalfPeriods(p1, p2, p3, prec = None, padic = True):
     if padic or prec is None:
-        return ICI_static(*xvec_padic(a,b,c,prec))
+        return ICI_static(*xvec_padic(p1,p2,p3,prec))
     else:
-        return ICI_static(*xvec(a,b,c,prec))
+        return ICI_static(*xvec(p1,p2,p3,prec))
 
 # computes the p-adic L-invariant
 # A = <gamma_1,gamma_1>
@@ -194,13 +183,7 @@ def IgusaClebschFromHalfPeriods(a, b, c, prec = None, padic = True):
 # Tmatrix is the matrix of the T_ell operator with respect to the basis (gamma_1,gamma_2)
 # the output is (a,b), where L_p = a + bT
 def p_adic_l_invariant(A,B, Tmatrix):
-    K = A.parent()
-    A, B = K(A), K(B)
-    x,y,z,t = Tmatrix.change_ring(K).list()
-    alpha,beta = A.ordp(),B.ordp()
-    M = Matrix(K,2,2,[alpha,x*alpha+z*beta,beta, y*alpha+t*beta])
-    n  = Matrix(K,2,1,[A.log(0),B.log(0)])
-    return M.solve_right(n).list()
+    return p_adic_l_invariant_additive(A.log(0),B.log(0),A.ordp(),B.ordp(),Tmatrix)
 
 def p_adic_l_invariant_additive(A,B, alpha, beta, Tmatrix):
     K = A.parent()
@@ -264,16 +247,6 @@ def all_possible_qords(Tmatrix,N,initial = None):
             t0 = 0
     return tmp[t0:]
 
-# use hensel lemma to lift an approximate root x0 of the polynomial f to a root to the desired precision
-def ComputeRootFromApprox(f,x0, prec):
-    xn = x0
-    while True:
-        xnn = xn - f.subs(xn)/f.derivative().subs(xn)
-        if (xnn-xn).valuation() > prec:
-            break
-        xn = xnn
-    return xn
-
 def recognize_absolute_invariant(j_invariant,base = QQ,phi = None,threshold = 0.9,prec = None, outfile = None):
     deg = base.degree()
     Kp = j_invariant.parent()
@@ -283,8 +256,6 @@ def recognize_absolute_invariant(j_invariant,base = QQ,phi = None,threshold = 0.
     threshold = threshold * RR(p).log(10)
     j_invariant_val = j_invariant.valuation()
     j_invariant = p**-j_invariant_val * j_invariant
-    # if prec is not None:
-    #     j_invariant = Qp(p,prec)(j_invariant.lift())
     fx = algdep(j_invariant,deg)
     hfx = height_polynomial(fx)
     trash_height = threshold * j_invariant.precision_relative()
@@ -364,62 +335,55 @@ def find_igusa_invariants_from_AB(A, B, T, prec, base=QQ, cheatjs=None, phi=None
     teichF = teichmuller_system(F.base_ring())
     x, y, z, t = T.list()
     r = x + y - z - t
-    total_tries = len(teichF)**2
-    num_tries = 0
-    for s1, s2 in product(teichF,repeat = 2):
-        print 'Tries = %s/%s'%(num_tries,total_tries)
-        num_tries += 1
-        A1 = A * s1
-        B1 = B * s2
-        q2 = K(A1 * B1)
-        q3 = K(B1**-1)
-        q1z = q2**y * q3**r
+    q2 = K(A * B)
+    q3 = K(B**-1)
+    q1z = q2**y * q3**r
+    try:
+        p2,p3 = our_sqrt(q2,K),our_sqrt(q3,K)
+    except (ValueError):
+        return 'Nope'
+    for p1 in our_nroot(q1z, ZZ(2*z),K, return_all = True):
         try:
-            p2,p3 = our_sqrt(q2,K),our_sqrt(q3,K)
-        except (ValueError):
+            I2c, I4c, I6c, I10c = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec,padic = True)
+        except (ValueError,RuntimeError,PrecisionError):
             continue
-        for p1 in our_nroot(q1z, ZZ(2*z), return_all = True):
+        if list_I10 is None:
+            # # Get absolute invariants j1, j2, j3
+            j1 = I2c**5 / I10c
+            j2 = I2c**3 * I4c / I10c
+            j3 = I2c**2 * I6c / I10c
+            tol = prec / 3
             try:
-                I2c, I4c, I6c, I10c = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec,padic = True)
-            except (ValueError,RuntimeError):
+                j1, j2, j3 = take_to_Qp(j1, tolerance = tol), take_to_Qp(j2, tol), take_to_Qp(j3, tol)
+            except ValueError:
                 continue
-            if list_I10 is None:
-                # # Get absolute invariants j1, j2, j3
-                j1 = I2c**5 / I10c
-                j2 = I2c**3 * I4c / I10c
-                j3 = I2c**2 * I6c / I10c
-                tol = prec / 3
-                try:
-                    j1, j2, j3 = take_to_Qp(j1, tolerance = tol), take_to_Qp(j2, tol), take_to_Qp(j3, tol)
-                except ValueError:
-                    continue
-                if cheatjs is not None:
-                    vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
-                    if all([o > minval for o in vals]):
-                        return (oq1,oq2,oq3,min(vals))
-                else:
-                    # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
-                    try:
-                        return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = threshold,prec = prec, outfile = outfile), 1, 1, 1)
-                    except ValueError:
-                        continue
+            if cheatjs is not None:
+                vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
+                if all([o > minval for o in vals]):
+                    return (oq1,oq2,oq3,min(vals))
             else:
-                j1 = (I2c**5 / I10c)
+                # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
                 try:
-                    j1n = take_to_Qp(j1, tolerance = prec/3)
-                    j1 = j1n * Pgen**ZZ(I10c.ordp())
+                    return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = threshold,prec = prec, outfile = outfile), 1, 1, 1)
                 except ValueError:
                     continue
-                for I10 in list_I10:
+        else:
+            j1 = (I2c**5 / I10c)
+            try:
+                j1n = take_to_Qp(j1, tolerance = prec/3)
+                j1 = j1n * Pgen**ZZ(I10c.ordp())
+            except ValueError:
+                continue
+            for I10 in list_I10:
+                try:
+                    I2c_list = our_nroot( j1 * I10, 5, return_all = True)
+                except ValueError:
+                    continue
+                for I2c in I2c_list:
                     try:
-                        I2c_list = our_nroot( j1 * I10, 5, return_all = True)
+                        return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = threshold,prec = prec,  outfile = outfile), 1, 1, 1)
                     except ValueError:
                         continue
-                    for I2c in I2c_list:
-                        try:
-                            return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = threshold,prec = prec,  outfile = outfile), 1, 1, 1)
-                        except ValueError:
-                            continue
     return 'Nope'
 
 
@@ -455,7 +419,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
         prec0 = prec
         try:
             I2c, I4c, I6c, I10c = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec0,padic = True)
-        except (ValueError,RuntimeError):
+        except (ValueError,RuntimeError,PrecisionError):
             continue
         if list_I10 is None:
             # # Get absolute invariants j1, j2, j3
@@ -547,17 +511,15 @@ def frobenius_polynomial(C):
     ap1 = q + 1 - N1
     ap2 = q*q +1 - N2
     r = (ap1*ap1 - ap2)/2
-    x = QQ['x'].gen()
     print 'trace = %s'%ap1
     print 'norm = %s'%(r - 2*q)
-    return x**4 - ap1 * x**3 + r * x**2 - ap1*q * x + q*q
+    return QQ['x']([q*q, -ap1*q, r, -ap1, 1])
 
 def euler_factor_twodim(p,T):
     return euler_factor_twodim_tn(p, T.trace(), T.determinant())
 
 def euler_factor_twodim_tn(q,t,n):
-    x = QQ['x'].gen()
-    return x**4 - t*x**3 + (2*q+n)*x**2 - q*t*x + q*q
+    return QQ['x']([q*q,-q*t,2*q+n,-t,1])
 
 def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, compute_G = True, compute_cohomology = True, abtuple = None, logfile = None, **kwargs):
     from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
