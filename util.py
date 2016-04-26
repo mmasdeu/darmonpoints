@@ -564,7 +564,6 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
 def our_sqrt(xx,K = None,return_all = False):
     if K is None:
         K = xx.parent()
-
     if xx == 0:
         if return_all:
             return [xx]
@@ -682,23 +681,34 @@ def our_nroot(xx,n,K = None,return_all = False):
             return [xx]
         else:
             return xx
-    n = ZZ(n)
+    n=ZZ(n)
+    xx=K(xx)
     if n == 1:
         return [xx] if return_all else xx
     elif n == -1:
         return [xx**-1] if return_all else xx**-1
     sgn = n.sign()
     n = n.abs()
-    xx = K(xx)
+    p=K.base_ring().prime()
     prec = K.precision_cap()
-    x_orig = xx
-    p = K.base_ring().prime()
     valp = xx.valuation()
-    eK = K.ramification_index() if hasattr(K,'ramification_index') else 1
-    valpi = eK * valp
-    if valpi % n != 0:
-        raise ValueError,'Not an n-th power'
+    valpi = xx.ordp()
+    try:
+        eK = K.ramification_index()
+    except AttributeError:
+        eK = 1
+    if valp * eK % n != 0:
+        if return_all:
+            return []
+        else:
+            raise ValueError,'Not an n-th power'
     x = K.uniformizer()**(-valp) * xx
+    try:
+        z = K.unramified_generator()
+    except AttributeError:
+        z = K.gen()
+    deg = K.residue_class_degree()
+    found = False
     try:
         z = K.unramified_generator()
     except AttributeError:
@@ -733,17 +743,21 @@ def our_nroot(xx,n,K = None,return_all = False):
         y = y1
         yn = y**n
         y1 = ((n-1)*yn+x)*y/(n*yn)
-    ans = K.uniformizer()**ZZ(valpi/n) * y
-    # assert ans**n == x_orig, 'ans**n/x_orig = %s'%(ans**n/x_orig)
+    ans = K.uniformizer()**(ZZ(valp/n)) * y
     if return_all:
         t = PolynomialRing(QQ,'t').gen()
         newans = []
         for d in divisors(n):
+            phid = cyclotomic_polynomial(d)
             try:
-                newans.extend([K(o[0])*ans for o in cyclotomic_polynomial(d).roots(K)])
-            except:
-                K0 = K.base_ring()
-                newans.extend([K(o[0])*ans for o in cyclotomic_polynomial(d).roots(K0)])
+                roots = phid.roots(K)
+            except NotImplementedError:
+                K0 = K.base()
+                try:
+                    roots = phid.roots(K0)
+                except NotImplementedError:
+                    roots = phid.roots(K0.base())
+            newans.extend([K(o[0])*ans for o in roots])
         if sgn == 1:
             return newans
         else:
