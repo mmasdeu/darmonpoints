@@ -672,7 +672,9 @@ class BigArithGroup_class(AlgebraicGroup):
         a00, a01, a10, a11 = ZZ(a00), ZZ(a01), ZZ(a10), ZZ(a11)
         determinant = a00*a11 - a01*a10
         fwrite('Scaling = %s (mat = [%s, %s, %s, %s])'%(determinant, a00, a01, a10, a11), outfile)
-        return [a11 * ker[0] - a10 * ker[1], -a01 * ker[0] + a00 * ker[1]]
+        theta1 = a11 * ker[0] - a10 * ker[1]
+        theta2 = -a01 * ker[0] + a00 * ker[1]
+        return [theta1, theta2]
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0):
     if base == QQ:

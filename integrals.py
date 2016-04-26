@@ -172,7 +172,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',prec = None,parall
         resval += newresval
     if not multiplicative:
         if return_valuation:
-            return resadd, resval
+            return resadd, resval, Cp.teichmuller(resmul)
         else:
             return resadd
     else:

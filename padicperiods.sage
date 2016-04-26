@@ -155,6 +155,10 @@ def xvec_padic(p1, p2, p3,prec = None):
     l1,l2,l3 = lambdavec_padic(p1,p2,p3,prec).list()
     return (1/(1-l1),1 - 1/l2,l3 * ((p3-1)/(p3+1))**2 )
 
+def igusa_clebsch_absolute_from_half_periods(a, b, c, prec = None, padic = True):
+    I2, I4, I6, I10 = igusa_clebsch_from_half_periods(a, b, c, prec=prec, padic=padic)
+    return I2**5/I10,I2**3*I4/I10,I2**2*I6/I10
+
 def ICI_static(x1,x2,x3):
     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
     x13, x23, x33 = x1 * x12, x2 * x22, x3 * x32
@@ -170,11 +174,22 @@ def ICI_static(x1,x2,x3):
     I10 = x18*x26*x34 - 2*x17*x27*x34 + x16*x28*x34 - 2*x18*x25*x35 + 2*x17*x26*x35 + 2*x16*x27*x35 - 2*x15*x28*x35 + x18*x24*x36 + 2*x17*x25*x36 - 6*x16*x26*x36 + 2*x15*x27*x36 + x14*x28*x36 - 2*x17*x24*x37 + 2*x16*x25*x37 + 2*x15*x26*x37 - 2*x14*x27*x37 + x16*x24*x38 - 2*x15*x25*x38 + x14*x26*x38 - 2*x18*x26*x33 + 4*x17*x27*x33 - 2*x16*x28*x33 + 2*x18*x25*x34 - 2*x17*x26*x34 - 2*x16*x27*x34 + 2*x15*x28*x34 + 2*x18*x24*x35 - 4*x17*x25*x35 + 4*x16*x26*x35 - 4*x15*x27*x35 + 2*x14*x28*x35 - 2*x18*x23*x36 - 2*x17*x24*x36 + 4*x16*x25*x36 + 4*x15*x26*x36 - 2*x14*x27*x36 - 2*x13*x28*x36 + 4*x17*x23*x37 - 2*x16*x24*x37 - 4*x15*x25*x37 - 2*x14*x26*x37 + 4*x13*x27*x37 - 2*x16*x23*x38 + 2*x15*x24*x38 + 2*x14*x25*x38 - 2*x13*x26*x38 + x18*x26*x32 - 2*x17*x27*x32 + x16*x28*x32 + 2*x18*x25*x33 - 2*x17*x26*x33 - 2*x16*x27*x33 + 2*x15*x28*x33 - 6*x18*x24*x34 + 4*x17*x25*x34 + 4*x16*x26*x34 + 4*x15*x27*x34 - 6*x14*x28*x34 + 2*x18*x23*x35 + 4*x17*x24*x35 - 6*x16*x25*x35 - 6*x15*x26*x35 + 4*x14*x27*x35 + 2*x13*x28*x35 + x18*x22*x36 - 2*x17*x23*x36 + 4*x16*x24*x36 - 6*x15*x25*x36 + 4*x14*x26*x36 - 2*x13*x27*x36 + x12*x28*x36 - 2*x17*x22*x37 - 2*x16*x23*x37 + 4*x15*x24*x37 + 4*x14*x25*x37 - 2*x13*x26*x37 - 2*x12*x27*x37 + x16*x22*x38 + 2*x15*x23*x38 - 6*x14*x24*x38 + 2*x13*x25*x38 + x12*x26*x38 - 2*x18*x25*x32 + 2*x17*x26*x32 + 2*x16*x27*x32 - 2*x15*x28*x32 + 2*x18*x24*x33 - 4*x17*x25*x33 + 4*x16*x26*x33 - 4*x15*x27*x33 + 2*x14*x28*x33 + 2*x18*x23*x34 + 4*x17*x24*x34 - 6*x16*x25*x34 - 6*x15*x26*x34 + 4*x14*x27*x34 + 2*x13*x28*x34 - 2*x18*x22*x35 - 4*x17*x23*x35 - 6*x16*x24*x35 + 24*x15*x25*x35 - 6*x14*x26*x35 - 4*x13*x27*x35 - 2*x12*x28*x35 + 2*x17*x22*x36 + 4*x16*x23*x36 - 6*x15*x24*x36 - 6*x14*x25*x36 + 4*x13*x26*x36 + 2*x12*x27*x36 + 2*x16*x22*x37 - 4*x15*x23*x37 + 4*x14*x24*x37 - 4*x13*x25*x37 + 2*x12*x26*x37 - 2*x15*x22*x38 + 2*x14*x23*x38 + 2*x13*x24*x38 - 2*x12*x25*x38 + x18*x24*x32 + 2*x17*x25*x32 - 6*x16*x26*x32 + 2*x15*x27*x32 + x14*x28*x32 - 2*x18*x23*x33 - 2*x17*x24*x33 + 4*x16*x25*x33 + 4*x15*x26*x33 - 2*x14*x27*x33 - 2*x13*x28*x33 + x18*x22*x34 - 2*x17*x23*x34 + 4*x16*x24*x34 - 6*x15*x25*x34 + 4*x14*x26*x34 - 2*x13*x27*x34 + x12*x28*x34 + 2*x17*x22*x35 + 4*x16*x23*x35 - 6*x15*x24*x35 - 6*x14*x25*x35 + 4*x13*x26*x35 + 2*x12*x27*x35 - 6*x16*x22*x36 + 4*x15*x23*x36 + 4*x14*x24*x36 + 4*x13*x25*x36 - 6*x12*x26*x36 + 2*x15*x22*x37 - 2*x14*x23*x37 - 2*x13*x24*x37 + 2*x12*x25*x37 + x14*x22*x38 - 2*x13*x23*x38 + x12*x24*x38 - 2*x17*x24*x32 + 2*x16*x25*x32 + 2*x15*x26*x32 - 2*x14*x27*x32 + 4*x17*x23*x33 - 2*x16*x24*x33 - 4*x15*x25*x33 - 2*x14*x26*x33 + 4*x13*x27*x33 - 2*x17*x22*x34 - 2*x16*x23*x34 + 4*x15*x24*x34 + 4*x14*x25*x34 - 2*x13*x26*x34 - 2*x12*x27*x34 + 2*x16*x22*x35 - 4*x15*x23*x35 + 4*x14*x24*x35 - 4*x13*x25*x35 + 2*x12*x26*x35 + 2*x15*x22*x36 - 2*x14*x23*x36 - 2*x13*x24*x36 + 2*x12*x25*x36 - 2*x14*x22*x37 + 4*x13*x23*x37 - 2*x12*x24*x37 + x16*x24*x32 - 2*x15*x25*x32 + x14*x26*x32 - 2*x16*x23*x33 + 2*x15*x24*x33 + 2*x14*x25*x33 - 2*x13*x26*x33 + x16*x22*x34 + 2*x15*x23*x34 - 6*x14*x24*x34 + 2*x13*x25*x34 + x12*x26*x34 - 2*x15*x22*x35 + 2*x14*x23*x35 + 2*x13*x24*x35 - 2*x12*x25*x35 + x14*x22*x36 - 2*x13*x23*x36 + x12*x24*x36
     return I2, I4, I6, I10
 
-def IgusaClebschFromHalfPeriods(p1, p2, p3, prec = None, padic = True):
+def igusa_clebsch_from_half_periods(a, b, c, prec=None, padic=True):
+    if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
+        a,b,c = 1/a, 1/b, 1/c
+        if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
+            raise RuntimeError('1')
+    if sum(1 for u in [a,b,c] if u.valuation() == 0) > 1:
+        raise RuntimeError('2')
+    if b.valuation() == 0:
+        a, b, c = b, c, a
+    if a.valuation() == 0:
+        a, b, c = b, c, a
+    assert a.valuation() > 0 and b.valuation() > 0 and c.valuation() >= 0
     if padic or prec is None:
-        return ICI_static(*xvec_padic(p1,p2,p3,prec))
+        return ICI_static(*xvec_padic(a,b,c,prec))
     else:
-        return ICI_static(*xvec(p1,p2,p3,prec))
+        return ICI_static(*xvec(a,b,c,prec))
 
 # computes the p-adic L-invariant
 # A = <gamma_1,gamma_1>
@@ -568,8 +583,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         warnings.warn('Use of "bigmatrix" for Up iteration is incompatible with Shapiro Lemma trick. Using "naive" method for Up.')
         Up_method = 'naive'
 
-    global G, Coh, flist, hecke_data, g0, g1, A, B, a, b, T, xi10, xi20, xi11, xi21, Phif
-
+    global G, Coh, flist, hecke_data, g0, g1, Alog, Aval, Amul, Blog, Bval, Bmul, Dlog, Dval, Dmul, a, b, T, xi10, xi20, xi11, xi21, Phif
     if pol is None or pol.degree() == 1:
         F = QQ
         P = Pgen
@@ -632,8 +646,8 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         return 'DONE'
     fwrite('Obtained cocycles',outfile)
     for flist, hecke_data in all_twodim_cocycles:
-        # g0, g1 = G.get_homology_kernel(hecke_data = tuple(hecke_data))
         g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data, outfile = outfile)
+        g1 = g0.parent().apply_hecke_operator(g0,hecke_data_init[0]) # DEBUG
         g0_shapiro, g1_shapiro = G.inverse_shapiro(g0), G.inverse_shapiro(g1)
         fwrite('Obtained homology generators',outfile)
         if working_prec is None:
@@ -652,21 +666,23 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         fwrite('Overconvergent lift completed', outfile)
 
         from integrals import integrate_H1
-        num, numval = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
-        den, denval = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
-        A = num - den
+        numadd, numval, numroot = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        denadd, denval, denroot = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        Alog = numadd - denadd
         Aval = numval - denval
+        Amul = numroot / denroot
         fwrite('Finished computation of A period', outfile)
         # A = A.add_bigoh(prec + A.valuation())
-        fwrite('A = %s (%s)'%(A,Aval), outfile)
+        fwrite('A = p**(%s) * (%s) * (%s).exp()'%(Aval, Amul, Alog), outfile)
 
-        num, numval = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
-        den, denval = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
-        B = num - den
+        numadd, numval, numroot = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        denadd, denval, denroot = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        Blog = numadd - denadd
         Bval = numval - denval
+        Bmul = numroot / denroot
         fwrite('Finished computation of B period', outfile)
         # B = B.add_bigoh(prec + B.valuation())
-        fwrite('B = %s (%s)'%(B,Bval), outfile)
+        fwrite('B = p**(%s) * (%s) * (%s).exp()'%(Bval, Bmul, Blog), outfile)
 
         found = False
         for ell, T0 in hecke_data:
@@ -680,9 +696,14 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
             fwrite('Good T not found...', outfile)
             return('DONE WITH ERROR')
 
-        F = A.parent()
+        Dlog = Alog + T.trace()*Blog
+        Dval = Aval + T.trace()*Bval
+        Dmul = Amul * Bmul**(ZZ(T.trace()))
+        fwrite('D = p**(%s) * (%s) * (%s).exp()'%(Dval, Dmul, Dlog), outfile)
+
+        F = Alog.parent()
         TF = T.change_ring(F)
-        a, b = p_adic_l_invariant_additive(A, B, Aval, Bval, TF)
+        a, b = p_adic_l_invariant_additive(Alog, Blog, Aval, Bval, TF)
 
         a = take_to_Qp(a)
         b = take_to_Qp(b)

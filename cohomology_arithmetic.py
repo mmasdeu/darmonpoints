@@ -493,7 +493,6 @@ class ArithCoh(CohomologyGroup):
             K = (Tinf-sign).kernel().change_ring(QQ)
             if K.dimension() >= 2:
                 component_list.append((K, [(oo,Tinf)]))
-
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
             if K.dimension() >= 2:
@@ -519,13 +518,20 @@ class ArithCoh(CohomologyGroup):
             if U0.dimension() != 2:
                 raise ValueError('Hecke data does not suffice to cut out space')
             good_component = (U0.denominator() * U0,component_list[0][1] + [(qq.gens_reduced()[0],Aq)])
-            flist = []
-            for row0 in good_component[0].matrix().rows():
-                col0 = [QQ(o) for o in row0.list()]
-                clcm = lcm([o.denominator() for o in col0])
-                col0 = [ZZ(clcm * o ) for o in col0]
-                flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-            return flist,[(ell, o.restrict(good_component[0])) for ell, o in good_component[1]]
+            row0 = good_component[0].matrix().rows()[0]
+            col0 = [QQ(o) for o in row0.list()]
+            clcm = lcm([o.denominator() for o in col0])
+            col0 = [ZZ(clcm * o ) for o in col0]
+            phi1 = sum([a * phi for a,phi in zip(col0,self.gens())],self(0))
+            phi2 = self.apply_hecke_operator(phi1,qq.gens_reduced()[0], use_magma = use_magma)
+            return [phi1, phi2], [(ell, o.restrict(good_component[0])) for ell, o in good_component[1]]
+            # flist = []
+            # for row0 in good_component[0].matrix().rows():
+            #     col0 = [QQ(o) for o in row0.list()]
+            #     clcm = lcm([o.denominator() for o in col0])
+            #     col0 = [ZZ(clcm * o ) for o in col0]
+            #     flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
+            # return flist,[(ell, o.restrict(good_component[0])) for ell, o in good_component[1]]
         while len(component_list) > 0 and num_hecke_operators < bound:
             verbose('num_hecke_ops = %s'%num_hecke_operators)
             verbose('len(components_list) = %s'%len(component_list))
