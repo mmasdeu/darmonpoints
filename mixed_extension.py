@@ -19,7 +19,7 @@ class QuadExtElement(FieldElement):
             if y is None:
                 y = B.zero()
             if x not in B or y not in B:
-                raise ValueError("Both arguments must be elements of %s"%B)
+                raise ValueError("Both arguments (x = %s, y = %s) must be elements of %s"%(x,y,B))
             x = B(x)
             y = B(y)
             self._value = (x, y)
@@ -77,7 +77,7 @@ class QuadExtElement(FieldElement):
 
     def valuation(self, p = None):
         a, b = self._value
-        return min([2 * a.valuation(p), b.valuation(p) + 1])
+        return min([2 * a.valuation(p), 2 * b.valuation(p) + 1])
 
     def ordp(self, p = None):
         a, b = self._value
@@ -182,13 +182,9 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 - r*x +
         return self._polynomial
 
     def _element_constructor_(self, *args, **kwds):
-        if len(args)!=1:
+        if len(args) != 1:
            return self.element_class(self, *args, **kwds)
         x = args[0]
-        try:
-            P = x.parent()
-        except AttributeError:
-            return self.element_class(self, x, **kwds)
         if isinstance(x,list):
             return self.element_class(self, x[0], x[1], **kwds)
         else:
