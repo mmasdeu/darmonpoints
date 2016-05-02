@@ -672,7 +672,6 @@ def our_cuberoot(xx,K = None,return_all = False):
         ans = [ans] + [K(o) * ans for o,_ in cubicpol.roots()]
     return ans
 
-
 def our_nroot(xx,n,K = None,return_all = False):
     if K is None:
         K = xx.parent()
@@ -714,55 +713,51 @@ def our_nroot(xx,n,K = None,return_all = False):
     except AttributeError:
         z = K.gen()
     deg = K.residue_class_degree()
-    found = False
     if n % p == 0:
         minval = 3 if p == 2 else 2
     else:
         minval = 1
     ppow = p**minval
+    y0list = []
     if deg == 1:
         for y0 in range(ppow):
-            if (y0**n-x).valuation() >= minval:
-                found = True
-                break
+            if (y0**n-x).valuation() >= minval and y0 not in y0list:
+                y0list.append(y0)
+                if not return_all:
+                    break
     else:
         for avec in product(range(ppow),repeat=deg):
             y0 = avec[0]
             for a in avec[1:]:
                 y0 = y0*z + a
-            if (y0**n-x).valuation() >= minval:
-                found = True
-                break
-    if found == False:
+            if (y0**n-x).valuation() >= minval and y0 not in y0list:
+                y0list.append(y0)
+                if not return_all:
+                    break
+    if len(y0list) == 0 and not return_all:
         raise ValueError,'Not an n-th power'
-    y1 = y0
-    y = 0
-    num_iters = 0
-    while y != y1 and num_iters < 2 * prec:
-        num_iters += 1
-        y = y1
-        yn = y**n
-        y1 = ((n-1)*yn+x)*y/(n*yn)
-    ans = K.uniformizer()**(ZZ(valp/n)) * y
-    if return_all:
-        t = PolynomialRing(QQ,'t').gen()
-        newans = []
-        for d in divisors(n):
-            phid = cyclotomic_polynomial(d)
-            try:
-                roots = phid.roots(K)
-            except NotImplementedError:
-                K0 = K.base()
-                try:
-                    roots = phid.roots(K0)
-                except NotImplementedError:
-                    roots = phid.roots(K0.base())
-            newans.extend([K(o[0])*ans for o in roots])
+    ans_list = []
+    for y0 in y0list:
+        y1 = y0
+        y = 0
+        num_iters = 0
+        while y != y1 and num_iters < 2 * prec:
+            num_iters += 1
+            y = y1
+            yn = y**n
+            y1 = ((n-1)*yn+x)*y/(n*yn)
+        ans = K.uniformizer()**(ZZ(valp/n)) * y
         if sgn == 1:
-            return newans
+            if ans not in ans_list:
+                ans_list.append(ans)
         else:
-            return [o**-1 for o in newans]
-    return ans if sgn == 1 else ans**-1
+            ansinv = ans**-1
+            if ansinv not in ans_list:
+                ans_list.append(ansinv)
+    if return_all:
+        return ans_list
+    else:
+        return ans_list[0]
 
 def enumerate_words(v, n = None,max_length = -1):
     if n is None:
@@ -1392,7 +1387,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
 
                 if success:
                     verbose('Recognized the point!')
-                    fwrite('x,y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
+                    fwrite('x, y = %s,%s'%(x.add_bigoh(10),y.add_bigoh(10)),outfile)
                     break
         if success:
             assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
