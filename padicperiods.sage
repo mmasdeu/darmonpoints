@@ -367,7 +367,7 @@ def absolute_igusa_padic_from_half_periods(p1,p2,p3,prec,padic,threshold = None)
 
 def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85,matlist = None, hecke_polys = None, max_height_elements = 2, mat_coeffs_range = 3):
     K0 = Alist[0].parent()
-    p = F.prime()
+    p = K0.prime()
     if phi is None:
         phi = lambda x:Qp(p,prec)(x)
     x = QQ['x'].gen()
@@ -391,6 +391,7 @@ def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None,
     total_tests = len(hecke_polys) * len(Alist) * len(Blist) * len(matlist)
     fwrite('# Starting search for Igusa invariants. Number of tests = %s = %s x %s x %s x %s'%(total_tests, len(hecke_polys), len(Alist), len(Blist), len(matlist)), outfile)
     ntests = 0
+    success_list = []
     for pu in hecke_polys:
         n = ZZ(pu[0])
         t = -ZZ(pu[1])
@@ -417,10 +418,17 @@ def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None,
                     vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
                     if all([o > minval for o in vals]):
                         fwrite('# Success !! -> t=%s, n=%s, mat=%s, valuation=%s'%(t,n,(b,d),min(vals)), outfile)
-                        # return (t,n,(a,b,c,d),min(vals))
+                        success_list.append((t,n,(b,d),min(vals)))
                 else:
                     try:
-                        return (recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec, outfile = outfile), 1, 1, 1)
+                        j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                        fwrite('# Possible j1 = %s'%(j1n),outfile)
+                        j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                        fwrite('# Possible j2 = %s'%(j2n),outfile)
+                        j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                        fwrite('# Possible j3 = %s'%(j3n),outfile)
+                        fwrite('# Candidate js = %s, %s, %s (t = %s, n = %s, mat = %s) jpadic = (%s, %s, %s)'%(j1n,j2n,j3n,t,n,(b,d), j1,j2,j3),outfile)
+                        success_list.append((j1,j2,j3))
                     except ValueError:
                         continue
             else:
@@ -434,11 +442,11 @@ def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None,
                             fwrite('# Possible I4 = %s'%I4new,outfile)
                             I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
                             fwrite('# Possible I6 = %s'%I6new,outfile)
-                            fwrite('# Candidate = %s, %s, %s, %s (t = %s, n = %s, mat = %s)'%(I2new,I4new,I6new,I10new,t,n,m.list()),outfile)
-                            # return (I2new, I4new, I6new, I10new)
+                            fwrite('# Candidate = %s, %s, %s, %s (t = %s, n = %s, mat = %s)'%(I2new,I4new,I6new,I10new,t,n,(b,d)),outfile)
+                            success_list.append((I2new, I4new, I6new, I10new))
                         except ValueError:
                             continue
-    return 'Nope'
+    return success_list
 
 def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None, threshold = 0.85):
     F = Lpmat.parent().base_ring()
