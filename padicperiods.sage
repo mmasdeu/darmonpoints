@@ -6,7 +6,45 @@ from util import *
 # Theta functions of (25) in Teitelbaum's
 # and also the other theta functions that we need to compute the lambda's according to the formulas (23)
 # We sum terms until we get the result to the accuracy prec. When deciding the set of indicies over which we sum, we have made several simplifications that probably cause that we sum more terms than strictly needed for that accuracy, but this probably won't be an issue...
-def Theta(p1,p2,p3,version = None,prec = None):
+def Thetas(p1, p2, p3, prec=None):
+    if prec is None:
+        prec = 2 * p1.parent().precision_cap()
+    imax = (RR(1)/2 + RR(2*prec + RR(1)/2).sqrt()).ceiling() # note the 2!
+    a = QQ(1)/QQ(2)
+    b = QQ(1)/QQ(2)
+    c = 0
+    # Define the different conditions and term forms
+    resdict = {}
+    resdict['1p1m'] = resdict['1p2m'] = 0
+    resdict['2p2m'] = resdict['1m2p'] = 0
+    resdict['3p3m'] = resdict['2m3p'] = 0
+    resdict['2p3m'] = resdict['3m1p'] = resdict['3p1m'] = 0
+    res = 0
+    assert imax > 0
+    for i in xrange(-imax,imax + 1):
+        jmax = RR(2*prec - .25 - i**2 + RR(i).abs())
+        if jmax < 0:
+            continue
+        jmax = (jmax.sqrt()+.5).ceiling()
+        for j in xrange(-jmax,jmax + 1):
+
+            newterm = p2**(i**2) * p1**(j**2) * p3**((i-j)**2)
+            p2l_inv_p1l_inv_term = p2**(i**2 -i) * p1**(j**2-j) * p3**((i-j)**2)
+            p2lp3l_term = p2**(i**2+i) * p1**(j**2) * p3**((i-j)**2 + (i-j))
+            p1lp3l_inv_term = p2**(i**2) * p1**(j**2 + j) * p3**((i-j)**2- (i-j))
+            resdict['1p1m'] += newterm * (-1)**j
+            resdict['1p2m'] += p2l_inv_p1l_inv_term
+            resdict['2p2m'] += newterm * (-1)**i
+            resdict['1m2p'] += p2l_inv_p1l_inv_term * (-1)**(i+j)
+            resdict['3p3m'] += newterm * (-1)**(i+j)
+            resdict['2m3p'] += p2lp3l_term * (-1)**j
+            resdict['2p3m'] += p2lp3l_term
+            resdict['3m1p'] += p1lp3l_inv_term * (-1)**i
+            resdict['3p1m'] += p1lp3l_inv_term
+
+    return resdict
+
+def Theta(p1, p2, p3, version, prec=None):
     if prec is None:
         prec = 2 * p1.parent().precision_cap()
     imax = (RR(1)/2 + RR(2*prec + RR(1)/2).sqrt()).ceiling() # note the 2!
@@ -15,14 +53,7 @@ def Theta(p1,p2,p3,version = None,prec = None):
     c = 0
     # print 'Entering Theta %s %s %s'%(a,b,c)
     # Define the different conditions and term forms
-    if version is None:
-        condition = lambda i,j: b*(i**2-ZZ(i).abs()) + a*(j**2-ZZ(j).abs()) + c*((i-j)**2 - ZZ(i-j).abs())
-        resdict = {}
-        resdict['1p1m'] = resdict['1p2m'] = 0
-        resdict['2p2m'] = resdict['1m2p'] = 0
-        resdict['3p3m'] = resdict['2m3p'] = 0
-        resdict['2p3m'] = resdict['3m1p'] = resdict['3p1m'] = 0
-    elif version == '1p1m':
+    if version == '1p1m':
         condition = lambda i,j: b*i**2 + a*j**2 + c*(i-j)**2
         term = lambda i,j: (-1)**j
     elif version == '1p2m':
@@ -60,26 +91,8 @@ def Theta(p1,p2,p3,version = None,prec = None):
         jmax = (jmax.sqrt()+.5).ceiling()
         for j in xrange(-jmax,jmax + 1):
             newterm = p2**(i**2) * p1**(j**2) * p3**((i-j)**2)
-            if version is None:
-                p2l_inv_p1l_inv_term = p2**(i**2 -i) * p1**(j**2-j) * p3**((i-j)**2)
-                p2lp3l_term = p2**(i**2+i) * p1**(j**2) * p3**((i-j)**2 + (i-j))
-                p1lp3l_inv_term = p2**(i**2) * p1**(j**2 + j) * p3**((i-j)**2- (i-j))
-
-                resdict['1p1m'] += newterm * (-1)**j
-                resdict['1p2m'] += p2l_inv_p1l_inv_term
-                resdict['2p2m'] += newterm * (-1)**i
-                resdict['1m2p'] += p2l_inv_p1l_inv_term * (-1)**(i+j)
-                resdict['3p3m'] += newterm * (-1)**(i+j)
-                resdict['2m3p'] += p2lp3l_term * (-1)**j
-                resdict['2p3m'] += p2lp3l_term
-                resdict['3m1p'] += p1lp3l_inv_term * (-1)**i
-                resdict['3p1m'] += p1lp3l_inv_term
-            else:
-                res += newterm * term(i,j)
-    if version is None:
-        return resdict
-    else:
-        return res
+            res += newterm * term(i,j)
+    return res
 
 def compare_thetas(th1,th2):
     minval = None
@@ -94,7 +107,7 @@ def compare_thetas(th1,th2):
 def lambdavec(p1, p2, p3, prec = None, theta = None, prec_pseries = None):
     if theta is None:
         assert prec is not None
-        th = Theta(p1,p2,p3,prec = prec)
+        th = Thetas(p1,p2,p3,prec = prec)
     else:
         th = theta
 
@@ -122,7 +135,7 @@ def lambdavec(p1, p2, p3, prec = None, theta = None, prec_pseries = None):
     return matrix(3,1,[l1,l2,l3])
 
 def lambdavec_padic(p1, p2, p3,prec = None):
-    th = Theta(p1,p2,p3,prec = prec)
+    th = Thetas(p1,p2,p3, prec)
     num = th['3p3m'] * th['2m3p']
     den = th['2p2m'] * th['2p3m']
     l1 = (num/den)**2
@@ -159,20 +172,25 @@ def igusa_clebsch_absolute_from_half_periods(a, b, c, prec = None, padic = True)
     I2, I4, I6, I10 = igusa_clebsch_from_half_periods(a, b, c, prec=prec, padic=padic)
     return I2**5/I10,I2**3*I4/I10,I2**2*I6/I10
 
-def ICI_static(x1,x2,x3):
+def I2(x1,x2,x3):
     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
-    x13, x23, x33 = x1 * x12, x2 * x22, x3 * x32
-    x14, x24, x34 = x1 * x13, x2 * x23, x3 * x33
-    x15, x25, x35 = x1 * x14, x2 * x24, x3 * x34
-    x16, x26, x36 = x1 * x15, x2 * x25, x3 * x35
-    x17, x27, x37 = x1 * x16, x2 * x26, x3 * x36
-    x18, x28, x38 = x1 * x17, x2 * x27, x3 * x37
+    return 6*((x12+1)*(x22+x32+1) + x22*x32 -1) + 12*x1*x2*x3 -\
+        4*( x1*(x2*x3*(x1+x2+x3) + x1*(x2+x3) + x22 + x2) +  x3*(x22 + x3*(x1 + x2) + x1 + x2) )
 
-    I2 = 6*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 6*x12*x32 - 4*x1*x2*x32 + 6*x22*x32 - 4*x12*x2 - 4*x1*x22 - 4*x12*x3 + 12*x1*x2*x3 - 4*x22*x3 - 4*x1*x32 - 4*x2*x32 + 6*x12 - 4*x1*x2 + 6*x22 - 4*x1*x3 - 4*x2*x3 + 6*x32
-    I4 = 4*x14*x22*x32 - 4*x13*x23*x32 + 4*x12*x24*x32 - 4*x13*x22*x33 - 4*x12*x23*x33 + 4*x12*x22*x34 - 4*x14*x22*x3 + 4*x13*x23*x3 - 4*x12*x24*x3 - 4*x14*x2*x32 + 4*x13*x22*x32 + 4*x12*x23*x32 - 4*x1*x24*x32 + 4*x13*x2*x33 + 4*x12*x22*x33 + 4*x1*x23*x33 - 4*x12*x2*x34 - 4*x1*x22*x34 + 4*x14*x22 - 4*x13*x23 + 4*x12*x24 - 4*x14*x2*x3 + 4*x13*x22*x3 + 4*x12*x23*x3 - 4*x1*x24*x3 + 4*x14*x32 + 4*x13*x2*x32 - 24*x12*x22*x32 + 4*x1*x23*x32 + 4*x24*x32 - 4*x13*x33 + 4*x12*x2*x33 + 4*x1*x22*x33 - 4*x23*x33 + 4*x12*x34 - 4*x1*x2*x34 + 4*x22*x34 - 4*x13*x22 - 4*x12*x23 + 4*x13*x2*x3 + 4*x12*x22*x3 + 4*x1*x23*x3 - 4*x13*x32 + 4*x12*x2*x32 + 4*x1*x22*x32 - 4*x23*x32 - 4*x12*x33 + 4*x1*x2*x33 - 4*x22*x33 + 4*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 4*x12*x32 - 4*x1*x2*x32 + 4*x22*x32
-    I6 =8*x16*x24*x32 - 8*x15*x25*x32 + 8*x14*x26*x32 - 8*x16*x23*x33 - 4*x15*x24*x33 - 4*x14*x25*x33 - 8*x13*x26*x33 + 8*x16*x22*x34 - 4*x15*x23*x34 + 24*x14*x24*x34 - 4*x13*x25*x34 + 8*x12*x26*x34 - 8*x15*x22*x35 - 4*x14*x23*x35 - 4*x13*x24*x35 - 8*x12*x25*x35 + 8*x14*x22*x36 - 8*x13*x23*x36 + 8*x12*x24*x36 - 8*x16*x24*x3 + 8*x15*x25*x3 - 8*x14*x26*x3 - 4*x16*x23*x32 + 2*x15*x24*x32 + 2*x14*x25*x32 - 4*x13*x26*x32 - 4*x16*x22*x33 + 40*x15*x23*x33 - 28*x14*x24*x33 + 40*x13*x25*x33 - 4*x12*x26*x33 - 8*x16*x2*x34 + 2*x15*x22*x34 - 28*x14*x23*x34 - 28*x13*x24*x34 + 2*x12*x25*x34 - 8*x1*x26*x34 + 8*x15*x2*x35 + 2*x14*x22*x35 + 40*x13*x23*x35 + 2*x12*x24*x35 + 8*x1*x25*x35 - 8*x14*x2*x36 - 4*x13*x22*x36 - 4*x12*x23*x36 - 8*x1*x24*x36 + 8*x16*x24 - 8*x15*x25 + 8*x14*x26 - 4*x16*x23*x3 + 2*x15*x24*x3 + 2*x14*x25*x3 - 4*x13*x26*x3 + 24*x16*x22*x32 - 28*x15*x23*x32 + 32*x14*x24*x32 - 28*x13*x25*x32 + 24*x12*x26*x32 - 4*x16*x2*x33 - 28*x15*x22*x33 - 4*x14*x23*x33 - 4*x13*x24*x33 - 28*x12*x25*x33 - 4*x1*x26*x33 + 8*x16*x34 + 2*x15*x2*x34 + 32*x14*x22*x34 - 4*x13*x23*x34 + 32*x12*x24*x34 + 2*x1*x25*x34 + 8*x26*x34 - 8*x15*x35 + 2*x14*x2*x35 - 28*x13*x22*x35 - 28*x12*x23*x35 + 2*x1*x24*x35 - 8*x25*x35 + 8*x14*x36 - 4*x13*x2*x36 + 24*x12*x22*x36 - 4*x1*x23*x36 + 8*x24*x36 - 8*x16*x23 - 4*x15*x24 - 4*x14*x25 - 8*x13*x26 - 4*x16*x22*x3 + 40*x15*x23*x3 - 28*x14*x24*x3 + 40*x13*x25*x3 - 4*x12*x26*x3 - 4*x16*x2*x32 - 28*x15*x22*x32 - 4*x14*x23*x32 - 4*x13*x24*x32 - 28*x12*x25*x32 - 4*x1*x26*x32 - 8*x16*x33 + 40*x15*x2*x33 - 4*x14*x22*x33 + 48*x13*x23*x33 - 4*x12*x24*x33 + 40*x1*x25*x33 - 8*x26*x33 - 4*x15*x34 - 28*x14*x2*x34 - 4*x13*x22*x34 - 4*x12*x23*x34 - 28*x1*x24*x34 - 4*x25*x34 - 4*x14*x35 + 40*x13*x2*x35 - 28*x12*x22*x35 + 40*x1*x23*x35 - 4*x24*x35 - 8*x13*x36 - 4*x12*x2*x36 - 4*x1*x22*x36 - 8*x23*x36 + 8*x16*x22 - 4*x15*x23 + 24*x14*x24 - 4*x13*x25 + 8*x12*x26 - 8*x16*x2*x3 + 2*x15*x22*x3 - 28*x14*x23*x3 - 28*x13*x24*x3 + 2*x12*x25*x3 - 8*x1*x26*x3 + 8*x16*x32 + 2*x15*x2*x32 + 32*x14*x22*x32 - 4*x13*x23*x32 + 32*x12*x24*x32 + 2*x1*x25*x32 + 8*x26*x32 - 4*x15*x33 - 28*x14*x2*x33 - 4*x13*x22*x33 - 4*x12*x23*x33 - 28*x1*x24*x33 - 4*x25*x33 + 24*x14*x34 - 28*x13*x2*x34 + 32*x12*x22*x34 - 28*x1*x23*x34 + 24*x24*x34 - 4*x13*x35 + 2*x12*x2*x35 + 2*x1*x22*x35 - 4*x23*x35 + 8*x12*x36 - 8*x1*x2*x36 + 8*x22*x36 - 8*x15*x22 - 4*x14*x23 - 4*x13*x24 - 8*x12*x25 + 8*x15*x2*x3 + 2*x14*x22*x3 + 40*x13*x23*x3 + 2*x12*x24*x3 + 8*x1*x25*x3 - 8*x15*x32 + 2*x14*x2*x32 - 28*x13*x22*x32 - 28*x12*x23*x32 + 2*x1*x24*x32 - 8*x25*x32 - 4*x14*x33 + 40*x13*x2*x33 - 28*x12*x22*x33 + 40*x1*x23*x33 - 4*x24*x33 - 4*x13*x34 + 2*x12*x2*x34 + 2*x1*x22*x34 - 4*x23*x34 - 8*x12*x35 + 8*x1*x2*x35 - 8*x22*x35 + 8*x14*x22 - 8*x13*x23 + 8*x12*x24 - 8*x14*x2*x3 - 4*x13*x22*x3 - 4*x12*x23*x3 - 8*x1*x24*x3 + 8*x14*x32 - 4*x13*x2*x32 + 24*x12*x22*x32 - 4*x1*x23*x32 + 8*x24*x32 - 8*x13*x33 - 4*x12*x2*x33 - 4*x1*x22*x33 - 8*x23*x33 + 8*x12*x34 - 8*x1*x2*x34 + 8*x22*x34
-    I10 = x18*x26*x34 - 2*x17*x27*x34 + x16*x28*x34 - 2*x18*x25*x35 + 2*x17*x26*x35 + 2*x16*x27*x35 - 2*x15*x28*x35 + x18*x24*x36 + 2*x17*x25*x36 - 6*x16*x26*x36 + 2*x15*x27*x36 + x14*x28*x36 - 2*x17*x24*x37 + 2*x16*x25*x37 + 2*x15*x26*x37 - 2*x14*x27*x37 + x16*x24*x38 - 2*x15*x25*x38 + x14*x26*x38 - 2*x18*x26*x33 + 4*x17*x27*x33 - 2*x16*x28*x33 + 2*x18*x25*x34 - 2*x17*x26*x34 - 2*x16*x27*x34 + 2*x15*x28*x34 + 2*x18*x24*x35 - 4*x17*x25*x35 + 4*x16*x26*x35 - 4*x15*x27*x35 + 2*x14*x28*x35 - 2*x18*x23*x36 - 2*x17*x24*x36 + 4*x16*x25*x36 + 4*x15*x26*x36 - 2*x14*x27*x36 - 2*x13*x28*x36 + 4*x17*x23*x37 - 2*x16*x24*x37 - 4*x15*x25*x37 - 2*x14*x26*x37 + 4*x13*x27*x37 - 2*x16*x23*x38 + 2*x15*x24*x38 + 2*x14*x25*x38 - 2*x13*x26*x38 + x18*x26*x32 - 2*x17*x27*x32 + x16*x28*x32 + 2*x18*x25*x33 - 2*x17*x26*x33 - 2*x16*x27*x33 + 2*x15*x28*x33 - 6*x18*x24*x34 + 4*x17*x25*x34 + 4*x16*x26*x34 + 4*x15*x27*x34 - 6*x14*x28*x34 + 2*x18*x23*x35 + 4*x17*x24*x35 - 6*x16*x25*x35 - 6*x15*x26*x35 + 4*x14*x27*x35 + 2*x13*x28*x35 + x18*x22*x36 - 2*x17*x23*x36 + 4*x16*x24*x36 - 6*x15*x25*x36 + 4*x14*x26*x36 - 2*x13*x27*x36 + x12*x28*x36 - 2*x17*x22*x37 - 2*x16*x23*x37 + 4*x15*x24*x37 + 4*x14*x25*x37 - 2*x13*x26*x37 - 2*x12*x27*x37 + x16*x22*x38 + 2*x15*x23*x38 - 6*x14*x24*x38 + 2*x13*x25*x38 + x12*x26*x38 - 2*x18*x25*x32 + 2*x17*x26*x32 + 2*x16*x27*x32 - 2*x15*x28*x32 + 2*x18*x24*x33 - 4*x17*x25*x33 + 4*x16*x26*x33 - 4*x15*x27*x33 + 2*x14*x28*x33 + 2*x18*x23*x34 + 4*x17*x24*x34 - 6*x16*x25*x34 - 6*x15*x26*x34 + 4*x14*x27*x34 + 2*x13*x28*x34 - 2*x18*x22*x35 - 4*x17*x23*x35 - 6*x16*x24*x35 + 24*x15*x25*x35 - 6*x14*x26*x35 - 4*x13*x27*x35 - 2*x12*x28*x35 + 2*x17*x22*x36 + 4*x16*x23*x36 - 6*x15*x24*x36 - 6*x14*x25*x36 + 4*x13*x26*x36 + 2*x12*x27*x36 + 2*x16*x22*x37 - 4*x15*x23*x37 + 4*x14*x24*x37 - 4*x13*x25*x37 + 2*x12*x26*x37 - 2*x15*x22*x38 + 2*x14*x23*x38 + 2*x13*x24*x38 - 2*x12*x25*x38 + x18*x24*x32 + 2*x17*x25*x32 - 6*x16*x26*x32 + 2*x15*x27*x32 + x14*x28*x32 - 2*x18*x23*x33 - 2*x17*x24*x33 + 4*x16*x25*x33 + 4*x15*x26*x33 - 2*x14*x27*x33 - 2*x13*x28*x33 + x18*x22*x34 - 2*x17*x23*x34 + 4*x16*x24*x34 - 6*x15*x25*x34 + 4*x14*x26*x34 - 2*x13*x27*x34 + x12*x28*x34 + 2*x17*x22*x35 + 4*x16*x23*x35 - 6*x15*x24*x35 - 6*x14*x25*x35 + 4*x13*x26*x35 + 2*x12*x27*x35 - 6*x16*x22*x36 + 4*x15*x23*x36 + 4*x14*x24*x36 + 4*x13*x25*x36 - 6*x12*x26*x36 + 2*x15*x22*x37 - 2*x14*x23*x37 - 2*x13*x24*x37 + 2*x12*x25*x37 + x14*x22*x38 - 2*x13*x23*x38 + x12*x24*x38 - 2*x17*x24*x32 + 2*x16*x25*x32 + 2*x15*x26*x32 - 2*x14*x27*x32 + 4*x17*x23*x33 - 2*x16*x24*x33 - 4*x15*x25*x33 - 2*x14*x26*x33 + 4*x13*x27*x33 - 2*x17*x22*x34 - 2*x16*x23*x34 + 4*x15*x24*x34 + 4*x14*x25*x34 - 2*x13*x26*x34 - 2*x12*x27*x34 + 2*x16*x22*x35 - 4*x15*x23*x35 + 4*x14*x24*x35 - 4*x13*x25*x35 + 2*x12*x26*x35 + 2*x15*x22*x36 - 2*x14*x23*x36 - 2*x13*x24*x36 + 2*x12*x25*x36 - 2*x14*x22*x37 + 4*x13*x23*x37 - 2*x12*x24*x37 + x16*x24*x32 - 2*x15*x25*x32 + x14*x26*x32 - 2*x16*x23*x33 + 2*x15*x24*x33 + 2*x14*x25*x33 - 2*x13*x26*x33 + x16*x22*x34 + 2*x15*x23*x34 - 6*x14*x24*x34 + 2*x13*x25*x34 + x12*x26*x34 - 2*x15*x22*x35 + 2*x14*x23*x35 + 2*x13*x24*x35 - 2*x12*x25*x35 + x14*x22*x36 - 2*x13*x23*x36 + x12*x24*x36
-    return I2, I4, I6, I10
+def ICI_static(x1,x2,x3):
+     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
+     x13, x23, x33 = x1 * x12, x2 * x22, x3 * x32
+     x14, x24, x34 = x1 * x13, x2 * x23, x3 * x33
+     x15, x25, x35 = x1 * x14, x2 * x24, x3 * x34
+     x16, x26, x36 = x1 * x15, x2 * x25, x3 * x35
+     x17, x27, x37 = x1 * x16, x2 * x26, x3 * x36
+     x18, x28, x38 = x1 * x17, x2 * x27, x3 * x37
+
+     I2 = 6*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 6*x12*x32 - 4*x1*x2*x32 + 6*x22*x32 - 4*x12*x2 - 4*x1*x22 - 4*x12*x3 + 12*x1*x2*x3 - 4*x22*x3 - 4*x1*x32 - 4*x2*x32 + 6*x12 - 4*x1*x2 + 6*x22 - 4*x1*x3 - 4*x2*x3 + 6*x32
+     I4 = 4*x14*x22*x32 - 4*x13*x23*x32 + 4*x12*x24*x32 - 4*x13*x22*x33 - 4*x12*x23*x33 + 4*x12*x22*x34 - 4*x14*x22*x3 + 4*x13*x23*x3 - 4*x12*x24*x3 - 4*x14*x2*x32 + 4*x13*x22*x32 + 4*x12*x23*x32 - 4*x1*x24*x32 + 4*x13*x2*x33 + 4*x12*x22*x33 + 4*x1*x23*x33 - 4*x12*x2*x34 - 4*x1*x22*x34 + 4*x14*x22 - 4*x13*x23 + 4*x12*x24 - 4*x14*x2*x3 + 4*x13*x22*x3 + 4*x12*x23*x3 - 4*x1*x24*x3 + 4*x14*x32 + 4*x13*x2*x32 - 24*x12*x22*x32 + 4*x1*x23*x32 + 4*x24*x32 - 4*x13*x33 + 4*x12*x2*x33 + 4*x1*x22*x33 - 4*x23*x33 + 4*x12*x34 - 4*x1*x2*x34 + 4*x22*x34 - 4*x13*x22 - 4*x12*x23 + 4*x13*x2*x3 + 4*x12*x22*x3 + 4*x1*x23*x3 - 4*x13*x32 + 4*x12*x2*x32 + 4*x1*x22*x32 - 4*x23*x32 - 4*x12*x33 + 4*x1*x2*x33 - 4*x22*x33 + 4*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 4*x12*x32 - 4*x1*x2*x32 + 4*x22*x32
+     I6 =8*x16*x24*x32 - 8*x15*x25*x32 + 8*x14*x26*x32 - 8*x16*x23*x33 - 4*x15*x24*x33 - 4*x14*x25*x33 - 8*x13*x26*x33 + 8*x16*x22*x34 - 4*x15*x23*x34 + 24*x14*x24*x34 - 4*x13*x25*x34 + 8*x12*x26*x34 - 8*x15*x22*x35 - 4*x14*x23*x35 - 4*x13*x24*x35 - 8*x12*x25*x35 + 8*x14*x22*x36 - 8*x13*x23*x36 + 8*x12*x24*x36 - 8*x16*x24*x3 + 8*x15*x25*x3 - 8*x14*x26*x3 - 4*x16*x23*x32 + 2*x15*x24*x32 + 2*x14*x25*x32 - 4*x13*x26*x32 - 4*x16*x22*x33 + 40*x15*x23*x33 - 28*x14*x24*x33 + 40*x13*x25*x33 - 4*x12*x26*x33 - 8*x16*x2*x34 + 2*x15*x22*x34 - 28*x14*x23*x34 - 28*x13*x24*x34 + 2*x12*x25*x34 - 8*x1*x26*x34 + 8*x15*x2*x35 + 2*x14*x22*x35 + 40*x13*x23*x35 + 2*x12*x24*x35 + 8*x1*x25*x35 - 8*x14*x2*x36 - 4*x13*x22*x36 - 4*x12*x23*x36 - 8*x1*x24*x36 + 8*x16*x24 - 8*x15*x25 + 8*x14*x26 - 4*x16*x23*x3 + 2*x15*x24*x3 + 2*x14*x25*x3 - 4*x13*x26*x3 + 24*x16*x22*x32 - 28*x15*x23*x32 + 32*x14*x24*x32 - 28*x13*x25*x32 + 24*x12*x26*x32 - 4*x16*x2*x33 - 28*x15*x22*x33 - 4*x14*x23*x33 - 4*x13*x24*x33 - 28*x12*x25*x33 - 4*x1*x26*x33 + 8*x16*x34 + 2*x15*x2*x34 + 32*x14*x22*x34 - 4*x13*x23*x34 + 32*x12*x24*x34 + 2*x1*x25*x34 + 8*x26*x34 - 8*x15*x35 + 2*x14*x2*x35 - 28*x13*x22*x35 - 28*x12*x23*x35 + 2*x1*x24*x35 - 8*x25*x35 + 8*x14*x36 - 4*x13*x2*x36 + 24*x12*x22*x36 - 4*x1*x23*x36 + 8*x24*x36 - 8*x16*x23 - 4*x15*x24 - 4*x14*x25 - 8*x13*x26 - 4*x16*x22*x3 + 40*x15*x23*x3 - 28*x14*x24*x3 + 40*x13*x25*x3 - 4*x12*x26*x3 - 4*x16*x2*x32 - 28*x15*x22*x32 - 4*x14*x23*x32 - 4*x13*x24*x32 - 28*x12*x25*x32 - 4*x1*x26*x32 - 8*x16*x33 + 40*x15*x2*x33 - 4*x14*x22*x33 + 48*x13*x23*x33 - 4*x12*x24*x33 + 40*x1*x25*x33 - 8*x26*x33 - 4*x15*x34 - 28*x14*x2*x34 - 4*x13*x22*x34 - 4*x12*x23*x34 - 28*x1*x24*x34 - 4*x25*x34 - 4*x14*x35 + 40*x13*x2*x35 - 28*x12*x22*x35 + 40*x1*x23*x35 - 4*x24*x35 - 8*x13*x36 - 4*x12*x2*x36 - 4*x1*x22*x36 - 8*x23*x36 + 8*x16*x22 - 4*x15*x23 + 24*x14*x24 - 4*x13*x25 + 8*x12*x26 - 8*x16*x2*x3 + 2*x15*x22*x3 - 28*x14*x23*x3 - 28*x13*x24*x3 + 2*x12*x25*x3 - 8*x1*x26*x3 + 8*x16*x32 + 2*x15*x2*x32 + 32*x14*x22*x32 - 4*x13*x23*x32 + 32*x12*x24*x32 + 2*x1*x25*x32 + 8*x26*x32 - 4*x15*x33 - 28*x14*x2*x33 - 4*x13*x22*x33 - 4*x12*x23*x33 - 28*x1*x24*x33 - 4*x25*x33 + 24*x14*x34 - 28*x13*x2*x34 + 32*x12*x22*x34 - 28*x1*x23*x34 + 24*x24*x34 - 4*x13*x35 + 2*x12*x2*x35 + 2*x1*x22*x35 - 4*x23*x35 + 8*x12*x36 - 8*x1*x2*x36 + 8*x22*x36 - 8*x15*x22 - 4*x14*x23 - 4*x13*x24 - 8*x12*x25 + 8*x15*x2*x3 + 2*x14*x22*x3 + 40*x13*x23*x3 + 2*x12*x24*x3 + 8*x1*x25*x3 - 8*x15*x32 + 2*x14*x2*x32 - 28*x13*x22*x32 - 28*x12*x23*x32 + 2*x1*x24*x32 - 8*x25*x32 - 4*x14*x33 + 40*x13*x2*x33 - 28*x12*x22*x33 + 40*x1*x23*x33 - 4*x24*x33 - 4*x13*x34 + 2*x12*x2*x34 + 2*x1*x22*x34 - 4*x23*x34 - 8*x12*x35 + 8*x1*x2*x35 - 8*x22*x35 + 8*x14*x22 - 8*x13*x23 + 8*x12*x24 - 8*x14*x2*x3 - 4*x13*x22*x3 - 4*x12*x23*x3 - 8*x1*x24*x3 + 8*x14*x32 - 4*x13*x2*x32 + 24*x12*x22*x32 - 4*x1*x23*x32 + 8*x24*x32 - 8*x13*x33 - 4*x12*x2*x33 - 4*x1*x22*x33 - 8*x23*x33 + 8*x12*x34 - 8*x1*x2*x34 + 8*x22*x34
+     I10 = x12*x22*x32 * ((1-x1)*(1-x2)*(1-x3)*(x1-x2)*(x1-x3)*(x2-x3))**2
+     return I2, I4, I6, I10
 
 def igusa_clebsch_from_half_periods(a, b, c, prec=None, padic=True):
     if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
@@ -200,12 +218,12 @@ def igusa_clebsch_from_half_periods(a, b, c, prec=None, padic=True):
 def p_adic_l_invariant(A,B, Tmatrix):
     return p_adic_l_invariant_additive(A.log(0),B.log(0),A.ordp(),B.ordp(),Tmatrix)
 
-def p_adic_l_invariant_additive(A,B, alpha, beta, Tmatrix):
-    K = A.parent()
-    A, B = K(A), K(B)
+def p_adic_l_invariant_additive(logA,logB, alpha, beta, Tmatrix):
+    K = logA.parent()
+    logA, logB = K(logA), K(logB)
     x,y,z,t = Tmatrix.change_ring(K).list()
     M = Matrix(K,2,2,[alpha,x*alpha+z*beta,beta, y*alpha+t*beta])
-    n  = Matrix(K,2,1,[A, B])
+    n  = Matrix(K,2,1,[logA, logB])
     return M.solve_right(n).list()
 
 def qlogs_from_Lp_and_ords(a,b,Tmatrix,q1ord, q2ord, q3ord):
@@ -262,22 +280,16 @@ def all_possible_qords(Tmatrix,N,initial = None):
             t0 = 0
     return tmp[t0:]
 
-def recognize_absolute_invariant(j_invariant,base = QQ,phi = None,threshold = 0.9,prec = None, outfile = None):
+def recognize_absolute_invariant(j_invariant,base = QQ,threshold = 0.9,prec = None, outfile = None):
     deg = base.degree()
     Kp = j_invariant.parent()
-    p = Kp.prime()
-    if phi is None:
-        phi = lambda t:t
-    threshold = threshold * RR(p).log(10)
-    j_invariant_val = j_invariant.valuation()
-    j_invariant = p**-j_invariant_val * j_invariant
+    threshold = threshold * RR(Kp.prime()).log(10)
     fx = algdep(j_invariant,deg)
     hfx = height_polynomial(fx)
     trash_height = threshold * j_invariant.precision_relative()
     if hfx < trash_height:
         try:
-            fwrite('%s (deg = %s, relprec = %s, threshold = %s)'%(RealField(20)(hfx)/RealField(20)(trash_height), fx.degree(), j_invariant.precision_relative(), threshold),outfile)
-            return p**j_invariant_val * fx.change_ring(base).roots()[0][0]
+            return fx.change_ring(base).roots()[0][0]
         except IndexError:
             raise ValueError('No roots')
     raise ValueError('Unrecognized')
@@ -331,76 +343,102 @@ def take_to_Qp(x, tolerance = None):
         ans = x.trace()/x.parent().degree()
     else:
         ans = x.trace_absolute()/x.parent().absolute_degree()
-    if tolerance is None:
-        tolerance = 3
-    if (x.parent()(ans) - x).ordp() - x.ordp() <= tolerance:
+    ordp = (x.parent()(ans) - x).ordp()
+    if tolerance is not None and ordp - x.ordp() <= tolerance:
         raise ValueError('Input does not look p-adic')
+    ans = ans.add_bigoh(ordp.floor())
     return ans
 
-def find_igusa_invariants_from_AB(A, B, T, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85):
-    F = A.parent().base_ring()
+
+@fork
+def absolute_igusa_padic_from_half_periods(p1,p2,p3,prec,padic,threshold = None):
+    j1,j2,j3 = igusa_clebsch_absolute_from_half_periods(p1, p2, p3, prec = prec, padic = True)
+    if threshold is None:
+        tol = None
+    else:
+        tol = threshold * prec
+    try:
+        j1 = take_to_Qp(j1,tol)
+        j2 = take_to_Qp(j2,tol)
+        j3 = take_to_Qp(j3,tol)
+    except ValueError:
+        return None, None, None
+    return j1, j2, j3
+
+def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85,matlist = None, hecke_polys = None, max_height_elements = 2, mat_coeffs_range = 3):
+    K0 = Alist[0].parent()
     p = F.prime()
+    if phi is None:
+        phi = lambda x:Qp(p,prec)(x)
     x = QQ['x'].gen()
     from mixed_extension import QuadExt
-    F.<r> = Qq(p**2, prec)
-    K = QuadExt(F,p)
+    K = QuadExt(K0,p)
     deg = base.degree()
-    F0 = F.residue_field()
-    F0.lift = lambda t:F(t).lift_to_precision(F.precision_cap())
-    teichF = teichmuller_system(F.base_ring())
-    x, y, z, t = T.list()
-    r = x + y - z - t
-    q2 = K(A * B)
-    q3 = K(B**-1)
-    q1z = q2**y * q3**r
-    try:
-        p2,p3 = our_sqrt(q2,K),our_sqrt(q3,K)
-    except (ValueError):
-        return 'Nope'
-    for p1 in our_nroot(q1z, ZZ(2*z),K, return_all = True):
-        try:
-            I2c, I4c, I6c, I10c = IgusaClebschFromHalfPeriods(p1,p2,p3,prec = prec,padic = True)
-        except (ValueError,RuntimeError,PrecisionError):
-            continue
-        if list_I10 is None:
-            # # Get absolute invariants j1, j2, j3
-            j1 = I2c**5 / I10c
-            j2 = I2c**3 * I4c / I10c
-            j3 = I2c**2 * I6c / I10c
-            tol = prec / 3
+    L = NumberField(fT,names='t')
+    if list_I10 is not None:
+        list_I10_padic = [phi(o) for o in list_I10]
+    if matlist is None:
+        matlist = []
+        for b,d in product(range(-mat_coeffs_range,mat_coeffs_range+1),repeat = 2):
+            if d != 0:
+                matlist.append((b,d))
+    if hecke_polys is None:
+        possible_charpolys = set([])
+        for u in L.elements_of_bounded_height(max_height_elements):
+            if u.is_integral() and u.minpoly().degree() == 2:
+                possible_charpolys.add(u.charpoly())
+        hecke_polys = sorted(list(possible_charpolys), key = lambda x:max(x[0].abs(),x[1].abs()))
+    total_tests = len(hecke_polys) * len(Alist) * len(Blist) * len(matlist)
+    fwrite('# Starting search for Igusa invariants. Number of tests = %s = %s x %s x %s x %s'%(total_tests, len(hecke_polys), len(Alist), len(Blist), len(matlist)), outfile)
+    ntests = 0
+    for pu in hecke_polys:
+        n = ZZ(pu[0])
+        t = -ZZ(pu[1])
+        for A0, B0, m in product(Alist,Blist,matlist):
+            ntests += 1
+            if ntests % 100 == 0:
+                fwrite('# num_tests = %s / %s'%(ntests,total_tests), outfile)
+            b,d = m
+            A1 = A0 * B0**b
+            B1 = B0**d
+            D1 = A1**(-n) * B1**t
+            q1 = K0(B1 * D1)
+            q2 = K0(A1 * B1)
+            q3 = K0(B1**-1)
             try:
-                j1, j2, j3 = take_to_Qp(j1, tolerance = tol), take_to_Qp(j2, tol), take_to_Qp(j3, tol)
-            except ValueError:
+                p1, p2, p3 = our_sqrt(K(q1)**-1),our_sqrt(K(q2)**-1),our_sqrt(K(q3)**-1)
+                j1,j2,j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, prec, True, threshold = threshold)
+                if j1 is None:
+                    raise ValueError
+            except (ValueError,RuntimeError,PrecisionError):
                 continue
-            if cheatjs is not None:
-                vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
-                if all([o > minval for o in vals]):
-                    return (oq1,oq2,oq3,min(vals))
-            else:
-                # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
-                try:
-                    return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = threshold,prec = prec, outfile = outfile), 1, 1, 1)
-                except ValueError:
-                    continue
-        else:
-            j1 = (I2c**5 / I10c)
-            try:
-                j1n = take_to_Qp(j1, tolerance = prec/3)
-                j1 = j1n * Pgen**ZZ(I10c.ordp())
-            except ValueError:
-                continue
-            for I10 in list_I10:
-                try:
-                    I2c_list = our_nroot( j1 * I10, 5, return_all = True)
-                except ValueError:
-                    continue
-                for I2c in I2c_list:
+            if list_I10 is None:
+                if cheatjs is not None:
+                    vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
+                    if all([o > minval for o in vals]):
+                        fwrite('# Success !! -> t=%s, n=%s, mat=%s, valuation=%s'%(t,n,(b,d),min(vals)), outfile)
+                        # return (t,n,(a,b,c,d),min(vals))
+                else:
                     try:
-                        return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = threshold,prec = prec,  outfile = outfile), 1, 1, 1)
+                        return (recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec, outfile = outfile), 1, 1, 1)
                     except ValueError:
                         continue
+            else:
+                for I10new, I10p in zip(list_I10,list_I10_padic):
+                    I2c_list = our_nroot( j1 * I10p, 5, return_all = True)
+                    for I2c in I2c_list:
+                        try:
+                            I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                            fwrite('# Possible I2 = %s'%(I2new),outfile)
+                            I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                            fwrite('# Possible I4 = %s'%I4new,outfile)
+                            I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                            fwrite('# Possible I6 = %s'%I6new,outfile)
+                            fwrite('# Candidate = %s, %s, %s, %s (t = %s, n = %s, mat = %s)'%(I2new,I4new,I6new,I10new,t,n,m.list()),outfile)
+                            # return (I2new, I4new, I6new, I10new)
+                        except ValueError:
+                            continue
     return 'Nope'
-
 
 def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None, threshold = 0.85):
     F = Lpmat.parent().base_ring()
@@ -446,7 +484,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                 continue
             tol = prec/3
             try:
-                j1, j2, j3 = take_to_Qp(j1, tolerance = tol), take_to_Qp(j2, tol), take_to_Qp(j3, tol)
+                j1, j2, j3 = take_to_Qp(j1), take_to_Qp(j2), take_to_Qp(j3)
             except ValueError:
                 continue
             if cheatjs is not None:
@@ -456,7 +494,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             else:
                 # return recognize_invariants(j1,j2,j3,oq1+oq2+oq3,base = base,phi = phi)
                 try:
-                    return (recognize_absolute_invariant(j1,base = base,phi = phi,threshold = threshold,prec = prec, outfile = outfile), 1, 1, 1)
+                    return (recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec, outfile = outfile), 1, 1, 1)
                 except ValueError:
                     continue
         else:
@@ -465,7 +503,7 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
             except PrecisionError:
                 continue
             try:
-                j1n = take_to_Qp(j1, tolerance = prec/3)
+                j1n = take_to_Qp(j1)
                 j1 = j1n # * Pgen**ZZ(I10c.ordp())
             except ValueError:
                 continue
@@ -476,13 +514,13 @@ def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,
                     continue
                 for I2c in I2c_list:
                     try:
-                        return (recognize_absolute_invariant(I2c,base = base,phi = phi,threshold = threshold,prec = prec,  outfile = outfile), 1, 1, 1)
+                        return (recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile), 1, 1, 1)
                     except ValueError:
                         continue
     return 'Nope'
 
 def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_I10 = None, Pgen = None, N = 6, cheatjs = None, parallelize = True):
-    fwrite('Trying to recognize invariants...',outfile)
+    fwrite('# Trying to recognize invariants...',outfile)
     Pring = embedding.domain()
     if prec is None:
         prec = a.parent().precision_cap()
@@ -497,7 +535,7 @@ def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_
             Tlist.append(M)
     Tlist = sorted(Tlist, key = lambda x: max(x[0,0].abs(), x[0,1].abs(), x[1,0].abs(), x[1,1].abs()))
     for ii, tt in enumerate(Tlist):
-        fwrite('Doing matrix %s / %s ( = %s)'%(ii,len(Tlist),tt.list()),outfile)
+        fwrite('# Doing matrix %s / %s ( = %s)'%(ii,len(Tlist),tt.list()),outfile)
         Lp = a + b * tt
         inp_vec = [(Lp, ordmat, prec, Pring, cheatjs, embedding, 3, list_I10, Pgen, outfile) for ordmat in all_possible_ordmats(Lp,20)]
 
@@ -507,17 +545,17 @@ def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_
             for inpt, outt in parallel(find_igusa_invariants_from_L_inv)(inp_vec):
                 jj += 1
                 if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt and 'Error' not in outt:
-                    fwrite('(%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
+                    fwrite('# (%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
                 elif outt != 'Nope':
-                    fwrite('(%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
+                    fwrite('# (%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
         else:
             for inpt in inp_vec:
                 outt = find_igusa_invariants_from_L_inv(*inpt)
                 jj += 1
                 if outt != 'Nope' and outt != '' and 'indistinguishable' not in outt and 'Error' not in outt:
-                    fwrite('(%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
+                    fwrite('# (%s/%s) %s %s %s %s'%(jj, num_inpts, str(tt.list()), str(inpt[0][0].list()),str(inpt[0][1].list()),str(outt)), outfile)
                 elif outt != 'Nope':
-                    fwrite('(%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
+                    fwrite('# (%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
 
 
 def frobenius_polynomial(C):
@@ -598,14 +636,13 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
             abtuple = (QQ(abtuple[0]), QQ(abtuple[1]))
 
         if outfile is None:
-            outfile = 'atr_surface_%s_%s_%s_%s_%s.txt'%(code,1,P,D,(P*D*Np))
+            outfile = 'periods_%s_%s_%s_%s_%s.sage'%(code,1,P,D,(P*D*Np))
     else:
         F.<r> = NumberField(pol)
         r = F.gen()
         P = F.ideal(Pgen)
         Pnrm = P.norm()
         Pring = P.ring()
-
         D = F.ideal(Dgen)
         Np = F.ideal(Npgen)
         if Sinf is None:
@@ -616,21 +653,21 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         else:
             abtuple = (F(abtuple[0]), F(abtuple[1]))
         if outfile is None:
-            outfile = 'atr_surface_%s_%s_%s_%s_%s.txt'%(code,F.discriminant().abs(),Pnrm,D.norm(),(P*D*Np).norm())
+            outfile = 'periods_%s_%s_%s_%s_%s.sage'%(code,F.discriminant().abs(),Pnrm,D.norm(),(P*D*Np).norm())
     if os.path.isfile(outfile):
         return 'Skipping because outfile exists'
 
     if Pnrm > 31:
         return 'Giving up, prime norm is too large (Pnrm = %s)'%Pnrm
-    fwrite('Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,Sinf)),outfile)
-
+    fwrite('# Starting computation for candidate %s'%str((code,pol,Pgen,Dgen,Npgen,Sinf)),outfile)
+    fwrite('p = %s'%Pnrm, outfile)
     if compute_G:
         G = BigArithGroup(P,abtuple,Np,base = F, use_shapiro = use_shapiro, seed = magma_seed, outfile = outfile, use_sage_db = use_sage_db, magma = None, timeout = timeout, grouptype = grouptype, logfile = logfile)
     if compute_cohomology:
         Coh = ArithCoh(G)
-        fwrite('Computed Cohomology group',outfile)
+        fwrite('# Computed Cohomology group',outfile)
     if hecke_data_init is not None and return_all:
-        fwrite('Warning: setting return_all to False because user passed hecke_data_init value', outfile)
+        fwrite('# Warning: setting return_all to False because user passed hecke_data_init value', outfile)
         return_all = False
 
     if return_all:
@@ -641,15 +678,16 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         except ValueError:
             all_twodim_cocycles = []
     if len(all_twodim_cocycles) == 0:
-        fwrite('Group not attached to surface',outfile)
-        fwrite('DONE WITH COMPUTATION',outfile)
+        fwrite('# Group not attached to surface',outfile)
+        fwrite('# DONE WITH COMPUTATION',outfile)
         return 'DONE'
-    fwrite('Obtained cocycles',outfile)
+    fwrite('# Obtained cocycles',outfile)
     for flist, hecke_data in all_twodim_cocycles:
-        g0, g1 = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data, outfile = outfile)
-        g1 = g0.parent().apply_hecke_operator(g0,hecke_data_init[0]) # DEBUG
+        # g0, g1 = G.get_homology_kernel(hecke_data = tuple(hecke_data))
+        g0, g1, scaling = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data, outfile = outfile)
+        # g1 = g0.parent().apply_hecke_operator(g0,hecke_data_init[0]) # DEBUG
         g0_shapiro, g1_shapiro = G.inverse_shapiro(g0), G.inverse_shapiro(g1)
-        fwrite('Obtained homology generators',outfile)
+        fwrite('# Obtained homology generators',outfile)
         if working_prec is None:
             working_prec = max([2 * prec + 10, 30])
         found = False
@@ -660,60 +698,64 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
                 found = True
             except PrecisionError:
                 working_prec *= 2
-                fwrite('Raising working precision to %s and trying again'%working_prec, outfile)
-        fwrite('Defined homology cycles', outfile)
+                fwrite('# Raising working precision to %s and trying again'%working_prec, outfile)
+        fwrite('# Defined homology cycles', outfile)
         Phif = get_overconvergent_class_quaternionic(P, flist[0], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
-        fwrite('Overconvergent lift completed', outfile)
+        fwrite('# Overconvergent lift completed', outfile)
 
         from integrals import integrate_H1
         numadd, numval, numroot = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
         denadd, denval, denroot = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
-        Alog = numadd - denadd
+        Alog = take_to_Qp(numadd - denadd)
         Aval = numval - denval
         Amul = numroot / denroot
-        fwrite('Finished computation of A period', outfile)
+        fwrite('# Finished computation of A period', outfile)
         # A = A.add_bigoh(prec + A.valuation())
-        fwrite('A = p**(%s) * (%s) * (%s).exp()'%(Aval, Amul, Alog), outfile)
+        fwrite('A0 = p**(%s) * (%s) * (%s).exp()'%(Aval, Amul, Alog), outfile)
 
         numadd, numval, numroot = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
         denadd, denval, denroot = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
-        Blog = numadd - denadd
+        Blog = take_to_Qp(numadd - denadd)
         Bval = numval - denval
         Bmul = numroot / denroot
-        fwrite('Finished computation of B period', outfile)
+        fwrite('# Finished computation of B period', outfile)
         # B = B.add_bigoh(prec + B.valuation())
-        fwrite('B = p**(%s) * (%s) * (%s).exp()'%(Bval, Bmul, Blog), outfile)
+        fwrite('B0 = p**(%s) * (%s) * (%s).exp()'%(Bval, Bmul, Blog), outfile)
 
         found = False
         for ell, T0 in hecke_data:
             fwrite('ell = %s'%ell, outfile)
-            fwrite('T_ell = %s'%str(T0.list()), outfile)
+            fwrite('T_ell = Matrix(ZZ,2,2,%s)'%str(T0.list()), outfile)
             if T0.charpoly().is_irreducible():
                 found = True
                 T = T0
-                fwrite('The above is the good T', outfile)
+                fwrite('# The above is the good T', outfile)
         if not found:
-            fwrite('Good T not found...', outfile)
+            fwrite('# Good T not found...', outfile)
             return('DONE WITH ERROR')
 
         Dlog = Alog + T.trace()*Blog
         Dval = Aval + T.trace()*Bval
         Dmul = Amul * Bmul**(ZZ(T.trace()))
-        fwrite('D = p**(%s) * (%s) * (%s).exp()'%(Dval, Dmul, Dlog), outfile)
+        fwrite('D0 = p**(%s) * (%s) * (%s).exp()'%(Dval, Dmul, Dlog), outfile)
 
         F = Alog.parent()
         TF = T.change_ring(F)
         a, b = p_adic_l_invariant_additive(Alog, Blog, Aval, Bval, TF)
-
         a = take_to_Qp(a)
         b = take_to_Qp(b)
-
         Lp = a + b * T
-        fwrite('Lp = %s'%str(Lp.list()), outfile)
-
+        fwrite('a = %s'%a, outfile)
+        fwrite('b = %s'%b, outfile)
+        fwrite('Lp = Matrix(2,2,%s)'%str(Lp.list()), outfile)
         if recognize_invariants:
-            find_igusa_invariants(a, b, T, embedding = G._F_to_local, outfile = outfile, list_I10 = list_I10, Pgen = G._F_to_local(Pgen))
-    fwrite('DONE WITH COMPUTATION', outfile)
+               A = p**Aval * Alog.exp() * Amul
+               B = p**Bval * Blog.exp() * Bmul
+               K0 = Qq(p**2, prec)
+               Alist = our_nroot(K0(A),scaling,return_all = True)
+               Blist = our_nroot(K0(B),scaling,return_all = True)
+               find_igusa_invariants_from_AB(Alist,Blist,T.charpoly(), prec = prec, embedding = G._F_to_local, outfile = outfile, list_I10 = list_I10, Pgen = G._F_to_local(Pgen))
+    fwrite('# DONE WITH COMPUTATION', outfile)
     return('DONE')
 
 def all_possible_ordmats(Lpmat, N):
@@ -814,3 +856,66 @@ def HalfPeriodsInTermsOfLambdas(L1, L2, L3, lvec_and_Mlist = None, HP0 = None, p
             return Pn
         Pn = Pnn
     raise RuntimeError,"Does not converge"
+
+def normalize_periods(A, B, alpha, T, a, b, outfile = None):
+    r'''
+    alpha = (phi1, theta1)
+    beta = (phi2, theta2) = -n(T) * alpha, where T is the Hecke
+    operator used when computing A and B.
+    T is the new hecke operator.
+    '''
+    # fwrite('# The following are the canonical periods (using T_ell):', outfile)
+    nm = T.determinant()
+    newA = A**ZZ(-b*nm) * B**ZZ(-a)
+    new_norm = ZZ((a+b*T).determinant())
+    new_trace = 2*a + T.trace()
+    newB = B**-new_norm
+    newD = newA**ZZ(-new_norm) * newB**ZZ(new_trace)
+
+    # fwrite('A = %s'%newA, outfile)
+    # fwrite('B = %s'%newB, outfile)
+    # fwrite('D = %s'%newD, outfile)
+    # fwrite('final_scaling = %s * scaling'%-nm*b,outfile)
+    return newA,newB,newD,-nm*b*alpha
+
+
+def change_period_logs(Alog,Blog,T):
+    x,y,z,t = T.list()
+    c00,c01,c10,c11 = Matrix(2,2,[z, -x, x*(z-y), z*z-x*t]).list()
+    Alog, Blog = c00*Alog + c01*Blog, c10*Alog + c11*Blog
+    Dlog = Alog + T.trace()*Blog
+    return Alog, Blog, Dlog
+
+def compare_AB_periods(Alist, Blist, T, Ag, Bg, Dg, prec, base=QQ, matlist = None):
+    F = Alist[0].parent().base().prime()
+    x = QQ['x'].gen()
+    from mixed_extension import QuadExt
+    K0 = Qq(p**2,prec,names='r')
+    K = QuadExt(K0,p)
+    deg = base.degree()
+    L = NumberField(T.charpoly(),names='t')
+    if matlist is None:
+        matlist = []
+        for b,d in product(range(-2,3),repeat = 2):
+            m = matrix(ZZ,2,2,[1,b,0,d])
+            if m.determinant() != 0:
+                matlist.append(m)
+
+    pairs = set([])
+    print 'len(Alist) = %s, len(Blist) = %s'%(len(Alist),len(Blist))
+    for u, pu in sorted([(u,u.charpoly().list()[:2]) for u in L.elements_of_bounded_height(5) if u.is_integral()],key = lambda x:max(x[1][0].abs(),x[1][1].abs())):
+        if not u.charpoly().is_irreducible():
+            continue
+        n = ZZ(pu[0])
+        t = -ZZ(pu[1])
+        if (t,n) in pairs:
+            continue
+        pairs.add((t,n))
+        for A0, B0, m in product(Alist,Blist,matlist):
+            a,b,c,d = m.list()
+            A1log = a* A0.log(0) + b*B0.log(0)
+            B1log = c * A0.log(0) + d*B0.log(0)
+            D1log = -n * A1log + t * B1log
+
+            if (A1log-Ag.log(0)).valuation() > 2 and (B1log-Bg.log(0)).valuation() > 2 and (D1log-Dg.log(0)).valuation() > 2:
+                print a,b,c,d, t,n

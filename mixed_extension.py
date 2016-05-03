@@ -17,12 +17,9 @@ class QuadExtElement(FieldElement):
         else:
             B = parent.base()
             if y is None:
-                y = B.zero()
-            if x not in B or y not in B:
-                raise ValueError("Both arguments (x = %s, y = %s) must be elements of %s"%(x,y,B))
-            x = B(x)
-            y = B(y)
-            self._value = (x, y)
+                self._value = (B(x), B.zero())
+            else:
+                self._value = (B(x), B(y))
         FieldElement.__init__(self, parent)
 
     # Needed for the class
@@ -46,6 +43,37 @@ class QuadExtElement(FieldElement):
         a,b = self._value
         c,d = right._value
         return self.__class__(self.parent(), (a-c, b-d), check = False)
+
+    def _neg_(self):
+        a,b = self._value
+        return self.__class__(self.parent(), (-a, -b), check = False)
+
+    def __pow__(self,n):
+        if n == 0:
+            return 1
+        elif n == 1:
+            return self
+        elif n == -1:
+            return ~self
+        elif n > 0:
+            try:
+                plist = self._pow_list
+            except AttributeError:
+                self._pow_list = [None, self]
+                plist = self._pow_list
+            while len(plist) <= n:
+                plist.append(plist[-1] * self)
+            return plist[n]
+        else:
+            n = -n
+            try:
+                plist = self._neg_pow_list
+            except AttributeError:
+                self._neg_pow_list = [None, ~self]
+                plist = self._neg_pow_list
+            while len(plist) <= n:
+                plist.append(plist[-1] * plist[1])
+            return self._neg_pow_list[n]
 
     def _mul_(self, right):
         a, b = self._value
