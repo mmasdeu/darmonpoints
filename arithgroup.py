@@ -562,12 +562,12 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             phi = K.hom([mu])
         except TypeError:
             phi = K.hom([mu/2])
-        fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
-        fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
+        fwrite('# d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+        fwrite('# w_K satisfies: %s'%w.minpoly(),outfile)
         assert self._is_in_order(phi(w))
 
         iotap = self.get_embedding(prec)
-        fwrite('Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
+        fwrite('# Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
         a,b,c,d = iotap(mu).list()
         R = PolynomialRing(Cp,names = 'X')
         X = R.gen()
@@ -576,10 +576,10 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
         found = False
         gamma = self(phi(K.units()[0])**2)
-        fwrite('\cO_K to R_0 given by w_K |-> %s'%phi(w),outfile)
-        fwrite('gamma_psi = %s'%gamma,outfile)
-        fwrite('tau_psi = %s'%tau1,outfile)
-        fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
+        fwrite('# \cO_K to R_0 given by w_K |-> %s'%phi(w),outfile)
+        fwrite('# gamma_psi = %s'%gamma,outfile)
+        fwrite('# tau_psi = %s'%tau1,outfile)
+        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
         if return_all:
             return gamma,tau1,tau2
         else:
@@ -836,9 +836,9 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         assert r0 + r1 * w == K.gen()
         padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
         try:
-            fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+            fwrite('# d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
         except NotImplementedError: pass
-        fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
+        fwrite('# w_K satisfies: %s'%w.minpoly(),outfile)
         mu = r0 + r1*mu
         assert K.gen(0).trace() == mu.trace() and K.gen(0).norm() == mu.determinant()
         iotap = self.get_embedding(prec)
@@ -864,10 +864,10 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                 gammaq *= gammaquatrep
         a, b, c, d = iotap(gamma.quaternion_rep).list()
         assert (c*tau1**2 + (d-a)*tau1 - b) == 0
-        fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
-        fwrite('gamma_psi = %s'%gamma,outfile)
-        fwrite('tau_psi = %s'%tau1,outfile)
-        fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
+        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
+        fwrite('# gamma_psi = %s'%gamma,outfile)
+        fwrite('# tau_psi = %s'%tau1,outfile)
+        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
         if return_all:
             return gamma, tau1, tau2
         else:
@@ -888,7 +888,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             try:
                 ans = list(self._Gamma0_farey.word_problem(SL2Z((-delta).list()),output = 'standard'))
             except (RuntimeError, AssertionError):
-                print delta
+                print 'Delta = %s'%delta
                 assert 0
         tmp = self.B(1)
         for i,a in shorten_word(ans):
@@ -1388,13 +1388,13 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         assert r0+r1*w == K.gen()
         padic_Kgen = Cp(self._F_to_local(r0))+Cp(self._F_to_local(r1))*Cp.gen()
         try:
-            fwrite('d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+            fwrite('# d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
         except NotImplementedError: pass
-        fwrite('w_K satisfies: %s'%w.minpoly(),outfile)
+        fwrite('# w_K satisfies: %s'%w.minpoly(),outfile)
         assert K.gen(0).trace(K.base_ring()) == mu.reduced_trace() and K.gen(0).norm(K.base_ring()) == mu.reduced_norm()
 
         iotap = self.get_embedding(prec)
-        fwrite('Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
+        fwrite('# Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
         a,b,c,d = iotap(mu).list()
         tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
         tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
@@ -1416,10 +1416,10 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 break
             except ValueError:
                 gammaq *= gammaquatrep
-        fwrite('\cO_K to R_0 given by w_K |-> %s'%mu,outfile)
-        fwrite('gamma_psi = %s'%gamma,outfile)
-        fwrite('tau_psi = %s'%tau1,outfile)
-        fwrite('(where g satisfies: %s)'%w.minpoly(),outfile)
+        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
+        fwrite('# gamma_psi = %s'%gamma,outfile)
+        fwrite('# tau_psi = %s'%tau1,outfile)
+        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
         if return_all:
             return gamma, tau1, tau2
         else:

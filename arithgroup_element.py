@@ -166,7 +166,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         except (TypeError,IndexError):
             #print q
             #print q1
-            print q * q1**-1
+            print 'Inconsistency: %s'%(q * q1**-1)
             raise RuntimeError('Word and quaternion are inconsistent! (%s)'%txt)
         return
 

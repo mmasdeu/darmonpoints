@@ -175,9 +175,9 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
         if hasattr(self.Gn.B,'is_division_algebra'):
-            fwrite('B = F<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gn.B.gens()[0]**2,self.Gn.B.gens()[1]**2),outfile)
+            fwrite('# B = F<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gn.B.gens()[0]**2,self.Gn.B.gens()[1]**2),outfile)
         else:
-            fwrite('B = M_2(F)',outfile)
+            fwrite('# B = M_2(F)',outfile)
         try:
             basis_data_1 = list(self.Gn.Obasis)
             if not self.use_shapiro():
@@ -188,10 +188,10 @@ class BigArithGroup_class(AlgebraicGroup):
                 basis_data_p = self.Gpn.basis_invmat.inverse().columns()
         self._prec = -1
         self.get_embedding(200)
-        fwrite('R with basis %s'%basis_data_1,outfile)
+        fwrite('# R with basis %s'%basis_data_1,outfile)
         self.Gn.get_Up_reps = self.get_Up_reps
         if not self.use_shapiro():
-            fwrite('R(p) with basis %s'%basis_data_p,outfile)
+            fwrite('# R(p) with basis %s'%basis_data_p,outfile)
             self.Gpn.get_Up_reps = self.get_Up_reps
         self.Gn.wp = self.wp
         self.Gpn.wp = self.wp
@@ -671,10 +671,10 @@ class BigArithGroup_class(AlgebraicGroup):
         a11 = f1.pair_with_cycle(ker[1])
         a00, a01, a10, a11 = ZZ(a00), ZZ(a01), ZZ(a10), ZZ(a11)
         determinant = a00*a11 - a01*a10
-        fwrite('Scaling = %s (mat = [%s, %s, %s, %s])'%(determinant, a00, a01, a10, a11), outfile)
-        theta1 = a11 * ker[0] - a10 * ker[1]
+        fwrite('scaling = %s; mat = Matrix(ZZ,2,2,[%s, %s, %s, %s])'%(determinant, a00, a01, a10, a11), outfile)
+        theta1 =  a11 * ker[0] - a10 * ker[1]
         theta2 = -a01 * ker[0] + a00 * ker[1]
-        return [theta1, theta2]
+        return theta1, theta2, determinant
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0):
     if base == QQ:
