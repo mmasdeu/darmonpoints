@@ -349,8 +349,6 @@ def take_to_Qp(x, tolerance = None):
     ans = ans.add_bigoh(ordp.floor())
     return ans
 
-
-@fork
 def absolute_igusa_padic_from_half_periods(p1,p2,p3,prec,padic,threshold = None):
     j1,j2,j3 = igusa_clebsch_absolute_from_half_periods(p1, p2, p3, prec = prec, padic = True)
     if threshold is None:
@@ -365,7 +363,7 @@ def absolute_igusa_padic_from_half_periods(p1,p2,p3,prec,padic,threshold = None)
         return None, None, None
     return j1, j2, j3
 
-def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85,matlist = None, hecke_polys = None, max_height_elements = 2, mat_coeffs_range = 3):
+def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85,matlist = None, hecke_polys = None, max_height_elements = 5, mat_coeffs_range = 3):
     K0 = Alist[0].parent()
     p = K0.prime()
     if phi is None:
@@ -379,9 +377,11 @@ def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None,
         list_I10_padic = [phi(o) for o in list_I10]
     if matlist is None:
         matlist = []
-        for b,d in product(range(-mat_coeffs_range,mat_coeffs_range+1),repeat = 2):
-            if d != 0:
-                matlist.append((b,d))
+        for d in range(-mat_coeffs_range,mat_coeffs_range+1):
+            if d == 0:
+                continue
+            for b0 in range(3):
+                matlist.append((b0*d, d))
     if hecke_polys is None:
         possible_charpolys = set([])
         for u in L.elements_of_bounded_height(max_height_elements):
@@ -757,9 +757,9 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         fwrite('b = %s'%b, outfile)
         fwrite('Lp = Matrix(2,2,%s)'%str(Lp.list()), outfile)
         if recognize_invariants:
-               A = p**Aval * Alog.exp() * Amul
-               B = p**Bval * Blog.exp() * Bmul
-               K0 = Qq(p**2, prec)
+               A = Pnrm**Aval * Alog.exp() * Amul
+               B = Pnrm**Bval * Blog.exp() * Bmul
+               K0 = Qq(Pnrm**2, prec,names = 's')
                Alist = our_nroot(K0(A),scaling,return_all = True)
                Blist = our_nroot(K0(B),scaling,return_all = True)
                find_igusa_invariants_from_AB(Alist,Blist,T.charpoly(), prec = prec, embedding = G._F_to_local, outfile = outfile, list_I10 = list_I10, Pgen = G._F_to_local(Pgen))

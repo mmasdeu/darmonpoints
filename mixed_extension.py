@@ -174,7 +174,8 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 - r*x +
         try:
             polynomial = ZZ(polynomial)
             x = QQ['x'].gen()
-            self._polynomial = x*x - self._p
+            assert polynomial % self._p == 0
+            self._polynomial = x*x - polynomial
         except TypeError:
             self._polynomial = polynomial
         if not self._polynomial.is_monic():
