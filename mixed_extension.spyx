@@ -6,6 +6,7 @@ from sage.structure.element import FieldElement
 from sage.rings.ring import Field
 from sage.rings.integer_ring import Z as ZZ
 from sage.rings.all import QQ
+from util import our_sqrt
 
 class QuadExtElement(FieldElement):
     def __init__(self, parent, x, y = None, check = True):
@@ -42,6 +43,7 @@ class QuadExtElement(FieldElement):
     def _neg_(self):
         return self.__class__(self.parent(), (-self._a, -self._b), check = False)
 
+    r'''
     def __pow__(self,int n):
         if n == 0:
             return 1
@@ -68,6 +70,7 @@ class QuadExtElement(FieldElement):
             while len(plist) <= n:
                 plist.append(plist[-1] * plist[1])
             return self._neg_pow_list[n]
+    '''
 
     def _rmul_(self, right):
         r'''
@@ -90,6 +93,44 @@ class QuadExtElement(FieldElement):
             return self.__class__(self.parent(),(ac - bd*s, ab_times_cd - (ac + bd)), check = False)
         else:
             return self.__class__(self.parent(),(ac - bd*s, ab_times_cd - ac - bd + bd*r), check = False)
+
+    def sqrt(self, return_all=False):
+        return our_sqrt(self, return_all = return_all) # DEBUG
+        r, s = self.parent()._rs
+        a, b = self._a, self._b
+        base = self.parent().base()
+        if return_all:
+            raise NotImplementedError
+        if r is None:
+            if b == 0:
+                try:
+                    ans = self.__class__(self.parent(), (our_sqrt(a),base.zero()), check=False)
+                except ValueError:
+                    ans = self.__class__(self.parent(), (base.zero(),our_sqrt(base(-a*s))/s), check=False)
+            else:
+                ans = our_sqrt(self, return_all = False)
+                sqrtnrm = our_sqrt(base(self.norm_relative()))
+                try:
+                    x = our_sqrt(base((a + sqrtnrm) / 2))
+                except ValueError:
+                    x = our_sqrt(base((a - sqrtnrm) / 2))
+                if x != 0:
+                    y = base(b/(2*x))
+                    ans = self.__class__(self.parent(), (x, y), check=False)
+                else:
+                    ans = our_sqrt(self, return_all = False)
+        else:
+            ans = our_sqrt(self, return_all = False)
+        return ans
+
+    def norm_relative(self):
+        r, s = self.parent()._rs
+        c, d = self._a, self._b
+        if r is None:
+            return self.parent().base()(c*c + d*d*s)
+        else:
+            return self.parent().base()(c*c + c*d*r + d*d*s)
+
 
     def _div_(self, right):
         a, b = self._a, self._b
@@ -199,7 +240,7 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 - r*x +
         return self.base().characteristic()
 
     def gen(self):
-        return self.element_class(self, self.base()(0), self.base()(1))
+        return self.element_class(self, 0, 1)
 
     def unramified_generator(self):
         return self.element_class(self, self.base().gen())

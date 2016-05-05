@@ -3,8 +3,6 @@ from sage.arith.all import algdep
 from sage.rings.padics.precision_error import PrecisionError
 from util import *
 
-
-
 # Theta functions of (25) in Teitelbaum's
 # and also the other theta functions that we need to compute the lambda's according to the formulas (23)
 # We sum terms until we get the result to the accuracy prec. When deciding the set of indicies over which we sum, we have made several simplifications that probably cause that we sum more terms than strictly needed for that accuracy, but this probably won't be an issue...
@@ -236,6 +234,12 @@ def lambdavec_padic(p1, p2, p3,q1,q2,q3,prec = None):
     return matrix(3,1,[l1,l2,l3])
 
 def xvec(p1, p2, p3, prec):
+    if p1.valuation() < 0 or p2.valuation() < 0 or p3.valuation() < 0:
+        raise RuntimeError('1')
+    if sum(1 for u in [p1,p2,p3] if u.valuation() == 0) > 1:
+        raise RuntimeError('2')
+    if not ( p1.valuation() > 0 and p2.valuation() > 0 and p3.valuation() >= 0):
+        raise RuntimeError('3')
     l1,l2,l3 = lambdavec(p1,p2,p3,prec).list()
     x3 = l3 * ((p3-1)/(p3+1))**2
     den = l2
@@ -253,6 +257,12 @@ def xvec(p1, p2, p3, prec):
     return (x1,x2,x3)
 
 def xvec_padic(p1, p2, p3,q1,q2,q3,prec = None):
+    if p1.valuation() < 0 or p2.valuation() < 0 or p3.valuation() < 0:
+        raise RuntimeError('1')
+    if sum(1 for u in [p1,p2,p3] if u.valuation() == 0) > 1:
+        raise RuntimeError('2')
+    if not ( p1.valuation() > 0 and p2.valuation() > 0 and p3.valuation() >= 0):
+        raise RuntimeError('3')
     l1,l2,l3 = lambdavec_padic(p1,p2,p3,q1,q2,q3,prec).list()
     return (1/(1-l1),1 - 1/l2,l3 * ((p3-1)/(p3+1))**2 )
 
@@ -260,10 +270,16 @@ def igusa_clebsch_absolute_from_half_periods(p1, p2, p3, q1,q2,q3,prec = None, p
     I2, I4, I6, I10 = igusa_clebsch_from_half_periods(p1, p2, p3, q1,q2,q3,prec=prec, padic=padic)
     return I2**5/I10,I2**3*I4/I10,I2**2*I6/I10
 
-def I2(x1,x2,x3):
+def I2_inv(x1,x2,x3):
     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
     return 6*((x12+1)*(x22+x32+1) + x22*x32 -1) + 12*x1*x2*x3 -\
         4*( x1*(x2*x3*(x1+x2+x3) + x1*(x2+x3) + x22 + x2) +  x3*(x22 + x3*(x1 + x2) + x1 + x2) )
+
+def j1_inv(x1,x2,x3):
+     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
+     I2 = 6*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 6*x12*x32 - 4*x1*x2*x32 + 6*x22*x32 - 4*x12*x2 - 4*x1*x22 - 4*x12*x3 + 12*x1*x2*x3 - 4*x22*x3 - 4*x1*x32 - 4*x2*x32 + 6*x12 - 4*x1*x2 + 6*x22 - 4*x1*x3 - 4*x2*x3 + 6*x32
+     I10 = x12*x22*x32 * ((1-x1)*(1-x2)*(1-x3)*(x1-x2)*(x1-x3)*(x2-x3))**2
+     return I2**5/I10
 
 def ICI_static(x1,x2,x3):
      x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
@@ -281,12 +297,6 @@ def ICI_static(x1,x2,x3):
      return I2, I4, I6, I10
 
 def igusa_clebsch_from_half_periods(a, b, c, q1,q2,q3,prec=None, padic=True):
-    if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
-        raise RuntimeError('1')
-    if sum(1 for u in [a,b,c] if u.valuation() == 0) > 1:
-        raise RuntimeError('2')
-    if not ( a.valuation() > 0 and b.valuation() > 0 and c.valuation() >= 0):
-        raise RuntimeError('3')
     if padic or prec is None:
         return ICI_static(*xvec_padic(a,b,c,q1,q2,q3,prec))
     else:
@@ -432,7 +442,29 @@ def take_to_Qp(x, tolerance = None):
     ans = ans.add_bigoh(ordp.floor())
     return ans
 
-def absolute_igusa_padic_from_half_periods(p1,p2,p3,q1,q2,q3,prec,padic,threshold = None):
+def j1_inv_padic_from_half_periods(a, b, c, q1,q2,q3,prec, threshold=None):
+    if threshold is None:
+        tol = None
+    else:
+        tol = threshold * prec
+    j1 = j1_inv(*xvec_padic(a,b,c,q1,q2,q3,prec))
+    try:
+        return take_to_Qp(j1,tol)
+    except ValueError:
+        return None
+
+def I2_inv_padic_from_half_periods(a, b, c, q1,q2,q3,prec,threshold=None):
+    if threshold is None:
+        tol = None
+    else:
+        tol = threshold * prec
+    I2 = I2_inv(*xvec_padic(a,b,c,q1,q2,q3,prec))
+    try:
+        return take_to_Qp(I2,tol)
+    except ValueError:
+        return None
+
+def absolute_igusa_padic_from_half_periods(p1,p2,p3,q1,q2,q3,prec,threshold = None):
     j1,j2,j3 = igusa_clebsch_absolute_from_half_periods(p1, p2, p3, q1,q2,q3,prec = prec, padic = True)
     if threshold is None:
         tol = None
@@ -493,22 +525,26 @@ def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None,
                 q3 = K0(B1**-1)
                 try:
                     q1inv, q2inv, q3inv = q1**-1, q2**-1, q3**-1
-                    p1, p2, p3 = our_sqrt(K(q1inv)),our_sqrt(K(q2inv)),our_sqrt(K(q3inv))
-                    j1,j2,j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec, True, threshold = threshold)
+                    # p1, p2, p3 = our_sqrt(K(q1inv)),our_sqrt(K(q2inv)),our_sqrt(K(q3inv))
+                    p1, p2, p3 = K(q1inv).sqrt(), K(q2inv).sqrt(), K(q3inv).sqrt()
+                    j1 = j1_inv_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec,  threshold = threshold)
                     if j1 is None:
                         raise ValueError
                 except (ValueError,RuntimeError,PrecisionError):
                     continue
                 if list_I10 is None:
                     if cheatjs is not None:
-                        vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
-                        if all([o > minval for o in vals]):
-                            fwrite('# Success !! -> t=%s, n=%s, mat=%s, valuation=%s'%(t,n,list(mat),min(vals)), outfile)
-                            success_list.append((t,n,list(mat),min(vals)))
+                        if (j1 - cheatjs[0]).valuation() > minval:
+                            j1, j2, j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec, threshold = threshold)
+                            vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
+                            if all([o > minval for o in vals]):
+                                fwrite('# Success !! -> t=%s, n=%s, mat=%s, valuation=%s'%(t,n,list(mat),min(vals)), outfile)
+                                success_list.append((t,n,list(mat),min(vals)))
                     else:
                         try:
                             j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
                             fwrite('# Possible j1 = %s'%(j1n),outfile)
+                            j1, j2, j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec, threshold = threshold)
                             j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
                             fwrite('# Possible j2 = %s'%(j2n),outfile)
                             j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
@@ -524,6 +560,7 @@ def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None,
                             try:
                                 I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
                                 fwrite('# Possible I2 = %s'%(I2new),outfile)
+                                j1, j2, j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec,  threshold = threshold)
                                 I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
                                 fwrite('# Possible I4 = %s'%I4new,outfile)
                                 I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
