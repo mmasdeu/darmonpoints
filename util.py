@@ -564,12 +564,13 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
 def our_sqrt(xx,K = None,return_all = False):
     if K is None:
         K = xx.parent()
+    else:
+        xx = K(xx)
     if xx == 0:
         if return_all:
             return [xx]
         else:
             return xx
-    xx=K(xx)
     p=K.base_ring().prime()
     prec = K.precision_cap()
     valp = xx.valuation()
@@ -604,16 +605,14 @@ def our_sqrt(xx,K = None,return_all = False):
             return []
         else:
             raise ValueError,'Not a square'
-    y1 = y0
-    y = 0
-    num_iters = 0
+    y, y1 = 0, y0
     while y != y1:
-        y = y1
-        y1 = (y**2+x)/(2*y)
+        y, y1 = y1, (y1+x/y1)/2
     ans = K.uniformizer()**(ZZ(valp/2)) * y
     if return_all:
         ans = [ans, -ans]
-    return ans
+    else:
+        return ans
 
 def our_cuberoot(xx,K = None,return_all = False):
     if K is None:

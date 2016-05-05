@@ -13,42 +13,36 @@ class QuadExtElement(FieldElement):
         if parent is None:
             raise ValueError("The parent must be provided")
         if not check:
-            self._value = x
+            self._a, self._b = x
         else:
             B = parent.base()
             if y is None:
-                self._value = (B(x), B.zero())
+                self._a, self._b = B(x), B.zero()
             else:
-                self._value = (B(x), B(y))
+                self._a, self._b = B(x), B(y)
         FieldElement.__init__(self, parent)
 
     # Needed for the class
     def _repr_(self):
-        return '%s + ( %s )*pi'%(self._value[0], self._value[1])
+        return '%s + ( %s )*pi'%(self._a, self._b)
 
     def __nonzero__(self):
-        a, b = self._value
-        return a.__nonzero__() or b.__nonzero__()
+        return self._a.__nonzero__() or self._b.__nonzero__()
 
     def list(self):
-        return list(self._value)
+        return [self._a,self._b]
 
     # Arithmetic
     def _add_(self, right):
-        a,b = self._value
-        c,d = right._value
-        return self.__class__(self.parent(), (a+c, b+d), check = False)
+        return self.__class__(self.parent(), (self._a+right._a, self._b+right._b), check = False)
 
     def _sub_(self, right):
-        a,b = self._value
-        c,d = right._value
-        return self.__class__(self.parent(), (a-c, b-d), check = False)
+        return self.__class__(self.parent(), (self._a-right._a, self._b-right._b), check = False)
 
     def _neg_(self):
-        a,b = self._value
-        return self.__class__(self.parent(), (-a, -b), check = False)
+        return self.__class__(self.parent(), (-self._a, -self._b), check = False)
 
-    def __pow__(self,n):
+    def __pow__(self,int n):
         if n == 0:
             return 1
         elif n == 1:
@@ -75,22 +69,31 @@ class QuadExtElement(FieldElement):
                 plist.append(plist[-1] * plist[1])
             return self._neg_pow_list[n]
 
+    def _rmul_(self, right):
+        r'''
+        We assume that right is in the base of self.parent()
+        '''
+        return self.__class__(self.parent(), (right * self._a, right * self._b), check=False)
+
+    def _lmul_(self, right):
+        r'''
+        We assume that right is in the base of self.parent()
+        '''
+        return self.__class__(self.parent(), (right * self._a, right * self._b), check=False)
+
     def _mul_(self, right):
-        a, b = self._value
-        c, d = right._value
-        parent = self.parent()
-        r, s = parent._rs
-        ac = a*c
-        bd = b*d
-        ab_times_cd = (a+b)*(c+d)
+        r, s = self.parent()._rs
+        ac = self._a*right._a
+        bd = self._b*right._b
+        ab_times_cd = (self._a+self._b)*(right._a+right._b)
         if r is None:
-            return self.__class__(parent,(ac - bd*s, ab_times_cd - (ac + bd)), check = False)
+            return self.__class__(self.parent(),(ac - bd*s, ab_times_cd - (ac + bd)), check = False)
         else:
-            return self.__class__(parent,(ac - bd*s, ab_times_cd - ac - bd + bd*r), check = False)
+            return self.__class__(self.parent(),(ac - bd*s, ab_times_cd - ac - bd + bd*r), check = False)
 
     def _div_(self, right):
-        a, b = self._value
-        c, d = right._value
+        a, b = self._a, self._b
+        c, d = right._a, right._b
         r, s = self.parent()._rs
         if r is None:
             den = c*c + d*d*s
@@ -100,26 +103,23 @@ class QuadExtElement(FieldElement):
             return self.__class__(self.parent(), ((a*c+a*d*r+b*d*s) / den, (b*c-a*d) / den), check = False)
 
     def _cmp_(self, right):
-        return cmp(self._value,right._value)
+        return cmp((self._a,self._b),(right._a,right._b))
     __cmp__ = _cmp_
 
     def valuation(self, p = None):
-        a, b = self._value
-        return min([2 * a.valuation(p), 2 * b.valuation(p) + 1])
+        return min([2 * self._a.valuation(p), 2 * self._b.valuation(p) + 1])
 
     def ordp(self, p = None):
-        a, b = self._value
         return self.valuation(p) / 2
 
     def trace_relative(self):
-        a, b = self._value
         parent = self.parent()
         base = parent.base()
         r = parent._rs[0]
         if r is None:
-            return parent.relative_degree()*base(a)
+            return parent.relative_degree()*base(self._a)
         else:
-            return parent.relative_degree()*base(a) + base(b) * base(r)
+            return parent.relative_degree()*base(self._a) + base(self._b) * base(r)
 
     def trace_absolute(self):
         y = self.trace_relative()
@@ -232,6 +232,10 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 - r*x +
 
     def some_elements(self):
         return [self.an_element(),self.element_class(self,self.base().an_element()),self.element_class(self, self.base_ring().an_element())]
+
+    def random_element(self):
+        base = self.base()
+        return self.element_class(self, (base.random_element(),base.random_element()), check=False)
 
     def _repr_(self):
         return 'Quadratic extension defined by %s over its base.'%self._polynomial

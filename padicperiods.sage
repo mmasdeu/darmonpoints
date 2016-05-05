@@ -3,10 +3,12 @@ from sage.arith.all import algdep
 from sage.rings.padics.precision_error import PrecisionError
 from util import *
 
+
+
 # Theta functions of (25) in Teitelbaum's
 # and also the other theta functions that we need to compute the lambda's according to the formulas (23)
 # We sum terms until we get the result to the accuracy prec. When deciding the set of indicies over which we sum, we have made several simplifications that probably cause that we sum more terms than strictly needed for that accuracy, but this probably won't be an issue...
-def Thetas(p1, p2, p3, prec=None):
+def Thetas(p1, p2, p3, q1,q2,q3,prec=None):
     if prec is None:
         prec = 2 * p1.parent().precision_cap()
     imax = (RR(1)/2 + RR(2*prec + RR(1)/2).sqrt()).ceiling() # note the 2!
@@ -27,11 +29,107 @@ def Thetas(p1, p2, p3, prec=None):
             continue
         jmax = (jmax.sqrt()+.5).ceiling()
         for j in xrange(-jmax,jmax + 1):
+            P = q1**ZZ((j**2-j)/2) * q2**ZZ((i**2-i)/2) * q3**ZZ(((i-j)**2-(i-j))/2)
+            if i % 2 == 0:
+                p22 = q2**ZZ(i/2)
+            else:
+                p22 = p2 * q2**ZZ((i-1)/2)
+            if j % 2 == 0:
+                p11 = q1**ZZ(j/2)
+            else:
+                p11 = p1 * q1**ZZ((j-1)/2)
+            if (i-j) % 2 == 0:
+                p33 = q3**ZZ((i-j)/2)
+            else:
+                p33 = p3 * q3**ZZ((i-j-1)/2)
+            a = p33 * P
+            p2l_inv_p1l_inv_term = a
+            p22p11 = p22 * p11
+            newterm = p22p11 * a
+            b = p22p11 * P
+            p2lp3l_term = p22 * p33**2 * b
+            p1lp3l_inv_term = p11 * b
 
-            newterm = p2**(i**2) * p1**(j**2) * p3**((i-j)**2)
-            p2l_inv_p1l_inv_term = p2**(i**2 -i) * p1**(j**2-j) * p3**((i-j)**2)
-            p2lp3l_term = p2**(i**2+i) * p1**(j**2) * p3**((i-j)**2 + (i-j))
-            p1lp3l_inv_term = p2**(i**2) * p1**(j**2 + j) * p3**((i-j)**2- (i-j))
+            resdict['1p2m'] += p2l_inv_p1l_inv_term
+            resdict['2p3m'] += p2lp3l_term
+            resdict['3p1m'] += p1lp3l_inv_term
+            if j % 2 == 0:
+                resdict['1p1m'] += newterm
+                resdict['2m3p'] += p2lp3l_term
+            else:
+                resdict['1p1m'] -= newterm
+                resdict['2m3p'] -= p2lp3l_term
+            if i % 2 == 0:
+                resdict['2p2m'] += newterm
+                resdict['3m1p'] += p1lp3l_inv_term
+            else:
+                resdict['2p2m'] -= newterm
+                resdict['3m1p'] -= p1lp3l_inv_term
+            if (i-j) % 2 == 0:
+                resdict['1m2p'] += p2l_inv_p1l_inv_term
+                resdict['3p3m'] += newterm
+            else:
+                resdict['1m2p'] -= p2l_inv_p1l_inv_term
+                resdict['3p3m'] -= newterm
+
+    return resdict
+
+# Theta functions of (25) in Teitelbaum's
+# and also the other theta functions that we need to compute the lambda's according to the formulas (23)
+# We sum terms until we get the result to the accuracy prec. When deciding the set of indicies over which we sum, we have made several simplifications that probably cause that we sum more terms than strictly needed for that accuracy, but this probably won't be an issue...
+def Thetas_old(p1, p2, p3, q1,q2,q3,prec=None):
+    if prec is None:
+        prec = 2 * p1.parent().precision_cap()
+    imax = (RR(1)/2 + RR(2*prec + RR(1)/2).sqrt()).ceiling() # note the 2!
+    a = QQ(1)/QQ(2)
+    b = QQ(1)/QQ(2)
+    c = 0
+    # Define the different conditions and term forms
+    resdict = {}
+    resdict['1p1m'] = resdict['1p2m'] = 0
+    resdict['2p2m'] = resdict['1m2p'] = 0
+    resdict['3p3m'] = resdict['2m3p'] = 0
+    resdict['2p3m'] = resdict['3m1p'] = resdict['3p1m'] = 0
+    res = 0
+    assert imax > 0
+    for i in xrange(-imax,imax + 1):
+        jmax = RR(2*prec - .25 - i**2 + RR(i).abs())
+        if jmax < 0:
+            continue
+        jmax = (jmax.sqrt()+.5).ceiling()
+        for j in xrange(-jmax,jmax + 1):
+            q22m = q2**ZZ((i**2 -i)/2)
+            q12m = q1**ZZ((j**2-j)/2)
+            q32m = q3**ZZ(((i-j)**2 - (i-j))/2)
+            p2l_inv_p1l_inv_term = q22m * q12m
+            p2lp3l_term = q2**i*q22m * q3**(i-j) * q32m
+            p1lp3l_inv_term = q1**j*q12m * q32m
+            if i % 2 == 0: # i is even
+                q2h = q2**ZZ(i/2)
+                newterm = q2h * q22m
+                p1lp3l_inv_term *= newterm
+                if j % 2 == 0:
+                    q1h = q1**ZZ(j/2)
+                    q3h = q3**ZZ((i-j)/2)
+                    newterm *= q1h * q12m * q3h * q32m
+                    p2l_inv_p1l_inv_term *= q3**ZZ((i-j)**2/2)
+                    p2lp3l_term *= q1**ZZ(j**2/2)
+                else:
+                    newterm = (p1*p3)*(newterm * q1**ZZ((j**2-1)/2) * q3**ZZ(((i-j)**2-1)/2))
+                    p2l_inv_p1l_inv_term = p3*(p2l_inv_p1l_inv_term*q3**ZZ(((i-j)**2-1)/2))
+                    p2lp3l_term = p1 * (p2lp3l_term * q1**ZZ((j**2-1)/2))
+            else: # i is odd
+                newterm = q2**ZZ((i**2-1)/2)
+                p1lp3l_inv_term *= p2*q2**ZZ((i**2-1)/2)
+                if j % 2 == 0:
+                    newterm = (p2*p3) * (newterm * q1**ZZ(j**2/2) * q3**ZZ(((i-j)**2-1)/2))
+                    p2l_inv_p1l_inv_term = p3*(p2l_inv_p1l_inv_term*q3**ZZ(((i-j)**2-1)/2))
+                    p2lp3l_term *= q1**ZZ(j**2/2)
+                else:
+                    newterm = (p1*p2) * (newterm * q1**ZZ((j**2-1)/2) * q3**ZZ(((i-j)**2)/2))
+                    p2l_inv_p1l_inv_term = (p2l_inv_p1l_inv_term * q3**ZZ(((i-j)**2)/2))
+                    p2lp3l_term = p1 * (p2lp3l_term * q1**ZZ((j**2-1)/2))
+
             resdict['1p1m'] += newterm * (-1)**j
             resdict['1p2m'] += p2l_inv_p1l_inv_term
             resdict['2p2m'] += newterm * (-1)**i
@@ -94,16 +192,6 @@ def Theta(p1, p2, p3, version, prec=None):
             res += newterm * term(i,j)
     return res
 
-def compare_thetas(th1,th2):
-    minval = None
-    for ky in th1.iterkeys():
-        difference = th1[ky] - th2[ky]
-        val = min([QQ(i+j)/2 for i,j,k in difference.exponents()]+[Infinity])
-        print ky,": ", val
-        if minval is None or val < minval:
-            minval = val
-    return minval
-
 def lambdavec(p1, p2, p3, prec = None, theta = None, prec_pseries = None):
     if theta is None:
         assert prec is not None
@@ -134,8 +222,8 @@ def lambdavec(p1, p2, p3, prec = None, theta = None, prec_pseries = None):
     l3 *= l3
     return matrix(3,1,[l1,l2,l3])
 
-def lambdavec_padic(p1, p2, p3,prec = None):
-    th = Thetas(p1,p2,p3, prec)
+def lambdavec_padic(p1, p2, p3,q1,q2,q3,prec = None):
+    th = Thetas(p1,p2,p3, q1,q2,q3,prec)
     num = th['3p3m'] * th['2m3p']
     den = th['2p2m'] * th['2p3m']
     l1 = (num/den)**2
@@ -164,12 +252,12 @@ def xvec(p1, p2, p3, prec):
     x1 = 1/den
     return (x1,x2,x3)
 
-def xvec_padic(p1, p2, p3,prec = None):
-    l1,l2,l3 = lambdavec_padic(p1,p2,p3,prec).list()
+def xvec_padic(p1, p2, p3,q1,q2,q3,prec = None):
+    l1,l2,l3 = lambdavec_padic(p1,p2,p3,q1,q2,q3,prec).list()
     return (1/(1-l1),1 - 1/l2,l3 * ((p3-1)/(p3+1))**2 )
 
-def igusa_clebsch_absolute_from_half_periods(a, b, c, prec = None, padic = True):
-    I2, I4, I6, I10 = igusa_clebsch_from_half_periods(a, b, c, prec=prec, padic=padic)
+def igusa_clebsch_absolute_from_half_periods(p1, p2, p3, q1,q2,q3,prec = None, padic = True):
+    I2, I4, I6, I10 = igusa_clebsch_from_half_periods(p1, p2, p3, q1,q2,q3,prec=prec, padic=padic)
     return I2**5/I10,I2**3*I4/I10,I2**2*I6/I10
 
 def I2(x1,x2,x3):
@@ -192,20 +280,15 @@ def ICI_static(x1,x2,x3):
      I10 = x12*x22*x32 * ((1-x1)*(1-x2)*(1-x3)*(x1-x2)*(x1-x3)*(x2-x3))**2
      return I2, I4, I6, I10
 
-def igusa_clebsch_from_half_periods(a, b, c, prec=None, padic=True):
+def igusa_clebsch_from_half_periods(a, b, c, q1,q2,q3,prec=None, padic=True):
     if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
-        a,b,c = 1/a, 1/b, 1/c
-        if a.valuation() < 0 or b.valuation() < 0 or c.valuation() < 0:
-            raise RuntimeError('1')
+        raise RuntimeError('1')
     if sum(1 for u in [a,b,c] if u.valuation() == 0) > 1:
         raise RuntimeError('2')
-    if b.valuation() == 0:
-        a, b, c = b, c, a
-    if a.valuation() == 0:
-        a, b, c = b, c, a
-    assert a.valuation() > 0 and b.valuation() > 0 and c.valuation() >= 0
+    if not ( a.valuation() > 0 and b.valuation() > 0 and c.valuation() >= 0):
+        raise RuntimeError('3')
     if padic or prec is None:
-        return ICI_static(*xvec_padic(a,b,c,prec))
+        return ICI_static(*xvec_padic(a,b,c,q1,q2,q3,prec))
     else:
         return ICI_static(*xvec(a,b,c,prec))
 
@@ -349,8 +432,8 @@ def take_to_Qp(x, tolerance = None):
     ans = ans.add_bigoh(ordp.floor())
     return ans
 
-def absolute_igusa_padic_from_half_periods(p1,p2,p3,prec,padic,threshold = None):
-    j1,j2,j3 = igusa_clebsch_absolute_from_half_periods(p1, p2, p3, prec = prec, padic = True)
+def absolute_igusa_padic_from_half_periods(p1,p2,p3,q1,q2,q3,prec,padic,threshold = None):
+    j1,j2,j3 = igusa_clebsch_absolute_from_half_periods(p1, p2, p3, q1,q2,q3,prec = prec, padic = True)
     if threshold is None:
         tol = None
     else:
@@ -364,24 +447,25 @@ def absolute_igusa_padic_from_half_periods(p1,p2,p3,prec,padic,threshold = None)
     return j1, j2, j3
 
 def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85,matlist = None, hecke_polys = None, max_height_elements = 5, mat_coeffs_range = 3):
+    global success_list
     K0 = Alist[0].parent()
     p = K0.prime()
     if phi is None:
         phi = lambda x:Qp(p,prec)(x)
     x = QQ['x'].gen()
-    from mixed_extension import QuadExt
     K = QuadExt(K0,p)
     deg = base.degree()
     L = NumberField(fT,names='t')
     if list_I10 is not None:
         list_I10_padic = [phi(o) for o in list_I10]
+
     if matlist is None:
         matlist = []
-        for d in range(-mat_coeffs_range,mat_coeffs_range+1):
-            if d == 0:
-                continue
-            for b0 in range(3):
-                matlist.append((b0*d, d))
+        for a,b,c,d in product(range(-mat_coeffs_range,mat_coeffs_range+1),repeat = 4):
+            m = matrix(ZZ,2,2,[a,b,c,d])
+            if m.determinant() != 0:
+                matlist.append(m)
+        matlist = sorted(matlist,key=lambda x:max([o.abs() for o in x.list()]))
     if hecke_polys is None:
         possible_charpolys = set([])
         for u in L.elements_of_bounded_height(max_height_elements):
@@ -395,64 +479,65 @@ def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None,
     for pu in hecke_polys:
         n = ZZ(pu[0])
         t = -ZZ(pu[1])
-        for A0, B0, m in product(Alist,Blist,matlist):
-            ntests += 1
-            if ntests % 100 == 0:
-                fwrite('# num_tests = %s / %s'%(ntests,total_tests), outfile)
-            b,d = m
-            A1 = A0 * B0**b
-            B1 = B0**d
-            D1 = A1**(-n) * B1**t
-            q1 = K0(B1 * D1)
-            q2 = K0(A1 * B1)
-            q3 = K0(B1**-1)
-            try:
-                p1, p2, p3 = our_sqrt(K(q1)**-1),our_sqrt(K(q2)**-1),our_sqrt(K(q3)**-1)
-                j1,j2,j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, prec, True, threshold = threshold)
-                if j1 is None:
-                    raise ValueError
-            except (ValueError,RuntimeError,PrecisionError):
-                continue
-            if list_I10 is None:
-                if cheatjs is not None:
-                    vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
-                    if all([o > minval for o in vals]):
-                        fwrite('# Success !! -> t=%s, n=%s, mat=%s, valuation=%s'%(t,n,(b,d),min(vals)), outfile)
-                        success_list.append((t,n,(b,d),min(vals)))
-                else:
-                    try:
-                        j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                        fwrite('# Possible j1 = %s'%(j1n),outfile)
-                        j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                        fwrite('# Possible j2 = %s'%(j2n),outfile)
-                        j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                        fwrite('# Possible j3 = %s'%(j3n),outfile)
-                        fwrite('# Candidate js = %s, %s, %s (t = %s, n = %s, mat = %s) jpadic = (%s, %s, %s)'%(j1n,j2n,j3n,t,n,(b,d), j1,j2,j3),outfile)
-                        success_list.append((j1,j2,j3))
-                    except ValueError:
-                        continue
-            else:
-                for I10new, I10p in zip(list_I10,list_I10_padic):
-                    I2c_list = our_nroot( j1 * I10p, 5, return_all = True)
-                    for I2c in I2c_list:
+        for mat in matlist:
+            for A0, B0 in product(Alist,Blist):
+                ntests += 1
+                if ntests % 1000 == 0:
+                    fwrite('# num_tests = %s / %s (successes = %s)'%(ntests,total_tests, len(success_list)), outfile)
+                a,b,c,d = mat.list()
+                A1 = A0**a * B0**b
+                B1 = A0**c * B0**d
+                D1 = A1**(-n) * B1**t
+                q1 = K0(B1 * D1)
+                q2 = K0(A1 * B1)
+                q3 = K0(B1**-1)
+                try:
+                    q1inv, q2inv, q3inv = q1**-1, q2**-1, q3**-1
+                    p1, p2, p3 = our_sqrt(K(q1inv)),our_sqrt(K(q2inv)),our_sqrt(K(q3inv))
+                    j1,j2,j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec, True, threshold = threshold)
+                    if j1 is None:
+                        raise ValueError
+                except (ValueError,RuntimeError,PrecisionError):
+                    continue
+                if list_I10 is None:
+                    if cheatjs is not None:
+                        vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
+                        if all([o > minval for o in vals]):
+                            fwrite('# Success !! -> t=%s, n=%s, mat=%s, valuation=%s'%(t,n,list(mat),min(vals)), outfile)
+                            success_list.append((t,n,list(mat),min(vals)))
+                    else:
                         try:
-                            I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                            fwrite('# Possible I2 = %s'%(I2new),outfile)
-                            I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                            fwrite('# Possible I4 = %s'%I4new,outfile)
-                            I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                            fwrite('# Possible I6 = %s'%I6new,outfile)
-                            fwrite('# Candidate = %s, %s, %s, %s (t = %s, n = %s, mat = %s)'%(I2new,I4new,I6new,I10new,t,n,(b,d)),outfile)
-                            success_list.append((I2new, I4new, I6new, I10new))
+                            j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                            fwrite('# Possible j1 = %s'%(j1n),outfile)
+                            j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                            fwrite('# Possible j2 = %s'%(j2n),outfile)
+                            j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                            fwrite('# Possible j3 = %s'%(j3n),outfile)
+                            fwrite('# Candidate js = %s, %s, %s (t = %s, n = %s, mat = %s) jpadic = (%s, %s, %s)'%(j1n,j2n,j3n,t,n,list(mat), j1,j2,j3),outfile)
+                            success_list.append((j1,j2,j3))
                         except ValueError:
                             continue
+                else:
+                    for I10new, I10p in zip(list_I10,list_I10_padic):
+                        I2c_list = our_nroot( j1 * I10p, 5, return_all = True)
+                        for I2c in I2c_list:
+                            try:
+                                I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                                fwrite('# Possible I2 = %s'%(I2new),outfile)
+                                I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                                fwrite('# Possible I4 = %s'%I4new,outfile)
+                                I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                                fwrite('# Possible I6 = %s'%I6new,outfile)
+                                fwrite('# Candidate = %s, %s, %s, %s (t = %s, n = %s, mat = %s)'%(I2new,I4new,I6new,I10new,t,n,list(mat)),outfile)
+                                success_list.append((I2new, I4new, I6new, I10new))
+                            except ValueError:
+                                continue
     return success_list
 
 def find_igusa_invariants_from_L_inv(Lpmat,ordmat,prec,base = QQ,cheatjs = None,phi = None, minval = 3, list_I10 = None, Pgen = None, outfile = None, threshold = 0.85):
     F = Lpmat.parent().base_ring()
     p = F.prime()
     x = QQ['x'].gen()
-    from mixed_extension import QuadExt
     F.<r> = Qq(p**2, prec)
     r = F.gen()
     K = QuadExt(F,p)
@@ -897,7 +982,6 @@ def change_period_logs(Alog,Blog,T):
 def compare_AB_periods(Alist, Blist, T, Ag, Bg, Dg, prec, base=QQ, matlist = None):
     F = Alist[0].parent().base().prime()
     x = QQ['x'].gen()
-    from mixed_extension import QuadExt
     K0 = Qq(p**2,prec,names='r')
     K = QuadExt(K0,p)
     deg = base.degree()
