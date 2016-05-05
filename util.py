@@ -594,9 +594,9 @@ def our_sqrt(xx,K = None,return_all = False):
     ppow = p if p != 2 else 8
     minval = 1 if p != 2 else 3
     for avec in product(range(ppow),repeat=deg):
-        y0 = avec[0]
+        y0 = K(avec[0])
         for a in avec[1:]:
-            y0 = y0*z + a
+            y0 = y0*z + K(a)
         if (y0**2-x).valuation() >= minval:
             found = True
             break

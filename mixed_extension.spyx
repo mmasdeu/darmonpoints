@@ -43,35 +43,6 @@ class QuadExtElement(FieldElement):
     def _neg_(self):
         return self.__class__(self.parent(), (-self._a, -self._b), check = False)
 
-    r'''
-    def __pow__(self,int n):
-        if n == 0:
-            return 1
-        elif n == 1:
-            return self
-        elif n == -1:
-            return ~self
-        elif n > 0:
-            try:
-                plist = self._pow_list
-            except AttributeError:
-                self._pow_list = [None, self]
-                plist = self._pow_list
-            while len(plist) <= n:
-                plist.append(plist[-1] * self)
-            return plist[n]
-        else:
-            n = -n
-            try:
-                plist = self._neg_pow_list
-            except AttributeError:
-                self._neg_pow_list = [None, ~self]
-                plist = self._neg_pow_list
-            while len(plist) <= n:
-                plist.append(plist[-1] * plist[1])
-            return self._neg_pow_list[n]
-    '''
-
     def _rmul_(self, right):
         r'''
         We assume that right is in the base of self.parent()
@@ -95,7 +66,6 @@ class QuadExtElement(FieldElement):
             return self.__class__(self.parent(),(ac - bd*s, ab_times_cd - ac - bd + bd*r), check = False)
 
     def sqrt(self, return_all=False):
-        return our_sqrt(self, return_all = return_all) # DEBUG
         r, s = self.parent()._rs
         a, b = self._a, self._b
         base = self.parent().base()
