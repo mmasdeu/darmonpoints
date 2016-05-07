@@ -10,6 +10,8 @@ def Thetas(p1, p2, p3, q1,q2,q3,prec=None):
     if prec is None:
         prec = 2 * p1.parent().precision_cap()
     imax = (RR(1)/2 + RR(2*prec + RR(1)/2).sqrt()).ceiling() # note the 2!
+    if imax % 2 == 1:
+        imax += 1
     a = QQ(1)/QQ(2)
     b = QQ(1)/QQ(2)
     c = 0
@@ -21,25 +23,53 @@ def Thetas(p1, p2, p3, q1,q2,q3,prec=None):
     resdict['2p3m'] = resdict['3m1p'] = resdict['3p1m'] = 0
     res = 0
     assert imax > 0
-    for i in xrange(-imax,imax + 1):
-        jmax = RR(2*prec - .25 - i**2 + RR(i).abs())
-        if jmax < 0:
-            continue
-        jmax = (jmax.sqrt()+.5).ceiling()
+    jdict = {}
+    p1dict = {}
+    p2dict = {}
+    p3dict = {}
+    irange = range(-imax,imax+1)
+    ilist = sorted(list(set([i**2-i for i in irange] + [i for i in irange])))
+
+    p2dict[0] = 1
+    p2dict[1] = p2
+    p2dict[-1] = p2**-1
+    for i in range(2,imax+2,2):
+        tmp = p2dict[i-2]*q2
+        tmpinv = tmp**-1
+        p2dict[i] = tmp
+        p2dict[-i] = tmpinv
+        p2dict[i+1] = p2 * tmp
+        p2dict[-i-1] = p2dict[-1] * tmpinv
+    for i in range(imax/2,imax):
+        p2dict[2*i] = q2 * p2dict[2*i-2]
+    for i in range(1, imax + 2):
+        idx = i**2-i
+        if not p2dict.has_key(idx):
+            p2dict[idx] = p2dict[2*i - 2] * p2dict[idx - 2*i + 2]
+    for i in irange:
+        newjmax = RR(2*prec - .25 - i**2 + RR(i).abs())
+        if newjmax >= 0:
+            newjmax = (newjmax.sqrt()+.5).ceiling()
+            jdict[i] = newjmax
+            jrange = range(-newjmax,newjmax+1)
+            jlist = list(set([j**2-j for j in jrange] + [j for j in jrange]).difference(set(p1dict.keys())))
+            klist = list(set([(i-j)**2-(i-j) for j in jrange] + [(i-j) for j in jrange] + [(i-j)**2-(i-j) for j in jrange]).difference(set(p3dict.keys())))
+            for j in jlist:
+                tmp = q1**QQ(j/2).floor()
+                if j % 2 == 1:
+                    tmp *= p1
+                p1dict[j] = tmp
+            for k in klist:
+                tmp = q3**QQ(k/2).floor()
+                if k % 2 == 1:
+                    tmp *= p3
+                p3dict[k] = tmp
+    for i,jmax in jdict.iteritems():
         for j in xrange(-jmax,jmax + 1):
-            P = q1**ZZ((j**2-j)/2) * q2**ZZ((i**2-i)/2) * q3**ZZ(((i-j)**2-(i-j))/2)
-            if i % 2 == 0:
-                p22 = q2**ZZ(i/2)
-            else:
-                p22 = p2 * q2**ZZ((i-1)/2)
-            if j % 2 == 0:
-                p11 = q1**ZZ(j/2)
-            else:
-                p11 = p1 * q1**ZZ((j-1)/2)
-            if (i-j) % 2 == 0:
-                p33 = q3**ZZ((i-j)/2)
-            else:
-                p33 = p3 * q3**ZZ((i-j-1)/2)
+            P = p1dict[j**2-j] * p2dict[i**2-i] * p3dict[(i-j)**2-(i-j)]
+            p11 = p1dict[j]
+            p22 = p2dict[i]
+            p33 = p3dict[i-j]
             a = p33 * P
             p2l_inv_p1l_inv_term = a
             p22p11 = p22 * p11
@@ -69,75 +99,6 @@ def Thetas(p1, p2, p3, q1,q2,q3,prec=None):
             else:
                 resdict['1m2p'] -= p2l_inv_p1l_inv_term
                 resdict['3p3m'] -= newterm
-
-    return resdict
-
-# Theta functions of (25) in Teitelbaum's
-# and also the other theta functions that we need to compute the lambda's according to the formulas (23)
-# We sum terms until we get the result to the accuracy prec. When deciding the set of indicies over which we sum, we have made several simplifications that probably cause that we sum more terms than strictly needed for that accuracy, but this probably won't be an issue...
-def Thetas_old(p1, p2, p3, q1,q2,q3,prec=None):
-    if prec is None:
-        prec = 2 * p1.parent().precision_cap()
-    imax = (RR(1)/2 + RR(2*prec + RR(1)/2).sqrt()).ceiling() # note the 2!
-    a = QQ(1)/QQ(2)
-    b = QQ(1)/QQ(2)
-    c = 0
-    # Define the different conditions and term forms
-    resdict = {}
-    resdict['1p1m'] = resdict['1p2m'] = 0
-    resdict['2p2m'] = resdict['1m2p'] = 0
-    resdict['3p3m'] = resdict['2m3p'] = 0
-    resdict['2p3m'] = resdict['3m1p'] = resdict['3p1m'] = 0
-    res = 0
-    assert imax > 0
-    for i in xrange(-imax,imax + 1):
-        jmax = RR(2*prec - .25 - i**2 + RR(i).abs())
-        if jmax < 0:
-            continue
-        jmax = (jmax.sqrt()+.5).ceiling()
-        for j in xrange(-jmax,jmax + 1):
-            q22m = q2**ZZ((i**2 -i)/2)
-            q12m = q1**ZZ((j**2-j)/2)
-            q32m = q3**ZZ(((i-j)**2 - (i-j))/2)
-            p2l_inv_p1l_inv_term = q22m * q12m
-            p2lp3l_term = q2**i*q22m * q3**(i-j) * q32m
-            p1lp3l_inv_term = q1**j*q12m * q32m
-            if i % 2 == 0: # i is even
-                q2h = q2**ZZ(i/2)
-                newterm = q2h * q22m
-                p1lp3l_inv_term *= newterm
-                if j % 2 == 0:
-                    q1h = q1**ZZ(j/2)
-                    q3h = q3**ZZ((i-j)/2)
-                    newterm *= q1h * q12m * q3h * q32m
-                    p2l_inv_p1l_inv_term *= q3**ZZ((i-j)**2/2)
-                    p2lp3l_term *= q1**ZZ(j**2/2)
-                else:
-                    newterm = (p1*p3)*(newterm * q1**ZZ((j**2-1)/2) * q3**ZZ(((i-j)**2-1)/2))
-                    p2l_inv_p1l_inv_term = p3*(p2l_inv_p1l_inv_term*q3**ZZ(((i-j)**2-1)/2))
-                    p2lp3l_term = p1 * (p2lp3l_term * q1**ZZ((j**2-1)/2))
-            else: # i is odd
-                newterm = q2**ZZ((i**2-1)/2)
-                p1lp3l_inv_term *= p2*q2**ZZ((i**2-1)/2)
-                if j % 2 == 0:
-                    newterm = (p2*p3) * (newterm * q1**ZZ(j**2/2) * q3**ZZ(((i-j)**2-1)/2))
-                    p2l_inv_p1l_inv_term = p3*(p2l_inv_p1l_inv_term*q3**ZZ(((i-j)**2-1)/2))
-                    p2lp3l_term *= q1**ZZ(j**2/2)
-                else:
-                    newterm = (p1*p2) * (newterm * q1**ZZ((j**2-1)/2) * q3**ZZ(((i-j)**2)/2))
-                    p2l_inv_p1l_inv_term = (p2l_inv_p1l_inv_term * q3**ZZ(((i-j)**2)/2))
-                    p2lp3l_term = p1 * (p2lp3l_term * q1**ZZ((j**2-1)/2))
-
-            resdict['1p1m'] += newterm * (-1)**j
-            resdict['1p2m'] += p2l_inv_p1l_inv_term
-            resdict['2p2m'] += newterm * (-1)**i
-            resdict['1m2p'] += p2l_inv_p1l_inv_term * (-1)**(i+j)
-            resdict['3p3m'] += newterm * (-1)**(i+j)
-            resdict['2m3p'] += p2lp3l_term * (-1)**j
-            resdict['2p3m'] += p2lp3l_term
-            resdict['3m1p'] += p1lp3l_inv_term * (-1)**i
-            resdict['3p1m'] += p1lp3l_inv_term
-
     return resdict
 
 def Theta(p1, p2, p3, version, prec=None):
@@ -264,7 +225,7 @@ def xvec_padic(p1, p2, p3,q1,q2,q3,prec = None):
     if not ( p1.valuation() > 0 and p2.valuation() > 0 and p3.valuation() >= 0):
         raise RuntimeError('3')
     l1,l2,l3 = lambdavec_padic(p1,p2,p3,q1,q2,q3,prec).list()
-    return (1/(1-l1),1 - 1/l2,l3 * ((p3-1)/(p3+1))**2 )
+    return (1/(1-l1),1 - 1/l2,l3 * (1-(4*p3)/(q3+2*p3+1)) )
 
 def igusa_clebsch_absolute_from_half_periods(p1, p2, p3, q1,q2,q3,prec = None, padic = True):
     I2, I4, I6, I10 = igusa_clebsch_from_half_periods(p1, p2, p3, q1,q2,q3,prec=prec, padic=padic)
@@ -508,24 +469,24 @@ def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None,
     fwrite('# Starting search for Igusa invariants. Number of tests = %s = %s x %s x %s x %s'%(total_tests, len(hecke_polys), len(Alist), len(Blist), len(matlist)), outfile)
     ntests = 0
     success_list = []
+    prodAB = list(product(Alist,Blist))
     for pu in hecke_polys:
         n = ZZ(pu[0])
         t = -ZZ(pu[1])
         for mat in matlist:
-            for A0, B0 in product(Alist,Blist):
+            for A0, B0 in prodAB:
                 ntests += 1
                 if ntests % 1000 == 0:
                     fwrite('# num_tests = %s / %s (successes = %s)'%(ntests,total_tests, len(success_list)), outfile)
                 a,b,c,d = mat.list()
-                A1 = A0**a * B0**b
+                A1inv = A0**-a * B0**-b
                 B1 = A0**c * B0**d
-                D1 = A1**(-n) * B1**t
-                q1 = K0(B1 * D1)
-                q2 = K0(A1 * B1)
-                q3 = K0(B1**-1)
+                B1inv = B1**-1
+                D1inv = A1inv**(-n) * B1**-t
+                q1inv = B1inv * D1inv
+                q2inv = B1inv * A1inv
+                q3inv = B1
                 try:
-                    q1inv, q2inv, q3inv = q1**-1, q2**-1, q3**-1
-                    # p1, p2, p3 = our_sqrt(K(q1inv)),our_sqrt(K(q2inv)),our_sqrt(K(q3inv))
                     p1, p2, p3 = K(q1inv).sqrt(), K(q2inv).sqrt(), K(q3inv).sqrt()
                     j1 = j1_inv_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec,  threshold = threshold)
                     if j1 is None:
