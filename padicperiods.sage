@@ -40,7 +40,7 @@ def Thetas(p1, p2, p3, q1,q2,q3,prec=None):
         p2dict[-i] = tmpinv
         p2dict[i+1] = p2 * tmp
         p2dict[-i-1] = p2dict[-1] * tmpinv
-    for i in range(imax/2,imax):
+    for i in range(imax/2,imax+1):
         p2dict[2*i] = q2 * p2dict[2*i-2]
     for i in range(1, imax + 2):
         idx = i**2-i
