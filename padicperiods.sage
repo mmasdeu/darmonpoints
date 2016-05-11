@@ -3,6 +3,24 @@ from sage.arith.all import algdep
 from sage.rings.padics.precision_error import PrecisionError
 from util import *
 
+def precompute_powers(p,q,N):
+    irange = range(-N, N+1)
+    pdict = {0:1, 1:p, -1:p**-1}
+    for i in range(2,N+2,2):
+        tmp = pdict[i-2]*q
+        tmpinv = tmp**-1
+        pdict[i] = tmp
+        pdict[-i] = tmpinv
+        pdict[i+1] = p * tmp
+        pdict[-i-1] = pdict[-1] * tmpinv
+    for i in range(N/2,N+1):
+        pdict[2*i] = q * pdict[2*i-2]
+    for i in range(1, N + 2):
+        idx = i**2-i
+        if not pdict.has_key(idx):
+            pdict[idx] = pdict[2*i - 2] * pdict[idx - 2*i + 2]
+    return pdict
+
 # Theta functions of (25) in Teitelbaum's
 # and also the other theta functions that we need to compute the lambda's according to the formulas (23)
 # We sum terms until we get the result to the accuracy prec. When deciding the set of indicies over which we sum, we have made several simplifications that probably cause that we sum more terms than strictly needed for that accuracy, but this probably won't be an issue...
@@ -25,28 +43,9 @@ def Thetas(p1, p2, p3, q1,q2,q3,prec=None):
     assert imax > 0
     jdict = {}
     p1dict = {}
-    p2dict = {}
     p3dict = {}
-    irange = range(-imax,imax+1)
-    ilist = sorted(list(set([i**2-i for i in irange] + [i for i in irange])))
-
-    p2dict[0] = 1
-    p2dict[1] = p2
-    p2dict[-1] = p2**-1
-    for i in range(2,imax+2,2):
-        tmp = p2dict[i-2]*q2
-        tmpinv = tmp**-1
-        p2dict[i] = tmp
-        p2dict[-i] = tmpinv
-        p2dict[i+1] = p2 * tmp
-        p2dict[-i-1] = p2dict[-1] * tmpinv
-    for i in range(imax/2,imax+1):
-        p2dict[2*i] = q2 * p2dict[2*i-2]
-    for i in range(1, imax + 2):
-        idx = i**2-i
-        if not p2dict.has_key(idx):
-            p2dict[idx] = p2dict[2*i - 2] * p2dict[idx - 2*i + 2]
-    for i in irange:
+    p2dict = precompute_powers(p2,q2,imax)
+    for i in xrange(-imax,imax+1):
         newjmax = RR(2*prec - .25 - i**2 + RR(i).abs())
         if newjmax >= 0:
             newjmax = (newjmax.sqrt()+.5).ceiling()
@@ -439,7 +438,127 @@ def absolute_igusa_padic_from_half_periods(p1,p2,p3,q1,q2,q3,prec,threshold = No
         return None, None, None
     return j1, j2, j3
 
-def find_igusa_invariants_from_AB(Alist, Blist, fT, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85,matlist = None, hecke_polys = None, max_height_elements = 5, mat_coeffs_range = 3):
+
+def multiplicative_scalar_product(b, v):
+    ans = 1
+    for bi,vi in zip(b,v):
+        ans *= vi**ZZ(bi)
+    return ans
+
+def left_multiply_multiplicative(B, V): # V^B
+    ans = V.parent()(0)
+    for i, j in product(range(ans.nrows()),range(ans.ncols())):
+        ans[i,j] = multiplicative_scalar_product(B.row(i).list(),V.column(j).list())
+    return ans
+
+def right_multiply_multiplicative(W, A):
+    return left_multiply_multiplicative(A.transpose(),W.transpose()).transpose()
+
+def generate_matlists(A,B,D,mat_coeffs_range = 3):
+    mlistX = []
+    mlistY = []
+    for a in range(mat_coeffs_range+1):
+        for b in range(a+1):
+            for c,d in product(range(-mat_coeffs_range,mat_coeffs_range+1),repeat = 2):
+                m = matrix(ZZ,2,2,[a,b,c,d])
+                if m.determinant() != 0:
+                    mlistY.append(m)
+                    if m.determinant().abs() in [1,2]:
+                        mlistX.append(m)
+    mlistX = sorted(mlistX,key=lambda x:max([o.abs() for o in x.list()]))
+    mlistY = sorted(mlistY,key=lambda x:max([o.abs() for o in x.list()]))
+    Lambda0 = matrix(A.parent(),2,2,[A,B,B,D])
+    mlistYLY = []
+    for Y in mlistY:
+        LY = right_multiply_multiplicative(Lambda0,Y)
+        mlistYLY.append((Y,LY))
+    all_mats = []
+    for X,YLY in product(mlistX,mlistYLY):
+        Y, LY = YLY
+        delta = X.determinant()
+        XinvLY = left_multiply_multiplicative(X.adjoint(),LY)
+        if XinvLY[0,1] != XinvLY[1,0]:
+            continue
+        all_mats.append((X,Y,XinvLY, delta))
+    return sorted(all_mats, key = lambda x: max([o.abs() for o in x[0].list() + x[1].list()]))
+
+@fork
+def find_igusa_invariants_from_ABD(A, B, D, scaling, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85, matlists = None, mat_coeffs_range = 3):
+    global success_list
+    K0 = A.parent()
+    p = K0.prime()
+    if phi is None:
+        phi = lambda x:Qp(p,prec)(x)
+    x = QQ['x'].gen()
+    K = QuadExt(K0,p)
+    deg = base.degree()
+    if list_I10 is not None:
+        list_I10_padic = [phi(o) for o in list_I10]
+
+    if matlists is None:
+        matlists = generate_matlists(A,B,D,mat_coeffs_range)
+
+    total_tests = len(matlists)
+    fwrite('# Starting search for Igusa invariants. Number of tests = %s'%(total_tests), outfile)
+    ntests = 0
+    success_list = []
+    for X,Y,XinvLY,delta in matlists:
+        ntests += 1
+        if ntests % 1000 == 0:
+            fwrite('# num_tests = %s / %s (successes = %s)'%(ntests, total_tests, len(success_list)), outfile)
+        Ag1,Bg1,_,Dg1 = XinvLY.list()
+        for Ag,Bg,Dg in product(*[our_nroot(K0(o),delta*scaling,return_all=True) for o in [Ag1,Bg1,Dg1]]):
+            q1inv = (Bg * Dg)**-1
+            q2inv = (Bg * Ag)**-1
+            q3inv = Bg
+            try:
+                p1, p2, p3 = K(q1inv).sqrt(), K(q2inv).sqrt(), K(q3inv).sqrt()
+                j1 = j1_inv_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec,  threshold = threshold)
+                if j1 is None:
+                    raise ValueError
+            except (ValueError,RuntimeError,PrecisionError):
+                continue
+            if list_I10 is None:
+                if cheatjs is not None:
+                    if (j1 - cheatjs[0]).valuation() > minval:
+                        j1, j2, j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec, threshold = threshold)
+                        vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
+                        if all([o > minval for o in vals]):
+                            fwrite('# Success !! -> X = %s, Y = %s, valuation=%s'%(list(X),list(Y),min(vals)), outfile)
+                            success_list.append((list(X),list(Y),min(vals)))
+                else:
+                    try:
+                        j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                        fwrite('# Possible j1 = %s'%(j1n),outfile)
+                        j1, j2, j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec, threshold = threshold)
+                        j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                        fwrite('# Possible j2 = %s'%(j2n),outfile)
+                        j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                        fwrite('# Possible j3 = %s'%(j3n),outfile)
+                        fwrite('# Candidate js = %s, %s, %s (X = %s, Y = %s) jpadic = (%s, %s, %s)'%(j1n,j2n,j3n,list(X),list(Y), j1,j2,j3),outfile)
+                        success_list.append((list(X),list(Y),j1,j2,j3))
+                    except ValueError:
+                        continue
+            else:
+                for I10new, I10p in zip(list_I10,list_I10_padic):
+                    I2c_list = our_nroot( j1 * I10p, 5, return_all = True)
+                    for I2c in I2c_list:
+                        try:
+                            I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                            fwrite('# Possible I2 = %s'%(I2new),outfile)
+                            j1, j2, j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec,  threshold = threshold)
+                            I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                            fwrite('# Possible I4 = %s'%I4new,outfile)
+                            I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                            fwrite('# Possible I6 = %s'%I6new,outfile)
+                            fwrite('# Candidate = %s, %s, %s, %s (X = %s, Y = %s)'%(I2new,I4new,I6new,I10new,list(X),list(Y)),outfile)
+                            success_list.append((list(X),list(Y),I2new, I4new, I6new, I10new))
+                        except ValueError:
+                            continue
+    return success_list
+
+
+def find_igusa_invariants_from_AB_old(Alist, Blist, fT, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85,matlist = None, hecke_polys = None, max_height_elements = 5, mat_coeffs_range = 3):
     global success_list
     K0 = Alist[0].parent()
     p = K0.prime()
@@ -1009,3 +1128,4 @@ def compare_AB_periods(Alist, Blist, T, Ag, Bg, Dg, prec, base=QQ, matlist = Non
 
             if (A1log-Ag.log(0)).valuation() > 2 and (B1log-Bg.log(0)).valuation() > 2 and (D1log-Dg.log(0)).valuation() > 2:
                 print a,b,c,d, t,n
+
