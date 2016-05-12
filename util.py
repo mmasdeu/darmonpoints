@@ -611,8 +611,7 @@ def our_sqrt(xx,K = None,return_all = False):
     ans = K.uniformizer()**(ZZ(valp/2)) * y
     if return_all:
         ans = [ans, -ans]
-    else:
-        return ans
+    return ans
 
 def our_cuberoot(xx,K = None,return_all = False):
     if K is None:
