@@ -481,11 +481,13 @@ def left_multiply_multiplicative(B, V): # V^B
 def right_multiply_multiplicative(W, A):
     return left_multiply_multiplicative(A.transpose(),W.transpose()).transpose()
 
-def generate_matlists(A,B,D,mat_coeffs_range = 3):
+def generate_matlists(Lambda,mat_coeffs_range = 3):
     mlistX = []
     mlistY = []
-    for a in range(mat_coeffs_range+1):
-        for b in range(a+1):
+    # for a in range(mat_coeffs_range+1):
+    for a in range(-mat_coeffs_range, mat_coeffs_range+1):
+        # for b in range(a+1):
+        for b in range(-mat_coeffs_range,mat_coeffs_range+1):
             for c,d in product(range(-mat_coeffs_range,mat_coeffs_range+1),repeat = 2):
                 m = matrix(ZZ,2,2,[a,b,c,d])
                 if m.determinant() != 0:
@@ -494,10 +496,9 @@ def generate_matlists(A,B,D,mat_coeffs_range = 3):
                         mlistX.append(m)
     mlistX = sorted(mlistX,key=lambda x:max([o.abs() for o in x.list()]))
     mlistY = sorted(mlistY,key=lambda x:max([o.abs() for o in x.list()]))
-    Lambda0 = matrix(A.parent(),2,2,[A,B,B,D])
     mlistYLY = []
     for Y in mlistY:
-        LY = right_multiply_multiplicative(Lambda0,Y)
+        LY = right_multiply_multiplicative(Lambda,Y)
         mlistYLY.append((Y,LY))
     all_mats = []
     for X,YLY in product(mlistX,mlistYLY):
@@ -519,7 +520,7 @@ def check_generic(xvec, prec, data,  **kwargs):
 
 def check_cheatjs(xvec,prec,data, **kwargs):
     cheatjs = kwargs.get('cheatjs')
-    minval = kwargs.get('minval')
+    minval = kwargs.get('minval',5)
     threshold = kwargs.get('threshold')
     try:
         j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
@@ -587,17 +588,17 @@ def check_listI10(xvec, prec, data, **kwargs):
                 pass
     return ''
 
-def find_igusa_invariants_from_ABD(A, B, D, scaling, prec, **kwargs):
+def find_igusa_invariants_from_Lambda(Lambda, scaling, prec, **kwargs):
     # base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85, matlists = None, mat_coeffs_range = 3
     global success_list
-    K0 = A.parent()
+    K0 = Lambda.parent().base_ring()
     p = K0.prime()
     phi = kwargs.get('phi',lambda x:Qp(p,prec)(x))
     mat_coeffs_range = kwargs.get('mat_coeffs_range',3)
     base = kwargs.setdefault('base',QQ)
     if kwargs.has_key('list_I10'):
         kwargs['list_I10_padic'] = [phi(o) for o in list_I10]
-    matlists = kwargs.get('matlists',generate_matlists(A,B,D,mat_coeffs_range))
+    matlists = kwargs.get('matlists',generate_matlists(Lambda0,mat_coeffs_range))
     outfile = kwargs.get('outfile')
     K = QuadExt(K0,p)
     total_tests = len(matlists)
