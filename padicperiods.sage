@@ -414,7 +414,7 @@ def j1_inv_padic_from_xvec(xvec, prec, threshold = None):
         tol = None
     else:
         tol = threshold * prec
-    j1 = j1_inv(*xvec)
+    j1 = j1_inv_from_xvec(xvec)
     try:
         return take_to_Qp(j1,tol)
     except ValueError:
