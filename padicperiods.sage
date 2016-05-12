@@ -230,37 +230,44 @@ def igusa_clebsch_absolute_from_half_periods(p1, p2, p3, q1,q2,q3,prec = None, p
     I2, I4, I6, I10 = igusa_clebsch_from_half_periods(p1, p2, p3, q1,q2,q3,prec=prec, padic=padic)
     return I2**5/I10,I2**3*I4/I10,I2**2*I6/I10
 
-def I2_inv(x1,x2,x3):
+def igusa_clebsch_from_half_periods(p1, p2, p3, q1, q2, q3, prec=None, padic=True):
+    if padic or prec is None:
+        return igusa_clebsch_from_xvec(xvec_padic(p1, p2, p3, q1, q2, q3, prec))
+    else:
+        return igusa_clebsch_from_xvec(xvec(p1, p2, p3, prec))
+
+def igusa_clebsch_absolute_from_xvec(xvec):
+    I2, I4, I6, I10 = igusa_clebsch_from_xvec(xvec)
+    return I2**5/I10,I2**3*I4/I10,I2**2*I6/I10
+
+def I2_inv_from_xvec(xvec):
+    x1, x2, x3 = xvec
     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
     return 6*((x12+1)*(x22+x32+1) + x22*x32 -1) + 12*x1*x2*x3 -\
         4*( x1*(x2*x3*(x1+x2+x3) + x1*(x2+x3) + x22 + x2) +  x3*(x22 + x3*(x1 + x2) + x1 + x2) )
 
-def j1_inv(x1,x2,x3):
-     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
-     I2 = 6*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 6*x12*x32 - 4*x1*x2*x32 + 6*x22*x32 - 4*x12*x2 - 4*x1*x22 - 4*x12*x3 + 12*x1*x2*x3 - 4*x22*x3 - 4*x1*x32 - 4*x2*x32 + 6*x12 - 4*x1*x2 + 6*x22 - 4*x1*x3 - 4*x2*x3 + 6*x32
-     I10 = x12*x22*x32 * ((1-x1)*(1-x2)*(1-x3)*(x1-x2)*(x1-x3)*(x2-x3))**2
-     return I2**5/I10
+def j1_inv_from_xvec(xvec):
+    x1, x2, x3 = xvec
+    x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
+    I2 = 6*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 6*x12*x32 - 4*x1*x2*x32 + 6*x22*x32 - 4*x12*x2 - 4*x1*x22 - 4*x12*x3 + 12*x1*x2*x3 - 4*x22*x3 - 4*x1*x32 - 4*x2*x32 + 6*x12 - 4*x1*x2 + 6*x22 - 4*x1*x3 - 4*x2*x3 + 6*x32
+    I10 = x12*x22*x32 * ((1-x1)*(1-x2)*(1-x3)*(x1-x2)*(x1-x3)*(x2-x3))**2
+    return I2**5/I10
 
-def ICI_static(x1,x2,x3):
-     x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
-     x13, x23, x33 = x1 * x12, x2 * x22, x3 * x32
-     x14, x24, x34 = x1 * x13, x2 * x23, x3 * x33
-     x15, x25, x35 = x1 * x14, x2 * x24, x3 * x34
-     x16, x26, x36 = x1 * x15, x2 * x25, x3 * x35
-     x17, x27, x37 = x1 * x16, x2 * x26, x3 * x36
-     x18, x28, x38 = x1 * x17, x2 * x27, x3 * x37
+def igusa_clebsch_from_xvec(xvec):
+    x1, x2, x3 = xvec
+    x12, x22, x32 = x1 * x1, x2 * x2, x3 * x3
+    x13, x23, x33 = x1 * x12, x2 * x22, x3 * x32
+    x14, x24, x34 = x1 * x13, x2 * x23, x3 * x33
+    x15, x25, x35 = x1 * x14, x2 * x24, x3 * x34
+    x16, x26, x36 = x1 * x15, x2 * x25, x3 * x35
+    x17, x27, x37 = x1 * x16, x2 * x26, x3 * x36
+    x18, x28, x38 = x1 * x17, x2 * x27, x3 * x37
 
-     I2 = 6*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 6*x12*x32 - 4*x1*x2*x32 + 6*x22*x32 - 4*x12*x2 - 4*x1*x22 - 4*x12*x3 + 12*x1*x2*x3 - 4*x22*x3 - 4*x1*x32 - 4*x2*x32 + 6*x12 - 4*x1*x2 + 6*x22 - 4*x1*x3 - 4*x2*x3 + 6*x32
-     I4 = 4*x14*x22*x32 - 4*x13*x23*x32 + 4*x12*x24*x32 - 4*x13*x22*x33 - 4*x12*x23*x33 + 4*x12*x22*x34 - 4*x14*x22*x3 + 4*x13*x23*x3 - 4*x12*x24*x3 - 4*x14*x2*x32 + 4*x13*x22*x32 + 4*x12*x23*x32 - 4*x1*x24*x32 + 4*x13*x2*x33 + 4*x12*x22*x33 + 4*x1*x23*x33 - 4*x12*x2*x34 - 4*x1*x22*x34 + 4*x14*x22 - 4*x13*x23 + 4*x12*x24 - 4*x14*x2*x3 + 4*x13*x22*x3 + 4*x12*x23*x3 - 4*x1*x24*x3 + 4*x14*x32 + 4*x13*x2*x32 - 24*x12*x22*x32 + 4*x1*x23*x32 + 4*x24*x32 - 4*x13*x33 + 4*x12*x2*x33 + 4*x1*x22*x33 - 4*x23*x33 + 4*x12*x34 - 4*x1*x2*x34 + 4*x22*x34 - 4*x13*x22 - 4*x12*x23 + 4*x13*x2*x3 + 4*x12*x22*x3 + 4*x1*x23*x3 - 4*x13*x32 + 4*x12*x2*x32 + 4*x1*x22*x32 - 4*x23*x32 - 4*x12*x33 + 4*x1*x2*x33 - 4*x22*x33 + 4*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 4*x12*x32 - 4*x1*x2*x32 + 4*x22*x32
-     I6 =8*x16*x24*x32 - 8*x15*x25*x32 + 8*x14*x26*x32 - 8*x16*x23*x33 - 4*x15*x24*x33 - 4*x14*x25*x33 - 8*x13*x26*x33 + 8*x16*x22*x34 - 4*x15*x23*x34 + 24*x14*x24*x34 - 4*x13*x25*x34 + 8*x12*x26*x34 - 8*x15*x22*x35 - 4*x14*x23*x35 - 4*x13*x24*x35 - 8*x12*x25*x35 + 8*x14*x22*x36 - 8*x13*x23*x36 + 8*x12*x24*x36 - 8*x16*x24*x3 + 8*x15*x25*x3 - 8*x14*x26*x3 - 4*x16*x23*x32 + 2*x15*x24*x32 + 2*x14*x25*x32 - 4*x13*x26*x32 - 4*x16*x22*x33 + 40*x15*x23*x33 - 28*x14*x24*x33 + 40*x13*x25*x33 - 4*x12*x26*x33 - 8*x16*x2*x34 + 2*x15*x22*x34 - 28*x14*x23*x34 - 28*x13*x24*x34 + 2*x12*x25*x34 - 8*x1*x26*x34 + 8*x15*x2*x35 + 2*x14*x22*x35 + 40*x13*x23*x35 + 2*x12*x24*x35 + 8*x1*x25*x35 - 8*x14*x2*x36 - 4*x13*x22*x36 - 4*x12*x23*x36 - 8*x1*x24*x36 + 8*x16*x24 - 8*x15*x25 + 8*x14*x26 - 4*x16*x23*x3 + 2*x15*x24*x3 + 2*x14*x25*x3 - 4*x13*x26*x3 + 24*x16*x22*x32 - 28*x15*x23*x32 + 32*x14*x24*x32 - 28*x13*x25*x32 + 24*x12*x26*x32 - 4*x16*x2*x33 - 28*x15*x22*x33 - 4*x14*x23*x33 - 4*x13*x24*x33 - 28*x12*x25*x33 - 4*x1*x26*x33 + 8*x16*x34 + 2*x15*x2*x34 + 32*x14*x22*x34 - 4*x13*x23*x34 + 32*x12*x24*x34 + 2*x1*x25*x34 + 8*x26*x34 - 8*x15*x35 + 2*x14*x2*x35 - 28*x13*x22*x35 - 28*x12*x23*x35 + 2*x1*x24*x35 - 8*x25*x35 + 8*x14*x36 - 4*x13*x2*x36 + 24*x12*x22*x36 - 4*x1*x23*x36 + 8*x24*x36 - 8*x16*x23 - 4*x15*x24 - 4*x14*x25 - 8*x13*x26 - 4*x16*x22*x3 + 40*x15*x23*x3 - 28*x14*x24*x3 + 40*x13*x25*x3 - 4*x12*x26*x3 - 4*x16*x2*x32 - 28*x15*x22*x32 - 4*x14*x23*x32 - 4*x13*x24*x32 - 28*x12*x25*x32 - 4*x1*x26*x32 - 8*x16*x33 + 40*x15*x2*x33 - 4*x14*x22*x33 + 48*x13*x23*x33 - 4*x12*x24*x33 + 40*x1*x25*x33 - 8*x26*x33 - 4*x15*x34 - 28*x14*x2*x34 - 4*x13*x22*x34 - 4*x12*x23*x34 - 28*x1*x24*x34 - 4*x25*x34 - 4*x14*x35 + 40*x13*x2*x35 - 28*x12*x22*x35 + 40*x1*x23*x35 - 4*x24*x35 - 8*x13*x36 - 4*x12*x2*x36 - 4*x1*x22*x36 - 8*x23*x36 + 8*x16*x22 - 4*x15*x23 + 24*x14*x24 - 4*x13*x25 + 8*x12*x26 - 8*x16*x2*x3 + 2*x15*x22*x3 - 28*x14*x23*x3 - 28*x13*x24*x3 + 2*x12*x25*x3 - 8*x1*x26*x3 + 8*x16*x32 + 2*x15*x2*x32 + 32*x14*x22*x32 - 4*x13*x23*x32 + 32*x12*x24*x32 + 2*x1*x25*x32 + 8*x26*x32 - 4*x15*x33 - 28*x14*x2*x33 - 4*x13*x22*x33 - 4*x12*x23*x33 - 28*x1*x24*x33 - 4*x25*x33 + 24*x14*x34 - 28*x13*x2*x34 + 32*x12*x22*x34 - 28*x1*x23*x34 + 24*x24*x34 - 4*x13*x35 + 2*x12*x2*x35 + 2*x1*x22*x35 - 4*x23*x35 + 8*x12*x36 - 8*x1*x2*x36 + 8*x22*x36 - 8*x15*x22 - 4*x14*x23 - 4*x13*x24 - 8*x12*x25 + 8*x15*x2*x3 + 2*x14*x22*x3 + 40*x13*x23*x3 + 2*x12*x24*x3 + 8*x1*x25*x3 - 8*x15*x32 + 2*x14*x2*x32 - 28*x13*x22*x32 - 28*x12*x23*x32 + 2*x1*x24*x32 - 8*x25*x32 - 4*x14*x33 + 40*x13*x2*x33 - 28*x12*x22*x33 + 40*x1*x23*x33 - 4*x24*x33 - 4*x13*x34 + 2*x12*x2*x34 + 2*x1*x22*x34 - 4*x23*x34 - 8*x12*x35 + 8*x1*x2*x35 - 8*x22*x35 + 8*x14*x22 - 8*x13*x23 + 8*x12*x24 - 8*x14*x2*x3 - 4*x13*x22*x3 - 4*x12*x23*x3 - 8*x1*x24*x3 + 8*x14*x32 - 4*x13*x2*x32 + 24*x12*x22*x32 - 4*x1*x23*x32 + 8*x24*x32 - 8*x13*x33 - 4*x12*x2*x33 - 4*x1*x22*x33 - 8*x23*x33 + 8*x12*x34 - 8*x1*x2*x34 + 8*x22*x34
-     I10 = x12*x22*x32 * ((1-x1)*(1-x2)*(1-x3)*(x1-x2)*(x1-x3)*(x2-x3))**2
-     return I2, I4, I6, I10
-
-def igusa_clebsch_from_half_periods(a, b, c, q1,q2,q3,prec=None, padic=True):
-    if padic or prec is None:
-        return ICI_static(*xvec_padic(a,b,c,q1,q2,q3,prec))
-    else:
-        return ICI_static(*xvec(a,b,c,prec))
+    I2 = 6*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 6*x12*x32 - 4*x1*x2*x32 + 6*x22*x32 - 4*x12*x2 - 4*x1*x22 - 4*x12*x3 + 12*x1*x2*x3 - 4*x22*x3 - 4*x1*x32 - 4*x2*x32 + 6*x12 - 4*x1*x2 + 6*x22 - 4*x1*x3 - 4*x2*x3 + 6*x32
+    I4 = 4*x14*x22*x32 - 4*x13*x23*x32 + 4*x12*x24*x32 - 4*x13*x22*x33 - 4*x12*x23*x33 + 4*x12*x22*x34 - 4*x14*x22*x3 + 4*x13*x23*x3 - 4*x12*x24*x3 - 4*x14*x2*x32 + 4*x13*x22*x32 + 4*x12*x23*x32 - 4*x1*x24*x32 + 4*x13*x2*x33 + 4*x12*x22*x33 + 4*x1*x23*x33 - 4*x12*x2*x34 - 4*x1*x22*x34 + 4*x14*x22 - 4*x13*x23 + 4*x12*x24 - 4*x14*x2*x3 + 4*x13*x22*x3 + 4*x12*x23*x3 - 4*x1*x24*x3 + 4*x14*x32 + 4*x13*x2*x32 - 24*x12*x22*x32 + 4*x1*x23*x32 + 4*x24*x32 - 4*x13*x33 + 4*x12*x2*x33 + 4*x1*x22*x33 - 4*x23*x33 + 4*x12*x34 - 4*x1*x2*x34 + 4*x22*x34 - 4*x13*x22 - 4*x12*x23 + 4*x13*x2*x3 + 4*x12*x22*x3 + 4*x1*x23*x3 - 4*x13*x32 + 4*x12*x2*x32 + 4*x1*x22*x32 - 4*x23*x32 - 4*x12*x33 + 4*x1*x2*x33 - 4*x22*x33 + 4*x12*x22 - 4*x12*x2*x3 - 4*x1*x22*x3 + 4*x12*x32 - 4*x1*x2*x32 + 4*x22*x32
+    I6 =8*x16*x24*x32 - 8*x15*x25*x32 + 8*x14*x26*x32 - 8*x16*x23*x33 - 4*x15*x24*x33 - 4*x14*x25*x33 - 8*x13*x26*x33 + 8*x16*x22*x34 - 4*x15*x23*x34 + 24*x14*x24*x34 - 4*x13*x25*x34 + 8*x12*x26*x34 - 8*x15*x22*x35 - 4*x14*x23*x35 - 4*x13*x24*x35 - 8*x12*x25*x35 + 8*x14*x22*x36 - 8*x13*x23*x36 + 8*x12*x24*x36 - 8*x16*x24*x3 + 8*x15*x25*x3 - 8*x14*x26*x3 - 4*x16*x23*x32 + 2*x15*x24*x32 + 2*x14*x25*x32 - 4*x13*x26*x32 - 4*x16*x22*x33 + 40*x15*x23*x33 - 28*x14*x24*x33 + 40*x13*x25*x33 - 4*x12*x26*x33 - 8*x16*x2*x34 + 2*x15*x22*x34 - 28*x14*x23*x34 - 28*x13*x24*x34 + 2*x12*x25*x34 - 8*x1*x26*x34 + 8*x15*x2*x35 + 2*x14*x22*x35 + 40*x13*x23*x35 + 2*x12*x24*x35 + 8*x1*x25*x35 - 8*x14*x2*x36 - 4*x13*x22*x36 - 4*x12*x23*x36 - 8*x1*x24*x36 + 8*x16*x24 - 8*x15*x25 + 8*x14*x26 - 4*x16*x23*x3 + 2*x15*x24*x3 + 2*x14*x25*x3 - 4*x13*x26*x3 + 24*x16*x22*x32 - 28*x15*x23*x32 + 32*x14*x24*x32 - 28*x13*x25*x32 + 24*x12*x26*x32 - 4*x16*x2*x33 - 28*x15*x22*x33 - 4*x14*x23*x33 - 4*x13*x24*x33 - 28*x12*x25*x33 - 4*x1*x26*x33 + 8*x16*x34 + 2*x15*x2*x34 + 32*x14*x22*x34 - 4*x13*x23*x34 + 32*x12*x24*x34 + 2*x1*x25*x34 + 8*x26*x34 - 8*x15*x35 + 2*x14*x2*x35 - 28*x13*x22*x35 - 28*x12*x23*x35 + 2*x1*x24*x35 - 8*x25*x35 + 8*x14*x36 - 4*x13*x2*x36 + 24*x12*x22*x36 - 4*x1*x23*x36 + 8*x24*x36 - 8*x16*x23 - 4*x15*x24 - 4*x14*x25 - 8*x13*x26 - 4*x16*x22*x3 + 40*x15*x23*x3 - 28*x14*x24*x3 + 40*x13*x25*x3 - 4*x12*x26*x3 - 4*x16*x2*x32 - 28*x15*x22*x32 - 4*x14*x23*x32 - 4*x13*x24*x32 - 28*x12*x25*x32 - 4*x1*x26*x32 - 8*x16*x33 + 40*x15*x2*x33 - 4*x14*x22*x33 + 48*x13*x23*x33 - 4*x12*x24*x33 + 40*x1*x25*x33 - 8*x26*x33 - 4*x15*x34 - 28*x14*x2*x34 - 4*x13*x22*x34 - 4*x12*x23*x34 - 28*x1*x24*x34 - 4*x25*x34 - 4*x14*x35 + 40*x13*x2*x35 - 28*x12*x22*x35 + 40*x1*x23*x35 - 4*x24*x35 - 8*x13*x36 - 4*x12*x2*x36 - 4*x1*x22*x36 - 8*x23*x36 + 8*x16*x22 - 4*x15*x23 + 24*x14*x24 - 4*x13*x25 + 8*x12*x26 - 8*x16*x2*x3 + 2*x15*x22*x3 - 28*x14*x23*x3 - 28*x13*x24*x3 + 2*x12*x25*x3 - 8*x1*x26*x3 + 8*x16*x32 + 2*x15*x2*x32 + 32*x14*x22*x32 - 4*x13*x23*x32 + 32*x12*x24*x32 + 2*x1*x25*x32 + 8*x26*x32 - 4*x15*x33 - 28*x14*x2*x33 - 4*x13*x22*x33 - 4*x12*x23*x33 - 28*x1*x24*x33 - 4*x25*x33 + 24*x14*x34 - 28*x13*x2*x34 + 32*x12*x22*x34 - 28*x1*x23*x34 + 24*x24*x34 - 4*x13*x35 + 2*x12*x2*x35 + 2*x1*x22*x35 - 4*x23*x35 + 8*x12*x36 - 8*x1*x2*x36 + 8*x22*x36 - 8*x15*x22 - 4*x14*x23 - 4*x13*x24 - 8*x12*x25 + 8*x15*x2*x3 + 2*x14*x22*x3 + 40*x13*x23*x3 + 2*x12*x24*x3 + 8*x1*x25*x3 - 8*x15*x32 + 2*x14*x2*x32 - 28*x13*x22*x32 - 28*x12*x23*x32 + 2*x1*x24*x32 - 8*x25*x32 - 4*x14*x33 + 40*x13*x2*x33 - 28*x12*x22*x33 + 40*x1*x23*x33 - 4*x24*x33 - 4*x13*x34 + 2*x12*x2*x34 + 2*x1*x22*x34 - 4*x23*x34 - 8*x12*x35 + 8*x1*x2*x35 - 8*x22*x35 + 8*x14*x22 - 8*x13*x23 + 8*x12*x24 - 8*x14*x2*x3 - 4*x13*x22*x3 - 4*x12*x23*x3 - 8*x1*x24*x3 + 8*x14*x32 - 4*x13*x2*x32 + 24*x12*x22*x32 - 4*x1*x23*x32 + 8*x24*x32 - 8*x13*x33 - 4*x12*x2*x33 - 4*x1*x22*x33 - 8*x23*x33 + 8*x12*x34 - 8*x1*x2*x34 + 8*x22*x34
+    I10 = x12*x22*x32 * ((1-x1)*(1-x2)*(1-x3)*(x1-x2)*(x1-x3)*(x2-x3))**2
+    return I2, I4, I6, I10
 
 # computes the p-adic L-invariant
 # A = <gamma_1,gamma_1>
@@ -402,30 +409,36 @@ def take_to_Qp(x, tolerance = None):
     ans = ans.add_bigoh(ordp.floor())
     return ans
 
-def j1_inv_padic_from_half_periods(a, b, c, q1,q2,q3,prec, threshold=None):
+def j1_inv_padic_from_xvec(xvec, prec, threshold = None):
     if threshold is None:
         tol = None
     else:
         tol = threshold * prec
-    j1 = j1_inv(*xvec_padic(a,b,c,q1,q2,q3,prec))
+    j1 = j1_inv(*xvec)
     try:
         return take_to_Qp(j1,tol)
     except ValueError:
         return None
 
-def I2_inv_padic_from_half_periods(a, b, c, q1,q2,q3,prec,threshold=None):
+def j1_inv_padic_from_half_periods(a, b, c, q1,q2,q3,prec, threshold=None):
+    return j1_inv_padic_from_xvec(xvec_padic(a,b,c,q1,q2,q3,prec),prec,threshold)
+
+def I2_inv_padic_from_xvec(xvec,prec,threshold=None):
     if threshold is None:
         tol = None
     else:
         tol = threshold * prec
-    I2 = I2_inv(*xvec_padic(a,b,c,q1,q2,q3,prec))
+    I2 = I2_inv(*xvec)
     try:
         return take_to_Qp(I2,tol)
     except ValueError:
         return None
 
-def absolute_igusa_padic_from_half_periods(p1,p2,p3,q1,q2,q3,prec,threshold = None):
-    j1,j2,j3 = igusa_clebsch_absolute_from_half_periods(p1, p2, p3, q1,q2,q3,prec = prec, padic = True)
+def I2_inv_padic_from_half_periods(a, b, c, q1,q2,q3,prec,threshold=None):
+    return I2_inv_padic_from_xvec(xvec_padic(a,b,c,q1,q2,q3,prec),prec,threshold)
+
+def absolute_igusa_padic_from_xvec(xvec,prec, threshold = None):
+    j1,j2,j3 = igusa_clebsch_absolute_from_xvec(xvec)
     if threshold is None:
         tol = None
     else:
@@ -438,6 +451,20 @@ def absolute_igusa_padic_from_half_periods(p1,p2,p3,q1,q2,q3,prec,threshold = No
         return None, None, None
     return j1, j2, j3
 
+def absolute_igusa_padic_from_half_periods(p1,p2,p3,q1,q2,q3,prec,threshold = None):
+    xvec = xvec_padic(p1,p2,p3,q1,q2,q3,prec)
+    j1,j2,j3 = igusa_clebsch_absolute_from_xvec(xvec)
+    if threshold is None:
+        tol = None
+    else:
+        tol = threshold * prec
+    try:
+        j1 = take_to_Qp(j1,tol)
+        j2 = take_to_Qp(j2,tol)
+        j3 = take_to_Qp(j3,tol)
+    except ValueError:
+        return None, None, None
+    return j1, j2, j3
 
 def multiplicative_scalar_product(b, v):
     ans = 1
@@ -482,27 +509,103 @@ def generate_matlists(A,B,D,mat_coeffs_range = 3):
         all_mats.append((X,Y,XinvLY, delta))
     return sorted(all_mats, key = lambda x: max([o.abs() for o in x[0].list() + x[1].list()]))
 
-@fork
-def find_igusa_invariants_from_ABD(A, B, D, scaling, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85, matlists = None, mat_coeffs_range = 3):
+def check_generic(xvec, prec, data,  **kwargs):
+    if kwargs.has_key('cheatjs'):
+        return check_cheatjs(xvec,prec,data, **kwargs)
+    elif kwargs.has_key('list_I10'):
+        return check_listI10(xvec,prec,data, **kwargs)
+    else:
+        return check_absoluteinvs(xvec,prec,data, **kwargs)
+
+def check_cheatjs(xvec,prec,data, **kwargs):
+    cheatjs = kwargs.get('cheatjs')
+    minval = kwargs.get('minval')
+    threshold = kwargs.get('threshold')
+    try:
+        j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
+        if j1 is None:
+            return ''
+    except (ValueError,RuntimeError,PrecisionError):
+        return ''
+    if (j1 - cheatjs[0]).valuation() > minval:
+        j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec, threshold = threshold)
+        vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
+        if all([o > minval for o in vals]):
+            out_str = '# Success !! -> %s, valuation=%s'%(data,min(vals))
+            return out_str
+    return ''
+
+def check_absoluteinvs(xvec,prec,data, **kwargs):
+    base = kwargs.get('base')
+    threshold = kwargs.get('threshold')
+    outfile = kwargs.get('outfile')
+    try:
+        j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
+        if j1 is None:
+            return ''
+    except (ValueError,RuntimeError,PrecisionError):
+        return ''
+    try:
+        j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+        fwrite('# Possible j1 = %s'%(j1n),outfile)
+        j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec, threshold = threshold)
+        j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+        fwrite('# Possible j2 = %s'%(j2n),outfile)
+        j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+        fwrite('# Possible j3 = %s'%(j3n),outfile)
+        out_str = '# Candidate js = %s, %s, %s (%s) jpadic = (%s, %s, %s)'%(j1n,j2n,j3n,data, j1,j2,j3)
+        return out_str
+    except ValueError:
+        return ''
+
+def check_listI10(xvec, prec, data, **kwargs):
+    list_I10 = kwargs.get('list_I10')
+    list_I10_padic = kwargs.get('list_I10_padic')
+    base = kwargs.get('base')
+    threshold = kwargs.get('threshold')
+    outfile = kwargs.get('outfile')
+    try:
+        j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
+        if j1 is None:
+            return ''
+    except (ValueError,RuntimeError,PrecisionError):
+        return ''
+    for I10new, I10p in zip(list_I10,list_I10_padic):
+        I2c_list = our_nroot( j1 * I10p, 5, return_all = True)
+        for I2c in I2c_list:
+            try:
+                I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                fwrite('# Possible I2 = %s'%(I2new),outfile)
+                j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec,  threshold = threshold)
+                I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                fwrite('# Possible I4 = %s'%I4new,outfile)
+                I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                fwrite('# Possible I6 = %s'%I6new,outfile)
+                out_str = '# Candidate = %s, %s, %s, %s (%s)'%(I2new,I4new,I6new,I10new,data)
+                return out_str
+            except ValueError:
+                pass
+    return ''
+
+def find_igusa_invariants_from_ABD(A, B, D, scaling, prec, **kwargs):
+    # base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85, matlists = None, mat_coeffs_range = 3
     global success_list
     K0 = A.parent()
     p = K0.prime()
-    if phi is None:
-        phi = lambda x:Qp(p,prec)(x)
-    x = QQ['x'].gen()
+    phi = kwargs.get('phi',lambda x:Qp(p,prec)(x))
+    mat_coeffs_range = kwargs.get('mat_coeffs_range',3)
+    base = kwargs.setdefault('base',QQ)
+    if kwargs.has_key('list_I10'):
+        kwargs['list_I10_padic'] = [phi(o) for o in list_I10]
+    matlists = kwargs.get('matlists',generate_matlists(A,B,D,mat_coeffs_range))
+    outfile = kwargs.get('outfile')
     K = QuadExt(K0,p)
-    deg = base.degree()
-    if list_I10 is not None:
-        list_I10_padic = [phi(o) for o in list_I10]
-
-    if matlists is None:
-        matlists = generate_matlists(A,B,D,mat_coeffs_range)
-
     total_tests = len(matlists)
     fwrite('# Starting search for Igusa invariants. Number of tests = %s'%(total_tests), outfile)
     ntests = 0
     success_list = []
     for X,Y,XinvLY,delta in matlists:
+        data = 'X = %s, Y = %s'%(X.list(),Y.list())
         ntests += 1
         if ntests % 1000 == 0:
             fwrite('# num_tests = %s / %s (successes = %s)'%(ntests, total_tests, len(success_list)), outfile)
@@ -513,48 +616,12 @@ def find_igusa_invariants_from_ABD(A, B, D, scaling, prec, base=QQ, cheatjs=None
             q3inv = Bg
             try:
                 p1, p2, p3 = K(q1inv).sqrt(), K(q2inv).sqrt(), K(q3inv).sqrt()
-                j1 = j1_inv_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec,  threshold = threshold)
-                if j1 is None:
-                    raise ValueError
+                xvec = xvec_padic(p1, p2, p3, q1inv, q2inv, q3inv, prec)
             except (ValueError,RuntimeError,PrecisionError):
                 continue
-            if list_I10 is None:
-                if cheatjs is not None:
-                    if (j1 - cheatjs[0]).valuation() > minval:
-                        j1, j2, j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec, threshold = threshold)
-                        vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
-                        if all([o > minval for o in vals]):
-                            fwrite('# Success !! -> X = %s, Y = %s, valuation=%s'%(list(X),list(Y),min(vals)), outfile)
-                            success_list.append((list(X),list(Y),min(vals)))
-                else:
-                    try:
-                        j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                        fwrite('# Possible j1 = %s'%(j1n),outfile)
-                        j1, j2, j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec, threshold = threshold)
-                        j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                        fwrite('# Possible j2 = %s'%(j2n),outfile)
-                        j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                        fwrite('# Possible j3 = %s'%(j3n),outfile)
-                        fwrite('# Candidate js = %s, %s, %s (X = %s, Y = %s) jpadic = (%s, %s, %s)'%(j1n,j2n,j3n,list(X),list(Y), j1,j2,j3),outfile)
-                        success_list.append((list(X),list(Y),j1,j2,j3))
-                    except ValueError:
-                        continue
-            else:
-                for I10new, I10p in zip(list_I10,list_I10_padic):
-                    I2c_list = our_nroot( j1 * I10p, 5, return_all = True)
-                    for I2c in I2c_list:
-                        try:
-                            I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                            fwrite('# Possible I2 = %s'%(I2new),outfile)
-                            j1, j2, j3 = absolute_igusa_padic_from_half_periods(p1, p2, p3, q1inv,q2inv,q3inv,prec,  threshold = threshold)
-                            I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                            fwrite('# Possible I4 = %s'%I4new,outfile)
-                            I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                            fwrite('# Possible I6 = %s'%I6new,outfile)
-                            fwrite('# Candidate = %s, %s, %s, %s (X = %s, Y = %s)'%(I2new,I4new,I6new,I10new,list(X),list(Y)),outfile)
-                            success_list.append((list(X),list(Y),I2new, I4new, I6new, I10new))
-                        except ValueError:
-                            continue
+            out_str = check_generic(xvec,prec,data,**kwargs)
+            if out_str != '':
+                success_list.append(out_str)
     return success_list
 
 
