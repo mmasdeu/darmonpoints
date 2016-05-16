@@ -487,7 +487,7 @@ def generate_matlists(Lambda,mat_coeffs_range = 3):
     # for a in range(mat_coeffs_range+1):
     for a in range(-mat_coeffs_range, mat_coeffs_range+1):
         # for b in range(a+1):
-        for b in range(-mat_coeffs_range,mat_coeffs_range+1):
+        for b in range(-mat_coeffs_range, mat_coeffs_range + 1):
             for c,d in product(range(-mat_coeffs_range,mat_coeffs_range+1),repeat = 2):
                 m = matrix(ZZ,2,2,[a,b,c,d])
                 if m.determinant() != 0:
@@ -496,100 +496,35 @@ def generate_matlists(Lambda,mat_coeffs_range = 3):
                         mlistX.append(m)
     mlistX = sorted(mlistX,key=lambda x:max([o.abs() for o in x.list()]))
     mlistY = sorted(mlistY,key=lambda x:max([o.abs() for o in x.list()]))
-    mlistYLY = []
+    mlistYYL = []
     for Y in mlistY:
-        LY = right_multiply_multiplicative(Lambda,Y)
-        mlistYLY.append((Y,LY))
+        YL = left_multiply_multiplicative(Y, Lambda)
+        mlistYYL.append((Y,YL))
     all_mats = []
-    for X,YLY in product(mlistX,mlistYLY):
-        Y, LY = YLY
+    for X,YYL in product(mlistX,mlistYYL):
+        Y, YL = YYL
         delta = X.determinant()
-        XinvLY = left_multiply_multiplicative(X.adjoint(),LY)
-        if XinvLY[0,1] != XinvLY[1,0]:
+        YLXinv = right_multiply_multiplicative(YL, X.adjoint())
+        if YLXinv[0,1] != YLXinv[1,0]:
             continue
-        all_mats.append((X,Y,XinvLY, delta))
+        all_mats.append((X, Y, YLXinv, delta))
     return sorted(all_mats, key = lambda x: max([o.abs() for o in x[0].list() + x[1].list()]))
 
-def check_generic(xvec, prec, data,  **kwargs):
-    if kwargs.has_key('cheatjs'):
-        return check_cheatjs(xvec,prec,data, **kwargs)
-    elif kwargs.has_key('list_I10'):
-        return check_listI10(xvec,prec,data, **kwargs)
-    else:
-        return check_absoluteinvs(xvec,prec,data, **kwargs)
+def build_Lambda_from_AB(A,B,T):
+    # T is the matrix of Hecke acting on Homology
+    x,y,z,t = T.list()
+    alpha = ZZ(z)/ZZ(y)
+    beta = ZZ(t-x)/ZZ(y)
+    d = lcm(alpha.denominator(),beta.denominator())
+    alpha, beta = ZZ(d*alpha), ZZ(d*beta)
+    K = A.parent()
+    return Matrix(K, 2, 2, [A**d, B**d, B**alpha, A**d * B**beta]), d
 
-def check_cheatjs(xvec,prec,data, **kwargs):
-    cheatjs = kwargs.get('cheatjs')
-    minval = kwargs.get('minval',5)
-    threshold = kwargs.get('threshold')
-    try:
-        j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
-        if j1 is None:
-            return ''
-    except (ValueError,RuntimeError,PrecisionError):
-        return ''
-    if (j1 - cheatjs[0]).valuation() > minval:
-        j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec, threshold = threshold)
-        vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
-        if all([o > minval for o in vals]):
-            out_str = '# Success !! -> %s, valuation=%s'%(data,min(vals))
-            return out_str
-    return ''
-
-def check_absoluteinvs(xvec,prec,data, **kwargs):
-    base = kwargs.get('base')
-    threshold = kwargs.get('threshold')
-    outfile = kwargs.get('outfile')
-    try:
-        j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
-        if j1 is None:
-            return ''
-    except (ValueError,RuntimeError,PrecisionError):
-        return ''
-    try:
-        j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-        fwrite('# Possible j1 = %s'%(j1n),outfile)
-        j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec, threshold = threshold)
-        j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-        fwrite('# Possible j2 = %s'%(j2n),outfile)
-        j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-        fwrite('# Possible j3 = %s'%(j3n),outfile)
-        out_str = '# Candidate js = %s, %s, %s (%s) jpadic = (%s, %s, %s)'%(j1n,j2n,j3n,data, j1,j2,j3)
-        return out_str
-    except ValueError:
-        return ''
-
-def check_listI10(xvec, prec, data, **kwargs):
-    list_I10 = kwargs.get('list_I10')
-    list_I10_padic = kwargs.get('list_I10_padic')
-    base = kwargs.get('base')
-    threshold = kwargs.get('threshold')
-    outfile = kwargs.get('outfile')
-    try:
-        j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
-        if j1 is None:
-            return ''
-    except (ValueError,RuntimeError,PrecisionError):
-        return ''
-    for I10new, I10p in zip(list_I10,list_I10_padic):
-        I2c_list = our_nroot( j1 * I10p, 5, return_all = True)
-        for I2c in I2c_list:
-            try:
-                I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                fwrite('# Possible I2 = %s'%(I2new),outfile)
-                j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec,  threshold = threshold)
-                I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                fwrite('# Possible I4 = %s'%I4new,outfile)
-                I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
-                fwrite('# Possible I6 = %s'%I6new,outfile)
-                out_str = '# Candidate = %s, %s, %s, %s (%s)'%(I2new,I4new,I6new,I10new,data)
-                return out_str
-            except ValueError:
-                pass
-    return ''
+def find_igusa_invariants_from_AB(A,B,T,scaling, prec, **kwargs):
+    Lambda = build_Lambda_from_AB(A,B,T)
+    return find_igusa_invariants_from_Lambda(Lambda, scaling, prec, **kwargs)
 
 def find_igusa_invariants_from_Lambda(Lambda, scaling, prec, **kwargs):
-    # base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85, matlists = None, mat_coeffs_range = 3
     global success_list
     K0 = Lambda.parent().base_ring()
     p = K0.prime()
@@ -598,19 +533,20 @@ def find_igusa_invariants_from_Lambda(Lambda, scaling, prec, **kwargs):
     base = kwargs.setdefault('base',QQ)
     if kwargs.has_key('list_I10'):
         kwargs['list_I10_padic'] = [phi(o) for o in list_I10]
-    matlists = kwargs.get('matlists',generate_matlists(Lambda0,mat_coeffs_range))
+    matlists = kwargs.get('matlists',generate_matlists(Lambda,mat_coeffs_range))
     outfile = kwargs.get('outfile')
     K = QuadExt(K0,p)
     total_tests = len(matlists)
     fwrite('# Starting search for Igusa invariants. Number of tests = %s'%(total_tests), outfile)
     ntests = 0
     success_list = []
-    for X,Y,XinvLY,delta in matlists:
+    for X, Y, YLXinv, delta in matlists:
         data = 'X = %s, Y = %s'%(X.list(),Y.list())
+        print data
         ntests += 1
         if ntests % 1000 == 0:
             fwrite('# num_tests = %s / %s (successes = %s)'%(ntests, total_tests, len(success_list)), outfile)
-        Ag1,Bg1,_,Dg1 = XinvLY.list()
+        Ag1,Bg1,_,Dg1 = YLXinv.list()
         for Ag,Bg,Dg in product(*[our_nroot(K0(o),delta*scaling,return_all=True) for o in [Ag1,Bg1,Dg1]]):
             q1inv = (Bg * Dg)**-1
             q2inv = (Bg * Ag)**-1
@@ -623,8 +559,9 @@ def find_igusa_invariants_from_Lambda(Lambda, scaling, prec, **kwargs):
             out_str = check_generic(xvec,prec,data,**kwargs)
             if out_str != '':
                 success_list.append(out_str)
-    return success_list
+                fwrite('# Success! data = %s'%out_str, outfile)
 
+    return success_list
 
 def find_igusa_invariants_from_AB_old(Alist, Blist, fT, prec, base=QQ, cheatjs=None, phi=None, minval=3, list_I10=None, Pgen=None, outfile=None, threshold=0.85,matlist = None, hecke_polys = None, max_height_elements = 5, mat_coeffs_range = 3):
     global success_list
@@ -836,6 +773,84 @@ def find_igusa_invariants(a, b, T, embedding, prec = None, outfile = None, list_
                     fwrite('# (%s/%s) (%s)...Out: %s'%(jj, num_inpts, inpt[0][1].list(),str(outt)), outfile)
 
 
+def check_generic(xvec, prec, data,  **kwargs):
+    if kwargs.has_key('cheatjs'):
+        return check_cheatjs(xvec,prec,data, **kwargs)
+    elif kwargs.has_key('list_I10'):
+        return check_listI10(xvec,prec,data, **kwargs)
+    else:
+        return check_absoluteinvs(xvec,prec,data, **kwargs)
+
+def check_cheatjs(xvec,prec,data, **kwargs):
+    cheatjs = kwargs.get('cheatjs')
+    minval = kwargs.get('minval',5)
+    threshold = kwargs.get('threshold')
+    try:
+        j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
+        if j1 is None:
+            return ''
+    except (ValueError,RuntimeError,PrecisionError):
+        return ''
+    if (j1 - cheatjs[0]).valuation() > minval:
+        j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec, threshold = threshold)
+        vals = [(u-v).valuation() - u.valuation() for u,v in zip([j1,j2,j3],cheatjs)]
+        if all([o > minval for o in vals]):
+            out_str = '# Success !! -> %s, valuation=%s'%(data,min(vals))
+            return out_str
+    return ''
+
+def check_absoluteinvs(xvec,prec,data, **kwargs):
+    base = kwargs.get('base')
+    threshold = kwargs.get('threshold')
+    outfile = kwargs.get('outfile')
+    try:
+        j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
+        if j1 is None:
+            return ''
+    except (ValueError,RuntimeError,PrecisionError):
+        return ''
+    try:
+        j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+        fwrite('# Possible j1 = %s'%(j1n),outfile)
+        j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec, threshold = threshold)
+        j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+        fwrite('# Possible j2 = %s'%(j2n),outfile)
+        j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+        fwrite('# Possible j3 = %s'%(j3n),outfile)
+        out_str = '# Candidate js = %s, %s, %s (%s) jpadic = (%s, %s, %s)'%(j1n,j2n,j3n,data, j1,j2,j3)
+        return out_str
+    except ValueError:
+        return ''
+
+def check_listI10(xvec, prec, data, **kwargs):
+    list_I10 = kwargs.get('list_I10')
+    list_I10_padic = kwargs.get('list_I10_padic')
+    base = kwargs.get('base')
+    threshold = kwargs.get('threshold')
+    outfile = kwargs.get('outfile')
+    try:
+        j1 = j1_inv_padic_from_xvec(xvec, prec,  threshold = threshold)
+        if j1 is None:
+            return ''
+    except (ValueError,RuntimeError,PrecisionError):
+        return ''
+    for I10new, I10p in zip(list_I10,list_I10_padic):
+        I2c_list = our_nroot( j1 * I10p, 5, return_all = True)
+        for I2c in I2c_list:
+            try:
+                I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                fwrite('# Possible I2 = %s'%(I2new),outfile)
+                j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec,  threshold = threshold)
+                I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                fwrite('# Possible I4 = %s'%I4new,outfile)
+                I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                fwrite('# Possible I6 = %s'%I6new,outfile)
+                out_str = '# Candidate = %s, %s, %s, %s (%s)'%(I2new,I4new,I6new,I10new,data)
+                return out_str
+            except ValueError:
+                pass
+    return ''
+
 def frobenius_polynomial(C):
     q = len(C.base_ring())
     N1, N2 = C.count_points(2)
@@ -961,9 +976,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         return 'DONE'
     fwrite('# Obtained cocycles',outfile)
     for flist, hecke_data in all_twodim_cocycles:
-        # g0, g1 = G.get_homology_kernel(hecke_data = tuple(hecke_data))
         g0, g1, scaling = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data, outfile = outfile)
-        # g1 = g0.parent().apply_hecke_operator(g0,hecke_data_init[0]) # DEBUG
         g0_shapiro, g1_shapiro = G.inverse_shapiro(g0), G.inverse_shapiro(g1)
         fwrite('# Obtained homology generators',outfile)
         if working_prec is None:
