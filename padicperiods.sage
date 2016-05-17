@@ -525,8 +525,8 @@ def build_Lambdalist_from_AB(A,B,T, scaling):
     ans = []
     K = A.parent()
     for A0, B0 in product(our_nroot(A,scaling,return_all=True),our_nroot(B,scaling,return_all=True)):
-        for B1, D1 in product(our_nroot(B0**alpha, d,return_all=True),our_nroot(A0*B0**beta, d, return_all=True)):
-            ans.append(Matrix(K,2,2,[A0,B0,B1,D1]))
+        for B1, D1 in product(our_nroot(B0**alpha, d,return_all=True),our_nroot(B0**beta, d, return_all=True)):
+            ans.append(Matrix(K,2,2,[A0,B0,B1,A0*D1]))
     return ans
 
 def find_igusa_invariants_from_AB(A,B,T,scaling, prec, **kwargs):
