@@ -3,6 +3,8 @@ from sage.arith.all import algdep
 from sage.rings.padics.precision_error import PrecisionError
 from util import *
 
+load('mixed_extension.spyx')
+
 def precompute_powers(p,q,N):
     irange = range(-N, N+1)
     pdict = {0:1, 1:p, -1:p**-1}
@@ -340,7 +342,7 @@ def all_possible_qords(Tmatrix,N,initial = None):
             t0 = 0
     return tmp[t0:]
 
-def recognize_absolute_invariant(j_invariant,base = None,threshold = None,prec = None, outfile = None):
+def recognize_invariant(j_invariant,base = None,threshold = None,prec = None, outfile = None):
     if threshold is None:
         threshold = .9
     if base is None:
@@ -356,49 +358,6 @@ def recognize_absolute_invariant(j_invariant,base = None,threshold = None,prec =
             return fx.change_ring(base).roots()[0][0]
         except IndexError:
             raise ValueError('No roots')
-    raise ValueError('Unrecognized')
-
-def recognize_invariants(j1,j2,j3,pval,base = None,phi = None):
-    if base is None:
-        base = QQ
-    deg = base.degree()
-    x = QQ['x'].gen()
-    Kp = j1.parent()
-    j2, j3 = Kp(j2), Kp(j3)
-    p = Kp.prime()
-    if phi is None:
-        phi = lambda t:t
-    threshold = .9 * RR(p).log(10)
-    for froot,_ in algdep(p**pval * j1,deg).roots(base):
-        if froot.global_height() > threshold * j1.precision_relative():
-            continue
-        # At this point we may have recognized j1
-        j1 = p**-pval * froot
-        I10 = p**pval * froot.denominator()
-        verbose('I10 = %s'%I10)
-        I2_5 = froot.denominator() * froot
-        try:
-            for q,e in I2_5.factor():
-                if e % 5 != 0:
-                    v = 5 - (e % 5)
-                    qv = q**v
-                    I2_5 *= qv
-                    I10 *= qv
-        except ArithmeticError: pass
-        verbose('I2_5 = %s, I10 = %s'%(I2_5,I10))
-        for I2,_ in (x**5 - I2_5).roots(base):
-            verbose('I2 = %s'%I2)
-            I4p = phi(I10/I2**3) * j2
-            for I4,_ in algdep(I4p,deg).roots(base):
-                verbose('I4 = %s'%I4)
-                if I4.global_height() > threshold * I4p.precision_relative():
-                    continue
-                I6p = phi(I10/I2**2) * j3
-                for I6,_ in algdep(I6p,deg).roots(base):
-                    verbose('I6 = %s'%I6)
-                    if I6.global_height() > threshold * I6p.precision_relative():
-                        continue
-                    return (I2, I4, I6, I10)
     raise ValueError('Unrecognized')
 
 def teichmuller_system(self):
@@ -490,14 +449,12 @@ def right_multiply_multiplicative(W, A):
 def generate_matlists(Lambdalist,mat_coeffs_range = 3):
     mlistX = []
     mlistY = []
-    for a in range(-mat_coeffs_range, mat_coeffs_range+1):
-        for b in range(-mat_coeffs_range, mat_coeffs_range + 1):
-            for c,d in product(range(-mat_coeffs_range,mat_coeffs_range+1),repeat = 2):
-                m = matrix(ZZ,2,2,[a,b,c,d])
-                if m.determinant() != 0:
-                    mlistY.append(m)
-                    if m.determinant().abs() in [1,2]:
-                        mlistX.append(m)
+    for a,b,c,d in product(range(-mat_coeffs_range,mat_coeffs_range+1),repeat = 4):
+        m = matrix(ZZ,2,2,[a,b,c,d])
+        if m.determinant() != 0:
+            mlistY.append(m)
+            if m.determinant().abs() in [1,2]:
+                mlistX.append(m)
     mlistX = sorted(mlistX,key=lambda x:max([o.abs() for o in x.list()]))
     mlistY = sorted(mlistY,key=lambda x:max([o.abs() for o in x.list()]))
     mlistYYL = []
@@ -505,15 +462,14 @@ def generate_matlists(Lambdalist,mat_coeffs_range = 3):
         for Lambda in Lambdalist:
             YL = left_multiply_multiplicative(Y, Lambda)
             mlistYYL.append((Y,YL))
-    all_mats = []
     for X,YYL in product(mlistX,mlistYYL):
         Y, YL = YYL
         delta = X.determinant()
         YLXinv = right_multiply_multiplicative(YL, X.adjoint())
         if YLXinv[0,1] != YLXinv[1,0]:
             continue
-        all_mats.append((X, Y, YLXinv, delta))
-    return sorted(all_mats, key = lambda x: max([o.abs() for o in x[0].list() + x[1].list()]))
+        yield (X,Y,YLXinv,delta)
+    # return sorted(all_mats, key = lambda x: max([o.abs() for o in x[0].list() + x[1].list()]))
 
 def build_Lambdalist_from_AB(A,B,T, scaling):
     # T is the matrix of Hecke acting on Homology
@@ -525,14 +481,14 @@ def build_Lambdalist_from_AB(A,B,T, scaling):
     ans = []
     K = A.parent()
     for A0, B0 in product(our_nroot(A,scaling,return_all=True),our_nroot(B,scaling,return_all=True)):
-        for B1, D1 in product(our_nroot(B0**alpha, d,return_all=True),our_nroot(B0**beta, d, return_all=True)):
-            ans.append(Matrix(K,2,2,[A0,B0,B1,A0*D1]))
+        for B1 in our_nroot(B0, d,return_all=True):
+            ans.append(Matrix(K,2,2,[A0,B0,B1**alpha,A0*B1**beta]))
     return ans
 
 def find_igusa_invariants_from_AB(A,B,T,scaling, prec, **kwargs):
     global success_list
     Lambdalist = build_Lambdalist_from_AB(A,B,T, scaling)
-    K0 = Lambda.parent().base_ring()
+    K0 = Lambdalist[0].parent().base_ring()
     p = K0.prime()
     phi = kwargs.get('phi',lambda x:Qp(p,prec)(x))
     mat_coeffs_range = kwargs.get('mat_coeffs_range',3)
@@ -540,20 +496,19 @@ def find_igusa_invariants_from_AB(A,B,T,scaling, prec, **kwargs):
     if kwargs.has_key('list_I10'):
         list_I10 = kwargs['list_I10']
         kwargs['list_I10_padic'] = [phi(o) for o in list_I10]
-    matlists = kwargs.get('matlists',generate_matlists(Lambdalist,mat_coeffs_range))
+    # matlists = kwargs.get('matlists',generate_matlists(Lambdalist,mat_coeffs_range))
     outfile = kwargs.get('outfile')
     K = QuadExt(K0,p)
-    total_tests = len(matlists)
+    total_tests = '?' #len(matlists)
     fwrite('# Starting search for Igusa invariants. Number of tests = %s'%(total_tests), outfile)
     ntests = 0
     success_list = []
-    for X, Y, YLXinv, delta in matlists:
+    for X, Y, YLXinv, delta in generate_matlists(Lambdalist,mat_coeffs_range):
         data = 'X = %s, Y = %s'%(X.list(),Y.list())
         ntests += 1
         if ntests % 1000 == 0:
             fwrite('# num_tests = %s / %s (successes = %s)'%(ntests, total_tests, len(success_list)), outfile)
         Ag,Bg,_,Dg = YLXinv.list()
-        # for Ag,Bg,Dg in product(*[our_nroot(K0(o),delta*scaling,return_all=True) for o in [Ag1,Bg1,Dg1]]):
         q1inv = (Bg * Dg)**-1
         q2inv = (Bg * Ag)**-1
         q3inv = Bg
@@ -644,12 +599,12 @@ def check_absoluteinvs(xvec,prec,data, **kwargs):
     except (ValueError,RuntimeError,PrecisionError):
         return ''
     try:
-        j1n = recognize_absolute_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+        j1n = recognize_invariant(j1,base = base,threshold = threshold,prec = prec,  outfile = outfile)
         fwrite('# Possible j1 = %s'%(j1n),outfile)
         j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec)
-        j2n = recognize_absolute_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+        j2n = recognize_invariant(j2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
         fwrite('# Possible j2 = %s'%(j2n),outfile)
-        j3n = recognize_absolute_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+        j3n = recognize_invariant(j3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
         fwrite('# Possible j3 = %s'%(j3n),outfile)
         out_str = '# Candidate js = %s, %s, %s (%s) jpadic = (%s, %s, %s)'%(j1n,j2n,j3n,data, j1,j2,j3)
         return out_str
@@ -673,12 +628,12 @@ def check_listI10(xvec, prec, data, **kwargs):
 
         for I2c in I2c_list:
             try:
-                I2new = recognize_absolute_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                I2new = recognize_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
                 fwrite('# Possible I2 = %s'%(I2new),outfile)
                 j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec)
-                I4new = recognize_absolute_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                I4new = recognize_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
                 fwrite('# Possible I4 = %s'%I4new,outfile)
-                I6new = recognize_absolute_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                I6new = recognize_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
                 fwrite('# Possible I6 = %s'%I6new,outfile)
                 out_str = '# Candidate = %s, %s, %s, %s (%s)'%(I2new,I4new,I6new,I10new,data)
                 return out_str
@@ -702,7 +657,7 @@ def euler_factor_twodim(p,T):
 def euler_factor_twodim_tn(q,t,n):
     return QQ['x']([q*q,-q*t,2*q+n,-t,1])
 
-def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, list_I10 = None, return_all = True, compute_G = True, compute_cohomology = True, abtuple = None, logfile = None, **kwargs):
+def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, return_all = True, compute_G = True, compute_cohomology = True, abtuple = None, logfile = None, **kwargs):
     from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
     from sarithgroup import BigArithGroup
     from homology import lattice_homology_cycle
@@ -878,7 +833,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
                K0 = Qq(Pnrm**2, prec,names = 's')
                A = K0(Pnrm**Aval * Alog.exp() * Amul)
                B = K0(Pnrm**Bval * Blog.exp() * Bmul)
-               find_igusa_invariants_from_AB(A, B, T, scaling, prec = prec, embedding = G._F_to_local, outfile = outfile, list_I10 = list_I10, Pgen = G._F_to_local(Pgen))
+               find_igusa_invariants_from_AB(A, B, T, scaling, prec = prec, embedding = G._F_to_local, outfile = outfile, Pgen = G._F_to_local(Pgen),**kwargs)
     fwrite('# DONE WITH COMPUTATION', outfile)
     return('DONE')
 
