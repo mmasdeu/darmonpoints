@@ -405,6 +405,7 @@ class BigArithGroup_class(AlgebraicGroup):
             pass
         verbose('Finding a suitable wp...')
         i = 0
+        max_iterations = kwargs.get('max_iterations',-1)
         for wp in self.Gn.generate_wp_candidates(self.p,self.ideal_p,**kwargs):
             if i % 50000 == 0:
                 verbose('Done %s iterations'%i)
@@ -415,48 +416,6 @@ class BigArithGroup_class(AlgebraicGroup):
                 return self.set_wp(wp)
             except AssertionError:
                 pass
-
-    def wp(self, max_iterations = -1, initial_wp = None):
-
-        if self.discriminant == 1 and self.F == QQ: #
-            epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            if hasattr(self.Gn,'extra_matrix'):
-                return self.set_wp(self.Gn.find_wp(self.p))
-            elif self.level == 1:
-                try:
-                    ans = matrix(QQ,2,2,[0,-1,self.ideal_p.gens_reduced()[0],0])
-                except AttributeError:
-                    ans = matrix(QQ,2,2,[0,-1,self.ideal_p,0])
-                return self.set_wp(ans)
-            else:
-                # Follow Atkin--Li
-                if initial_wp is None:
-                    from sage.arith.all import xgcd
-                    p = self.ideal_p
-                    m = self.level
-                    g,w,z = xgcd(p,-m)
-                    ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
-                    all_initial = []
-                    for t in sorted(range(-8,7)):
-                        g, tinv, k = xgcd(t, -p * m)
-                        if g == 1:
-                            new_initial =  ans * matrix(QQ,2,2,[t, k, p*m, tinv])
-                            all_initial.append(new_initial)
-                else:
-                    all_initial = [initial_wp]
-                i = 0
-                for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
-                    if i % 50000 == 0:
-                        verbose('Done %s iterations'%i)
-                    if i == max_iterations:
-                        raise RuntimeError('Trouble finding wp by enumeration')
-                    i += 1
-                    for tmp in all_initial:
-                        new_candidate =  v1 * tmp * v2
-                        try:
-                            return self.set_wp(new_candidate)
-                        except AssertionError:
-                            continue
 
     def get_embedding(self,prec):
         r"""
