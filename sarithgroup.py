@@ -19,6 +19,7 @@ from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from arithgroup import ArithGroup_nf_quaternion,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix
+from arithgroup_nscartan import ArithGroup_nscartan
 from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 from sage.structure.sage_object import save,load
@@ -45,57 +46,57 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None):
-        if magma is None:
-            from sage.interfaces.magma import Magma
-            magma = Magma(logfile = logfile)
-            try:
-                page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
-            except NameError:
-                ROOT = os.getcwd()
-                page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
-            if seed is not None:
-                magma.eval('SetSeed(%s)'%seed)
-            magma.attach_spec(page_path)
-        magma.eval('Page_initialized := true')
-        a, b = None, None
-        if logfile is not None:
-            magma.eval('SetVerbose("Kleinian",2)')
+def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None, nscartan = None):
+    if magma is None:
+        from sage.interfaces.magma import Magma
+        magma = Magma(logfile = logfile)
         try:
-            discriminant = ZZ(quat_data)
-            if base is not None:
-                assert base == QQ
-            else:
-                base = QQ
-            fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level) # Fix this name
-        except TypeError:
-            a,b = quat_data
-            if base is None:
-                base = a.parent()
-            discriminant = QuaternionAlgebra(base,a,b).discriminant()
-            fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level) # Fix this name
-        if base != QQ:
-            use_sage_db = False # This is not implemented yet
-
-        if grouptype is None:
-            if base == QQ:
-                grouptype = 'PSL2'
-            else:
-                grouptype = 'PGL2'
-
-        if use_sage_db:
-            try:
-                newobj = db(fname)
-            except IOError:
-                verbose('Group not found in database. Computing from scratch.')
-                newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character)
-                newobj.save_to_db()
+            page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+        except NameError:
+            ROOT = os.getcwd()
+            page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+        if seed is not None:
+            magma.eval('SetSeed(%s)'%seed)
+        magma.attach_spec(page_path)
+    magma.eval('Page_initialized := true')
+    a, b = None, None
+    if logfile is not None:
+        magma.eval('SetVerbose("Kleinian",2)')
+    try:
+        discriminant = ZZ(quat_data)
+        if base is not None:
+            assert base == QQ
         else:
-            if a is not None:
-                newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character)
-            else:
-                newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character)
-        return newobj
+            base = QQ
+        fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level) # Fix this name
+    except TypeError:
+        a,b = quat_data
+        if base is None:
+            base = a.parent()
+        discriminant = QuaternionAlgebra(base,a,b).discriminant()
+        fname = 'arithgroup%s_%s_%s_%s.sobj'%(seed,p,discriminant,level) # Fix this name
+    if base != QQ:
+        use_sage_db = False # This is not implemented yet
+
+    if grouptype is None:
+        if base == QQ:
+            grouptype = 'PSL2'
+        else:
+            grouptype = 'PGL2'
+
+    if use_sage_db:
+        try:
+            newobj = db(fname)
+        except IOError:
+            verbose('Group not found in database. Computing from scratch.')
+            newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan)
+            newobj.save_to_db()
+    else:
+        if a is not None:
+            newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan)
+        else:
+            newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan)
+    return newobj
 
 
 class BigArithGroup_class(AlgebraicGroup):
@@ -124,7 +125,7 @@ class BigArithGroup_class(AlgebraicGroup):
         Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
         Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None, nscartan = None):
         self.seed = seed
         self.magma = magma
         self._use_shapiro = use_shapiro
@@ -160,14 +161,14 @@ class BigArithGroup_class(AlgebraicGroup):
         lev = self.ideal_p*self.level
         if character is not None:
             lev = [lev, character]
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,grouptype = grouptype,magma = magma, compute_presentation = not self._use_shapiro, timeout = timeout)
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,grouptype = grouptype,magma = magma, compute_presentation = not self._use_shapiro, timeout = timeout,nscartan=nscartan)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
         verbose('Initializing arithmetic group G(n)...')
         lev = self.level
         if character is not None:
             lev = [lev, character]
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev,info_magma = self.Gpn,grouptype = grouptype,magma = magma, compute_presentation = True, timeout = timeout)
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev,info_magma = self.Gpn,grouptype = grouptype,magma = magma, compute_presentation = True, timeout = timeout,nscartan=nscartan)
         t = walltime(t)
         verbose('Time for calculation T = %s'%t)
         verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
@@ -183,9 +184,13 @@ class BigArithGroup_class(AlgebraicGroup):
             if not self.use_shapiro():
                 basis_data_p = list(self.Gpn.Obasis)
         except AttributeError:
-            basis_data_1 = self.Gn.basis_invmat.inverse().columns()
-            if not self.use_shapiro():
-                basis_data_p = self.Gpn.basis_invmat.inverse().columns()
+            try:
+                basis_data_1 = self.Gn.basis_invmat.inverse().columns()
+                if not self.use_shapiro():
+                    basis_data_p = self.Gpn.basis_invmat.inverse().columns()
+            except AttributeError:
+                basis_data_1 = '?'
+                basis_data_p = '?'
         self._prec = -1
         self.get_embedding(200)
         fwrite('# R with basis %s'%basis_data_1,outfile)
@@ -384,30 +389,45 @@ class BigArithGroup_class(AlgebraicGroup):
                 newEgood.extend([BTEdge(not rev, e * gamma) for e in self.get_BT_reps()[1:]])
         return self.subdivide(newEgood,1-parity,depth - 1)
 
-    def set_wp(self, wp, check = True):
+    def set_wp(self, wp):
         epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
         set_immutable(wp)
-        if check:
-            assert is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False)
-            assert all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn_Obasis()))
-            assert self.is_in_Gpn_order(wp)
+        assert is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False)
+        assert all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn_Obasis()))
+        assert self.is_in_Gpn_order(wp)
         self._wp = wp
         return self._wp
 
-    def wp(self, max_iterations = -1, initial_wp = None):
+    def wp(self, **kwargs):
         try:
             return self._wp
         except AttributeError:
             pass
         verbose('Finding a suitable wp...')
-        if self.discriminant == 1 and self.F == QQ: # DEBUG
+        i = 0
+        for wp in self.Gn.generate_wp_candidates(self.p,self.ideal_p,**kwargs):
+            if i % 50000 == 0:
+                verbose('Done %s iterations'%i)
+            if i == max_iterations:
+                raise RuntimeError('Trouble finding wp by enumeration')
+            i += 1
+            try:
+                return self.set_wp(wp)
+            except AssertionError:
+                pass
+
+    def wp(self, max_iterations = -1, initial_wp = None):
+
+        if self.discriminant == 1 and self.F == QQ: #
             epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            if self.level == 1:
+            if hasattr(self.Gn,'extra_matrix'):
+                return self.set_wp(self.Gn.find_wp(self.p))
+            elif self.level == 1:
                 try:
                     ans = matrix(QQ,2,2,[0,-1,self.ideal_p.gens_reduced()[0],0])
                 except AttributeError:
                     ans = matrix(QQ,2,2,[0,-1,self.ideal_p,0])
-                return self.set_wp(ans, check = True)
+                return self.set_wp(ans)
             else:
                 # Follow Atkin--Li
                 if initial_wp is None:
@@ -434,38 +454,9 @@ class BigArithGroup_class(AlgebraicGroup):
                     for tmp in all_initial:
                         new_candidate =  v1 * tmp * v2
                         try:
-                            return self.set_wp(new_candidate, check = True)
+                            return self.set_wp(new_candidate)
                         except AssertionError:
                             continue
-        else:
-            epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            if self.F == QQ:
-                all_elts = self.Gn.element_of_norm(self.ideal_p,use_magma = True,return_all = True,radius = -1, max_elements = 1)
-            else:
-                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = -1, max_elements = 1)
-            found = False
-            all_initial = all_elts
-            if len(all_initial) == 0:
-                raise RuntimeError('Found no initial candidates for wp')
-            verbose('Found %s initial candidates for wp'%len(all_initial))
-            i = 0
-            try:
-                pgen = self.ideal_p.gens_reduced()[0]
-            except AttributeError:
-                pgen = self.ideal_p
-            for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
-                if i % 50000 == 0:
-                    verbose('Done %s iterations'%i)
-                if i == max_iterations:
-                    raise RuntimeError('Trouble finding wp by enumeration')
-                i += 1
-                for tmp in all_initial:
-                    new_candidate =  v1 * tmp * v2
-                    try:
-                        return self.set_wp(new_candidate, check = True)
-                    except AssertionError:
-                        pass
-            raise RuntimeError('Could not find wp')
 
     def get_embedding(self,prec):
         r"""
@@ -676,13 +667,16 @@ class BigArithGroup_class(AlgebraicGroup):
         theta2 = -a01 * ker[0] + a00 * ker[1]
         return theta1, theta2, determinant
 
-def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0):
+def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0, nscartan = None):
     if base == QQ:
         if timeout != 0:
             raise NotImplementedError("Timeout not implemented for rational base yet")
         discriminant = ZZ(discriminant)
         if discriminant == 1:
-            return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype, magma = magma, compute_presentation = compute_presentation)
+            if nscartan is not None:
+                return ArithGroup_nscartan(nscartan,level,info_magma,grouptype = grouptype, magma = magma, compute_presentation = compute_presentation)
+            else:
+                return ArithGroup_rationalmatrix(level,info_magma,grouptype = grouptype, magma = magma, compute_presentation = compute_presentation)
         else:
             if magma is None:
                 raise ValueError('Should specify magma session')

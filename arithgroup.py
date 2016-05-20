@@ -82,7 +82,6 @@ def _get_word_jv(G,delta):
         ans = ans + newcs
     return ans
 
-
 class ArithGroup_generic(AlgebraicGroup):
     def __init__(self):
         if self._compute_presentation:
@@ -146,6 +145,26 @@ class ArithGroup_generic(AlgebraicGroup):
             return self.abelianization().ab_to_G(x)
         else:
             return self.element_class(self, quaternion_rep = x,check = False)
+
+    def generate_wp_candidates(self, p, ideal_p,**kwargs):
+        epsinv = matrix(QQ,2,2,[0,-1,p,0])**-1
+        if self.F == QQ:
+            all_elts = self.element_of_norm(ideal_p,use_magma = True,return_all = True,radius = -1, max_elements = 1)
+        else:
+            all_elts = self.element_of_norm(ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = -1, max_elements = 1)
+        found = False
+        all_initial = all_elts
+        if len(all_initial) == 0:
+            raise RuntimeError('Found no initial candidates for wp')
+        verbose('Found %s initial candidates for wp'%len(all_initial))
+        try:
+            pgen = ideal_p.gens_reduced()[0]
+        except AttributeError:
+            pgen = ideal_p
+        for v1,v2 in cantor_diagonal(self.enumerate_elements(),self.enumerate_elements()):
+            for tmp in all_initial:
+                new_candidate =  v1 * tmp * v2
+                yield new_candidate
 
     def _coerce_map_from_(self,S):
         r"""
@@ -539,7 +558,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         return magma_quaternion_to_sage(self.B,Btmp(mu_magma),self.magma)
 
     # rationalquaternion
-    def embed_order(self,p,K,prec,outfile = None,return_all = False):
+    def embed_order(self,p,K,prec,outfile = None):
         r'''
         sage: G = ArithGroup(5,6,1)
         sage: f = G.embed_order(23,20)
@@ -580,10 +599,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)
         fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
-        if return_all:
-            return gamma,tau1,tau2
-        else:
-            return gamma, tau1
+        return gamma, tau1
 
     def get_word_rep(self,delta): # rationalquaternion
         if not self._is_in_order(delta):
@@ -594,7 +610,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
             if delta1 != delta:
                 tmp.extend(self.minus_one)
-                delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
+                delta1 =  delta1 * prod((self.Ugens[g]**a for g,a in self.minus_one))
                 assert delta1 == delta
         return reduce_word(tmp)
 
@@ -798,7 +814,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         return x.list()
 
     # rationalmatrix
-    def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1):
+    def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, extra_conductor = 1):
         from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
         M = self.level
         extra_conductor = ZZ(extra_conductor)
@@ -817,7 +833,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         gamma.set_immutable()
         return self(gamma), v0(tau)
 
-    def embed_order_legacy(self,p,K,prec,outfile = None,return_all = False):
+    def embed_order_legacy(self,p,K,prec,outfile = None):
         r'''
         '''
         from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit, find_the_unit_of
@@ -868,10 +884,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)
         fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
-        if return_all:
-            return gamma, tau1, tau2
-        else:
-            return gamma, tau1
+        return gamma, tau1
 
     def check_word(self,delta,wd):
         tmp = self.B(1)
@@ -1294,7 +1307,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
             if delta1 != delta:
                 tmp.extend(self.minus_one)
-                delta1 =  prod((self.Ugens[g]**a for g,a in tmp)) # Should be fixed...this is not efficient
+                delta1 =  delta1 * prod((self.Ugens[g]**a for g,a in self.minus_one))
                 assert delta1 == delta
         return reduce_word(tmp)
 
@@ -1369,7 +1382,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             return ans
 
     # nf_quaternion
-    def embed_order(self,p,K,prec,outfile = None,return_all = False):
+    def embed_order(self,p,K,prec,outfile = None):
         r'''
         '''
         verbose('Computing quadratic embedding to precision %s'%prec)
@@ -1420,10 +1433,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)
         fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
-        if return_all:
-            return gamma, tau1, tau2
-        else:
-            return gamma, tau1
+        return gamma, tau1
 
     def _fix_sign(self,x,N):
         if self.F.signature()[1] == 1 or self.F.signature()[0] == 0:

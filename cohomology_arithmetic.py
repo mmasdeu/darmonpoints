@@ -328,9 +328,9 @@ class ArithCoh(CohomologyGroup):
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
+            K = (self.hecke_matrix(oo).transpose()-sign).left_kernel().change_ring(QQ)
         else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
+            K = Matrix(QQ,self.dimension(),self.dimension(),0).left_kernel()
         disc = self.S_arithgroup().Gpn._O_discriminant
         discnorm = disc.norm()
         try:
@@ -361,7 +361,7 @@ class ArithCoh(CohomologyGroup):
                     except (ValueError,ArithmeticError):
                         continue
                     try:
-                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose()-ap).kernel()
+                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose()-ap).left_kernel()
                     except RuntimeError:
                         continue
                     K = K.intersection(K1)
