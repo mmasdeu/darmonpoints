@@ -34,6 +34,9 @@ from sage.rings.infinity import Infinity
 from homology_abstract import HomologyGroup
 oo = Infinity
 
+def reduce_word(wd): # DEBUG
+    return wd
+
 def _get_word_jv(G,delta):
     B = delta.parent()
     CC = ComplexField(300)

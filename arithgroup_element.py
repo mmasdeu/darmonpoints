@@ -67,7 +67,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
             init_data = True
         if init_data is False:
             raise ValueError('Must pass either quaternion_rep or word_rep')
-        self._reduce_word()
+        # self._reduce_word() # DEBUG
 
     @cached_method
     def __hash__(self):
@@ -89,8 +89,8 @@ class ArithGroupElement(MultiplicativeGroupElement):
     def _mul_(left,right):
         word_rep = None
         quaternion_rep = None
-        if left.has_word_rep and right.has_word_rep:
-            word_rep = left.word_rep + right.word_rep
+        # if left.has_word_rep and right.has_word_rep:
+        #     word_rep = left.word_rep + right.word_rep
         if (left.has_quaternion_rep and right.has_quaternion_rep) or word_rep is None:
             quaternion_rep = left.quaternion_rep * right.quaternion_rep
         return left.__class__(left.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)

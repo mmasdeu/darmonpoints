@@ -534,8 +534,15 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
           return E.change_ring(HCF)(0),True
   elif E.base_ring() == QQ and hF == 1:
       assert w.minpoly()(Cp.gen()) == 0
-      x1 = (p**(x.valuation())*Floc(ZZ(x._ntl_rep()[0]))).add_bigoh(prec)
-      x2 = (p**(x.valuation())*Floc(ZZ(x._ntl_rep()[1]))).add_bigoh(prec)
+      x1 = 0
+      x2 = 0
+      for i,o in enumerate(x.list()):
+          if len(o) > 0:
+              x1 += o[0] * p**i
+          if len(o) > 1:
+              x2 += o[1] * p**i
+      x1 = (p**x.valuation())*Floc(x1).add_bigoh(prec)
+      x2 = (p**x.valuation())*Floc(x2).add_bigoh(prec)
       try:
           x1 = algdep(x1,1).roots(QQ)[0][0]
           x2 = algdep(x2,1).roots(QQ)[0][0]

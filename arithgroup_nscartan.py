@@ -243,7 +243,6 @@ class ArithGroup_nscartan(ArithGroup_generic):
         r'''
         '''
         from limits import find_the_unit_of
-
         verbose('Computing quadratic embedding to precision %s'%prec)
         verbose('Finding module generators')
         w = module_generators(K)[1]
@@ -260,23 +259,20 @@ class ArithGroup_nscartan(ArithGroup_generic):
             fwrite('# d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
         except NotImplementedError: pass
         fwrite('# w_K satisfies: %s'%w.minpoly(),outfile)
-
+        #####
+        a = (self.GFq(w.trace())/2).lift()
+        b = (self.GFq(w.trace()**2/4 - w.norm())/self.eps).sqrt()
+        mu = matrix(self.GFq,2,2,[a,b,b*self.eps,a])
         # Define mu to have the same minpoly as K.gen()
-        
-        mu = r0 + r1*mu
-        assert K.gen(0).trace() == mu.trace() and K.gen(0).norm() == mu.determinant()
-        iotap = self.get_embedding(prec)
-        a,b,c,d = iotap(mu).list()
-        X = PolynomialRing(Cp,names = 'X').gen()
-        tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
-        tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
-        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
-        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
+        mu = ZZ(r0) + ZZ(r1)*mu
+        assert self.GFq(K.gen(0).trace()) == mu.trace() and self.GFq(K.gen(0).norm()) == mu.determinant()
         u = find_the_unit_of(self.F,K)
         gammalst = u.list()
         assert len(gammalst) == 2
-        gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
+        gammaquatrep = self.B(gammalst[0]).change_ring(self.GFq) + self.B(gammalst[1]).change_ring(self.GFq) * mu
         assert gammaquatrep.trace() == u.trace() and gammaquatrep.determinant() == u.norm()
+        gammaquatrep = lift(gammaquatrep.change_ring(ZZ),self.q)
+        # print gammaquatrep.charpoly()
         gammaq = gammaquatrep
         while True:
             try:
@@ -284,8 +280,11 @@ class ArithGroup_nscartan(ArithGroup_generic):
                 break
             except ValueError:
                 gammaq *= gammaquatrep
-        a, b, c, d = iotap(gamma.quaternion_rep).list()
-        assert (c*tau1**2 + (d-a)*tau1 - b) == 0
+        a,b,c,d = gamma.quaternion_rep.list()
+        rt_list = our_sqrt((d-a)**2 + 4*b*c,Cp,return_all=True)
+        tau1, tau2 = [(Cp(a-d) + rt)/Cp(2*c) for rt in rt_list]
+        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
+        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
         fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)
