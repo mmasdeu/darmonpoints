@@ -239,7 +239,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
         yield ans
 
     # nonsplitcartan
-    def embed_order(self,p,K,prec,outfile = None):
+    def embed_order(self,p,K,prec,outfile = None, return_all = False):
         r'''
         '''
         from limits import find_the_unit_of
