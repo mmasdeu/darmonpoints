@@ -41,7 +41,6 @@ EXAMPLES::
 # conventions for matrix actions (since there are several in use in the
 # literature and no natural "best" choice).
 
-from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.abstract_method import abstract_method
 from sage.structure.factory import UniqueFactory
@@ -359,10 +358,7 @@ class Sigma0_class(Parent):
         self._primes = list(N.factor())
         self._base_ring = base_ring
         self._adjuster = adjuster
-        if base_ring == ZZ:
-            self._matrix_space = MatrixSpace_ZZ_2x2()
-        else:
-            self._matrix_space = MatrixSpace(base_ring, 2)
+        self._matrix_space = MatrixSpace(base_ring, 2)
         Parent.__init__(self, category=Monoids())
         self.register_embedding(_Sigma0Embedding(self))
 
