@@ -147,6 +147,26 @@ class ArithGroup_generic(AlgebraicGroup):
         else:
             return self.element_class(self, quaternion_rep = x,check = False)
 
+    def generate_wp_candidates(self, p, ideal_p,**kwargs):
+        epsinv = matrix(QQ,2,2,[0,-1,p,0])**-1
+        if self.F == QQ:
+            all_elts = self.element_of_norm(ideal_p,use_magma = True,return_all = True,radius = -1, max_elements = 1)
+        else:
+            all_elts = self.element_of_norm(ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = -1, max_elements = 1)
+        found = False
+        all_initial = all_elts
+        if len(all_initial) == 0:
+            raise RuntimeError('Found no initial candidates for wp')
+        verbose('Found %s initial candidates for wp'%len(all_initial))
+        try:
+            pgen = ideal_p.gens_reduced()[0]
+        except AttributeError:
+            pgen = ideal_p
+        for v1,v2 in cantor_diagonal(self.enumerate_elements(),self.enumerate_elements()):
+            for tmp in all_initial:
+                new_candidate =  v1 * tmp * v2
+                yield new_candidate
+
     def _coerce_map_from_(self,S):
         r"""
         The only things that coerce into this group are:
@@ -796,6 +816,35 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
 
     def _quaternion_to_list(self,x):
         return x.list()
+
+    def generate_wp_candidates(self,p,ideal_p,**kwargs):
+        epsinv = matrix(QQ,2,2,[0,-1,p,0])**-1
+        initial_wp = kwargs.get('initial_wp')
+        if self.level == 1:
+            try:
+                ans = matrix(QQ,2,2,[0,-1,ideal_p.gens_reduced()[0],0])
+            except AttributeError:
+                ans = matrix(QQ,2,2,[0,-1,ideal_p,0])
+            yield ans
+        else:
+            # Follow Atkin--Li
+            if initial_wp is None:
+                from sage.arith.all import xgcd
+                p = ideal_p
+                m = self.level
+                g,w,z = xgcd(p,-m)
+                ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
+                all_initial = []
+                for t in sorted(range(-8,7)):
+                    g, tinv, k = xgcd(t, -p * m)
+                    if g == 1:
+                        new_initial =  ans * matrix(QQ,2,2,[t, k, p*m, tinv])
+                        all_initial.append(new_initial)
+            else:
+                all_initial = [initial_wp]
+            for v1,v2 in cantor_diagonal(self.enumerate_elements(),self.enumerate_elements()):
+                for tmp in all_initial:
+                    yield  v1 * tmp * v2
 
     # rationalmatrix
     def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1):

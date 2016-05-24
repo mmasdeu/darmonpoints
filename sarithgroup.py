@@ -394,78 +394,23 @@ class BigArithGroup_class(AlgebraicGroup):
         self._wp = wp
         return self._wp
 
-    def wp(self, max_iterations = -1, initial_wp = None):
+    def wp(self,**kwargs):
         try:
             return self._wp
         except AttributeError:
             pass
         verbose('Finding a suitable wp...')
-        if self.discriminant == 1 and self.F == QQ: # DEBUG
-            epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            if self.level == 1:
-                try:
-                    ans = matrix(QQ,2,2,[0,-1,self.ideal_p.gens_reduced()[0],0])
-                except AttributeError:
-                    ans = matrix(QQ,2,2,[0,-1,self.ideal_p,0])
-                return self.set_wp(ans, check = True)
-            else:
-                # Follow Atkin--Li
-                if initial_wp is None:
-                    from sage.arith.all import xgcd
-                    p = self.ideal_p
-                    m = self.level
-                    g,w,z = xgcd(p,-m)
-                    ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
-                    all_initial = []
-                    for t in sorted(range(-8,7)):
-                        g, tinv, k = xgcd(t, -p * m)
-                        if g == 1:
-                            new_initial =  ans * matrix(QQ,2,2,[t, k, p*m, tinv])
-                            all_initial.append(new_initial)
-                else:
-                    all_initial = [initial_wp]
-                i = 0
-                for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
-                    if i % 50000 == 0:
-                        verbose('Done %s iterations'%i)
-                    if i == max_iterations:
-                        raise RuntimeError('Trouble finding wp by enumeration')
-                    i += 1
-                    for tmp in all_initial:
-                        new_candidate =  v1 * tmp * v2
-                        try:
-                            return self.set_wp(new_candidate, check = True)
-                        except AssertionError:
-                            continue
-        else:
-            epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
-            if self.F == QQ:
-                all_elts = self.Gn.element_of_norm(self.ideal_p,use_magma = True,return_all = True,radius = -1, max_elements = 1)
-            else:
-                all_elts = self.Gn.element_of_norm(self.ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = -1, max_elements = 1)
-            found = False
-            all_initial = all_elts
-            if len(all_initial) == 0:
-                raise RuntimeError('Found no initial candidates for wp')
-            verbose('Found %s initial candidates for wp'%len(all_initial))
-            i = 0
+        i = 0
+        for wp in self.Gn.generate_wp_candidates(self.p,self.ideal_p,**kwargs):
+            if i % 50000 == 0:
+                verbose('Done %s iterations'%i)
+            if i == max_iterations:
+                raise RuntimeError('Trouble finding wp by enumeration')
+            i += 1
             try:
-                pgen = self.ideal_p.gens_reduced()[0]
-            except AttributeError:
-                pgen = self.ideal_p
-            for v1,v2 in cantor_diagonal(self.Gn.enumerate_elements(),self.Gn.enumerate_elements()):
-                if i % 50000 == 0:
-                    verbose('Done %s iterations'%i)
-                if i == max_iterations:
-                    raise RuntimeError('Trouble finding wp by enumeration')
-                i += 1
-                for tmp in all_initial:
-                    new_candidate =  v1 * tmp * v2
-                    try:
-                        return self.set_wp(new_candidate, check = True)
-                    except AssertionError:
-                        pass
-            raise RuntimeError('Could not find wp')
+                return self.set_wp(wp)
+            except AssertionError:
+                pass
 
     def get_embedding(self,prec):
         r"""
