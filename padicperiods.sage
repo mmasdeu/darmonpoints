@@ -566,7 +566,7 @@ def check_generic(xvec, prec, data,  **kwargs):
     if kwargs.has_key('cheatjs'):
         return check_cheatjs(xvec,prec,data, **kwargs)
     elif kwargs.has_key('list_I10'):
-        return check_listI10(xvec,prec,data, **kwargs)
+        return check_absoluteinvs(xvec,prec,data, **kwargs) + check_listI10(xvec,prec,data, **kwargs)
     else:
         return check_absoluteinvs(xvec,prec,data, **kwargs)
 
@@ -998,3 +998,15 @@ def compare_AB_periods(Alist, Blist, T, Ag, Bg, Dg, prec, base=QQ, matlist = Non
             if (A1log-Ag.log(0)).valuation() > 2 and (B1log-Bg.log(0)).valuation() > 2 and (D1log-Dg.log(0)).valuation() > 2:
                 print a,b,c,d, t,n
 
+
+def generate_listI10(F,N):
+    from itertools import product
+    factor_list = [F(-1)] + list(F.units()) + [o.gens_reduced()[0] for o,_ in N.factor()]
+    exp_ranges = [[-1,1]] + [range(-15,16) for _ in F.units()] + [[2] for o in N.factor()]
+    for ell in F.primes_of_bounded_norm(5):
+        factor_list.append(ell.gens_reduced()[0])
+        exp_ranges.append(range(3))
+    ans = []
+    for v in product(*exp_ranges):
+        ans.append(prod([o**i for o,i in zip(factor_list,v)]))
+    return ans
