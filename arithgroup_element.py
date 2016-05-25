@@ -69,6 +69,9 @@ class ArithGroupElement(MultiplicativeGroupElement):
             raise ValueError('Must pass either quaternion_rep or word_rep')
         self._reduce_word()
 
+    def size(self):
+        return len(self.word_rep)
+
     @cached_method
     def __hash__(self):
         try:
@@ -103,7 +106,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         word_rep = None
         quaternion_rep = None
         if self.has_word_rep:
-            word_rep = [(g,-i) for g,i in reversed(self.word_rep)]
+            word_rep = [-i for i in reversed(self.word_rep)]
         if self.has_quaternion_rep:
             quaternion_rep = self.quaternion_rep**(-1)
         return self.__class__(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
@@ -128,7 +131,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
     def _reduce_word(self):
         if not self.has_word_rep:
             return
-        self.word_rep = reduce_word(self.word_rep)
+        self.word_rep = reduce_word_tietze(self.word_rep)
 
     @lazy_attribute
     def word_rep(self):
@@ -146,7 +149,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         '''
         Gamma = self.parent()
         self.has_quaternion_rep = True
-        self.quaternion_rep = prod([Gamma.Ugens[g]**a for g,a in self.word_rep], z = Gamma.B(1))
+        self.quaternion_rep = prod([Gamma.Ugens[g]**a for g,a in tietze_to_syllables(self.word_rep)], z = Gamma.B(1))
         set_immutable(self.quaternion_rep)
         return self.quaternion_rep
 
@@ -161,7 +164,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         Gamma = self.parent()
         F = Gamma.base_field()
         try:
-            q1 = prod([Gamma.Ugens[g]**a for g,a in wd],z = ZZ(1))
+            q1 = prod([Gamma.Ugens[g]**a for g,a in tietze_to_syllables(wd)],z = ZZ(1))
             quo = F(q * q1**-1)
         except (TypeError,IndexError):
             #print q
@@ -169,13 +172,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
             print 'Inconsistency: %s'%(q * q1**-1)
             raise RuntimeError('Word and quaternion are inconsistent! (%s)'%txt)
         return
-
-    def __getitem__(self,n):
-        r'''
-        Returns the nth letter of the form g^a
-        '''
-        g,a = self.word_rep[n]
-        return self.parent().gen(g)**a
 
     @cached_method
     def embed(self,prec):
@@ -189,15 +185,18 @@ class ArithGroupElement(MultiplicativeGroupElement):
             if len(self.word_rep) == 0:
                 return self
             elif len(self.word_rep) == 1:
-                i, a = self.word_rep[0]
-                return self.parent()(w**-1 * self.parent().gen(i).quaternion_rep * w) ** a
+                i = self.word_rep[0]
+                if i > 0:
+                    return self.parent()(w**-1 * self.parent().gen(i-1).quaternion_rep * w)
+                else:
+                    return self.parent()(w**-1 * self.parent().gen(-i-1).quaternion_rep * w)**-1
             else:
                 word_rep = []
-                for i,a in self.word_rep:
-                    if a > 0:
-                        word_rep += self.parent().gen(i).conjugate_by(w).word_rep * a
+                for i in self.word_rep:
+                    if i > 0:
+                        word_rep += self.parent().gen(i-1).conjugate_by(w).word_rep
                     else:
-                        word_rep += (self.parent().gen(i)**-1).conjugate_by(w).word_rep * (-a)
+                        word_rep += (self.parent().gen(-i-1)**-1).conjugate_by(w).word_rep
         if self.has_quaternion_rep:
             quat_rep = w**-1 * self.quaternion_rep * w
         return self.parent().element_class(self.parent(), word_rep = word_rep, quaternion_rep = quat_rep, check = False)
@@ -214,7 +213,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         B = G.Gn.B
         gprimeq = self.quaternion_rep
         gprime = G.Gn(gprimeq)
-        gword = gprime.word_rep
+        gword = tietze_to_syllables(gprime.word_rep)
         rels = G.Gn._calculate_relation(G.Gn.get_weight_vector(gprime**npow),separated = True)
         # If npow > 1 then add the boundary relating self^npow with npow*self
         ans = [(-1,[gprimeq**j for j in range(1,npow)],gprime)] if npow > 1 else []

@@ -384,7 +384,7 @@ class OneChains_element(ModuleElement):
         return mystr
 
     def short_rep(self):
-        return [(len(g.word_rep),v.degree(),v.size()) for g,v in self._data.iteritems()]
+        return [(g.size(),v.degree(),v.size()) for g,v in self._data.iteritems()]
 
     def is_degree_zero_valued(self):
         for v in self._data.values():
@@ -424,7 +424,7 @@ class OneChains_element(ModuleElement):
         newdict = defaultdict(V)
         for gword, v in zip(gwordlist,oldvals):
             newv = V(v)
-            for i,a in gword:
+            for i,a in tietze_to_syllables(gword):
                 oldv = V(newv)
                 g = G.gen(i)
                 newv = (g**-a) * V(oldv) # for the next iteration
@@ -440,7 +440,7 @@ class OneChains_element(ModuleElement):
             update_progress(float(QQ(counter)/QQ(len(oldvals))),'Reducing to degree zero equivalent')
         for b, r in rel:
             newv = V(V.base_field().gen())
-            for i, a in r:
+            for i, a in tietze_to_syllables(r):
                 oldv = V(newv)
                 g = G.gen(i)
                 newv = (g**-a) * V(oldv)
@@ -471,9 +471,8 @@ class OneChains_element(ModuleElement):
         G = self.parent().group()
         newdict = defaultdict(V)
         for oldg,v in self._data.iteritems():
-            gword = oldg.word_rep
             newv = v
-            for i,a in gword:
+            for i,a in tietze_to_syllables(oldg.word_rep):
                 g = G.gen(i)
                 oldv = newv
                 newv = g**-a * oldv

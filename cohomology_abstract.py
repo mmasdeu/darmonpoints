@@ -110,9 +110,9 @@ class CohomologyElement(ModuleElement):
             x = G(x)
             wd = x.word_rep
         if self.parent().trivial_action():
-            return self._evaluate_word_tietze_trivial_identity(syllables_to_tietze(wd))
+            return self._evaluate_word_tietze_trivial_identity(wd)
         else:
-            return self._evaluate_word_tietze_identity(syllables_to_tietze(wd))
+            return self._evaluate_word_tietze_identity(wd)
 
     @cached_method
     def evaluate(self,x,parallelize = False):
@@ -124,9 +124,9 @@ class CohomologyElement(ModuleElement):
             x = G(x)
             wd = x.word_rep
         if self.parent().trivial_action():
-            return self._evaluate_word_tietze_trivial(syllables_to_tietze(wd))
+            return self._evaluate_word_tietze_trivial(wd)
         else:
-            return self._evaluate_word_tietze(syllables_to_tietze(wd))
+            return self._evaluate_word_tietze(wd)
 
     def _evaluate_word_tietze(self,word):
         G = self.parent().group()
@@ -327,6 +327,7 @@ class CohomologyGroup(Parent):
         ans = [self._gen_pows[0][0].parent()(0) for o in self.group().gens()]
         if len(word) == 0:
             return ans
+        word = tietze_to_syllables(word)
         lenword = len(word)
         for j in xrange(lenword):
             i,a = word[j]

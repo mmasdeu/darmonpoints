@@ -248,6 +248,7 @@ class HomologyGroup(Parent):
         ans = [self._gen_pows[0][0].parent()(0) for o in self.group().gens()]
         if len(word) == 0:
             return ans
+        word = tietze_to_syllables(word)
         lenword = len(word)
         for j in xrange(lenword):
             i,a = word[j]
