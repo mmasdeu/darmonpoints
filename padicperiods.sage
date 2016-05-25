@@ -342,22 +342,28 @@ def all_possible_qords(Tmatrix,N,initial = None):
             t0 = 0
     return tmp[t0:]
 
-def recognize_invariant(j_invariant,base = None,threshold = None,prec = None, outfile = None):
+def recognize_invariant(j_invariant,base = None,threshold = None,prec = None, outfile = None, twopowlist = None, return_all = False):
     if threshold is None:
         threshold = .9
     if base is None:
         base = QQ
+    if twopowlist is None:
+        twopowlist = [0]
     deg = base.degree()
     Kp = j_invariant.parent()
     threshold = threshold * RR(Kp.prime()).log(10)
-    fx = algdep(j_invariant,deg)
-    hfx = height_polynomial(fx)
-    trash_height = threshold * j_invariant.precision_relative()
-    if hfx < trash_height:
-        try:
-            return fx.change_ring(base).roots()[0][0]
-        except IndexError:
-            raise ValueError('No roots')
+    for i in twopowlist:
+        twopow = 2**i
+        fx = algdep(j_invariant/twopow,deg)
+        hfx = height_polynomial(fx)
+        trash_height = threshold * j_invariant.precision_relative()
+        if hfx < trash_height:
+            ans = [twopow * o for o,_ in fx.change_ring(base).roots()]
+            if len(ans) > 0:
+                if return_all:
+                    return ans
+                else:
+                    return ans[0]
     raise ValueError('Unrecognized')
 
 def teichmuller_system(self):
@@ -628,12 +634,12 @@ def check_listI10(xvec, prec, data, **kwargs):
 
         for I2c in I2c_list:
             try:
-                I2new = recognize_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                I2new = recognize_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile, twopowlist = range(5,10))
                 fwrite('# Possible I2 = %s'%(I2new),outfile)
                 j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec)
-                I4new = recognize_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                I4new = recognize_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile, twopowlist = range(10,12))
                 fwrite('# Possible I4 = %s'%I4new,outfile)
-                I6new = recognize_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile)
+                I6new = recognize_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile, twopowlist = range(13,20))
                 fwrite('# Possible I6 = %s'%I6new,outfile)
                 out_str = '# Candidate = %s, %s, %s, %s (%s)'%(I2new,I4new,I6new,I10new,data)
                 return out_str
@@ -1001,8 +1007,8 @@ def compare_AB_periods(Alist, Blist, T, Ag, Bg, Dg, prec, base=QQ, matlist = Non
 
 def generate_listI10(F,N):
     from itertools import product
-    factor_list = [F(-1)] + list(F.units()) + [o.gens_reduced()[0] for o,_ in N.factor()]
-    exp_ranges = [[-1,1]] + [range(-15,16) for _ in F.units()] + [[2] for o in N.factor()]
+    factor_list = [F(2), F(-1)] + list(F.units()) + [o.gens_reduced()[0] for o,_ in N.factor()]
+    exp_ranges = [range(20,25), [-1,1]] + [range(-15,16) for _ in F.units()] + [[2] for o in N.factor()]
     for ell in F.primes_of_bounded_norm(5):
         factor_list.append(ell.gens_reduced()[0])
         exp_ranges.append(range(3))
