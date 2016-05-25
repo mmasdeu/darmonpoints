@@ -458,6 +458,7 @@ class BigArithGroup_class(AlgebraicGroup):
             f = self._F_to_local
             return set_immutable((f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K).change_ring(Qp(self.p, prec)))
 
+    @cached_method
     def reduce_in_amalgam(self,x,return_word = False, check = False):
         a,wd = self._reduce_in_amalgam(set_immutable(x))
         if check:

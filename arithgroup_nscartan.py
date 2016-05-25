@@ -30,7 +30,7 @@ from sage.misc.sage_eval import sage_eval
 from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
-from sage.rings.finite_rings.constructor import FiniteField
+from sage.rings.finite_rings.finite_field_constructor import FiniteField
 from sage.rings.infinity import Infinity
 from homology_abstract import HomologyGroup
 from arithgroup import ArithGroup_generic
