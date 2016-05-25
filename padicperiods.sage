@@ -479,7 +479,10 @@ def generate_matlists(Lambdalist,mat_coeffs_range = 3):
 
 def build_Lambdalist_from_AB(A,B,T, scaling):
     # T is the matrix of Hecke acting on Homology
-    x,y,z,t = T.list()
+    try:
+        x,y,z,t = T.list()
+    except AttributeError:
+        x,y,z,t = T
     alpha = ZZ(z)/ZZ(y)
     beta = ZZ(t-x)/ZZ(y)
     d = lcm(alpha.denominator(),beta.denominator())
