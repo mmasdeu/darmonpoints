@@ -430,8 +430,9 @@ def our_algdep(z,degree,prec = None):
         if field_deg == 1:
             M[k,0] = ZZ(r.lift()) % pn
         else:
-            for i in range(field_deg):
-                M[k,-1-i] = ZZ(r._ntl_rep()[i]) % pn
+            for j,o in enumerate(r.list()):
+                for i,u in enumerate(o):
+                    M[k,-1-i] += (p**j*u) % pn
     for i in range(field_deg):
         M[n+i,-1-i] = pn
     verb_lev = get_verbose()
@@ -534,8 +535,15 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
           return E.change_ring(HCF)(0),True
   elif E.base_ring() == QQ and hF == 1:
       assert w.minpoly()(Cp.gen()) == 0
-      x1 = (p**(x.valuation())*Floc(ZZ(x._ntl_rep()[0]))).add_bigoh(prec)
-      x2 = (p**(x.valuation())*Floc(ZZ(x._ntl_rep()[1]))).add_bigoh(prec)
+      x1 = 0
+      x2 = 0
+      for i,o in enumerate(x.list()):
+          if len(o) > 0:
+              x1 += o[0] * p**i
+          if len(o) > 1:
+              x2 += o[1] * p**i
+      x1 = (p**x.valuation())*Floc(x1).add_bigoh(prec)
+      x2 = (p**x.valuation())*Floc(x2).add_bigoh(prec)
       try:
           x1 = algdep(x1,1).roots(QQ)[0][0]
           x2 = algdep(x2,1).roots(QQ)[0][0]
@@ -797,23 +805,37 @@ def translate_into_twosided_list(V):
     vp,vm = V
     return [None] + vp + list(reversed(vm))
 
-def shorten_word(longword):
+def tietze_to_syllables(wd):
     r'''
     Converts a word in Magma format into our own format.
 
         TESTS:
 
-            sage: short = shorten_word([1,1,-3,-3,-3,2,2,2,2,2,-1,-1,-1])
+            sage: short = tietze_to_syllables([1,1,-3,-3,-3,2,2,2,2,2,-1,-1,-1])
             sage: print short
             [(0, 2), (2, -3), (1, 5), (0, -3)]
     '''
-    return [(a-1,len(list(g))) if a > 0 else (-a-1,-len(list(g))) for a,g in groupby(longword)]
-
-def tietze_to_syllables(wd):
-    return shorten_word(wd)
+    return [(a-1,len(list(g))) if a > 0 else (-a-1,-len(list(g))) for a,g in groupby(wd)]
 
 def syllables_to_tietze(wd):
     return [sgn(a)*(i + 1) for i,a in wd for _ in range(abs(a))]
+
+def reduce_word_tietze(word):
+    r'''
+    Simplifies the given word by cancelling out [g, -g] -> []
+    '''
+    new_word = [i for i in word]
+    old_word = []
+    changed = True
+    while changed:
+        changed = False
+        old_word = new_word
+        for i in range(len(old_word) - 1):
+            if old_word[i] == -old_word[i+1]:
+                changed = True
+                new_word = old_word[:i] + old_word[i+2:]
+                break
+    return new_word
 
 def reduce_word(word):
     r'''
@@ -1345,16 +1367,8 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     for twopow in twopowlist:
         addpart = addpart0 / twopow
         success = False
-
-        for a,b in product(range(p),repeat = 2) if twopow * known_multiple != 1 else [(1,0)]:
-            if a == 0 and b == 0:
-                continue
-            if twopow * known_multiple != 1:
-                try:
-                    J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
-                except ValueError: continue
-            else:
-                J1 = J
+        power = 1/(twopow * known_multiple)
+        for J1 in our_nroot(J**(power.numerator()), power.denominator(), return_all = True):
             if J1 == Cp(1):
                 candidate = E.change_ring(HCF)(0)
                 verbose('Recognized the point, it is zero!')
@@ -1378,7 +1392,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
                     break
                 success = False
                 prec0 = prec
-                while not success and prec0 > 0.66 * prec:
+                while not success and prec0 > 0.9 * prec:
                     verbose('Trying to recognize point with precision %s'%prec0, level = 2)
                     candidate,success = recognize_point(x,y,E,K,prec = prec0,HCF = HCF,E_over_HCF = EH)
                     prec0 -= 1
