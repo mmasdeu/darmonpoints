@@ -805,6 +805,15 @@ def translate_into_twosided_list(V):
     vp,vm = V
     return [None] + vp + list(reversed(vm))
 
+def multiply_out(word, genlist, z = 1):
+    ans = z
+    for i in word:
+        if i > 0:
+            ans = ans * genlist[i-1]
+        else:
+            ans = ans * genlist[-i-1]**-1
+    return ans
+
 def tietze_to_syllables(wd):
     r'''
     Converts a word in Magma format into our own format.

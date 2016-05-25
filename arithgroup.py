@@ -986,15 +986,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         else:
             return False
 
-def multiply_out(word, genlist, z = 1):
-    ans = z
-    for i in word:
-        if i > 0:
-            ans = ans * genlist[i-1]
-        else:
-            ans = ans * genlist[-i-1]**-1
-    return ans
-
 class FaceRel(SageObject):
     def __init__(self,center = None ,radius = None, mat = None):
         self.center = center

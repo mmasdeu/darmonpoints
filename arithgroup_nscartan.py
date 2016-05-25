@@ -158,58 +158,61 @@ class ArithGroup_nscartan(ArithGroup_generic):
             temp_relation_words = []
             I = SL2Z([1,0,0,1])
             E = SL2Z([-1,0,0,-1])
-            self.minus_one = []
+            minus_one = []
             for i,g in enumerate(self._Gamma_farey.generators()):
                 newg = self.B([g.a(),g.b(),g.c(),g.d()])
                 if newg == I:
                     continue
                 self.Ugens.append(newg)
-                self._gens.append(self.element_class(self,quaternion_rep = newg, word_rep = [(i,1)],check = False))
+                self._gens.append(self.element_class(self,quaternion_rep = newg, word_rep = [i+1],check = False))
                 if g.matrix()**2 == I.matrix():
-                    temp_relation_words.append([(i,2)])
-                    if self.minus_one is not None:
-                        temp_relation_words.append([(i,-1)]+self.minus_one)
-                    self.minus_one = [(i,1)]
+                    temp_relation_words.append([i+1, i+1])
+                    if minus_one is not None:
+                        temp_relation_words.append([-i-1]+minus_one)
+                    else:
+                        minus_one = [i+1]
                 elif g.matrix()**2 == E.matrix():
-                    temp_relation_words.append([(i,4)])
-                    if self.minus_one is not None:
-                        temp_relation_words.append([(i,-2)]+self.minus_one)
-                    self.minus_one = [(i,2)]
+                    temp_relation_words.append([i+1,i+1,i+1,i+1])
+                    if minus_one is not None:
+                        temp_relation_words.append([-i-1,-i-1]+minus_one)
+                    else:
+                        minus_one = [i+1, i+1]
                 elif g.matrix()**3 == I.matrix():
-                    temp_relation_words.append([(i,3)])
+                    temp_relation_words.append([i+1, i+1, i+1])
                 elif g.matrix()**3 == E.matrix():
-                    temp_relation_words.append([(i,6)])
-                    if self.minus_one is not None:
-                        temp_relation_words.append([(i,-3)]+self.minus_one)
-                    self.minus_one = [(i,3)]
+                    temp_relation_words.append([i+1, i+1, i+1, i+1, i+1, i+1])
+                    if minus_one is not None:
+                        temp_relation_words.append([-i-1, -i-1, -i-1]+minus_one)
+                    else:
+                        minus_one = [i+1, i+1, i+1]
                 else:
                     assert g.matrix()**24 != I.matrix()
             # The extra matrix is added
             i = len(self.Ugens)
             self.extra_matrix_index = i
             self.Ugens.append(self.extra_matrix)
-            self._gens.append(self.element_class(self,quaternion_rep = self.Ugens[i], word_rep = [(i,1)],check = False))
+            self._gens.append(self.element_class(self,quaternion_rep = self.Ugens[i], word_rep = [i+1],check = False))
 
             # The new relations are also added
             w = self._get_word_rep_initial(self.extra_matrix**(self.q+1))
-            temp_relation_words.append( w + [(i,-self.q-1)])
+            temp_relation_words.append( w + ([-i-1] * (self.q+1)))
             for j,g in enumerate(self.Ugens[:-1]):
                 g1 = self.extra_matrix_inverse * g * self.extra_matrix
                 w = self._get_word_rep_initial(g1)
-                new_rel = w + [(i,-1),(j,-1),(i,1)]
+                new_rel = w + [-i-1, -j-1, i+1]
                 temp_relation_words.append(new_rel)
             self.F_unit_offset = len(self.Ugens)
-            if self.minus_one is not None:
-                self.minus_one_long = syllables_to_tietze(self.minus_one)
+            if minus_one is not None:
+                self.minus_one_long = syllables_to_tietze(minus_one)
             self._relation_words = []
             for rel in temp_relation_words:
-                sign = prod((self._gens[g].quaternion_rep**a for g,a in rel), z = self.B(1))
+                sign = multiply_out(rel, self.Ugens, self.B(1))
                 if sign == self.B(1) or 'P' in grouptype:
                     self._relation_words.append(rel)
                 else:
                     assert sign == self.B(-1)
                     newrel = rel + self.minus_one
-                    sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1))
+                    sign = multiply_out(newrel, self.Ugens, self.B(1))
                     assert sign == self.B(1)
                     self._relation_words.append(newrel)
 
@@ -295,9 +298,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
             return gamma, tau1
 
     def check_word(self,delta,wd):
-        tmp = self.B(1)
-        for i,a in wd:
-            tmp = tmp * self.gen(i).quaternion_rep**a
+        tmp = multiply_out(wd, self.Ugens, self.B(1))
         assert tmp == delta,"tmp = %s, delta = %s, wd = %s"%(tmp,delta,wd)
         return wd
 
@@ -311,20 +312,17 @@ class ArithGroup_nscartan(ArithGroup_generic):
             except (RuntimeError, AssertionError):
                 print 'Delta = %s'%delta
                 assert 0
-        tmp = self.B(1)
-        for i,a in shorten_word(ans):
-            tmp *= self.gen(i).quaternion_rep**a
+        tmp = multiply_out(ans, self.Ugens, self.B(1))
         delta = SL2Z(delta.list())
         err = SL2Z(delta * SL2Z(tmp**-1))
         I = SL2Z([1,0,0,1])
         E = SL2Z([-1,0,0,-1])
         gens = self._Gamma_farey.generators()
         if err == I:
-            ans = shorten_word(ans)
             return self.check_word(delta.matrix(),ans)
         else:
             assert err == E
-            ans = shorten_word(self.minus_one_long + ans)
+            ans = self.minus_one_long + ans
             return self.check_word(delta.matrix(),ans)
 
     def _is_in_order(self, delta):
@@ -348,7 +346,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
             delta0 *= self.extra_matrix_inverse
         w = self._get_word_rep_initial(self.B(delta0))
         if i > 0:
-            return self.check_word(delta, w + [(self.extra_matrix_index,i)])
+            return self.check_word(delta, w + ([self.extra_matrix_index + 1] * i))
         else:
             return self.check_word(delta, w)
 
