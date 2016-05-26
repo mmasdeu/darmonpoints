@@ -145,6 +145,9 @@ class BigArithGroup_class(AlgebraicGroup):
             self.discriminant = ZZ(discriminant)
             self.level = ZZ(level)
 
+        if nscartan is not None:
+            self.level *= nscartan
+
         self.p = self.norm_p.prime_divisors()[0]
         if not self.ideal_p.is_prime():
             raise ValueError('p (=%s) must be prime'%self.p)

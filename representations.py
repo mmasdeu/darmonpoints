@@ -189,7 +189,7 @@ class CoIndModule(Parent):
 
     def trivial_action(self):
         return self._base_trivial_action
-    
+
     def base_ring(self):
         return self._V.base_ring()
 

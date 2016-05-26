@@ -115,7 +115,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
         self.F = QQ
         self.q = ZZ(q)
         self.discriminant = ZZ(1)
-        self.level = ZZ(level)
+        self.level = ZZ(level/self.q)
         if self.level != 1 and compute_presentation:
             raise NotImplementedError
         self._Gamma = Gamma_constructor(self.q)
