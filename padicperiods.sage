@@ -637,12 +637,12 @@ def check_listI10(xvec, prec, data, **kwargs):
 
         for I2c in I2c_list:
             try:
-                I2new = recognize_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile, twopowlist = range(5,10))
+                I2new = recognize_invariant(I2c,base = base,threshold = threshold,prec = prec,  outfile = outfile, twopowlist = range(10))
                 fwrite('# Possible I2 = %s'%(I2new),outfile)
                 j1, j2, j3 = absolute_igusa_padic_from_xvec(xvec,prec)
-                I4new = recognize_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile, twopowlist = range(10,12))
+                I4new = recognize_invariant(j2 * I10p / I2c**3,base = base,threshold = threshold,prec = prec,  outfile = outfile, twopowlist = range(12))
                 fwrite('# Possible I4 = %s'%I4new,outfile)
-                I6new = recognize_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile, twopowlist = range(13,20))
+                I6new = recognize_invariant(j3 * I10p / I2c**2,base = base,threshold = threshold,prec = prec,  outfile = outfile, twopowlist = range(20))
                 fwrite('# Possible I6 = %s'%I6new,outfile)
                 out_str = '# Candidate = %s, %s, %s, %s (%s)'%(I2new,I4new,I6new,I10new,data)
                 return out_str
@@ -1022,7 +1022,7 @@ def generate_listI10(F,N):
     and p is taken in another range(3)
     '''
     from itertools import product
-    range_twopows = range(20,25)
+    range_twopows = range(12,25)
     range_units = range(-15,16)
     range_conductor = [2]
     range_smallprimes = range(3)
