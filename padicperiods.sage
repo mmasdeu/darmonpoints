@@ -375,7 +375,7 @@ def take_to_Qp(x, tolerance = None):
     else:
         ans = x.trace_absolute()/x.parent().absolute_degree()
     ordp = (x.parent()(ans) - x).ordp()
-    if tolerance is not None and ordp - x.ordp() <= tolerance:
+    if tolerance is not None and ordp - x.ordp() < tolerance:
         raise ValueError('Input does not look p-adic')
     ans = ans.add_bigoh(ordp.floor())
     return ans
@@ -584,7 +584,7 @@ def check_cheatjs(xvec,prec,data, **kwargs):
     minval = kwargs.get('minval',5)
     threshold = kwargs.get('threshold')
     try:
-        j1 = j1_inv_padic_from_xvec(xvec, prec)
+        j1 = j1_inv_padic_from_xvec(xvec, prec, threshold = 0.8)
         if j1 is None:
             return ''
     except (ValueError,RuntimeError,PrecisionError):
@@ -602,7 +602,7 @@ def check_absoluteinvs(xvec,prec,data, **kwargs):
     threshold = kwargs.get('threshold')
     outfile = kwargs.get('outfile')
     try:
-        j1 = j1_inv_padic_from_xvec(xvec, prec)
+        j1 = j1_inv_padic_from_xvec(xvec, prec, threshold = .8)
         if j1 is None:
             return ''
     except (ValueError,RuntimeError,PrecisionError):
@@ -627,7 +627,7 @@ def check_listI10(xvec, prec, data, **kwargs):
     threshold = kwargs.get('threshold')
     outfile = kwargs.get('outfile')
     try:
-        j1 = j1_inv_padic_from_xvec(xvec, prec)
+        j1 = j1_inv_padic_from_xvec(xvec, prec, threshold = .8)
         if j1 is None:
             return ''
     except (ValueError,RuntimeError,PrecisionError):
@@ -829,9 +829,9 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         Dmul = Amul * Bmul**(ZZ(T.trace()))
         fwrite('D0 = p**(%s) * (%s) * (%s).exp()'%(Dval, Dmul, Dlog), outfile)
 
-        F = Alog.parent()
-        TF = T.change_ring(F)
-        a, b = p_adic_l_invariant_additive(Alog, Blog, Aval, Bval, TF)
+        Fp = Alog.parent()
+        TFp = T.change_ring(Fp)
+        a, b = p_adic_l_invariant_additive(Alog, Blog, Aval, Bval, TFp)
         a = take_to_Qp(a)
         b = take_to_Qp(b)
         Lp = a + b * T
@@ -842,7 +842,10 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
                K0 = Qq(Pnrm**2, prec,names = 's')
                A = K0(Pnrm**Aval * Alog.exp() * Amul)
                B = K0(Pnrm**Bval * Blog.exp() * Bmul)
-               find_igusa_invariants_from_AB(A, B, T, scaling, prec = prec, embedding = G._F_to_local, outfile = outfile, Pgen = G._F_to_local(Pgen),**kwargs)
+               if not param_dict.has_key('list_I10'):
+                   param_dict['list_I10'] = generate_listI10(G.F, G.ideal_p*G.discriminant*G.level)
+               param_dict['outfile'] = outfile
+               find_igusa_invariants_from_AB(A, B, T, scaling, prec = prec, embedding = G._F_to_local, **param_dict)
     fwrite('# DONE WITH COMPUTATION', outfile)
     return('DONE')
 
@@ -1009,12 +1012,26 @@ def compare_AB_periods(Alist, Blist, T, Ag, Bg, Dg, prec, base=QQ, matlist = Non
 
 
 def generate_listI10(F,N):
+    r'''
+    Generates a list of possible I10's, of the form:
+
+    (+-1) * 2^i * u^j * p^k * N^2
+
+    where i is taken in a specific range(20,25)
+    and j is taken in another range(-15,16)
+    and p is taken in another range(3)
+    '''
     from itertools import product
+    range_twopows = range(20,25)
+    range_units = range(-15,16)
+    range_conductor = [2]
+    range_smallprimes = range(3)
+
     factor_list = [F(2), F(-1)] + list(F.units()) + [o.gens_reduced()[0] for o,_ in N.factor()]
-    exp_ranges = [range(20,25), [-1,1]] + [range(-15,16) for _ in F.units()] + [[2] for o in N.factor()]
+    exp_ranges = [range_twopows, [-1,1]] + [range_units for _ in F.units()] + [range_conductor for o in N.factor()]
     for ell in F.primes_of_bounded_norm(5):
         factor_list.append(ell.gens_reduced()[0])
-        exp_ranges.append(range(3))
+        exp_ranges.append(range_smallprimes)
     ans = []
     for v in product(*exp_ranges):
         ans.append(prod([o**i for o,i in zip(factor_list,v)]))
