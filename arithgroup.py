@@ -1412,7 +1412,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         verbose('Finding module generators')
         w = module_generators(K)[1]
         verbose('Done')
-        w_minpoly = PolynomialRing(Qp(p,prec),names = 'x')([self._F_to_local(o) for o in w.minpoly().coeffs()])
+        w_minpoly = PolynomialRing(Qp(p,prec),names = 'x')([self._F_to_local(o) for o in w.minpoly().coefficients(sparse=False)])
         verbose('w_minpoly = %s'%w_minpoly)
         Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
         verbose('Cp is %s'%Cp)
