@@ -319,7 +319,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             rev, h = edge
             a,b,c,d = [K(o) for o in G.embed(h,prec).list()]
             try:
-                c0 = K.one()
+                c0unit = K.one()
                 c0val = 0
                 pol = R.zero()
                 for P,n in divisor_list:
