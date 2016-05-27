@@ -320,6 +320,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
             a,b,c,d = [K(o) for o in G.embed(h,prec).list()]
             try:
                 c0 = K.one()
+                c0val = 0
                 pol = R.zero()
                 for P,n in divisor_list:
                     if P == Infinity:
@@ -336,8 +337,9 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                         xpow *= x
                         v.append( xpow / QQ(m) )
                     pol -= QQ(n) * R(v)
-                    c0 *= (-hp0) ** n
-                pol += c0.log( p_branch = 0 )
+                    c0unit *= (-hp0).unit_part() ** n
+                    c0val += n * hp0.valuation()
+                pol += c0unit.log( p_branch = 0 )
                 newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)
                 if rev:
                     newgamma = newgamma.conjugate_by(G.wp())
@@ -358,8 +360,8 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                     tmp = hc.get_liftee().evaluate_and_identity(newgamma)
                 else:
                     tmp = hc.get_liftee().evaluate(newgamma)
-                resval += c0.valuation() * ZZ(tmp[0])
-                resmul *= c0.unit_part()**ZZ(tmp[0])
+                resval += c0val * ZZ(tmp[0])
+                resmul *= c0unit**ZZ(tmp[0])
             except IndexError: pass
             if progress_bar:
                 update_progress(float(QQ(ii)/QQ(len(edgelist))),'Integration %s/%s'%(counter,total_counter))
