@@ -840,12 +840,12 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         fwrite('Lp = Matrix(2,2,%s)'%str(Lp.list()), outfile)
         if recognize_invariants:
                K0 = Qq(Pnrm**2, prec,names = 's')
-               A = K0(Pnrm**Aval * Alog.exp() * Amul)
-               B = K0(Pnrm**Bval * Blog.exp() * Bmul)
+               A = K0(take_to_Qp(Pnrm**Aval * Alog.exp() * Amul))
+               B = K0(take_to_Qp(Pnrm**Bval * Blog.exp() * Bmul))
                if not param_dict.has_key('list_I10'):
                    param_dict['list_I10'] = generate_listI10(G.F, G.ideal_p*G.discriminant*G.level)
                param_dict['outfile'] = outfile
-               find_igusa_invariants_from_AB(A, B, T, scaling, prec = prec, embedding = G._F_to_local, **param_dict)
+               find_igusa_invariants_from_AB(A, B, T, scaling, prec = prec, phi = G._F_to_local, **param_dict)
     fwrite('# DONE WITH COMPUTATION', outfile)
     return('DONE')
 
