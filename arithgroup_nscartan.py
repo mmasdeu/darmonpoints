@@ -242,7 +242,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
         yield ans
 
     # nonsplitcartan
-    def embed_order(self,p,K,prec,outfile = None, return_all = False):
+    def embed_order_original(self,p,K,prec,outfile = None, return_all = False):
         r'''
         '''
         from limits import find_the_unit_of
@@ -288,6 +288,53 @@ class ArithGroup_nscartan(ArithGroup_generic):
         tau1, tau2 = [(Cp(a-d) + rt)/Cp(2*c) for rt in rt_list]
         assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
         assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
+        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
+        fwrite('# gamma_psi = %s'%gamma,outfile)
+        fwrite('# tau_psi = %s'%tau1,outfile)
+        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
+        if return_all:
+            return gamma, tau1, tau2
+        else:
+            return gamma, tau1
+
+    def embed_order(self,p,K,prec,outfile = None, return_all = False):
+        r'''
+        '''
+        from limits import find_the_unit_of
+        verbose('Computing quadratic embedding to precision %s'%prec)
+        verbose('Finding module generators')
+        w = module_generators(K)[1]
+        verbose('Done')
+        w_minpoly = w.minpoly().change_ring(Qp(p,prec))
+        Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
+        wl = w.list()
+        assert len(wl) == 2
+        r0 = -wl[0]/wl[1]
+        r1 = 1/wl[1]
+        assert r0 + r1 * w == K.gen()
+        padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
+        try:
+            fwrite('# d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+        except NotImplementedError: pass
+        fwrite('# w_K satisfies: %s'%w.minpoly(),outfile)
+        #####
+        uk = find_the_unit_of(self.F,K)
+        tu = uk.trace()
+        for g in self.enumerate_elements():
+            if g.trace() == tu:
+                gamma = self(g)
+                break
+        a,b,c,d = gamma.quaternion_rep.list()
+        rt_list = our_sqrt((d-a)**2 + 4*b*c,Cp,return_all=True)
+        tau1, tau2 = [(Cp(a-d) + rt)/Cp(2*c) for rt in rt_list]
+        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
+        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
+        r,s = uk.coordinates_in_terms_of_powers()(K.gen())
+        assert r+s*uk == K.gen()
+        assert uk.charpoly() == gamma.quaternion_rep.charpoly()
+        mtx  = r + s*gamma.quaternion_rep
+        emb = K.hom([mtx])
+        mu = emb(w)
         fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)

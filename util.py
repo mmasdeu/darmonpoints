@@ -1376,6 +1376,16 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     for twopow in twopowlist:
         addpart = addpart0 / twopow
         success = False
+
+        # for a,b in product(range(p),repeat = 2) if twopow * known_multiple != 1 else [(1,0)]:
+        #     if a == 0 and b == 0:
+        #         continue
+        #     if twopow * known_multiple != 1:
+        #         try:
+        #             J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
+        #         except ValueError: continue
+        #     else:
+        #         J1 = J
         power = 1/(twopow * known_multiple)
         pnum = E.torsion_order() * power.numerator()
         pden = E.torsion_order() * power.denominator()
