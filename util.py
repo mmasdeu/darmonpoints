@@ -553,7 +553,7 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   else:
       candidate_x = our_algdep(x,E.base_ring().degree()*2*hF,prec)
       pol_height = height_polynomial(candidate_x,base = p)
-      if pol_height < .7 * prec: # .7 is quite arbitrary...
+      if pol_height < .9 * prec: # .9 is quite arbitrary...
           list_candidate_x = [rt for rt,pw in candidate_x.change_ring(HCF).roots()]
       else:
           list_candidate_x = []
@@ -1341,7 +1341,7 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
 def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = None,prec = None,outfile = None, qEpows = None):
     p = J.parent().prime()
     if prec is None:
-        prec = J.parent().precision_cap()
+        prec = J.precision_relative()
     QQp = Qp(p,prec)
     if local_embedding is None:
         local_embedding = QQp

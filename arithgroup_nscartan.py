@@ -225,21 +225,44 @@ class ArithGroup_nscartan(ArithGroup_generic):
     def _quaternion_to_list(self,x):
         return x.list()
 
+
     def generate_wp_candidates(self, p, ideal_p, **kwargs):
         eps = self.eps
         q = self.q
-        for a,b in product(range(p*q),repeat = 2):
-            if p**2*a**2 - b**2*eps - p % (p*q) == 0:
+        for a,b in product(range(q),repeat = 2):
+            if (p**2*a**2 - b**2*eps - p) % (q) == 0:
                 verbose('Found a=%s, b=%s'%(a,b))
                 break
         c = (self.GFq(p)**-1 * b * eps).lift()
         d = a
-        while (p*a*d-b*c ) % (p*q) != 1:
-            c += q
-        a,b,c0,d0 = lift(matrix(ZZ,2,2,[p*a,b,c,d]),p*q).list()
-        ans = matrix(ZZ,2,2,[a,b,p*c0,p*d0])
+        a,b,c,d = lift(matrix(ZZ,2,2,[p*a,b,c,d]),q).list()
+        Fp = FiniteField(p)
+        if c % p == 0:
+            c += a*q
+            d += b*q
+        assert c % p != 0
+        r = (Fp(-a)*Fp(c*q)**-1).lift()
+        a += q*c*r
+        b += q*d*r
+        ans = matrix(ZZ,2,2,[a,b,p*c,p*d])
         ans.set_immutable()
         yield ans
+
+    # def generate_wp_candidates(self, p, ideal_p, **kwargs):
+    #     eps = self.eps
+    #     q = self.q
+    #     for a,b in product(range(p*q),repeat = 2):
+    #         if (p**2*a**2 - b**2*eps - p) % (p*q) == 0:
+    #             verbose('Found a=%s, b=%s'%(a,b))
+    #             break
+    #     c = (self.GFq(p)**-1 * b * eps).lift()
+    #     d = a
+    #     while (p*a*d-b*c ) % (p*q) != 1:
+    #         c += q
+    #     a,b,c0,d0 = lift(matrix(ZZ,2,2,[p*a,b,c,d]),p*q).list()
+    #     ans = matrix(ZZ,2,2,[a,b,p*c0,p*d0])
+    #     ans.set_immutable()
+    #     yield ans
 
     # nonsplitcartan
     def embed_order_original(self,p,K,prec,outfile = None, return_all = False):

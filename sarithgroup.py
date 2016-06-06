@@ -416,7 +416,9 @@ class BigArithGroup_class(AlgebraicGroup):
                 raise RuntimeError('Trouble finding wp by enumeration')
             i += 1
             try:
-                return self.set_wp(wp)
+                wp = self.set_wp(wp)
+                verbose('wp = %s'%list(wp))
+                return wp
             except AssertionError:
                 pass
 
