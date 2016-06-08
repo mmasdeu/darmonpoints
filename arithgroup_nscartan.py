@@ -343,19 +343,23 @@ class ArithGroup_nscartan(ArithGroup_generic):
         #####
         uk = find_the_unit_of(self.F,K)
         tu = uk.trace()
+        verb_level = get_verbose()
+        set_verbose(0)
         for g in self.enumerate_elements():
             if g.trace() == tu:
                 gamma = self(g)
-                break
-        a,b,c,d = gamma.quaternion_rep.list()
-        rt_list = our_sqrt((d-a)**2 + 4*b*c,Cp,return_all=True)
-        tau1, tau2 = [(Cp(a-d) + rt)/Cp(2*c) for rt in rt_list]
-        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
-        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
-        r,s = uk.coordinates_in_terms_of_powers()(K.gen())
-        assert r+s*uk == K.gen()
-        assert uk.charpoly() == gamma.quaternion_rep.charpoly()
-        mtx  = r + s*gamma.quaternion_rep
+                a,b,c,d = gamma.quaternion_rep.list()
+                rt_list = our_sqrt((d-a)**2 + 4*b*c,Cp,return_all=True)
+                tau1, tau2 = [(Cp(a-d) + rt)/Cp(2*c) for rt in rt_list]
+                assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
+                assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
+                r,s = uk.coordinates_in_terms_of_powers()(K.gen())
+                assert r+s*uk == K.gen()
+                assert uk.charpoly() == gamma.quaternion_rep.charpoly()
+                mtx  = r + s*gamma.quaternion_rep
+                if mtx.denominator() == 1:
+                    break
+        set_verbose(verb_level)
         emb = K.hom([mtx])
         mu = emb(w)
         fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
