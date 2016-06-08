@@ -909,7 +909,7 @@ def _get_heegner_params_numberfield(P,N,beta):
     inert_primes_at_infty =  K.signature()[1] - 2 * F.signature()[1]
     if (inert_primes_at_infty + num_inert_primes) % 2 != 0:
         raise ValueError,'There should an even number of primes different than p which are inert'
-    return DB,Np
+    return DB,Np,None
 
 def _get_heegner_params_rational(p,N,beta):
     if N % p != 0:
@@ -921,20 +921,25 @@ def _get_heegner_params_rational(p,N,beta):
         raise ValueError,'p (=%s) must exactly divide the conductor (=%s)'%(p,N)
     DB = 1
     Np = 1
-    num_inert_primes = 0
+    Ncartan = None
+    num_inert_semistable_primes = 0
     for ell,r in N1.factor():
         ks = kronecker_symbol(beta,ell)
         if ks == -1: # inert
             if r != 1:
-                raise ValueError,'The inert prime l = %s divides too much the conductor.'%ell
-            num_inert_primes += 1
-            DB *= ell
+                if r > 2:
+                    raise ValueError('The inert prime l = %s divides too much the conductor.'%ell)
+                if Ncartan is not None:
+                    raise ValueError('Too many non-semistable primes')
+                Ncartan = ell
+            else:
+                num_inert_semistable_primes += 1
+                DB *= ell
         else: #split or ramified
             Np *= ell**r
-    assert N == p * DB * Np
-    if num_inert_primes % 2 != 0:
-        raise ValueError,'There should an even number of primes different than p which are inert'
-    return DB,Np
+    if num_inert_semistable_primes % 2 != 0:
+        raise ValueError('There should an even number of primes different than p which are inert')
+    return DB, Np, Ncartan
 
 def fwrite(string, outfile,newline = True):
     if outfile is None:

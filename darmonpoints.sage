@@ -2,6 +2,18 @@
 ### Stark-Heegner points for quaternion algebras                         #
 ##########################################################################
 
+def darmon_discriminants(bound, split_primes = None, inert_primes = None):
+    good_D = []
+    for D in xrange(2,bound):
+        if not is_fundamental_discriminant(D):
+            continue
+        if not all(kronecker_symbol(D,p) == 1 for p in split_primes):
+            continue
+        if not all(kronecker_symbol(D,p) == -1 for p in inert_primes):
+            continue
+        good_D.append(D)
+    return good_D
+
 def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data = None, magma = None, working_prec = None, **kwargs):
     r'''
 
@@ -91,7 +103,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
 
     F = E.base_ring()
     beta = F(beta)
-    DB,Np = get_heegner_params(P,E,beta)
+    DB,Np,Ncartan = get_heegner_params(P,E,beta)
     if quaternionic is None:
         quaternionic = ( DB != 1 )
     if cohomological is None:
@@ -150,6 +162,8 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     fwrite("Starting computation of the Darmon point",outfile)
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
     fwrite('Np = %s'%Np,outfile)
+    if Ncartan is not None:
+        fwrite('Ncartan = %s'%Ncartan,outfile)
     fwrite('dK = %s (class number = %s)'%(dK,hK),outfile)
     fwrite('Calculation with p = %s and prec = %s'%(P,prec),outfile)
     fwrite('Elliptic curve %s: %s'%(Ename,E),outfile)
@@ -177,7 +191,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F, DB, ramification_at_infinity)
 
-            G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro)
+            G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro, nscartan=Ncartan)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             Coh = ArithCoh(G)

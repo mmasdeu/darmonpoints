@@ -100,7 +100,10 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         if NE % (P*DB) != 0:
             raise ValueError,'Conductor (NE) should be divisible by P*DB'
 
+    Ncartan = kwargs.get('Ncartan',None)
     Np = NE / (P * DB)
+    if Ncartan is not None:
+        Np = Np / Ncartan**2
     if use_ps_dists is None:
         use_ps_dists = False # More efficient our own implementation
 
@@ -143,7 +146,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity)
-            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout, use_shapiro = use_shapiro)
+            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout, use_shapiro = use_shapiro, nscartan = Ncartan)
         except RuntimeError as e:
             if quit_when_done:
                 magma.quit()
@@ -236,6 +239,8 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         fwrite('N_E = %s = %s'%(NE,factor(NE)),outfile)
         fwrite('D_B = %s = %s'%(DB,factor(DB)),outfile)
         fwrite('Np = %s = %s'%(Np,factor(Np)),outfile)
+        if Ncartan is not None:
+            fwrite('Ncartan = %s'%(Ncartan),outfile)
         fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
         fwrite('qE = %s'%qE,outfile)
         fwrite('Linv = %s'%Linv,outfile)
