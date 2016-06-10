@@ -225,7 +225,6 @@ class ArithGroup_nscartan(ArithGroup_generic):
     def _quaternion_to_list(self,x):
         return x.list()
 
-
     def generate_wp_candidates(self, p, ideal_p, **kwargs):
         eps = self.eps
         q = self.q
@@ -248,78 +247,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
         ans.set_immutable()
         yield ans
 
-    # def generate_wp_candidates(self, p, ideal_p, **kwargs):
-    #     eps = self.eps
-    #     q = self.q
-    #     for a,b in product(range(p*q),repeat = 2):
-    #         if (p**2*a**2 - b**2*eps - p) % (p*q) == 0:
-    #             verbose('Found a=%s, b=%s'%(a,b))
-    #             break
-    #     c = (self.GFq(p)**-1 * b * eps).lift()
-    #     d = a
-    #     while (p*a*d-b*c ) % (p*q) != 1:
-    #         c += q
-    #     a,b,c0,d0 = lift(matrix(ZZ,2,2,[p*a,b,c,d]),p*q).list()
-    #     ans = matrix(ZZ,2,2,[a,b,p*c0,p*d0])
-    #     ans.set_immutable()
-    #     yield ans
-
     # nonsplitcartan
-    def embed_order_original(self,p,K,prec,outfile = None, return_all = False):
-        r'''
-        '''
-        from limits import find_the_unit_of
-        verbose('Computing quadratic embedding to precision %s'%prec)
-        verbose('Finding module generators')
-        w = module_generators(K)[1]
-        verbose('Done')
-        w_minpoly = w.minpoly().change_ring(Qp(p,prec))
-        Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
-        wl = w.list()
-        assert len(wl) == 2
-        r0 = -wl[0]/wl[1]
-        r1 = 1/wl[1]
-        assert r0 + r1 * w == K.gen()
-        padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
-        try:
-            fwrite('# d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
-        except NotImplementedError: pass
-        fwrite('# w_K satisfies: %s'%w.minpoly(),outfile)
-        #####
-        a = (self.GFq(w.trace())/2).lift()
-        b = (self.GFq(w.trace()**2/4 - w.norm())/self.eps).sqrt()
-        mu = matrix(self.GFq,2,2,[a,b,b*self.eps,a])
-        # Define mu to have the same minpoly as K.gen()
-        mu = ZZ(r0) + ZZ(r1)*mu
-        assert self.GFq(K.gen(0).trace()) == mu.trace() and self.GFq(K.gen(0).norm()) == mu.determinant()
-        u = find_the_unit_of(self.F,K)
-        gammalst = u.list()
-        assert len(gammalst) == 2
-        gammaquatrep = self.B(gammalst[0]).change_ring(self.GFq) + self.B(gammalst[1]).change_ring(self.GFq) * mu
-        assert gammaquatrep.trace() == u.trace() and gammaquatrep.determinant() == u.norm()
-        gammaquatrep = lift(gammaquatrep.change_ring(ZZ),self.q)
-        # print gammaquatrep.charpoly()
-        gammaq = gammaquatrep
-        while True:
-            try:
-                gamma = self(gammaq)
-                break
-            except ValueError:
-                gammaq *= gammaquatrep
-        a,b,c,d = gamma.quaternion_rep.list()
-        rt_list = our_sqrt((d-a)**2 + 4*b*c,Cp,return_all=True)
-        tau1, tau2 = [(Cp(a-d) + rt)/Cp(2*c) for rt in rt_list]
-        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
-        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
-        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
-        fwrite('# gamma_psi = %s'%gamma,outfile)
-        fwrite('# tau_psi = %s'%tau1,outfile)
-        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
-        if return_all:
-            return gamma, tau1, tau2
-        else:
-            return gamma, tau1
-
     def embed_order(self,p,K,prec,outfile = None, return_all = False):
         r'''
         '''
