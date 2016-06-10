@@ -359,6 +359,11 @@ class ArithGroup_generic(AlgebraicGroup):
     def gens(self):
         return self._gens
 
+    def check_word(self,delta,wd):
+        tmp = multiply_out(wd, self.Ugens, self.B(1))
+        assert tmp == delta,"tmp = %s, delta = %s, wd = %s"%(tmp,delta,wd)
+        return wd
+
     def _calculate_relation(self,wt,separated = False):
         relmat = self.get_relation_matrix()
         relwords = self.get_relation_words()
@@ -921,10 +926,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         else:
             return gamma, tau1
 
-    def check_word(self,delta,wd):
-        tmp = multiply_out(wd, self.Ugens, self.B(1))
-        assert tmp == delta,"tmp = %s, delta = %s, wd = %s"%(tmp,delta,wd)
-        return wd
 
     def get_word_rep(self,delta): # rationalmatrix
         level = self.level

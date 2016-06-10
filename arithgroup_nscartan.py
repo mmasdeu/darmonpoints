@@ -299,11 +299,6 @@ class ArithGroup_nscartan(ArithGroup_generic):
         else:
             return gamma, tau1
 
-    def check_word(self,delta,wd):
-        tmp = multiply_out(wd, self.Ugens, self.B(1))
-        assert tmp == delta,"tmp = %s, delta = %s, wd = %s"%(tmp,delta,wd)
-        return wd
-
     def _get_word_rep_initial(self,delta): # nonsplitcartan
         level = self.level
         try:
