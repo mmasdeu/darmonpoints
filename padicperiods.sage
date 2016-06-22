@@ -111,7 +111,14 @@ def Theta(p1, p2, p3, version, prec=None):
     c = 0
     # print 'Entering Theta %s %s %s'%(a,b,c)
     # Define the different conditions and term forms
-    if version == '1p1m':
+    if version is None:
+        condition = lambda i,j: b*(i**2-ZZ(i).abs()) + a*(j**2-ZZ(j).abs()) + c*((i-j)**2 - ZZ(i-j).abs())
+        resdict = {}
+        resdict['1p1m'] = resdict['1p2m'] = 0
+        resdict['2p2m'] = resdict['1m2p'] = 0
+        resdict['3p3m'] = resdict['2m3p'] = 0
+        resdict['2p3m'] = resdict['3m1p'] = resdict['3p1m'] = 0
+    elif version == '1p1m':
         condition = lambda i,j: b*i**2 + a*j**2 + c*(i-j)**2
         term = lambda i,j: (-1)**j
     elif version == '1p2m':
@@ -149,7 +156,25 @@ def Theta(p1, p2, p3, version, prec=None):
         jmax = (jmax.sqrt()+.5).ceiling()
         for j in xrange(-jmax,jmax + 1):
             newterm = p2**(i**2) * p1**(j**2) * p3**((i-j)**2)
-            res += newterm * term(i,j)
+            if version is None:
+                p1l = p1**j
+                p2l = p2**i
+                p3l = p3**(i-j)
+                p2l_inv_p1l_inv_term = newterm * (p2l*p1l)**-1
+                p2lp3l_term = newterm * p2l * p3l
+                p1lp3l_inv_term = newterm * p1l * p3l**-1
+
+                resdict['1p1m'] += newterm * (-1)**j
+                resdict['1p2m'] += p2l_inv_p1l_inv_term
+                resdict['2p2m'] += newterm * (-1)**i
+                resdict['1m2p'] += p2l_inv_p1l_inv_term * (-1)**(i+j)
+                resdict['3p3m'] += newterm * (-1)**(i+j)
+                resdict['2m3p'] += p2lp3l_term * (-1)**j
+                resdict['2p3m'] += p2lp3l_term
+                resdict['3m1p'] += p1lp3l_inv_term * (-1)**i
+                resdict['3p1m'] += p1lp3l_inv_term
+            else:
+                res += newterm * term(i,j)
     return res
 
 def lambdavec(p1, p2, p3, prec = None, theta = None, prec_pseries = None):
@@ -758,15 +783,16 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     if compute_cohomology:
         Coh = ArithCoh(G)
         fwrite('# Computed Cohomology group',outfile)
+    fwrite('# dim H^1 = %s'%Coh.dimension(),outfile)
     if hecke_data_init is not None and return_all:
         fwrite('# Warning: setting return_all to False because user passed hecke_data_init value', outfile)
         return_all = False
 
     if return_all:
-        all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = True)
+        all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = True, outfile = outfile)
     else:
         try:
-            all_twodim_cocycles = [ Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = False) ]
+            all_twodim_cocycles = [ Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = False, outfile = outfile) ]
         except ValueError:
             all_twodim_cocycles = []
     if len(all_twodim_cocycles) == 0:
@@ -775,6 +801,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         return 'DONE'
     fwrite('# Obtained cocycles',outfile)
     for flist, hecke_data in all_twodim_cocycles:
+        fwrite('Hecke data: %s'%str(hecke_data),outfile)
         g0, g1, scaling = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data, outfile = outfile)
         g0_shapiro, g1_shapiro = G.inverse_shapiro(g0), G.inverse_shapiro(g1)
         fwrite('# Obtained homology generators',outfile)
@@ -870,7 +897,7 @@ def compute_lvec_and_Mlist(prec):
     p1, p2, p3 = R.gens()
     R.set_default_prec(prec)
     R._bg_ps_ring().set_default_prec(prec)
-    theta = Theta(p1,p2, p3,prec = prec)
+    theta = Theta(p1,p2,p3,version=None, prec = prec)
     lvec = lambdavec(p1, p2, p3, theta = theta,prec_pseries = prec)
     Mlist = compute_twisted_jacobian_data(lvec)
     lvec = [o.polynomial() for o in lvec.list()]
@@ -1010,7 +1037,6 @@ def compare_AB_periods(Alist, Blist, T, Ag, Bg, Dg, prec, base=QQ, matlist = Non
             if (A1log-Ag.log(0)).valuation() > 2 and (B1log-Bg.log(0)).valuation() > 2 and (D1log-Dg.log(0)).valuation() > 2:
                 print a,b,c,d, t,n
 
-
 def generate_listI10(F,N):
     r'''
     Generates a list of possible I10's, of the form:
@@ -1036,3 +1062,37 @@ def generate_listI10(F,N):
     for v in product(*exp_ranges):
         ans.append(prod([o**i for o,i in zip(factor_list,v)]))
     return ans
+
+def find_kadziela_matrices(M,T):
+    '''
+    The matrix M describes the relation between periods (A,B,D)^t
+    and the periods (A0,B0)^t, where (A,B,D) are the periods of
+    the Teitelbaum periods, and (A0,B0) are the Darmon ones.
+           (A,B,D)^t = M * (A0,B0)^t
+    The matrix T describes the action of Hecke on homology.
+    That is, the first column of T describes the image of T
+    on the first basis vector.
+
+    The output are matrices X and Y such that
+         X * matrix(2,2,[A,B,B,D]) = matrix(2,2,[A0,B0,C0,D0]) * Y
+
+    '''
+    a, b, c, d, e, f = M.list()
+    x, y, z, t = T.list()
+    #     1,  2,  3,  4,  5,  6,  7,  8
+    r1 = [a,  c,  0,  0, -1,  0,  0,  0]
+    r2 = [b,  d,  0,  0,  0,  0, -1,  0]
+    r3 = [c,  e,  0,  0,  0, -1,  0,  0]
+    r4 = [d,  f,  0,  0,  0,  0,  0, -1]
+    r5 = [0,  0,  a,  c,  0,  0, -1,  0]
+    r6 = [0,  0,y*b,y*d, -z,  0,x-t,  0]
+    r7 = [0,  0,  c,  e,  0,  0,  0, -1]
+    r8 = [0,  0,y*d,y*f,  0, -z,  0,x-t]
+    AA = matrix(ZZ,8,8,[r1,r2,r3,r4,r5,r6,r7,r8])
+    if AA.rank() == 8:
+        raise ValueError('Not isogenous')
+    r = AA.right_kernel().matrix().rows()[0].list()
+    X = matrix(ZZ,2,2,r[:4])
+    Y = matrix(ZZ,2,2,r[4:])
+    return X, Y
+

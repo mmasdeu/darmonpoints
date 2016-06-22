@@ -569,6 +569,17 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
               verbose('Point does not appear to lie on curve...',level=2)
   return candidate_x,False
 
+def solve_quadratic(f, K = None, return_all = False):
+    a,b,c = f[2], f[1], f[0]
+    if f.degree() != 2:
+        raise ValueError
+    disc = b*b-4*a*c
+    discrt = our_sqrt(disc,K,False)
+    if return_all:
+        return [(-b + discrt)/(2*a), (-b - discrt)/(2*a)]
+    else:
+        return (-b + discrt)/(2*a)
+
 def our_sqrt(xx,K = None,return_all = False):
     if K is None:
         K = xx.parent()

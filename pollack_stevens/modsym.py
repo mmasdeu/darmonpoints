@@ -10,7 +10,6 @@
 import operator
 
 from sage.structure.element import ModuleElement
-from sage.matrix.matrix_integer_2x2 import MatrixSpace_ZZ_2x2
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
 from sage.misc.cachefunc import cached_method
