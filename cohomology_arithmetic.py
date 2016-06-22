@@ -482,7 +482,7 @@ class ArithCoh(CohomologyGroup):
                 col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
                 return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self(0))
 
-    def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 5, hecke_data = None, return_all = False):
+    def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 5, hecke_data = None, return_all = False, outfile = None):
         F = self.group().base_ring()
         if F == QQ:
             F = NumberField(PolynomialRing(QQ,'x').gen(),names='r')
@@ -493,6 +493,7 @@ class ArithCoh(CohomologyGroup):
             K = (Tinf-sign).kernel().change_ring(QQ)
             if K.dimension() >= 2:
                 component_list.append((K, [(oo,Tinf)]))
+            fwrite('Too charpoly = %s'%Tinf.charpoly().factor(),outfile)
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
             if K.dimension() >= 2:
@@ -514,6 +515,7 @@ class ArithCoh(CohomologyGroup):
             qq = F.ideal(hecke_data[0])
             pol = hecke_data[1]
             Aq = self.hecke_matrix(qq.gens_reduced()[0], use_magma = use_magma).transpose().change_ring(QQ)
+            fwrite('ell = (%s,%s), T_ell charpoly = %s'%(qq.norm(), qq.gens_reduced()[0], Aq.charpoly().factor()),outfile)
             U0 = component_list[0][0].intersection(pol.subs(Aq).left_kernel())
             if U0.dimension() != 2:
                 raise ValueError('Hecke data does not suffice to cut out space')
@@ -556,6 +558,7 @@ class ArithCoh(CohomologyGroup):
                         sleep(1)
                         continue
                     verbose('Computed hecke matrix at qq = %s'%qq)
+                    fwrite('ell = (%s,%s), T_ell charpoly = %s'%(qq.norm(), qq.gens_reduced()[0], Aq.charpoly().factor()),outfile)
                     old_component_list = component_list
                     component_list = []
                     num_hecke_operators += 1
