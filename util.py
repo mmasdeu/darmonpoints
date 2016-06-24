@@ -1725,3 +1725,9 @@ def config_section_map(config, section):
             print("exception on %s!" % option)
             dict1[option] = None
     return dict1
+
+def print_padic(x):
+    from sage.rings.padics.padic_generic import local_print_mode
+    R = x.parent()
+    with local_print_mode(R,'val-unit'):
+        print x
