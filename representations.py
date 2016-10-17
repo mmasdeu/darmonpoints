@@ -21,7 +21,6 @@ from util import *
 import os
 from ocmodule import OCVn
 from sage.misc.persist import db,db_save
-from sage.schemes.plane_curves.constructor import Curve
 from sage.parallel.decorate import fork,parallel
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField

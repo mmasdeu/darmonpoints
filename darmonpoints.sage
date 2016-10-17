@@ -223,7 +223,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                 try:
                     sign_ap = ZZ(P.norm() + 1 - E.reduction(P).count_points())
                 except ValueError:
-                    from sage.schemes.plane_curves.constructor import Curve
+                    from sage.schemes.curves.constructor import Curve
                     sign_ap = ZZ(P.norm() + 1 - Curve(E).change_ring(P.residue_field()).count_points(1)[0])
 
             Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar,Ename = Ename)
