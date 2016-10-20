@@ -124,6 +124,8 @@ class ArithGroup_generic(AlgebraicGroup):
                 return self.zero()
             elif x == 1:
                 return self.one()
+            else:
+                raise ValueError('Wrong input')
         if isinstance(x,list):
             return self.element_class(self, word_rep = x,check = False)
         elif isinstance(x, self.element_class):
@@ -147,7 +149,13 @@ class ArithGroup_generic(AlgebraicGroup):
                 return ans
         elif isinstance(x.parent(),FreeModule_generic):
             return self.abelianization().ab_to_G(x)
+        elif x.parent() is self.B:
+            return self.element_class(self, quaternion_rep = x, check = False)
         else:
+            try:
+                x = x.quaternion_rep
+            except AttributeError:
+                pass
             return self.element_class(self, quaternion_rep = x,check = False)
 
     def generate_wp_candidates(self, p, ideal_p,**kwargs):

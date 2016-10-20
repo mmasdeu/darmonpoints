@@ -59,8 +59,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
                         raise ValueError('Quaternion must be of unit norm')
                 if self.has_word_rep:
                     self.check_consistency(quaternion_rep,self.word_rep)
-            if check and not parent._is_in_order(quaternion_rep):
-                    raise ValueError('Quaternion (= %s) must be in order'%quaternion_rep)
             self.quaternion_rep = quaternion_rep
             set_immutable(self.quaternion_rep)
             self.has_quaternion_rep = True
