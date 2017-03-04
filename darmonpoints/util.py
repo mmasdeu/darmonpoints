@@ -4,7 +4,7 @@ from sage.matrix.all import matrix,Matrix
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.modular.modform.constructor import EisensteinForms, CuspForms
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
-from sage.libs.pari.all import PariError
+from sage.libs.pari.all import PariError, pari
 from sage.misc.sage_eval import sage_eval
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
@@ -12,7 +12,6 @@ from sage.calculus.var import var
 from sage.rings.arith import next_prime
 from sage.arith.all import divisors, algdep, kronecker_symbol
 from sage.interfaces.gp import gp
-from sage.libs.pari.pari_instance import pari
 from sage.rings.infinity import Infinity
 from sage.sets.primes import Primes
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing,Zmod
@@ -1326,7 +1325,6 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
     if (len(S) > 0 or len(T) > 0) and len(self.narrow_class_group()) > 1:
         raise NotImplementedError, 'Only implemented for fields of narrow class number 1'
     from itertools import chain
-    from sage.libs.pari.all import pari
     nf = self.pari_nf()
     n = 0
     entrylist = []
