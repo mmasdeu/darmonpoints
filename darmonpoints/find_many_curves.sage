@@ -1,6 +1,8 @@
-load('findcurve.sage')
+# load('findcurve.sage')
 from sage.misc.misc import alarm,cancel_alarm
 from sage.parallel.decorate import parallel,fork
+from util import *
+
 ######################
 # Parameters         #
 ######################
@@ -12,6 +14,7 @@ outfile = 'curve_table_real_new.sage'
 
 @parallel
 def find_one_curve(inp):
+    from findcurve import find_curve
     x = QQ['x'].gen()
     pol,P,D,Np,Pnorm,Nnorm = inp
     # Nnorm, _, pol, P, D, Np, curve_message, matching_conductor = inp
@@ -30,10 +33,11 @@ def find_one_curve(inp):
     # if matching_conductor == True:
     #     return out_str.format(curve = curve_message, right_conductor = 1)
     ram_at_inf = [-1 for a in F.real_embeddings()]
-    ram_at_inf[0] = 1
+    # ram_at_inf[0] = 1
     from sage.interfaces.magma import Magma
-    magma = Magma()
-    curve = fork(find_curve,timeout = max_waiting_time)(P,D,P*D*Np,prec,working_prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf,magma = magma)
+    magma = Magma(server = 'hecke') # DEBUG
+    # curve = fork(find_curve,timeout = max_waiting_time)(P,D,P*D*Np,prec,working_prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf,magma = magma)
+    curve = find_curve(P,D,P*D*Np,prec,working_prec,outfile='tmp.txt',ramification_at_infinity = ram_at_inf,magma = magma)
     magma.quit()
     if curve is None:
         out_str = out_str.format(curve = 'Not recognized',right_conductor = 'False')
@@ -53,6 +57,8 @@ x = QQ['x'].gen()
 r = QQ['r'].gen()
 load('real_fields_candidates.sage')
 data = sorted(data,key = lambda x:x[0])
+
+inp = [x^2 - x - 28,-r - 5,r - 6,1,2,4]
 
 for inp,out_str in find_one_curve(data):
     fwrite(out_str,outfile)

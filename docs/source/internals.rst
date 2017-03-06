@@ -3,7 +3,7 @@
 Mixed extensions
 ====================
 
-.. automodule:: darmonpoints.mixed_extension.spyx
+.. automodule:: darmonpoints.mixed_extension
    :members:
    :undoc-members:
    :show-inheritance:

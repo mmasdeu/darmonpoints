@@ -8,14 +8,14 @@ r'''
 
 TESTS:
 
-sage: %runfile findcurve.sage
+sage: from darmonpoints.findcurve import find_curve
 sage: F.<r> = QuadraticField(5)
 sage: P = F.ideal(3/2*r + 1/2)
 sage: D = F.ideal(3)
-sage: from cohomology_abstract import *
-sage: from sarithgroup import *
-sage: from util import *
-sage: from cohomology_arithmetic import *
+sage: from darmonpoints.cohomology_abstract import *
+sage: from darmonpoints.sarithgroup import *
+sage: from darmonpoints.util import *
+sage: from darmonpoints.cohomology_arithmetic import *
 sage: abtuple = quaternion_algebra_invariants_from_ramification(F,D,F.real_places()[:1])
 sage: G = BigArithGroup(P,abtuple, F.ideal(1), grouptype = 'PSL2')
 sage: CohShapiro = CohomologyGroup(G.Gn,CoIndModule(G,ZZ**1,trivial_action = True),trivial_action = False)
