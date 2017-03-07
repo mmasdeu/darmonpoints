@@ -101,11 +101,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     if working_prec is None:
         working_prec = max([2 * prec + 10, 30])
 
-    try:
-        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
-    except NameError:
-        ROOT = os.getcwd()
-        page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+    page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
 
     if magma is None:
         from sage.interfaces.magma import Magma

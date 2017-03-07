@@ -8,7 +8,7 @@ from homology import lattice_homology_cycle
 from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
 from integrals import integrate_H1,double_integral_zero_infty
 from sage.all import QQ, ZZ, QuaternionAlgebra, factor
-import sys, datetime, ConfigParser
+import sys, os, datetime, ConfigParser
 
 def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
     r'''
@@ -62,11 +62,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     check_conductor = param.get('check_conductor',True)
 
     if initial_data is None:
-        try:
-            page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
-        except NameError:
-            ROOT = str(magma.GetCurrentDirectory())
-            page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+        page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
         if magma is None:
             from sage.interfaces.magma import Magma
             quit_when_done = True
