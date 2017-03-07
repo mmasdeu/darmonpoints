@@ -2,8 +2,23 @@ from itertools import product
 from sage.arith.all import algdep
 from sage.rings.padics.precision_error import PrecisionError
 from util import *
+from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
+from sarithgroup import BigArithGroup
+from homology import lattice_homology_cycle
+from itertools import product,chain,izip,groupby,islice,tee,starmap
+from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
+from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
+from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
+from sage.misc.persist import db
+from sage.rings.padics.precision_error import PrecisionError
+from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
+from integrals import integrate_H1
+from sage.misc.misc import alarm, cancel_alarm
+from sage.rings.integer_ring import ZZ
 
-load('mixed_extension.spyx')
+import os, datetime, ConfigParser
+
+# load('mixed_extension.spyx')
 
 def precompute_powers(p,q,N):
     irange = range(-N, N+1)
@@ -692,22 +707,6 @@ def euler_factor_twodim_tn(q,t,n):
     return QQ['x']([q*q,-q*t,2*q+n,-t,1])
 
 def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, return_all = True, compute_G = True, compute_cohomology = True, abtuple = None, logfile = None, **kwargs):
-    from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
-    from sarithgroup import BigArithGroup
-    from homology import lattice_homology_cycle
-    from itertools import product,chain,izip,groupby,islice,tee,starmap
-    from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
-    from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
-    from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
-    import os,datetime
-    from sage.misc.persist import db
-    from sage.rings.padics.precision_error import PrecisionError
-    from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
-    from integrals import integrate_H1
-    from sage.misc.misc import alarm, cancel_alarm
-    from sage.rings.integer_ring import ZZ
-
-    import os, datetime, ConfigParser
 
     config = ConfigParser.ConfigParser()
     config.read('config.ini')
@@ -755,7 +754,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         if outfile is None:
             outfile = 'periods_%s_%s_%s_%s_%s.sage'%(code,1,P,D,(P*D*Np))
     else:
-        F.<r> = NumberField(pol)
+        F = NumberField(pol, name = 'r')
         r = F.gen()
         P = F.ideal(Pgen)
         Pnrm = P.norm()

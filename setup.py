@@ -5,6 +5,12 @@ from setuptools import setup
 from codecs import open # To open the README file with proper encoding
 from setuptools.command.test import test as TestCommand # for tests
 
+# The next block is if there are some cython files
+
+from setuptools import Extension
+from Cython.Build import cythonize
+import Cython.Compiler.Options
+from sage.env import sage_include_directories
 
 # Get information from separate files (README, VERSION)
 def readfile(filename):
@@ -14,9 +20,16 @@ def readfile(filename):
 # For the tests
 class SageTest(TestCommand):
     def run_tests(self):
-        errno = os.system("sage -t --force-lib sage_sample")
+        errno = os.system("sage -t --force-lib darmonpoints darmonpoints/*.pyx")
         if errno != 0:
             sys.exit(1)
+
+ # Cython modules
+ext_modules = [
+         Extension('darmonpoints.mixed_extension',
+         sources = [os.path.join('darmonpoints','mixed_extension.pyx')],
+         include_dirs=sage_include_directories())
+]
 
 setup(
     name = "darmonpoints",
@@ -40,5 +53,7 @@ setup(
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "SageMath, Darmon points, elliptic curves, p-adic periods",
     packages = ['darmonpoints'],
+    ext_modules = cythonize(ext_modules),
+    include_package_data = True,
     cmdclass = {'test': SageTest} # adding a special setup command for tests
 )

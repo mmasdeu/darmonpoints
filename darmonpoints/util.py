@@ -23,8 +23,7 @@ from sage.misc.misc_c import prod
 from sage.functions.generalized import sgn
 from sage.misc.functional import cyclotomic_polynomial
 from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
-import sys
-
+import sys, ConfigParser
 
 def JtoP(H,MR,p = None):
     CC = MR.base_ring()
@@ -96,6 +95,7 @@ def find_containing_affinoid(p,z,level = 1):
       A 2x2 integer matrix representing the affinoid.
 
         sage: K.<a> = Qq(5^2,20)
+        sage: from darmonpoints.util import find_containing_affinoid
         sage: find_containing_affinoid(5,a)
         [1 0]
         [0 1]
@@ -828,11 +828,11 @@ def tietze_to_syllables(wd):
     r'''
     Converts a word in Magma format into our own format.
 
-        TESTS:
+    TESTS:
 
-            sage: short = tietze_to_syllables([1,1,-3,-3,-3,2,2,2,2,2,-1,-1,-1])
-            sage: print short
-            [(0, 2), (2, -3), (1, 5), (0, -3)]
+        sage: from darmonpoints.util import tietze_to_syllables
+        sage: short = tietze_to_syllables([1,1,-3,-3,-3,2,2,2,2,2,-1,-1,-1]); short
+        [(0, 2), (2, -3), (1, 5), (0, -3)]
     '''
     return [(a-1,len(list(g))) if a > 0 else (-a-1,-len(list(g))) for a,g in groupby(wd)]
 
@@ -1119,21 +1119,18 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
     EXAMPLES::
 
         sage: F.<r> = QuadraticField(5)
-        sage: from sage.algebras.quatalg.quaternion_algebra import quaternion_algebra_invariants_from_ramification
-        sage: quaternion_algebra_invariants_from_ramification(F,F.ideal(11),[]) # random
+        sage: from darmonpoints.util import quaternion_algebra_invariants_from_ramification
+        sage: quaternion_algebra_invariants_from_ramification(F,F.ideal(11),[]); # random
         (22, -22*r - 31)
         sage: F.<r> = NumberField(x^2 - x - 24)
         sage: D = F.ideal(106*r + 469)
         sage: S = [F.real_places()[0]]
-        sage: B = QuaternionAlgebra(F,D,S)
+        sage: a, b = quaternion_algebra_invariants_from_ramification(F,D,S)
+        sage: B = QuaternionAlgebra(F,a,b)
         sage: B.discriminant() == D
         True
-        sage: a,b = B.invariants()
-        sage: all([v(a) < 0 and v(b) < 0 for v in S])
-        True
-        sage: all([v(a) > 0 or v(b) > 0 for v in F.real_places() if v not in S])
-        True
-        sage: B = QuaternionAlgebra(F,r+1,[])
+        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+1,[])
+        sage: B = QuaternionAlgebra(F,a,b)
         sage: B.discriminant() == F.ideal(r + 1)
         True
         sage: a,b = B.invariants()
@@ -1143,7 +1140,7 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
     The number of ramified places must be even:
 
         sage: F.<r> = NumberField(x^2 - x - 24)
-        sage: QuaternionAlgebra(F,r+4,[])
+        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+4,[])
         Traceback (most recent call last):
         ...
         ValueError: Number of ramified places must be even
@@ -1266,6 +1263,7 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
                     a,b = Bm.StandardForm(nvals = 2)
                     a = magma_F_elt_to_sage(F,a,magma)
                     b = magma_F_elt_to_sage(F,b,magma)
+                assert all([v(a) < 0 or v(b) < 0 for v in S])
                 return a,b
 
 def weak_approximation(self,I = None,S = None,J = None,T = None):
@@ -1297,10 +1295,11 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
 
     EXAMPLES::
 
+        sage: from darmonpoints.util import weak_approximation
         sage: F.<r> = NumberField(x^2 - x - 24)
         sage: P3 = F.prime_above(3)
         sage: P11 = F.prime_above(11)
-        sage: a = F.weak_approximation(P3^2 * P11^3); a
+        sage: a = weak_approximation(F, P3^2 * P11^3); a
         196*r + 141
         sage: a.valuation(P3)
         2
@@ -1310,12 +1309,12 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
         sage: P = F.prime_above(7)
         sage: Q = F.prime_above(13)
         sage: R = F.prime_above(23)
-        sage: b = F.weak_approximation(P * Q * R); b
+        sage: b = weak_approximation(F,P * Q * R); b
         -r^3 + 9*r^2 + 28*r - 19
         sage: b.valuation(P), b.valuation(Q), b.valuation(R)
         (1, 1, 1)
         sage: F.<r> = NumberField(x^4 - x - 12)
-        sage: F.weak_approximation(S = [F.real_places()[0]], T =[F.real_places()[1]])
+        sage: weak_approximation(F,S = [F.real_places()[0]], T =[F.real_places()[1]])
         11*r^3 - 43*r^2 - 32*r + 143
     """
     if S is None:
@@ -1552,16 +1551,12 @@ def simplification_isomorphism(G,return_inverse = False):
         sage: G.<a,b,c> = FreeGroup()
         sage: H = G / [a*b*c, a*b^2, c*b/c^2]
         sage: I = H.simplification_isomorphism()
-        sage: I
+        sage: I # random
         Generic morphism:
           From: Finitely presented group < a, b, c | a*b*c, a*b^2, c*b*c^-2 >
           To:   Finitely presented group < b |  >
-        sage: I(a)
-        b^-2
-        sage: I(b)
-        b
-        sage: I(c)
-        b
+        sage: I(a), I(b), I(c) # random
+        b^-2, b, b
 
     TESTS::
 
@@ -1572,6 +1567,7 @@ def simplification_isomorphism(G,return_inverse = False):
         Generic morphism:
           From: Finitely presented group < x | x >
           To:   Finitely presented group <  |  >
+          Defn: x |--> 1
 
     ALGORITM:
 
@@ -1712,15 +1708,24 @@ class Bunch:
         self.__dict__.update(kwds)
     def update(self, **v):
         self.__dict__.update(**v)
-
+    def get(self,name,default=None):
+        try:
+            return self.name
+        except AttributeError:
+            return default
 def config_section_map(config, section):
     dict1 = {}
-    options = config.options(section)
+    try:
+        options = config.options(section)
+    except ConfigParser.NoSectionError:
+        return dict1
     for option in options:
         try:
             dict1[option] = sage_eval(config.get(section, option))
         except NameError:
             print("exception on %s!" % option)
+            dict1[option] = None
+        except ConfigParser.NoSectionError:
             dict1[option] = None
     return dict1
 

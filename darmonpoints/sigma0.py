@@ -260,7 +260,7 @@ class Sigma0Element(MonoidElement):
             sage: type(s)
             <class 'sage.modular.pollack_stevens.sigma0.Sigma0_class_with_category.element_class'>
             sage: type(sm)
-            <type 'sage.matrix.matrix_integer_2x2.Matrix_integer_2x2'>
+            <type 'sage.matrix.matrix_integer_dense.Matrix_integer_dense'>
             sage: s == sm
             True
         """
@@ -321,7 +321,7 @@ class _Sigma0Embedding(Morphism):
             sage: S = Sigma0(3)
             sage: x = _Sigma0Embedding(S)
             sage: x(S([1,0,0,3])).parent() # indirect doctest
-            Space of 2x2 integer matrices
+            Full MatrixSpace of 2 by 2 dense matrices over Integer Ring
         """
         return x.matrix()
 
