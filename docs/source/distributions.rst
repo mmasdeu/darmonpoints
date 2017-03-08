@@ -15,11 +15,3 @@ Representations
    :members:
    :undoc-members:
    :show-inheritance:
-
-Sigma_0
-====================
-
-.. automodule:: darmonpoints.sigma0
-   :members:
-   :undoc-members:
-   :show-inheritance:

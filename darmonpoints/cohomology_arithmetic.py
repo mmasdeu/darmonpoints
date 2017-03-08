@@ -243,9 +243,8 @@ class ArithCoh(CohomologyGroup):
 
     def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'bigmatrix', steps = 1):
         r"""
-        Repeatedly applies U_p.
 
-        EXAMPLES::
+        Repeatedly applies U_p.
 
         """
         U = self.coefficient_module()
@@ -606,9 +605,8 @@ class ArithCoh(CohomologyGroup):
 
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,g0 = None):
         r"""
-        Apply the l-th Hecke operator operator to ``c``.
 
-        EXAMPLES::
+        Apply the l-th Hecke operator operator to ``c``.
 
         """
         # verbose('Entering apply_hecke_operator')
@@ -652,9 +650,6 @@ class ArithCoh(CohomologyGroup):
     def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive', repslocal = None, steps = 1):
         r"""
         Apply the Up Hecke operator operator to ``c``.
-
-        EXAMPLES::
-
         """
         assert steps >= 1
         Up_reps = self.S_arithgroup().get_Up_reps()

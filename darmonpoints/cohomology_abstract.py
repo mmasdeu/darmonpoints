@@ -245,7 +245,7 @@ class CohomologyGroup(Parent):
         r'''
         Calculates the space of cocyles modulo coboundaries, as a Z-module.
 
-        TESTS::
+        TESTS:
 
         sage: from darmonpoints.sarithgroup import *
         sage: from darmonpoints.cohomology_abstract import *

@@ -122,35 +122,20 @@ class OCVnElement(ModuleElement):
 
     def element(self):
         r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
+        The element ``self`` represents.
         """
         tmp = self.matrix_rep()
         return [tmp[ii,0] for ii in range(tmp.nrows())]
 
     def list(self):
         r"""
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
+        The element ``self`` represents.
         """
         return self.element()
 
     def matrix_rep(self,B=None):
         r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-
+        Returns a matrix representation of ``self``.
         """
         #Express the element in terms of the basis B
         if B is None:
@@ -161,50 +146,26 @@ class OCVnElement(ModuleElement):
 
     def _add_(self,y):
         r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
+        Add two elements.
         """
         val=self._val+y._val
         return self.__class__(self._parent,val, check = False)
 
     def _sub_(self,y):
         r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
+        Subtract two elements.
         """
         val=self._val-y._val
         return self.__class__(self._parent,val, check = False)
 
     def r_act_by(self,x):
         r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
+        Act on the right by a matrix.
         """
         #assert(x.nrows()==2 and x.ncols()==2) #An element of GL2
         return self._acted_upon_(x.adjoint(), False)
 
     def _acted_upon_(self,x, right_action): # Act by x on the left
-        r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-
-        """
         if right_action:
             return self._acted_upon_(x.adjoint(), False)
         else:
@@ -214,41 +175,16 @@ class OCVnElement(ModuleElement):
             return self.__class__(self._parent, tmp, check = False)
 
     def _neg_(self):
-        r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-
-        """
         return self.__class__(self._parent,-self._val, check = False)
 
 
     def _rmul_(self,a):
-        r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-
-        """
         #assume that a is a scalar
         return self.__class__(self._parent,a*self._val, check = False)
 
     def _repr_(self):
         r"""
-        This returns the representation of self as a string.
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-
+        Returns the representation of self as a string.
         """
         R = PowerSeriesRing(self._parent._R,default_prec=self._depth,name='z')
         z = R.gen()
@@ -256,37 +192,14 @@ class OCVnElement(ModuleElement):
         return s
 
     def __cmp__(self,other):
-        r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-
-        """
         return cmp(self._val,other._val)
 
     def __nonzero__(self):
-        r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-        """
         return self._val!=0
 
     def evaluate_at_poly(self,P,R = None,depth = None):
         r"""
-
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
-
+        Evaluate ``self`` at a polynomial
         """
         p = self._parent._p
         if R is None:
@@ -306,12 +219,9 @@ class OCVnElement(ModuleElement):
 
     def valuation(self,l=None):
         r"""
+        The `l`-adic valuation of ``self``.
 
-        EXAMPLES:
-
-        This example illustrates ...
-
-        ::
+        INPUT: a prime `l`. The default (None) uses the prime of the parent.
 
         """
         if not self._parent.base_ring().is_exact():
@@ -386,22 +296,10 @@ class OCVn(Module,UniqueRepresentation):
         return OCVnElement(self,Matrix(self._R,self._depth,1,range(1,self._depth+1)), check = False)
 
     def _coerce_map_from_(self, S):
-        r"""
-
-        EXAMPLES:
-
-        ::
-
-        """
         # Nothing coherces here, except OCVnElement
         return False
 
     def _element_constructor_(self,x,check = True):
-        r"""
-
-        EXAMPLES:
-
-        """
         #Code how to coherce x into the space
         #Admissible values of x?
         return OCVnElement(self, x)
@@ -410,14 +308,6 @@ class OCVn(Module,UniqueRepresentation):
         return self._get_powers(g).submatrix(0,0,M,M)
 
     def _get_powers(self,abcd,emb = None):
-        r"""
-        Compute the action of a matrix on the basis elements.
-
-        EXAMPLES:
-
-        ::
-
-        """
         abcd = tuple(abcd.list())
         try:
             return self._cache_powers[abcd]
@@ -446,9 +336,6 @@ class OCVn(Module,UniqueRepresentation):
     def _repr_(self):
         r"""
         This returns the representation of self as a string.
-
-        EXAMPLES:
-
         """
         return "Space of %s-adic distributions with k=0 action and precision cap %s"%(self._p, self._depth - 1)
 
@@ -467,13 +354,6 @@ class OCVn(Module,UniqueRepresentation):
 
          - ``y`` - integer (default: 2) the ...
 
-        OUTPUT:
-
-        integer -- the ...
-
-        EXAMPLES:
-
-
         """
         try: return self._basis
         except: pass
@@ -483,13 +363,6 @@ class OCVn(Module,UniqueRepresentation):
     def base_ring(self):
         r"""
         This function returns the base ring of the overconvergent element.
-
-        EXAMPLES::
-
-        This example illustrates ...
-
-        ::
-
         """
         return self._Rmod
 

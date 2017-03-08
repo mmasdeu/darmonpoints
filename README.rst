@@ -4,6 +4,7 @@ A package to compute Darmon points
 ----------------------------------
 (or just p-adically construct elliptic curves)
 ----------------------------------
+(for the full documentation, please see http://mmasdeu.github.io/darmonpoints/doc/html/)
 
 What is this?
 ~~~~~~~~~~~~~
@@ -18,23 +19,37 @@ The **darmonpoints** package can also compute equations for some elliptic curves
    b) `P` is a prime ideal of `F` of prime norm.
    c) `D` is the discriminant of a quaternion algebra over `F` which is split at only one infinite place.
 
+The full documentation can be found at http://mmasdeu.github.io/darmonpoints/doc/html/
+
 
 Installation
 ~~~~~~~~~~~~
 
-Installation of the *darmonpoints* package has been grealy simplified and is now essentially trivial. For most operations one does need to have **Magma** installed, although we do hope that in the future Sage will include the required functionality. We include for convenience the dependencies, which are currently:
+Installation of the *darmonpoints* package has been grealy simplified and is now essentially trivial. For most operations one does need to have **Magma** installed, although we do hope that in the future Sage will include the required functionality. We include for convenience the dependency, which is currently only one:
 
-1) The package *KleinianGroups*, the original of which can be found at http://www.normalesup.org/~page/Recherche/Logiciels/KleinianGroups/KleinianGroups-1.0.tar.gz.
+- The package *KleinianGroups*, the original of which can be found at http://www.normalesup.org/~page/Recherche/Logiciels/KleinianGroups/KleinianGroups-1.0.tar.gz.
 
-2) The *overconvergent modular symbols* package (or rather some parts of it). This is currently on *Sage trac*, see  http://trac.sagemath.org/ticket/812 and please review it!
+The installation consists of two easy steps:
+
+1) Clone the repository to your computer:
+
+   [user@local ~]$ git clone https://github.com/mmasdeu/darmonpoints.git
+
+    (or download a zipfile by pressing the "Clone or download" button in the github website, and
+    then unzip it into some local folder).
+
+2) Install the package so that Sage knowns about it:
+
+   [user@local ~]$ cd darmonpoints
+   [user@local ~]$ make install
 
 
 Basic usage
 ~~~~~~~~~~~
 
-The files ``darmonpoints.sage`` and ``findcurve.sage`` contain the high level routines from which show how to use the package, although one can use parts of the package in other ways if one feels adventurous. Here are some sample calculations that one can try::
+The files ``darmonpoints.py``, ``findcurve.py`` and ``padicperiods.py`` contain the high level routines from which show how to use the package, although one can use parts of the package in other ways if one feels adventurous. Here are some sample calculations that one can try::
 
-    sage: %runfile darmonpoints.sage
+    sage: from darmonpoints.darmonpoints import darmon_point
 
 1) A classical Darmon (a.k.a. Stark-Heegner) point. The following will perform a `7`-adic calculation to precision `7^20`, to find a point over the real quadratic field of discriminant `41` for the elliptic curve ``35a1``::
 
@@ -57,6 +72,7 @@ We can also *discover* equations of curves!
 
 1) We first find a curve over the rationals. The following command will find a curve of conductor `30`, using a `5`-adic calculation with precision of `5^20`, and the quaternion algebra of discriminant `6`::
 
+     sage: from darmonpoints.findcurve import find_curve
      sage: find_curve(5,6,30,20)
 
 This constructs the curve with equation::
@@ -66,7 +82,7 @@ This constructs the curve with equation::
 
 2) Now for a curve defined over a real quadratic field. Note that here we must specify which place will ramify in the quaternion algebra::
 
-     sage: %runfile findcurve.sage
+     sage: from darmonpoints.findcurve import find_curve
      sage: F.<r> = QuadraticField(5)
      sage: P = F.ideal(3/2*r + 1/2)
      sage: D = F.ideal(3)
@@ -79,6 +95,7 @@ This returns something like::
 
 3) A curve over a cubic field of mixed signature::
 
+     sage: from darmonpoints.findcurve import find_curve
      sage: F.<r> = NumberField(x^3 -3)
      sage: P = F.ideal(r-2)
      sage: D = F.ideal(r-1)

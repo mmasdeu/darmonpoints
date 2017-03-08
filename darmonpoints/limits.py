@@ -149,11 +149,11 @@ def compute_tau0(v0,gamma,wD,return_exact = False):
 
 def order_and_unit(F,conductor):
     r'''
-     Returns an order in F and a fundamental unit in the order.
-     It ensures that u satisfies (recall that F is real quadratic):
-       u belongs to the order ZZ + ZZ[delta], where delta
-          is either sqrt{D}/2 (if D = 0 mod 4), or (1+sqrt{D})/2.
-          Here D is the discriminant of the order.
+    Returns an order in F and a fundamental unit in the order.
+    It ensures that `u` satisfies (recall that F is real quadratic) that
+    `u` belongs to the order `ZZ` + `ZZ[\delta]`, where `\delta`
+    is either `\sqrt{D}/2` (if `D = 0 \pmod 4`), or `(1+\sqrt{D})/2`.
+    Here D is the discriminant of the order.
     '''
     #we have to square the unit, so that the determinant is 1
     u0 = F.units()[0]**2 # It looks like the square can (sometimes) be removed!

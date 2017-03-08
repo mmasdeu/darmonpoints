@@ -115,9 +115,6 @@ class HomologyGroup(Parent):
     def space(self):
         r'''
         Calculates the homology space as a Z-module.
-
-        TESTS::
-
         '''
         verb = get_verbose()
         set_verbose(0)
@@ -349,9 +346,6 @@ class ArithHomology(HomologyGroup):
     def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,g0 = None):
         r"""
         Apply the l-th Hecke operator operator to ``c``.
-
-        EXAMPLES::
-
         """
         # verbose('Entering apply_hecke_operator')
         if hecke_reps is None:

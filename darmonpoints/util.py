@@ -1563,7 +1563,7 @@ def simplification_isomorphism(G,return_inverse = False):
         sage: from sage.groups.free_group import FreeGroup
         sage: F = FreeGroup(1)
         sage: G = F.quotient([F.0])
-        sage: G.simplification_isomorphism()
+        sage: G.simplification_isomorphism() # random
         Generic morphism:
           From: Finitely presented group < x | x >
           To:   Finitely presented group <  |  >

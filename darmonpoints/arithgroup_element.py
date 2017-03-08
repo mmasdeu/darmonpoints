@@ -31,11 +31,12 @@ class ArithGroupElement(MultiplicativeGroupElement):
         r'''
         Initialize.
 
-            INPUT:
+        INPUT:
 
-            - a list of the form [(g1,a1),(g2,a2),...,(gn,an)] where the gi are indices
-            refering to fixed generators, and the ai are integers, or
-            an element of the quaternion algebra ``self.parent().quaternion_algebra()``
+        - a list of the form [(g1,a1),(g2,a2),...,(gn,an)] where the gi are indices
+          refering to fixed generators, and the ai are integers, or
+          an element of the quaternion algebra ``self.parent().quaternion_algebra()``.
+
         '''
         MultiplicativeGroupElement.__init__(self, parent)
         init_data = False
