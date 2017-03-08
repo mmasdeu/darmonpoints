@@ -280,7 +280,7 @@ class ArithGroup_generic(AlgebraicGroup):
         TESTS:
 
         sage: from darmonpoints.sarithgroup import ArithGroup
-        sage: magma.eval('SetSeed(2000000)')
+        sage: magma.eval('SetSeed(2000000)') #  optional - magma
         ''
         sage: G = ArithGroup(QQ,6,None,5,magma=Magma()) # optional - magma
         sage: reps = G.get_hecke_reps(11) # optional - magma

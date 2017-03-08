@@ -22,7 +22,7 @@ r'''
     TESTS:
 
     sage: from darmonpoints.darmonpoints import darmon_point
-    sage: P = darmon_point(13,EllipticCurve('78a1'),5,20); P
+    sage: P = darmon_point(13,EllipticCurve('78a1'),5,20); P #  optional - magma
     Starting computation of the Darmon point
     ...
     (22 : 48*alpha - 11 : 1)

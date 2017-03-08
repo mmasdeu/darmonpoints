@@ -16,14 +16,14 @@ sage: from darmonpoints.cohomology_arithmetic import *
 sage: F.<r> = QuadraticField(5)
 sage: P = F.ideal(3/2*r + 1/2)
 sage: D = F.ideal(3)
-sage: abtuple = quaternion_algebra_invariants_from_ramification(F,D,F.real_places()[:1])
-sage: G = BigArithGroup(P,abtuple, F.ideal(1), grouptype = 'PSL2',outfile = "/tmp/darmonpoints.tmp")
-sage: H = ArithCoh(G)
-sage: primes = F.primes_of_degree_one_list(10)
-sage: H.hecke_matrix(primes[0]).charpoly()
+sage: abtuple = quaternion_algebra_invariants_from_ramification(F,D,F.real_places()[:1]) #  optional - magma
+sage: G = BigArithGroup(P,abtuple, F.ideal(1), grouptype = 'PSL2',outfile = "/tmp/darmonpoints.tmp") #  optional - magma
+sage: H = ArithCoh(G)           #  optional - magma
+sage: primes = F.primes_of_degree_one_list(10) #  optional - magma
+sage: H.hecke_matrix(primes[0]).charpoly() #  optional - magma
 x^2 - 16
-sage: ell = F.ideal(1/2*r + 5/2)
-sage: H.hecke_matrix(ell).charpoly()
+sage: ell = F.ideal(1/2*r + 5/2) #  optional - magma
+sage: H.hecke_matrix(ell).charpoly() #  optional - magma
 x^2 - 4
 '''
 from sage.structure.sage_object import SageObject

@@ -154,7 +154,7 @@ class CoIndModule(Parent):
     sage: from darmonpoints.homology import *
     sage: from darmonpoints.cohomology_abstract import *
     sage: from darmonpoints.sarithgroup import *
-    sage: G = BigArithGroup(5,6,1,outfile='/tmp/darmonpoints.tmp')
+    sage: G = BigArithGroup(5,6,1,outfile='/tmp/darmonpoints.tmp') #  optional - magma
     '''
     Element = CoIndElement
     def __init__(self, G, V, trivial_action = False):

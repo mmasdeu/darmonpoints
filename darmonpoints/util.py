@@ -1120,27 +1120,27 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
 
         sage: F.<r> = QuadraticField(5)
         sage: from darmonpoints.util import quaternion_algebra_invariants_from_ramification
-        sage: quaternion_algebra_invariants_from_ramification(F,F.ideal(11),[]); # random
+        sage: quaternion_algebra_invariants_from_ramification(F,F.ideal(11),[]); # random #  optional - magma
         (22, -22*r - 31)
         sage: F.<r> = NumberField(x^2 - x - 24)
         sage: D = F.ideal(106*r + 469)
         sage: S = [F.real_places()[0]]
-        sage: a, b = quaternion_algebra_invariants_from_ramification(F,D,S)
-        sage: B = QuaternionAlgebra(F,a,b)
-        sage: B.discriminant() == D
+        sage: a, b = quaternion_algebra_invariants_from_ramification(F,D,S) #  optional - magma
+        sage: B = QuaternionAlgebra(F,a,b) #  optional - magma
+        sage: B.discriminant() == D #  optional - magma
         True
-        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+1,[])
-        sage: B = QuaternionAlgebra(F,a,b)
-        sage: B.discriminant() == F.ideal(r + 1)
+        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+1,[]) #  optional - magma
+        sage: B = QuaternionAlgebra(F,a,b) #  optional - magma
+        sage: B.discriminant() == F.ideal(r + 1) #  optional - magma
         True
-        sage: a,b = B.invariants()
-        sage: all([v(a) > 0 or v(b) > 0 for v in F.real_places()])
+        sage: a,b = B.invariants() #  optional - magma
+        sage: all([v(a) > 0 or v(b) > 0 for v in F.real_places()]) #  optional - magma
         True
 
     The number of ramified places must be even:
 
         sage: F.<r> = NumberField(x^2 - x - 24)
-        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+4,[])
+        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+4,[]) #  optional - magma
         Traceback (most recent call last):
         ...
         ValueError: Number of ramified places must be even

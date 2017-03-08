@@ -105,14 +105,14 @@ class BigArithGroup_class(AlgebraicGroup):
     TESTS:
 
         sage: from darmonpoints.sarithgroup import BigArithGroup
-        sage: GS = BigArithGroup(7,6,1,outfile='/tmp/darmonpoints.tmp',use_shapiro=False)
-        sage: G = GS.small_group()
-        sage: a = G([2,2,1,1,1,-3])
-        sage: b = G([2,2,2])
-        sage: c = G([3])
-        sage: print a * b # random
+        sage: GS = BigArithGroup(7,6,1,outfile='/tmp/darmonpoints.tmp',use_shapiro=False) #  optional - magma
+        sage: G = GS.small_group() #  optional - magma
+        sage: a = G([2,2,1,1,1,-3]) #  optional - magma
+        sage: b = G([2,2,2])    #  optional - magma
+        sage: c = G([3])        #  optional - magma
+        sage: print a * b # random #  optional - magma
         -236836769/2 + 120098645/2*i - 80061609/2*j - 80063439/2*k
-        sage: b.quaternion_rep # random
+        sage: b.quaternion_rep # random #  optional - magma
         846 - 429*i + 286*j + 286*k
     '''
     def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None, nscartan = None):
@@ -279,10 +279,10 @@ class BigArithGroup_class(AlgebraicGroup):
         EXAMPLES::
 
             sage: from darmonpoints.sarithgroup import BigArithGroup
-            sage: X = BigArithGroup(13,2*3,1,outfile='/tmp/darmonpoints.tmp')
-            sage: II, JJ, KK = X.local_splitting(10)
-            sage: B = X.Gn.B
-            sage: II**2 == QQ(B.gen(0)**2)
+            sage: X = BigArithGroup(13,2*3,1,outfile='/tmp/darmonpoints.tmp') #  optional - magma
+            sage: II, JJ, KK = X.local_splitting(10) #  optional - magma
+            sage: B = X.Gn.B    #  optional - magma
+            sage: II**2 == QQ(B.gen(0)**2) #  optional - magma
             True
 
         """
