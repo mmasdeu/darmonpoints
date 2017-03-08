@@ -17,7 +17,10 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     First example::
 
     sage: from darmonpoints.findcurve import find_curve
-    sage: find_curve(5,6,30,20)
+    sage: find_curve(5,6,30,20) # long time # optional - magma
+    # B = F<i,j,k>, with i^2 = -1 and j^2 = 3
+    ...
+    '(1, 0, 1, -289, 1862)'
 
     A second example, now over a real quadratic::
 
@@ -25,7 +28,8 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     sage: F.<r> = QuadraticField(5)
     sage: P = F.ideal(3/2*r + 1/2)
     sage: D = F.ideal(3)
-    sage: find_curve(P,D,P*D,30,ramification_at_infinity = F.real_places()[:1])
+    sage: find_curve(P,D,P*D,30,ramification_at_infinity = F.real_places()[:1]) # long time # optional - magma
+    ...
 
     Now over a cubic of mixed signature::
 
@@ -33,7 +37,8 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     sage: F.<r> = NumberField(x^3 -3)
     sage: P = F.ideal(r-2)
     sage: D = F.ideal(r-1)
-    sage: find_curve(P,D,P*D,30)
+    sage: find_curve(P,D,P*D,30) # long time # optional - magma
+    ...
 
     '''
     config = ConfigParser.ConfigParser()

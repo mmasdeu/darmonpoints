@@ -145,7 +145,7 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 - r*x +
 
     EXAMPLES::
 
-        sage: from mixed_extension import *
+        sage: from darmonpoints.mixed_extension import *
         sage: p = 7
         sage: K0.<z> = Qq(p**2,20)
         sage: K = QuadExt(K0, p)
@@ -154,11 +154,11 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 - r*x +
         sage: print K(3) - K(5)
         5 + 6*7 + 6*7^2 + 6*7^3 + 6*7^4 + 6*7^5 + 6*7^6 + 6*7^7 + 6*7^8 + 6*7^9 + 6*7^10 + 6*7^11 + 6*7^12 + 6*7^13 + 6*7^14 + 6*7^15 + 6*7^16 + 6*7^17 + 6*7^18 + 6*7^19 + O(7^20) + ( 0 )*pi
         sage: print K(3) * K(5)
-        1 + 2*7 + O(7^20) + ( 0 )*pi
+        1 + 2*7 + O(7^20) + ( O(7^20) )*pi
         sage: print K.gen()
         0 + ( 1 + O(7^20) )*pi
         sage: print K.gen()**2
-        7 + O(7^21) + ( 0 )*pi
+        7 + O(7^21) + ( O(7^20) )*pi
         sage: print (K(1) + K.gen())**2
         1 + 7 + O(7^20) + ( 2 + O(7^20) )*pi
         sage: print K(3)/K(2)

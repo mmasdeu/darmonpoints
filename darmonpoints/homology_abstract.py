@@ -14,7 +14,6 @@ from sage.structure.parent import Parent
 from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
 from sage.sets.set import Set
-from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.modules.free_module_element import vector
 from util import *
 import os

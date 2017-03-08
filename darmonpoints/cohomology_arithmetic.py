@@ -9,22 +9,22 @@ r'''
 TESTS:
 
 sage: from darmonpoints.findcurve import find_curve
-sage: F.<r> = QuadraticField(5)
-sage: P = F.ideal(3/2*r + 1/2)
-sage: D = F.ideal(3)
 sage: from darmonpoints.cohomology_abstract import *
 sage: from darmonpoints.sarithgroup import *
 sage: from darmonpoints.util import *
 sage: from darmonpoints.cohomology_arithmetic import *
+sage: F.<r> = QuadraticField(5)
+sage: P = F.ideal(3/2*r + 1/2)
+sage: D = F.ideal(3)
 sage: abtuple = quaternion_algebra_invariants_from_ramification(F,D,F.real_places()[:1])
-sage: G = BigArithGroup(P,abtuple, F.ideal(1), grouptype = 'PSL2')
-sage: CohShapiro = CohomologyGroup(G.Gn,CoIndModule(G,ZZ**1,trivial_action = True),trivial_action = False)
-sage: CohOrig = CohomologyGroup(G.Gpn, ZZ**1, trivial_action = True)
+sage: G = BigArithGroup(P,abtuple, F.ideal(1), grouptype = 'PSL2',outfile = "/tmp/darmonpoints.tmp")
 sage: H = ArithCoh(G)
 sage: primes = F.primes_of_degree_one_list(10)
-sage: H.hecke_matrix(primes[0])
+sage: H.hecke_matrix(primes[0]).charpoly()
+x^2 - 16
 sage: ell = F.ideal(1/2*r + 5/2)
-sage: H.hecke_matrix(ell)
+sage: H.hecke_matrix(ell).charpoly()
+x^2 - 4
 '''
 from sage.structure.sage_object import SageObject
 from sage.groups.group import AlgebraicGroup
@@ -38,7 +38,6 @@ from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.rings.infinity import Infinity
 from sage.arith.all import gcd, lcm, xgcd
 from util import *
@@ -53,7 +52,7 @@ from sage.categories.action import Action
 import operator
 from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
-from ocmodule import our_adjuster, Sigma0Action
+from ocmodule import our_adjuster
 from sage.modules.free_module_element import free_module_element, vector
 from representations import *
 from time import sleep
@@ -91,8 +90,7 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
             Phi = db(fname)
             return Phi
         except IOError: pass
-    from pollack_stevens.space import ps_modsym_from_elliptic_curve
-    phi0 = ps_modsym_from_elliptic_curve(E)
+    phi0 = E.pollack_stevens_modular_symbol()
     if sign_at_infinity == 1:
         phi0 = phi0.plus_part()
     else:
@@ -198,8 +196,8 @@ class ArithCoh(CohomologyGroup):
         if overconvergent:
             trivial_action = False
             if self._use_ps_dists:
-                from pollack_stevens.distributions import Distributions, Symk
-                V = Distributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = our_adjuster(), dettwist = 0) # Darmon convention
+                from sage.modular.pollack_stevens.distributions import OverconvergentDistributions
+                V = OverconvergentDistributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = our_adjuster(), dettwist = 0) # Darmon convention
                 V.Sigma0 = lambda :V._act._Sigma0
             else:
                 V = OCVn(base.prime(), 1 + base.precision_cap())

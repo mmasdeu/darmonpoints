@@ -45,29 +45,6 @@ def lift(A, N):
 
     Follows Shimura, Lemma 1.38, p21.
 
-    sage: N = 11
-    sage: A = matrix(ZZ, 4, 4, [6, 0, 0, 9, 1, 6, 9, 4, 4, 4, 8, 0, 4, 0, 0, 8])
-    sage: A.det()
-    144
-    sage: A.change_ring(Zmod(N)).det()
-    1
-    sage: L = lift(A, N)
-    sage: L.det()
-    1
-    sage: (L - A) * Mod(1, N) == 0
-    True
-
-    sage: N = 19
-    sage: B = matrix(ZZ, 4, 4, [1, 6, 10, 4, 4, 14, 15, 4, 13, 0, 1, 15, 15, 15, 17, 10])
-    sage: B.det()
-    4447
-    sage: B.change_ring(Zmod(N)).det()
-    1
-    sage: L = lift(B, N)
-    sage: L.det()
-    1
-    sage: (L - B) * Mod(1, N) == 0
-    True
     """
     assert A.is_square()
     assert A.determinant() != 0

@@ -25,13 +25,14 @@ from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
 from sage.matrix.matrix_space import MatrixSpace
-from arithgroup_element import ArithGroupElement
+
 from sage.misc.sage_eval import sage_eval
 from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.rings.infinity import Infinity
 from homology_abstract import HomologyGroup
+from arithgroup_element import ArithGroupElement
 oo = Infinity
 
 def _get_word_jv(G,delta):
@@ -274,13 +275,15 @@ class ArithGroup_generic(AlgebraicGroup):
             else:
                 yield prod([Ugens[i] for i in v],self.B(1))
 
-    def get_hecke_reps(self,l,use_magma = True,g0 = None): # generic
+    def get_hecke_reps(self,l,use_magma = True,g0 = None,progress = False): # generic
         r'''
         TESTS:
 
+        sage: from darmonpoints.sarithgroup import ArithGroup
         sage: magma.eval('SetSeed(2000000)')
-        sage: G = ArithGroup(6,5)
-        sage: reps = G.get_hecke_reps(11)
+        ''
+        sage: G = ArithGroup(QQ,6,None,5,magma=Magma()) # optional - magma
+        sage: reps = G.get_hecke_reps(11) # optional - magma
         '''
         try:
             return self._cache_hecke_reps[l]
@@ -311,9 +314,10 @@ class ArithGroup_generic(AlgebraicGroup):
                 new_inv = new_candidate**-1
                 if not any([self._is_in_order(new_inv * old) for old in reps]):
                     reps.append(new_candidate)
-                if n_iters % 100 == 0:
+                if progress and n_iters % 100 == 0:
                     update_progress(float(len(reps))/float(num_reps),'Getting Hecke representatives (%s iterations)'%(n_iters))
-            update_progress(float(1.0),'Getting Hecke representatives (%s iterations)'%(n_iters))
+            if progress:
+                update_progress(float(1.0),'Getting Hecke representatives (%s iterations)'%(n_iters))
         reps = tuple([set_immutable(o) for o in reps])
         self._cache_hecke_reps[l] = reps
         return reps
@@ -576,8 +580,9 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
     # rationalquaternion
     def embed_order(self,p,K,prec,outfile = None,return_all = False):
         r'''
-        sage: G = ArithGroup(5,6,1)
-        sage: f = G.embed_order(23,20)
+        sage: from darmonpoints.sarithgroup import ArithGroup
+        sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
+        sage: f = G.embed_order(23,20) # optional - magma
         '''
         try:
             newobj = db('quadratic_embeddings_%s_%s.sobj'%(self.discriminant,self.level))
@@ -641,8 +646,9 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
         EXAMPLES:
 
-        sage: G = ArithGroup(7,15,1)
-        sage: G.__magma_word_problem_jv(G.Ugens[2]*G.Ugens[1]) == [2,1]
+        sage: from darmonpoints.sarithgroup import ArithGroup
+        sage: G = ArithGroup(QQ,7,None,15,1,magma=Magma()) # optional - magma
+        sage: G.__magma_word_problem_jv(G.Ugens[2]*G.Ugens[1]) == [2,1] # optional - magma
         '''
         wtime = walltime()
         B = self.O
@@ -1353,8 +1359,9 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
         EXAMPLES:
 
-        sage: G = ArithGroup(7,15,1)
-        sage: G.__magma_word_problem_jv(G.Ugens[2]*G.Ugens[1]) == [2,1]
+        sage: from darmonpoints.sarithgroup import ArithGroup
+        sage: G = ArithGroup(QQ,7,15,magma = Magma()) # optional - magma
+        sage: G.__magma_word_problem_jv(G.Ugens[2]*G.Ugens[1]) == [2,1] # optional - magma
         '''
         wtime = walltime()
         x0 = x

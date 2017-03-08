@@ -149,13 +149,16 @@ class Divisor_element(ModuleElement):
 
         TESTS:
 
+            sage: from darmonpoints.homology import Divisors
             sage: Cp.<g> = Qq(5^3,20)
             sage: Div = Divisors(Cp)
             sage: D1 = Div(g+3)
             sage: D2 = Div(2*g+1)
             sage: D = D1 + D2
             sage: print -D
+            Divisor of degree -2
             sage: print 2*D1 + 5*D2
+            Divisor of degree 7
         '''
         self._data = defaultdict(ZZ)
         self._ptdict = {}

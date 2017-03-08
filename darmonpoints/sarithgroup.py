@@ -20,7 +20,6 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from arithgroup import ArithGroup_nf_quaternion,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix
 from arithgroup_nscartan import ArithGroup_nscartan
-from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 from sage.structure.sage_object import save,load
 from copy import copy
@@ -50,11 +49,7 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
     if magma is None:
         from sage.interfaces.magma import Magma
         magma = Magma(logfile = logfile)
-        try:
-            page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
-        except NameError:
-            ROOT = os.getcwd()
-            page_path = ROOT + '/KleinianGroups-1.0/klngpspec'
+        page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
         if seed is not None:
             magma.eval('SetSeed(%s)'%seed)
         magma.attach_spec(page_path)
@@ -109,21 +104,16 @@ class BigArithGroup_class(AlgebraicGroup):
 
     TESTS:
 
-        sage: G = BigArithGroup(7,15,1)
-        sage: a = G([(1,2),(0,3),(2,-1)])
-        sage: b = G([(1,3)])
-        sage: c = G([(2,1)])
-        sage: print a*b
-        Element in Arithmetic Group attached to data p = 7, disc = 15, level = 1
-        Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
-        sage: a.quaternion_rep
-        618 + 787/4*i - 239*j - 787/4*k
-        sage: b.quaternion_rep
-        -1
-        sage: print a*b
-        Element in Arithmetic Group attached to data p = 7, disc = 15, level = 1
-        Quaternion representation: -618 - 787/4*i + 239*j + 787/4*k
-        Word representation: [(1, 2), (0, 3), (2, -1), (1, 3)]
+        sage: from darmonpoints.sarithgroup import BigArithGroup
+        sage: GS = BigArithGroup(7,6,1,outfile='/tmp/darmonpoints.tmp',use_shapiro=False)
+        sage: G = GS.small_group()
+        sage: a = G([2,2,1,1,1,-3])
+        sage: b = G([2,2,2])
+        sage: c = G([3])
+        sage: print a * b # random
+        -236836769/2 + 120098645/2*i - 80061609/2*j - 80063439/2*k
+        sage: b.quaternion_rep # random
+        846 - 429*i + 286*j + 286*k
     '''
     def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None, nscartan = None):
         self.seed = seed
@@ -288,10 +278,11 @@ class BigArithGroup_class(AlgebraicGroup):
 
         EXAMPLES::
 
-            sage: X = BigArithGroup(13,2*3,1)
-            sage: phi = X.local_splitting(10)
-            sage: B.<i,j,k> = QuaternionAlgebra(3)
-            sage: phi(i)**2 == QQ(i**2)*phi(B(1))
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: X = BigArithGroup(13,2*3,1,outfile='/tmp/darmonpoints.tmp')
+            sage: II, JJ, KK = X.local_splitting(10)
+            sage: B = X.Gn.B
+            sage: II**2 == QQ(B.gen(0)**2)
             True
 
         """

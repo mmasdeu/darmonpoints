@@ -16,7 +16,6 @@ from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,lcm, Qp,Zp,Zmod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sigma0 import Sigma0,Sigma0ActionAdjuster
 from util import *
 import os
 from ocmodule import OCVn
@@ -28,7 +27,6 @@ from sage.categories.action import Action
 import operator
 from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
-from ocmodule import our_adjuster, Sigma0Action
 from sage.modules.free_module_element import vector
 from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.modules.vector_rational_dense import Vector_rational_dense
@@ -153,19 +151,10 @@ class CoIndModule(Parent):
     r'''
     TESTS::
 
-    sage: from homology import *
-    sage: from cohomology import *
-    sage: from sarithgroup import *
-    sage: G = BigArithGroup(5,6,1)
-    sage: V = ZZ**1
-    sage: act = ArithGroupAction(G.Gpn,V)
-    sage: V._unset_coercions_used()
-    sage: V.register_action(act)
-    sage: CoI = CoIndModule(G,V)
-    sage: g = G.Gn.gen(1)
-    sage: x = CoI([0])
-    sage: g * x
-
+    sage: from darmonpoints.homology import *
+    sage: from darmonpoints.cohomology_abstract import *
+    sage: from darmonpoints.sarithgroup import *
+    sage: G = BigArithGroup(5,6,1,outfile='/tmp/darmonpoints.tmp')
     '''
     Element = CoIndElement
     def __init__(self, G, V, trivial_action = False):

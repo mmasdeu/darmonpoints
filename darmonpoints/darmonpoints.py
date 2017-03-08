@@ -23,6 +23,8 @@ r'''
 
     sage: from darmonpoints.darmonpoints import darmon_point
     sage: P = darmon_point(13,EllipticCurve('78a1'),5,20); P
+    Starting computation of the Darmon point
+    ...
     (22 : 48*alpha - 11 : 1)
 
 '''
@@ -43,17 +45,18 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
 
     EXAMPLES:
 
-    First we load the file::
+    We first need to import the module::
 
-    sage: %runfile darmonpoints.sage
+    sage: from darmonpoints.darmonpoints import darmon_point
 
     A first example (Stark--Heegner point)::
 
-    sage: darmon_point(7,EllipticCurve('35a1'),41,20)
+    sage: from darmonpoints.darmonpoints import darmon_point
+    sage: darmon_point(7,EllipticCurve('35a1'),41,20) # long time # optional - magma
 
     A quaternionic (Greenberg) point::
 
-    sage: darmon_point(13,EllipticCurve('78a1'),5,20)
+    sage: darmon_point(13,EllipticCurve('78a1'),5,20) # long time # optional - magma
 
     A Darmon point over a cubic (1,1) field::
 
@@ -62,7 +65,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     sage: N = E.conductor()
     sage: P = F.ideal(r^2 - 2*r - 1)
     sage: beta = -3*r^2 + 9*r - 6
-    sage: darmon_point(P,E,beta,20)
+    sage: darmon_point(P,E,beta,20) # long time # optional - magma
 
     '''
     # global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist

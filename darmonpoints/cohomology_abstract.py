@@ -43,14 +43,16 @@ class CohomologyElement(ModuleElement):
             - V: a CoeffModule
             - data: a list
 
-        TESTS:
-            sage: G = BigArithGroup(5,6,1)
-            sage: V = QQ^1
-            sage: Coh = Cohomology(G,V)
-            sage: print Coh.hecke_matrix(13).eigenvalues()
-            [2,2]
-            sage: print Coh.hecke_matrix(7).eigenvalues()
-            [4,-4]
+        TESTS::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: from darmonpoints.cohomology_arithmetic import ArithCoh
+            sage: G = BigArithGroup(5,6,1,use_shapiro=False,outfile='/tmp/darmonpoints.tmp')
+            sage: Coh = ArithCoh(G)
+            sage: 2 in Coh.hecke_matrix(13).eigenvalues()
+            True
+            sage: -4 in Coh.hecke_matrix(7).eigenvalues()
+            True
             sage: PhiE = Coh.gen(1)
         '''
         G = parent.group()
@@ -245,14 +247,13 @@ class CohomologyGroup(Parent):
 
         TESTS::
 
-        sage: from sarithgroup import *
-        sage: from cohomology_abstract import *
-        sage: from ocmodule import *
-        sage: GS = BigArithGroup(5, 6, 1)
+        sage: from darmonpoints.sarithgroup import *
+        sage: from darmonpoints.cohomology_abstract import *
+        sage: from darmonpoints.ocmodule import *
+        sage: GS = BigArithGroup(5, 6,1,use_shapiro=False,outfile='/tmp/darmonpoints.tmp')
         sage: G = GS.large_group()
         sage: V = OCVn(5,1)
         sage: Coh = CohomologyGroup(G,V,trivial_action = False)
-        sage: amb = Coh.space()
         '''
         verb = get_verbose()
         set_verbose(0)
