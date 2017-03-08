@@ -8,7 +8,7 @@ A package to compute Darmon points
 
 What is this?
 ~~~~~~~~~~~~~
-The **darmonpoints** package can compute many different types of what is known as Darmon points. These are known as *Stark-Heegner* points in some literature, and originated in [Darmon]_. Subsequent generalizations were introduced by [Greenberg]_ and [Trifkovic]_. This has been generalized by [GMS1]_ to elliptic curves defined over number fields of arbitrary signature. Darmon points are attached to triples `(F,E,K)`, where `F` is a number field, `E/F` is an elliptic curve defined over `F`, and `K/F` is a quadratic extension. These triples must satisfy certain conditions for Darmon points to be attached to them. The article [GMS] contains an overview of all of this.
+The **darmonpoints** package can compute many different types of what is known as Darmon points. These are known as *Stark-Heegner* points in some literature, and originated in [Darmon]_. Subsequent generalizations were introduced by [Greenberg]_ and [Trifkovic]_. This has been generalized by [GMS1]_ to elliptic curves defined over number fields of arbitrary signature. Darmon points are attached to triples `(F,E,K)`, where `F` is a number field, `E/F` is an elliptic curve defined over `F`, and `K/F` is a quadratic extension. These triples must satisfy certain conditions for Darmon points to be attached to them. The article [GMS1]_ contains an overview of all of this. We include also a variation used in [KP]_.
 
 The **darmonpoints** package can also compute equations for some elliptic curves `E/F` defined over number fields `F`, as long as certain conditions are satisfied. Namely:
 
@@ -19,13 +19,17 @@ The **darmonpoints** package can also compute equations for some elliptic curves
    b) `P` is a prime ideal of `F` of prime norm.
    c) `D` is the discriminant of a quaternion algebra over `F` which is split at only one infinite place.
 
+Finally, we include the module *padicperiods*, which allows for the computation of `p`-adic periods attached to two-dimensional components of the cohomology of the same arithmetic groups, and which has allowed us to find the corresponding abelian surfaces in some cases (see [GM]_).
+
 The full documentation can be found at http://mmasdeu.github.io/darmonpoints/doc/html/
 
 
 Installation
 ~~~~~~~~~~~~
 
-Installation of the *darmonpoints* package has been grealy simplified and is now essentially trivial. For most operations one does need to have **Magma** installed, although we do hope that in the future Sage will include the required functionality. We include for convenience the dependency, which is currently only one:
+Installation of the *darmonpoints* package has been grealy simplified, thanks to Matthias Köppe "Sample Sage" (https://github.com/mkoeppe/sage_sample). For most operations one *does need* to have **Magma** (https://magma.maths.usyd.edu.au/magma/) installed, although we do hope that in the future Sage will include the required functionality.
+
+We include the only other dependency for convenience:
 
 - The package *KleinianGroups*, the original of which can be found at http://www.normalesup.org/~page/Recherche/Logiciels/KleinianGroups/KleinianGroups-1.0.tar.gz.
 
@@ -106,7 +110,9 @@ This should return an elliptic curve like this::
    y^2 + r*x*y + (r+1)*y = x^3 + (-575*r^2-829*r-1195)*x + (-13327*r^2-19221*r-27721)
 
 ..   [Darmon] H.Darmon. *Integration on Hp x H and arithmetic applications*. Annals of Math.
+..   [Greenberg] M.Greenberg. *Stark-Heegner points and the cohomology of quaternionic Shimura varieties*. Duke Math.
+..   [GM] X.Guitart, M.Masdeu. *Periods of modular GL2-type abelian varieties and p-adic integration*. Experimental Mathematics.
 ..   [GMS1] X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves over number fields of arbitrary signature*. Proc. LMS.
 ..   [GMS2] X.Guitart, M.Masdeu, M.H.Sengun. *Uniformization of modular elliptic curves via p-adic methods*. Journal of Algebra.
-..   [Greenberg] M.Greenberg. *Stark-Heegner points and the cohomology of quaternionic Shimura varieties*. Duke Math.
+..   [KP] A.Pacetti, D.Kohen (with an appendix by M.Masdeu) *On Heegner points for primes of additive reduction ramifying in the base field*. Transactions of the AMS.
 ..   [Trifkovic] M.Trifkovic. *Stark-Heegner points on elliptic curves defined over imaginary quadratic fields*. Duke Math.
