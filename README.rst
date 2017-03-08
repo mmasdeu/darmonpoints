@@ -29,24 +29,11 @@ Installation
 
 Installation of the *darmonpoints* package has been grealy simplified, thanks to Matthias Köppe "Sample Sage" (https://github.com/mkoeppe/sage_sample). For most operations one *does need* to have **Magma** (https://magma.maths.usyd.edu.au/magma/) installed, although we do hope that in the future Sage will include the required functionality.
 
-We include the only other dependency for convenience:
+We include for convenience the dependency Magma package *KleinianGroups* by Aurel Page, the original of which can be found at http://www.normalesup.org/~page/Recherche/Logiciels/KleinianGroups/KleinianGroups-1.0.tar.gz.
 
-- The package *KleinianGroups*, the original of which can be found at http://www.normalesup.org/~page/Recherche/Logiciels/KleinianGroups/KleinianGroups-1.0.tar.gz.
+To install the package use the following command::
 
-The installation consists of two easy steps:
-
-1) Clone the repository to your computer:
-
-   [user@local ~]$ git clone https://github.com/mmasdeu/darmonpoints.git
-
-    (or download a zipfile by pressing the "Clone or download" button in the github website, and
-    then unzip it into some local folder).
-
-2) Install the package so that Sage knowns about it:
-
-   [user@local ~]$ cd darmonpoints
-   [user@local ~]$ make install
-
+   sage -pip install --upgrade --noindex -v git+https://github.com/mmasdeu/darmonpoints.git
 
 Basic usage
 ~~~~~~~~~~~
