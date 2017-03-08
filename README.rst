@@ -33,7 +33,7 @@ We include for convenience the dependency Magma package *KleinianGroups* by Aure
 
 To install the package use the following command::
 
-   sage -pip install --upgrade --noindex -v git+https://github.com/mmasdeu/darmonpoints.git
+   sage -pip install --upgrade -v git+https://github.com/mmasdeu/darmonpoints.git
 
 Basic usage
 ~~~~~~~~~~~
