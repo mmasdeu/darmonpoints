@@ -5,7 +5,7 @@ from sage.rings.number_field.number_field import is_fundamental_discriminant
 from sage.arith.misc import kronecker_symbol,fundamental_discriminant, factor
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.rings.padics.precision_error import PrecisionError
-from sage.rings.all import ZZ, QQ
+from sage.rings.all import ZZ, QQ, Qp
 from sage.schemes.curves.constructor import Curve
 from sage.misc.misc import walltime, verbose
 from sarithgroup import BigArithGroup
