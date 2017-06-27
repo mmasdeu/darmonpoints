@@ -27,7 +27,7 @@ The full documentation can be found at http://mmasdeu.github.io/darmonpoints/doc
 Installation
 ~~~~~~~~~~~~
 
-Installation of the *darmonpoints* package has been grealy simplified, thanks to Matthias Köppe "Sample Sage" (https://github.com/mkoeppe/sage_sample). For most operations one *does need* to have **Magma** (https://magma.maths.usyd.edu.au/magma/) installed, although we do hope that in the future Sage will include the required functionality.
+Installation of the *darmonpoints* package has been greatly simplified, thanks to Matthias Köppe "Sample Sage" (https://github.com/mkoeppe/sage_sample). For most operations one *does need* to have **Magma** (https://magma.maths.usyd.edu.au/magma/) installed, although we do hope that in the future Sage will include the required functionality.
 
 We include for convenience the dependency Magma package *KleinianGroups* by Aurel Page, the original of which can be found at http://www.normalesup.org/~page/Recherche/Logiciels/KleinianGroups/KleinianGroups-1.0.tar.gz.
 
