@@ -7,7 +7,7 @@ from sarithgroup import BigArithGroup
 from homology import lattice_homology_cycle
 from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
 from integrals import integrate_H1,double_integral_zero_infty
-from sage.all import QQ, ZZ, QuaternionAlgebra, factor
+from sage.all import QQ, ZZ, Qp, QuaternionAlgebra, factor, Infinity
 import sys, os, datetime, ConfigParser
 
 def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
