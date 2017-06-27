@@ -164,12 +164,12 @@ class ArithAction(Action):
 
 class LocalAction(Action):
     def __init__(self,G,M):
-        self.G = G
+        self._G = G
         Action.__init__(self,G.large_group().B,M,is_left = True,op = operator.mul)
 
     def _call_(self,g,v):
         V = v.parent()
-        return V.Sigma0()(self.G.embed(g, V.precision_cap()), check = False) * v
+        return V.Sigma0()(self._G.embed(g, V.precision_cap()), check = False) * v
 
 class ArithCohElement(CohomologyElement):
     def set_liftee(self,x):

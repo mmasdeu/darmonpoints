@@ -34,7 +34,7 @@ from sage.modules.free_module_element import FreeModuleElement_generic_dense
 
 class CoIndAction(Action):
     def __init__(self, algebra , V, G, trivial_action = False):
-        self.G = G
+        self._G = G
         self.V = V
         self._trivial_action = trivial_action
         Action.__init__(self,algebra,V,is_left = True,op = operator.mul)
@@ -44,7 +44,7 @@ class CoIndAction(Action):
         # v = [v_1, ... , v_r], indexed by cosets
         # To know (g*f)(x_i) = f(x_i g), we write
         # x_i g = g' x_j, and then f(x_i g) = g' f(x_j).
-        G = self.G
+        G = self._G
         V = self.V
         try:
             g = g.quaternion_rep
