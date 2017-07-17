@@ -5,7 +5,7 @@ from sage.rings.number_field.number_field import is_fundamental_discriminant
 from sage.arith.misc import kronecker_symbol,fundamental_discriminant, factor
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.rings.padics.precision_error import PrecisionError
-from sage.rings.all import ZZ, QQ, Qp
+from sage.rings.all import ZZ, QQ, Qp, Zmod
 from sage.rings.infinity import Infinity
 from sage.schemes.curves.constructor import Curve
 from sage.misc.misc import walltime, verbose
@@ -15,7 +15,6 @@ from cohomology_arithmetic import get_overconvergent_class_matrices, get_overcon
 from integrals import double_integral_zero_infty,integrate_H1
 from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,config_section_map, Bunch
-
 
 import os, datetime, ConfigParser, sys
 
