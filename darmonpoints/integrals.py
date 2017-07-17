@@ -39,7 +39,10 @@ def double_integral_zero_infty(Phi,tau1,tau2):
     x = R.gen()
     R1 = PowerSeriesRing(K,'r1')
     r1 = R1.gen()
-    R1.set_default_prec(Phi.precision_absolute())
+    try:
+        R1.set_default_prec(Phi.precision_absolute())
+    except AttributeError:
+        R1.set_default_prec(Phi.precision_relative())
     level = Phi._map._manin.level()
     E0inf = [M2Z([0,-1,level,0])]
     E0Zp = [M2Z([p,a,0,1]) for a in range(p)]
