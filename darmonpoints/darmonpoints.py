@@ -9,6 +9,7 @@ from sage.rings.all import ZZ, QQ, Qp, Zmod
 from sage.rings.infinity import Infinity
 from sage.schemes.curves.constructor import Curve
 from sage.misc.misc import walltime, verbose
+from sage.misc.misc_c import prod
 from sarithgroup import BigArithGroup
 from homology import construct_homology_cycle
 from cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
