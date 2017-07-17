@@ -43,7 +43,7 @@ from sage.arith.all import gcd, lcm, xgcd
 from util import *
 import os
 from ocmodule import OCVn
-from sage.misc.persist import db,db_save
+from sage.misc.persist import db, db_save
 from sage.parallel.decorate import fork,parallel
 oo = Infinity
 from sage.matrix.constructor import block_matrix
@@ -79,7 +79,6 @@ def find_newans(Coh,glocs,ti):
 def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
-    from sage.misc.persist import db_save
     if use_ps_dists == False:
         raise NotImplementedError, 'Must use distributions from Pollack-Stevens code in the split case'
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'

@@ -114,6 +114,9 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         else:
             quit_when_done = False
         magma.attach_spec(page_path)
+    else:
+        quit_when_done = False
+
     sys.setrecursionlimit(10**6)
 
     F = E.base_ring()
