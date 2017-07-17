@@ -96,7 +96,6 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
         phi0 = phi0.minus_part()
     phi0 = 1/gcd([val.moment(0) for val in phi0.values()]) * phi0
     Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True)
-    db_save(Phi,fname)
     Phi._liftee = phi0
     return Phi
 
