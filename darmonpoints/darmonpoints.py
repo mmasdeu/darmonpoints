@@ -113,7 +113,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             quit_when_done = True
         else:
             quit_when_done = False
-
         magma.attach_spec(page_path)
     sys.setrecursionlimit(10**6)
 
@@ -168,7 +167,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     fname = 'moments_%s_%s_%s_%s.sobj'%(P,Ename,sgninfty,prec)
 
     if use_sage_db:
-        print "Moments will be stored in database as %s"%(fname)
+        print("Moments will be stored in database as %s"%(fname))
 
     if outfile == 'log':
         outfile = '%s_%s_%s_%s_%s_%s.log'%(P,Ename,dK,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
@@ -184,7 +183,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     fwrite('Calculation with p = %s and prec = %s'%(P,prec),outfile)
     fwrite('Elliptic curve %s: %s'%(Ename,E),outfile)
     if outfile is not None:
-        print "Partial results will be saved in %s"%outfile
+        print("Partial results will be saved in %s"%outfile)
 
     if input_data is None:
         if cohomological:

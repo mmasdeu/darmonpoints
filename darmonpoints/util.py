@@ -1710,9 +1710,10 @@ class Bunch:
         self.__dict__.update(**v)
     def get(self,name,default=None):
         try:
-            return self.name
-        except AttributeError:
+            return self.__dict__[name]
+        except KeyError:
             return default
+
 def config_section_map(config, section):
     dict1 = {}
     try:

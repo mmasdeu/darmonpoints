@@ -135,7 +135,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
             ramification_at_infinity = None
 
     if outfile is not None:
-        print "Partial results will be saved in %s"%outfile
+        print("Partial results will be saved in %s"%outfile)
 
     if initial_data is not None:
         G,phiE = initial_data
