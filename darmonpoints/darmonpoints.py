@@ -105,16 +105,16 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     if working_prec is None:
         working_prec = max([2 * prec + 10, 30])
 
-    page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
+    if use_magma:
+        page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
+        if magma is None:
+            from sage.interfaces.magma import Magma
+            magma = Magma()
+            quit_when_done = True
+        else:
+            quit_when_done = False
 
-    if magma is None:
-        from sage.interfaces.magma import Magma
-        magma = Magma()
-        quit_when_done = True
-    else:
-        quit_when_done = False
-
-    magma.attach_spec(page_path)
+        magma.attach_spec(page_path)
     sys.setrecursionlimit(10**6)
 
     F = E.base_ring()
