@@ -32,6 +32,27 @@ ext_modules = [
 ]
 
 sage_version_string = 'sagemath>=9.0'
+
+# Here we test that the version is the correct one
+def check_version(version):
+    try:
+        import sage.all
+    except ImportError:
+        print("Sage does not seem to be installed in this system. Please visit www.sagemath.org to fix this!")
+        raise ValueError
+    installed_version = sage.all.version().replace(',','').split()[2]
+    if version.find('==') != -1:
+        version = version.replace('==','')
+        if sage.all.sage_eval(version) != sage.all.sage_eval(installed_version):
+            print("Sage version (=%s) is different from required one (=%s)."%(installed_version,version))
+            raise ValueError
+    elif version.find('>=') != -1:
+        version = version.replace('>=','')
+        if sage.all.sage_eval(version) > sage.all.sage_eval(installed_version):
+            print("Sage version (=%s) is older than the required one (=%s)."%(installed_version,version))
+            raise ValueError
+
+
 check_version(sage_version_string.replace('sagemath',''))
 
 setup(
