@@ -31,6 +31,9 @@ ext_modules = [
          include_dirs=sage_include_directories())
 ]
 
+sage_version_string = 'sagemath>=9.0'
+check_version(sage_version_string.replace('sagemath',''))
+
 setup(
     name = "darmonpoints",
     version = readfile("VERSION"), # the VERSION file is shared with the documentation
@@ -52,7 +55,7 @@ setup(
       'Programming Language :: Python :: 2.7',
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "SageMath, Darmon points, elliptic curves, p-adic periods",
-    install_requires = ['sagemath>=7.6'],
+    install_requires = [sage_version_string],
     packages = ['darmonpoints'],
     ext_modules = cythonize(ext_modules),
     include_package_data = True,
