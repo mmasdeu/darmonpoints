@@ -49,9 +49,10 @@ setup(
       'Intended Audience :: Science/Research',
       'Topic :: Scientific/Engineering :: Mathematics',
       'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
-      'Programming Language :: Sage :: 7.5',
+      'Programming Language :: Python :: 2.7',
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "SageMath, Darmon points, elliptic curves, p-adic periods",
+    requires = ['sagemath (>=7.6)']
     packages = ['darmonpoints'],
     ext_modules = cythonize(ext_modules),
     include_package_data = True,
