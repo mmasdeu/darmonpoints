@@ -1,4 +1,6 @@
 prune darmonpoints
+include VERSION
 include darmonpoints/config.ini
+include darmonpoints/mixed_extension.pyx
 recursive-include darmonpoints/KleinianGroups-1.0 *
 global-exclude *.sig
