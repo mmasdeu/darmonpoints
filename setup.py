@@ -4,6 +4,7 @@ import sys
 from setuptools import setup
 from codecs import open # To open the README file with proper encoding
 from setuptools.command.test import test as TestCommand # for tests
+from distutils.command import build as build_module
 
 # The next block is if there are some cython files
 
@@ -17,6 +18,14 @@ def readfile(filename):
     with open(filename,  encoding='utf-8') as f:
         return f.read()
 
+# Check the right Sage version
+class build(build_module.build):
+    def run(self):
+        from sagemath.check_version import check_version
+        check_version(sage_required_version)
+        build_module.build.run(self)
+
+
 # For the tests
 class SageTest(TestCommand):
     def run_tests(self):
@@ -24,36 +33,15 @@ class SageTest(TestCommand):
         if errno != 0:
             sys.exit(1)
 
- # Cython modules
+# Cython modules
 ext_modules = [
          Extension('darmonpoints.mixed_extension',
          sources = [os.path.join('darmonpoints','mixed_extension.pyx')],
          include_dirs=sage_include_directories())
 ]
 
-sage_version_string = 'sagemath>=9.0'
-
-# Here we test that the version is the correct one
-def check_version(version):
-    try:
-        import sage.all
-    except ImportError:
-        print("Sage does not seem to be installed in this system. Please visit www.sagemath.org to fix this!")
-        raise ValueError
-    installed_version = sage.all.version().replace(',','').split()[2]
-    if version.find('==') != -1:
-        version = version.replace('==','')
-        if sage.all.sage_eval(version) != sage.all.sage_eval(installed_version):
-            print("Sage version (=%s) is different from required one (=%s)."%(installed_version,version))
-            raise ValueError
-    elif version.find('>=') != -1:
-        version = version.replace('>=','')
-        if sage.all.sage_eval(version) > sage.all.sage_eval(installed_version):
-            print("Sage version (=%s) is older than the required one (=%s)."%(installed_version,version))
-            raise ValueError
-
-
-check_version(sage_version_string.replace('sagemath',''))
+# Specify the required Sage version
+sage_required_version = '>=7.6'
 
 setup(
     name = "darmonpoints",
@@ -76,9 +64,9 @@ setup(
       'Programming Language :: Python :: 2.7',
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "SageMath, Darmon points, elliptic curves, p-adic periods",
-    install_requires = [sage_version_string],
+    install_requires = ['sagemath'],
     packages = ['darmonpoints'],
     ext_modules = cythonize(ext_modules),
     include_package_data = True,
-    cmdclass = {'test': SageTest} # adding a special setup command for tests
+    cmdclass = {'build': build, 'test': SageTest} # adding a special setup command for tests
 )
