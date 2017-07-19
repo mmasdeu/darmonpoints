@@ -1,4 +1,3 @@
-required: sudo
 language: python
 matrix:
   include:
@@ -8,9 +7,6 @@ matrix:
   - env: CACHE_NAME=7.5.1 SAGE_SERVER=http://mirrors.xmission.com/sage/ SAGE_IMAGE=linux/64bit/sage-7.5.1-Ubuntu_12.04-x86_64.tar.bz2
   allow_failures:
   - env: CACHE_NAME=7.5.1 SAGE_SERVER=http://mirrors.xmission.com/sage/ SAGE_IMAGE=linux/64bit/sage-7.5.1-Ubuntu_12.04-x86_64.tar.bz2
-
-services:
-- docker
 
 install:
 - "./.travis-install.sh"
