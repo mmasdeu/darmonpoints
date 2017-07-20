@@ -8,12 +8,6 @@ from codecs import open # To open the README file with proper encoding
 from setuptools.command.test import test as TestCommand # for tests
 from distutils.command import build as build_module
 
-# The next block is if there are some cython files
-from setuptools import Extension
-from Cython.Build import cythonize
-import Cython.Compiler.Options
-from sage.env import sage_include_directories
-
 # Obtain the different Sage versions
 def get_all_version_names(mirror_url, idx = None, distribution = 'Ubuntu_16.04-x86_64'):
     if idx is None:
@@ -59,6 +53,12 @@ ext_modules = [
 sage_required_version = '>=7.6'
 
 if __name__ == "__main__":
+    # The next block is if there are some cython files
+    from setuptools import Extension
+    from Cython.Build import cythonize
+    import Cython.Compiler.Options
+    from sage.env import sage_include_directories
+
     setup(
         name = "darmonpoints",
         version = readfile("VERSION"), # the VERSION file is shared with the documentation
