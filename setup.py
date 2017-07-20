@@ -58,30 +58,31 @@ ext_modules = [
 # Specify the required Sage version
 sage_required_version = '>=7.6'
 
-setup(
-    name = "darmonpoints",
-    version = readfile("VERSION"), # the VERSION file is shared with the documentation
-    description='Compute non-archimedean Darmon points',
-    long_description = readfile("README.rst"), # get the long description from the README
-    url='https://github.com/mmasdeu/darmonpoints',
-    author='Marc Masdeu',
-    author_email='marc.masdeu@gmail.com', # choose a main contact email
-    license='GPLv2+', # This should be consistent with the LICENCE file
-    classifiers=[
-      # How mature is this project? Common values are
-      #   3 - Alpha
-      #   4 - Beta
-      #   5 - Production/Stable
-      'Development Status :: 4 - Beta',
-      'Intended Audience :: Science/Research',
-      'Topic :: Scientific/Engineering :: Mathematics',
-      'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
-      'Programming Language :: Python :: 2.7',
-    ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-    keywords = "SageMath, Darmon points, elliptic curves, p-adic periods",
-    install_requires = ['sagemath'],
-    packages = ['darmonpoints'],
-    ext_modules = cythonize(ext_modules),
-    include_package_data = True,
-    cmdclass = {'build': build, 'test': SageTest} # adding a special setup command for tests
-)
+if __name__ == "__main__":
+    setup(
+        name = "darmonpoints",
+        version = readfile("VERSION"), # the VERSION file is shared with the documentation
+        description='Compute non-archimedean Darmon points',
+        long_description = readfile("README.rst"), # get the long description from the README
+        url='https://github.com/mmasdeu/darmonpoints',
+        author='Marc Masdeu',
+        author_email='marc.masdeu@gmail.com', # choose a main contact email
+        license='GPLv2+', # This should be consistent with the LICENCE file
+        classifiers=[
+          # How mature is this project? Common values are
+          #   3 - Alpha
+          #   4 - Beta
+          #   5 - Production/Stable
+          'Development Status :: 4 - Beta',
+          'Intended Audience :: Science/Research',
+          'Topic :: Scientific/Engineering :: Mathematics',
+          'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
+          'Programming Language :: Python :: 2.7',
+        ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
+        keywords = "SageMath, Darmon points, elliptic curves, p-adic periods",
+        install_requires = ['sagemath'],
+        packages = ['darmonpoints'],
+        ext_modules = cythonize(ext_modules),
+        include_package_data = True,
+        cmdclass = {'build': build, 'test': SageTest} # adding a special setup command for tests
+    )
