@@ -1,7 +1,7 @@
 #! /bin/sh
 set -e
-cd $HOME
 SAGE_IMAGE = `python2 process_mirror.py ${SAGE_SERVER} ${SAGE_AGE}`
+cd $HOME
 if [ ! -x SageMath/sage ] ; then
     rm -f SageMath.tar.bz2
     wget ${SAGE_SERVER}${SAGE_IMAGE} -O SageMath.tar.bz2
