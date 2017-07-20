@@ -42,15 +42,6 @@ class SageTest(TestCommand):
         if errno != 0:
             sys.exit(1)
 
-# Cython modules
-ext_modules = [
-         Extension('darmonpoints.mixed_extension',
-         sources = [os.path.join('darmonpoints','mixed_extension.pyx')],
-         include_dirs=sage_include_directories())
-]
-
-# Specify the required Sage version
-sage_required_version = '>=7.6'
 
 if __name__ == "__main__":
     # The next block is if there are some cython files
@@ -58,6 +49,16 @@ if __name__ == "__main__":
     from Cython.Build import cythonize
     import Cython.Compiler.Options
     from sage.env import sage_include_directories
+
+    # Cython modules
+    ext_modules = [
+             Extension('darmonpoints.mixed_extension',
+             sources = [os.path.join('darmonpoints','mixed_extension.pyx')],
+             include_dirs=sage_include_directories())
+    ]
+
+    # Specify the required Sage version
+    sage_required_version = '>=7.6'
 
     setup(
         name = "darmonpoints",
