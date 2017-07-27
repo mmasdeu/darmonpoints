@@ -53,7 +53,10 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     A first example (Stark--Heegner point)::
 
     sage: from darmonpoints.darmonpoints import darmon_point
-    sage: darmon_point(7,EllipticCurve('35a1'),41,20) # long time # optional - magma
+    sage: darmon_point(7,EllipticCurve('35a1'),41,20, cohomological=False, use_magma=False, use_ps_dists = True)
+    Starting computation of the Darmon point
+    ...
+    (-70*alpha + 449 : 2100*alpha - 13444 : 1)
 
     A quaternionic (Greenberg) point::
 
