@@ -3,7 +3,7 @@ set -e
 if [[ "${TRAVIS_PULL_REQUEST}" == "false" && "${TRAVIS_BRANCH}" == "${DEPLOY_DOC_FROM_BRANCH}" && -r .travis_ci_gh_pages_deploy_key ]]; then
     chmod 600 .travis_ci_gh_pages_deploy_key
     eval `ssh-agent -s`
-    ssh-add .travis_ci_gh_pages_deploy_key
+    ssh-add .travis_ci_gh_pages_deploy_key < /dev/null
     rm -Rf gh-pages
     git clone --depth 1 git@github.com:${DEPLOY_DOC_TO_REPOSITORY}.git --depth 1 --branch=gh-pages gh-pages
     BUILT_DOCS_DIR=`cd docs/build/html && pwd`
