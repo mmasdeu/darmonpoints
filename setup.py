@@ -2,7 +2,6 @@
 import os
 import sys
 import re
-import urllib2
 from setuptools import setup
 from codecs import open # To open the README file with proper encoding
 from setuptools.command.test import test as TestCommand # for tests
@@ -10,6 +9,7 @@ from distutils.command import build as build_module
 
 # Obtain the different Sage versions
 def get_all_version_names(mirror_url, idx = None, distribution = 'Ubuntu_12.04-x86_64'):
+    import urllib2
     if idx is None:
         idx = 0
     else:
@@ -58,7 +58,8 @@ if __name__ == "__main__":
     ]
 
     # Specify the required Sage version
-    sage_required_version = '>=7.6'
+    sage_required_version = u'>=7.4'
+    REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
 
     setup(
         name = "darmonpoints",
@@ -81,7 +82,9 @@ if __name__ == "__main__":
           'Programming Language :: Python :: 2.7',
         ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
         keywords = "SageMath, Darmon points, elliptic curves, p-adic periods",
-        install_requires = ['sagemath'],
+        # this grabs the requirements from requirements.txt
+        install_requires=REQUIREMENTS,
+        # install_requires = ['sagemath', 'cython'],
         packages = ['darmonpoints'],
         ext_modules = cythonize(ext_modules),
         include_package_data = True,
