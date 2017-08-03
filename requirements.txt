@@ -1,0 +1,4 @@
+urllib2>=0.0.1
+sagemath>=1.0
+cython>=0.0.1
+
