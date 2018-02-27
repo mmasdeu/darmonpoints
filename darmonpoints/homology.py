@@ -18,7 +18,7 @@ from util import *
 import os
 from ocmodule import *
 import operator
-from sage.rings.arith import GCD
+from sage.arith.misc import GCD
 from sage.rings.padics.precision_error import PrecisionError
 from representations import *
 
