@@ -9,8 +9,7 @@ from sage.misc.sage_eval import sage_eval
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
-from sage.rings.arith import next_prime
-from sage.arith.all import divisors, algdep, kronecker_symbol
+from sage.arith.all import divisors, algdep, kronecker_symbol, next_prime
 from sage.interfaces.gp import gp
 from sage.rings.infinity import Infinity
 from sage.sets.primes import Primes

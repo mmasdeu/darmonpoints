@@ -311,6 +311,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         Phi,J = input_data[1:3]
     fwrite('Integral done. Now trying to recognize the point', outfile)
     fwrite('J_psi = %s'%J,outfile)
+    fwrite('g belongs to %s'%J.parent(),outfile)
     #Try to recognize a generator
     if quaternionic:
         local_embedding = G.base_ring_local_embedding(working_prec)
