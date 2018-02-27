@@ -18,7 +18,7 @@ from sage.modules.free_module_element import vector
 from util import *
 import os
 import operator
-from sage.rings.arith import GCD
+from sage.arith.all import GCD
 from representations import *
 
 class HomologyElement(ModuleElement):
