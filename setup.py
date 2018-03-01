@@ -2,14 +2,15 @@
 import os
 import sys
 import re
+import urllib2
 from setuptools import setup
 from codecs import open # To open the README file with proper encoding
 from setuptools.command.test import test as TestCommand # for tests
 from distutils.command import build as build_module
 
+
 # Obtain the different Sage versions
-def get_all_version_names(mirror_url, idx = None, distribution = 'Ubuntu_12.04-x86_64'):
-    import urllib2
+def get_all_version_names(mirror_url, idx = None, distribution = 'Ubuntu_14.04-x86_64'):
     if idx is None:
         idx = 0
     else:
@@ -19,6 +20,7 @@ def get_all_version_names(mirror_url, idx = None, distribution = 'Ubuntu_12.04-x
     all_version_names = []
     for fname, ver in ans:
         if fname not in all_version_names:
+            print("Adding version %s to list of Sage versions available."%fname)
             all_version_names.append(fname)
     return all_version_names[idx]
 
