@@ -14,7 +14,6 @@ from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp,Zmod
-from sage.arith.all import lcm
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
 from collections import defaultdict
@@ -34,7 +33,6 @@ from sage.rings.finite_rings.finite_field_constructor import FiniteField
 from sage.rings.infinity import Infinity
 from homology_abstract import HomologyGroup
 from arithgroup import ArithGroup_generic
-from sage.arith.misc import XGCD
 from sage.modular.modsym.p1list import lift_to_sl2z
 from sage.matrix.constructor import diagonal_matrix, identity_matrix, block_diagonal_matrix
 oo = Infinity

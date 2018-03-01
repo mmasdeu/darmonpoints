@@ -14,11 +14,11 @@ from sage.structure.parent import Parent
 from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
 from sage.sets.set import Set
+from sage.arith.all import GCD
 from util import *
 import os
 from ocmodule import *
 import operator
-from sage.arith.misc import GCD
 from sage.rings.padics.precision_error import PrecisionError
 from representations import *
 
@@ -117,9 +117,6 @@ def lattice_homology_cycle(G, xlist, prec, outfile = None, smoothen = None):
         except ValueError:
             xi1 = xi1 + xi10
             xi2 = xi2 + xi20
-    # m = GCD(n1, n2)
-    # xi1 = xi1.mult_by(ZZ(n2/m))
-    # xi2 = xi2.mult_by(ZZ(n1/m))
     if smoothen is not None:
         newxi1 = newxi1.hecke_smoothen(smoothen)
         newxi2 = newxi2.hecke_smoothen(smoothen)
@@ -155,9 +152,9 @@ class Divisor_element(ModuleElement):
             sage: D1 = Div(g+3)
             sage: D2 = Div(2*g+1)
             sage: D = D1 + D2
-            sage: print -D
+            sage: print(-D)
             Divisor of degree -2
-            sage: print 2*D1 + 5*D2
+            sage: print(2*D1 + 5*D2)
             Divisor of degree 7
         '''
         self._data = defaultdict(ZZ)

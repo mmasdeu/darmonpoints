@@ -9,7 +9,7 @@ from sage.misc.sage_eval import sage_eval
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
-from sage.arith.all import divisors, algdep, kronecker_symbol, next_prime
+from sage.arith.all import algdep
 from sage.interfaces.gp import gp
 from sage.rings.infinity import Infinity
 from sage.sets.primes import Primes
@@ -118,7 +118,7 @@ def find_containing_affinoid(p,z,level = 1):
     a=0
     pn=1
     val=z.valuation(p)
-    L=[0]*val+z.unit_part().list()
+    L=[0]*val+list(z.unit_part().expansion())
     for n in range(len(L)):
         if L[n] != 0:
             if len(L[n]) > 1:
@@ -149,7 +149,7 @@ def point_radius(z,level = 1):
     pn=1
     ans = 0
     val=z.valuation(p)
-    L=[0]*val+z.unit_part().list()
+    L=[0]*val + list(z.unit_part().expansion())
     for n in range(len(L)):
         if L[n] != 0:
             if len(L[n]) > 1:
@@ -184,7 +184,7 @@ def find_center(p,level,t1,t2):
 
 def is_in_Gamma_1(mat,N,p = None,determinant_condition = True):
     if N != 1:
-        a,b,c,d=mat.list()
+        a,b,c,d = mat.list()
         if p is None and not all([QQ(x).is_integral() for x in [a,b,c,d]]):
             return False
         if p is not None and not all([QQ(x).is_S_integral([p]) for x in [a,b,c,d]]):
@@ -923,7 +923,7 @@ def _get_heegner_params_numberfield(P,N,beta):
 def _get_heegner_params_rational(p,N,beta):
     if N % p != 0:
         raise ValueError,'p (=%s) must divide conductor (=%s)'%(p,N)
-    if kronecker_symbol(beta,p) != -1:
+    if ZZ(beta).kronecker(p) != -1:
         raise ValueError,'p (=%s) must be inert in K (=Q(sqrt{%s}))'%(p,beta)
     N1 = ZZ(N/p)
     if N1 % p == 0:
@@ -933,7 +933,7 @@ def _get_heegner_params_rational(p,N,beta):
     Ncartan = None
     num_inert_semistable_primes = 0
     for ell,r in N1.factor():
-        ks = kronecker_symbol(beta,ell)
+        ks = ZZ(beta).kronecker(ell)
         if ks == -1: # inert
             if r != 1:
                 if r > 2:
@@ -1733,4 +1733,4 @@ def print_padic(x):
     from sage.rings.padics.padic_generic import local_print_mode
     R = x.parent()
     with local_print_mode(R,'val-unit'):
-        print x
+        print(x)

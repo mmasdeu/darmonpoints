@@ -14,7 +14,6 @@ from sage.misc.cachefunc import cached_method
 from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod
-from sage.arith.all import lcm
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from util import *

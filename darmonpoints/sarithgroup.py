@@ -110,7 +110,7 @@ class BigArithGroup_class(AlgebraicGroup):
         sage: a = G([2,2,1,1,1,-3]) #  optional - magma
         sage: b = G([2,2,2])    #  optional - magma
         sage: c = G([3])        #  optional - magma
-        sage: print a * b # random #  optional - magma
+        sage: print(a * b) # random #  optional - magma
         -236836769/2 + 120098645/2*i - 80061609/2*j - 80063439/2*k
         sage: b.quaternion_rep # random #  optional - magma
         846 - 429*i + 286*j + 286*k
@@ -515,7 +515,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 x = set_immutable(x * gitildes[i])
                 new_wd = [wd1] + new_wd
             if len(new_wd) == 0:
-                print 'Offending input: %s'%x
+                print('Offending input: %s'%x)
                 raise RuntimeError
             a, wd = self._reduce_in_amalgam(x)
             return set_immutable(a), wd + new_wd

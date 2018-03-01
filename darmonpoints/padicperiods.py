@@ -124,7 +124,6 @@ def Theta(p1, p2, p3, version, prec=None):
     a = QQ(1)/QQ(2)
     b = QQ(1)/QQ(2)
     c = 0
-    # print 'Entering Theta %s %s %s'%(a,b,c)
     # Define the different conditions and term forms
     if version is None:
         condition = lambda i,j: b*(i**2-ZZ(i).abs()) + a*(j**2-ZZ(j).abs()) + c*((i-j)**2 - ZZ(i-j).abs())
@@ -525,7 +524,7 @@ def build_Lambdalist_from_AB(A,B,T, scaling):
         x,y,z,t = T
     alpha = ZZ(z)/ZZ(y)
     beta = ZZ(t-x)/ZZ(y)
-    d = lcm(alpha.denominator(),beta.denominator())
+    d = alpha.denominator().lcm(beta.denominator())
     alpha, beta = ZZ(d*alpha), ZZ(d*beta)
     ans = []
     K = A.parent()
@@ -696,8 +695,8 @@ def frobenius_polynomial(C):
     ap1 = q + 1 - N1
     ap2 = q*q +1 - N2
     r = (ap1*ap1 - ap2)/2
-    print 'trace = %s'%ap1
-    print 'norm = %s'%(r - 2*q)
+    print('trace = %s'%ap1)
+    print('norm = %s'%(r - 2*q))
     return QQ['x']([q*q, -ap1*q, r, -ap1, 1])
 
 def euler_factor_twodim(p,T):
@@ -939,12 +938,12 @@ def find_initial_approx(L1, L2, L3, lvec):
     for V in product(product(range(K.base().prime()), repeat = 3), repeat = 3):
         n_tries += 1
         if n_tries % 100 == 0:
-            print 'n_tries = %s'%n_tries
+            print('n_tries = %s'%n_tries)
         P = [a+b*K.gen()+c*K.base().gen() for a,b,c in V]
         FP = ev(*P)
         if min([(u-v).valuation() for u,v in zip(FP,[L1,L2,L3])]) > 1/2:
             good_P = P
-            print P, [(u-v).valuation() for u,v in zip(FP,[L1,L2,L3])]
+            print(P, [(u-v).valuation() for u,v in zip(FP,[L1,L2,L3])])
     return good_P
 
 # given a triple of lambda's returns the corresponding half periods
@@ -968,7 +967,7 @@ def HalfPeriodsInTermsOfLambdas(L1, L2, L3, lvec_and_Mlist = None, HP0 = None, p
         Jinv = evaluate_twisted_jacobian_matrix(*Pn.list(),Mlist = Mlist).inverse()
         FPn = matrix(3,1, ev(*Pn.list()))
         Pnn = Pn - Jinv * (FPn - L0)
-        print '(%s)'%n_iters, [(u-v).valuation() for u,v in zip(Pn.list(), Pnn.list())]
+        print('(%s)'%n_iters, [(u-v).valuation() for u,v in zip(Pn.list(), Pnn.list())])
         if all([u == v for u,v in zip(Pn.list(), Pnn.list())]):
             return Pn
         Pn = Pnn
@@ -1018,7 +1017,7 @@ def compare_AB_periods(Alist, Blist, T, Ag, Bg, Dg, prec, base=QQ, matlist = Non
                 matlist.append(m)
 
     pairs = set([])
-    print 'len(Alist) = %s, len(Blist) = %s'%(len(Alist),len(Blist))
+    print('len(Alist) = %s, len(Blist) = %s'%(len(Alist),len(Blist)))
     for u, pu in sorted([(u,u.charpoly().list()[:2]) for u in L.elements_of_bounded_height(5) if u.is_integral()],key = lambda x:max(x[1][0].abs(),x[1][1].abs())):
         if not u.charpoly().is_irreducible():
             continue
@@ -1034,7 +1033,7 @@ def compare_AB_periods(Alist, Blist, T, Ag, Bg, Dg, prec, base=QQ, matlist = Non
             D1log = -n * A1log + t * B1log
 
             if (A1log-Ag.log(0)).valuation() > 2 and (B1log-Bg.log(0)).valuation() > 2 and (D1log-Dg.log(0)).valuation() > 2:
-                print a,b,c,d, t,n
+                print(a,b,c,d,t,n)
 
 def generate_listI10(F,N):
     r'''

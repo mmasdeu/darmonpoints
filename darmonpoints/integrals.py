@@ -6,7 +6,7 @@
 import itertools
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing,lcm, Infinity,Zmod
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing, Infinity,Zmod
 from sage.all import prod
 from operator import mul
 from util import *
@@ -79,7 +79,7 @@ def double_integral_zero_infty(Phi,tau1,tau2):
                     try:
                         phimap = Phi._map(M2Z([b,d,a,c]))
                     except OverflowError:
-                        print a,b,c,d
+                        print(a,b,c,d)
                         raise OverflowError,'Matrix too large?'
                     # mu_e0 = ZZ(phimap.moment(0).rational_reconstruction())
                     mu_e0 = ZZ(Phi._liftee._map(M2Z([b,d,a,c])).moment(0))

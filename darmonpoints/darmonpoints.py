@@ -2,7 +2,7 @@
 ### Darmon (Stark-Heegner) points for quaternion algebras                #
 ##########################################################################
 from sage.rings.number_field.number_field import is_fundamental_discriminant
-from sage.arith.misc import kronecker_symbol,fundamental_discriminant, factor
+from sage.arith.misc import fundamental_discriminant, factor
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.rings.padics.precision_error import PrecisionError
 from sage.rings.all import ZZ, QQ, Qp, Zmod
@@ -34,9 +34,9 @@ def darmon_discriminants(bound, split_primes = None, inert_primes = None):
     for D in xrange(2,bound):
         if not is_fundamental_discriminant(D):
             continue
-        if not all(kronecker_symbol(D,p) == 1 for p in split_primes):
+        if not all(ZZ(D).kronecker(p) == 1 for p in split_primes):
             continue
-        if not all(kronecker_symbol(D,p) == -1 for p in inert_primes):
+        if not all(ZZ(D).kronecker(p) == -1 for p in inert_primes):
             continue
         good_D.append(D)
     return good_D

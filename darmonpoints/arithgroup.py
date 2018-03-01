@@ -847,14 +847,13 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         else:
             # Follow Atkin--Li
             if initial_wp is None:
-                from sage.arith.all import xgcd
                 p = ideal_p
                 m = self.level
-                g,w,z = xgcd(p,-m)
+                g,w,z = ZZ(p).xgcd(-m)
                 ans = matrix(QQ,2,2,[p,1,p*m*z,p*w])
                 all_initial = []
                 for t in sorted(range(-8,7)):
-                    g, tinv, k = xgcd(t, -p * m)
+                    g, tinv, k = ZZ(t).xgcd(-p * m)
                     if g == 1:
                         new_initial =  ans * matrix(QQ,2,2,[t, k, p*m, tinv])
                         all_initial.append(new_initial)

@@ -9,7 +9,6 @@ from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRi
 from sage.groups.generic import discrete_log
 from sage.all import prod
 from random import shuffle
-from sage.arith.all import gcd, divisors
 
 ##########################################################################################
 # now the new functions that we need...they follow pretty close the article we're writting
@@ -33,7 +32,7 @@ def factorize_matrix(m,M):
             if alpha * delta == 1:
                 continue
             gamma0 = ZZ( (alpha*delta -1) / M)
-            c1vec = divisors(gamma0)
+            c1vec = gamma0.divisors()
             for c1 in c1vec:
                 ulentry = (a*delta-b*c1*M).abs()
                 urentry = (b*alpha-a*gamma0/c1).abs()
@@ -79,11 +78,12 @@ def find_lambda(M,p,n_results = 1):
 #adapted
 def is_represented_by_unit(a,c,p):
     #we can forget about powers of p, because they are units; then we can work with integers
-    vala = 0
-    valc = 0
+    a, c, p = ZZ(a), ZZ(c), ZZ(p)
+    vala = ZZ(0)
+    valc = ZZ(0)
     while a % p == 0:
         vala += 1
-        a = ZZ(a/p)
+        a = ZZ(a / p)
     while c % p == 0:
         valc += 1
         c = ZZ(c/p)
@@ -108,7 +108,7 @@ def is_represented_by_unit(a,c,p):
         n0 = n0 % expn
         if n0 > expn/2:
             n0 -= expn
-        res.append( (-1)**n0 * p**ZZ(n0 + valc) )
+        res.append( ZZ(-1)**n0 * p**ZZ(n0 + valc) )
     except (ValueError,RuntimeError): pass
     return res
 
@@ -249,7 +249,7 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
     r = F.gen()
     Cp = v0.codomain()
     p = Cp.base_ring().prime()
-    if F.degree() != 2 or len(F.ideal(p).factor()) > 1 or gcd(p,F.disc()) !=1:
+    if F.degree() != 2 or len(F.ideal(p).factor()) > 1 or ZZ(p).gcd(F.disc()) !=1:
         raise ValueError,'Not a valid field'
     w=F.maximal_order().ring_generators()[0]
     assert w.minpoly() == W.minpoly()
@@ -270,31 +270,31 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
     elif algorithm == 'guitart_masdeu':
         # We seek for an optimal embedding of conductor M
         emblist = [emb for sgn in [+1,-1] for emb in _find_initial_embedding_list(v0,M,WD,orientation,OD,sgn * u)]
-        print 'Before exploding, have %s embeddings'%len(emblist)
+        print('Before exploding, have %s embeddings'%len(emblist))
         power = 0
         list_embeddings = []
         while len(list_embeddings) == 0:
             power += 1
             list_embeddings = _explode_embedding_list(v0,M,emblist,power = power)
 
-        print 'We have now %s embeddings'%len(list_embeddings)
+        print('We have now %s embeddings'%len(list_embeddings))
         # Now choose the best
         opt_evals = None
         opt_tau = None
         num_emb = 0
         for tau,gtau,sign in list_embeddings:
             # verbose('Analyzing embedding %s...'%num_emb)
-            print 'Analyzing embedding %s. Press C-c C-c to skip.'%num_emb
+            print('Analyzing embedding %s. Press C-c C-c to skip.'%num_emb)
             num_emb += 1
             assert tau.parent().is_exact()
             #if not is_in_Gamma_1(gtau,M,p,determinant_condition = False):
             #    continue
             try: V = find_limits(tau,gtau,M,v0,method = 2)
             except KeyboardInterrupt:
-                print 'Key press detected. Continuing.'
+                print('Key press detected. Continuing.')
                 continue
             except RuntimeError:
-                print 'Not suitable. Continuing.'
+                print('Not suitable. Continuing.')
                 continue
             if V is None: continue
             n_evals = sum((num_evals(t1,t2) for t1,t2 in V))
@@ -372,7 +372,7 @@ def _find_limits_prefactoring(tau,gtau,level,v0):
     if not all((is_in_Gamma_1(mat,level,p,determinant_condition = False) for mat in decomp)):
         for mat in decomp:
             if not is_in_Gamma_1(mat,level,p,determinant_condition = False):
-                print mat.list()
+                print(mat.list())
                 raise RuntimeError
     if any((get_limits_from_decomp(tau,[mat],v0)[1] > p*(p+1) for mat in decomp)):
         raise RuntimeError

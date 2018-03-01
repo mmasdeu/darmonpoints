@@ -14,7 +14,7 @@ from sage.structure.parent import Parent
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,lcm,QQ,ZZ,Qp
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
 from collections import defaultdict
@@ -166,9 +166,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
             q1 = prod([Gamma.Ugens[g]**a for g,a in tietze_to_syllables(wd)],z = ZZ(1))
             quo = F(q * q1**-1)
         except (TypeError,IndexError):
-            #print q
-            #print q1
-            print 'Inconsistency: %s'%(q * q1**-1)
+            print('Inconsistency: %s'%(q * q1**-1))
             raise RuntimeError('Word and quaternion are inconsistent! (%s)'%txt)
         return
 
