@@ -118,7 +118,10 @@ def find_containing_affinoid(p,z,level = 1):
     a=0
     pn=1
     val=z.valuation(p)
-    L=[0]*val+list(z.unit_part().expansion())
+    try:
+        L=[0]*val+list(z.unit_part().expansion())
+    except AttributeError:
+        L=[0]*val+z.unit_part().list()
     for n in range(len(L)):
         if L[n] != 0:
             if len(L[n]) > 1:
@@ -149,7 +152,10 @@ def point_radius(z,level = 1):
     pn=1
     ans = 0
     val=z.valuation(p)
-    L=[0]*val + list(z.unit_part().expansion())
+    try:
+        L=[0]*val + list(z.unit_part().expansion())
+    except AttributeError:
+        L=[0]*val + z.unit_part().list()
     for n in range(len(L)):
         if L[n] != 0:
             if len(L[n]) > 1:
