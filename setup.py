@@ -20,7 +20,6 @@ def get_all_version_names(mirror_url, idx = None, distribution = 'Ubuntu_14.04-x
     all_version_names = []
     for fname, ver in ans:
         if fname not in all_version_names:
-            print("Adding version %s to list of Sage versions available."%fname)
             all_version_names.append(fname)
     return all_version_names[idx]
 
