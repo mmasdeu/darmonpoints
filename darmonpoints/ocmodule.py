@@ -45,6 +45,14 @@ class our_adjuster(Sigma0ActionAdjuster):
         a,b,c,d = g.list()
         return tuple([d,b,c,a])
 
+class ps_adjuster(Sigma0ActionAdjuster):
+    """
+    Callable object that turns matrices into 4-tuples.
+
+    """
+    def __call__(self, g):
+        a,b,c,d = g.list()
+        return tuple([a,-b,-c,d])
 
 class OCVnElement(ModuleElement):
     r"""
@@ -67,7 +75,7 @@ class OCVnElement(ModuleElement):
     - Cameron Franc (2012-02-20)
     - Marc Masdeu (2012-02-20)
     """
-    def __init__(self,parent,val = 0,check = True):
+    def __init__(self,parent,val = 0,check = True,normalize=False):
         ModuleElement.__init__(self,parent)
         self._parent = parent
         self._depth = self._parent._depth
@@ -91,6 +99,9 @@ class OCVnElement(ModuleElement):
                 except (TypeError, ValueError):
                     self._val= self._parent._R(val) * MatrixSpace(self._parent._R,self._depth,1)(1)
         self._moments = self._val
+
+    def lift(self, p=None,M=None):
+        return self
 
     def moment(self, i):
         return self._parent._Rmod(self._moments[i,0])
@@ -166,6 +177,9 @@ class OCVnElement(ModuleElement):
         return self._acted_upon_(x.adjoint(), False)
 
     def _acted_upon_(self,x, right_action): # Act by x on the left
+        try:
+            x = x.matrix()
+        except AttributeError: pass
         if right_action:
             return self._acted_upon_(x.adjoint(), False)
         else:
@@ -299,12 +313,15 @@ class OCVn(Module,UniqueRepresentation):
         # Nothing coherces here, except OCVnElement
         return False
 
-    def _element_constructor_(self,x,check = True):
+    def _element_constructor_(self,x,check = True,normalize=False):
         #Code how to coherce x into the space
         #Admissible values of x?
         return OCVnElement(self, x)
 
     def acting_matrix(self, g, M):
+        try:
+            g = g.matrix()
+        except AttributeError: pass
         return self._get_powers(g).submatrix(0,0,M,M)
 
     def _get_powers(self,abcd,emb = None):

@@ -314,6 +314,12 @@ class BigArithGroup_class(AlgebraicGroup):
         reps = [self.Gn.B(1)] + [None for i in xrange(self.p)]
         emb = self.get_embedding(20)
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in xrange(self.p)]
+        try:
+            ans = [self.Gn(1).quaternion_rep] + [self.Gn(matrix(QQ,2,2,[0,-1,1,-i])).quaternion_rep for i in xrange(self.p)]
+            return ans
+        except TypeError:
+            pass
+
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)
             embelt = emb(elt)

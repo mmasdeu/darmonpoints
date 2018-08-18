@@ -213,7 +213,9 @@ class CohomologyGroup(Parent):
                 try:
                     return V.acting_matrix(x,y)
                 except AttributeError:
-                    return V.acting_matrix(G.embed(x.quaternion_rep,V.base_ring().precision_cap()), y)
+                    gg = G.embed(x.quaternion_rep,V.base_ring().precision_cap())
+                    gg = V.Sigma0()(gg)
+                    return V.acting_matrix(gg, y)
             self._acting_matrix = acting_matrix
             gens_local = [ (g, g**-1) for g in G.gens() ]
         onemat = G(1)

@@ -39,7 +39,7 @@ from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRi
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.rings.infinity import Infinity
-from sage.arith.all import gcd, lcm
+from sage.arith.all import gcd, lcm, xgcd
 from util import *
 import os
 from ocmodule import OCVn
@@ -52,10 +52,11 @@ from sage.categories.action import Action
 import operator
 from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
-from ocmodule import our_adjuster
+from ocmodule import our_adjuster, ps_adjuster
 from sage.modules.free_module_element import free_module_element, vector
 from representations import *
 from time import sleep
+from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
 
 def find_newans(Coh,glocs,ti):
     gens = Coh.group().gens()
@@ -92,11 +93,14 @@ def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = F
     phi0 = E.pollack_stevens_modular_symbol()
     if sign_at_infinity == 1:
         phi0 = phi0.plus_part()
-    else:
+    elif sign_at_infinity == -1:
         phi0 = phi0.minus_part()
+    else:
+        assert sign_at_infinity == 0
+        phi0 = phi0.plus_part() + phi0.minus_part()
     phi0 = 1 / gcd([val.moment(0) for val in phi0.values()]) * phi0
     Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True)
-    Phi._liftee = phi0
+    Phi.set_liftee(phi0)
     return Phi
 
 def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap, use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False,method = None,Ename = 'unknown'):
@@ -141,6 +145,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
         # db_save(Phi._val,fname)
     verbose('Done.')
     Phi.set_liftee(phiE)
+    Phi._sign_ap = sign_ap
     return Phi
 
 class ArithAction(Action):
@@ -166,6 +171,8 @@ class LocalAction(Action):
         return V.Sigma0()(self._G.embed(g, V.precision_cap()), check = False) * v
 
 class ArithCohElement(CohomologyElement):
+    _Lseries_coefficients = {}
+
     def set_liftee(self,x):
         self._liftee = x
 
@@ -176,6 +183,59 @@ class ArithCohElement(CohomologyElement):
             raise RuntimeError,"Don't know what this cocycle is a lift of!"
     def _repr_(self):
         return 'Arithmetic cohomology class in %s'%self.parent()
+
+    def basic_integral(self, a, j):
+        ap = self._sign_ap
+        p = self.parent().S_arithgroup().prime()
+        g, a0, b = xgcd(a, -p)
+        symb = self.evaluate(matrix(ZZ,2,2,[a,b,p,a0]))
+        K = self.parent().coefficient_module().base_ring()
+
+        return sum(ZZ(j).binomial(r)
+                     * ((a - ZZ(K.teichmuller(a))) ** (j - r))
+                     * (p ** r)
+                     * (-1)**(r+1) * symb.moment(r) for r in range(j + 1)) / ap
+
+    def get_Lseries_term(self, n):
+        r"""
+        Return the `n`-th coefficient of the `p`-adic `L`-series
+
+         """
+
+        if n in self._Lseries_coefficients:
+            return self._Lseries_coefficients[n]
+        else:
+            p = self.parent().S_arithgroup().prime()
+            ap = self._sign_ap
+            if p == 2:
+                gamma = 1 + 4
+            else:
+                gamma = 1 + p
+            K = self.parent().coefficient_module().base_ring()
+            precision = K.precision_cap()
+
+            S = QQ[['z']]
+            z = S.gen()
+            M = precision
+            dn = 0
+            if n == 0:
+                precision = M
+                lb = [1] + [0 for a in range(M - 1)]
+            else:
+                lb = log_gamma_binomial(p, gamma, z, n, 2 * M)
+                if precision is None:
+                    precision = min([j + lb[j].valuation(p)
+                                     for j in range(M, len(lb))])
+                lb = [lb[a] for a in range(M)]
+
+            for j in range(len(lb)):
+                cjn = lb[j]
+                temp = sum((ZZ(K.teichmuller(a)) ** (-j))
+                           * self.basic_integral(a, j) for a in range(1, p))
+                dn = dn + cjn * temp
+            self._Lseries_coefficients[n] = dn.add_bigoh(precision)
+            # self._Lseries_coefficients[n] /= self._cinf # DEBUG
+            return self._Lseries_coefficients[n]
 
 class ArithCoh(CohomologyGroup):
     Element = ArithCohElement
@@ -221,21 +281,29 @@ class ArithCoh(CohomologyGroup):
 
     def _element_constructor_(self,data):
         if isinstance(data,list):
-            return self.element_class(self, data)
+            V = self.coefficient_module()
+            return self.element_class(self, [V(o) for o in data])
         elif isinstance(data,self.element_class):
             G = self.group()
             V = self.coefficient_module()
+            prec = V.base_ring().precision_cap()
             try:
                 data = data.get_liftee()
-                return self.element_class(self,[V(data.evaluate(g).moment(0)) for g in G.gens()])
             except RuntimeError:
-                return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()])
+                pass
+            try:
+                return self.element_class(self,[V(data.evaluate(g).moment(0),normalize=False).lift(M=prec) for g in G.gens()])
+            except AttributeError:
+                try:
+                    return self.element_class(self,[V(data.evaluate(g),normalize=False).lift(M=prec) for g in G.gens()])
+                except AttributeError:
+                    return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()]) # DEBUG ,normalize=False
         else:
             G = self.group()
             V = self.coefficient_module()
             return self.element_class(self, [V(data) for g in G.gens()])
 
-    def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'bigmatrix', steps = 1):
+    def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'naive', steps = 1):
         r"""
 
         Repeatedly applies U_p.
@@ -316,6 +384,10 @@ class ArithCoh(CohomologyGroup):
         return M
 
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
+        if sign == 0:
+            return self.get_cocycle_from_elliptic_curve(E,1,use_magma) + self.get_cocycle_from_elliptic_curve(E,-1,use_magma)
+        if not sign in [1, -1]:
+            raise NotImplementedError
         F = self.group().base_ring()
         if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
             K = (self.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
@@ -676,7 +748,7 @@ class ArithCoh(CohomologyGroup):
                     for i, xi in enumerate(G.coset_reps()):
                         delta = Gn(G.get_coset_ti(set_immutable(xi * gamma.quaternion_rep))[0])
                         input_vec.append(([(sk, Gn.get_hecke_ti(g,delta)) for sk, g in zip(repslocal, Up_reps)], c, i, j))
-                vals = [[V.coefficient_module()(0) for xi in G.coset_reps()] for gamma in gammas]
+                vals = [[V.coefficient_module()(0,normalize=False) for xi in G.coset_reps()] for gamma in gammas]
                 if parallelize:
                     for inp, outp in parallel(calculate_Up_contribution)(input_vec):
                         vals[inp[0][-1]][inp[0][-2]] += outp
@@ -689,14 +761,14 @@ class ArithCoh(CohomologyGroup):
                 Gpn = G.small_group()
                 if self.trivial_action():
                     def calculate_Up_contribution(lst,c,num_gamma):
-                        return sum([c.evaluate(tt) for sk, tt in lst])
+                        return sum([c.evaluate(tt) for sk, tt in lst], V(0,normalize=False))
                 else:
                     def calculate_Up_contribution(lst,c,num_gamma):
-                        return sum([sk * c.evaluate(tt) for sk, tt in lst])
+                        return sum([sk * c.evaluate(tt) for sk, tt in lst], V(0,normalize=False))
                 input_vec = []
                 for j,gamma in enumerate(gammas):
                     input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma)) for sk, g in zip(repslocal, Up_reps)], c, j))
-                vals = [V(0) for gamma in gammas]
+                vals = [V(0,normalize=False) for gamma in gammas]
                 if parallelize:
                     for inp,outp in parallel(calculate_Up_contribution)(input_vec):
                         vals[inp[0][-1]] += outp
