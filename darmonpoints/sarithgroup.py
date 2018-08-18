@@ -371,6 +371,23 @@ class BigArithGroup_class(AlgebraicGroup):
             set_immutable(o)
         return tmp
 
+    @cached_method
+    def get_Up_reps_bianchi(self):
+        p = self.norm_p
+        ideal_p = self.ideal_p
+        F = self.F
+        pi, pi_bar = [o.gens_reduced()[0] for o, _ in F.ideal(p).factor()]
+        if F.ideal(pi) != ideal_p:
+            pi, pi_bar = pi_bar, pi
+        assert F.ideal(pi) == ideal_p
+        Upreps = [ Matrix(F,2,2,[pi, a, 0, 1]) for a in range(p) ]
+        Upreps_bar = [ Matrix(F,2,2,[pi_bar, a, 0, 1]) for a in range(p) ]
+        for o in Upreps:
+            set_immutable(o)
+        for o in Upreps_bar:
+            set_immutable(o)
+        return Upreps, Upreps_bar
+
     def get_covering(self,depth):
         return self.subdivide([BTEdge(False, o) for o in self.get_BT_reps_twisted()], 1, depth - 1)
 
