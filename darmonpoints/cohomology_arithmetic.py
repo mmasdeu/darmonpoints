@@ -955,7 +955,7 @@ class ArithCoh(CohomologyGroup):
             except AttributeError:
                 prec = None
             repslocal = self.get_Up_reps_local(prec)
-
+        i = 0
         if method == 'naive':
             assert times == 0
             G = self.S_arithgroup()
@@ -984,15 +984,14 @@ class ArithCoh(CohomologyGroup):
                 ans = self([V(o) for o in vals])
             else:
                 Gpn = G.small_group()
-                i = 0
                 if self.trivial_action():
                     def calculate_Up_contribution(lst,c,num_gamma):
                         return sum([c.evaluate(tt) for sk, tt in lst], V(0,normalize=False))
                 else:
                     def calculate_Up_contribution(lst,c,num_gamma,pb_fraction=None):
+                        i = 0
                         ans = V(0, normalize=False)
                         for sk, tt in lst:
-                            i += 1
                             ans += sk * c.evaluate(tt)
                             update_progress(i * pb_fraction, 'Up action')
                         return ans
