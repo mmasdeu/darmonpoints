@@ -175,6 +175,12 @@ class ArithGroupElement(MultiplicativeGroupElement):
         assert self.has_quaternion_rep
         return self.parent().embed(self.quaternion_rep,prec)
 
+    def __iter__(self):
+        return self.embed(-1).list().__iter__()
+
+    def matrix(self):
+        return self.embed(-1)
+
     def conjugate_by(self, w):
         word_rep = None
         quat_rep = None

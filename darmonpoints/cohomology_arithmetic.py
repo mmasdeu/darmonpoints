@@ -43,7 +43,7 @@ from sage.arith.all import gcd, lcm, xgcd
 from util import *
 import os
 from ocmodule import OCVn
-from ocbianchi import BianchiDistributions
+from ocbianchi import BianchiDistributions, left_ps_adjuster
 from sage.misc.persist import db, db_save
 from sage.parallel.decorate import fork,parallel
 oo = Infinity
@@ -78,11 +78,14 @@ def find_newans(Coh,glocs,ti):
                 pass
     return newans
 
-def get_overconvergent_class_matrices(p,E,prec,sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
+def get_overconvergent_class_matrices(p,E,prec,aP, aPbar, sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     if use_ps_dists == False:
         raise NotImplementedError, 'Must use distributions from Pollack-Stevens code in the split case'
+    self._aP = aP
+    self._aPbar = aPbar
+
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
     fname = 'moments_%s_%s_%s_%s_%s.sobj'%(p,E.cremona_label(),sgninfty,prec,dist_type)
@@ -122,7 +125,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     if Pnorm != p:
         raise NotImplementedError('For now I can only work over totally split')
 
-    base_ring = Zp(p,prec) #Qp(p,prec)
+    base_ring = Zp(p,prec)
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
@@ -149,7 +152,9 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     Phi._sign_ap = sign_ap
     return Phi
 
-def get_overconvergent_class_bianchi(P,phiE,G,prec,sign_at_infinity,sign_ap, progress_bar = False,method = None,Ename = 'unknown'):
+def get_overconvergent_class_bianchi(P,phiE,G,prec,sign_at_infinity,sign_ap, parallelize = False, progress_bar = False,method = None,Ename = 'unknown'):
+    if parallelize:
+        raise NotImplementedError
     p = ZZ(P.norm().factor()[0][0])
     Pnorm = ZZ(P.norm())
     F = P.number_field()
@@ -178,34 +183,44 @@ def get_overconvergent_class_bianchi(P,phiE,G,prec,sign_at_infinity,sign_ap, pro
     verbose('Computing moments...')
     CohOC = ArithCoh(G,overconvergent = 2,base = base_ring)
     Phi0 = CohOC(phiE)
+    pi, pi_bar = [o.gens_reduced()[0] for o, _ in G.F.ideal(G.prime()).factor()]
+    if F.ideal(pi) != G.ideal_p:
+        pi, pi_bar = pi_bar, pi
+    assert F.ideal(pi) == G.ideal_p
+    CohOC.P_gen = pi
+    CohOC.Pbar_gen = pi_bar
     verbose('Now lifting...')
-    Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
+    Phi = CohOC.improve_bianchi(Phi0, prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
     verbose('Done.')
     Phi.set_liftee(phiE)
     Phi._sign_ap = sign_ap
     return Phi
 
 class ArithAction(Action):
+    r'''
+    Encodes de action of an arithmetic group on the distributions module
+    '''
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
     def _call_(self,g,v):
         V = v.parent()
-        g = g.embed(V.precision_cap())
-        try:
-            return g * v
-        except TypeError:
-            S0 = V.Sigma0()
-            return S0(g, check = False) * v
+        return V.Sigma0()(g) * v
 
-class LocalAction(Action):
+class BianchiArithAction(Action):
+    r'''
+    Encodes de action of an arithmetic group on the distributions module
+    '''
     def __init__(self,G,M):
-        self._G = G
-        Action.__init__(self,G.large_group().B,M,is_left = True,op = operator.mul)
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
     def _call_(self,g,v):
         V = v.parent()
-        return V.Sigma0()(self._G.embed(g, V.precision_cap()), check = False) * v
+        prec = V.precision_cap()
+        qrep = g.parent().matrix_rep(g) # This method is only available for matrix ring (not quaternionic)
+        qrep_bar = qrep.apply_map(lambda x:x.trace() - x)
+        first, second = g.parent().embed_matrix(qrep, prec), g.parent().embed_matrix(qrep_bar, prec)
+        return V.Sigma0Squared()(first,second) * v
 
 class ArithCohElement(CohomologyElement):
     _Lseries_coefficients = {}
@@ -221,17 +236,48 @@ class ArithCohElement(CohomologyElement):
     def _repr_(self):
         return 'Arithmetic cohomology class in %s'%self.parent()
 
-    def basic_integral(self, a, j):
-        ap = self._sign_ap
-        p = self.parent().S_arithgroup().prime()
-        g, a0, b = xgcd(a, -p)
-        symb = self.evaluate(matrix(ZZ,2,2,[a,b,p,a0]))
-        K = self.parent().coefficient_module().base_ring()
+    def Tq_eigenvalue(self, ell, check = True):
+        # Assume that self IS a hecke eigenvalue
+        f = self.parent().apply_hecke_operator(self, ell)
+        ans = None
+        for u, v in zip(f.values(), self.values()):
+            try:
+                ans = ZZ(u / v)
+            except IndexError:
+                pass
+        if ans is None:
+            raise RuntimeError
+        if check:
+            assert (ans * self).values() == f.values()
+        return ans
 
-        return sum(ZZ(j).binomial(r)
-                     * ((a - ZZ(K.teichmuller(a))) ** (j - r))
-                     * (p ** r)
-                     * (-1)**(r+1) * symb.moment(r) for r in range(j + 1)) / ap
+    @cached_method
+    def BI(self, a, j):
+        G = self.parent().S_arithgroup()
+        N = G.Gpn.level
+        p = G.prime()
+        scale = 1
+        x = ZZ['x'].gen()
+        for q,_ in ZZ(N).factor():
+            if q != p:
+                lambda_q = self.get_liftee().get_hecke_eigenvalue(q)
+                scale /= (1 - ZZ(q)**j / lambda_q)
+        ans = 0
+        for alpha in range(N):
+            if (alpha - a) % p != 0:
+                continue
+            g, alpha0, beta = xgcd(alpha, -N)
+            if g != 1:
+                continue
+            symb = self.evaluate(matrix(ZZ,2,2,[alpha, beta, N, alpha0]))
+            ans += -symb.evaluate_at_poly((alpha + N*(-x))**j)
+        return scale * ans
+
+    def basic_integral(self, a, j):
+        K = self.parent().coefficient_module().base_ring()
+        aa = K.teichmuller(a)
+        p = self.parent().S_arithgroup().prime()
+        return sum(((-1)**(j-r) * ZZ(j).binomial(r) * aa**(j-r) * self.BI(a, r) for r in xrange(j+1)))
 
     def get_Lseries_term(self, n):
         r"""
@@ -286,6 +332,7 @@ class ArithCoh(CohomologyGroup):
             overconvergent = 0
         if overconvergent > 0 and base is None:
             raise ValueError, 'Must give base if overconvergent'
+        self._overconvergent = overconvergent
         if base is None:
             base = ZZ
         if overconvergent == 0:
@@ -300,27 +347,18 @@ class ArithCoh(CohomologyGroup):
                 V.Sigma0 = lambda :V._act._Sigma0
             else:
                 V = OCVn(base.prime(), 1 + base.precision_cap())
-            if self._use_shapiro:
-                V._arith_act = ArithAction(G.large_group(), V)
-            else:
-                V._arith_act = ArithAction(G.small_group(), V)
-            V._local_act = LocalAction(G, V)
+            arith_act = ArithAction(G.small_group(), V)
             V._unset_coercions_used()
-            V.register_action( V._arith_act )
-            V.register_action( V._local_act )
+            V.register_action( arith_act )
             self._pN = V._p**base.precision_cap()
         elif overconvergent == 2:
             trivial_action = False
-            raise NotImplementedError
-            V = BianchiDistributions(base.prime(), 1 + base.precision_cap())
-            if self._use_shapiro:
-                V._arith_act = ArithAction(G.large_group(), V)
-            else:
-                V._arith_act = ArithAction(G.small_group(), V)
-            V._local_act = LocalAction(G, V)
+            V = BianchiDistributions(base.prime(), 1 + base.precision_cap(), act_on_left=True, adjuster=left_ps_adjuster())
+            arith_act = BianchiArithAction(G.small_group(), V)
             V._unset_coercions_used()
-            V.register_action( V._arith_act )
-            V.register_action( V._local_act )
+            V.register_action( arith_act )
+            self.P_gen = None
+            self.Pbar_gen = None
             self._pN = V._p**base.precision_cap()
         else:
             raise ValueError("overconvergent parameter (=%s) should be 0 if not overconvergent, 1 if 1-variable overconvergent, or 2 if 2-variable overconvergent"%overconvergent)
@@ -342,18 +380,22 @@ class ArithCoh(CohomologyGroup):
         elif isinstance(data,self.element_class):
             G = self.group()
             V = self.coefficient_module()
-            prec = V.base_ring().precision_cap()
+            if self._overconvergent > 0:
+                prec = V.base_ring().precision_cap()
+            else:
+                prec = None
             try:
                 data = data.get_liftee()
             except RuntimeError:
                 pass
             try:
-                return self.element_class(self,[V(data.evaluate(g).moment(0),normalize=False).lift(M=prec) for g in G.gens()])
-            except AttributeError:
+                vals = [V(data.evaluate(g).moment(0), normalize=False).lift(M=prec) for g in G.gens()]
+            except (AttributeError, TypeError):
                 try:
-                    return self.element_class(self,[V(data.evaluate(g),normalize=False).lift(M=prec) for g in G.gens()])
-                except AttributeError:
-                    return self.element_class(self,[V(data.evaluate(g)) for g in G.gens()]) # DEBUG ,normalize=False
+                    vals = [V(data.evaluate(g), normalize=False).lift(M=prec) for g in G.gens()]
+                except (AttributeError, TypeError):
+                    vals = [V(data.evaluate(g)) for g in G.gens()]
+            return self.element_class(self, vals)
         else:
             G = self.group()
             V = self.coefficient_module()
@@ -428,16 +470,13 @@ class ArithCoh(CohomologyGroup):
         if prec is None:
             prec = U.base_ring().precision_cap()
         assert prec is not None
-        repslocal = self.get_Up_reps_local(prec)
-        repslocal_bar = self.get_Up_reps_local(prec) # Need to code how to do this
 
-        Up_reps, Up_reps_bar = self.S_arithgroup().get_Up_reps_bianchi()
-
+        pi, pi_bar = self.P_gen, self.Pbar_gen
+        p = pi.norm()
         if method != 'naive':
             raise NotImplementedError
 
-        h2 = self.apply_Up(Phi, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', repslocal = repslocal, Up_reps = Up_reps, steps = steps)
-        h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', repslocal = repslocal_bar, Up_reps = Up_reps_bar, steps = steps)
+        h2 = self.apply_Up_bianchi(Phi, group = group, scale = sign,progress_bar = progress_bar)
 
         if progress_bar:
             update_progress(float(0)/float(prec),'f|Up')
@@ -451,24 +490,21 @@ class ArithCoh(CohomologyGroup):
         else:
             verbose("Applied Up once")
         old_val = current_val - 1
-        while current_val < prec and current_val > old_val:
+        while ii < 3 or (current_val < prec and current_val > old_val):
             h1 = h2
             old_val = current_val
             ii += 1
-            h2 = self.apply_Up(h1, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', repslocal = repslocal, Up_reps = Up_reps, steps = steps)
-            h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', repslocal = repslocal_bar, Up_reps = Up_reps_bar, steps = steps)
+            h2 = self.apply_Up_bianchi(h1, group = group, scale = sign,progress_bar = progress_bar)
 
             if progress_bar:
                 update_progress(float(current_val)/float(prec),'f|Up')
-            else:
-                verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
+            verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
             current_val = min([(u-v).valuation() for u,v in zip(h2.values(),h1.values())])
             if ii == 2 and current_val <= old_val:
                 raise RuntimeError("Not converging, maybe ap sign is wrong?")
             if progress_bar and ii + 1 <= prec:
                 update_progress(float(current_val)/float(prec),'f|Up')
-            else:
-                verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
+            verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
         Phi._val = h2._val
         if progress_bar and current_val < 1:
             update_progress(float(1.0),'f|Up')
@@ -826,6 +862,80 @@ class ArithCoh(CohomologyGroup):
         S0 = V.Sigma0()
         return [S0(self.group().embed(g,prec), check = False) for g in Up_reps]
 
+    @cached_method
+    def get_Up_reps_bianchi_local(self,prec, pi, pi_bar):
+        Up_reps, Up_reps_bar = self.S_arithgroup().get_Up_reps_bianchi(pi, pi_bar)
+        phi = lambda x: self.group().matrix_rep(x)
+        emb = self.group().embed
+        if prec is None:
+            return Up_reps, Up_reps_bar
+        V = self.coefficient_module()
+        try:
+            V = V.coefficient_module()
+        except AttributeError:
+            pass
+        S0 = V.Sigma0Squared()
+        ans0 = []
+        ans1 = []
+        conj = lambda m : m.parent()([o.trace() - o for o in list(m)])
+        for g in Up_reps:
+            ans0.append(S0(emb(g,prec), emb(conj(g),prec)))
+        for gbar in Up_reps_bar:
+            ans1.append(S0(emb(gbar,prec), emb(conj(gbar),prec)))
+        return ans0, ans1
+
+    def apply_Up_bianchi(self,c,group = None,scale = 1,progress_bar = False):
+        V = self.coefficient_module()
+        R = V.base_ring()
+        gammas = self.group().gens()
+        pi, pi_bar = self.P_gen, self.Pbar_gen
+
+        Up_reps, Up_reps_bar = self.S_arithgroup().get_Up_reps_bianchi(pi, pi_bar)
+
+        try:
+            prec = V.base_ring().precision_cap()
+        except AttributeError:
+            prec = None
+        repslocal, repslocal_bar = self.get_Up_reps_bianchi_local(prec, pi, pi_bar)
+
+        G = self.S_arithgroup()
+        Gn = G.large_group()
+        Gpn = G.small_group()
+        i = 0
+        input_vec = []
+        for j,gamma in enumerate(gammas):
+            input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma,reps = tuple(Up_reps))) for sk, g in zip(repslocal, Up_reps)], c, j))
+
+        vals = [V(0,normalize=False) for gamma in gammas]
+        pb_fraction = QQ(1) / (2 * len(repslocal) * len(input_vec))
+        progress = 0
+        for lst, c, j in input_vec:
+            outp = V(0, normalize=False)
+            for sk, tt in lst:
+                progress += pb_fraction
+                outp += sk * c.evaluate(tt)
+                update_progress(float(progress), 'Up action (%s)'%(2 * len(repslocal) * len(input_vec)))
+            vals[j] += outp
+        ans = self(vals)
+        c = ans
+        input_vec = []
+        for j,gamma in enumerate(gammas):
+            input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma,reps = tuple(Up_reps_bar))) for sk, g in zip(repslocal_bar, Up_reps_bar)], c, j))
+
+        vals = [V(0,normalize=False) for gamma in gammas]
+        for lst, c, j in input_vec:
+            outp = V(0, normalize=False)
+            for sk, tt in lst:
+                progress += pb_fraction
+                outp += sk * c.evaluate(tt)
+                update_progress(float(progress), 'Up action (%s)'%(2 * len(repslocal) * len(input_vec)))
+            vals[j] += outp
+        ans = self(vals)
+
+        if scale != 1:
+            ans = scale * ans
+        return ans
+
     def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive', repslocal = None, Up_reps = None, steps = 1):
         r"""
         Apply the Up Hecke operator operator to ``c``.
@@ -874,12 +984,18 @@ class ArithCoh(CohomologyGroup):
                 ans = self([V(o) for o in vals])
             else:
                 Gpn = G.small_group()
+                i = 0
                 if self.trivial_action():
                     def calculate_Up_contribution(lst,c,num_gamma):
                         return sum([c.evaluate(tt) for sk, tt in lst], V(0,normalize=False))
                 else:
-                    def calculate_Up_contribution(lst,c,num_gamma):
-                        return sum([sk * c.evaluate(tt) for sk, tt in lst], V(0,normalize=False))
+                    def calculate_Up_contribution(lst,c,num_gamma,pb_fraction=None):
+                        ans = V(0, normalize=False)
+                        for sk, tt in lst:
+                            i += 1
+                            ans += sk * c.evaluate(tt)
+                            update_progress(i * pb_fraction, 'Up action')
+                        return ans
                 input_vec = []
                 for j,gamma in enumerate(gammas):
                     input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma)) for sk, g in zip(repslocal, Up_reps)], c, j))
@@ -888,8 +1004,8 @@ class ArithCoh(CohomologyGroup):
                     for inp,outp in parallel(calculate_Up_contribution)(input_vec):
                         vals[inp[0][-1]] += outp
                 else:
-                    for inp in input_vec:
-                        outp = calculate_Up_contribution(*inp)
+                    for counter, inp in enumerate(input_vec):
+                        outp = calculate_Up_contribution(*inp, pb_fraction=float(1)/float(len(repslocal) * len(input_vec)))
                         vals[inp[-1]] += outp
                 ans = self(vals)
             if scale != 1:

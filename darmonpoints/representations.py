@@ -217,10 +217,13 @@ class CoIndModule(Parent):
     @cached_method
     def get_action_data(self, g, idx = None):
         G = self._G
+        Gpn = G.small_group()
         if idx is None:
-            return [G.get_coset_ti(set_immutable(xi * g)) for xi in G.coset_reps()]
+            ans = [G.get_coset_ti(set_immutable(xi * g)) for xi in G.coset_reps()]
+            return [(Gpn(a),b) for a,b in ans]
         else:
-            return G.get_coset_ti(set_immutable(G.coset_reps()[idx] * g))
+            ans = G.get_coset_ti(set_immutable(G.coset_reps()[idx] * g))
+            return Gpn(ans[0]), ans[1]
 
     def group(self):
         return self._G

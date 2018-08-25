@@ -359,6 +359,7 @@ class ArithGroup_generic(AlgebraicGroup):
                     ans = self(ti)
                     if not conservative:
                         return ans
+
         if ans is None:
             verbose("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
             raise RuntimeError("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
@@ -1054,6 +1055,19 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 self._init_jv_data()
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
+
+    @cached_method()
+    def matrix_rep(self, x):
+        try:
+            x = x.quaternion_rep
+        except AttributeError:
+            pass
+        if self.B.invariants() != (1,1):
+            raise NotImplementedError
+        F = self.F
+        M = MatrixSpace(F,2,2)
+        basis = [M([1,0,0,1]), M([1,0,0,-1]), M([0,-1,-1,0]), M([0,-1,1,0])]
+        return sum((a * b for a, b in zip(list(self.B(x)), basis)), M(0))
 
     def _init_jv_data(self):
         self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1))),self.magma) for n in xrange(len(self._U_magma.gens()))]

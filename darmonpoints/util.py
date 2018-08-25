@@ -213,18 +213,6 @@ def is_in_Gamma0loc(A,det_condition = True,p = None):
     else:
         return all((o.valuation() >= 0 for o in A.list())) and A[1,0].valuation() > 0
 
-def is_in_Sigma0(x):
-    if x.determinant() == 0:
-        return False
-    a,b,c,d = _our_adjuster()(x)
-    if c.valuation() < 1:
-        return False
-    if a.valuation() != 0:
-        return False
-    if b.valuation() < 0 or d.valuation() < 0:
-        return False
-    return True
-
 def set_immutable(x):
     try:
         x.set_immutable()
@@ -541,7 +529,7 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
       assert w.minpoly()(Cp.gen()) == 0
       x1 = 0
       x2 = 0
-      for i,o in enumerate(x.list()):
+      for i,o in enumerate(x.expansion()):
           if len(o) > 0:
               x1 += o[0] * p**i
           if len(o) > 1:

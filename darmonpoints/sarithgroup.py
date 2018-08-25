@@ -157,11 +157,13 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,grouptype = grouptype,magma = magma, compute_presentation = not self._use_shapiro, timeout = timeout,nscartan=nscartan)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
+        self.Gpn.embed_matrix = self.embed_matrix
         verbose('Initializing arithmetic group G(n)...')
         lev = self.level
         if character is not None:
             lev = [lev, character]
         self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev,info_magma = self.Gpn,grouptype = grouptype,magma = magma, compute_presentation = True, timeout = timeout,nscartan=nscartan)
+        self.Gn.embed_matrix = self.embed_matrix
         t = walltime(t)
         verbose('Time for calculation T = %s'%t)
         verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
@@ -195,6 +197,12 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gpn.wp = self.wp
         verbose('Done initializing arithmetic groups')
         verbose('Done initialization of BigArithmeticGroup')
+
+    def base_field(self):
+        return self.F
+
+    def quaternion_algebra(self):
+        return self.B
 
     def clear_cache(self):
         self.Gn.clear_cache()
@@ -314,11 +322,17 @@ class BigArithGroup_class(AlgebraicGroup):
         reps = [self.Gn.B(1)] + [None for i in xrange(self.p)]
         emb = self.get_embedding(20)
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in xrange(self.p)]
-        try:
-            ans = [self.Gn(1).quaternion_rep] + [self.Gn(matrix(QQ,2,2,[0,-1,1,-i])).quaternion_rep for i in xrange(self.p)]
-            return ans
-        except TypeError:
-            pass
+        if self.F == QQ and self.discriminant == 1: # Hard-coded matrices
+            wp = self.wp()
+            return [self.Gn(1).quaternion_rep] + [1 / self.p * wp * matrix(QQ,2,2,[1,-i,0,self.p]) for i in xrange(self.p)]
+
+        elif self.discriminant == 1 and self.Gn.B.invariants() == (1,1):
+            verbose('Using hard-coded matrices for BT (Bianchi)')
+            pi = self.ideal_p.gens_reduced()[0]
+            B = self.Gn.B
+            BTreps0 = [ Matrix(self.F,2,2,[0, -1, 1, -i]) for a in range(self.prime()) ]
+            BTreps = [self.Gn(1).quaternion_rep] + [self.Gn(B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2])).quaternion_rep for o in BTreps0]
+            return BTreps
 
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)
@@ -335,7 +349,6 @@ class BigArithGroup_class(AlgebraicGroup):
                     if is_in_Gamma0loc(embelt * mat, det_condition = False):
                         reps[i] = set_immutable(elt)
                         del matrices[idx]
-                        # update_progress(float((self.p+1-len(matrices)))/float(self.p+1),'Getting BT representatives (%s iterations)'%(n_iters))
                         verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
                         if len(matrices) == 0:
                             return reps
@@ -372,16 +385,13 @@ class BigArithGroup_class(AlgebraicGroup):
         return tmp
 
     @cached_method
-    def get_Up_reps_bianchi(self):
-        p = self.norm_p
-        ideal_p = self.ideal_p
-        F = self.F
-        pi, pi_bar = [o.gens_reduced()[0] for o, _ in F.ideal(p).factor()]
-        if F.ideal(pi) != ideal_p:
-            pi, pi_bar = pi_bar, pi
-        assert F.ideal(pi) == ideal_p
-        Upreps = [ Matrix(F,2,2,[pi, a, 0, 1]) for a in range(p) ]
-        Upreps_bar = [ Matrix(F,2,2,[pi_bar, a, 0, 1]) for a in range(p) ]
+    def get_Up_reps_bianchi(self, pi, pi_bar):
+        B = self.small_group().B
+        Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in range(self.prime()) ]
+        Upreps_bar0 = [ Matrix(self.F,2,2,[pi_bar, a, 0, 1]) for a in range(self.prime()) ]
+        Upreps = [B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2]) for o in Upreps0]
+        Upreps_bar = [B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2]) for o in Upreps_bar0]
+
         for o in Upreps:
             set_immutable(o)
         for o in Upreps_bar:
@@ -390,6 +400,9 @@ class BigArithGroup_class(AlgebraicGroup):
 
     def get_covering(self,depth):
         return self.subdivide([BTEdge(False, o) for o in self.get_BT_reps_twisted()], 1, depth - 1)
+
+    def get_Zp_covering(self, depth):
+        return self.subdivide([BTEdge(False, o) for o in self.get_BT_reps_twisted()[1:]], 1, depth - 1)
 
     def subdivide(self,edgelist,parity,depth):
         if depth < 0:
@@ -420,6 +433,7 @@ class BigArithGroup_class(AlgebraicGroup):
             return self._wp
         except AttributeError:
             pass
+        B = self.Gn.B
         verbose('Finding a suitable wp...')
         i = 0
         max_iterations = kwargs.get('max_iterations',-1)
@@ -451,6 +465,7 @@ class BigArithGroup_class(AlgebraicGroup):
             self._F_to_local = QQ.hom([R(1)])
             def iota(q):
                 return q.change_ring(R)
+            self._prec = prec
         else:
             I,J,K = self.local_splitting(prec)
             mats = [1,I,J,K]
@@ -467,6 +482,8 @@ class BigArithGroup_class(AlgebraicGroup):
     def embed(self,q,prec):
         if prec is None:
             return None
+        elif prec == -1:
+            prec = self._prec
         if self.F == QQ and self.discriminant == 1:
             return set_immutable(q.change_ring(Qp(self.p,prec)))
         else:
@@ -478,7 +495,18 @@ class BigArithGroup_class(AlgebraicGroup):
             return set_immutable((f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K).change_ring(Qp(self.p, prec)))
 
     @cached_method
-    def reduce_in_amalgam(self,x,return_word = False, check = False):
+    def embed_matrix(self,q,prec):
+        if prec is None:
+            return None
+        elif prec == -1:
+            prec = self._prec
+        if self.F == QQ and self.discriminant == 1:
+            return set_immutable(q.change_ring(Qp(self.p,prec)))
+        else:
+            return q.apply_map(self._F_to_local)
+
+    @cached_method
+    def reduce_in_amalgam(self,x,return_word = False, check = True):
         a,wd = self._reduce_in_amalgam(set_immutable(x))
         if check:
             assert self.is_in_Gpn_order(a)

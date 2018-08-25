@@ -203,27 +203,23 @@ class CohomologyGroup(Parent):
         self._group = G
         self._coeffmodule = V
         self._trivial_action = trivial_action
-        self._gen_pows = []
-        self._gen_pows_neg = []
-        if trivial_action:
-            self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
-            gens_local = [ (None, None) for g in G.gens() ]
-        else:
-            def acting_matrix(x,y):
-                try:
-                    return V.acting_matrix(x,y)
-                except AttributeError:
-                    gg = G.embed(x.quaternion_rep,V.base_ring().precision_cap())
-                    gg = V.Sigma0()(gg)
-                    return V.acting_matrix(gg, y)
-            self._acting_matrix = acting_matrix
-            gens_local = [ (g, g**-1) for g in G.gens() ]
         onemat = G(1)
         try:
             dim = V.dimension()
         except AttributeError:
             dim = len(V.basis())
         one = Matrix(V.base_ring(),dim,dim,1)
+        self._gen_pows = []
+        self._gen_pows_neg = []
+
+        if trivial_action:
+            self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
+            gens_local = [ (None, None) for g in G.gens() ]
+        else:
+            def acting_matrix(x,y):
+                return V.acting_matrix(x,y)
+            self._acting_matrix = acting_matrix
+            gens_local = [ (g, g**-1) for g in G.gens() ]
         for g, ginv in gens_local:
             A = self._acting_matrix(g, dim)
             self._gen_pows.append([one, A])

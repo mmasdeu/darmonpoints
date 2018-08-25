@@ -10,6 +10,7 @@ from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRi
 from sage.all import prod
 from operator import mul
 from util import *
+from sarithgroup import BTEdge
 from limits import num_evals,find_center
 from sage.parallel.decorate import fork,parallel
 from sage.misc.getusage import get_memory_usage
@@ -371,3 +372,60 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
 
         edgelist = newedgelist
     return resadd, resmul, resval
+
+def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
+    p = G.p
+    HOC = cocycle.parent()
+    V = HOC.coefficient_module()
+
+    if prec is None:
+        prec = V.precision_cap()
+    Cp = Qp(p, prec)
+    verbose('precision = %s'%prec)
+    R = PolynomialRing(Cp,names = 't')
+    PS = PowerSeriesRing(Cp, names = 'z')
+    t = R.gen()
+    z = PS.gen()
+
+    if prec is None:
+        prec = V.precision_cap()
+    try:
+        coeff_depth = V.precision_cap()
+    except AttributeError:
+        coeff_depth = V.coefficient_module().precision_cap()
+    resadd = ZZ(0)
+    edgelist = G.get_covering(1)[1:]
+
+    for rev, h in edgelist:
+        a,b,c,d = [Cp(o) for o in G.embed(h,prec).list()]
+        try:
+            c0val = 0
+            pol =  PS(d * z + b)  # / PS(c * z + a)
+            pol -= Cp.teichmuller(center)
+            pol = pol**j
+            pol = pol.polynomial()
+            newgamma = G.Gpn(G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False))
+            if rev: # DEBUG
+                newgamma = newgamma.conjugate_by(G.wp())
+                print 'reversing'
+            if G.use_shapiro():
+                mu_e = cocycle.evaluate_and_identity(newgamma)
+            else:
+                mu_e = cocycle.evaluate(newgamma)
+            if newgamma.quaternion_rep != 1:
+                print 'newgamma = ', newgamma
+        except AttributeError:
+            verbose('...')
+            continue
+        if HOC._use_ps_dists:
+            tmp = sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
+        else:
+            tmp = mu_e.evaluate_at_poly(pol, Cp, coeff_depth)
+        resadd += tmp
+        try:
+            if G.use_shapiro():
+                tmp = cocycle.get_liftee().evaluate_and_identity(newgamma)
+            else:
+                tmp = cocycle.get_liftee().evaluate(newgamma)
+        except IndexError: pass
+    return resadd
