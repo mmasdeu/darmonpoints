@@ -8,7 +8,7 @@ def get_all_version_names(mirror_url, idx = None, distribution = '{{cookiecutter
     else:
         idx = int(idx)
     site = urllib2.urlopen(mirror_url).read()
-    ans = re.findall('(sage-([0-9]*(?:\.[0-9]*)*)-%s.tar.bz2)'%distribution, site)
+    ans = re.findall('(sage-([0-9.]*?)-%s.tar.bz2)'%distribution,site)
     all_version_names = []
     for fname, ver in ans:
         if fname not in all_version_names:

@@ -8,21 +8,6 @@ from codecs import open # To open the README file with proper encoding
 from setuptools.command.test import test as TestCommand # for tests
 from distutils.command import build as build_module
 
-
-# Obtain the different Sage versions
-def get_all_version_names(mirror_url, idx = None, distribution = 'Ubuntu_14.04-x86_64'):
-    if idx is None:
-        idx = 0
-    else:
-        idx = int(idx)
-    site = urllib2.urlopen(mirror_url).read()
-    ans = re.findall('(sage-([0-9]*(?:\.[0-9]*)*)-%s.tar.bz2)'%distribution, site)
-    all_version_names = []
-    for fname, ver in ans:
-        if fname not in all_version_names:
-            all_version_names.append(fname)
-    return all_version_names[idx]
-
 # Get information from separate files (README, VERSION)
 def readfile(filename):
     with open(filename,  encoding='utf-8') as f:
