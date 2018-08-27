@@ -36,7 +36,6 @@ from sage.structure.element import Element
 from sage.modules.free_module_element import free_module_element as vector
 from sage.misc.misc import verbose
 oo = Infinity
-
 ##===========================================================================================
 
 
@@ -306,6 +305,7 @@ class BianchiDistributionElement(ModuleElement):
 
         EXAMPLES::
 
+            sage: from . import BianchiDistributions
             sage: D = BianchiDistributions(11,2)
             sage: mu = D.basis_vector((1,1))
             sage: mu.moments()
