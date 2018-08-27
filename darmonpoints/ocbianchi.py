@@ -305,7 +305,7 @@ class BianchiDistributionElement(ModuleElement):
 
         EXAMPLES::
 
-            sage: from . import BianchiDistributions
+            sage: from darmonpoints.ocbianchi import BianchiDistributions
             sage: D = BianchiDistributions(11,2)
             sage: mu = D.basis_vector((1,1))
             sage: mu.moments()
