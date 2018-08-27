@@ -46,6 +46,7 @@ class left_ps_adjuster(Sigma0ActionAdjuster):
 
     EXAMPLES::
 
+        sage: from darmonpoints.ocbianchi import left_ps_adjuster
         sage: adj = left_ps_adjuster()
         sage: adj(matrix(ZZ,2,2,[1..4]))
         (4, -2, -3, 1)
@@ -170,6 +171,7 @@ class Sigma0SquaredAction(Action):
 
                 EXAMPLES::
 
+                        sage: from darmonpoints.ocbianchi import BianchiDistributions
                         sage: D = BianchiDistributions(11,4)
                         sage: mu = D.basis_vector((1,0))
                         sage: g = D.Sigma0Squared()([1,-1,0,1],[1,0,0,1])
@@ -283,12 +285,13 @@ class BianchiDistributionElement(ModuleElement):
 
         EXAMPLES::
 
-                sage: D = BianchiDistributions(11,4)
-                sage: mu = D.basis_vector((2,3))
-                sage: mu.moment((2,3))
-                1 + O(11^3)
-                sage: mu.moment((2,1))
-                O(11^3)
+            sage: from darmonpoints.ocbianchi import BianchiDistributions
+            sage: D = BianchiDistributions(11,4)
+            sage: mu = D.basis_vector((2,3))
+            sage: mu.moment((2,3))
+            1 + O(11^3)
+            sage: mu.moment((2,1))
+            O(11^3)
 
         """
         if isinstance(ij,tuple):
@@ -303,14 +306,13 @@ class BianchiDistributionElement(ModuleElement):
 
         EXAMPLES::
 
-                sage: D = BianchiDistributions(11,2)
-                sage: mu = D.basis_vector((1,1))
-                sage: mu.moments()
-                [0]
-                [0]
-                [0]
-                [1]
-
+            sage: D = BianchiDistributions(11,2)
+            sage: mu = D.basis_vector((1,1))
+            sage: mu.moments()
+            [0]
+            [0]
+            [0]
+            [1]
         """
         return self._moments
 
@@ -366,11 +368,12 @@ class BianchiDistributionElement(ModuleElement):
 
         EXAMPLES::
 
-                sage: D = BianchiDistributions(11,4)
-                sage: mu1 = D.basis_vector((2,3))
-                sage: mu2 = D.basis_vector((1,2))
-                sage: mu1 + mu2
-                X*Y^2 + X^2*Y^3
+            sage: from darmonpoints.ocbianchi import BianchiDistributions
+            sage: D = BianchiDistributions(11,4)
+            sage: mu1 = D.basis_vector((2,3))
+            sage: mu2 = D.basis_vector((1,2))
+            sage: mu1 + mu2
+            X*Y^2 + X^2*Y^3
 
         """
         val = self._moments + y._moments
@@ -397,12 +400,13 @@ class BianchiDistributionElement(ModuleElement):
 
         EXAMPLES::
 
-                sage: D = BianchiDistributions(11,4)
-                sage: mu = D.basis_vector((2,1)) + D.basis_vector((1,0))
-                sage: mu
-                X + X^2*Y
-                sage: D.basis_vector((1,1)) + 2*D.basis_vector((2,1))
-                X*Y + 2*X^2*Y
+            sage: from darmonpoints.ocbianchi import BianchiDistributions
+            sage: D = BianchiDistributions(11,4)
+            sage: mu = D.basis_vector((2,1)) + D.basis_vector((1,0))
+            sage: mu
+            X + X^2*Y
+            sage: D.basis_vector((1,1)) + 2*D.basis_vector((2,1))
+            X*Y + 2*X^2*Y
 
         """
         R = self.parent()._repr_R
@@ -426,16 +430,16 @@ class BianchiDistributionElement(ModuleElement):
 
         EXAMPLES::
 
-                sage: D = BianchiDistributions(11,4)
-                sage: x,y = D.analytic_vars()
-                sage: mu = D.basis_vector((2,1)) + D.basis_vector((1,0))
-                sage: mu(x^2*y)
-                1
-                sage: mu(y)
-                0
-                sage: mu(x^2*y + x)
-                2
-
+            sage: from darmonpoints.ocbianchi import BianchiDistributions
+            sage: D = BianchiDistributions(11,4)
+            sage: x,y = D.analytic_vars()
+            sage: mu = D.basis_vector((2,1)) + D.basis_vector((1,0))
+            sage: mu(x^2*y)
+            1
+            sage: mu(y)
+            0
+            sage: mu(x^2*y + x)
+            2
         """
         p = self._parent._p
 
@@ -598,11 +602,10 @@ class BianchiDistributions(Module,UniqueRepresentation):
         r"""
         Function to return index of a tuple (i,j).
 
-        Input: 
-                - ij (tuple) :
-                        pair (i,j)
+        Input:
+           - ij (tuple) : pair (i,j)
         Returns:
-                place in ordered basis corr. to x^iy^j
+            Place in ordered basis corresponding to x^iy^j.
         """
         return self._index[tuple(ij)]
 
@@ -611,10 +614,9 @@ class BianchiDistributions(Module,UniqueRepresentation):
         From position in the ordered basis, returns corr. tuple (n,i)
 
         Input:
-                - n (int) :
-                        position in basis.
+                - n (int) : position in basis.
         Returns:
-                pair (i,j) s.t. the nth basis vector is x^iy^j 
+                pair (i,j) s.t. the nth basis vector is x^iy^j
         """
         return self._ij[n]
 
@@ -637,11 +639,12 @@ class BianchiDistributions(Module,UniqueRepresentation):
 
         EXAMPLES::
 
-                sage: D = BianchiDistributions(11,4)
-                sage: D.basis_vector((2,3))
-                X^2*Y^3
-                sage: D.basis_vector(5)
-                X*Y
+            sage: from darmonpoints.ocbianchi import BianchiDistributions
+            sage: D = BianchiDistributions(11,4)
+            sage: D.basis_vector((2,3))
+            X^2*Y^3
+            sage: D.basis_vector(5)
+            X*Y
         """
         moments = vector(ZZ,[0 for i in range(self._dimension)])
         if isinstance(ij,tuple):
@@ -726,20 +729,20 @@ class BianchiDistributions(Module,UniqueRepresentation):
 
         EXAMPLES::
 
-                sage: D = BianchiDistributions(11,2)
-                sage: h = D.Sigma0Squared()([1,1,0,1],[1,1,0,1])
-                sage: D._get_powers(h)
-                [1 0 0 0]
-                [1 1 0 0]
-                [1 0 1 0]
-                [1 1 1 1]
-                sage: h = D.Sigma0Squared()([2,3,11,1],[12,1,22,1])
-                sage: D._get_powers(h)
-                [1 0 0 0]
-                [7 6 0 0]
-                [1 0 1 0]
-                [7 6 7 6]
-
+            sage: from darmonpoints.ocbianchi import BianchiDistributions
+            sage: D = BianchiDistributions(11,2)
+            sage: h = D.Sigma0Squared()([1,1,0,1],[1,1,0,1])
+            sage: D._get_powers(h)
+            [1 0 0 0]
+            [1 1 0 0]
+            [1 0 1 0]
+            [1 1 1 1]
+            sage: h = D.Sigma0Squared()([2,3,11,1],[12,1,22,1])
+            sage: D._get_powers(h)
+            [1 0 0 0]
+            [7 6 0 0]
+            [1 0 1 0]
+            [7 6 7 6]
         """
         ## We want to ultimately compute actions on distributions. The matrix describing the (left)
         ## action of g on distributions is the transpose of the action of adjoint(g) acting on the (left)
@@ -883,9 +886,4 @@ class BianchiDistributions(Module,UniqueRepresentation):
         D/Fil^{d,d}D, where d is the depth.
         """
         return False
-
-
-
-
-
 

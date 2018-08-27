@@ -78,13 +78,11 @@ def find_newans(Coh,glocs,ti):
                 pass
     return newans
 
-def get_overconvergent_class_matrices(p,E,prec,aP, aPbar, sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
+def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     if use_ps_dists == False:
         raise NotImplementedError, 'Must use distributions from Pollack-Stevens code in the split case'
-    self._aP = aP
-    self._aPbar = aPbar
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
@@ -152,7 +150,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     Phi._sign_ap = sign_ap
     return Phi
 
-def get_overconvergent_class_bianchi(P,phiE,G,prec,sign_at_infinity,sign_ap, parallelize = False, progress_bar = False,method = None,Ename = 'unknown'):
+def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity,sign_ap, parallelize = False, progress_bar = False,method = None,Ename = 'unknown'):
     if parallelize:
         raise NotImplementedError
     p = ZZ(P.norm().factor()[0][0])
@@ -161,6 +159,9 @@ def get_overconvergent_class_bianchi(P,phiE,G,prec,sign_at_infinity,sign_ap, par
     pOF = [o for o, _ in F.ideal(p).factor()]
     Pbar = pOF[0] if P == pOF[1] else pOF[1]
     assert P * Pbar == F.ideal(p)
+
+    self._aP = aP
+    self._aPbar = aPbar
 
     if method is None:
         method = 'naive'
@@ -260,7 +261,7 @@ class ArithCohElement(CohomologyElement):
         x = ZZ['x'].gen()
         for q,_ in ZZ(N).factor():
             if q != p:
-                lambda_q = self.get_liftee().get_hecke_eigenvalue(q)
+                lambda_q = self.get_liftee().Tq_hecke_eigenvalue(q)
                 scale /= (1 - ZZ(q)**j / lambda_q)
         ans = 0
         for alpha in range(N):
