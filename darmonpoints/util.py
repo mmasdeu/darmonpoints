@@ -600,7 +600,7 @@ def our_sqrt(xx,K = None,return_all = False):
         z = K.unramified_generator()
     except AttributeError:
         z = K.gen()
-    deg = K.residue_class_degree()
+    deg = K.residue_class_field().degree()
     found = False
     ppow = p if p != 2 else 8
     minval = 1 if p != 2 else 3
@@ -648,7 +648,7 @@ def our_cuberoot(xx,K = None,return_all = False):
         z = K.unramified_generator()
     except AttributeError:
         z = K.gen()
-    deg = K.residue_class_degree()
+    deg = K.residue_class_field().degree()
     found = False
     ppow = p if p != 3 else 9
     minval = 1 if p != 3 else 2
@@ -715,13 +715,13 @@ def our_nroot(xx,n,K = None,return_all = False):
         z = K.unramified_generator()
     except AttributeError:
         z = K.gen()
-    deg = K.residue_class_degree()
+    deg = K.residue_class_field().degree()
     found = False
     try:
         z = K.unramified_generator()
     except AttributeError:
         z = K.gen()
-    deg = K.residue_class_degree()
+    deg = K.residue_class_field().degree()
     if n % p == 0:
         minval = 3 if p == 2 else 2
     else:
