@@ -45,7 +45,7 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None, nscartan = None):
+def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None, nscartan = None, matrix_group = False):
     if magma is None:
         from sage.interfaces.magma import Magma
         magma = Magma(logfile = logfile)
@@ -84,13 +84,13 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
             newobj = db(fname)
         except IOError:
             verbose('Group not found in database. Computing from scratch.')
-            newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan)
+            newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, matrix_group = matrix_group)
             newobj.save_to_db()
     else:
         if a is not None:
-            newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan)
+            newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, matrix_group = matrix_group)
         else:
-            newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan)
+            newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, matrix_group = matrix_group)
     return newobj
 
 
@@ -115,10 +115,11 @@ class BigArithGroup_class(AlgebraicGroup):
         sage: b.quaternion_rep # random #  optional - magma
         846 - 429*i + 286*j + 286*k
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None, nscartan = None):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None, nscartan = None, matrix_group = False):
         self.seed = seed
         self.magma = magma
         self._use_shapiro = use_shapiro
+        self._matrix_group = matrix_group
         if seed is not None:
             verbose('Setting Magma seed to %s'%seed)
             self.magma.eval('SetSeed(%s)'%seed)
@@ -151,7 +152,7 @@ class BigArithGroup_class(AlgebraicGroup):
         verbose('Estimated Difficulty = %s'%difficulty)
         verbose('Initializing arithmetic group G(pn)...')
         t = walltime()
-        lev = self.ideal_p*self.level
+        lev = self.ideal_p * self.level
         if character is not None:
             lev = [lev, character]
         self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,grouptype = grouptype,magma = magma, compute_presentation = not self._use_shapiro, timeout = timeout,nscartan=nscartan)
@@ -233,7 +234,7 @@ class BigArithGroup_class(AlgebraicGroup):
         R = Qp(prime,prec+10) #Zmod(prime**prec) #
         B_magma = self.Gn._B_magma
         a,b = self.Gn.B.invariants()
-        if (a,b) == (1,1): # DEBUG
+        if self._matrix_group:
             self._II = matrix(R,2,2,[1,0,0,-1])
             self._JJ = matrix(R,2,2,[0,1,1,0])
             goodroot = self.F.gen().minpoly().change_ring(R).roots()[0][0]
@@ -322,17 +323,18 @@ class BigArithGroup_class(AlgebraicGroup):
         reps = [self.Gn.B(1)] + [None for i in xrange(self.p)]
         emb = self.get_embedding(20)
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in xrange(self.p)]
-        if self.F == QQ and self.discriminant == 1: # Hard-coded matrices
-            wp = self.wp()
-            return [self.Gn(1).quaternion_rep] + [1 / self.p * wp * matrix(QQ,2,2,[1,-i,0,self.p]) for i in xrange(self.p)]
-
-        elif self.discriminant == 1 and self.Gn.B.invariants() == (1,1):
+        if self._matrix_group:
             verbose('Using hard-coded matrices for BT (Bianchi)')
-            pi = self.ideal_p.gens_reduced()[0]
-            B = self.Gn.B
-            BTreps0 = [ Matrix(self.F,2,2,[0, -1, 1, -i]) for a in range(self.prime()) ]
-            BTreps = [self.Gn(1).quaternion_rep] + [self.Gn(B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2])).quaternion_rep for o in BTreps0]
-            return BTreps
+            if F == QQ:
+                wp = self.wp()
+                return [self.Gn(1).quaternion_rep] + [1 / self.p * wp * matrix(QQ,2,2,[1,-i,0,self.p]) for i in xrange(self.p)]
+
+            else:
+                pi = self.ideal_p.gens_reduced()[0]
+                B = self.Gn.B
+                BTreps0 = [ Matrix(self.F,2,2,[0, -1, 1, -i]) for a in range(self.prime()) ]
+                BTreps = [self.Gn(1).quaternion_rep] + [self.Gn(B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2])).quaternion_rep for o in BTreps0]
+                return BTreps
 
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)
@@ -340,7 +342,7 @@ class BigArithGroup_class(AlgebraicGroup):
             if (embelt[0,0]-1).valuation() > 0 and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
                 if hasattr(self.Gpn,'nebentypus'):
                     tmp = self.do_tilde(embelt)**-1
-                    tmp = tmp[0,0] / (self.p**tmp[0,0].valuation()) # DEBUG
+                    tmp = tmp[0,0] / (self.p**tmp[0,0].valuation())
                     tmp = ZZ(tmp.lift()) % self.Gpn.level
                     if tmp not in self.Gpn.nebentypus:
                         continue

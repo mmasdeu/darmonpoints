@@ -1036,7 +1036,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             i, j, k = self.B.gens()
             Pgen = level.gens_reduced()[0]
             tmpObasis_F = [(1 + i)/2, (j+k)/2, (Pgen/2)*(j-k), (1-i)/2]
-            tmpObasis = [self.F.gen()**i * o  for o in tmpObasis_F for i in range(self.F.degree())] # DEBUG
+            tmpObasis = [self.F.gen()**i * o  for o in tmpObasis_F for i in range(self.F.degree())]
             self._O_discriminant = self.F.ideal(self.B.discriminant()) * level
         else:
             magma_ZBasis = self._O_magma.ZBasis()
@@ -1120,7 +1120,10 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             grouptype = '"NormOne"'
             assert 'SL' in self._grouptype
         verbose('Seed = %s'%self.magma.eval('GetSeed()'))
-        verbose('Grouptype = %s, prec = %s'%(grouptype,prec))
+        verbose(' O = %s'%self._O_magma)
+        verbose(' Basis = %s'%self._O_magma.Basis())
+        verbose('Grouptype = %s, prec = %s, periodenum = %s, timeout = %s'%(grouptype,prec, periodenum, timeout))
+
         _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, PeriodEnum = periodenum, max_time = timeout)
         verbose('Done normalizedbasis')
         if f == self.magma(False):
@@ -1223,16 +1226,15 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             am, bm = sage_F_elt_to_magma(self._F_magma,self.a),sage_F_elt_to_magma(self._F_magma,self.b)
             self._B_magma = self.magma.QuaternionAlgebra(FF_magma,am,bm)
 
-            if self.abtuple == (1,1):
+            if False: #self.abtuple == (1,1):
                 i, j = self._B_magma.gen(1), self._B_magma.gen(2)
                 k = i * j
                 on = self._B_magma.One()
-                self._Omax_magma = self.magma.Order([(on + i)/2, (j+k)/2, (j-k)/2, (on - i)/2, ])
-                # assert self._Omax_magma.IsPrincipal()._sage_()
+                self._Omax_magma = self.magma.Order([(on + i)/2, (j+k)/2, (j-k)/2, (on - i)/2])
             else:
                 self._Omax_magma = self._B_magma.MaximalOrder()
             if self.level != self.F.ideal(1):
-                if self.abtuple == (1,1):
+                if False: #self.abtuple == (1,1):
                     i, j = self._B_magma.gen(1), self._B_magma.gen(2)
                     k = i * j
                     levgen = sage_F_elt_to_magma(self._B_magma.BaseRing(), self.level.gens_reduced()[0])
@@ -1250,15 +1252,16 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self._B_magma = info_magma._B_magma
             self._Omax_magma = info_magma._Omax_magma
             if self.level != self.F.ideal(1):
-                if self.abtuple == (1,1):
+                if False: # self.abtuple == (1,1):
                     i, j = self._B_magma.gen(1), self._B_magma.gen(2)
                     k = i * j
                     Pgen = sage_F_elt_to_magma(self._F_magma, self.level.gens_reduced()[0])
                     on = self._B_magma.One()
                     self._O_magma = self.magma.Order([(on + i)/2, (j+k)/2,  Pgen * (j-k)/2, (on-i)/2])
                 else:
-                    P = sage_F_ideal_to_magma(self._F_magma,info_magma.level/self.level)
-                    self._O_magma = info_magma._O_magma.pMaximalOrder(P)
+                    M = sage_F_ideal_to_magma(self._F_magma,info_magma.level)
+                    # self._O_magma = info_magma._O_magma.pMaximalOrder(P)
+                    self._O_magma = info_magma._Omax_magma.Order(M)
             else:
                 self._O_magma = self._Omax_magma
             if self._compute_presentation:

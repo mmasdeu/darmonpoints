@@ -239,9 +239,13 @@ class ArithCohElement(CohomologyElement):
 
     def Tq_eigenvalue(self, ell, check = True):
         # Assume that self IS a hecke eigenvalue
-        f = self.parent().apply_hecke_operator(self, ell)
+        try:
+            f0 = self.get_liftee()
+        except AttributeError:
+            f0 = self
+        f = f0.parent().apply_hecke_operator(f0, ell)
         ans = None
-        for u, v in zip(f.values(), self.values()):
+        for u, v in zip(f.values(), f0.values()):
             try:
                 ans = ZZ(u / v)
             except IndexError:
@@ -249,11 +253,43 @@ class ArithCohElement(CohomologyElement):
         if ans is None:
             raise RuntimeError
         if check:
-            assert (ans * self).values() == f.values()
+            assert (ans * f0).values() == f.values()
         return ans
 
-    @cached_method
+
     def BI(self, a, j):
+        verbose('BI')
+        K = self.parent().coefficient_module().base_ring()
+        p = K.prime()
+        G = self.parent().S_arithgroup()
+        N = G.Gpn.level
+        scale = 1 / self.Tq_eigenvalue(p)
+        N = p * self.parent().S_arithgroup().level
+        x = ZZ['x'].gen()
+        prec = K.precision_cap()
+        ans = 0
+        for q,_ in ZZ(N).factor():
+            if q == p:
+                continue
+            lambda_q = self.Tq_eigenvalue(q)
+            order = Zmod(p)(q).multiplicative_order()
+            scale /= (lambda_q - lambda_q**(1-order) * ZZ(q)**(order * j))
+            print 'scale = %s'%scale
+            for m in range(order):
+                new_ans = 0
+                for b in range(N):
+                    if (q**m * b - a) % p != 0:
+                        continue
+                    g, alpha0, beta = xgcd(b, -N)
+                    if g != 1:
+                        continue
+                    symb = self.evaluate(matrix(ZZ,2,2,[b, N, beta, alpha0]))
+                    new_ans += sum(ZZ(j).binomial(r) * b**(j-r) * N**r * symb.moment(r) for r in range(j+1))
+                ans += lambda_q**(-m) * q**(m*j) * new_ans
+        return scale * ans
+
+    @cached_method
+    def BI_old(self, a, j):
         G = self.parent().S_arithgroup()
         N = G.Gpn.level
         p = G.prime()
@@ -261,7 +297,7 @@ class ArithCohElement(CohomologyElement):
         x = ZZ['x'].gen()
         for q,_ in ZZ(N).factor():
             if q != p:
-                lambda_q = self.get_liftee().Tq_hecke_eigenvalue(q)
+                lambda_q = self.get_liftee().Tq_eigenvalue(q)
                 scale /= (1 - ZZ(q)**j / lambda_q)
         ans = 0
         for alpha in range(N):

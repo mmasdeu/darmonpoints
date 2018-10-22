@@ -1514,7 +1514,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
         Phi = QQ(1)
         for P,_ in D.factor():
             Phi *= QQ(P.norm().abs() - 1)
-        Psi = QQ(M.norm()).abs()
+        Psi = QQ(1) # DEBUG: was QQ(M.norm()).abs()
         for P,e in M.factor():
             np = QQ(P.norm())
             Psi *= np**(ZZ(e)-1) * (np + 1)
@@ -1523,7 +1523,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
         Phi = ZZ(D)
         for np,_ in D.factor():
             Phi *= QQ(1)-QQ(1)/np
-        Psi = ZZ(M).abs()
+        Psi = ZZ(1) # DEBUG: was ZZ(M).abs()
         for np,e in M.factor():
             Psi *= np**(ZZ(e)-1) * (np + 1)
     RR = RealField(prec)

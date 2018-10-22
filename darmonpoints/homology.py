@@ -22,6 +22,14 @@ import operator
 from sage.rings.padics.precision_error import PrecisionError
 from representations import *
 
+
+class MatrixAction(Action):
+    def __init__(self,G,M):
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
+
+    def _call_(self,g,v):
+        return v.left_act_by_matrix(g)
+
 def construct_homology_cycle(G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
     F = G.F
     t = PolynomialRing(F, names = 't').gen()
@@ -302,6 +310,8 @@ class Divisors(Parent):
     def __init__(self,field):
         self._field = field
         Parent.__init__(self)
+        self._unset_coercions_used()
+        self.register_action(MatrixAction(MatrixSpace(self._field,2,2),self))
 
     def _an_element_(self):
         return self.element_class(self,[(3,self._field._an_element_())])
