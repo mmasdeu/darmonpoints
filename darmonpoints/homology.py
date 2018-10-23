@@ -13,6 +13,7 @@ from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.structure.parent import Parent
 from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
+from sage.rings.integer_ring import ZZ
 from sage.sets.set import Set
 from sage.arith.all import GCD
 from util import *
@@ -29,6 +30,13 @@ class MatrixAction(Action):
 
     def _call_(self,g,v):
         return v.left_act_by_matrix(g)
+
+class Scaling(Action):
+    def __init__(self,G,M):
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
+
+    def _call_(self,g,v):
+        return v.scale_by(g)
 
 def construct_homology_cycle(G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
     F = G.F
@@ -268,6 +276,17 @@ class Divisor_element(ModuleElement):
             newdict[P] = -n
         return self.__class__(self.parent(),newdict,ptdata = new_ptdata)
 
+    def scale_by(self, a):
+        if a == 0:
+            return self.__class__(self.parent(), {}, ptdata={})
+
+        newdict = defaultdict(ZZ)
+        new_ptdata = {}
+        new_ptdata.update(self._ptdict)
+        for P,n in self._data.iteritems():
+            newdict[P] = a * n
+        return self.__class__(self.parent(),newdict,ptdata = new_ptdata)
+
     def left_act_by_matrix(self,g):
         a,b,c,d = g.list()
         gp = self.parent()
@@ -312,6 +331,7 @@ class Divisors(Parent):
         Parent.__init__(self)
         self._unset_coercions_used()
         self.register_action(MatrixAction(MatrixSpace(self._field,2,2),self))
+        self.register_action(Scaling(ZZ,self))
 
     def _an_element_(self):
         return self.element_class(self,[(3,self._field._an_element_())])
