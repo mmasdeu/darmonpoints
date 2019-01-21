@@ -408,5 +408,5 @@ class Sigma0Action(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
-    def _call_(self,g,v):
+    def _act_(self,g,v):
         return v._acted_upon_(g.matrix(), False)

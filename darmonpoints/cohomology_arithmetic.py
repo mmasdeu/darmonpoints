@@ -204,7 +204,7 @@ class ArithAction(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
-    def _call_(self,g,v):
+    def _act_(self,g,v):
         V = v.parent()
         return V.Sigma0()(g) * v
 
@@ -215,7 +215,7 @@ class BianchiArithAction(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
-    def _call_(self,g,v):
+    def _act_(self,g,v):
         V = v.parent()
         prec = V.precision_cap()
         qrep = g.parent().matrix_rep(g) # This method is only available for matrix ring (not quaternionic)

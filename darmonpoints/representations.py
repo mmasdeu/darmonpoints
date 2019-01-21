@@ -39,7 +39,7 @@ class CoIndAction(Action):
         self._trivial_action = trivial_action
         Action.__init__(self,algebra,V,is_left = True,op = operator.mul)
 
-    def _call_(self,g,v):
+    def _act_(self,g,v):
         # Here v is an element of the coinduced module
         # v = [v_1, ... , v_r], indexed by cosets
         # To know (g*f)(x_i) = f(x_i g), we write

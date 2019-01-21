@@ -163,7 +163,7 @@ class Sigma0SquaredAction(Action):
                 """
                 Action.__init__(self,Sigma0Squared,D, is_left=act_on_left, op=operator.mul)
 
-        def _call_(self,mu,g):
+        def _act_(self,g,mu):
                 """
                 Returns mu.g, where mu is a Bianchi distribution object and g is a
                 Sigma0SquaredElement object
@@ -186,9 +186,6 @@ class Sigma0SquaredAction(Action):
                         102*X + 45*X^2 + 64*X*Y + 14*X^2*Y + 9*X*Y^2 + 36*X^2*Y^2
 
                 """
-                if self.is_left():
-                    mu,g = g,mu
-
                 ## Get matrix of g acting on distributions
                 matrix_of_action = mu.parent()._get_powers(g)
 

@@ -28,14 +28,14 @@ class MatrixAction(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
-    def _call_(self,g,v):
+    def _act_(self,g,v):
         return v.left_act_by_matrix(g)
 
 class Scaling(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
-    def _call_(self,g,v):
+    def _act_(self,g,v):
         return v.scale_by(g)
 
 def construct_homology_cycle(G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
@@ -358,7 +358,7 @@ class ArithGroupAction(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
-    def _call_(self,g,v):
+    def _act_(self,g,v):
         K = v.parent().base_ring()
         if K is ZZ:
             try:
