@@ -330,8 +330,8 @@ class Divisors(Parent):
         self._field = field
         Parent.__init__(self)
         self._unset_coercions_used()
-        self.register_action(MatrixAction(MatrixSpace(self._field,2,2),self))
         self.register_action(Scaling(ZZ,self))
+        self.register_action(MatrixAction(MatrixSpace(self._field,2,2),self))
 
     def _an_element_(self):
         return self.element_class(self,[(3,self._field._an_element_())])
