@@ -256,36 +256,49 @@ class ArithCohElement(CohomologyElement):
             assert (ans * f0).values() == f.values()
         return ans
 
-
-    def BI(self, a, j):
-        verbose('BI')
+    @cached_method
+    def BI(self, a, j): # Returns \int_{a + p \Z_p} z^j \Phi\{0 \to \infy\}
         K = self.parent().coefficient_module().base_ring()
         p = K.prime()
         G = self.parent().S_arithgroup()
         N = G.Gpn.level
         scale = 1 / self.Tq_eigenvalue(p)
-        N = p * self.parent().S_arithgroup().level
         x = ZZ['x'].gen()
         prec = K.precision_cap()
         ans = 0
-        for q,_ in ZZ(N).factor():
-            if q == p:
-                continue
-            lambda_q = self.Tq_eigenvalue(q)
-            order = Zmod(p)(q).multiplicative_order()
-            scale /= (lambda_q - lambda_q**(1-order) * ZZ(q)**(order * j))
-            print 'scale = %s'%scale
-            for m in range(order):
-                new_ans = 0
-                for b in range(N):
-                    if (q**m * b - a) % p != 0:
-                        continue
-                    g, alpha0, beta = xgcd(b, -N)
-                    if g != 1:
-                        continue
-                    symb = self.evaluate(matrix(ZZ,2,2,[b, N, beta, alpha0]))
-                    new_ans += sum(ZZ(j).binomial(r) * b**(j-r) * N**r * symb.moment(r) for r in range(j+1))
-                ans += lambda_q**(-m) * q**(m*j) * new_ans
+        q = ZZ(1)
+        while (N * p) % q == 0:
+            q = q.next_prime()
+        scale /= (self.Tq_eigenvalue(q) - q - 1)
+        reps = self.parent().group().get_hecke_reps(q)
+        ans = 0
+        for g in reps:
+            g_inv = g #g.adjugate()
+            try:
+                rr = (g_inv[0,0] * a + g_inv[0,1] * p) / (g_inv[1,0] * a + g_inv[1,1] * p)
+                num, den = rr.numerator(), rr.denominator()
+            except ZeroDivisionError:
+                num, den = 1, 0
+            A = G.find_matrix_from_cusp(num, den)
+            symb = A * self.evaluate(A**-1)
+            ans += sum(ZZ(j).binomial(r) * a**(j-r) * p**r * symb.moment(r) for r in range(j+1))
+
+            try:
+                rr = g_inv[0,0] / g_inv[1,0]
+                num, den = rr.numerator(), rr.denominator()
+            except ZeroDivisionError:
+                num, den = 1, 0
+            A = G.find_matrix_from_cusp(num, den)
+            symb = A * self.evaluate(A**-1)
+            ans -= sum(ZZ(j).binomial(r) * a**(j-r) * p**r * symb.moment(r) for r in range(j+1))
+
+        A = G.find_matrix_from_cusp(a, p)
+        symb =  A * self.evaluate(A**-1)
+        ans -= (q + 1) * sum(ZZ(j).binomial(r) * a**(j-r) * p**r * symb.moment(r) for r in range(j+1))
+        A = G.find_matrix_from_cusp(1, 0)
+        symb =  A * self.evaluate(A**-1)
+        ans += (q + 1) * sum(ZZ(j).binomial(r) * a**(j-r) * p**r * symb.moment(r) for r in range(j+1))
+
         return scale * ans
 
     @cached_method
@@ -310,6 +323,7 @@ class ArithCohElement(CohomologyElement):
             ans += -symb.evaluate_at_poly((alpha + N*(-x))**j)
         return scale * ans
 
+    @cached_method
     def basic_integral(self, a, j):
         K = self.parent().coefficient_module().base_ring()
         aa = K.teichmuller(a)
@@ -342,7 +356,7 @@ class ArithCohElement(CohomologyElement):
                 precision = M
                 lb = [1] + [0 for a in range(M - 1)]
             else:
-                lb = log_gamma_binomial(p, gamma, z, n, 2 * M)
+                lb = log_gamma_binomial(p, gamma, n, 2 * M)
                 if precision is None:
                     precision = min([j + lb[j].valuation(p)
                                      for j in range(M, len(lb))])

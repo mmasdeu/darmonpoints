@@ -174,14 +174,14 @@ class OCVnElement(ModuleElement):
         Act on the right by a matrix.
         """
         #assert(x.nrows()==2 and x.ncols()==2) #An element of GL2
-        return self._acted_upon_(x.adjoint(), False)
+        return self._acted_upon_(x.adjugate(), False)
 
     def _acted_upon_(self,x, right_action): # Act by x on the left
         try:
             x = x.matrix()
         except AttributeError: pass
         if right_action:
-            return self._acted_upon_(x.adjoint(), False)
+            return self._acted_upon_(x.adjugate(), False)
         else:
             R = self._parent._R
             A = self._parent._get_powers(x)

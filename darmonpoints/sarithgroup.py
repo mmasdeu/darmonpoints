@@ -676,6 +676,57 @@ class BigArithGroup_class(AlgebraicGroup):
         theta2 = -a01 * ker[0] + a00 * ker[1]
         return theta1, theta2, determinant
 
+    @cached_method
+    def get_P1List(self):
+        from sage.modular.modsym.p1list import P1List
+        N = self.level * self.ideal_p
+        return P1List(N)
+
+    @cached_method
+    def cusp_reduction_table(self):
+        P = self.get_P1List()
+        N = P.N()
+        remaining_points = set(list(P))
+        reduction_table = dict([])
+        cusp_set = set([])
+        while True:
+            try:
+                c = remaining_points.pop()
+            except KeyError: # No remaining points
+                break
+            reduction_table[c]=(c[0],c[1],matrix(ZZ,2,2,1))
+            cusp_set.add(c)
+            for hh in Zmod(N):
+                h = hh.lift()
+                for u in [-1, 1]:
+                    new_c = P.normalize(u*c[0],u**-1*c[1] + h*c[0])
+                    if new_c not in reduction_table:
+                        remaining_points.remove(new_c)
+                        reduction_table[new_c]=(c[0],c[1],matrix(ZZ,2,2,[u,h,0,u**-1]))
+        return reduction_table, cusp_set
+
+    def find_matrix_from_cusp(self, a,c):
+        from sage.modular.modsym.p1list import lift_to_sl2z
+        reduction_table, _ = self.cusp_reduction_table()
+        P = self.get_P1List()
+        N = P.N()
+        if c == 0:
+            g = Matrix(ZZ,2,2,[1,0,0,1])
+            c1, d1 = P.normalize(0, 1)
+        else:
+            g, d, b = ZZ(a).xgcd(-c)
+            assert g == 1
+            g = Matrix(QQ,2,2,[a,b,c,d])
+            c1, d1 = P.normalize(c, d)
+        assert g.determinant() == 1
+
+        c2, d2, T = reduction_table[(c1,d1)]
+        A = Matrix(ZZ,2,2,lift_to_sl2z(c2, d2, N))
+        gamma = A.parent()(A * T * g**-1)
+        assert gamma.determinant() == 1
+        assert gamma[1,0] % N == 0
+        return gamma
+
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0, nscartan = None):
     if base == QQ:
         if timeout != 0:
