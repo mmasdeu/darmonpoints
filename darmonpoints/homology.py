@@ -18,11 +18,10 @@ from sage.sets.set import Set
 from sage.arith.all import GCD
 from util import *
 import os
-from ocmodule import *
 import operator
 from sage.rings.padics.precision_error import PrecisionError
-from representations import *
-
+from sage.structure.element import MultiplicativeGroupElement,ModuleElement
+from sage.matrix.matrix_space import MatrixSpace
 
 class MatrixAction(Action):
     def __init__(self,G,M):
@@ -309,7 +308,7 @@ class Divisor_element(ModuleElement):
                 del new_ptdata[hnew_pt]
             else:
                 new_ptdata[hnew_pt] = new_pt
-        return self.__class__(gp,newdict,ptdata = new_ptdata)
+        return gp(newdict,ptdata = new_ptdata)
 
     @cached_method
     def degree(self):
@@ -321,6 +320,12 @@ class Divisor_element(ModuleElement):
 
     def support(self):
         return [self._ptdict[P] for P in Set([d for d in self._data])]
+
+    def __getitem__(self, P):
+        return self._ptdict[P]
+
+    def __setitem__(self, P, val):
+        self._ptdict[P] = val
 
 class Divisors(Parent):
 
