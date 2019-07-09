@@ -35,18 +35,18 @@ from sage.matrix.constructor import Matrix,matrix
 from sage.misc.cachefunc import cached_method
 from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod,FiniteField
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.rings.infinity import Infinity
 from sage.arith.all import gcd, lcm, xgcd
+
 from util import *
 import os
 from ocmodule import OCVn
 from ocbianchi import BianchiDistributions, left_ps_adjuster
 from sage.misc.persist import db, db_save
 from sage.parallel.decorate import fork,parallel
-oo = Infinity
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 from sage.categories.action import Action
@@ -58,6 +58,7 @@ from sage.modules.free_module_element import free_module_element, vector
 from representations import *
 from time import sleep
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
+from sage.modular.cusps import Cusp
 
 def find_newans(Coh,glocs,ti):
     gens = Coh.group().gens()
@@ -224,16 +225,16 @@ class BianchiArithAction(Action):
         return V.Sigma0Squared()(first,second) * v
 
 class ArithCohElement(CohomologyElement):
-    _Lseries_coefficients = {}
+    def __init__(self, parent, data):
+        self._Lseries_coefficients = {}
+        super(ArithCohElement,self).__init__(parent, data)
 
     def set_liftee(self,x):
         self._liftee = x
 
     def get_liftee(self):
-        try:
-            return self._liftee
-        except AttributeError:
-            raise RuntimeError,"Don't know what this cocycle is a lift of!"
+        return self._liftee
+
     def _repr_(self):
         return 'Arithmetic cohomology class in %s'%self.parent()
 
@@ -256,50 +257,49 @@ class ArithCohElement(CohomologyElement):
             assert (ans * f0).values() == f.values()
         return ans
 
+    def evaluate_at_cusp(self, cusp):
+        a, c = cusp.numerator(), cusp.denominator()
+        A = self.parent().S_arithgroup().find_matrix_from_cusp(a, c)
+        symb = A * self.evaluate(A**-1)
+        return symb
+
+    def evaluate_at_cusp_list(self, cusp_list):
+        symb = 0
+        for n, cusp in cusp_list:
+            a, c = cusp.numerator(), cusp.denominator()
+            A = self.parent().S_arithgroup().find_matrix_from_cusp(a, c)
+            symb += n * (A * self.evaluate(A**-1))
+        return symb
+
     @cached_method
-    def BI(self, a, j): # Returns \int_{a + p \Z_p} z^j \Phi\{0 \to \infy\}
-        K = self.parent().coefficient_module().base_ring()
+    def BI(self, h, j): # Returns \int_{h^{-1} \Z_p} z^j \Phi\{0 \to \infy\}
+        V = self.parent().coefficient_module()
+        K = V.base_ring()
         p = K.prime()
-        G = self.parent().S_arithgroup()
-        N = G.Gpn.level
-        scale = 1 / self.Tq_eigenvalue(p)
+        G = self.parent().group()
+        N = G.level
         x = ZZ['x'].gen()
         prec = K.precision_cap()
-        ans = 0
+
+        # a_h = -h[0,1] / h[0,0] # = h^-1 (0)
+        # b_h = -h[1,1] / h[1,0] # h^-1 (oo)
         q = ZZ(1)
         while (N * p) % q == 0:
             q = q.next_prime()
-        scale /= (self.Tq_eigenvalue(q) - q - 1)
-        reps = self.parent().group().get_hecke_reps(q)
-        ans = 0
-        for g in reps:
-            g_inv = g #g.adjugate()
-            try:
-                rr = (g_inv[0,0] * a + g_inv[0,1] * p) / (g_inv[1,0] * a + g_inv[1,1] * p)
-                num, den = rr.numerator(), rr.denominator()
-            except ZeroDivisionError:
-                num, den = 1, 0
-            A = G.find_matrix_from_cusp(num, den)
-            symb = A * self.evaluate(A**-1)
-            ans += sum(ZZ(j).binomial(r) * a**(j-r) * p**r * symb.moment(r) for r in range(j+1))
+        scale = (self.Tq_eigenvalue(p) * (self.Tq_eigenvalue(q) - q - 1))**-1
+        symb = 0
+        cc = Cusp(h[0,1],h[0,0]) # Cusp(1,0)
+        oo = Cusp(h[1,1],h[1,0]) # M2Z(p * h) * Cusp(0,1) # DEBUG
 
-            try:
-                rr = g_inv[0,0] / g_inv[1,0]
-                num, den = rr.numerator(), rr.denominator()
-            except ZeroDivisionError:
-                num, den = 1, 0
-            A = G.find_matrix_from_cusp(num, den)
-            symb = A * self.evaluate(A**-1)
-            ans -= sum(ZZ(j).binomial(r) * a**(j-r) * p**r * symb.moment(r) for r in range(j+1))
-
-        A = G.find_matrix_from_cusp(a, p)
-        symb =  A * self.evaluate(A**-1)
-        ans -= (q + 1) * sum(ZZ(j).binomial(r) * a**(j-r) * p**r * symb.moment(r) for r in range(j+1))
-        A = G.find_matrix_from_cusp(1, 0)
-        symb =  A * self.evaluate(A**-1)
-        ans += (q + 1) * sum(ZZ(j).binomial(r) * a**(j-r) * p**r * symb.moment(r) for r in range(j+1))
-
-        return scale * ans
+        for g in G.get_hecke_reps(q):
+            g_inv = M2Z(g.adjugate())
+            symb += g * self.evaluate_at_cusp_list([(1,g_inv * cc), (-1,g_inv * oo)])
+        symb -= self.evaluate_at_cusp_list([(q+1,cc),(-(q+1),oo)])
+        a,b,c,d = h.list() #(h**-1 * G.wp()).list()
+        R = V._PowerSeries # DEBUG
+        return scale * symb.evaluate_at_poly((R((a * (-x) + b)) / R((c * (-x) + d)))**j)
+        # return scale * symb.evaluate_at_poly((R((d * (-x) + b)) / R((c * (-x) + a)))**j)
+        # return scale * symb.evaluate_at_poly((a+p*(-x))**j)
 
     @cached_method
     def BI_old(self, a, j):
@@ -324,11 +324,23 @@ class ArithCohElement(CohomologyElement):
         return scale * ans
 
     @cached_method
-    def basic_integral(self, a, j):
+    def basic_integral_with_constant_old(self, a, j, mat = None):
         K = self.parent().coefficient_module().base_ring()
         aa = K.teichmuller(a)
         p = self.parent().S_arithgroup().prime()
-        return sum(((-1)**(j-r) * ZZ(j).binomial(r) * aa**(j-r) * self.BI(a, r) for r in xrange(j+1)))
+        return K(ZZ(aa)**-j) * sum(((-1)**(j-r) * ZZ(j).binomial(r) * aa**(j-r) * self.BI_old(a, r) for r in xrange(j+1)))
+
+    @cached_method
+    def basic_integral_with_constant(self, mat, j): # Includes the power of aa**-j.
+        K = self.parent().coefficient_module().base_ring()
+        G = self.parent().S_arithgroup()
+        p = G.prime()
+        # g_a = mat.adjugate()*G.wp()
+        a,b,c,d = mat.list() #(mat**-1 * G.wp()).list()
+        aa = K.teichmuller(b / d)
+        if aa == 0:
+            return 0
+        return K(ZZ(aa)**-j) * sum(((-1)**(j-r) * ZZ(j).binomial(r) * aa**(j-r) * self.BI(mat, r) for r in xrange(j+1)))
 
     def get_Lseries_term(self, n):
         r"""
@@ -339,7 +351,8 @@ class ArithCohElement(CohomologyElement):
         if n in self._Lseries_coefficients:
             return self._Lseries_coefficients[n]
         else:
-            p = self.parent().S_arithgroup().prime()
+            G = self.parent().S_arithgroup()
+            p = G.prime()
             ap = self._sign_ap
             if p == 2:
                 gamma = 1 + 4
@@ -362,11 +375,14 @@ class ArithCohElement(CohomologyElement):
                                      for j in range(M, len(lb))])
                 lb = [lb[a] for a in range(M)]
 
+            # cov = [h * G.wp()**-1 for _, h in G.get_covering(1)[1:]]
+            cov =  G.get_Up_reps()[1:] # [h.adjugate() * G.wp() for h in G.get_Up_reps()[1:]]
             for j in range(len(lb)):
                 cjn = lb[j]
-                temp = sum((ZZ(K.teichmuller(a)) ** (-j))
-                           * self.basic_integral(a, j) for a in range(1, p))
-                dn = dn + cjn * temp
+                for h in cov:
+                    assert h.parent().base_ring() == QQ
+                temp = sum(self.basic_integral_with_constant(h, j) for h in cov)
+                dn += cjn * temp
             self._Lseries_coefficients[n] = dn.add_bigoh(precision)
             # self._Lseries_coefficients[n] /= self._cinf # DEBUG
             return self._Lseries_coefficients[n]
@@ -437,7 +453,7 @@ class ArithCoh(CohomologyGroup):
                 prec = None
             try:
                 data = data.get_liftee()
-            except RuntimeError:
+            except AttributeError:
                 pass
             try:
                 vals = [V(data.evaluate(g).moment(0), normalize=False).lift(M=prec) for g in G.gens()]

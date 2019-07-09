@@ -395,12 +395,11 @@ def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
         coeff_depth = V.coefficient_module().precision_cap()
     resadd = ZZ(0)
     edgelist = G.get_covering(1)[1:]
-
     for rev, h in edgelist:
         a,b,c,d = [Cp(o) for o in G.embed(h,prec).list()]
         try:
             c0val = 0
-            pol =  PS(d * z + b)  # / PS(c * z + a)
+            pol =  PS(d * z + b) / PS(c * z + a)
             pol -= Cp.teichmuller(center)
             pol = pol**j
             pol = pol.polynomial()

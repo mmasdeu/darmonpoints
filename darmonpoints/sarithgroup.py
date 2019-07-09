@@ -325,7 +325,7 @@ class BigArithGroup_class(AlgebraicGroup):
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in xrange(self.p)]
         if self._matrix_group:
             verbose('Using hard-coded matrices for BT (Bianchi)')
-            if F == QQ:
+            if self.F == QQ:
                 wp = self.wp()
                 return [self.Gn(1).quaternion_rep] + [1 / self.p * wp * matrix(QQ,2,2,[1,-i,0,self.p]) for i in xrange(self.p)]
 
@@ -725,7 +725,7 @@ class BigArithGroup_class(AlgebraicGroup):
         gamma = A.parent()(A * T * g**-1)
         assert gamma.determinant() == 1
         assert gamma[1,0] % N == 0
-        return gamma
+        return gamma**-1
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0, nscartan = None):
     if base == QQ:
