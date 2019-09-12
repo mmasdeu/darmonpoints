@@ -41,7 +41,7 @@ def darmon_discriminants(bound, split_primes = None, inert_primes = None):
         good_D.append(D)
     return good_D
 
-def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data = None, magma = None, working_prec = None, **kwargs):
+def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data = None, magma = None, working_prec = None, recognize_point = True, **kwargs):
     r'''
 
     EXAMPLES:
@@ -323,6 +323,12 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     known_multiple = QQ(nn * eisenstein_constant) # It seems that we are not getting it with present algorithm.
     while known_multiple % p == 0:
         known_multiple = ZZ(known_multiple / p)
+
+    if not recognize_point:
+        fwrite('known_multiple = %s'%known_multiple, outfile)
+        if quit_when_done:
+            magma.quit()
+        return J, Jlist
 
     candidate,twopow,J1 = recognize_J(E,J,K,local_embedding = local_embedding,known_multiple = known_multiple,twopowlist = twopowlist,prec = prec, outfile = outfile)
 
