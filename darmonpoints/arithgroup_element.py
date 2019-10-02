@@ -178,8 +178,11 @@ class ArithGroupElement(MultiplicativeGroupElement):
     def __iter__(self):
         return self.embed(-1).list().__iter__()
 
-    def matrix(self):
-        return self.embed(-1)
+    def matrix(self, prec=-1):
+        return self.embed(prec)
+
+    def acton(self, x):
+        return act_flt(self.matrix(), x)
 
     def conjugate_by(self, w):
         word_rep = None

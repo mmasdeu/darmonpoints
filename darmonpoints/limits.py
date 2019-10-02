@@ -40,7 +40,7 @@ def factorize_matrix(m,M):
                     gamma = c1*M
                     beta = ZZ(gamma0/c1)
                     r1 = Matrix(QQ,2,2,[alpha,beta,gamma,delta])
-                    r2 = m*r1.adjoint()
+                    r2 = m*r1.adjugate()
                     assert r1.determinant() == 1
                     assert is_in_Gamma_1(r1,M,determinant_condition = False)
                     assert is_in_Gamma_1(r1,M,determinant_condition = False)

@@ -510,7 +510,7 @@ def generate_matlists(Lambdalist,mat_coeffs_range = 3):
     for X,YYL in product(mlistX,mlistYYL):
         Y, YL = YYL
         delta = X.determinant()
-        YLXinv = right_multiply_multiplicative(YL, X.adjoint())
+        YLXinv = right_multiply_multiplicative(YL, X.adjugate())
         if YLXinv[0,1] != YLXinv[1,0]:
             continue
         yield (X,Y,YLXinv,delta)

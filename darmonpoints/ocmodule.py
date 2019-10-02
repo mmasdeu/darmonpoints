@@ -194,7 +194,7 @@ class OCVnElement(ModuleElement):
 
     def _rmul_(self,a):
         #assume that a is a scalar
-        return self.__class__(self._parent,a*self._val, check = False)
+        return self.__class__(self._parent,self._parent._Rmod(a)*self._val, check = False)
 
     def _repr_(self):
         r"""

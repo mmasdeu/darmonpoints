@@ -18,7 +18,6 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from util import *
 import os
-from ocmodule import OCVn
 from sage.misc.persist import db,db_save
 from sage.parallel.decorate import fork,parallel
 from sage.matrix.constructor import block_matrix
