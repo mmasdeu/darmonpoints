@@ -22,6 +22,8 @@ import operator
 from sage.rings.padics.precision_error import PrecisionError
 from sage.structure.element import MultiplicativeGroupElement,ModuleElement
 from sage.matrix.matrix_space import MatrixSpace
+from sage.modules.free_module_element import free_module_element
+from sage.structure.unique_representation import CachedRepresentation
 
 class MatrixAction(Action):
     def __init__(self,G,M):
@@ -154,7 +156,7 @@ def _hash(x):
         ans.extend(tup)
     return tuple(ans)
 
-class Divisor_element(ModuleElement):
+class DivisorsElement(ModuleElement):
     def __init__(self,parent,data,ptdata = None):
         r'''
         A Divisor is given by a list of pairs (P,nP), where P is a point, and nP is an integer.
@@ -177,7 +179,7 @@ class Divisor_element(ModuleElement):
         ModuleElement.__init__(self,parent)
         if data == 0:
             return
-        elif isinstance(data,Divisor_element):
+        elif isinstance(data,DivisorsElement):
             self._data.update(data._data)
             self._ptdict.update(data._ptdict)
         elif isinstance(data,list):
@@ -202,6 +204,12 @@ class Divisor_element(ModuleElement):
             hP = _hash(P)
             self._data[hP] = 1
             self._ptdict[hP] = P
+
+    def apply_map(self, f):
+        ans = []
+        for hP, n in self._data.iteritems():
+            ans.append((n,f(self._ptdict[hP])))
+        return self.parent()(ans)
 
     def __iter__(self):
         return iter(((self._ptdict[hP],n) for hP,n in self._data.iteritems()))
@@ -327,9 +335,15 @@ class Divisor_element(ModuleElement):
     def __setitem__(self, P, val):
         self._ptdict[P] = val
 
-class Divisors(Parent):
+    def rational_function(self, as_map = False):
+        if as_map:
+            return lambda z: prod(((1 - z/P)**n for P, n in self), z.parent()(1))
+        else:
+            z = PolynomialRing(self.parent()._field, names='z').gen()
+            return prod(((1 - z/P)**n for P, n in self), z.parent()(1))
 
-    Element = Divisor_element
+class Divisors(Parent,CachedRepresentation):
+    Element = DivisorsElement
 
     def __init__(self,field):
         self._field = field
@@ -370,7 +384,10 @@ class ArithGroupAction(Action):
                 return v.parent()(v._data,v._ptdata)
             except AttributeError:
                 return v.parent()(v)
-        prec = K.precision_cap()
+        try:
+            prec = K.precision_cap()
+        except AttributeError:
+            prec = -1
         G = g.parent()
         a,b,c,d = [K(o) for o in G.embed(g.quaternion_rep,prec).list()]
         newdict = defaultdict(ZZ)
@@ -442,18 +459,17 @@ class OneChains_element(ModuleElement):
         V = HH.coefficient_module()
         G = HH.group()
         oldvals = self._data.values()
+        aux_element = list(oldvals[0])[0][0]
         Gab = G.abelianization()
         xlist = [(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)]
         abxlist = [ Gab((x,n)) for x,n in xlist]
-        sum_abxlist = vector(sum(abxlist))
+        sum_abxlist = free_module_element(sum(abxlist))
         x_ord = sum_abxlist.order()
         if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
             raise ValueError('Must yield torsion element in abelianization (%s)'%(sum_abxlist))
         else:
             xlist = [(x,x_ord * n) for x,n in xlist]
         gwordlist, rel = G.calculate_weight_zero_word(xlist, separated = True)
-        #  gwordlist.append(rel)
-        # oldvals.append(V(V.base_field().gen()))
         counter = 0
         assert len(gwordlist) == len(oldvals)
         newdict = defaultdict(V)
@@ -474,7 +490,7 @@ class OneChains_element(ModuleElement):
             counter += 1
             update_progress(float(QQ(counter)/QQ(len(oldvals))),'Reducing to degree zero equivalent')
         for b, r in rel:
-            newv = V(V.base_field().gen())
+            newv = V(aux_element)
             for i, a in tietze_to_syllables(r):
                 oldv = V(newv)
                 g = G.gen(i)
@@ -639,7 +655,7 @@ class OneChains(Parent):
         return self.element_class(self,dict([(self.group().gen(0),self._coeffmodule._an_element_())]))
 
     def _repr_(self):
-        return 'Group of 1-chains'
+        return 'Group of 1-chains on %s with values in %s'%(self.group(), self.coefficient_module())
 
     def group(self):
         return self._group

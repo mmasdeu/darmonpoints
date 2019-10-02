@@ -17,7 +17,6 @@ from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from util import *
 import os
-from ocmodule import OCVn
 from sage.misc.persist import db,db_save
 from sage.parallel.decorate import fork,parallel
 oo = Infinity
@@ -128,6 +127,15 @@ class CohomologyElement(ModuleElement):
         else:
             return self._evaluate_word_tietze(wd)
 
+    def check_cocycle_property(self, g1=None,g2=None):
+        H = self.parent()
+        G = H.group()
+        if g1 is None:
+            return [self._evaluate_word_tietze(r) for r in G.get_relation_words()]
+        else:
+            return self.evaluate(g1*g2) - self.evaluate(g1) - g1 * self.evaluate(g2)
+        return
+
     def _evaluate_word_tietze(self,word):
         G = self.parent().group()
         V = self.parent().coefficient_module()
@@ -204,13 +212,21 @@ class CohomologyGroup(Parent):
         self._coeffmodule = V
         self._trivial_action = trivial_action
         onemat = G(1)
-        try:
-            dim = V.dimension()
-        except AttributeError:
-            dim = len(V.basis())
-        one = Matrix(V.base_ring(),dim,dim,1)
         self._gen_pows = []
         self._gen_pows_neg = []
+
+        if hasattr(V, 'dimension'):
+            dim = V.dimension()
+        elif hasattr(V, 'basis'):
+            dim = len(V.basis())
+        else:
+            Parent.__init__(self)
+            self._acting_matrix = None
+            self._gen_pows = None
+            self._gen_pows_neg = None
+            return
+
+        one = Matrix(V.base_ring(),dim,dim,1)
 
         if trivial_action:
             self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)

@@ -102,7 +102,9 @@ def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = 
         assert sign_at_infinity == 0
         phi0 = phi0.plus_part() + phi0.minus_part()
     phi0 = 1 / gcd([val.moment(0) for val in phi0.values()]) * phi0
-    Phi = phi0.lift(p,M = prec - 1,algorithm = 'stevens',eigensymbol = True)
+    verbose('Lifting..')
+    Phi = phi0.lift(p,M = prec - 1,algorithm = 'greenberg',eigensymbol = True)
+    verbose('Done lifting.')
     Phi._liftee = phi0
     return Phi
 
@@ -257,22 +259,49 @@ class ArithCohElement(CohomologyElement):
             assert (ans * f0).values() == f.values()
         return ans
 
-    def evaluate_at_cusp(self, cusp):
-        a, c = cusp.numerator(), cusp.denominator()
-        A = self.parent().S_arithgroup().find_matrix_from_cusp(a, c)
-        symb = A * self.evaluate(A**-1)
+    def evaluate_cuspidal_modsym_at_cusp_list(self, cusp_list,j = None, q = None):
+        V = self.parent().coefficient_module()
+        K = V.base_ring()
+        p = K.prime()
+        G = self.parent().group()
+        N = G.level
+        R = V._PowerSeries
+        x = ZZ['x'].gen()
+
+        if q is None:
+            q = ZZ(1)
+            while (N * p) % q == 0:
+                q = q.next_prime()
+
+        scale = 1
+        if q != -1:
+            scale = (self.Tq_eigenvalue(q) - q - 1)**-1
+            ans = self.parent().coefficient_module()(0)
+            for g in G.get_hecke_reps(q):
+                g_inv = M2Z(g.adjugate())
+                ans += g * self.evaluate_at_cusp_list([(n, cc.apply(g_inv.list())) for n, cc in cusp_list])
+            ans -= (q+1) * self.evaluate_at_cusp_list(cusp_list)
+        else:
+            ans = self.evaluate_at_cusp_list(cusp_list)
+        if j is None:
+            return ans._rmul_(scale)
+        else:
+            return scale * ans.evaluate_at_poly(R(x**j))
+
+    def _evaluate_at_cusp(self, cusp):
+        gamma, A = self.parent().S_arithgroup().find_matrix_from_cusp(cusp)
+        symb = gamma * self.evaluate(gamma**-1)
         return symb
 
     def evaluate_at_cusp_list(self, cusp_list):
         symb = 0
         for n, cusp in cusp_list:
-            a, c = cusp.numerator(), cusp.denominator()
-            A = self.parent().S_arithgroup().find_matrix_from_cusp(a, c)
-            symb += n * (A * self.evaluate(A**-1))
+            gamma, A = self.parent().S_arithgroup().find_matrix_from_cusp(cusp)
+            symb -= n * (gamma * self.evaluate(gamma**-1)) # Note the minus sign!
         return symb
 
     @cached_method
-    def BI(self, h, j): # Returns \int_{h^{-1} \Z_p} z^j \Phi\{0 \to \infy\}
+    def BI(self, h, j): # Returns \int_{h \Z_p} z^j \Phi\{0 \to \infy\}
         V = self.parent().coefficient_module()
         K = V.base_ring()
         p = K.prime()
@@ -281,25 +310,21 @@ class ArithCohElement(CohomologyElement):
         x = ZZ['x'].gen()
         prec = K.precision_cap()
 
-        # a_h = -h[0,1] / h[0,0] # = h^-1 (0)
-        # b_h = -h[1,1] / h[1,0] # h^-1 (oo)
         q = ZZ(1)
         while (N * p) % q == 0:
             q = q.next_prime()
-        scale = (self.Tq_eigenvalue(p) * (self.Tq_eigenvalue(q) - q - 1))**-1
-        symb = 0
-        cc = Cusp(h[0,1],h[0,0]) # Cusp(1,0)
-        oo = Cusp(h[1,1],h[1,0]) # M2Z(p * h) * Cusp(0,1) # DEBUG
+        scale = (self.Tq_eigenvalue(p))**-1 * ((self.Tq_eigenvalue(q) - q - 1))**-1
+        cc = Cusp(h[0,1],h[0,0])
+        oo = Cusp(h[1,1],h[1,0])
 
+        symb = self.parent().coefficient_module()(0)
         for g in G.get_hecke_reps(q):
             g_inv = M2Z(g.adjugate())
             symb += g * self.evaluate_at_cusp_list([(1,g_inv * cc), (-1,g_inv * oo)])
         symb -= self.evaluate_at_cusp_list([(q+1,cc),(-(q+1),oo)])
-        a,b,c,d = h.list() #(h**-1 * G.wp()).list()
-        R = V._PowerSeries # DEBUG
+        a,b,c,d = h.list() # DEBUG
+        R = V._PowerSeries
         return scale * symb.evaluate_at_poly((R((a * (-x) + b)) / R((c * (-x) + d)))**j)
-        # return scale * symb.evaluate_at_poly((R((d * (-x) + b)) / R((c * (-x) + a)))**j)
-        # return scale * symb.evaluate_at_poly((a+p*(-x))**j)
 
     @cached_method
     def BI_old(self, a, j):
@@ -335,14 +360,12 @@ class ArithCohElement(CohomologyElement):
         K = self.parent().coefficient_module().base_ring()
         G = self.parent().S_arithgroup()
         p = G.prime()
-        # g_a = mat.adjugate()*G.wp()
         a,b,c,d = mat.list() #(mat**-1 * G.wp()).list()
         aa = K.teichmuller(b / d)
-        if aa == 0:
-            return 0
-        return K(ZZ(aa)**-j) * sum(((-1)**(j-r) * ZZ(j).binomial(r) * aa**(j-r) * self.BI(mat, r) for r in xrange(j+1)))
+        assert aa != 0
+        return sum(((-1)**(j-r) * ZZ(j).binomial(r) * aa**(-r) * self.BI(mat, r) for r in xrange(j+1)))
 
-    def get_Lseries_term(self, n):
+    def get_Lseries_term(self, n, cov = None):
         r"""
         Return the `n`-th coefficient of the `p`-adic `L`-series
 
@@ -364,7 +387,6 @@ class ArithCohElement(CohomologyElement):
             S = QQ[['z']]
             z = S.gen()
             M = precision
-            dn = 0
             if n == 0:
                 precision = M
                 lb = [1] + [0 for a in range(M - 1)]
@@ -376,13 +398,11 @@ class ArithCohElement(CohomologyElement):
                 lb = [lb[a] for a in range(M)]
 
             # cov = [h * G.wp()**-1 for _, h in G.get_covering(1)[1:]]
-            cov =  G.get_Up_reps()[1:] # [h.adjugate() * G.wp() for h in G.get_Up_reps()[1:]]
+            if cov is None:
+                cov = G.get_Up_reps()[1:] # [h.adjugate() * G.wp() for h in G.get_Up_reps()[1:]]
+            dn = 0
             for j in range(len(lb)):
-                cjn = lb[j]
-                for h in cov:
-                    assert h.parent().base_ring() == QQ
-                temp = sum(self.basic_integral_with_constant(h, j) for h in cov)
-                dn += cjn * temp
+                dn += lb[j] * sum(self.basic_integral_with_constant(h, j) for h in cov)
             self._Lseries_coefficients[n] = dn.add_bigoh(precision)
             # self._Lseries_coefficients[n] /= self._cinf # DEBUG
             return self._Lseries_coefficients[n]

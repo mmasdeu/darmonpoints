@@ -13,7 +13,7 @@ from sage.structure.parent import Parent
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp, AA
 from sage.arith.all import lcm
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
@@ -30,15 +30,24 @@ from sage.misc.sage_eval import sage_eval
 from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
+from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
 from sage.rings.infinity import Infinity
 from homology_abstract import HomologyGroup
 from arithgroup_element import ArithGroupElement
+from sage.plot.hyperbolic_polygon import hyperbolic_polygon
+from sage.repl.rich_output.pretty_print import show
+from sage.plot.plot import plot
+from sage.plot.hyperbolic_arc import hyperbolic_arc
+from sage.plot.hyperbolic_polygon import hyperbolic_polygon
+from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
+
 oo = Infinity
 
-def _get_word_jv(G,delta):
+def _get_word_jv(G,delta, P = None):
     B = delta.parent()
     CC = ComplexField(300)
-    P = CC(90)/CC(100) * CC.gen()
+    if P is None:
+        P = CC(90)/CC(100) * CC.gen()
     emb = G.get_archimedean_embedding(300)
     ngquats = G.ngquats
     gammas = G.gquats
@@ -83,6 +92,201 @@ def _get_word_jv(G,delta):
         ans = ans + newcs
     return ans
 
+def geodesic_circle(alpha, beta, return_equation=True):
+    r'''
+    From a picture (pg 79) in "Hyperbolic Geometry",
+    in an article Cannon, Floyd, Kenyon, Parry
+    '''
+    K = alpha.parent() if not is_infinity(alpha) else beta.parent()
+    x, y = PolynomialRing(K,2,names='x,y').gens()
+
+    if is_infinity(alpha):
+        alpha, beta = beta, alpha
+    if is_infinity(beta) or (alpha.real() - beta.real()).abs() < 10**-10:
+        return x - alpha.real() if return_equation is True  else (alpha.real(), Infinity)
+
+    z0 = (alpha + beta) / 2
+    z1 = (beta - alpha) * K(-1).sqrt()
+    t = -z0.imag() / z1.imag()
+    C = (z0 + z1 * t)
+    verbose('z0 = %s'%z0)
+    verbose('z1 = %s'%z1)
+    verbose('t = %s'%t)
+    verbose('C = %s'%C)
+    assert C.imag().abs() < 10**-10, C
+    try:
+        r2 = (alpha - C).norm()
+    except AttributError:
+        r2 = (alpha - C)**2
+    return  (x - C.real())**2 + y**2 - r2 if return_equation is True else (C.real(), r2)
+
+
+def is_in_open_interval(x,a,b, eps=10**-10):
+    a,b = sorted([a,b])
+    if b is Infinity:
+        return x-a > eps
+    else:
+        return x > a + eps and x < b - eps
+
+def perturb_point_on_arc(x1, x2, z, r):
+    r = z.real().parent()(r)
+    center, r2 = geodesic_circle(x1, x2,False)
+    ans = []
+    CC = z.parent()
+    rnorm = r / (z.imag()**2)
+    ans.append(CC(z.real() + rnorm, (r2 - (z.real() + rnorm - center)**2).sqrt()))
+    ans.append(CC(z.real() - rnorm, (r2 - (z.real() - rnorm - center)**2).sqrt()))
+    return ans
+
+def intersect_geodesic_arcs(x1, x2, y1, y2):
+    r'''
+    TESTS::
+
+    sage: intersect_geodesic_arcs(1,3,2,4)
+    2.5000000000000000? + 0.866025403784439?*I
+    sage: intersect_geodesic_arcs(-1, 1, 0, AA(-1).sqrt())
+    None
+    sage: intersect_geodesic_arcs(-1, 1, 0, 2*AA(-1).sqrt())
+    1*I
+    sage: intersect_geodesic_arcs(-3, 3, 2*AA(-1).sqrt(), Infinity)
+    3.000000000000000?*I
+    '''
+    verbose('Entering intersect_geodesic_arcs')
+    e1 = geodesic_circle(x1, x2)
+    e2 = geodesic_circle(y1, y2)
+    if e2.degree() == 1: # e2 is a line
+        e1, e2 = e2, e1
+        x1, x2, y1, y2 = y1, y2, x1, x2
+    if e1.degree() == 1: # e1 is a line
+        if e2.degree() == 1: # Both are lines!
+            verbose('Done intersect_geodesic_arcs')
+            return None
+        alpha = -e1.constant_coefficient() # x-coordinate of intersection
+        x, y = e2.parent().gens()
+        y_squared = -e2.subs({x: alpha}).constant_coefficient() # y-coordinate of intersection, squared
+        if y_squared < 0:
+            verbose('Done intersect_geodesic_arcs')
+            return None
+        else:
+            yy = y_squared.sqrt()
+            if is_in_open_interval(yy, imag_part(x1), imag_part(x2),0) \
+               and is_in_open_interval(alpha, real_part(y1), real_part(y2),0):
+                verbose('Done intersect_geodesic_arcs')
+                return alpha + yy * AA(-1).sqrt()
+            else:
+                verbose('Done intersect_geodesic_arcs')
+                return None
+    e = e1 - e2
+    x,y = e.parent().gens()
+    xx = -e.constant_coefficient() / e.monomial_coefficient(x)
+    x,y = e1.parent().gens()
+    y_squared = -e1.subs({x: xx}).constant_coefficient()
+    if y_squared < 0:
+        verbose('Done intersect_geodesic_arcs')
+        return None
+    if is_in_open_interval(xx, real_part(x1), real_part(x2),0) \
+       and is_in_open_interval(xx, real_part(y1), real_part(y2),0):
+        yy = y_squared.sqrt()
+        verbose('Done intersect_geodesic_arcs')
+        return xx + yy * AA(-1).sqrt()
+    else:
+        verbose('Done intersect_geodesic_arcs')
+        return None
+
+def sorted_ideal_endpoints(self):
+    r"""
+    Determine the ideal (boundary) endpoints of the complete
+    hyperbolic geodesic corresponding to ``self``.
+
+    OUTPUT:
+
+    - a list of 2 boundary points
+
+    """
+
+    start = self._start.coordinates()
+    end = self._end.coordinates()
+    [x1, x2] = [real_part(k) for k in [start, end]]
+    [y1, y2] = [imag_part(k) for k in [start, end]]
+    M = self._model
+    # infinity is the first endpoint, so the other ideal endpoint
+    # is just the real part of the second coordinate
+    if start == Infinity:
+        return [M.get_point(start), M.get_point(x2)]
+    # Same idea as above
+    if end == Infinity:
+        return [M.get_point(x1), M.get_point(end)]
+    # We could also have a vertical line with two interior points
+    if x1 == x2:
+        if y1 < y2:
+            return [M.get_point(x1), M.get_point(Infinity)]
+        else:
+            return [M.get_point(Infinity), M.get_point(x1)]
+    # Otherwise, we have a semicircular arc in the UHP
+    c = ((x1+x2)*(x2-x1) + (y1+y2)*(y2-y1)) / (2*(x2-x1))
+    r = ((c - x1)**2 + y1**2).sqrt()
+    if x1 < x2:
+        return [M.get_point(c - r), M.get_point(c + r)]
+    else:
+        return [M.get_point(c + r), M.get_point(c - r)]
+
+def moebius_transform(A, z):
+    r"""
+    Given a matrix ``A`` in `GL(2, \CC)` and a point ``z`` in the complex
+    plane return the Moebius transformation action of ``A`` on ``z``.
+
+    INPUT:
+
+    - ``A`` -- a `2 \times 2` invertible matrix over the complex numbers
+    - ``z`` -- a complex number or infinity
+
+    OUTPUT:
+
+    - a complex number or infinity
+    """
+    if A.ncols() == 2 and A.nrows() == 2 and A.det() != 0:
+        (a, b, c, d) = A.list()
+        if z == Infinity:
+            if c == 0:
+                return Infinity
+            return a/c
+        if a*d - b*c < 0:
+            w = z.conjugate()  # Reverses orientation
+        else:
+            w = z
+        if c*z + d == 0:
+            return Infinity
+        return (a*w + b) / (c*w + d)
+    raise TypeError("A must be an invertible 2x2 matrix over the"
+                    " complex numbers or a symbolic ring")
+
+def angle_sign(self, other):  # UHP
+    r"""
+    Return the angle between any two given completed geodesics if
+    they intersect.
+    """
+    (p1, p2) = [k.coordinates() for k in sorted_ideal_endpoints(self)]
+    (q1, q2) = [k.coordinates() for k in sorted_ideal_endpoints(other)]
+    if p1 != Infinity and  p2 != Infinity:  # geodesic not a straight line
+        # So we send it to the geodesic with endpoints [0, oo]
+        T = HyperbolicGeodesicUHP._crossratio_matrix(p1, (p1 + p2) / 2, p2)
+    else:
+        # geodesic is a straight line, so we send it to the geodesic
+        # with endpoints [0,oo]
+        if p1 == Infinity:
+            T = HyperbolicGeodesicUHP._crossratio_matrix(p1, p2 + 1, p2)
+        else:
+            T = HyperbolicGeodesicUHP._crossratio_matrix(p1, p1 + 1, p2)
+    # b1 and b2 are the endpoints of the image of other
+    if T.determinant().sign() < 0:
+        q1, q2 = q2, q1
+    b1, b2 = [moebius_transform(T,k) for k in [q1, q2]]
+    # If other is now a straight line...
+    if (b1 == Infinity or b2 == Infinity):
+        # then since they intersect, they are equal
+        return 0
+    assert b1 * b2 < 0
+    return b1.sign()
 
 class ArithGroup_generic(AlgebraicGroup):
     def __init__(self):
@@ -192,7 +396,7 @@ class ArithGroup_generic(AlgebraicGroup):
     def get_archimedean_embedding(self,prec):
         r"""
         Returns an embedding of the quaternion algebra
-        into the algebra of 2x2 matrices with coefficients in `\QQ_p`.
+        into the algebra of 2x2 matrices with coefficients in `RR`.
 
         INPUT:
 
@@ -202,8 +406,8 @@ class ArithGroup_generic(AlgebraicGroup):
         I,J,K = self._splitting_at_infinity(prec)
         phi = self.F_into_RR
         def iota(q):
-            R=I.parent()
-            v=q.coefficient_tuple()
+            R = I.parent()
+            v = q.coefficient_tuple()
             return R(phi(v[0]) + phi(v[1]) * I + phi(v[2]) * J + phi(v[3]) * K)
         return iota
 
@@ -516,11 +720,81 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                     newrel = rel + self.minus_one_long
                     assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
                     self._relation_words.append(newrel)
+
+            # Fundamental domain data
+            self._fundamental_domain = [ComplexField(1000)(o.Real().sage(), o.Imaginary().sage()) for o in self._G_magma.FundamentalDomain()]
+            length = len(UsideFD_magma)
+            pairing = {}
+            for i in range(1, length + 1):
+                g = magma_integral_quaternion_to_sage(self.B,self._O_magma,self._F_magma, UsideFD_magma[i][1], self.magma)
+                vs1 = UsideFD_magma[i][3].sage()
+                vs2 = UsideFD_magma[i][4].sage()
+                vs1 = tuple([vs1[0]-1, vs1[1]-1])
+                vs2 = tuple([vs2[0]-1, vs2[1]-1])
+                assert not pairing.has_key(vs1)
+                assert not pairing.has_key(vs2)
+                pairing[vs2] = (vs1, g)
+                pairing[vs1] = (vs2, g**-1)
+            self._sidepairs = pairing
+            P = CC(0, 90.0/100.0)
+            self._in_interior = {}
+            for v1, v2 in self.fundamental_domain_data():
+                center, r2 = geodesic_circle(v1, v2, False)
+                self._in_interior[(v1,v2)] = (center, r2, ((P - center).norm() < r2))
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
 
     def _repr_(self):
         return 'Arithmetic Group attached to rational quaternion algebra, disc = %s, level = %s'%(self.discriminant,self.level)
+
+    def is_in_fundom(self, z):
+        for v1, v2 in self.fundamental_domain_data():
+            center, r2, in_interior = self._in_interior[(v1, v2)]
+            if ((z - center).norm() < r2) != in_interior:
+                return False
+        return True
+
+    def is_in_fundom_interior(self, z, tol = None):
+        if tol is None:
+            tol = 10**-5
+        for v1, v2 in self.fundamental_domain_data():
+            center, r2, in_interior = self._in_interior[(v1, v2)]
+            if in_interior:
+                if r2 - (z - center).norm() < tol:# * center.abs()**2:
+                    return False
+            else:
+                if ((z - center).norm() - r2) < tol:# * center.abs()**2:
+                    return False
+        return True
+
+    def is_in_fundom_exterior(self, z, tol = None):
+        if self.is_in_fundom_interior(z, tol) or self.is_in_fundom_boundary(z, tol):
+            return False
+        else:
+            return True
+
+    def is_in_fundom_boundary(self, z, tol = None):
+        PP = self.plot_fundamental_domain()
+        if tol is None:
+            tol = 10**-5
+        for v1, v2 in self.fundamental_domain_data():
+            center, r2, in_interior = self._in_interior[(v1, v2)]
+            if (r2 - (z - center).norm()).abs() < tol:
+                if is_in_open_interval(z.real(), v1.real(), v2.real(),0):
+                    return True
+        return False
+
+    def fundamental_domain_data(self):
+        fdom = self._fundamental_domain
+        ans = []
+        for i in range(len(fdom)-1):
+            ans.append((fdom[i], fdom[i+1]))
+        ans.append((fdom[-1], fdom[0]))
+        return ans
+
+    def plot_fundamental_domain(self):
+        P = hyperbolic_polygon(self._fundamental_domain)
+        return P
 
     def __init_magma_objects(self,info_magma = None): # Rational quaternions
         wtime = walltime()
@@ -551,15 +825,58 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             else:
                 self._D_magma = info_magma._D_magma
         self._F_magma = self._B_magma.BaseRing()
-        if self._compute_presentation:
+        if self._compute_presentation: # rational quaternion
             self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
-            FDom_magma = self._G_magma.FundamentalDomain(self._D_magma.name())
+            FDom_magma = self._G_magma.FundamentalDomain() #self._D_magma.name()) # Debug
             self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
 
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
 
     def _quaternion_to_list(self,x):
         return (self.basis_invmat * matrix(QQ,4,1,x.coefficient_tuple())).list()
+
+    def mat_list(self, x1, x2, check_fundom=True): # rationalquaternion
+        r'''
+        Returns a list S of matrices such that the geodesic (x1, x2) is contained in the union
+        of the translates s*D (with s in S) of the standard fundamental domain D.
+        '''
+        verbose('Calling mat_list with x1 = %s and x2 = %s'%(x1,x2))
+        x1_orig = x1
+        x2_orig = x2
+        n = 0
+        g = 1
+        if check_fundom and not self.is_in_fundom(x1):
+            t0, g = self.find_fundom_rep(x1)
+            x1, x2 = t0, self(g**-1) * x2
+
+        # Here we can assume that x1 is in the fundamental domain
+        ans = [self(g)]
+        while not self.is_in_fundom(x2):
+            found = False
+            for i, (v1, v2) in enumerate(self.fundamental_domain_data()):
+                z = intersect_geodesic_arcs(v1, v2, x1, x2)
+                if z is not None:
+                    # We take a perturbation of z to avoid boundary problems
+                    eps = 10**-4
+                    z1, z2 = perturb_point_on_arc(x1, x2, z, eps)
+                    if not self.is_in_fundom(z1):
+                        z1, z2 = z2, z1
+                    assert self.is_in_fundom(z1), 'z1 fails'
+                    assert not self.is_in_fundom(z2), 'z2 fails'
+                    for g in self.gquats[1:]:
+                        t0 = self(g)**-1 * z2
+                        if self.is_in_fundom(t0):
+                            assert not found
+                            found = True
+                            x1 = t0
+                            x2 = self(g)**-1 * x2
+                            verbose('x1 = %s, x2 = %s'%(x1,x2))
+                            ans.append(ans[-1] * self(g))
+                            break # DEBUG
+                    assert found,'Did not find any to move...'
+                    break
+            assert found,':-('
+        return [o.quaternion_rep for o in ans]
 
     # rationalquaternion
     def compute_quadratic_embedding(self,K):
@@ -579,7 +896,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         return magma_quaternion_to_sage(self.B,Btmp(mu_magma),self.magma)
 
     # rationalquaternion
-    def embed_order(self,p,K,prec,outfile = None,return_all = False):
+    def embed_order(self,p,K,prec,outfile = None,return_all = False, extra_conductor=1):
         r'''
         sage: from darmonpoints.sarithgroup import ArithGroup
         sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
@@ -597,7 +914,8 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         QQp = Qp(p,prec)
         w_minpoly = w.minpoly().change_ring(QQp)
         Cp = QQp.extension(w_minpoly,names = 'g')
-        r0,r1 = w.coordinates_in_terms_of_powers()(K.gen())
+        coords = w.coordinates_in_terms_of_powers()
+        r0,r1 = coords(K.gen())
         v0 = K.hom([Cp(r0)+Cp(r1)*Cp.gen()])
         try:
             phi = K.hom([mu])
@@ -609,20 +927,27 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
         iotap = self.get_embedding(prec)
         fwrite('# Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
-        a,b,c,d = iotap(mu).list()
         R = PolynomialRing(Cp,names = 'X')
         X = R.gen()
-        tau1 = (Cp(a-d) + 2*v0(K.gen()))/Cp(2*c)
-        tau2 = (Cp(a-d) - 2*v0(K.gen()))/Cp(2*c)
 
         found = False
-        gamma = self(phi(K.units()[0])**2)
+        eps0 = K.units()[0]**2
+        eps = eps0
+        while coords(eps)[1] % extra_conductor != 0:
+            eps *= eps0
+        gamma = self(phi(eps))
+
+        a,b,c,d = iotap(gamma.quaternion_rep).list()
+        DD = our_sqrt(Cp((a+d)**2 - 4))
+        tau1 = (Cp(a - d) + DD) / Cp(2*c)
+        tau2 = (Cp(a - d) - DD) / Cp(2*c)
+
         fwrite('# \cO_K to R_0 given by w_K |-> %s'%phi(w),outfile)
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)
         fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
         if return_all:
-            return gamma,tau1,tau2
+            return gamma, tau1, tau2
         else:
             return gamma, tau1
 
@@ -635,6 +960,75 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             if delta1 != delta:
                 tmp.extend(self.minus_one_long)
         return tmp
+
+    def find_fundom_rep(self, z0_H, v0=None, return_alternative=False): # rationalquaternion -- Take z0 to the fundamental domain
+        r'''
+        Returns t0 and g such that g * t0 = z0_H, and t0 is in the fundamental domain
+        '''
+        B = self.B
+        CC = z0_H.parent()
+        if z0_H.imag() < 0:
+            raise ValueError("z0_H must be in the upper half plane")
+        emb = self.get_archimedean_embedding(CC.precision())
+        P = CC(90)/CC(100) * CC.gen()
+        Pconj = P.conjugate()
+        z0 = (z0_H - P) / (z0_H - Pconj)
+        ngquats = self.ngquats
+        gammas = self.gquats
+        embgammas = self.embgquats
+        findex = self.findex
+        fdargs = self.fdargs
+        wd = []
+        oldji = 0
+        oldgg = B(1)
+        gg = B(1)
+        embgg = embgammas[1]**0
+        delta = B(1)
+        n_iters = 0
+        t0 = z0_H
+        while True:
+            n_iters += 1
+            if n_iters >= 100:
+                print delta
+                print wd
+                assert 0
+            az0 = CC(z0).argument()
+            if az0 < fdargs[0]:
+                az0 += 2 * self.pi
+            if az0 > fdargs[-1]:
+                ji = findex[0]
+                embgg = embgammas[ji]
+                if act_flt_in_disc(embgg,z0,P).abs() > z0.abs():
+                    ji = findex[1]
+                    embgg = embgammas[ji]
+            else:
+                i = next((j for j,fda in enumerate(fdargs) if az0 < fda), None)
+                ji = findex[i+1]
+                embgg = embgammas[ji]
+
+            if ji is not None and ji == -oldji:
+                my_range = range(-ngquats,0) + range(1,ngquats + 1)
+                ji = next((j for j in my_range if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()),None)
+            if ji is None or gammas[ji] * oldgg == -1:
+                break
+            else:
+                embgg = embgammas[ji]
+            gg = gammas[ji]
+            delta = gg * delta
+            z0 = act_flt_in_disc(embgg,z0,P)
+            oldji, oldgg = ji, gg
+            wd.append(gg)
+        t0 = self(delta) * z0_H
+        t1 = self(wd[-1]**-1 * delta) * z0_H
+        delta = delta**-1
+        if return_alternative:
+            return (t0, delta), (t1, delta * wd[-1])
+        else:
+            if self.is_in_fundom(t0) or self.is_in_fundom_boundary(t0):
+                return t0, delta
+            else:
+                assert self.is_in_fundom(t1) or self.is_in_fundom_boundary(t1)
+                return t1, delta * wd[-1]
 
     def __magma_word_problem_jv(self,x):
         r'''
@@ -789,6 +1183,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             newg = self.B([g.a(),g.b(),g.c(),g.d()])
             if newg == I:
                 continue
+            newg.set_immutable()
             self.Ugens.append(newg)
             self._gens.append(self.element_class(self,quaternion_rep = newg, word_rep = [i+1],check = False))
             if g.matrix()**2 == I.matrix():
@@ -835,6 +1230,101 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
 
     def _quaternion_to_list(self,x):
         return x.list()
+
+    def get_archimedean_embedding(self,prec=None): # matrix
+        r"""
+        Returns an embedding of the quaternion algebra
+        into the algebra of 2x2 matrices with coefficients in `\QQ_p`.
+
+        INPUT:
+
+        - prec -- Integer. The precision of the splitting.
+
+        """
+        return lambda x:x
+
+    @cached_method
+    def fundamental_domain_data(self):
+        r'''
+        Returns a list of triples (v_i, v_{i+1}, g_i),
+        where the v_i are vertices of a fundamental domain D,
+        and the g_i are matrices, such that
+        (g_i * D) cap D = (v_i, v_{i+1}).
+        '''
+        ans = []
+        rho = (-1+AA(-3).sqrt())/2
+        S = self(matrix(ZZ,2,2,[0,-1,1,0]))
+        T = self(matrix(ZZ,2,2,[1,1,0,1]))
+        ans.append((Infinity, rho, T**-1))
+        ans.append((rho, rho+1, S))
+        ans.append((rho+1, Infinity, T))
+        return ans
+
+    def is_in_fundom(self, t,v0=None):
+        if v0 is None:
+            v0 = lambda x:x
+        if t is Infinity or t == Infinity:
+            return True
+        else:
+            return 2 * t.real_part().abs() <= 1 and t.norm() >= 1
+
+
+    def find_fundom_rep(self, tau,v0=None): # rational matrix
+        r'''
+        Returns t0 and g such that g*t0 = tau, and t0 is in the fundamental domain
+        '''
+        if v0 is None:
+            v0 = lambda x:x
+        g = Matrix(ZZ,2,2,[1,0,0,1])
+        if hasattr(tau, 'norm'):
+            nrm = lambda x:x.norm()
+        else:
+            nrm = lambda x:x**2
+        while not self.is_in_fundom(tau, v0):
+            t = tau.real_part().floor()
+            tau -= t
+            if tau.real_part() > .5:
+                tau -= 1
+                g = g * Matrix(ZZ,2,2,[1,t+1, 0, 1])
+            else:
+                g = g * Matrix(ZZ,2,2,[1,t, 0, 1])
+            if nrm(tau) < 1:
+                tau = -1/tau
+                g = g * Matrix(ZZ,2,2,[0,-1,1,0])
+        return tau,g
+
+    def mat_list(self, x1, x2, v0=None, check_fundom=True): # rationalmatrix
+        r'''
+        Returns a list S of matrices such that the geodesic (x1, g * x1) is contained in the union
+        of the translates s*D (with s in S) of the standard fundamental domain D.
+        '''
+        if v0 is None:
+            v0 = lambda x:x
+
+        if x2 is None:
+            x2 = self(gamma) * x1
+
+        # We first deal with the case of x1 or x2 being Infinity
+        if x1 == Infinity or x2 == Infinity:
+            raise NotImplementedError
+
+        if check_fundom and not self.is_in_fundom(x1, v0):
+            t0, g = self.find_fundom_rep(x1, v0)
+            return [self(g) * r for r in self.mat_list(t0, self(g**-1) * x2, v0,check_fundom=False) ]
+
+        # Here we can assume that x1 is in the fundamental domain
+        if self.is_in_fundom(x2, v0): # Base case
+            return [self(1)]
+        for v1, v2, g in self.fundamental_domain_data():
+            # print 'v1, v2, x1, x2 =', v1, v2, x1, x2
+            z = intersect_geodesic_arcs(v1, v2, x1, x2)
+            # print 'z = %s'%z
+            if z is not None:
+                # print 'Found intersection at z = %s'%z
+                x11 = self(g**-1) * z
+                x22 = self(g**-1) * x2
+                return [self(1)] + [self(g) * self(o) for o in self.mat_list(x11, x22, v0,check_fundom=False)]
+        raise RuntimeError("Should not get here. (%s, %s)"%(x1, x2))
 
     def generate_wp_candidates(self,p,ideal_p,**kwargs):
         epsinv = matrix(QQ,2,2,[0,-1,p,0])**-1
@@ -1069,7 +1559,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         basis = [M([1,0,0,1]), M([1,0,0,-1]), M([0,-1,-1,0]), M([0,-1,1,0])]
         return sum((a * b for a, b in zip(list(self.B(x)), basis)), M(0))
 
-    def _init_jv_data(self):
+    def _init_jv_data(self): # nf quaternion
         self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1))),self.magma) for n in xrange(len(self._U_magma.gens()))]
 
         Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
@@ -1354,7 +1844,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
 
         return Matrix(self._HH,2,2,[A,B,C,D])
 
-    def get_word_rep_jv(self,delta):
+    def get_word_rep_jv(self,delta): # nf quaternion
         if not self._is_in_order(delta):
             raise RuntimeError('delta (= %s) is not in order!'%delta)
         tmp = _get_word_jv(self, delta)

@@ -27,6 +27,8 @@ from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 import os,datetime
 from homology_abstract import ArithHomology, HomologyGroup
+from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor as Gamma0
+from sage.modular.cusps import Cusp
 
 class BTEdge(SageObject):
     r'''
@@ -323,7 +325,7 @@ class BigArithGroup_class(AlgebraicGroup):
         reps = [self.Gn.B(1)] + [None for i in xrange(self.p)]
         emb = self.get_embedding(20)
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in xrange(self.p)]
-        if self._matrix_group:
+        if self._matrix_group: # DEBUG
             verbose('Using hard-coded matrices for BT (Bianchi)')
             if self.F == QQ:
                 wp = self.wp()
@@ -462,12 +464,15 @@ class BigArithGroup_class(AlgebraicGroup):
         - prec -- Integer. The precision of the splitting.
 
         """
+        if prec == -1:
+            prec = self._prec
         if self.F == QQ and self.discriminant == 1:
             R =  Qp(self.p,prec)
             self._F_to_local = QQ.hom([R(1)])
             def iota(q):
                 return q.change_ring(R)
-            self._prec = prec
+            if prec > self._prec: # DEBUG
+                self._prec = prec
         else:
             I,J,K = self.local_splitting(prec)
             mats = [1,I,J,K]
@@ -684,48 +689,68 @@ class BigArithGroup_class(AlgebraicGroup):
 
     @cached_method
     def cusp_reduction_table(self):
+        r'''
+        Returns a dictionary and a set (of cusps).
+        The dictionary keys are the normalized elements of P1(Z/N), say (c:d),
+        and the value is a triple (c',d',T), where (c',d') is one of the cusp
+        representatives (that is, is in the returned set), and T is an element
+        in the stabilizer of Infinity that satisfies
+        (c': d') * T = (c: d) (as elements of P1(Z/N)).
+        '''
+        from sage.modular.modsym.p1list import lift_to_sl2z
         P = self.get_P1List()
-        N = P.N()
         remaining_points = set(list(P))
         reduction_table = dict([])
         cusp_set = set([])
-        while True:
-            try:
-                c = remaining_points.pop()
-            except KeyError: # No remaining points
-                break
-            reduction_table[c]=(c[0],c[1],matrix(ZZ,2,2,1))
-            cusp_set.add(c)
-            for hh in Zmod(N):
+        while len(remaining_points) > 0:
+            c = remaining_points.pop()
+            new_cusp = Matrix(ZZ,2,2,lift_to_sl2z(c[0], c[1], P.N()))
+            new_cusp.set_immutable()
+            cusp_set.add(new_cusp)
+            reduction_table[c]=(new_cusp,matrix(ZZ,2,2,1))
+            for hh in Zmod(P.N()):
                 h = hh.lift()
                 for u in [-1, 1]:
-                    new_c = P.normalize(u*c[0],u**-1*c[1] + h*c[0])
+                    new_c = P.normalize(u * c[0], u**-1 * c[1] + h * c[0])
                     if new_c not in reduction_table:
                         remaining_points.remove(new_c)
-                        reduction_table[new_c]=(c[0],c[1],matrix(ZZ,2,2,[u,h,0,u**-1]))
+                        T = matrix(ZZ,2,2,[u,h,0,u**-1])
+                        reduction_table[new_c]=(new_cusp, T)
+                        assert P.normalize(*(vector(c) * T)) == new_c
         return reduction_table, cusp_set
 
-    def find_matrix_from_cusp(self, a,c):
+    def find_matrix_from_cusp(self, cusp):
+        r'''
+        Returns a matrix gamma and a cusp representative modulo Gamma0(N) (c2:d2),
+        such that gamma * (c2:d2) = cusp.
+        '''
         from sage.modular.modsym.p1list import lift_to_sl2z
+        a, c = cusp.numerator(), cusp.denominator()
         reduction_table, _ = self.cusp_reduction_table()
         P = self.get_P1List()
-        N = P.N()
+
+        # Find a matrix g = [a,b,c,d] in SL2(Z) such that g * a/c = oo
+        # Define (c1:d1) to be the rep in P1(Z/N) such that (c1:d1) == (c:d).
         if c == 0:
+            assert a == 1
             g = Matrix(ZZ,2,2,[1,0,0,1])
             c1, d1 = P.normalize(0, 1)
         else:
-            g, d, b = ZZ(a).xgcd(-c)
-            assert g == 1
-            g = Matrix(QQ,2,2,[a,b,c,d])
+            g0, d, b = ZZ(a).xgcd(-c)
+            assert g0 == 1
+            g = Matrix(QQ,2,2,[d,-b,-c,a]) # the inverse
             c1, d1 = P.normalize(c, d)
         assert g.determinant() == 1
 
-        c2, d2, T = reduction_table[(c1,d1)]
-        A = Matrix(ZZ,2,2,lift_to_sl2z(c2, d2, N))
-        gamma = A.parent()(A * T * g**-1)
-        assert gamma.determinant() == 1
-        assert gamma[1,0] % N == 0
-        return gamma**-1
+        A, T = reduction_table[(c1,d1)]
+        gamma_inv = A.parent()(A * T * g)
+        gamma = gamma_inv.adjugate()
+
+        # This block test correctness
+        tst = Cusp(Gamma0(P.N())(gamma_inv).acton(Cusp(a,c)))
+        tst = (tst.numerator(), tst.denominator())
+        assert tst == tuple(A.column(0))
+        return gamma, A
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0, nscartan = None):
     if base == QQ:

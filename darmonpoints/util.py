@@ -9,7 +9,7 @@ from sage.misc.sage_eval import sage_eval
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.misc.misc import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
-from sage.arith.all import algdep
+from sage.arith.all import divisors, algdep, kronecker_symbol, next_prime
 from sage.interfaces.gp import gp
 from sage.rings.infinity import Infinity
 from sage.sets.primes import Primes
@@ -23,6 +23,31 @@ from sage.functions.generalized import sgn
 from sage.misc.functional import cyclotomic_polynomial
 from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
 import sys, ConfigParser
+
+
+def is_infinity(x):
+    try:
+        return x.is_infinity()
+    except AttributeError:
+        pass
+    if x is Infinity:
+        return True
+    else:
+        return False
+
+def imag_part(a):
+    if is_infinity(a):
+        return a
+    try:
+        return a.imag()
+    except AttributeError: # Infinity
+        return a
+
+def real_part(a):
+    try:
+        return a.real()
+    except AttributeError: # Infinity
+        return a
 
 def JtoP(H,MR,p = None):
     CC = MR.base_ring()
@@ -178,7 +203,7 @@ def find_center(p,level,t1,t2):
         same_ball = False
         new_dir = None
         for g in new_dirs:
-            a,b,c,d = g.adjoint().list()
+            a,b,c,d = g.adjugate().list()
             # Check whether t1 and t2 are in the open given by g
             if all([(a * t + b).valuation() >= (c * t + d).valuation() for t in [t1,t2]]):
                 new_dir = g
@@ -222,7 +247,13 @@ def set_immutable(x):
 
 def act_flt(g,x):
     a,b,c,d = g.list()
-    return (a*x + b)/(c*x + d)
+    K = x.parent()
+    if x == Infinity:
+        return a / c
+    if K(c) * x + K(d) == 0:
+        return Infinity
+    else:
+        return (K(a)*x + K(b))/(K(c)*x + K(d))
 
 def tate_parameter(E,R):
     p = R.prime()
@@ -422,7 +453,7 @@ def our_algdep(z,degree,prec = None):
         if field_deg == 1:
             M[k,0] = ZZ(r.lift()) % pn
         else:
-            for j,o in enumerate(r.list()):
+            for j,o in enumerate(r.expansion()):
                 for i,u in enumerate(o):
                     M[k,-1-i] += (p**j*u) % pn
     for i in range(field_deg):
@@ -795,7 +826,6 @@ def cantor_diagonal(iter1,iter2):
             yield a,b
         v1.append(iter1.next())
         v2.insert(0,iter2.next())
-
 
 def act_flt_in_disc(g,x,P):
     Pconj = P.conjugate()
@@ -1514,7 +1544,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
         Phi = QQ(1)
         for P,_ in D.factor():
             Phi *= QQ(P.norm().abs() - 1)
-        Psi = QQ(1) # DEBUG: was QQ(M.norm()).abs()
+        Psi = QQ(M.norm()).abs()
         for P,e in M.factor():
             np = QQ(P.norm())
             Psi *= np**(ZZ(e)-1) * (np + 1)
@@ -1523,7 +1553,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
         Phi = ZZ(D)
         for np,_ in D.factor():
             Phi *= QQ(1)-QQ(1)/np
-        Psi = ZZ(1) # DEBUG: was ZZ(M).abs()
+        Psi = ZZ(M).abs()
         for np,e in M.factor():
             Psi *= np**(ZZ(e)-1) * (np + 1)
     RR = RealField(prec)
