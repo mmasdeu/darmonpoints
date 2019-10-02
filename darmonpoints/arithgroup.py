@@ -98,11 +98,12 @@ def geodesic_circle(alpha, beta, return_equation=True):
     in an article Cannon, Floyd, Kenyon, Parry
     '''
     K = alpha.parent() if not is_infinity(alpha) else beta.parent()
-    x, y = PolynomialRing(K,2,names='x,y').gens()
 
     if is_infinity(alpha):
         alpha, beta = beta, alpha
     if is_infinity(beta) or (alpha.real() - beta.real()).abs() < 10**-10:
+        x, y = PolynomialRing(K,2,names='x,y').gens()
+        verbose('x.parent() = %s'%x.parent())
         return x - alpha.real() if return_equation is True  else (alpha.real(), Infinity)
 
     z0 = (alpha + beta) / 2
@@ -118,6 +119,8 @@ def geodesic_circle(alpha, beta, return_equation=True):
         r2 = (alpha - C).norm()
     except AttributError:
         r2 = (alpha - C)**2
+    x, y = PolynomialRing(C.parent(),2,names='x,y').gens()
+    verbose('x.parent() = %s'%x.parent())
     return  (x - C.real())**2 + y**2 - r2 if return_equation is True else (C.real(), r2)
 
 
@@ -143,13 +146,13 @@ def intersect_geodesic_arcs(x1, x2, y1, y2):
     TESTS::
 
     sage: intersect_geodesic_arcs(1,3,2,4)
-    2.5000000000000000? + 0.866025403784439?*I
-    sage: intersect_geodesic_arcs(-1, 1, 0, AA(-1).sqrt())
+    1/2*I*sqrt(3) + 5/2
+    sage: print intersect_geodesic_arcs(-1, 1, 0, AA(-1).sqrt())
     None
     sage: intersect_geodesic_arcs(-1, 1, 0, 2*AA(-1).sqrt())
-    1*I
+    I
     sage: intersect_geodesic_arcs(-3, 3, 2*AA(-1).sqrt(), Infinity)
-    3.000000000000000?*I
+    3*I
     '''
     verbose('Entering intersect_geodesic_arcs')
     e1 = geodesic_circle(x1, x2)
