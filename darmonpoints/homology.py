@@ -9,11 +9,11 @@ import itertools
 from collections import defaultdict
 from sage.matrix.all import matrix,Matrix
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-#from distributions import Distributions, Symk
 from sage.structure.parent import Parent
 from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
 from sage.rings.integer_ring import ZZ
+from sage.rings.power_series_ring import PowerSeriesRing
 from sage.sets.set import Set
 from sage.arith.all import GCD
 from util import *
@@ -342,7 +342,7 @@ class DivisorsElement(ModuleElement):
             z = PolynomialRing(self.parent()._field, names='z').gen()
             return prod(((1 - z/P)**n for P, n in self), z.parent()(1))
 
-class Divisors(Parent,CachedRepresentation):
+class Divisors(Parent, CachedRepresentation):
     Element = DivisorsElement
 
     def __init__(self,field):
@@ -674,3 +674,143 @@ class OneChains(Parent):
             return S.group() is self.group() and S.coefficient_module() is self.coefficient_module()
         else:
             return False
+
+class MeromorphicFunctionsElement(ModuleElement):
+    def __init__(self, parent, data):
+        additive = parent.is_additive()
+        K = parent.base_ring()
+        prec = parent._prec
+        p = K.prime()
+        Ps = parent._Ps
+        phi = parent._Ps_local_variable
+        self._value = Ps(0) if additive else Ps(1)
+        if data == 0:
+            pass
+        elif isinstance(data.parent(), Divisors):
+            for Q, n in data:
+                if Q.valuation() >= 0:
+                    raise ValueError('Divisor is not defined over the right open')
+                if additive:
+                    self._value += n * phi(Q).log()
+                else:
+                    self._value *= phi(Q)**n
+        else:
+            self._value = Ps(data)
+        assert self._value.valuation() >= 0
+        assert min([o.valuation() for o in self._value.coefficients()]) >= 0
+        self._value.add_bigoh(prec)
+        ModuleElement.__init__(self,parent)
+
+    def __call__(self, D):
+        K = self.parent().base_ring()
+        p = K.prime()
+        poly = self._value.polynomial()
+        assert isinstance(D.parent(), Divisors) and D.degree() == 0
+        if self.parent().is_additive():
+            ans = 0
+            for P, n in D:
+                assert P.valuation() >= 0
+                ans += n * poly(P)
+        else:
+            ans = 1
+            for P, n in D:
+                assert P.valuation() >= 0
+                ans *= (poly(P))**n
+        return ans
+
+    def _cmp_(self, right):
+        return cmp(self._value, right._value)
+
+    def valuation(self, p=None):
+        return min([Infinity] + [o.valuation(p) for o in (self._value-1).coefficients()])
+
+    def _add_(self, right):
+        if self.parent().is_additive():
+            ans = self._value + right._value
+        else:
+            ans = self._value * right._value
+        return self.__class__(self.parent(), ans)
+
+    def _sub_(self, right):
+        if self.parent().is_additive():
+            ans = self._value - right._value
+        else:
+            ans = self._value / right._value
+        return self.__class__(self.parent(), ans)
+
+    def _neg_(self):
+        if self.parent().is_additive():
+            ans = -self._value
+        else:
+            ans = self._value**-1
+        return self.__class__(self.parent(), ans)
+
+    def _repr_(self):
+        return repr(self._value)
+
+    def scale_by(self, k):
+        if self.parent().is_additive():
+            ans = k * self._value
+        else:
+            ans = self._value**k
+        return self.__class__(self.parent(), ans)
+
+    def left_act_by_matrix(self, g):
+        Ps = self._value.parent()
+        K = Ps.base_ring()
+        t = Ps.gen()
+        p = Ps.base_ring().prime()
+        prec = self.parent()._prec
+        # Below we code the action which is compatible with the usual action
+        # P |-> (aP+b)/(cP+D)
+        poly = self._value.polynomial()
+        zz_ps_vec = self.parent().get_action_data(g)
+        ans = Ps(sum(K(a) * zz_ps_vec[e].change_ring(K) for a, e in zip(poly.coefficients(), poly.exponents())))
+        ans.add_bigoh(prec)
+        if not self.parent().is_additive():
+            ans = (1/ans(0)) * ans
+        return self.__class__(self.parent(),ans)
+
+class MeromorphicFunctions(Parent, CachedRepresentation):
+    Element = MeromorphicFunctionsElement
+    def __init__(self, K, additive=False):
+        Parent.__init__(self)
+        self._additive = additive
+        self._base_ring = K
+        self._prec = K.precision_cap()
+        self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec=self._prec)
+        t = self._Ps.gen()
+        p = K.prime()
+        self._Ps_local_variable = lambda Q : 1 - t / Q
+        self._unset_coercions_used()
+        self.register_action(Scaling(ZZ,self))
+        self.register_action(MatrixAction(MatrixSpace(K,2,2),self))
+
+    @cached_method
+    def get_action_data(self, g):
+        a, b, c, d = g.list()
+        K = g.parent().base_ring()
+        R = PolynomialRing(K,'z')
+        Ps = PowerSeriesRing(K,'t', default_prec=self._prec)
+        z = R.gen()
+        zz = (d * z - b) / (-c * z + a)
+        zz_ps = Ps(zz).add_bigoh(self._prec)
+        ans = [Ps(1), zz_ps]
+        for _ in range(self._prec - 1):
+            ans.append((zz_ps * ans[-1]).add_bigoh(self._prec))
+        return ans
+
+    def is_additive(self):
+        return self._additive
+
+    def base_ring(self):
+        return self._base_ring
+
+    def power_series_ring(self):
+        return self._Ps
+
+    def _element_constructor_(self, data):
+        return self.element_class(self, data)
+
+    def _repr_(self):
+        return "Meromorphic %s Functions over %s"%('Additive' if self._additive else 'Multiplicative', self._base_ring)
