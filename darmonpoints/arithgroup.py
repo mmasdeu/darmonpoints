@@ -148,7 +148,7 @@ def intersect_geodesic_arcs(x1, x2, y1, y2):
     sage: from darmonpoints.arithgroup import intersect_geodesic_arcs
     sage: intersect_geodesic_arcs(1,3,2,4)
     1/2*I*sqrt(3) + 5/2
-    sage: print intersect_geodesic_arcs(-1, 1, 0, AA(-1).sqrt())
+    sage: print(intersect_geodesic_arcs(-1, 1, 0, AA(-1).sqrt()))
     None
     sage: intersect_geodesic_arcs(-1, 1, 0, 2*AA(-1).sqrt())
     I
@@ -993,8 +993,8 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         while True:
             n_iters += 1
             if n_iters >= 100:
-                print delta
-                print wd
+                print(delta)
+                print(wd)
                 assert 0
             az0 = CC(z0).argument()
             if az0 < fdargs[0]:
@@ -1320,11 +1320,8 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         if self.is_in_fundom(x2, v0): # Base case
             return [self(1)]
         for v1, v2, g in self.fundamental_domain_data():
-            # print 'v1, v2, x1, x2 =', v1, v2, x1, x2
             z = intersect_geodesic_arcs(v1, v2, x1, x2)
-            # print 'z = %s'%z
             if z is not None:
-                # print 'Found intersection at z = %s'%z
                 x11 = self(g**-1) * z
                 x22 = self(g**-1) * x2
                 return [self(1)] + [self(g) * self(o) for o in self.mat_list(x11, x22, v0,check_fundom=False)]
@@ -1443,7 +1440,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             try:
                 ans = list(self._Gamma0_farey.word_problem(SL2Z((-delta).list()),output = 'standard'))
             except (RuntimeError, AssertionError):
-                print 'Delta = %s'%delta
+                print('Delta = %s'%delta)
                 assert 0
         tmp = multiply_out(ans, self.Ugens, self.B(1))
         delta = SL2Z(delta.list())
@@ -1912,9 +1909,9 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         try:
             _,iota = self.magma.Embed(OK_magma,O_magma,nvals = 2)
         except RuntimeError:
-            print 'An error ocurred!'
-            print 'OK_magma = ',OK_magma
-            print 'O_magma =',O_magma
+            print('An error ocurred!')
+            print('OK_magma = %s'%OK_magma)
+            print('O_magma ='%O_magma)
             raise RuntimeError('Error while computing quadratic embedding')
         verbose('Calling magma Embed function done!')
         wm = K_magma(OK_magma.Basis()[2])
