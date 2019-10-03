@@ -145,6 +145,7 @@ def intersect_geodesic_arcs(x1, x2, y1, y2):
     r'''
     TESTS::
 
+    sage: from darmonpoints.arithgroup import intersect_geodesic_arcs
     sage: intersect_geodesic_arcs(1,3,2,4)
     1/2*I*sqrt(3) + 5/2
     sage: print intersect_geodesic_arcs(-1, 1, 0, AA(-1).sqrt())
