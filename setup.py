@@ -2,7 +2,7 @@
 import os
 import sys
 import re
-import urllib2
+
 from setuptools import setup
 from codecs import open # To open the README file with proper encoding
 from setuptools.command.test import test as TestCommand # for tests
