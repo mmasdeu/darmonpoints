@@ -57,8 +57,10 @@ class CohomologyElement(ModuleElement):
         V = parent.coefficient_module()
         if isinstance(data,list):
             self._val = [V(o) for o in data]
+        elif hasattr(data, 'evaluate'):
+            self._val = [V(data.evaluate(b)) for b in G.gens()]
         else:
-            self._val = [V(data.evaluate(b)) for b in parent.group().gens()]
+            self._val = [V(data(b)) for b in G.gens()]
         ModuleElement.__init__(self,parent)
 
     def values(self):
@@ -127,14 +129,21 @@ class CohomologyElement(ModuleElement):
         else:
             return self._evaluate_word_tietze(wd)
 
-    def check_cocycle_property(self, g1=None,g2=None):
+    def check_cocycle_property(self, g1=None,g2=None, function = None):
         H = self.parent()
         G = H.group()
-        if g1 is None:
-            return [self._evaluate_word_tietze(r) for r in G.get_relation_words()]
+        if function is None:
+            function = lambda x:x == 0
+        if function == -1:
+            if g1 is None:
+                return [(self._evaluate_word_tietze(r)) for r in G.get_relation_words()]
+            else:
+                return self.evaluate(g1*g2) - self.evaluate(g1) - g1 * self.evaluate(g2)
         else:
-            return self.evaluate(g1*g2) - self.evaluate(g1) - g1 * self.evaluate(g2)
-        return
+            if g1 is None:
+                return all([function(self._evaluate_word_tietze(r)) for r in G.get_relation_words()])
+            else:
+                return function(self.evaluate(g1*g2) - self.evaluate(g1) - g1 * self.evaluate(g2))
 
     def _evaluate_word_tietze(self,word):
         G = self.parent().group()
@@ -207,13 +216,18 @@ class CohomologyElement(ModuleElement):
         return ans
 
 class CohomologyGroup(Parent):
-    def __init__(self, G, V, trivial_action = False):
+    def __init__(self, G, V, trivial_action = False, action_map = None):
         self._group = G
         self._coeffmodule = V
         self._trivial_action = trivial_action
         onemat = G(1)
         self._gen_pows = []
         self._gen_pows_neg = []
+
+        if action_map is not None:
+            action = ArithAction(G, V, action_map)
+            V._unset_coercions_used()
+            V.register_action(action)
 
         if hasattr(V, 'dimension'):
             dim = V.dimension()
@@ -241,6 +255,8 @@ class CohomologyGroup(Parent):
             self._gen_pows.append([one, A])
             Ainv = self._acting_matrix(ginv, dim)
             self._gen_pows_neg.append([one, Ainv])
+
+
         Parent.__init__(self)
         return
 

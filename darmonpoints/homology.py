@@ -768,7 +768,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         ans = Ps(sum(K(a) * zz_ps_vec[e].change_ring(K) for a, e in zip(poly.coefficients(), poly.exponents())))
         ans.add_bigoh(prec)
         if not self.parent().is_additive():
-            ans = (1/ans(0)) * ans
+            ans = (ans[0]**-1) * ans
         return self.__class__(self.parent(),ans)
 
 class MeromorphicFunctions(Parent, CachedRepresentation):
