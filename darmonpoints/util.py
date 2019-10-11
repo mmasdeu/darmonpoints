@@ -819,13 +819,13 @@ def enumerate_words(v, n = None,max_length = -1):
                 raise StopIteration
 
 def cantor_diagonal(iter1,iter2):
-    v1 = [iter1.next()]
-    v2 = [iter2.next()]
+    v1 = [next(iter1)]
+    v2 = [next(iter2)]
     while True:
         for a,b in zip(v1,v2):
             yield a,b
-        v1.append(iter1.next())
-        v2.insert(0,iter2.next())
+        v1.append(next(iter1))
+        v2.insert(0,next(iter2))
 
 def act_flt_in_disc(g,x,P):
     Pconj = P.conjugate()

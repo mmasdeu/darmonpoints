@@ -204,12 +204,15 @@ class ArithAction(Action):
     r'''
     Encodes de action of an arithmetic group on the distributions module
     '''
-    def __init__(self,G,M):
+    def __init__(self,G,M, act=None):
+        if act is None:
+            self._act = lambda g, v: v.parent().Sigma0()(g) * v
+        else:
+            self._act = act
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
     def _act_(self,g,v):
-        V = v.parent()
-        return V.Sigma0()(g) * v
+        return self._act(g, v)
 
 class BianchiArithAction(Action):
     r'''
@@ -225,6 +228,50 @@ class BianchiArithAction(Action):
         qrep_bar = qrep.apply_map(lambda x:x.trace() - x)
         first, second = g.parent().embed_matrix(qrep, prec), g.parent().embed_matrix(qrep_bar, prec)
         return V.Sigma0Squared()(first,second) * v
+
+class CohArbitrary(CohomologyGroup):
+    Element = CohomologyElement
+    def __init__(self, G, V, action_map=None):
+        self._V = V
+        self._G = G
+        if action_map is not None:
+            action = ArithAction(G, V, action_map)
+            V._unset_coercions_used()
+            V.register_action(action)
+        CohomologyGroup.__init__(self, self._G, self._V, False)
+
+    def group(self):
+        return self._G
+
+    def coefficient_module(self):
+        return self._V
+
+    def get_hecke_data(self, ell, hecke_reps = None, use_magma= True, g0=None):
+        group = self.group()
+        if hecke_reps is None:
+            hecke_reps = group.get_hecke_reps(ell, use_magma = use_magma, g0 = g0)
+        hecke_data = {}
+        for gamma in group.gens():
+            for g in hecke_reps:
+                set_immutable(g)
+                ti = group.get_hecke_ti(g,gamma,ell,use_magma, reps = hecke_reps)
+                set_immutable(ti)
+                hecke_data[(g, gamma.quaternion_rep)] = ti
+        return hecke_data
+
+    def apply_hecke_operator(self,c,l, hecke_reps = None,scale = 1,use_magma = True,g0 = None, as_Up = False, hecke_data = None):
+        r"""
+        Apply the l-th Hecke operator operator to ``c``.
+        """
+        group = self.group()
+        if hecke_reps is None:
+            hecke_reps = group.get_hecke_reps(l,use_magma = use_magma, g0 = g0)
+        if as_Up:
+            l = None
+        if hecke_data is None:
+            hecke_data = self.get_hecke_data(l, hecke_reps, use_magma=use_magma, g0=g0)
+        vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]).left_act_by_matrix(group(g).matrix()) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
+        return scale * self(vals)
 
 class ArithCohElement(CohomologyElement):
     def __init__(self, parent, data):

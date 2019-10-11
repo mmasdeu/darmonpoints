@@ -406,13 +406,10 @@ def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
             newgamma = G.Gpn(G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False))
             if rev: # DEBUG
                 newgamma = newgamma.conjugate_by(G.wp())
-                print 'reversing'
             if G.use_shapiro():
                 mu_e = cocycle.evaluate_and_identity(newgamma)
             else:
                 mu_e = cocycle.evaluate(newgamma)
-            if newgamma.quaternion_rep != 1:
-                print 'newgamma = ', newgamma
         except AttributeError:
             verbose('...')
             continue
