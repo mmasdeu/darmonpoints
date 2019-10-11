@@ -207,12 +207,12 @@ class DivisorsElement(ModuleElement):
 
     def apply_map(self, f):
         ans = []
-        for hP, n in self._data.iteritems():
+        for hP, n in self._data.items():
             ans.append((n,f(self._ptdict[hP])))
         return self.parent()(ans)
 
     def __iter__(self):
-        return iter(((self._ptdict[hP],n) for hP,n in self._data.iteritems()))
+        return iter(((self._ptdict[hP],n) for hP,n in self._data.items()))
 
     def _repr_(self):
         return 'Divisor of degree %s'%self.degree()
@@ -222,7 +222,7 @@ class DivisorsElement(ModuleElement):
             return '0'
         is_first = True
         mystr = ''
-        for hP,n in self._data.iteritems():
+        for hP,n in self._data.items():
             if not is_first:
                 mystr += ' + '
             else:
@@ -234,10 +234,10 @@ class DivisorsElement(ModuleElement):
         return self._data.__cmp__(right._data)
 
     def is_zero(self):
-        return all((n == 0 for n in self._data.itervalues()))
+        return all((n == 0 for n in self._data.values()))
 
     def gcd(self):
-        return GCD([n for n in self._data.itervalues()])
+        return GCD([n for n in self._data.values()])
 
     def _add_(self,right):
         newdict = defaultdict(ZZ)
@@ -245,7 +245,7 @@ class DivisorsElement(ModuleElement):
         new_ptdata = {}
         new_ptdata.update(self._ptdict)
         new_ptdata.update(right._ptdict)
-        for hP,n in right._data.iteritems():
+        for hP,n in right._data.items():
             newdict[hP] += n
             if newdict[hP] == 0:
                 del newdict[hP]
@@ -266,7 +266,7 @@ class DivisorsElement(ModuleElement):
         new_ptdata = {}
         new_ptdata.update(self._ptdict)
         new_ptdata.update(right._ptdict)
-        for hP,n in right._data.iteritems():
+        for hP,n in right._data.items():
             newdict[hP] -= n
             if newdict[hP] == 0:
                 del newdict[hP]
@@ -279,7 +279,7 @@ class DivisorsElement(ModuleElement):
         newdict = defaultdict(ZZ)
         new_ptdata = {}
         new_ptdata.update(self._ptdict)
-        for P,n in self._data.iteritems():
+        for P,n in self._data.items():
             newdict[P] = -n
         return self.__class__(self.parent(),newdict,ptdata = new_ptdata)
 
@@ -290,7 +290,7 @@ class DivisorsElement(ModuleElement):
         newdict = defaultdict(ZZ)
         new_ptdata = {}
         new_ptdata.update(self._ptdict)
-        for P,n in self._data.iteritems():
+        for P,n in self._data.items():
             newdict[P] = a * n
         return self.__class__(self.parent(),newdict,ptdata = new_ptdata)
 
@@ -320,11 +320,11 @@ class DivisorsElement(ModuleElement):
 
     @cached_method
     def degree(self):
-        return sum(self._data.itervalues())
+        return sum(self._data.values())
 
     @cached_method
     def size(self):
-        return sum(ZZ(d).abs() for d in self._data.itervalues())
+        return sum(ZZ(d).abs() for d in self._data.values())
 
     def support(self):
         return [self._ptdict[P] for P in Set([d for d in self._data])]
@@ -417,7 +417,7 @@ class OneChains_element(ModuleElement):
         ModuleElement.__init__(self,parent)
 
     def get_data(self):
-        return self._data.iteritems()
+        return iter(self._data.items())
 
     def size_of_support(self):
         return len(self._data)
@@ -427,7 +427,7 @@ class OneChains_element(ModuleElement):
             return '0'
         is_first = True
         mystr = ''
-        for g,v in self._data.iteritems():
+        for g,v in self._data.items():
             if not is_first:
                 mystr += ' + '
             else:
@@ -436,7 +436,7 @@ class OneChains_element(ModuleElement):
         return mystr
 
     def short_rep(self):
-        return [(g.size(),v.degree(),v.size()) for g,v in self._data.iteritems()]
+        return [(g.size(),v.degree(),v.size()) for g,v in self._data.items()]
 
     def is_degree_zero_valued(self):
         for v in self._data.values():
@@ -445,7 +445,7 @@ class OneChains_element(ModuleElement):
         return True
 
     def radius(self):
-        return max([0] + [v.radius() for g,v in self._data.iteritems()])
+        return max([0] + [v.radius() for g,v in self._data.items()])
 
     def zero_degree_equivalent(self, prec, allow_multiple = False):
         r'''
@@ -521,7 +521,7 @@ class OneChains_element(ModuleElement):
         V = self.parent().coefficient_module()
         G = self.parent().group()
         newdict = defaultdict(V)
-        for oldg,v in self._data.iteritems():
+        for oldg,v in self._data.items():
             newv = v
             for i,a in tietze_to_syllables(oldg.word_rep):
                 g = G.gen(i)
@@ -541,7 +541,7 @@ class OneChains_element(ModuleElement):
 
     def _add_(self,right):
         newdict = dict()
-        for g,v in chain(self._data.iteritems(),right._data.iteritems()):
+        for g,v in chain(self._data.items(),right._data.items()):
             try:
                 newdict[g] += v
                 if newdict[g].is_zero():
@@ -552,7 +552,7 @@ class OneChains_element(ModuleElement):
 
     def _sub_(self,right):
         newdict = dict(self._data)
-        for g,v in right._data.iteritems():
+        for g,v in right._data.items():
             try:
                 newdict[g] -= v
                 if newdict[g].is_zero():
@@ -569,7 +569,7 @@ class OneChains_element(ModuleElement):
             gk1inv = gk1**-1
             set_immutable(gk1inv)
             gk1inv0 = G.embed(gk1inv, prec)
-            for g,v in self._data.iteritems():
+            for g,v in self._data.items():
                 ti = G.get_hecke_ti(gk1,g,l,True)
                 try:
                     newv = v.left_act_by_matrix(gk1inv0)
@@ -586,7 +586,7 @@ class OneChains_element(ModuleElement):
 
     def is_cycle(self,return_residue = False):
         res = self.parent().coefficient_module()(0)
-        for g,v in self._data.iteritems():
+        for g,v in self._data.items():
             res += (g**-1) * v - v
         if res.is_zero():
             ans = True
@@ -632,7 +632,7 @@ class OneChains_element(ModuleElement):
             return ans
 
     def __rmul__(self,a):
-        newdict = {g: a * v for g,v in self._data.iteritems()} if a != 0 else {}
+        newdict = {g: a * v for g,v in self._data.items()} if a != 0 else {}
         return self.parent()(newdict)
 
 class OneChains(Parent):
@@ -719,7 +719,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         return ans
 
     def _cmp_(self, right):
-        return cmp(self._value, right._value)
+        return richcmp(self._value, right._value)
 
     def valuation(self, p=None):
         return min([Infinity] + [o.valuation(p) for o in (self._value-1).coefficients()])

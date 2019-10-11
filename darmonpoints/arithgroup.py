@@ -518,7 +518,7 @@ class ArithGroup_generic(AlgebraicGroup):
 
             while len(reps) < num_reps:
                 n_iters += 1
-                new_candidate = I.next() * g0
+                new_candidate = next(I) * g0
                 new_inv = new_candidate**-1
                 if not any([self._is_in_order(new_inv * old) for old in reps]):
                     reps.append(new_candidate)

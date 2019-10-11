@@ -282,7 +282,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
             try:
                 ans = list(self._Gamma_farey.word_problem(SL2Z((-delta).list()),output = 'standard'))
             except (RuntimeError, AssertionError):
-                print 'Delta = %s'%delta
+                print('Delta = %s'%delta)
                 assert 0
         tmp = multiply_out(ans, self.Ugens, self.B(1))
         delta = SL2Z(delta.list())

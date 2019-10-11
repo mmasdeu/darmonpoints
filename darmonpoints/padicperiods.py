@@ -80,7 +80,7 @@ def Thetas(p1, p2, p3, q1,q2,q3,prec=None):
                 if k % 2 == 1:
                     tmp *= p3
                 p3dict[k] = tmp
-    for i,jmax in jdict.iteritems():
+    for i,jmax in jdict.items():
         for j in xrange(-jmax,jmax + 1):
             P = p1dict[j**2-j] * p2dict[i**2-i] * p3dict[(i-j)**2-(i-j)]
             p11 = p1dict[j]
