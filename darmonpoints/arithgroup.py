@@ -367,6 +367,176 @@ class ArithGroup_generic(AlgebraicGroup):
                 pass
             return self.element_class(self, quaternion_rep = x,check = False)
 
+    def init_fundom_data(self): # generic
+        # Fundamental domain data
+        UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
+        self._fundamental_domain = [ComplexField(1000)(o.Real().sage(), o.Imaginary().sage()) for o in self._G_magma.FundamentalDomain()]
+        length = len(UsideFD_magma)
+        P = CC(0, 90.0/100.0) # A point inside the fundamental domain.
+        self._in_interior = {}
+        for v1, v2 in self.fundamental_domain_data():
+            center, r2 = geodesic_circle(v1, v2, False)
+            self._in_interior[(v1,v2)] = (center, r2, ((P - center).norm() < r2)) # The last argument encodes whether one needs to take the exterior or the interior of the geodesic circle.
+        return
+        
+    def find_fundom_rep(self, z0_H, v0=None, return_alternative=False, max_iters=100): # generic -- Take z0 to the fundamental domain
+        r'''
+        Returns t0 and g such that g * t0 = z0_H, and t0 is in the fundamental domain
+        '''
+        B = self.B
+        CC = z0_H.parent()
+        if z0_H.imag() < 0:
+            raise ValueError("z0_H must be in the upper half plane")
+        emb = self.get_archimedean_embedding(CC.precision())
+        P = CC(90)/CC(100) * CC.gen()
+        Pconj = P.conjugate()
+        z0 = (z0_H - P) / (z0_H - Pconj)
+        ngquats = self.ngquats
+        gammas = self.gquats
+        embgammas = self.embgquats
+        findex = self.findex
+        fdargs = self.fdargs
+        wd = []
+        oldji = 0
+        oldgg = B(1)
+        gg = B(1)
+        embgg = embgammas[1]**0
+        delta = B(1)
+        n_iters = 0
+        t0 = z0_H
+        while True:
+            n_iters += 1
+            if n_iters >= max_iters:
+                raise RuntimeError("Reached maximum number of iterations (%s)"%max_iters)
+            az0 = CC(z0).argument()
+            if az0 < fdargs[0]:
+                az0 += 2 * self.pi
+            if az0 > fdargs[-1]:
+                ji = findex[0]
+                embgg = embgammas[ji]
+                if act_flt_in_disc(embgg,z0,P).abs() > z0.abs():
+                    ji = findex[1]
+                    embgg = embgammas[ji]
+            else:
+                i = next((j for j,fda in enumerate(fdargs) if az0 < fda), None)
+                ji = findex[i+1]
+                embgg = embgammas[ji]
+
+            if ji is not None and ji == -oldji:
+                my_range = range(-ngquats,0) + range(1,ngquats + 1)
+                ji = next((j for j in my_range if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()),None)
+            if ji is None or gammas[ji] * oldgg == -1:
+                break
+            else:
+                embgg = embgammas[ji]
+            gg = gammas[ji]
+            delta = gg * delta
+            z0 = act_flt_in_disc(embgg,z0,P)
+            oldji, oldgg = ji, gg
+            wd.append(gg)
+        t0 = self(delta) * z0_H
+        t1 = self(wd[-1]**-1 * delta) * z0_H
+        delta = delta**-1
+        if return_alternative:
+            return (t0, delta), (t1, delta * wd[-1])
+        else:
+            if self.is_in_fundom(t0) or self.is_in_fundom_boundary(t0):
+                return t0, delta
+            else:
+                assert self.is_in_fundom(t1) or self.is_in_fundom_boundary(t1)
+                return t1, delta * wd[-1]
+
+    def plot_fundamental_domain(self):
+        return hyperbolic_polygon(self._fundamental_domain)
+        
+    @cached_method
+    def fundamental_domain_data(self):
+        fdom = self._fundamental_domain
+        ans = []
+        for i in range(len(fdom)-1):
+            ans.append((fdom[i], fdom[i+1]))
+        ans.append((fdom[-1], fdom[0]))
+        return ans
+        
+    def is_in_fundom(self, z):
+        for v1, v2 in self.fundamental_domain_data():
+            center, r2, in_interior = self._in_interior[(v1, v2)]
+            if ((z - center).norm() < r2) != in_interior:
+                return False
+        return True
+
+    def is_in_fundom_interior(self, z, tol = None):
+        if tol is None:
+            tol = 10**-5
+        for v1, v2 in self.fundamental_domain_data():
+            center, r2, in_interior = self._in_interior[(v1, v2)]
+            if in_interior:
+                if r2 - (z - center).norm() < tol:
+                    return False
+            else:
+                if ((z - center).norm() - r2) < tol:
+                    return False
+        return True
+
+    def is_in_fundom_exterior(self, z, tol = None):
+        if self.is_in_fundom_interior(z, tol) or self.is_in_fundom_boundary(z, tol):
+            return False
+        else:
+            return True
+
+    def is_in_fundom_boundary(self, z, tol = None):
+        if tol is None:
+            tol = 10**-5
+        for v1, v2 in self.fundamental_domain_data():
+            center, r2, in_interior = self._in_interior[(v1, v2)]
+            if (r2 - (z - center).norm()).abs() < tol:
+                if is_in_open_interval(z.real(), v1.real(), v2.real(),0):
+                    return True
+        return False
+
+    def mat_list(self, x1, x2, check_fundom=True): # generic
+        r'''
+        Returns a list S of matrices such that the geodesic (x1, x2) is contained in the union
+        of the translates s*D (with s in S) of the standard fundamental domain D.
+        '''
+        verbose('Calling mat_list with x1 = %s and x2 = %s'%(x1,x2))
+        x1_orig = x1
+        x2_orig = x2
+        n = 0
+        g = 1
+        if check_fundom and not self.is_in_fundom(x1):
+            t0, g = self.find_fundom_rep(x1)
+            x1, x2 = t0, self(g**-1) * x2
+
+        # Here we can assume that x1 is in the fundamental domain
+        ans = [self(g)]
+        while not self.is_in_fundom(x2):
+            found = False
+            for i, (v1, v2) in enumerate(self.fundamental_domain_data()):
+                z = intersect_geodesic_arcs(v1, v2, x1, x2)
+                if z is not None:
+                    # We take a perturbation of z to avoid boundary problems
+                    eps = 10**-4
+                    z1, z2 = perturb_point_on_arc(x1, x2, z, eps)
+                    if not self.is_in_fundom(z1):
+                        z1, z2 = z2, z1
+                    assert self.is_in_fundom(z1), 'z1 fails'
+                    assert not self.is_in_fundom(z2), 'z2 fails'
+                    for g in self.gquats[1:]:
+                        t0 = self(g)**-1 * z2
+                        if self.is_in_fundom(t0):
+                            assert not found
+                            found = True
+                            x1 = t0
+                            x2 = self(g)**-1 * x2
+                            verbose('x1 = %s, x2 = %s'%(x1,x2))
+                            ans.append(ans[-1] * self(g))
+                            break # DEBUG
+                    assert found,'Did not find any to move...'
+                    break
+            assert found,':-('
+        return [o.quaternion_rep for o in ans]
+
     def generate_wp_candidates(self, p, ideal_p,**kwargs):
         epsinv = matrix(QQ,2,2,[0,-1,p,0])**-1
         if self.F == QQ:
@@ -692,7 +862,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
             Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
             mside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsMap')
-            UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
 
             self.Uside = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(mside_magma.Image(g))),self.magma) for g in Uside_magma.Generators()]
             self.F_unit_offset = len(self.Ugens)
@@ -724,81 +893,12 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                     newrel = rel + self.minus_one_long
                     assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
                     self._relation_words.append(newrel)
-
-            # Fundamental domain data
-            self._fundamental_domain = [ComplexField(1000)(o.Real().sage(), o.Imaginary().sage()) for o in self._G_magma.FundamentalDomain()]
-            length = len(UsideFD_magma)
-            pairing = {}
-            for i in range(1, length + 1):
-                g = magma_integral_quaternion_to_sage(self.B,self._O_magma,self._F_magma, UsideFD_magma[i][1], self.magma)
-                vs1 = UsideFD_magma[i][3].sage()
-                vs2 = UsideFD_magma[i][4].sage()
-                vs1 = tuple([vs1[0]-1, vs1[1]-1])
-                vs2 = tuple([vs2[0]-1, vs2[1]-1])
-                assert not pairing.has_key(vs1)
-                assert not pairing.has_key(vs2)
-                pairing[vs2] = (vs1, g)
-                pairing[vs1] = (vs2, g**-1)
-            self._sidepairs = pairing
-            P = CC(0, 90.0/100.0)
-            self._in_interior = {}
-            for v1, v2 in self.fundamental_domain_data():
-                center, r2 = geodesic_circle(v1, v2, False)
-                self._in_interior[(v1,v2)] = (center, r2, ((P - center).norm() < r2))
+            init_fundom_data()
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
 
     def _repr_(self):
         return 'Arithmetic Group attached to rational quaternion algebra, disc = %s, level = %s'%(self.discriminant,self.level)
-
-    def is_in_fundom(self, z):
-        for v1, v2 in self.fundamental_domain_data():
-            center, r2, in_interior = self._in_interior[(v1, v2)]
-            if ((z - center).norm() < r2) != in_interior:
-                return False
-        return True
-
-    def is_in_fundom_interior(self, z, tol = None):
-        if tol is None:
-            tol = 10**-5
-        for v1, v2 in self.fundamental_domain_data():
-            center, r2, in_interior = self._in_interior[(v1, v2)]
-            if in_interior:
-                if r2 - (z - center).norm() < tol:# * center.abs()**2:
-                    return False
-            else:
-                if ((z - center).norm() - r2) < tol:# * center.abs()**2:
-                    return False
-        return True
-
-    def is_in_fundom_exterior(self, z, tol = None):
-        if self.is_in_fundom_interior(z, tol) or self.is_in_fundom_boundary(z, tol):
-            return False
-        else:
-            return True
-
-    def is_in_fundom_boundary(self, z, tol = None):
-        PP = self.plot_fundamental_domain()
-        if tol is None:
-            tol = 10**-5
-        for v1, v2 in self.fundamental_domain_data():
-            center, r2, in_interior = self._in_interior[(v1, v2)]
-            if (r2 - (z - center).norm()).abs() < tol:
-                if is_in_open_interval(z.real(), v1.real(), v2.real(),0):
-                    return True
-        return False
-
-    def fundamental_domain_data(self):
-        fdom = self._fundamental_domain
-        ans = []
-        for i in range(len(fdom)-1):
-            ans.append((fdom[i], fdom[i+1]))
-        ans.append((fdom[-1], fdom[0]))
-        return ans
-
-    def plot_fundamental_domain(self):
-        P = hyperbolic_polygon(self._fundamental_domain)
-        return P
 
     def __init_magma_objects(self,info_magma = None): # Rational quaternions
         wtime = walltime()
@@ -838,49 +938,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
 
     def _quaternion_to_list(self,x):
         return (self.basis_invmat * matrix(QQ,4,1,x.coefficient_tuple())).list()
-
-    def mat_list(self, x1, x2, check_fundom=True): # rationalquaternion
-        r'''
-        Returns a list S of matrices such that the geodesic (x1, x2) is contained in the union
-        of the translates s*D (with s in S) of the standard fundamental domain D.
-        '''
-        verbose('Calling mat_list with x1 = %s and x2 = %s'%(x1,x2))
-        x1_orig = x1
-        x2_orig = x2
-        n = 0
-        g = 1
-        if check_fundom and not self.is_in_fundom(x1):
-            t0, g = self.find_fundom_rep(x1)
-            x1, x2 = t0, self(g**-1) * x2
-
-        # Here we can assume that x1 is in the fundamental domain
-        ans = [self(g)]
-        while not self.is_in_fundom(x2):
-            found = False
-            for i, (v1, v2) in enumerate(self.fundamental_domain_data()):
-                z = intersect_geodesic_arcs(v1, v2, x1, x2)
-                if z is not None:
-                    # We take a perturbation of z to avoid boundary problems
-                    eps = 10**-4
-                    z1, z2 = perturb_point_on_arc(x1, x2, z, eps)
-                    if not self.is_in_fundom(z1):
-                        z1, z2 = z2, z1
-                    assert self.is_in_fundom(z1), 'z1 fails'
-                    assert not self.is_in_fundom(z2), 'z2 fails'
-                    for g in self.gquats[1:]:
-                        t0 = self(g)**-1 * z2
-                        if self.is_in_fundom(t0):
-                            assert not found
-                            found = True
-                            x1 = t0
-                            x2 = self(g)**-1 * x2
-                            verbose('x1 = %s, x2 = %s'%(x1,x2))
-                            ans.append(ans[-1] * self(g))
-                            break # DEBUG
-                    assert found,'Did not find any to move...'
-                    break
-            assert found,':-('
-        return [o.quaternion_rep for o in ans]
 
     # rationalquaternion
     def compute_quadratic_embedding(self,K):
@@ -934,7 +991,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         R = PolynomialRing(Cp,names = 'X')
         X = R.gen()
 
-        found = False
         eps0 = K.units()[0]**2
         eps = eps0
         while coords(eps)[1] % extra_conductor != 0:
@@ -964,75 +1020,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             if delta1 != delta:
                 tmp.extend(self.minus_one_long)
         return tmp
-
-    def find_fundom_rep(self, z0_H, v0=None, return_alternative=False): # rationalquaternion -- Take z0 to the fundamental domain
-        r'''
-        Returns t0 and g such that g * t0 = z0_H, and t0 is in the fundamental domain
-        '''
-        B = self.B
-        CC = z0_H.parent()
-        if z0_H.imag() < 0:
-            raise ValueError("z0_H must be in the upper half plane")
-        emb = self.get_archimedean_embedding(CC.precision())
-        P = CC(90)/CC(100) * CC.gen()
-        Pconj = P.conjugate()
-        z0 = (z0_H - P) / (z0_H - Pconj)
-        ngquats = self.ngquats
-        gammas = self.gquats
-        embgammas = self.embgquats
-        findex = self.findex
-        fdargs = self.fdargs
-        wd = []
-        oldji = 0
-        oldgg = B(1)
-        gg = B(1)
-        embgg = embgammas[1]**0
-        delta = B(1)
-        n_iters = 0
-        t0 = z0_H
-        while True:
-            n_iters += 1
-            if n_iters >= 100:
-                print(delta)
-                print(wd)
-                assert 0
-            az0 = CC(z0).argument()
-            if az0 < fdargs[0]:
-                az0 += 2 * self.pi
-            if az0 > fdargs[-1]:
-                ji = findex[0]
-                embgg = embgammas[ji]
-                if act_flt_in_disc(embgg,z0,P).abs() > z0.abs():
-                    ji = findex[1]
-                    embgg = embgammas[ji]
-            else:
-                i = next((j for j,fda in enumerate(fdargs) if az0 < fda), None)
-                ji = findex[i+1]
-                embgg = embgammas[ji]
-
-            if ji is not None and ji == -oldji:
-                my_range = range(-ngquats,0) + range(1,ngquats + 1)
-                ji = next((j for j in my_range if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()),None)
-            if ji is None or gammas[ji] * oldgg == -1:
-                break
-            else:
-                embgg = embgammas[ji]
-            gg = gammas[ji]
-            delta = gg * delta
-            z0 = act_flt_in_disc(embgg,z0,P)
-            oldji, oldgg = ji, gg
-            wd.append(gg)
-        t0 = self(delta) * z0_H
-        t1 = self(wd[-1]**-1 * delta) * z0_H
-        delta = delta**-1
-        if return_alternative:
-            return (t0, delta), (t1, delta * wd[-1])
-        else:
-            if self.is_in_fundom(t0) or self.is_in_fundom_boundary(t0):
-                return t0, delta
-            else:
-                assert self.is_in_fundom(t1) or self.is_in_fundom_boundary(t1)
-                return t1, delta * wd[-1]
 
     def __magma_word_problem_jv(self,x):
         r'''
@@ -1763,7 +1750,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             self._F_magma = self._B_magma.BaseRing()
             if self._compute_presentation:
                 self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
-                FDom_magma = self._G_magma.FundamentalDomain(self._D_magma.name())
+                FDom_magma = self._G_magma.FundamentalDomain() # DEBUG # (self._D_magma.name())
                 self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
 
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
@@ -1950,7 +1937,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         except NotImplementedError: pass
         fwrite('# w_K satisfies: %s'%w.minpoly(),outfile)
         assert K.gen(0).trace(K.base_ring()) == mu.reduced_trace() and K.gen(0).norm(K.base_ring()) == mu.reduced_norm()
-
+        
         iotap = self.get_embedding(prec)
         fwrite('# Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
         a,b,c,d = iotap(mu).list()
@@ -1967,6 +1954,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
         verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.reduced_trace(),gammaquatrep.reduced_norm()))
         assert gammaquatrep.reduced_trace() == u.trace(self.F) and gammaquatrep.reduced_norm() == u.norm(self.F)
+
         gammaq = gammaquatrep
         while True:
             try:
