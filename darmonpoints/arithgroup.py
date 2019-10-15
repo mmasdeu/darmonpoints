@@ -378,7 +378,7 @@ class ArithGroup_generic(AlgebraicGroup):
             center, r2 = geodesic_circle(v1, v2, False)
             self._in_interior[(v1,v2)] = (center, r2, ((P - center).norm() < r2)) # The last argument encodes whether one needs to take the exterior or the interior of the geodesic circle.
         return
-        
+
     def find_fundom_rep(self, z0_H, v0=None, return_alternative=False, max_iters=100): # generic -- Take z0 to the fundamental domain
         r'''
         Returns t0 and g such that g * t0 = z0_H, and t0 is in the fundamental domain
@@ -387,6 +387,7 @@ class ArithGroup_generic(AlgebraicGroup):
         CC = z0_H.parent()
         if z0_H.imag() < 0:
             raise ValueError("z0_H must be in the upper half plane")
+        verbose('Moving z0_H = %s to fundamental domain'%z0_H)
         emb = self.get_archimedean_embedding(CC.precision())
         P = CC(90)/CC(100) * CC.gen()
         Pconj = P.conjugate()
@@ -434,6 +435,7 @@ class ArithGroup_generic(AlgebraicGroup):
             z0 = act_flt_in_disc(embgg,z0,P)
             oldji, oldgg = ji, gg
             wd.append(gg)
+            verbose('New g = %s\t delta = %s'%(gg, delta))
         t0 = self(delta) * z0_H
         t1 = self(wd[-1]**-1 * delta) * z0_H
         delta = delta**-1
@@ -448,7 +450,7 @@ class ArithGroup_generic(AlgebraicGroup):
 
     def plot_fundamental_domain(self):
         return hyperbolic_polygon(self._fundamental_domain)
-        
+
     @cached_method
     def fundamental_domain_data(self):
         fdom = self._fundamental_domain
