@@ -893,7 +893,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                     newrel = rel + self.minus_one_long
                     assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
                     self._relation_words.append(newrel)
-            init_fundom_data()
+            self.init_fundom_data()
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
 
@@ -1531,7 +1531,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 if timeout != 0:
                     raise NotImplementedError("Timeout functionality not implemented for totally real fields")
                 self._init_jv_data()
-        init_fundom_data()
+        self.init_fundom_data()
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
 
