@@ -405,7 +405,8 @@ class ArithGroup_generic(AlgebraicGroup):
         delta = B(1)
         n_iters = 0
         t0 = z0_H
-        while True:
+        t1 = z0_H
+        while not self.is_in_fundom(t0) and not self.is_in_fundom(t1):
             n_iters += 1
             if n_iters >= max_iters:
                 raise RuntimeError("Reached maximum number of iterations (%s)"%max_iters)
@@ -415,17 +416,17 @@ class ArithGroup_generic(AlgebraicGroup):
             if az0 > fdargs[-1]:
                 ji = findex[0]
                 embgg = embgammas[ji]
-                if act_flt_in_disc(embgg,z0,P).abs() > z0.abs():
+                if act_flt_in_disc(embgg,z0,P).abs() >= z0.abs():
                     ji = findex[1]
                     embgg = embgammas[ji]
             else:
-                i = next((j for j,fda in enumerate(fdargs) if az0 < fda), None)
+                i = next((j for j,fda in enumerate(fdargs) if az0 <= fda), None)
                 ji = findex[i+1]
                 embgg = embgammas[ji]
 
             if ji is not None and ji == -oldji:
                 my_range = range(-ngquats,0) + range(1,ngquats + 1)
-                ji = next((j for j in my_range if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()),None)
+                ji = next((j for j in my_range if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() <= z0.abs()),None)
             if ji is None or gammas[ji] * oldgg == -1:
                 break
             else:
@@ -435,18 +436,18 @@ class ArithGroup_generic(AlgebraicGroup):
             z0 = act_flt_in_disc(embgg,z0,P)
             oldji, oldgg = ji, gg
             wd.append(gg)
-            verbose('New g = %s\t delta = %s'%(gg, delta))
-        t0 = self(delta) * z0_H
-        t1 = self(wd[-1]**-1 * delta) * z0_H
-        delta = delta**-1
+            verbose('New g = %s\t delta = %s\t z0=%s'%(gg, delta, z0))
+            t0 = self(delta) * z0_H
+            t1 = self(wd[-1]**-1 * delta) * z0_H
+        delta_inv = delta**-1
         if return_alternative:
-            return (t0, delta), (t1, delta * wd[-1])
+            return (t0, delta_inv), (t1, delta_inv * wd[-1])
         else:
             if self.is_in_fundom(t0) or self.is_in_fundom_boundary(t0):
-                return t0, delta
+                return t0, delta_inv
             else:
                 assert self.is_in_fundom(t1) or self.is_in_fundom_boundary(t1)
-                return t1, delta * wd[-1]
+                return t1, delta_inv * wd[-1]
 
     def plot_fundamental_domain(self):
         return hyperbolic_polygon(self._fundamental_domain)
@@ -454,12 +455,10 @@ class ArithGroup_generic(AlgebraicGroup):
     @cached_method
     def fundamental_domain_data(self):
         fdom = self._fundamental_domain
-        ans = []
-        for i in range(len(fdom)-1):
-            ans.append((fdom[i], fdom[i+1]))
+        ans = [(fdom[i], fdom[i+1]) for in range(len(fdom)-1)]
         ans.append((fdom[-1], fdom[0]))
         return ans
-        
+
     def is_in_fundom(self, z):
         for v1, v2 in self.fundamental_domain_data():
             center, r2, in_interior = self._in_interior[(v1, v2)]
