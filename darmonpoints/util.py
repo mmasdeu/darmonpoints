@@ -1116,7 +1116,7 @@ def magma_F_ideal_to_sage(F_sage,x,magma):
     gens = x.TwoElement(nvals = 2)
     return F_sage.ideal([magma_F_elt_to_sage(F_sage,gens[0],magma),magma_F_elt_to_sage(F_sage,gens[1],magma)])
 
-def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_through_magma = True):
+def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_through_magma = True, magma = None):
     r"""
     Creates a quaternion algebra over a number field which ramifies exactly at
     the specified places. The algorithm is inspired by the current MAGMA implementation
@@ -1179,7 +1179,8 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
         raise ValueError, 'All exponents in the discriminant factorization must be odd'
 
     if optimize_through_magma:
-        from sage.interfaces.magma import magma
+        if magma is None:
+            from sage.interfaces.magma import magma
         if F.gen().minpoly().degree() == 1:
             Fm = magma.RationalsAsNumberField()
         else:
