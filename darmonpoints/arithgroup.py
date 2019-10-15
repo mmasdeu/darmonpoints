@@ -455,7 +455,7 @@ class ArithGroup_generic(AlgebraicGroup):
     @cached_method
     def fundamental_domain_data(self):
         fdom = self._fundamental_domain
-        ans = [(fdom[i], fdom[i+1]) for in range(len(fdom)-1)]
+        ans = [(fdom[i], fdom[i+1]) for i in range(len(fdom)-1)]
         ans.append((fdom[-1], fdom[0]))
         return ans
 
