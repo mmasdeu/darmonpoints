@@ -1916,7 +1916,7 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
             return ans
 
     # nf_quaternion
-    def embed_order(self,p,K,prec,outfile = None,return_all = False):
+    def embed_order(self,p,K,prec,outfile = None,return_all = False, extra_conductor = 1):
         r'''
         '''
         verbose('Computing quadratic embedding to precision %s'%prec)
@@ -1939,21 +1939,22 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         except NotImplementedError: pass
         fwrite('# w_K satisfies: %s'%w.minpoly(),outfile)
         assert K.gen(0).trace(K.base_ring()) == mu.reduced_trace() and K.gen(0).norm(K.base_ring()) == mu.reduced_norm()
-        
+
         iotap = self.get_embedding(prec)
         fwrite('# Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
-        a,b,c,d = iotap(mu).list()
-        tau1 = (Cp(a-d) + 2*padic_Kgen)/Cp(2*c)
-        tau2 = (Cp(a-d) - 2*padic_Kgen)/Cp(2*c)
-        assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
-        assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
 
         found = False
-        u = find_the_unit_of(self.F,K)
-        assert u.is_integral() and (1/u).is_integral()
-        gammalst = u.list()
+        coords = K.gen().coordinates_in_terms_of_powers()
+        phi = K.hom([mu])
+        u0 = find_the_unit_of(self.F,K)
+        assert u0.is_integral() and (1/u0).is_integral()
+        u = u0
+        # Deal with nontrivial conductor
+        while coords(u)[1] % extra_conductor != 0:
+            u *= u0
+        gammalst = coords(u)
         assert len(gammalst) == 2
-        gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu
+        gammaquatrep = phi(u) # self.B(gammalst[0]) + self.B(gammalst[1]) * mu
         verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.reduced_trace(),gammaquatrep.reduced_norm()))
         assert gammaquatrep.reduced_trace() == u.trace(self.F) and gammaquatrep.reduced_norm() == u.norm(self.F)
 
@@ -1968,6 +1969,12 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)
         fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
+
+        a,b,c,d = iotap(gamma.quaternion_rep).list()
+        DD = our_sqrt(Cp((a+d)**2 - 4))
+        tau1 = (Cp(a - d) + DD) / Cp(2*c)
+        tau2 = (Cp(a - d) - DD) / Cp(2*c)
+
         if return_all:
             return gamma, tau1, tau2
         else:

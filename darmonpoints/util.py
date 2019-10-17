@@ -1055,13 +1055,16 @@ def find_the_unit_of(F,K):
             unit_not_in_F = uK
         if is_square and uK not in F:
             ans = uK/rootNuK
+            unit_not_in_F = OK(ans)
             if ans not in F and ans.multiplicative_order() == Infinity and ans.norm(F) == 1:
                 ans_inv = OK(1/ans) #just for testing
                 return OK(ans)
     # Not found so far..
     norm = unit_not_in_F.norm(F)
     ans = unit_not_in_F**2/norm
-    assert ans not in F and ans.multiplicative_order() == Infinity and ans.norm(F) == 1
+    assert ans not in F, "Expected unit not to be in F, but it is (= %s)"%ans
+    assert ans.multiplicative_order() == Infinity, "Expected unit to be nontorsion, but it is (= %s)"%ans
+    assert ans.norm(F) == 1, "Expected unit to be of relative norm 1, but it is not (= %s, Norm = %s)"%(ans, ans.norm(F))
     ans_inv = OK(1/ans) # just for testing
     return OK(ans)
 
