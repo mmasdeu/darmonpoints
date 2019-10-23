@@ -25,6 +25,11 @@ from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
 import sys, ConfigParser
 
 
+def is_smooth(x, B):
+    for p in B:
+        x /= p**(valuation(x,p))
+    return x == 1
+
 def is_infinity(x):
     try:
         return x.is_infinity()
