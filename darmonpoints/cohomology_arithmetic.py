@@ -869,9 +869,6 @@ class ArithCoh(CohomologyGroup):
             col0 = [QQ(o) for o in row0.list()]
             clcm = lcm([o.denominator() for o in col0])
             col0 = [ZZ(clcm * o ) for o in col0]
-            # phi1 = sum([a * phi for a,phi in zip(col0,self.gens())],self(0))
-            # phi2 = self.apply_hecke_operator(phi1,qq.gens_reduced()[0], use_magma = use_magma)
-            # return [phi1, phi2], [(ell, o.restrict(good_component[0])) for ell, o in good_component[1]]
             flist = []
             for row0 in good_component[0].matrix().rows():
                 col0 = [QQ(o) for o in row0.list()]

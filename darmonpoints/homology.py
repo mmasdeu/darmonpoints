@@ -758,15 +758,12 @@ class MeromorphicFunctionsElement(ModuleElement):
     def left_act_by_matrix(self, g):
         Ps = self._value.parent()
         K = Ps.base_ring()
-        t = Ps.gen()
-        p = Ps.base_ring().prime()
-        prec = self.parent()._prec
         # Below we code the action which is compatible with the usual action
         # P |-> (aP+b)/(cP+D)
         poly = self._value.polynomial()
         zz_ps_vec = self.parent().get_action_data(g)
         ans = Ps(sum(K(a) * zz_ps_vec[e].change_ring(K) for a, e in zip(poly.coefficients(), poly.exponents())))
-        ans.add_bigoh(prec)
+        ans.add_bigoh(self.parent()._prec)
         if not self.parent().is_additive():
             ans = (ans[0]**-1) * ans
         return self.__class__(self.parent(),ans)
