@@ -22,8 +22,10 @@ import operator
 from sage.rings.padics.precision_error import PrecisionError
 from sage.structure.element import MultiplicativeGroupElement,ModuleElement
 from sage.matrix.matrix_space import MatrixSpace
-from sage.modules.free_module_element import free_module_element
+from sage.modules.free_module import FreeModule
+from sage.modules.free_module_element import  free_module_element
 from sage.structure.unique_representation import CachedRepresentation
+from sage.rings.padics.factory import ZpCA
 
 class MatrixAction(Action):
     def __init__(self,G,M):
@@ -683,46 +685,57 @@ class MeromorphicFunctionsElement(ModuleElement):
         p = K.prime()
         Ps = parent._Ps
         phi = parent._Ps_local_variable
-        self._value = Ps(0) if additive else Ps(1)
         if data == 0:
-            pass
+            self._value = parent._V(0) if additive else Ps(1)
         elif isinstance(data.parent(), Divisors):
+            self._value = parent._V(0) if additive else Ps(1)
             for Q, n in data:
                 if Q.valuation() >= 0:
                     raise ValueError('Divisor is not defined over the right open')
                 if additive:
-                    self._value += n * phi(Q).log()
+                    self._value += n * parent._V((phi(K(Q)).log()).list())
                 else:
-                    self._value *= phi(Q)**n
+                    self._value *= phi(K(Q))**n
         else:
-            self._value = Ps(data)
-        assert self._value.valuation() >= 0
-        assert min([o.valuation() for o in self._value.coefficients()]) >= 0
-        self._value.add_bigoh(prec)
+            val = Ps(data)
+            val.add_bigoh(prec)
+            if additive:
+                self._value = self.parent()._V(val.list())
+            else:
+                self._value = val
+        # assert min([o.valuation() for o in self._value.list()]) >= 0
         ModuleElement.__init__(self,parent)
 
     def __call__(self, D):
         K = self.parent().base_ring()
         p = K.prime()
-        poly = self._value.polynomial()
         assert isinstance(D.parent(), Divisors) and D.degree() == 0
         if self.parent().is_additive():
-            ans = 0
+            poly = self.parent()._Ps(self._value.list()).polynomial()
+            ans = K(0)
             for P, n in D:
                 assert P.valuation() >= 0
                 ans += n * poly(P)
+            if ans == 0:
+                return K(1)
+            else:
+                return ans.exp()
         else:
-            ans = 1
+            poly = self._value.polynomial()
+            ans = K(1)
             for P, n in D:
                 assert P.valuation() >= 0
                 ans *= (poly(P))**n
-        return ans
+            return ans
 
     def _cmp_(self, right):
         return richcmp(self._value, right._value)
 
     def valuation(self, p=None):
-        return min([Infinity] + [o.valuation(p) for o in (self._value-1).coefficients()])
+        if self.parent().is_additive():
+            return min([Infinity] + [o.valuation(p) for o in self._value])
+        else:
+            return min([Infinity] + [o.valuation(p) for o in (self._value-1).coefficients()])
 
     def _add_(self, right):
         if self.parent().is_additive():
@@ -760,42 +773,59 @@ class MeromorphicFunctionsElement(ModuleElement):
         K = Ps.base_ring()
         # Below we code the action which is compatible with the usual action
         # P |-> (aP+b)/(cP+D)
-        poly = self._value.polynomial()
         zz_ps_vec = self.parent().get_action_data(g)
-        ans = Ps(sum(K(a) * zz_ps_vec[e].change_ring(K) for a, e in zip(poly.coefficients(), poly.exponents())))
-        ans.add_bigoh(self.parent()._prec)
-        if not self.parent().is_additive():
-            ans = (ans[0]**-1) * ans
+        if self.parent().is_additive():
+            ans = zz_ps_vec.change_ring(K) * self._value
+            ans[0] = 0
+        else:
+            poly = self._value.polynomial()
+            ans = sum(a * zz_ps_vec[e].change_ring(K) for a, e in zip(poly.coefficients(), poly.exponents()))
+            ans.add_bigoh(self.parent()._prec)
+            ans /= ans[0]
         return self.__class__(self.parent(),ans)
 
 class MeromorphicFunctions(Parent, CachedRepresentation):
     Element = MeromorphicFunctionsElement
-    def __init__(self, K, additive=False):
+    def __init__(self, K, additive = True):
         Parent.__init__(self)
         self._additive = additive
         self._base_ring = K
         self._prec = K.precision_cap()
         self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec=self._prec)
+        if self._additive:
+            self._V = FreeModule(ZpCA(K.prime(), self._prec), self._prec)
         t = self._Ps.gen()
-        p = K.prime()
         self._Ps_local_variable = lambda Q : 1 - t / Q
         self._unset_coercions_used()
         self.register_action(Scaling(ZZ,self))
         self.register_action(MatrixAction(MatrixSpace(K,2,2),self))
 
     @cached_method
-    def get_action_data(self, g):
+    def get_action_data(self, g, K = None):
         a, b, c, d = g.list()
-        K = g.parent().base_ring()
+        if K is None:
+            K = g.parent().base_ring()
         R = PolynomialRing(K,'z')
-        Ps = PowerSeriesRing(K,'t', default_prec=self._prec)
+        prec = self._prec
+        Ps = PowerSeriesRing(K,'t', default_prec=prec)
         z = R.gen()
         zz = (d * z - b) / (-c * z + a)
-        zz_ps = Ps(zz).add_bigoh(self._prec)
-        ans = [Ps(1), zz_ps]
-        for _ in range(self._prec - 1):
-            ans.append((zz_ps * ans[-1]).add_bigoh(self._prec))
-        return ans
+        zz_ps0 = Ps(zz).add_bigoh(prec)
+        zz_ps = zz_ps0
+        if self.is_additive():
+            M = Matrix(self._V.base_ring(), prec, prec, 0)
+            M[0, 1] = 1
+            M.set_column(1, zz_ps.list())
+            for j in range(2, prec):
+                zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
+                M.set_column(j, zz_ps.list())
+            return M
+        else:
+            ans = [Ps(1), zz_ps]
+            for _ in range(prec - 1):
+                zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
+                ans.append(zz_ps)
+            return ans
 
     def is_additive(self):
         return self._additive
