@@ -1293,27 +1293,48 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         if v0 is None:
             v0 = lambda x:x
 
-        if x2 is None:
-            x2 = self(gamma) * x1
 
         # We first deal with the case of x1 or x2 being Infinity
         if x1 == Infinity or x2 == Infinity:
             raise NotImplementedError
 
-        if check_fundom and not self.is_in_fundom(x1, v0):
-            t0, g = self.find_fundom_rep(x1, v0)
-            return [self(g) * r for r in self.mat_list(t0, self(g**-1) * x2, v0,check_fundom=False) ]
+        verbose('Calling mat_list with x1 = %s and x2 = %s'%(x1,x2))
+        x1_orig = x1
+        x2_orig = x2
+        n = 0
+        g = 1
+        if check_fundom and not self.is_in_fundom(x1):
+            t0, g = self.find_fundom_rep(x1)
+            x1, x2 = t0, self(g**-1) * x2
 
         # Here we can assume that x1 is in the fundamental domain
-        if self.is_in_fundom(x2, v0): # Base case
-            return [self(1)]
-        for v1, v2, g in self.fundamental_domain_data():
-            z = intersect_geodesic_arcs(v1, v2, x1, x2)
-            if z is not None:
-                x11 = self(g**-1) * z
-                x22 = self(g**-1) * x2
-                return [self(1)] + [self(g) * self(o) for o in self.mat_list(x11, x22, v0,check_fundom=False)]
-        raise RuntimeError("Should not get here. (%s, %s)"%(x1, x2))
+        ans = [self(g)]
+        while not self.is_in_fundom(x2):
+            found = False
+            for v1, v2, g in self.fundamental_domain_data():
+                z = intersect_geodesic_arcs(v1, v2, x1, x2)
+                if z is not None:
+                    # We take a perturbation of z to avoid boundary problems
+                    eps = 10**-4
+                    z1, z2 = perturb_point_on_arc(x1, x2, z, eps)
+                    if not self.is_in_fundom(z1):
+                        z1, z2 = z2, z1
+                    assert self.is_in_fundom(z1), 'z1 fails'
+                    assert not self.is_in_fundom(z2), 'z2 fails'
+                    for g in self.gens():
+                        t0 = g**-1 * z2
+                        if self.is_in_fundom(t0):
+                            assert not found
+                            found = True
+                            x1 = t0
+                            x2 = g**-1 * x2
+                            verbose('x1 = %s, x2 = %s'%(x1,x2))
+                            ans.append(ans[-1] * g)
+                            break # DEBUG
+                    assert found,'Did not find any to move...'
+                    break
+            assert found,':-('
+        return ans
 
     def generate_wp_candidates(self,p,ideal_p,**kwargs):
         epsinv = matrix(QQ,2,2,[0,-1,p,0])**-1
@@ -1344,7 +1365,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                     yield  v1 * tmp * v2
 
     # rationalmatrix
-    def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1):
+    def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1, magma=None):
         from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
         M = self.level
         extra_conductor = ZZ(extra_conductor)
@@ -1354,7 +1375,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         QQp = Qp(p,prec)
         Cp = QQp.extension(w.minpoly(),names = 'g')
         v0 = K.hom([r0+r1*Cp.gen()])
-        W = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor)[0]
+        W = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor, magma = magma)[0]
         OD,u = order_and_unit(K, extra_conductor)
         wD = OD.ring_generators()[0]
         wDvec = w.coordinates_in_terms_of_powers()(wD)
