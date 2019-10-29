@@ -289,19 +289,16 @@ class ArithCohElement(CohomologyElement):
 
     def Tq_eigenvalue(self, ell, check = True):
         # Assume that self IS a hecke eigenvalue
+        if hasattr(self, 'elliptic_curve'):
+            return self.elliptic_curve.ap(ell)
         try:
             f0 = self.get_liftee()
         except AttributeError:
             f0 = self
+        if not f0.parent().trivial_action():
+            raise NotImplementedError
         f = f0.parent().apply_hecke_operator(f0, ell)
-        ans = None
-        for u, v in zip(f.values(), f0.values()):
-            try:
-                ans = ZZ(u / v)
-            except IndexError:
-                pass
-        if ans is None:
-            raise RuntimeError
+        ans = ZZ(f / f0)
         if check:
             assert (ans * f0).values() == f.values()
         return ans
@@ -312,7 +309,6 @@ class ArithCohElement(CohomologyElement):
         p = K.prime()
         G = self.parent().group()
         N = G.level
-        R = V._PowerSeries
         x = ZZ['x'].gen()
 
         if q is None:
@@ -333,91 +329,59 @@ class ArithCohElement(CohomologyElement):
         if j is None:
             return ans._rmul_(scale)
         else:
-            return scale * ans.evaluate_at_poly(R(x**j))
+            return scale * ans.evaluate_at_poly(x**j)
 
-    def _evaluate_at_cusp(self, cusp):
-        gamma, A = self.parent().S_arithgroup().find_matrix_from_cusp(cusp)
-        symb = gamma * self.evaluate(gamma**-1)
-        return symb
+    @cached_method
+    def cusp_boundary_element(self, cusp):
+        H = self.parent()
+        V = H.coefficient_module()
+        K = V.base_ring()
+        prec = K.precision_cap()
+        G = H.group()
+        N = G.level
+        a, mc = cusp.numerator(), -cusp.denominator()
+        g, d, b = xgcd(a, mc)
+        assert g == 1 and a * d + b * mc == 1
+        gamma = Matrix(ZZ,2,2,[a,b,-mc,d])
+        T0 = gamma * Matrix(ZZ,2,2,[1,1,0,1]) * gamma.adjugate()
+        T = T0
+        while T[1,0] % N != 0:
+            T *= T0
+        T = G(T)
+        A = V.acting_matrix(T, prec + 1).change_ring(K) - 1
+        verbose('T = %s'%T)
+        verbose('A = %s'%A)
+        ans = V(A.solve_right(self.evaluate(T)._val,check=False))
+        verbose('val_boundary = %s'%(T * ans - ans - self.evaluate(T)).valuation_list())
+        return ans
 
     def evaluate_at_cusp_list(self, cusp_list):
         symb = 0
         for n, cusp in cusp_list:
             gamma, A = self.parent().S_arithgroup().find_matrix_from_cusp(cusp)
-            symb -= n * (gamma * self.evaluate(gamma**-1)) # Note the minus sign!
+            symb += n * (gamma**-1 * (self.evaluate(gamma) + self.cusp_boundary_element(Cusp(A[0,0],A[1,0]))))
         return symb
 
     @cached_method
-    def BI(self, h, j): # Returns \int_{h \Z_p} z^j \Phi\{0 \to \infy\}
+    def BI(self, h, j = None): # Returns \int_{h \Z_p} z^j \Phi\{0 \to \infy\}
         V = self.parent().coefficient_module()
-        K = V.base_ring()
-        p = K.prime()
-        G = self.parent().group()
-        N = G.level
+        p = V.base_ring().prime()
         x = ZZ['x'].gen()
-        prec = K.precision_cap()
-
-        q = ZZ(1)
-        while (N * p) % q == 0:
-            q = q.next_prime()
-        scale = (self.Tq_eigenvalue(p))**-1 * ((self.Tq_eigenvalue(q) - q - 1))**-1
-        cc = Cusp(h[0,1],h[0,0])
-        oo = Cusp(h[1,1],h[1,0])
-
-        symb = self.parent().coefficient_module()(0)
-        for g in G.get_hecke_reps(q):
-            g_inv = M2Z(g.adjugate())
-            symb += g * self.evaluate_at_cusp_list([(1,g_inv * cc), (-1,g_inv * oo)])
-        symb -= self.evaluate_at_cusp_list([(q+1,cc),(-(q+1),oo)])
-        a,b,c,d = h.list() # DEBUG
-        R = V._PowerSeries
-        return scale * symb.evaluate_at_poly((R((a * (-x) + b)) / R((c * (-x) + d)))**j)
-
-    @cached_method
-    def BI_old(self, a, j):
-        G = self.parent().S_arithgroup()
-        N = G.Gpn.level
-        p = G.prime()
-        scale = 1
-        x = ZZ['x'].gen()
-        for q,_ in ZZ(N).factor():
-            if q != p:
-                lambda_q = self.get_liftee().Tq_eigenvalue(q)
-                scale /= (1 - ZZ(q)**j / lambda_q)
-        ans = 0
-        for alpha in range(N):
-            if (alpha - a) % p != 0:
-                continue
-            g, alpha0, beta = xgcd(alpha, -N)
-            if g != 1:
-                continue
-            symb = self.evaluate(matrix(ZZ,2,2,[alpha, beta, N, alpha0]))
-            ans += -symb.evaluate_at_poly((alpha + N*(-x))**j)
-        return scale * ans
-
-    @cached_method
-    def basic_integral_with_constant_old(self, a, j, mat = None):
-        K = self.parent().coefficient_module().base_ring()
-        aa = K.teichmuller(a)
-        p = self.parent().S_arithgroup().prime()
-        return K(ZZ(aa)**-j) * sum(((-1)**(j-r) * ZZ(j).binomial(r) * aa**(j-r) * self.BI_old(a, r) for r in xrange(j+1)))
-
-    @cached_method
-    def basic_integral_with_constant(self, mat, j): # Includes the power of aa**-j.
-        K = self.parent().coefficient_module().base_ring()
-        G = self.parent().S_arithgroup()
-        p = G.prime()
-        a,b,c,d = mat.list() #(mat**-1 * G.wp()).list()
-        aa = K.teichmuller(b / d)
-        assert aa != 0
-        return sum(((-1)**(j-r) * ZZ(j).binomial(r) * aa**(-r) * self.BI(mat, r) for r in xrange(j+1)))
+        scale = ZZ(self.Tq_eigenvalue(p))**-1
+        cusp_list = [(1, Cusp(h[0,1],h[0,0])), (-1, Cusp(h[1,1],h[1,0]))]
+        symb = self.evaluate_cuspidal_modsym_at_cusp_list(cusp_list)
+        a,b,c,d = h.list()
+        g = V.Sigma0()(Matrix(ZZ,2,2,[-a,b,-c,d]))
+        ans = (g * symb)._rmul_(scale)
+        if j is None:
+            return ans
+        else:
+            return ans.moment(j)
 
     def get_Lseries_term(self, n, cov = None):
         r"""
         Return the `n`-th coefficient of the `p`-adic `L`-series
-
          """
-
         if n in self._Lseries_coefficients:
             return self._Lseries_coefficients[n]
         else:
@@ -431,7 +395,7 @@ class ArithCohElement(CohomologyElement):
             K = self.parent().coefficient_module().base_ring()
             precision = K.precision_cap()
 
-            S = QQ[['z']]
+            S = K[['z']]
             z = S.gen()
             M = precision
             if n == 0:
@@ -444,14 +408,14 @@ class ArithCohElement(CohomologyElement):
                                      for j in range(M, len(lb))])
                 lb = [lb[a] for a in range(M)]
 
-            # cov = [h * G.wp()**-1 for _, h in G.get_covering(1)[1:]]
             if cov is None:
-                cov = G.get_Up_reps()[1:] # [h.adjugate() * G.wp() for h in G.get_Up_reps()[1:]]
+                cov = G.get_Up_reps()[1:]
             dn = 0
-            for j in range(len(lb)):
-                dn += lb[j] * sum(self.basic_integral_with_constant(h, j) for h in cov)
+            for h in cov:
+                aa = K.teichmuller(h[0,1] / h[1,1])
+                f = sum(lj * (1/aa * z - 1)**j for j, lj in enumerate(lb))
+                dn += self.BI(h, None).evaluate_at_poly(f)
             self._Lseries_coefficients[n] = dn.add_bigoh(precision)
-            # self._Lseries_coefficients[n] /= self._cinf # DEBUG
             return self._Lseries_coefficients[n]
 
 class ArithCoh(CohomologyGroup):
@@ -1120,11 +1084,13 @@ class ArithCoh(CohomologyGroup):
                         return sum([c.evaluate(tt) for sk, tt in lst], V(0,normalize=False))
                 else:
                     def calculate_Up_contribution(lst,c,num_gamma,pb_fraction=None):
-                        i = 0
+                        i = num_gamma * len(lst)
+                        verbose('pb_fraction = %s'%pb_fraction)
                         ans = V(0, normalize=False)
                         for sk, tt in lst:
                             ans += sk * c.evaluate(tt)
                             update_progress(i * pb_fraction, 'Up action')
+                            i += 1
                         return ans
                 input_vec = []
                 for j,gamma in enumerate(gammas):

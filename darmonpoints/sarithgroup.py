@@ -701,12 +701,12 @@ class BigArithGroup_class(AlgebraicGroup):
         P = self.get_P1List()
         remaining_points = set(list(P))
         reduction_table = dict([])
-        cusp_set = set([])
+        cusp_list = []
         while len(remaining_points) > 0:
             c = remaining_points.pop()
             new_cusp = Matrix(ZZ,2,2,lift_to_sl2z(c[0], c[1], P.N()))
             new_cusp.set_immutable()
-            cusp_set.add(new_cusp)
+            cusp_list.append(new_cusp)
             reduction_table[c]=(new_cusp,matrix(ZZ,2,2,1))
             for hh in Zmod(P.N()):
                 h = hh.lift()
@@ -717,12 +717,12 @@ class BigArithGroup_class(AlgebraicGroup):
                         T = matrix(ZZ,2,2,[u,h,0,u**-1])
                         reduction_table[new_c]=(new_cusp, T)
                         assert P.normalize(*(vector(c) * T)) == new_c
-        return reduction_table, cusp_set
+        return reduction_table, cusp_list
 
     def find_matrix_from_cusp(self, cusp):
         r'''
         Returns a matrix gamma and a cusp representative modulo Gamma0(N) (c2:d2),
-        such that gamma * (c2:d2) = cusp.
+        such that gamma * cusp = (c2:d2).
         '''
         from sage.modular.modsym.p1list import lift_to_sl2z
         a, c = cusp.numerator(), cusp.denominator()
@@ -743,11 +743,10 @@ class BigArithGroup_class(AlgebraicGroup):
         assert g.determinant() == 1
 
         A, T = reduction_table[(c1,d1)]
-        gamma_inv = A.parent()(A * T * g)
-        gamma = gamma_inv.adjugate()
+        gamma = A.parent()(A * T * g)
 
         # This block test correctness
-        tst = Cusp(Gamma0(P.N())(gamma_inv).acton(Cusp(a,c)))
+        tst = Cusp(Gamma0(P.N())(gamma).acton(Cusp(a,c)))
         tst = (tst.numerator(), tst.denominator())
         assert tst == tuple(A.column(0))
         return gamma, A

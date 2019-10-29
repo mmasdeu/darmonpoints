@@ -103,24 +103,19 @@ def geodesic_circle(alpha, beta, return_equation=True):
         alpha, beta = beta, alpha
     if is_infinity(beta) or (alpha.real() - beta.real()).abs() < 10**-10:
         x, y = PolynomialRing(K,2,names='x,y').gens()
-        verbose('x.parent() = %s'%x.parent())
         return x - alpha.real() if return_equation is True  else (alpha.real(), Infinity)
 
     z0 = (alpha + beta) / 2
     z1 = (beta - alpha) * K(-1).sqrt()
     t = -z0.imag() / z1.imag()
     C = (z0 + z1 * t)
-    verbose('z0 = %s'%z0)
-    verbose('z1 = %s'%z1)
-    verbose('t = %s'%t)
-    verbose('C = %s'%C)
+    verbose('z0 = %s, z1 = %s, t = %s, C = %s'%(z0, z1, t, C))
     assert C.imag().abs() < 10**-10, C
     try:
         r2 = (alpha - C).norm()
     except AttributError:
         r2 = (alpha - C)**2
     x, y = PolynomialRing(C.parent(),2,names='x,y').gens()
-    verbose('x.parent() = %s'%x.parent())
     return  (x - C.real())**2 + y**2 - r2 if return_equation is True else (C.real(), r2)
 
 
@@ -1211,7 +1206,8 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                 sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1))
                 assert sign == self.B(1)
                 self._relation_words.append(syllables_to_tietze(newrel))
-
+        rho = (-1+AA(-3).sqrt())/2
+        self._fundamental_domain = [10**6 * AA(-1).sqrt(), rho, rho + 1]
         ArithGroup_generic.__init__(self)
         Parent.__init__(self)
 
@@ -1306,6 +1302,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         if check_fundom and not self.is_in_fundom(x1):
             t0, g = self.find_fundom_rep(x1)
             x1, x2 = t0, self(g**-1) * x2
+            verbose('x1 = %s, x2 = %s (move to fundom)'%(x1,x2))
 
         # Here we can assume that x1 is in the fundamental domain
         ans = [self(g)]
@@ -1321,17 +1318,13 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                         z1, z2 = z2, z1
                     assert self.is_in_fundom(z1), 'z1 fails'
                     assert not self.is_in_fundom(z2), 'z2 fails'
-                    for g in self.gens():
-                        t0 = g**-1 * z2
-                        if self.is_in_fundom(t0):
-                            assert not found
-                            found = True
-                            x1 = t0
-                            x2 = g**-1 * x2
-                            verbose('x1 = %s, x2 = %s'%(x1,x2))
-                            ans.append(ans[-1] * g)
-                            break # DEBUG
-                    assert found,'Did not find any to move...'
+                    t0 = g**-1 * z2
+                    assert self.is_in_fundom(t0)
+                    x1 = t0
+                    x2 = g**-1 * x2
+                    verbose('x1 = %s, x2 = %s'%(x1,x2))
+                    ans.append(ans[-1] * g)
+                    found = True
                     break
             assert found,':-('
         return ans

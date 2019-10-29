@@ -169,6 +169,22 @@ class OCVnElement(ModuleElement):
         val=self._val-y._val
         return self.__class__(self._parent,val, check = False)
 
+    def _div_(self,right):
+        r"""
+        Finds the scalar such that self = a * right (assuming that it exists)
+        """
+        if self.is_zero():
+            return 0
+        else:
+            a = None
+            for u, v in zip(self._moments, right._moments):
+                if u != 0:
+                    a = u / v
+                    break
+            assert a is not None
+            assert (self - a * right).is_zero(), 'Not a scalar multiple of right'
+            return a
+
     def r_act_by(self,x):
         r"""
         Act on the right by a matrix.
@@ -228,8 +244,7 @@ class OCVnElement(ModuleElement):
             except NotImplementedError: pass
             return R(self._val[0,0])*P
         else:
-            return sum(R(self._val[ii,0])*P[ii] for ii in xrange(depth))
-
+            return sum(R(self._val[ii,0])*P[ii] for ii in xrange(self._depth))
 
     def valuation(self,l=None):
         r"""
@@ -245,6 +260,21 @@ class OCVnElement(ModuleElement):
             return min([self._val[ii,0].valuation(l) for ii in range(self._depth)])
         else:
             return min([self._val[ii,0].valuation(l) for ii in range(self._depth)])
+
+    def valuation_list(self,l=None):
+        r"""
+        The `l`-adic valuation of ``self``, as a list.
+
+        INPUT: a prime `l`. The default (None) uses the prime of the parent.
+
+        """
+        if not self._parent.base_ring().is_exact():
+            if(not l is None and l!=self._parent._Rmod.prime()):
+                raise ValueError, "This function can only be called with the base prime"
+            l = self._parent._Rmod.prime()
+            return [self._val[ii,0].valuation(l) for ii in range(self._depth)]
+        else:
+            return [self._val[ii,0].valuation(l) for ii in range(self._depth)]
 
     def reduce_mod(self, N = None):
         if N is None:

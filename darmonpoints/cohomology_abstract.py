@@ -83,6 +83,19 @@ class CohomologyElement(ModuleElement):
     def _neg_(self):
         return self.__class__(self.parent(), [ -a for a in self._val ])
 
+    def _div_(self, right):
+        ans = None
+        for u, v in zip(self.values(), right.values()):
+            if v != 0:
+                try:
+                    ans = u / v
+                    break
+                except (IndexError, ZeroDivisionError):
+                    pass
+        if ans is None:
+            raise RuntimeError, "It seems that we are trying to divide by 0"
+        return ans
+
     def __rmul__(self,right):
         return self.__class__(self.parent(), [ ZZ(right) * a for a in self._val ])
 
