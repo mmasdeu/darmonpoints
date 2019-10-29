@@ -58,7 +58,7 @@ from sage.modules.free_module_element import free_module_element, vector
 from representations import *
 from time import sleep
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
-from sage.modular.cusps import Cusp
+# from sage.modular.cusps import Cusp
 
 def find_newans(Coh,glocs,ti):
     gens = Coh.group().gens()
@@ -322,7 +322,11 @@ class ArithCohElement(CohomologyElement):
             ans = self.parent().coefficient_module()(0)
             for g in G.get_hecke_reps(q):
                 g_inv = M2Z(g.adjugate())
-                ans += g * self.evaluate_at_cusp_list([(n, cc.apply(g_inv.list())) for n, cc in cusp_list])
+                new_cusp_list = []
+                a, b, c, d = g_inv.list()
+                for n, cc in cusp_list:
+                    new_cusp_list.append((n, (a * cc[0] + b * cc[1], c * cc[0] + d * cc[1])))
+                ans += g * self.evaluate_at_cusp_list(new_cusp_list)#[(n, cc.apply(g_inv.list())) for n, cc in cusp_list]
             ans -= (q+1) * self.evaluate_at_cusp_list(cusp_list)
         else:
             ans = self.evaluate_at_cusp_list(cusp_list)
@@ -338,28 +342,33 @@ class ArithCohElement(CohomologyElement):
         K = V.base_ring()
         prec = K.precision_cap()
         G = H.group()
-        N = G.level
-        a, mc = cusp.numerator(), -cusp.denominator()
-        g, d, b = xgcd(a, mc)
-        assert g == 1 and a * d + b * mc == 1
-        gamma = Matrix(ZZ,2,2,[a,b,-mc,d])
-        T0 = gamma * Matrix(ZZ,2,2,[1,1,0,1]) * gamma.adjugate()
-        T = T0
-        while T[1,0] % N != 0:
-            T *= T0
-        T = G(T)
-        A = V.acting_matrix(T, prec + 1).change_ring(K) - 1
-        verbose('T = %s'%T)
-        verbose('A = %s'%A)
-        ans = V(A.solve_right(self.evaluate(T)._val,check=False))
-        verbose('val_boundary = %s'%(T * ans - ans - self.evaluate(T)).valuation_list())
+        a, c = cusp
+        try:
+            g, d, b = a.xgcd(-c)
+        except AttributeError:
+            if a.gcd(c) != 1:
+                raise ValueError('a, c not coprime.')
+            F = G.base_field().ring_of_integers()
+            ideal_c = F.ideal(c)
+            d = next(x for x in ideal_c.residues() if a * x - 1 in ideal_c)
+            b = (1 - a * x) / c
+        assert a * d - b * c == 1
+
+        gamma = Matrix([[a,b],[c,d]])
+        Tlist = G.compute_cusp_stabiliser(gamma)
+        A = V.acting_matrix(Tlist[0], prec + 1).change_ring(K) - 1
+        b = self.evaluate(Tlist[0])._val
+        for T in Tlist[1:]:
+            A = A.stack(V.acting_matrix(T, prec + 1).change_ring(K) - 1)
+            b = b.stack(self.evaluate(T)._val)
+        ans = V(A.solve_right(b, check=False))
         return ans
 
     def evaluate_at_cusp_list(self, cusp_list):
         symb = 0
         for n, cusp in cusp_list:
-            gamma, A = self.parent().S_arithgroup().find_matrix_from_cusp(cusp)
-            symb += n * (gamma**-1 * (self.evaluate(gamma) + self.cusp_boundary_element(Cusp(A[0,0],A[1,0]))))
+            gamma, A = self.parent().group().find_matrix_from_cusp(cusp)
+            symb += n * (gamma**-1 * (self.evaluate(gamma) + self.cusp_boundary_element((A[0,0],A[1,0]))))
         return symb
 
     @cached_method
@@ -368,7 +377,7 @@ class ArithCohElement(CohomologyElement):
         p = V.base_ring().prime()
         x = ZZ['x'].gen()
         scale = ZZ(self.Tq_eigenvalue(p))**-1
-        cusp_list = [(1, Cusp(h[0,1],h[0,0])), (-1, Cusp(h[1,1],h[1,0]))]
+        cusp_list = [(1, (h[0,1],h[0,0])), (-1, (h[1,1],h[1,0]))]
         symb = self.evaluate_cuspidal_modsym_at_cusp_list(cusp_list)
         a,b,c,d = h.list()
         g = V.Sigma0()(Matrix(ZZ,2,2,[-a,b,-c,d]))
