@@ -1013,7 +1013,7 @@ class ArithGroup_generic(AlgebraicGroup):
         if hasattr(N,'number_field'): ## Base field not Q
             from sage.modular.modsym.p1list_nf import P1NFList
             return P1NFList(N)
-        else:	## Base field Q
+        else:   ## Base field Q
             from sage.modular.modsym.p1list import P1List
             return P1List(N)
 
