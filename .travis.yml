@@ -1,4 +1,5 @@
 language: python
+dist: bionic
 matrix:
   include:
   - env: CACHE_NAME=latest DEPLOY_DOC_FROM_BRANCH=master DEPLOY_DOC_TO_REPOSITORY=mmasdeu/darmonpoints DEPLOY_DOC_TO_DIRECTORY=doc/html SAGE_LOCAL=$HOME/SageMath SAGE_SERVER=http://mirrors.xmission.com/sage/linux/64bit/ SAGE_AGE=0
