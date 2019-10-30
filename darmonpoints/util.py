@@ -389,15 +389,8 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     - ``prec`` - the `p`-adic precision, default is 20.
 
     """
-    # if R is None:
-    #     R = u.parent()
-    #     u = R(u)
-    # p = R.prime()
-
     p = R.prime()
-
     jE = E.j_invariant()
-
     if K_to_Cp is None:
         K_to_Cp = lambda x:x
 
@@ -1421,16 +1414,6 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     for twopow in twopowlist:
         addpart = addpart0 / twopow
         success = False
-
-        # for a,b in product(range(p),repeat = 2) if twopow * known_multiple != 1 else [(1,0)]:
-        #     if a == 0 and b == 0:
-        #         continue
-        #     if twopow * known_multiple != 1:
-        #         try:
-        #             J1 = Cp.teichmuller(a + Cp.gen()*b) * addpart.exp()
-        #         except ValueError: continue
-        #     else:
-        #         J1 = J
         power = 1/(twopow * known_multiple)
         pnum = E.torsion_order() * power.numerator()
         pden = E.torsion_order() * power.denominator()
@@ -1495,11 +1478,8 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
     jpowseries = E4.q_expansion(prec+7)**3/Deltamodform.q_expansion(prec+7)
     jpowseries = PolynomialRing(ZZ,names='w')([ZZ(jpowseries[i]) for i in range(prec+1)])
     Kp = emb.codomain()
-    try:
-        qElog = Kp(qElog)
-    except RuntimeError:
-        qElog = Kp(qElog.trace()/2)
-    w3s = [Kp(1)] + [o for o,_ in (PolynomialRing(Kp,names='w')([Kp.one(),Kp.one(),Kp.one()])).roots()]
+    qElog = Kp(qElog.trace()/2)
+    w3s = [Kp(1)] + [o for o,_ in PolynomialRing(Kp,names='w')([1,1,1]).roots()]
     roots_of_unity = [Kp.teichmuller(a) for a in range(1,p)]
     qE0 = qElog.exp()
     for zeta,D in product(roots_of_unity,selmer_group_iterator(F,S,12)):
@@ -1513,7 +1493,10 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
         except ValueError:
             continue
         for w3 in w3s:
-            c4pol = algdep((c4root * w3).add_bigoh(prec),deg)
+            try:
+                c4pol = algdep((c4root * w3).add_bigoh(prec),deg)
+            except ValueError:
+                continue
             if height_polynomial(c4pol,base = p) > height_threshold * prec:
                 continue
             for c4ex,_ in c4pol.roots(F):

@@ -370,5 +370,37 @@ class ArithHomology(HomologyGroup):
                     ans += self((group.get_hecke_ti(g,gamma,l,use_magma),g.conjugate() * v))
         return scale * ans
 
-class ArithHomologyElement(HomologyElement):
-    pass
+class Abelianization(HomologyGroup):
+    def __init__(self,G):
+        HomologyGroup.__init__(self, G, ZZ**1, trivial_action = True)
+
+    def ambient(self):
+        return self.space().V()
+
+    def abelian_group(self):
+        return self.space()
+
+    def abelian_invariants(self):
+        return self.space().invariants()
+
+    def _element_constructor_(self,x):
+        if isinstance(x, tuple):
+            if isinstance(x[1], tuple):
+                return HomologyGroup._element_constructor_(self, x)
+            else:
+                return HomologyGroup._element_constructor_(self, (x[0], self.coefficient_module()([x[1]])))
+        elif hasattr(x,'parent') and x.parent() is self.group():
+            return HomologyGroup._element_constructor_(self, (x,self.coefficient_module()([1])))
+        else:
+            return HomologyGroup._element_constructor_(self, x)
+
+    def _repr_(self):
+        return 'Abelianization of %s, with invariants %s'%(self.group(),self.abelian_invariants())
+
+    def ab_to_G(self,x):
+        group = self.group()
+        ans = 1
+        if x.parent() == self:
+            for g, v in zip(self.group().gens(), x.values()):
+                ans *= g**ZZ(v[0])
+        return ans

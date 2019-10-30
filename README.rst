@@ -61,7 +61,7 @@ The files ``darmonpoints.py``, ``findcurve.py`` and ``padicperiods.py`` contain 
     sage: N = E.conductor()
     sage: P = F.ideal(r^2 - 2*r - 1)
     sage: beta = -3*r^2 + 9*r - 6
-    sage: darmon_point(P,E,beta,20)
+    sage: darmon_point(P,E,beta,30)
 
 We can also *discover* equations of curves!
 

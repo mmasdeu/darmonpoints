@@ -9,7 +9,6 @@ from sage.structure.sage_object import SageObject
 from sage.misc.all import cached_method,walltime
 from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement
-from sage.structure.parent import Parent
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
@@ -32,7 +31,6 @@ from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
 from sage.rings.infinity import Infinity
-from homology_abstract import HomologyGroup
 from arithgroup_element import ArithGroupElement
 from sage.plot.hyperbolic_polygon import hyperbolic_polygon
 from sage.repl.rich_output.pretty_print import show
@@ -289,20 +287,7 @@ def angle_sign(self, other):  # UHP
 
 class ArithGroup_generic(AlgebraicGroup):
     def __init__(self):
-        if self._compute_presentation:
-            # Define the (abelian) relation matrix
-            self._relation_matrix = matrix(ZZ,len(self.get_relation_words()),len(self.gens()),0)
-            for i,rel in enumerate(self.get_relation_words()):
-                for j in rel:
-                    if j > 0:
-                        self._relation_matrix[i,j-1] += 1
-                    else:
-                        self._relation_matrix[i,-j-1] -= 1
-        self._cache_fox_gradient = dict()
-        self._cache_hecke_reps = dict()
-
-    def clear_cache(self):
-        return
+        super(ArithGroup_generic,self).__init__()
 
     def base_field(self):
         return self.F
@@ -316,8 +301,15 @@ class ArithGroup_generic(AlgebraicGroup):
     def get_relation_words(self):
         return self._relation_words
 
+    @cached_method
     def get_relation_matrix(self):
-        return self._relation_matrix
+        # Define the (abelian) relation matrix
+        rel_words = self.get_relation_words()
+        relation_matrix = matrix(ZZ,len(rel_words),len(self.gens()),0)
+        for i,rel in enumerate(rel_words):
+            for j in rel:
+                relation_matrix[i,ZZ(j).abs() - 1] += ZZ(j).sign()
+        return relation_matrix
 
     def one(self):
         return self.element_class(self,word_rep = [],quaternion_rep = self.B(1),check = False)
@@ -362,17 +354,6 @@ class ArithGroup_generic(AlgebraicGroup):
                 pass
             return self.element_class(self, quaternion_rep = x,check = False)
 
-    def init_fundom_data(self): # generic
-        # Fundamental domain data
-        UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
-        self._fundamental_domain = [ComplexField(1000)(o.Real().sage(), o.Imaginary().sage()) for o in self._G_magma.FundamentalDomain()]
-        length = len(UsideFD_magma)
-        P = CC(0, 90.0/100.0) # A point inside the fundamental domain.
-        self._in_interior = {}
-        for v1, v2 in self.fundamental_domain_data():
-            center, r2 = geodesic_circle(v1, v2, False)
-            self._in_interior[(v1,v2)] = (center, r2, ((P - center).norm() < r2)) # The last argument encodes whether one needs to take the exterior or the interior of the geodesic circle.
-        return
 
     def find_fundom_rep(self, z0_H, v0=None, return_alternative=False, max_iters=100): # generic -- Take z0 to the fundamental domain
         r'''
@@ -445,27 +426,44 @@ class ArithGroup_generic(AlgebraicGroup):
                 return t1, delta_inv * wd[-1]
 
     def plot_fundamental_domain(self):
-        return hyperbolic_polygon(self._fundamental_domain)
+        return hyperbolic_polygon(self.fundamental_domain())
+
+    @cached_method
+    def fundamental_domain_interior_data(self): # generic
+        UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
+        length = len(UsideFD_magma)
+        P = CC(0, 90.0/100.0) # A point inside the fundamental domain.
+        in_interior = {}
+        for v1, v2 in self.fundamental_domain_data():
+            center, r2 = geodesic_circle(v1, v2, False)
+            in_interior[(v1,v2)] = (center, r2, ((P - center).norm() < r2)) # The last argument encodes whether one needs to take the exterior or the interior of the geodesic circle.
+        return in_interior
+
+    @cached_method
+    def fundamental_domain(self):
+        return [ComplexField(1000)(o.Real().sage(), o.Imaginary().sage()) for o in self._G_magma.FundamentalDomain()]
 
     @cached_method
     def fundamental_domain_data(self):
-        fdom = self._fundamental_domain
+        fdom = self.fundamental_domain()
         ans = [(fdom[i], fdom[i+1]) for i in range(len(fdom)-1)]
         ans.append((fdom[-1], fdom[0]))
         return ans
 
     def is_in_fundom(self, z):
+        in_interior_data = self.fundamental_domain_interior_data()
         for v1, v2 in self.fundamental_domain_data():
-            center, r2, in_interior = self._in_interior[(v1, v2)]
+            center, r2, in_interior = in_interior_data[(v1, v2)]
             if ((z - center).norm() < r2) != in_interior:
                 return False
         return True
 
     def is_in_fundom_interior(self, z, tol = None):
+        in_interior_data = self.fundamental_domain_interior_data()
         if tol is None:
             tol = 10**-5
         for v1, v2 in self.fundamental_domain_data():
-            center, r2, in_interior = self._in_interior[(v1, v2)]
+            center, r2, in_interior = in_interior_data[(v1, v2)]
             if in_interior:
                 if r2 - (z - center).norm() < tol:
                     return False
@@ -481,10 +479,11 @@ class ArithGroup_generic(AlgebraicGroup):
             return True
 
     def is_in_fundom_boundary(self, z, tol = None):
+        in_interior_data = self.fundamental_domain_interior_data()
         if tol is None:
             tol = 10**-5
         for v1, v2 in self.fundamental_domain_data():
-            center, r2, in_interior = self._in_interior[(v1, v2)]
+            center, r2, in_interior = in_interior_data[(v1, v2)]
             if (r2 - (z - center).norm()).abs() < tol:
                 if is_in_open_interval(z.real(), v1.real(), v2.real(),0):
                     return True
@@ -649,6 +648,7 @@ class ArithGroup_generic(AlgebraicGroup):
             else:
                 yield prod([Ugens[i] for i in v],self.B(1))
 
+    @cached_method(key = lambda self, l, use_magma, g0, progress: (self, l))
     def get_hecke_reps(self,l,use_magma = True,g0 = None,progress = False): # generic
         r'''
         TESTS:
@@ -659,9 +659,6 @@ class ArithGroup_generic(AlgebraicGroup):
         sage: G = ArithGroup(QQ,6,None,5,magma=Magma()) # optional - magma
         sage: reps = G.get_hecke_reps(11) # optional - magma
         '''
-        try:
-            return self._cache_hecke_reps[l]
-        except KeyError: pass
         if l == oo:
             reps = [self.non_positive_unit()]
         elif l == -oo:
@@ -692,9 +689,7 @@ class ArithGroup_generic(AlgebraicGroup):
                     update_progress(float(len(reps))/float(num_reps),'Getting Hecke representatives (%s iterations)'%(n_iters))
             if progress:
                 update_progress(float(1.0),'Getting Hecke representatives (%s iterations)'%(n_iters))
-        reps = tuple([set_immutable(o) for o in reps])
-        self._cache_hecke_reps[l] = reps
-        return reps
+        return tuple([set_immutable(o) for o in reps])
 
     @cached_method
     def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False, conservative = False, reps = None):
@@ -825,6 +820,7 @@ class ArithGroup_generic(AlgebraicGroup):
 
     @cached_method
     def abelianization(self):
+        from homology_abstract import Abelianization
         return Abelianization(self)
 
     def find_matrix_from_cusp(self, cusp):
@@ -1044,6 +1040,9 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
         self._O_discriminant = ZZ.ideal(self.O.discriminant())
         self.basis_invmat = matrix(QQ,4,4,[list(self.O.gen(n)) for n in xrange(4)]).transpose().inverse()
         if self._compute_presentation:
+            self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
+            FDom_magma = self._G_magma.FundamentalDomain() #self._D_magma.name()) # Debug
+            self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
             self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1))),self.magma) for n in xrange(len(self._U_magma.gens()))]
 
             Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
@@ -1079,9 +1078,7 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
                     newrel = rel + self.minus_one_long
                     assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
                     self._relation_words.append(newrel)
-            self.init_fundom_data()
-        ArithGroup_generic.__init__(self)
-        Parent.__init__(self)
+        super(ArithGroup_rationalquaternion,self).__init__()
 
     def _repr_(self):
         return 'Arithmetic Group attached to rational quaternion algebra, disc = %s, level = %s'%(self.discriminant,self.level)
@@ -1115,11 +1112,6 @@ class ArithGroup_rationalquaternion(ArithGroup_generic):
             else:
                 self._D_magma = info_magma._D_magma
         self._F_magma = self._B_magma.BaseRing()
-        if self._compute_presentation: # rational quaternion
-            self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
-            FDom_magma = self._G_magma.FundamentalDomain() #self._D_magma.name()) # Debug
-            self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
-
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
 
     def _quaternion_to_list(self,x):
@@ -1396,10 +1388,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
                 sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1))
                 assert sign == self.B(1)
                 self._relation_words.append(syllables_to_tietze(newrel))
-        rho = (-1+AA(-3).sqrt())/2
-        self._fundamental_domain = [10**6 * AA(-1).sqrt(), rho, rho + 1]
-        ArithGroup_generic.__init__(self)
-        Parent.__init__(self)
+        super(ArithGroup_rationalmatrix,self).__init__()
 
     def _repr_(self):
         return 'Matrix Arithmetic Group of level = %s'%(self.level)
@@ -1408,6 +1397,11 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
 
     def _quaternion_to_list(self,x):
         return x.list()
+
+    @cached_method
+    def fundamental_domain(self):
+        rho = (-1+AA(-3).sqrt())/2
+        return [10**6 * AA(-1).sqrt(), rho, rho + 1]
 
     def get_archimedean_embedding(self,prec=None): # matrix
         r"""
@@ -1684,22 +1678,14 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         else:
             return False
 
-class FaceRel(SageObject):
-    def __init__(self,center = None ,radius = None, mat = None):
-        self.center = center
-        self.radius = radius
-        self.mat = mat
-
-class ArithGroup_nf_quaternion(ArithGroup_generic):
+class ArithGroup_nf_generic(ArithGroup_generic):
     Element = ArithGroupElement
     def __init__(self,base,a,b,level,info_magma = None,grouptype =  'PSL2',magma = None,timeout = 0, compute_presentation = True):
         self.magma = magma
         if base.signature()[1] == 0:
             self.algorithm = 'jv'
-            self.get_word_rep = self.get_word_rep_jv
         elif base.signature()[1] == 1:
             self.algorithm = 'aurel'
-            self.get_word_rep = self.get_word_rep_aurel
         else:
             raise NotImplementedError('At most one complex place!')
         assert grouptype in ['SL2','PSL2','GL2','PGL2']
@@ -1730,165 +1716,8 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         self.basis_invmat = matrix(QQ,4*self.F.degree(),4*self.F.degree(),Obasis).transpose().inverse()
 
         if self._compute_presentation:
-            if self.algorithm == 'aurel':
-                self._init_aurel_data(timeout = timeout)
-            else:
-                if timeout != 0:
-                    raise NotImplementedError("Timeout functionality not implemented for totally real fields")
-                self._init_jv_data()
-        self.init_fundom_data()
-        ArithGroup_generic.__init__(self)
-        Parent.__init__(self)
-
-    @cached_method()
-    def matrix_rep(self, x):
-        try:
-            x = x.quaternion_rep
-        except AttributeError:
-            pass
-        if self.B.invariants() != (1,1):
-            raise NotImplementedError
-        F = self.F
-        M = MatrixSpace(F,2,2)
-        basis = [M([1,0,0,1]), M([1,0,0,-1]), M([0,-1,-1,0]), M([0,-1,1,0])]
-        return sum((a * b for a, b in zip(list(self.B(x)), basis)), M(0))
-
-    def _init_jv_data(self): # nf quaternion
-        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1))),self.magma) for n in xrange(len(self._U_magma.gens()))]
-
-        Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
-        mside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsMap')
-        UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
-
-        self.Uside = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(mside_magma.Image(g))),self.magma) for g in Uside_magma.Generators()]
-
-        # We initialize some attributes by calling this function stupidly
-        self.magma.WordProblem(self._G_magma(1))
-
-        gquats_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsQuats')
-        self.ngquats = ZZ(len(gquats_magma[1]))
-        emb = self.get_archimedean_embedding(300)
-        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion()),self.magma) for n in xrange(len(gquats_magma[i+1]))] for i in xrange(2)])
-        self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
-
-        self.pi = 4 * RealField(300)(1).arctan()
-        self.findex = [ZZ(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimGroupSidepairsIndex')]
-        self.fdargs = [RealField(300)(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimFDArgs')]
-
-        self.minus_one_long = [ len(self.Ugens) + 1 ]
-        self.Ugens.append(self.B(-1))
-
-        self.translate = [None] + [self.__magma_word_problem_jv(g**-1) for g in self.gquats[1:]]
-
-        self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [i+1],check = False) for i,g in enumerate(self.Ugens) ]
-
-        temp_relation_words = [self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in xrange(len(self._U_magma.Relations()))] + [ [len(self.Ugens), len(self.Ugens)] ]
-
-        self._relation_words = []
-        for rel in temp_relation_words:
-            sign = multiply_out(rel,self.Ugens)
-            # assert sign.abs() == 1
-            if sign == 1 or 'P' in self._grouptype:
-                self._relation_words.append(rel)
-            else:
-                newrel = rel + self.minus_one
-                assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
-                self._relation_words.append(newrel)
-
-    def _init_aurel_data(self,prec = 100,periodenum = 20, timeout = 0):
-        verbose('Computing normalized basis')
-        if 'GL' in self._grouptype:
-            # raise NotImplementedError,'This implementation has bugs'
-            grouptype = '"Units"'
-        else:
-            grouptype = '"NormOne"'
-            assert 'SL' in self._grouptype
-        verbose('Seed = %s'%self.magma.eval('GetSeed()'))
-        verbose(' O = %s'%self._O_magma)
-        verbose(' Basis = %s'%self._O_magma.Basis())
-        verbose('Grouptype = %s, prec = %s, periodenum = %s, timeout = %s'%(grouptype,prec, periodenum, timeout))
-
-        _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, PeriodEnum = periodenum, max_time = timeout)
-        verbose('Done normalizedbasis')
-        if f == self.magma(False):
-            raise RuntimeError("Timed out (%s sec) in NormalizedBasis"%timeout)
-        matlist = self.magma.GetMatrixList(f)
-
-        self._facerels_magma = f
-        self._facerels = []
-        verbose('Getting precision from Magma')
-        try:
-            self._RR = RR = RealField((len(str(f[1].Radius)) * RealField(20)(10).log()/RealField(20)(2).log()).ceil()-13)
-        except:
-            self._RR = RR = RealField(100)
-        verbose('Getting precision done')
-        prec = RR.precision()
-        CC = ComplexField(prec)
-        all_complex_embs = [o for o in self.F.embeddings(CC) if o(self.F.gen()).imag() != 0]
-        assert len(all_complex_embs) == 2
-        vC = all_complex_embs[0]
-        tmp = self.magma.InfinitePlaces(self._F_magma)[1 + self.F.signature()[0]]
-        if (vC(self.F.gen(0)).imag() * self._F_magma.gen(1).Evaluate(tmp).Im()._sage_()) < 0:
-            vC = all_complex_embs[1]
-            assert (vC(self.F.gen(0)).imag() * self._F_magma.gen(1).Evaluate(tmp).Im()._sage_()) > 0
-        self._vC = vC
-        self._HH = QuaternionAlgebra(RR,-1,-1)
-        ih,jh,kh = self._HH.gens()
-        self._Pmat, self._Pmatinv = JtoP(self._HH,MatrixSpace(CC,2,2))
-        i,j,k  = self.B.gens()
-        centerlist = [self._HH(o) for o in sage_eval(self.magma.eval('[%s[i]`Center : i in [1..%s]]'%(f.name(),len(f))),{'i': ih, 'j': jh})]
-        radiuslist = [RR(o) for o in sage_eval(self.magma.eval('[%s[i]`Radius : i in [1..%s]]'%(f.name(),len(f))))]
-        matlist = [Matrix(self._HH,2,2,o) for o in sage_eval(self.magma.eval('[%s[i] : i in [1..%s]]'%(matlist.name(),len(f))),{'i' : ih, 'j': jh, 'k': kh})]
-        self._facerels = [FaceRel(c,r,m) for c,r,m in zip(centerlist,radiuslist,matlist)]
-
-        verbose('Computing presentation')
-        G,gens = f.Presentation(e,self._O_magma,nvals = 2)
-        Hm,GtoHm = self.magma.ReduceGenerators(G,nvals = 2)
-        r = self.F.gen()
-        i,j,k = self.B.gens()
-        chunk_length = 10
-        ngens = len(gens)
-        assert ngens == len(G.gens())
-        nchunks = (QQ(ngens)/QQ(chunk_length)).ceil()
-        verbose('Done ReduceGenerators. Now calculating inverse iso for %s generators'%len(gens))
-        tmp_quaternions = []
-        self._simplification_iso = []
-        for tt in xrange(nchunks):
-            verbose('... %s/%s ...'%(tt+1,nchunks))
-            i0 = tt * chunk_length + 1
-            i1 = min((tt+1) * chunk_length,ngens)
-            newvec = sage_eval(self.magma.eval('[ElementToSequence(Image(%s,%s.i)) : i in [%s..%s]]'%(GtoHm.name(),G.name(),i0,i1)))
-            self._simplification_iso.extend(newvec)
-            tmp_quaternions.extend(sage_eval(self.magma.eval('[%s[i] : i in [%s..%s]]'%(gens.name(),i0,i1)).replace('$.1','r'),{'r':r, 'i':i, 'j':j, 'k':k}))
-
-        assert len(self._simplification_iso) == len(self._facerels), "Simplification iso and facerels have different lengths (%s != %s)"%(len(self._simplification_iso),len(self._facerels))
-        verbose('Done inverse isomorphism. Now calculating Ugens for %s generators'%len(Hm.gens()))
-        self.Ugens = []
-        wrds = sage_eval(self.magma.eval('[ElementToSequence(%s!(%s.i)) : i in [1..%s]]'%(G.name(),Hm.name(),len(Hm.gens()))))
-        for wd in wrds:
-            self.Ugens.append(multiply_out(wd, tmp_quaternions, self.B(1)))
-        verbose('Done calculating Ugens. Now initializing relations')
-        if 'P' not in self._grouptype:
-            self.F_units = self.F.unit_group()
-            self.F_unit_offset = len(self.Ugens)
-            self.Ugens.extend([self.B(self.F(u)) for u in self.F_units.gens()])
-            temp_relation_words = [Hm.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in xrange(len(Hm.Relations()))] + [ [self.F_unit_offset + i + 1] * ZZ(u.multiplicative_order()) for i,u in enumerate(self.F_units.gens()) if u.multiplicative_order() != Infinity]
-            self._relation_words = []
-            for rel in temp_relation_words:
-                remaining_unit = self.F_units(self.F(multiply_out(rel, self.Ugens, self.B(1))))
-                assert remaining_unit.multiplicative_order() != Infinity
-                ulist = remaining_unit.exponents()
-                newrel = rel + syllables_to_tietze([(self.F_unit_offset + i,a) for i,a in enumerate(ulist) if a != 0 ])
-                assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
-                self._relation_words.append(newrel)
-        else:
-            self._relation_words = [Hm.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in xrange(len(Hm.Relations()))]
-        verbose('Done initializing relations. Now generators...')
-        self._gens = []
-        for i,g in enumerate(self.Ugens):
-            self._gens.append(ArithGroupElement(self,quaternion_rep = g, word_rep = [i+1],check = False))
-        verbose('Done initializing generators')
-
+            self._init_geometric_data(timeout = timeout)
+        super(ArithGroup_nf_generic,self).__init__()
 
     def _repr_(self):
         return 'Arithmetic Group attached to quaternion algebra with a = %s, b = %s and level = %s'%(self.a,self.b,self.level)
@@ -1944,7 +1773,6 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                     self._O_magma = self.magma.Order([(on + i)/2, (j+k)/2,  Pgen * (j-k)/2, (on-i)/2])
                 else:
                     M = sage_F_ideal_to_magma(self._F_magma,info_magma.level)
-                    # self._O_magma = info_magma._O_magma.pMaximalOrder(P)
                     self._O_magma = info_magma._Omax_magma.Order(M)
             else:
                 self._O_magma = self._Omax_magma
@@ -1952,134 +1780,14 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 self._D_magma = self.magma.UnitDisc(Precision = 300)
             else:
                 self._D_magma = info_magma._D_magma
-        if self.algorithm == 'jv':
+        if not hasattr(self,'_F_magma'):
             self._F_magma = self._B_magma.BaseRing()
-            if self._compute_presentation:
-                self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
-                FDom_magma = self._G_magma.FundamentalDomain()
-                self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
-
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
 
     def _quaternion_to_list(self,x):
         xlist = [u for o in x.coefficient_tuple() for u in o.list()]
         V = (self.basis_invmat * matrix(QQ,4 * self.F.degree() ,1,xlist)).list()
         return [self.F(y) for y in izip(*[iter(V)]*self.F.degree())]
-
-    def get_word_rep_aurel(self,gamma):
-        # if not self._is_in_order(gamma):
-        #     raise RuntimeError,'gamma (= %s) is not in order!'%gamma
-        HH = self._HH
-        R = HH.base_ring()
-        boundary = self._facerels
-        eps = 2**-(R(HH.base_ring().precision())/R(2))
-        #verbose('eps = %s'%eps)
-        correct = False
-        B = self.B
-        deltaword = []
-        gammainv = gamma**-1
-        while not correct:
-            z = HH(0)
-            mat_gamma = self._kleinianmatrix(gammainv)
-            gammaz = act_H3(mat_gamma,z)
-            if len(boundary) == 0:
-                raise RuntimeError('Empty boundary')
-            lengthw = 0
-            delta = B(1)
-            while True:
-                d = R(1)
-                i0 = None
-                for i,b in enumerate(boundary):
-                    d1 = sum((o**2 for o in (gammaz - b.center).coefficient_tuple()))/b.radius**2
-                    if d >= (1+eps)*d1:
-                        d = d1
-                        i0 = i
-                        break # This might yield longer words, but should be faster!
-                if i0 is None:
-                    break
-                gammaz = act_H3(boundary[i0].mat,gammaz)
-                deltaword.append(i0+1)
-                lengthw += 1
-            correct = ( -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 5.0)
-            if not correct:
-                verbose('Error in word problem:')
-                verbose('gamma = %s'%gamma)
-                verbose('err = %s'%-(sum((o**2 for o in gammaz.coefficient_tuple()))))
-                raise RuntimeError('Error in word problem from Aurel 1')
-        deltaword.reverse()
-        try:
-            c = sum((list(self._simplification_iso[o-1]) for o in deltaword),[])
-        except IndexError:
-            raise RuntimeError('Error in word problem from Aurel 2')
-        return c
-
-    def _kleinianmatrix(self,gamma):
-        B = gamma.parent()
-        K = gamma.parent().base_ring()
-        CC = ComplexField(self._RR.precision())
-        vC = self._vC
-        aa,bb = [vC(o) for o in B.invariants()]
-        sa = aa.sqrt()
-        bsa = bb * sa
-        P, Pinv = self._Pmat, self._Pmatinv
-        x1,x2,x3,x4 = [vC(o) for o in gamma.coefficient_tuple()]
-        hi = self._HH.gen(0)
-        phi = lambda x:self._HH(x.real()) + hi * x.imag()
-        m = Pinv * Matrix(CC,2,2,[x1 + x2*sa, x3 + x4*sa, x3*bb - x4*bsa, x1- x2*sa])* P
-        if gamma.reduced_norm() != 1:
-            scal = 1/m.determinant().sqrt()
-            m *= scal
-        a,b,c,d = m.apply_map(phi).list()
-        hj = self._HH.gen(1)
-        A = ((a+d.conjugate()) + (b-c.conjugate())*hj)
-        B = ((b+c.conjugate()) + (a-d.conjugate())*hj)
-        C = ((c+b.conjugate()) + (d-a.conjugate())*hj)
-        D = ((d+a.conjugate()) + (c-b.conjugate())*hj)
-
-        return Matrix(self._HH,2,2,[A,B,C,D])
-
-    def get_word_rep_jv(self,delta): # nf quaternion
-        if not self._is_in_order(delta):
-            raise RuntimeError('delta (= %s) is not in order!'%delta)
-        tmp = _get_word_jv(self, delta)
-        if 'P' not in self._grouptype:
-            delta1 = multiply_out(tmp,self.Ugens,self.B(1)) # Should be fixed...this is not efficient
-            if delta1 != delta:
-                tmp.extend(self.minus_one_long)
-        return tmp
-
-    def __magma_word_problem_jv(self,x):
-        r'''
-        Given a quaternion x, finds its decomposition in terms of the generators
-
-        INPUT: x can be a list/vector of integers (giving the quaternion in terms of the basis for the order,
-        or x can be a quaternion, in which case the conversion is done in the function.
-
-        OUTPUT: A list representing a word in the generators
-
-        EXAMPLES:
-
-        sage: from darmonpoints.sarithgroup import ArithGroup
-        sage: G = ArithGroup(QQ,7,15,magma = Magma()) # optional - magma
-        sage: G.__magma_word_problem_jv(G.Ugens[2]*G.Ugens[1]) == [2,1] # optional - magma
-        '''
-        wtime = walltime()
-        x0 = x
-        # If x is a quaternion, find the expression in the generators.
-        if x.parent() is self.B:
-            x = quaternion_to_magma_quaternion(self._B_magma,self.B(x))
-        else:
-            if len(x) != 4:
-                raise ValueError('x (=%s) should be a list of length 4'%x)
-            x = quaternion_to_magma_quaternion(self._B_magma,self.B(sum(a*b for a,b in zip(self.Obasis,x))))
-        x_magma = self._G_magma(x)
-        V = self.magma.WordProblem(x_magma).ElementToSequence()._sage_()
-        delta1 = self.B(1)
-        for v in V:
-            delta1 = delta1 * self.Ugens[v - 1] if v > 0 else delta1 * self.Ugens[-v - 1]
-        if delta1 != x0 and 'P' not in self._grouptype:
-            V.extend(self.minus_one_long)
-        return V
 
     def _is_in_order(self,x):
         return all([o.is_integral() for o in self._quaternion_to_list(x)])
@@ -2148,17 +1856,18 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
         fwrite('# Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
 
         found = False
-        coords = K.gen().coordinates_in_terms_of_powers()
-        phi = K.hom([mu])
+        coords = lambda x:K(x).list() #K.gen().coordinates_in_terms_of_powers()
+        phi = K.hom([mu, self.B(self.F.gen())],check=False)
         u0 = find_the_unit_of(self.F,K)
         assert u0.is_integral() and (1/u0).is_integral()
         u = u0
         # Deal with nontrivial conductor
-        while coords(u)[1] % extra_conductor != 0:
+        while not self.F.ideal(extra_conductor).divides(self.F.ideal(coords(u)[1])):
             u *= u0
         gammalst = coords(u)
+        verbose('gammalst = %s (length = %s)'%(gammalst,len(gammalst)))
         assert len(gammalst) == 2
-        gammaquatrep = phi(u) # self.B(gammalst[0]) + self.B(gammalst[1]) * mu
+        gammaquatrep = self.B(gammalst[0]) + self.B(gammalst[1]) * mu # phi(u)
         verbose('gammaquatrep trd = %s and nrd = %s'%(gammaquatrep.reduced_trace(),gammaquatrep.reduced_norm()))
         assert gammaquatrep.reduced_trace() == u.trace(self.F) and gammaquatrep.reduced_norm() == u.norm(self.F)
 
@@ -2169,15 +1878,15 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                 break
             except ValueError:
                 gammaq *= gammaquatrep
-        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
-        fwrite('# gamma_psi = %s'%gamma,outfile)
-        fwrite('# tau_psi = %s'%tau1,outfile)
-        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
 
         a,b,c,d = iotap(gamma.quaternion_rep).list()
         DD = our_sqrt(Cp((a+d)**2 - 4))
         tau1 = (Cp(a - d) + DD) / Cp(2*c)
         tau2 = (Cp(a - d) - DD) / Cp(2*c)
+        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
+        fwrite('# gamma_psi = %s'%gamma,outfile)
+        fwrite('# tau_psi = %s'%tau1,outfile)
+        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
 
         if return_all:
             return gamma, tau1, tau2
@@ -2300,37 +2009,277 @@ class ArithGroup_nf_quaternion(ArithGroup_generic):
                     self._non_positive_unit = candidate
                     return candidate
 
-class Abelianization(HomologyGroup):
-    def __init__(self,G):
-        HomologyGroup.__init__(self, G, ZZ**1, trivial_action = True)
+class ArithGroup_nf_fuchsian(ArithGroup_nf_generic):
+    def _init_geometric_data(self, timeout = 0): # nf quaternion
+        if timeout != 0:
+            raise NotImplementedError("Timeout functionality not implemented yet")
 
-    def ambient(self):
-        return self.space().V()
+        self._G_magma = self.magma.FuchsianGroup(self._O_magma.name())
+        FDom_magma = self._G_magma.FundamentalDomain() #self._D_magma.name()) # Debug
+        self._U_magma,_,self._m2_magma = self._G_magma.Group(nvals = 3)
 
-    def abelian_group(self):
-        return self.space()
+        self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(self._U_magma.gen(n+1))),self.magma) for n in xrange(len(self._U_magma.gens()))]
 
-    def abelian_invariants(self):
-        return self.space().invariants()
+        Uside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairs')
+        mside_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsMap')
+        UsideFD_magma = self._G_magma.get_magma_attribute('ShimFDSidepairs')
 
-    def _element_constructor_(self,x):
-        if isinstance(x, tuple):
-            if isinstance(x[1], tuple):
-                return HomologyGroup._element_constructor_(self, x)
+        self.Uside = [magma_quaternion_to_sage(self.B,self._B_magma(self._m2_magma.Image(mside_magma.Image(g))),self.magma) for g in Uside_magma.Generators()]
+
+        # We initialize some attributes by calling this function stupidly
+        self.magma.WordProblem(self._G_magma(1))
+
+        gquats_magma = self._G_magma.get_magma_attribute('ShimGroupSidepairsQuats')
+        self.ngquats = ZZ(len(gquats_magma[1]))
+        emb = self.get_archimedean_embedding(300)
+        self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion()),self.magma) for n in xrange(len(gquats_magma[i+1]))] for i in xrange(2)])
+        self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
+
+        self.pi = 4 * RealField(300)(1).arctan()
+        self.findex = [ZZ(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimGroupSidepairsIndex')]
+        self.fdargs = [RealField(300)(x._sage_()) for x in self._G_magma.get_magma_attribute('ShimFDArgs')]
+
+        self.minus_one_long = [ len(self.Ugens) + 1 ]
+        self.Ugens.append(self.B(-1))
+
+        self.translate = [None] + [self.__magma_word_problem_jv(g**-1) for g in self.gquats[1:]]
+
+        self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [i+1],check = False) for i,g in enumerate(self.Ugens) ]
+
+        temp_relation_words = [self._U_magma.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in xrange(len(self._U_magma.Relations()))] + [ [len(self.Ugens), len(self.Ugens)] ]
+
+        self._relation_words = []
+        for rel in temp_relation_words:
+            sign = multiply_out(rel,self.Ugens)
+            # assert sign.abs() == 1
+            if sign == 1 or 'P' in self._grouptype:
+                self._relation_words.append(rel)
             else:
-                return HomologyGroup._element_constructor_(self, (x[0], self.coefficient_module()([x[1]])))
-        elif hasattr(x,'parent') and x.parent() is self.group():
-            return HomologyGroup._element_constructor_(self, (x,self.coefficient_module()([1])))
+                newrel = rel + self.minus_one
+                assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
+                self._relation_words.append(newrel)
+
+    def get_word_rep(self,delta): # nf quaternion
+        if not self._is_in_order(delta):
+            raise RuntimeError('delta (= %s) is not in order!'%delta)
+        tmp = _get_word_jv(self, delta)
+        if 'P' not in self._grouptype:
+            delta1 = multiply_out(tmp,self.Ugens,self.B(1)) # Should be fixed...this is not efficient
+            if delta1 != delta:
+                tmp.extend(self.minus_one_long)
+        return tmp
+
+    def __magma_word_problem_jv(self,x):
+        r'''
+        Given a quaternion x, finds its decomposition in terms of the generators
+
+        INPUT: x can be a list/vector of integers (giving the quaternion in terms of the basis for the order,
+        or x can be a quaternion, in which case the conversion is done in the function.
+
+        OUTPUT: A list representing a word in the generators
+
+        EXAMPLES:
+
+        sage: from darmonpoints.sarithgroup import ArithGroup
+        sage: G = ArithGroup(QQ,7,15,magma = Magma()) # optional - magma
+        sage: G.__magma_word_problem_jv(G.Ugens[2]*G.Ugens[1]) == [2,1] # optional - magma
+        '''
+        x0 = x
+        # If x is a quaternion, find the expression in the generators.
+        if x.parent() is self.B:
+            x = quaternion_to_magma_quaternion(self._B_magma,self.B(x))
         else:
-            return HomologyGroup._element_constructor_(self, x)
+            if len(x) != 4:
+                raise ValueError('x (=%s) should be a list of length 4'%x)
+            x = quaternion_to_magma_quaternion(self._B_magma,self.B(sum(a*b for a,b in zip(self.Obasis,x))))
+        x_magma = self._G_magma(x)
+        V = self.magma.WordProblem(x_magma).ElementToSequence()._sage_()
+        delta1 = self.B(1)
+        for v in V:
+            delta1 = delta1 * self.Ugens[v - 1] if v > 0 else delta1 * self.Ugens[-v - 1]
+        if delta1 != x0 and 'P' not in self._grouptype:
+            V.extend(self.minus_one_long)
+        return V
 
-    def _repr_(self):
-        return 'Abelianization of %s, with invariants %s'%(self.group(),self.abelian_invariants())
+class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
+    def _init_geometric_data(self,prec = 100,periodenum = 20, timeout = 0):
+        verbose('Computing normalized basis')
+        if 'GL' in self._grouptype:
+            # raise NotImplementedError,'This implementation has bugs'
+            grouptype = '"Units"'
+        else:
+            grouptype = '"NormOne"'
+            assert 'SL' in self._grouptype
+        verbose('Seed = %s'%self.magma.eval('GetSeed()'))
+        verbose(' O = %s'%self._O_magma)
+        verbose(' Basis = %s'%self._O_magma.Basis())
+        verbose('Grouptype = %s, prec = %s, periodenum = %s, timeout = %s'%(grouptype,prec, periodenum, timeout))
 
-    def ab_to_G(self,x):
-        group = self.group()
-        ans = 1
-        if x.parent() == self:
-            for g, v in zip(self.group().gens(), x.values()):
-                ans *= g**ZZ(v[0])
-        return ans
+        _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, PeriodEnum = periodenum, max_time = timeout)
+        verbose('Done normalizedbasis')
+        if f == self.magma(False):
+            raise RuntimeError("Timed out (%s sec) in NormalizedBasis"%timeout)
+        matlist = self.magma.GetMatrixList(f)
+
+        self._fundom_data = []
+        verbose('Getting precision from Magma')
+        try:
+            self._RR = RR = RealField((len(str(f[1].Radius)) * RealField(20)(10).log()/RealField(20)(2).log()).ceil()-13)
+        except:
+            self._RR = RR = RealField(100)
+        verbose('Getting precision done')
+        prec = RR.precision()
+        CC = ComplexField(prec)
+        all_complex_embs = [o for o in self.F.embeddings(CC) if o(self.F.gen()).imag() != 0]
+        assert len(all_complex_embs) == 2
+        vC = all_complex_embs[0]
+        tmp = self.magma.InfinitePlaces(self._F_magma)[1 + self.F.signature()[0]]
+        if (vC(self.F.gen(0)).imag() * self._F_magma.gen(1).Evaluate(tmp).Im()._sage_()) < 0:
+            vC = all_complex_embs[1]
+            assert (vC(self.F.gen(0)).imag() * self._F_magma.gen(1).Evaluate(tmp).Im()._sage_()) > 0
+        self._vC = vC
+        self._HH = QuaternionAlgebra(RR,-1,-1)
+        ih,jh,kh = self._HH.gens()
+        self._Pmat, self._Pmatinv = JtoP(self._HH,MatrixSpace(CC,2,2))
+        i,j,k  = self.B.gens()
+        centerlist = sage_eval(self.magma.eval('[%s[i]`Center : i in [1..%s]]'%(f.name(),len(f))),{'i': ih, 'j': jh})
+        radiuslist = sage_eval(self.magma.eval('[%s[i]`Radius : i in [1..%s]]'%(f.name(),len(f))))
+        matlist = sage_eval(self.magma.eval('[%s[i] : i in [1..%s]]'%(matlist.name(),len(f))),{'i' : ih, 'j': jh, 'k': kh})
+        self._fundom_data = [(self._HH(c),RR(r),Matrix(self._HH,2,2,m)) for c,r,m in zip(centerlist,radiuslist,matlist)]
+
+        verbose('Computing presentation')
+        G,gens = f.Presentation(e,self._O_magma,nvals = 2)
+        Hm,GtoHm = self.magma.ReduceGenerators(G,nvals = 2)
+        r = self.F.gen()
+        i,j,k = self.B.gens()
+        chunk_length = 10
+        ngens = len(gens)
+        assert ngens == len(G.gens())
+        nchunks = (QQ(ngens)/QQ(chunk_length)).ceil()
+        verbose('Done ReduceGenerators. Now calculating inverse iso for %s generators'%len(gens))
+        tmp_quaternions = []
+        self._simplification_iso = []
+        for tt in xrange(nchunks):
+            verbose('... %s/%s ...'%(tt+1,nchunks))
+            i0 = tt * chunk_length + 1
+            i1 = min((tt+1) * chunk_length,ngens)
+            newvec = sage_eval(self.magma.eval('[ElementToSequence(Image(%s,%s.i)) : i in [%s..%s]]'%(GtoHm.name(),G.name(),i0,i1)))
+            self._simplification_iso.extend(newvec)
+            tmp_quaternions.extend(sage_eval(self.magma.eval('[%s[i] : i in [%s..%s]]'%(gens.name(),i0,i1)).replace('$.1','r'),{'r':r, 'i':i, 'j':j, 'k':k}))
+
+        assert len(self._simplification_iso) == len(self._fundom_data), "Simplification iso and facerels have different lengths (%s != %s)"%(len(self._simplification_iso),len(self._fundom_data))
+        verbose('Done inverse isomorphism. Now calculating Ugens for %s generators'%len(Hm.gens()))
+        self.Ugens = []
+        wrds = sage_eval(self.magma.eval('[ElementToSequence(%s!(%s.i)) : i in [1..%s]]'%(G.name(),Hm.name(),len(Hm.gens()))))
+        for wd in wrds:
+            self.Ugens.append(multiply_out(wd, tmp_quaternions, self.B(1)))
+        verbose('Done calculating Ugens. Now initializing relations')
+        if 'P' not in self._grouptype:
+            self.F_units = self.F.unit_group()
+            self.F_unit_offset = len(self.Ugens)
+            self.Ugens.extend([self.B(self.F(u)) for u in self.F_units.gens()])
+            temp_relation_words = [Hm.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in xrange(len(Hm.Relations()))] + [ [self.F_unit_offset + i + 1] * ZZ(u.multiplicative_order()) for i,u in enumerate(self.F_units.gens()) if u.multiplicative_order() != Infinity]
+            self._relation_words = []
+            for rel in temp_relation_words:
+                remaining_unit = self.F_units(self.F(multiply_out(rel, self.Ugens, self.B(1))))
+                assert remaining_unit.multiplicative_order() != Infinity
+                ulist = remaining_unit.exponents()
+                newrel = rel + syllables_to_tietze([(self.F_unit_offset + i,a) for i,a in enumerate(ulist) if a != 0 ])
+                assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
+                self._relation_words.append(newrel)
+        else:
+            self._relation_words = [Hm.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in xrange(len(Hm.Relations()))]
+        verbose('Done initializing relations. Now generators...')
+        self._gens = []
+        for i,g in enumerate(self.Ugens):
+            self._gens.append(ArithGroupElement(self,quaternion_rep = g, word_rep = [i+1],check = False))
+        verbose('Done initializing generators')
+
+    @cached_method
+    def fundamental_domain(self):
+        raise NotImplementedError
+
+    def get_word_rep(self,gamma):
+        # if not self._is_in_order(gamma):
+        #     raise RuntimeError,'gamma (= %s) is not in order!'%gamma
+        HH = self._HH
+        R = HH.base_ring()
+        boundary = self._fundom_data
+        eps = 2**-(R(HH.base_ring().precision())/R(2))
+        #verbose('eps = %s'%eps)
+        correct = False
+        B = self.B
+        deltaword = []
+        gammainv = gamma**-1
+        while not correct:
+            z = HH(0)
+            mat_gamma = self._kleinianmatrix(gammainv)
+            gammaz = act_H3(mat_gamma,z)
+            if len(boundary) == 0:
+                raise RuntimeError('Empty boundary')
+            lengthw = 0
+            delta = B(1)
+            while True:
+                d = R(1)
+                i0 = None
+                for i,(center, radius, mat) in enumerate(boundary):
+                    d1 = sum((o**2 for o in (gammaz - center).coefficient_tuple())) / radius**2
+                    if d >= (1+eps)*d1:
+                        d = d1
+                        i0 = i
+                        break # This might yield longer words, but should be faster!
+                if i0 is None:
+                    break
+                gammaz = act_H3(boundary[i0][2],gammaz)
+                deltaword.append(i0+1)
+                lengthw += 1
+            correct = ( -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 5.0)
+            if not correct:
+                verbose('Error in word problem:')
+                verbose('gamma = %s'%gamma)
+                verbose('err = %s'%-(sum((o**2 for o in gammaz.coefficient_tuple()))))
+                raise RuntimeError('Error in word problem from Aurel 1')
+        deltaword.reverse()
+        try:
+            c = sum((list(self._simplification_iso[o-1]) for o in deltaword),[])
+        except IndexError:
+            raise RuntimeError('Error in word problem from Aurel 2')
+        return c
+
+    def _kleinianmatrix(self,gamma):
+        B = gamma.parent()
+        K = gamma.parent().base_ring()
+        CC = ComplexField(self._RR.precision())
+        vC = self._vC
+        aa,bb = [vC(o) for o in B.invariants()]
+        sa = aa.sqrt()
+        bsa = bb * sa
+        P, Pinv = self._Pmat, self._Pmatinv
+        x1,x2,x3,x4 = [vC(o) for o in gamma.coefficient_tuple()]
+        hi = self._HH.gen(0)
+        phi = lambda x:self._HH(x.real()) + hi * x.imag()
+        m = Pinv * Matrix(CC,2,2,[x1 + x2*sa, x3 + x4*sa, x3*bb - x4*bsa, x1- x2*sa])* P
+        if gamma.reduced_norm() != 1:
+            scal = 1/m.determinant().sqrt()
+            m *= scal
+        a,b,c,d = m.apply_map(phi).list()
+        hj = self._HH.gen(1)
+        A = ((a+d.conjugate()) + (b-c.conjugate())*hj)
+        B = ((b+c.conjugate()) + (a-d.conjugate())*hj)
+        C = ((c+b.conjugate()) + (d-a.conjugate())*hj)
+        D = ((d+a.conjugate()) + (c-b.conjugate())*hj)
+        return Matrix(self._HH,2,2,[A,B,C,D])
+
+class ArithGroup_nf_matrix(ArithGroup_nf_kleinian):
+    @cached_method()
+    def matrix_rep(self, x):
+        try:
+            x = x.quaternion_rep
+        except AttributeError:
+            pass
+        if self.B.invariants() != (1,1):
+            raise NotImplementedError
+        F = self.F
+        M = MatrixSpace(F,2,2)
+        basis = [M([1,0,0,1]), M([1,0,0,-1]), M([0,-1,-1,0]), M([0,-1,1,0])]
+        return sum((a * b for a, b in zip(list(self.B(x)), basis)), M(0))
