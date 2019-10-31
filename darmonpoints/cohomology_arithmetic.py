@@ -498,7 +498,7 @@ class ArithCoh_generic(CohomologyGroup):
     or not to use Pollack-Stevens distributions.
     """
     Element = ArithCohElement
-    def __init__(self,G,base = None,use_ps_dists = False):
+    def __init__(self,G,base = None,use_ps_dists = False, trivial_action = True):
         self._S_arithgroup = G
         self._use_ps_dists = use_ps_dists
         self._use_shapiro = G._use_shapiro
@@ -648,7 +648,6 @@ class CohArbitrary(CohomologyGroup):
 
 class ArithCohOverconvergent(ArithCoh_generic):
     def __init__(self, G, base, use_ps_dists = False):
-        trivial_action = False
         self._overconvergent = 1
         if self._use_ps_dists:
             from sage.modular.pollack_stevens.distributions import OverconvergentDistributions
@@ -660,6 +659,8 @@ class ArithCohOverconvergent(ArithCoh_generic):
         V._unset_coercions_used()
         V.register_action( arith_act )
         self._pN = V._p**base.precision_cap()
+        self._V = V
+        ArithCoh_generic.__init__(G,base = base,use_ps_dists = use_ps_dists, trivial_action = False)
 
     def _element_constructor_(self,data):
         if isinstance(data,list):
@@ -883,7 +884,6 @@ class ArithCohOverconvergent(ArithCoh_generic):
 class ArithCohBianchi(ArithCoh_generic):
     def __init__(self, G, base, use_ps_dists = False):
         self._overconvergent = 2
-        trivial_action = False
         V = BianchiDistributions(base.prime(), 1 + base.precision_cap(), act_on_left=True, adjuster=left_ps_adjuster())
         arith_act = BianchiArithAction(G.small_group(), V)
         V._unset_coercions_used()
@@ -891,6 +891,8 @@ class ArithCohBianchi(ArithCoh_generic):
         self.P_gen = None
         self.Pbar_gen = None
         self._pN = V._p**base.precision_cap()
+        self._V = V
+        ArithCoh_generic.__init__(G,base = base,use_ps_dists = use_ps_dists, trivial_action = False)
 
     def _element_constructor_(self,data):
         if isinstance(data,list):
@@ -1052,7 +1054,8 @@ class ArithCoh(ArithCoh_generic):
             base = ZZ
         self._pN = None
         V = base**1
-        trivial_action = True
+        self._V = V
+        ArithCoh_generic.__init__(G,base = base,use_ps_dists = use_ps_dists, trivial_action = True)
 
     def _element_constructor_(self,data):
         if isinstance(data,list):
