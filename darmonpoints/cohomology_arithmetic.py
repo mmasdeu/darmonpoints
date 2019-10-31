@@ -436,55 +436,18 @@ class ArithCohElement(CohomologyElement):
     def get_Lseries_term(self, n, cov = None):
         r"""
         Return the `n`-th coefficient of the `p`-adic `L`-series attached to an
-        element of H^1(G,D).
+        element phi of H^1(G,D).
 
-        Currently hard-coded rational: need to update for Bianchi too.
+        Passes to parent and runs the function there to account for differences
+        between classical and Bianchi; it will go to ArithCoh and ArithCohBianchi
+        respectively.
+
+        If running in the classical case, n should be an integer, and we return the
+        coefficient of z^n. If in the Bianchi case, n should be a tuple (j,k), 
+        and we return the coefficient of z^j * w^k.
         """
-        ## Perhaps we've already computed this. If we have, then return it
-        if n in self._Lseries_coefficients:
-            return self._Lseries_coefficients[n]
-        else:
-            ## We need to compute this for the first time
-            G = self.parent().S_arithgroup() ## G = Gamma
-            p = G.prime() ## underlying prime
-            ap = self._sign_ap
+        return self.parent().get_Lseries_term(self,n,cov)
 
-            ## Specify a topological generator of 1 + pZp
-            if p == 2:
-                gamma = 1 + 4
-            else:
-                gamma = 1 + p
-
-            K = self.parent().coefficient_module().base_ring() ## p-adic ring
-            precision = K.precision_cap()
-
-            ## Initialise power series ring, where output will be valued
-            S = K[['z']]
-            z = S.gen()
-            M = precision
-            if n == 0:
-                precision = M
-                lb = [1] + [0 for a in range(M - 1)]
-            else:
-                lb = log_gamma_binomial(p, gamma, n, 2 * M)
-                if precision is None:
-                    precision = min([j + lb[j].valuation(p)
-                                     for j in range(M, len(lb))])
-                lb = [lb[a] for a in range(M)]
-
-            if cov is None:
-                cov = G.get_Up_reps()[1:]
-                ## BIANCHI CASE: TO BE CHANGED
-                ## Recall our fixed choice of uniformisers
-                #pi,pibar = self.parent().P_gen,self.parent().Pbar_gen
-                ## G.get_Up_reps_Bianchi(pi,pibar)....
-            dn = 0
-            for h in cov:
-                aa = K.teichmuller(h[0,1] / h[1,1])
-                f = sum(lj * (1/aa * z - 1)**j for j, lj in enumerate(lb))
-                dn += self.BI(h, None).evaluate_at_poly(f)
-            self._Lseries_coefficients[n] = dn.add_bigoh(precision)
-            return self._Lseries_coefficients[n]
 
 class ArithCoh_generic(CohomologyGroup):
     r"""
@@ -1020,6 +983,96 @@ class ArithCohBianchi(ArithCoh_generic):
             update_progress(float(1.0),'f|Up')
         return h2
 
+    def get_Lseries_term(self, phi, n, cov = None):
+        r"""
+        Return the `n`-th coefficient of the `p`-adic `L`-series attached to an
+        element phi of H^1(G,D): Bianchi case.
+
+        Input:
+            - phi, an ArithCohElement object, representing a cohomology class 
+                in the underlying group self;
+
+            - n, a tuple (r,s) of ints;
+
+            - cov, a set of representing matrices for the U_pi and U_pibar operators.
+
+        Outputs:
+            a p-adic number, the coefficient of z^r * w^s in the p-adic L-series 
+            attached to phi. This will give the series attached to the identity
+            component in weight space; in the notation of Masdeu-Palvannan-Williams, 
+            this is the power series L_p(mu,id,z,w), mu the p-adic L-function of phi.
+
+        """
+        ## Perhaps we've already computed this. If we have, then return it
+        if n in phi._Lseries_coefficients:
+            return phi._Lseries_coefficients[n]
+        else:
+            ## We need to compute this for the first time
+            r,s = n ## specify indices
+            G = self.S_arithgroup() ## G = Gamma
+            p = G.prime() ## underlying prime
+            ap = phi._sign_ap
+
+            ## Specify a topological generator of 1 + pZp: used in computation of log coeffs
+            if p == 2:
+                gamma = 1 + 4
+            else:
+                gamma = 1 + p
+
+            K = self.coefficient_module().base_ring() ## p-adic ring
+            precision = K.precision_cap()
+
+            ## Initialise 2-var power series ring, where output will be valued
+            S = K[['z', 'w']]
+            z,w = S.gens()
+            M = precision
+
+            ## Compute the coefficients c_j^(r)
+            if r == 0:
+                precision = M
+                lb_r = [1] + [0 for a in range(M - 1)]
+            else:
+                lb_r = log_gamma_binomial(p, gamma, r, 2 * M) ## p, top gen, target, 2* precision
+                if precision is None: ## compute precision automatically
+                    precision = min([j + lb_r[j].valuation(p)
+                                     for j in range(M, len(lb_r))])
+                lb_r = [lb_r[a] for a in range(M)]
+
+            ## Compute the coefficients c_j^(s)
+            if s == 0:
+                precision = M
+                lb_s = [1] + [0 for a in range(M - 1)]
+            else:
+                lb_s = log_gamma_binomial(p, gamma, s, 2 * M) ## p, top gen, target, 2* precision
+                if precision is None: ## compute precision automatically
+                    precision = min([j + lb_s[j].valuation(p)
+                                     for j in range(M, len(lb_s))])
+                lb_s = [lb_s[a] for a in range(M)]
+
+            ## Find U_p representatives, if necessary
+            if cov is None:
+                pi,pibar = self.P_gen,self.Pbar_gen
+                U_P_reps, U_Pbar_reps = G.get_Up_reps_Bianchi(pi,pibar)
+                ## Write down matrices for U_p operator: exclude all reps that
+                ## corr. to opens not in Zp* x Zp*
+                cov = [A*B for A in U_P_reps[1:] for B in U_Pbar_reps[1:]]
+       
+            dn = 0 ## Initialise output to 0
+
+            ## Range over all remaining reps of the U_p operator, and add the relevant integral
+            ## To add twists by psi: only need to add psi_P(aa), psi_Pbar(bb) to the sum for f
+            for h in cov:
+                alpha = h[0,1] / h[1,1] ## If h = (p, a; 0, 1), this is a
+                aa = K.teichmuller(F.residue_field(pi)) ## compute Teich lift of alpha mod P
+                bb = K.teichmuller(F.residue_field(pibar)) ## compute lift of alpha mod Pbar
+                f = sum(lj * lk * (1/aa * z - 1)**j * (1/bb * w - 1)**k \
+                                    for j, lj in enumerate(lb_r) \
+                                    for k, lk in enumerate(lb_s))
+                dn += phi.BI(h, None).evaluate_at_poly(f)
+            ## Store in dictionary of L_p series coefficients
+            phi._Lseries_coefficients[n] = dn.add_bigoh(precision)
+            return phi._Lseries_coefficients[n]
+
 class ArithCoh(ArithCoh_generic):
     def __init__(self, G, base = None, use_ps_dists = False):
         self._overconvergent = 0
@@ -1312,4 +1365,74 @@ class ArithCoh(ArithCoh_generic):
                 col0 = [ZZ(clcm * o ) for o in col0]
                 flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
             return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
+
+
+    def get_Lseries_term(self, phi, n, cov = None):
+        r"""
+        Return the `n`-th coefficient of the `p`-adic `L`-series attached to an
+        element phi of H^1(G,D).
+
+        Input:
+            - phi, an ArithCohElement object, representing a cohomology class 
+                in the underlying group self;
+
+            - n, an integer;
+
+            - cov, a set of representing matrices for the U_p operator.
+
+        Outputs:
+            a p-adic number, the coefficient of z^n in the p-adic L-series 
+            attached to phi. This will give the series attached to the identity
+            component in weight space; in the notation of Pollack-Stevens, this is
+            the power series L_p(mu,id,z), mu the p-adic L-function of phi.
+
+        """
+        ## Perhaps we've already computed this. If we have, then return it
+        if n in phi._Lseries_coefficients:
+            return phi._Lseries_coefficients[n]
+        else:
+            ## We need to compute this for the first time
+            G = self.S_arithgroup() ## G = Gamma
+            p = G.prime() ## underlying prime
+            ap = phi._sign_ap
+
+            ## Specify a topological generator of 1 + pZp
+            if p == 2:
+                gamma = 1 + 4
+            else:
+                gamma = 1 + p
+
+            K = self.coefficient_module().base_ring() ## p-adic ring
+            precision = K.precision_cap()
+
+            ## Initialise power series ring, where output will be valued
+            S = K[['z']]
+            z = S.gen()
+            M = precision
+
+            ## find coefficients of the log function wrt our top gen
+            if n == 0:
+                precision = M
+                lb = [1] + [0 for a in range(M - 1)]
+            else:
+                lb = log_gamma_binomial(p, gamma, n, 2 * M)
+                if precision is None:
+                    precision = min([j + lb[j].valuation(p)
+                                     for j in range(M, len(lb))])
+                lb = [lb[a] for a in range(M)]
+
+            ## Find U_p representatives, if necessary, ignoring first <-> pZp
+            if cov is None:
+                cov = G.get_Up_reps()[1:]
+       
+            dn = 0 ## Initialise output to 0
+
+            ## Range over all reps of the U_p operator, and add the relevant integral
+            for h in cov:
+                aa = K.teichmuller(h[0,1] / h[1,1])
+                f = sum(lj * (1/aa * z - 1)**j for j, lj in enumerate(lb))
+                dn += phi.BI(h, None).evaluate_at_poly(f)
+            ## Store in dictionary of L_p series coefficients
+            phi._Lseries_coefficients[n] = dn.add_bigoh(precision)
+            return phi._Lseries_coefficients[n]
 
