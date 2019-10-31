@@ -486,19 +486,17 @@ class ArithCohElement(CohomologyElement):
             self._Lseries_coefficients[n] = dn.add_bigoh(precision)
             return self._Lseries_coefficients[n]
 
-
 class ArithCoh_generic(CohomologyGroup):
     r"""
     Class for computing with arithmetic cohomology groups.
 
     Parent class for ArithCohElement.
 
-    Initialised by inputting an arithmetic group G, and options for
-    using overconvergent coefficients over a base ring, and whether
-    or not to use Pollack-Stevens distributions.
+    Initialised by inputting an arithmetic group G, and the
+    coefficient module.
     """
     Element = ArithCohElement
-    def __init__(self,G,base = None,use_ps_dists = False, trivial_action = True):
+    def __init__(self,G, V,use_ps_dists = False, trivial_action = True):
         self._S_arithgroup = G
         self._use_ps_dists = use_ps_dists
         self._use_shapiro = G._use_shapiro
@@ -514,7 +512,32 @@ class ArithCoh_generic(CohomologyGroup):
         return self._S_arithgroup
 
     def _element_constructor_(self,data):
-        raise NotImplementedError
+        if isinstance(data,list):
+            V = self.coefficient_module()
+            return self.element_class(self, [V(o) for o in data])
+        elif isinstance(data,ArithCohElement):
+            G = self.group()
+            V = self.coefficient_module()
+            try:
+                prec = V.base_ring().precision_cap()
+            except AttributeError:
+                prec = None
+            try:
+                data = data.get_liftee()
+            except AttributeError:
+                pass
+            try:
+                vals = [V(data.evaluate(g).moment(0), normalize=False).lift(M=prec) for g in G.gens()]
+            except (AttributeError, TypeError):
+                try:
+                    vals = [V(data.evaluate(g), normalize=False).lift(M=prec) for g in G.gens()]
+                except (AttributeError, TypeError):
+                    vals = [V(data.evaluate(g)) for g in G.gens()]
+            return self.element_class(self, vals)
+        else:
+            G = self.group()
+            V = self.coefficient_module()
+            return self.element_class(self, [V(data) for g in G.gens()])
 
     @cached_method
     def hecke_matrix(self, l, use_magma = True, g0 = None): # l can be oo
@@ -600,7 +623,6 @@ class BianchiArithAction(Action):
         return V.Sigma0Squared()(first,second) * v
 
 class CohArbitrary(CohomologyGroup):
-    Element = CohomologyElement
     def __init__(self, G, V, action_map=None):
         self._V = V
         self._G = G
@@ -649,7 +671,7 @@ class CohArbitrary(CohomologyGroup):
 class ArithCohOverconvergent(ArithCoh_generic):
     def __init__(self, G, base, use_ps_dists = False):
         self._overconvergent = 1
-        if self._use_ps_dists:
+        if use_ps_dists:
             from sage.modular.pollack_stevens.distributions import OverconvergentDistributions
             V = OverconvergentDistributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = our_adjuster(), dettwist = 0) # Darmon convention
             V.Sigma0 = lambda :V._act._Sigma0
@@ -660,32 +682,7 @@ class ArithCohOverconvergent(ArithCoh_generic):
         V.register_action( arith_act )
         self._pN = V._p**base.precision_cap()
         self._V = V
-        ArithCoh_generic.__init__(G,base = base,use_ps_dists = use_ps_dists, trivial_action = False)
-
-    def _element_constructor_(self,data):
-        if isinstance(data,list):
-            V = self.coefficient_module()
-            return self.element_class(self, [V(o) for o in data])
-        elif isinstance(data,self.element_class):
-            G = self.group()
-            V = self.coefficient_module()
-            prec = V.base_ring().precision_cap()
-            try:
-                data = data.get_liftee()
-            except AttributeError:
-                pass
-            try:
-                vals = [V(data.evaluate(g).moment(0), normalize=False).lift(M=prec) for g in G.gens()]
-            except (AttributeError, TypeError):
-                try:
-                    vals = [V(data.evaluate(g), normalize=False).lift(M=prec) for g in G.gens()]
-                except (AttributeError, TypeError):
-                    vals = [V(data.evaluate(g)) for g in G.gens()]
-            return self.element_class(self, vals)
-        else:
-            G = self.group()
-            V = self.coefficient_module()
-            return self.element_class(self, [V(data) for g in G.gens()])
+        ArithCoh_generic.__init__(self, G, V,use_ps_dists = use_ps_dists, trivial_action = False)
 
     def get_Up_reps_local(self,prec):
         Up_reps = self.S_arithgroup().get_Up_reps()
@@ -892,32 +889,8 @@ class ArithCohBianchi(ArithCoh_generic):
         self.Pbar_gen = None
         self._pN = V._p**base.precision_cap()
         self._V = V
-        ArithCoh_generic.__init__(G,base = base,use_ps_dists = use_ps_dists, trivial_action = False)
+        ArithCoh_generic.__init__(self, G, V,use_ps_dists = use_ps_dists, trivial_action = False)
 
-    def _element_constructor_(self,data):
-        if isinstance(data,list):
-            V = self.coefficient_module()
-            return self.element_class(self, [V(o) for o in data])
-        elif isinstance(data,self.element_class):
-            G = self.group()
-            V = self.coefficient_module()
-            prec = V.base_ring().precision_cap()
-            try:
-                data = data.get_liftee()
-            except AttributeError:
-                pass
-            try:
-                vals = [V(data.evaluate(g).moment(0), normalize=False).lift(M=prec) for g in G.gens()]
-            except (AttributeError, TypeError):
-                try:
-                    vals = [V(data.evaluate(g), normalize=False).lift(M=prec) for g in G.gens()]
-                except (AttributeError, TypeError):
-                    vals = [V(data.evaluate(g)) for g in G.gens()]
-            return self.element_class(self, vals)
-        else:
-            G = self.group()
-            V = self.coefficient_module()
-            return self.element_class(self, [V(data) for g in G.gens()])
 
     @cached_method
     def get_Up_reps_local(self,prec, pi, pi_bar):
@@ -1055,32 +1028,7 @@ class ArithCoh(ArithCoh_generic):
         self._pN = None
         V = base**1
         self._V = V
-        ArithCoh_generic.__init__(G,base = base,use_ps_dists = use_ps_dists, trivial_action = True)
-
-    def _element_constructor_(self,data):
-        if isinstance(data,list):
-            V = self.coefficient_module()
-            return self.element_class(self, [V(o) for o in data])
-        elif isinstance(data,self.element_class):
-            G = self.group()
-            V = self.coefficient_module()
-            prec = None
-            try:
-                data = data.get_liftee()
-            except AttributeError:
-                pass
-            try:
-                vals = [V(data.evaluate(g).moment(0), normalize=False).lift(M=prec) for g in G.gens()]
-            except (AttributeError, TypeError):
-                try:
-                    vals = [V(data.evaluate(g), normalize=False).lift(M=prec) for g in G.gens()]
-                except (AttributeError, TypeError):
-                    vals = [V(data.evaluate(g)) for g in G.gens()]
-            return self.element_class(self, vals)
-        else:
-            G = self.group()
-            V = self.coefficient_module()
-            return self.element_class(self, [V(data) for g in G.gens()])
+        ArithCoh_generic.__init__(self, G, V,use_ps_dists = use_ps_dists, trivial_action = True)
 
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
         if sign == 0:
