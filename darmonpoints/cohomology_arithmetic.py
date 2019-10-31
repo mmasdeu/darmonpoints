@@ -326,7 +326,7 @@ class ArithCohElement(CohomologyElement):
                 a, b, c, d = g_inv.list()
                 for n, cc in cusp_list:
                     new_cusp_list.append((n, (a * cc[0] + b * cc[1], c * cc[0] + d * cc[1])))
-                ans += g * self.evaluate_at_cusp_list(new_cusp_list)#[(n, cc.apply(g_inv.list())) for n, cc in cusp_list]
+                ans += g * self.evaluate_at_cusp_list(new_cusp_list)
             ans -= (q+1) * self.evaluate_at_cusp_list(cusp_list)
         else:
             ans = self.evaluate_at_cusp_list(cusp_list)
