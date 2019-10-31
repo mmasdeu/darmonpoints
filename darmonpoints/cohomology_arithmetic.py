@@ -200,162 +200,6 @@ def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity,
     Phi._sign_ap = sign_ap
     return Phi
 
-class ArithCoh_generic(CohomologyGroup):
-    r"""
-    Class for computing with arithmetic cohomology groups.
-
-    Parent class for ArithCohElement.
-
-    Initialised by inputting an arithmetic group G, and options for
-    using overconvergent coefficients over a base ring, and whether
-    or not to use Pollack-Stevens distributions.
-    """
-    Element = ArithCohElement
-    def __init__(self,G,base = None,use_ps_dists = False):
-        self._S_arithgroup = G
-        self._use_ps_dists = use_ps_dists
-        self._use_shapiro = G._use_shapiro
-        if self._use_shapiro:
-            CohomologyGroup.__init__(self, G.large_group(), CoIndModule(G,V,trivial_action = trivial_action), False)
-        else:
-            CohomologyGroup.__init__(self, G.small_group(), V, trivial_action)
-
-    def use_shapiro(self):
-        return self._use_shapiro
-
-    def S_arithgroup(self):
-        return self._S_arithgroup
-
-    def _element_constructor_(self,data):
-        raise NotImplementedError
-
-    @cached_method
-    def hecke_matrix(self, l, use_magma = True, g0 = None): # l can be oo
-        dim = self.dimension()
-        R = self.coefficient_module().base_ring()
-        M = matrix(R,dim,dim,0)
-        for j,cocycle in enumerate(self.gens()):
-            # Construct column j of the matrix
-            verbose('Constructing column %s/%s of the matrix'%(j,dim))
-            fvals = self.apply_hecke_operator(cocycle, l, use_magma = use_magma, g0 = g0)
-            M.set_column(j,list(vector(fvals)))
-        return M
-
-    def Up_matrix(self):
-        dim = self.dimension()
-        R = self.coefficient_module().base_ring()
-        M = matrix(R,dim,dim,0)
-        for j,cocycle in enumerate(self.gens()):
-            # Construct column j of the matrix
-            fvals = self.apply_Up(cocycle)
-            M.set_column(j,list(vector(fvals)))
-        return M
-
-    def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,g0 = None):
-        r"""
-
-        Apply the l-th Hecke operator operator to ``c``.
-
-        """
-        # verbose('Entering apply_hecke_operator')
-        if hecke_reps is None:
-            hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma, g0 = g0)
-        # verbose('Got hecke reps')
-        V = self.coefficient_module()
-        padic = not V.base_ring().is_exact()
-        group = self.group()
-        if padic:
-            prec = V.base_ring().precision_cap()
-        else:
-            prec = None
-        vals = []
-        R = V.base_ring()
-        gammas = group.gens()
-        vals = [V(0) for gamma in gammas]
-        input_vector = []
-        # verbose('Calculating action')
-        for j, gamma in enumerate(gammas):
-            # verbose('generator %s/%s...'%(j+1,len(gammas)))
-            for g in hecke_reps:
-                if self.trivial_action():
-                    vals[j] += c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
-                else:
-                    vals[j] += g * c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
-        return scale * self(vals)
-
-class ArithAction(Action):
-    r'''
-    Encodes de action of an arithmetic group on the distributions module
-    '''
-    def __init__(self,G,M, act=None):
-        if act is None:
-            self._act = lambda g, v: v.parent().Sigma0()(g) * v
-        else:
-            self._act = act
-        Action.__init__(self,G,M,is_left = True,op = operator.mul)
-
-    def _act_(self,g,v):
-        return self._act(g, v)
-
-class BianchiArithAction(Action):
-    r'''
-    Encodes de action of an arithmetic group on the distributions module
-    '''
-    def __init__(self,G,M):
-        Action.__init__(self,G,M,is_left = True,op = operator.mul)
-
-    def _act_(self,g,v):
-        V = v.parent()
-        prec = V.precision_cap()
-        qrep = g.parent().matrix_rep(g) # This method is only available for matrix ring (not quaternionic)
-        qrep_bar = qrep.apply_map(lambda x:x.trace() - x)
-        first, second = g.parent().embed_matrix(qrep, prec), g.parent().embed_matrix(qrep_bar, prec)
-        return V.Sigma0Squared()(first,second) * v
-
-class CohArbitrary(CohomologyGroup):
-    Element = CohomologyElement
-    def __init__(self, G, V, action_map=None):
-        self._V = V
-        self._G = G
-        if action_map is not None:
-            action = ArithAction(G, V, action_map)
-            V._unset_coercions_used()
-            V.register_action(action)
-        CohomologyGroup.__init__(self, self._G, self._V, False)
-
-    def group(self):
-        return self._G
-
-    def coefficient_module(self):
-        return self._V
-
-    def get_hecke_data(self, ell, hecke_reps = None, use_magma= True, g0=None):
-        group = self.group()
-        if hecke_reps is None:
-            hecke_reps = group.get_hecke_reps(ell, use_magma = use_magma, g0 = g0)
-        hecke_data = {}
-        for gamma in group.gens():
-            for g in hecke_reps:
-                set_immutable(g)
-                ti = group.get_hecke_ti(g,gamma,ell,use_magma, reps = hecke_reps)
-                set_immutable(ti)
-                hecke_data[(g, gamma.quaternion_rep)] = ti
-        return hecke_data
-
-    def apply_hecke_operator(self,c,l, hecke_reps = None,scale = 1,use_magma = True,g0 = None, as_Up = False, hecke_data = None):
-        r"""
-        Apply the l-th Hecke operator operator to ``c``.
-        """
-        group = self.group()
-        if hecke_reps is None:
-            hecke_reps = group.get_hecke_reps(l,use_magma = use_magma, g0 = g0)
-        if as_Up:
-            l = None
-        if hecke_data is None:
-            hecke_data = self.get_hecke_data(l, hecke_reps, use_magma=use_magma, g0=g0)
-        vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]).left_act_by_matrix(group(g).matrix()) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
-        return scale * self(vals)
-
 class ArithCohElement(CohomologyElement):
     r"""
     Class for working with arithmetic cohomology elements. In particular,
@@ -641,6 +485,163 @@ class ArithCohElement(CohomologyElement):
                 dn += self.BI(h, None).evaluate_at_poly(f)
             self._Lseries_coefficients[n] = dn.add_bigoh(precision)
             return self._Lseries_coefficients[n]
+
+
+class ArithCoh_generic(CohomologyGroup):
+    r"""
+    Class for computing with arithmetic cohomology groups.
+
+    Parent class for ArithCohElement.
+
+    Initialised by inputting an arithmetic group G, and options for
+    using overconvergent coefficients over a base ring, and whether
+    or not to use Pollack-Stevens distributions.
+    """
+    Element = ArithCohElement
+    def __init__(self,G,base = None,use_ps_dists = False):
+        self._S_arithgroup = G
+        self._use_ps_dists = use_ps_dists
+        self._use_shapiro = G._use_shapiro
+        if self._use_shapiro:
+            CohomologyGroup.__init__(self, G.large_group(), CoIndModule(G,V,trivial_action = trivial_action), False)
+        else:
+            CohomologyGroup.__init__(self, G.small_group(), V, trivial_action)
+
+    def use_shapiro(self):
+        return self._use_shapiro
+
+    def S_arithgroup(self):
+        return self._S_arithgroup
+
+    def _element_constructor_(self,data):
+        raise NotImplementedError
+
+    @cached_method
+    def hecke_matrix(self, l, use_magma = True, g0 = None): # l can be oo
+        dim = self.dimension()
+        R = self.coefficient_module().base_ring()
+        M = matrix(R,dim,dim,0)
+        for j,cocycle in enumerate(self.gens()):
+            # Construct column j of the matrix
+            verbose('Constructing column %s/%s of the matrix'%(j,dim))
+            fvals = self.apply_hecke_operator(cocycle, l, use_magma = use_magma, g0 = g0)
+            M.set_column(j,list(vector(fvals)))
+        return M
+
+    def Up_matrix(self):
+        dim = self.dimension()
+        R = self.coefficient_module().base_ring()
+        M = matrix(R,dim,dim,0)
+        for j,cocycle in enumerate(self.gens()):
+            # Construct column j of the matrix
+            fvals = self.apply_Up(cocycle)
+            M.set_column(j,list(vector(fvals)))
+        return M
+
+    def apply_hecke_operator(self,c,l, hecke_reps = None,group = None,scale = 1,use_magma = True,g0 = None):
+        r"""
+
+        Apply the l-th Hecke operator operator to ``c``.
+
+        """
+        # verbose('Entering apply_hecke_operator')
+        if hecke_reps is None:
+            hecke_reps = self.group().get_hecke_reps(l,use_magma = use_magma, g0 = g0)
+        # verbose('Got hecke reps')
+        V = self.coefficient_module()
+        padic = not V.base_ring().is_exact()
+        group = self.group()
+        if padic:
+            prec = V.base_ring().precision_cap()
+        else:
+            prec = None
+        vals = []
+        R = V.base_ring()
+        gammas = group.gens()
+        vals = [V(0) for gamma in gammas]
+        input_vector = []
+        # verbose('Calculating action')
+        for j, gamma in enumerate(gammas):
+            # verbose('generator %s/%s...'%(j+1,len(gammas)))
+            for g in hecke_reps:
+                if self.trivial_action():
+                    vals[j] += c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
+                else:
+                    vals[j] += g * c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
+        return scale * self(vals)
+
+class ArithAction(Action):
+    r'''
+    Encodes de action of an arithmetic group on the distributions module
+    '''
+    def __init__(self,G,M, act=None):
+        if act is None:
+            self._act = lambda g, v: v.parent().Sigma0()(g) * v
+        else:
+            self._act = act
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
+
+    def _act_(self,g,v):
+        return self._act(g, v)
+
+class BianchiArithAction(Action):
+    r'''
+    Encodes de action of an arithmetic group on the distributions module
+    '''
+    def __init__(self,G,M):
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
+
+    def _act_(self,g,v):
+        V = v.parent()
+        prec = V.precision_cap()
+        qrep = g.parent().matrix_rep(g) # This method is only available for matrix ring (not quaternionic)
+        qrep_bar = qrep.apply_map(lambda x:x.trace() - x)
+        first, second = g.parent().embed_matrix(qrep, prec), g.parent().embed_matrix(qrep_bar, prec)
+        return V.Sigma0Squared()(first,second) * v
+
+class CohArbitrary(CohomologyGroup):
+    Element = CohomologyElement
+    def __init__(self, G, V, action_map=None):
+        self._V = V
+        self._G = G
+        if action_map is not None:
+            action = ArithAction(G, V, action_map)
+            V._unset_coercions_used()
+            V.register_action(action)
+        CohomologyGroup.__init__(self, self._G, self._V, False)
+
+    def group(self):
+        return self._G
+
+    def coefficient_module(self):
+        return self._V
+
+    def get_hecke_data(self, ell, hecke_reps = None, use_magma= True, g0=None):
+        group = self.group()
+        if hecke_reps is None:
+            hecke_reps = group.get_hecke_reps(ell, use_magma = use_magma, g0 = g0)
+        hecke_data = {}
+        for gamma in group.gens():
+            for g in hecke_reps:
+                set_immutable(g)
+                ti = group.get_hecke_ti(g,gamma,ell,use_magma, reps = hecke_reps)
+                set_immutable(ti)
+                hecke_data[(g, gamma.quaternion_rep)] = ti
+        return hecke_data
+
+    def apply_hecke_operator(self,c,l, hecke_reps = None,scale = 1,use_magma = True,g0 = None, as_Up = False, hecke_data = None):
+        r"""
+        Apply the l-th Hecke operator operator to ``c``.
+        """
+        group = self.group()
+        if hecke_reps is None:
+            hecke_reps = group.get_hecke_reps(l,use_magma = use_magma, g0 = g0)
+        if as_Up:
+            l = None
+        if hecke_data is None:
+            hecke_data = self.get_hecke_data(l, hecke_reps, use_magma=use_magma, g0=g0)
+        vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]).left_act_by_matrix(group(g).matrix()) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
+        return scale * self(vals)
 
 
 ##=================================================================================
