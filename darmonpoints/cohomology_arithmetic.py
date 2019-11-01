@@ -67,9 +67,9 @@ def find_newans(Coh,glocs,ti):
         N = len(V(0)._moments.list())
     except AttributeError:
         N = 1
-    newans = [V.acting_matrix(glocs[0].matrix(), N).new_matrix() for u in gens]
+    newans = [V.acting_matrix(glocs[0], N).new_matrix() for u in gens]
     for gk0,tik in zip(glocs,ti):
-        gk = V.acting_matrix(gk0.matrix(), N)
+        gk = V.acting_matrix(gk0, N)
         fox_grad_k = Coh.fox_gradient(tik, red = lambda x:x.apply_map(lambda y: y % Coh._pN))
         for j,gj in enumerate(gens):
             newans[j] += gk * fox_grad_k[j]
@@ -647,6 +647,30 @@ class ArithCohOverconvergent(ArithCoh_generic):
         self._V = V
         ArithCoh_generic.__init__(self, G, V,use_ps_dists = use_ps_dists, trivial_action = False)
 
+    @cached_method
+    def precompute_Up_data(self):
+        gammas = self.group().gens()
+        if repslocal is None:
+            try:
+                prec = V.base_ring().precision_cap()
+            except AttributeError:
+                prec = None
+            repslocal = self.get_Up_reps_local(prec)
+
+        V = self.coefficient_module()
+        R = V.base_ring()
+        try:
+            N = len(V(0)._moments.list())
+        except AttributeError:
+            N = 1
+
+        ans_list = []
+        Up_reps = self.S_arithgroup().get_Up_reps()
+        for i,gi in enumerate(self.group().gens()):
+            tk_list = [tuple(self.group().get_hecke_ti(sk,gi).word_rep) for sk in Up_reps]
+            for tk in tk_list:
+                fox_grad_k = self.fox_gradient(tik)
+
     def get_Up_reps_local(self,prec):
         Up_reps = self.S_arithgroup().get_Up_reps()
         if prec is None:
@@ -659,7 +683,7 @@ class ArithCohOverconvergent(ArithCoh_generic):
         S0 = V.Sigma0()
         return [S0(self.group().embed(g,prec), check = False) for g in Up_reps]
 
-    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive', repslocal = None, Up_reps = None, steps = 1):
+    def apply_Up_bigmatrix(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False, repslocal = None, Up_reps = None, steps = 1): # one-variable overconvergent
         r"""
         Apply the Up Hecke operator operator to ``c``.
         """
@@ -679,106 +703,127 @@ class ArithCohOverconvergent(ArithCoh_generic):
                 prec = None
             repslocal = self.get_Up_reps_local(prec)
         i = 0
-        if method == 'naive':
-            assert times == 0
-            G = self.S_arithgroup()
-            Gn = G.large_group()
-            if self.use_shapiro():
-                if self.coefficient_module().trivial_action():
-                    def calculate_Up_contribution(lst, c, i, j):
-                        return sum([c.evaluate_and_identity(tt) for sk, tt in lst])
-                else:
-                    def calculate_Up_contribution(lst, c, i, j):
-                        return sum([sk * c.evaluate_and_identity(tt) for sk, tt in lst])
-
-                input_vec = []
-                for j, gamma in enumerate(gammas):
-                    for i, xi in enumerate(G.coset_reps()):
-                        delta = Gn(G.get_coset_ti(set_immutable(xi * gamma.quaternion_rep))[0])
-                        input_vec.append(([(sk, Gn.get_hecke_ti(g,delta)) for sk, g in zip(repslocal, Up_reps)], c, i, j))
-                vals = [[V.coefficient_module()(0,normalize=False) for xi in G.coset_reps()] for gamma in gammas]
-                if parallelize:
-                    for inp, outp in parallel(calculate_Up_contribution)(input_vec):
-                        vals[inp[0][-1]][inp[0][-2]] += outp
-                else:
-                    for inp in input_vec:
-                        outp = calculate_Up_contribution(*inp)
-                        vals[inp[-1]][inp[-2]] += outp
-                ans = self([V(o) for o in vals])
-            else:
-                Gpn = G.small_group()
-                if self.trivial_action():
-                    def calculate_Up_contribution(lst,c,num_gamma):
-                        return sum([c.evaluate(tt) for sk, tt in lst], V(0,normalize=False))
-                else:
-                    def calculate_Up_contribution(lst,c,num_gamma,pb_fraction=None):
-                        i = num_gamma * len(lst)
-                        verbose('pb_fraction = %s'%pb_fraction)
-                        ans = V(0, normalize=False)
-                        for sk, tt in lst:
-                            ans += sk * c.evaluate(tt)
-                            update_progress(i * pb_fraction, 'Up action')
-                            i += 1
-                        return ans
-                input_vec = []
-                for j,gamma in enumerate(gammas):
-                    input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma)) for sk, g in zip(repslocal, Up_reps)], c, j))
-                vals = [V(0,normalize=False) for gamma in gammas]
-                if parallelize:
-                    for inp,outp in parallel(calculate_Up_contribution)(input_vec):
-                        vals[inp[0][-1]] += outp
-                else:
-                    for counter, inp in enumerate(input_vec):
-                        outp = calculate_Up_contribution(*inp, pb_fraction=float(1)/float(len(repslocal) * len(input_vec)))
-                        vals[inp[-1]] += outp
-                ans = self(vals)
-            if scale != 1:
-                ans = scale * ans
-        else:
-            assert method == 'bigmatrix'
-            verbose('Getting Up matrices...')
-            try:
-                N = len(V(0)._moments.list())
-            except AttributeError:
-                N = 1
-            nreps = len(Up_reps)
-            ngens = len(self.group().gens())
-            NN = ngens * N
-            A = Matrix(ZZ,NN,NN,0)
-            total_counter = ngens**2
-            counter = 0
-            iS = 0
-            for i,gi in enumerate(self.group().gens()):
-                ti = [tuple(self.group().get_hecke_ti(sk,gi).word_rep) for sk in Up_reps]
-                jS = 0
-                for ans in find_newans(self,repslocal,ti):
-                    A.set_block(iS,jS,ans)
-                    jS += N
-                    if progress_bar:
-                        counter +=1
-                        update_progress(float(counter)/float(total_counter),'Up matrix')
-                iS += N
-            verbose('Computing 2^(%s)-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
-            for i in range(times):
-                A = A**2
-                if N != 0:
-                    A = A.apply_map(lambda x: x % self._pN)
+        verbose('Getting Up matrices...')
+        try:
+            N = len(V(0)._moments.list())
+        except AttributeError:
+            N = 1
+        nreps = len(Up_reps)
+        ngens = len(self.group().gens())
+        NN = ngens * N
+        A = Matrix(ZZ,NN,NN,0)
+        total_counter = ngens**2
+        counter = 0
+        iS = 0
+        for i,gi in enumerate(self.group().gens()):
+            ti = [tuple(self.group().get_hecke_ti(sk,gi).word_rep) for sk in Up_reps]
+            jS = 0
+            for ans in find_newans(self,repslocal,ti):
+                A.set_block(iS,jS,ans)
+                jS += N
+                if progress_bar:
+                    counter +=1
+                    update_progress(float(counter)/float(total_counter),'Up matrix')
+            iS += N
+        verbose('Computing 2^(%s)-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
+        for i in range(times):
+            A = A**2
+            if N != 0:
+                A = A.apply_map(lambda x: x % self._pN)
+            if progress_bar:
                 update_progress(float(i+1)/float(times),'Exponentiating matrix')
-            verbose('Done computing 2^(%s)-th power'%times)
-            if times > 0:
-                scale_factor = ZZ(scale).powermod(2**times,self._pN)
-            else:
-                scale_factor = ZZ(scale)
-            bvec = Matrix(R,NN,1,[o for b in c._val for o in b._moments.list()])
-            if scale_factor != 1:
-                bvec = scale_factor * bvec
-            valmat = A * bvec
-            appr_module = V.approx_module(N)
-            ans = self([V(appr_module(valmat.submatrix(row=i,nrows = N).list())) for i in xrange(0,valmat.nrows(),N)])
-        if steps <= 1:
-            return ans
+        verbose('Done computing 2^(%s)-th power'%times)
+        if times > 0:
+            scale_factor = ZZ(scale).powermod(2**times,self._pN)
         else:
-            return self.apply_Up(ans, group = group,scale = scale,parallelize = parallelize,times = times,progress_bar = progress_bar,method = method, repslocal = repslocal, steps = steps -1)
+            scale_factor = ZZ(scale)
+        bvec = Matrix(R,NN,1,[o for b in c._val for o in b._moments.list()])
+        if scale_factor != 1:
+            bvec = scale_factor * bvec
+        valmat = A * bvec
+        appr_module = V.approx_module(N)
+        ans = self([V(appr_module(valmat.submatrix(row=i,nrows = N).list())) for i in xrange(0,valmat.nrows(),N)])
+        return ans
+
+    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive', repslocal = None, Up_reps = None, steps = 1): # one-variable overconvergent
+        r"""
+        Apply the Up Hecke operator operator to ``c``.
+        """
+        if method != 'naive':
+            raise NotImplementedError
+        assert steps == 1
+
+        V = self.coefficient_module()
+        R = V.base_ring()
+        gammas = self.group().gens()
+
+        if Up_reps is None:
+            Up_reps = self.S_arithgroup().get_Up_reps()
+
+        if repslocal is None:
+            try:
+                prec = V.base_ring().precision_cap()
+            except AttributeError:
+                prec = None
+            repslocal = self.get_Up_reps_local(prec)
+        i = 0
+        assert times == 0
+        G = self.S_arithgroup()
+        Gn = G.large_group()
+        if self.use_shapiro():
+            if self.coefficient_module().trivial_action():
+                def calculate_Up_contribution(lst, c, i, j):
+                    return sum([c.evaluate_and_identity(tt) for sk, tt in lst])
+            else:
+                def calculate_Up_contribution(lst, c, i, j):
+                    return sum([sk * c.evaluate_and_identity(tt) for sk, tt in lst])
+
+            input_vec = []
+            for j, gamma in enumerate(gammas):
+                for i, xi in enumerate(G.coset_reps()):
+                    delta = Gn(G.get_coset_ti(set_immutable(xi * gamma.quaternion_rep))[0])
+                    input_vec.append(([(sk, Gn.get_hecke_ti(g,delta)) for sk, g in zip(repslocal, Up_reps)], c, i, j))
+            vals = [[V.coefficient_module()(0,normalize=False) for xi in G.coset_reps()] for gamma in gammas]
+            if parallelize:
+                for inp, outp in parallel(calculate_Up_contribution)(input_vec):
+                    vals[inp[0][-1]][inp[0][-2]] += outp
+            else:
+                for inp in input_vec:
+                    outp = calculate_Up_contribution(*inp)
+                    vals[inp[-1]][inp[-2]] += outp
+            ans = self([V(o) for o in vals])
+        else: # not shapiro
+            Gpn = G.small_group()
+            if self.trivial_action():
+                def calculate_Up_contribution(lst,c,num_gamma):
+                    return sum([c.evaluate(tt) for sk, tt in lst], V(0,normalize=False))
+            else:
+                def calculate_Up_contribution(lst,c,num_gamma,pb_fraction=None):
+                    i = num_gamma * len(lst)
+                    ans = V(0, normalize=False)
+                    j = 0
+                    for sk, tt in lst:
+                        j += 1
+                        verbose(' %s / %s'%(j, len(lst)))
+                        ans += sk * c.evaluate(tt)
+                        i += 1
+                    return ans
+            input_vec = []
+            for j,gamma in enumerate(gammas):
+                input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma)) for sk, g in zip(repslocal, Up_reps)], c, j))
+            vals = [V(0,normalize=False) for gamma in gammas]
+            if parallelize:
+                for inp,outp in parallel(calculate_Up_contribution)(input_vec):
+                    vals[inp[0][-1]] += outp
+            else:
+                for counter, inp in enumerate(input_vec):
+                    verbose('count = %s / %s'%(counter, len(input_vec)))
+                    outp = calculate_Up_contribution(*inp, pb_fraction=float(1)/float(len(repslocal) * len(input_vec)))
+                    vals[inp[-1]] += outp
+            ans = self(vals)
+        if scale != 1:
+            ans = scale * ans
+        return ans
 
     def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'naive', steps = 1):
         r"""
@@ -877,7 +922,7 @@ class ArithCohBianchi(ArithCoh_generic):
             ans1.append(S0(emb(gbar,prec), emb(conj(gbar),prec)))
         return ans0, ans1
 
-    def apply_Up(self,c,group = None,scale = 1,progress_bar = False):
+    def apply_Up(self,c,group = None,scale = 1,progress_bar = False): # bianchi
         V = self.coefficient_module()
         R = V.base_ring()
         gammas = self.group().gens()
@@ -921,7 +966,8 @@ class ArithCohBianchi(ArithCoh_generic):
             for sk, tt in lst:
                 progress += pb_fraction
                 outp += sk * c.evaluate(tt)
-                update_progress(float(progress), 'Up action (%s)'%(2 * len(repslocal) * len(input_vec)))
+                if progress_bar:
+                    update_progress(float(progress), 'Up action (%s)'%(2 * len(repslocal) * len(input_vec)))
             vals[j] += outp
         ans = self(vals)
 

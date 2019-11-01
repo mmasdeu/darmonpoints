@@ -10,7 +10,7 @@ from integrals import integrate_H1,double_integral_zero_infty
 from sage.all import QQ, ZZ, Qp, QuaternionAlgebra, factor, Infinity
 import sys, os, datetime, ConfigParser
 
-def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
+def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, implementation = None, **kwargs):
     r'''
     EXAMPLES:
 
@@ -146,7 +146,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity)
-            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout, use_shapiro = use_shapiro, nscartan = Ncartan)
+            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout, use_shapiro = use_shapiro, nscartan = Ncartan, implementation = implementation)
         except RuntimeError as e:
             if quit_when_done:
                 magma.quit()

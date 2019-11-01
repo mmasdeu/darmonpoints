@@ -38,6 +38,8 @@ from sage.plot.plot import plot
 from sage.plot.hyperbolic_arc import hyperbolic_arc
 from sage.plot.hyperbolic_polygon import hyperbolic_polygon
 from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
+from util import update_progress
+from sage.groups.free_group import FreeGroup
 
 def geodesic_circle(alpha, beta, return_equation=True):
     r'''
@@ -582,7 +584,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
 
         self._prec_inf = -1
 
-        self.__init_magma_objects(info_magma)
+        self._init_magma_objects(info_magma)
 
         self.B = QuaternionAlgebra((self._B_magma.gen(1)**2)._sage_(),(self._B_magma.gen(2)**2)._sage_())
         assert self.B.discriminant() == self.discriminant, "Error while constructing quaternion algebra"
@@ -634,7 +636,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
     def _repr_(self):
         return 'Arithmetic Group attached to rational quaternion algebra, disc = %s, level = %s'%(self.discriminant,self.level)
 
-    def __init_magma_objects(self,info_magma = None): # Rational quaternions
+    def _init_magma_objects(self,info_magma = None): # Rational quaternions
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
@@ -661,7 +663,10 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             if self._compute_presentation:
                 self._D_magma = self.magma.UnitDisc(Precision = 300)
             else:
-                self._D_magma = info_magma._D_magma
+                try:
+                    self._D_magma = info_magma._D_magma
+                except AttributeError:
+                    pass
         self._F_magma = self._B_magma.BaseRing()
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
 
@@ -1094,7 +1099,6 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         else:
             return gamma, tau1
 
-
     def get_word_rep(self,delta): # rationalmatrix
         level = self.level
         try:
@@ -1135,10 +1139,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
         if all([o.denominator() == 1 for o in entries]):
             if entries[2] % self.level == 0:
                 if hasattr(self,'nebentypus'):
-                    if ZZ(entries[0]) % self.level in self.nebentypus:
-                        return True
-                    else:
-                        return False
+                    return ZZ(entries[0]) % self.level in self.nebentypus
                 else:
                     return True
             else:
@@ -1165,8 +1166,8 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         self.level = base.ideal(level)
         self.a,self.b = base(a),base(b)
         self.abtuple = (self.a, self.b)
-        self.__init_magma_objects(info_magma)
         self.B = QuaternionAlgebra(self.F,self.a,self.b)
+        self._init_magma_objects(info_magma)
 
         if self.B.invariants() == (1,1):
             i, j, k = self.B.gens()
@@ -1189,7 +1190,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
     def _repr_(self):
         return 'Arithmetic Group attached to quaternion algebra with a = %s, b = %s and level = %s'%(self.a,self.b,self.level)
 
-    def __init_magma_objects(self,info_magma = None): # NF quaternion
+    def _init_magma_objects(self,info_magma = None): # NF quaternion
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
@@ -1226,7 +1227,10 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             if self._compute_presentation:
                 self._D_magma = self.magma.UnitDisc(Precision = 300)
             else:
-                self._D_magma = info_magma._D_magma
+                try:
+                    self._D_magma = info_magma._D_magma
+                except AttributeError:
+                    pass
         if not hasattr(self,'_F_magma'):
             self._F_magma = self._B_magma.BaseRing()
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
@@ -1562,6 +1566,30 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
         self._gens = [self.element_class(self,quaternion_rep = g, word_rep = [i+1],check = False) for i, g in enumerate(self.Ugens)]
         verbose('Done initializing generators')
 
+    def _kleinianmatrix(self,gamma):
+        B = gamma.parent()
+        K = gamma.parent().base_ring()
+        CC = ComplexField(self._RR.precision())
+        vC = self._vC
+        aa,bb = [vC(o) for o in B.invariants()]
+        sa = aa.sqrt()
+        bsa = bb * sa
+        P, Pinv = self._Pmat, self._Pmatinv
+        x1,x2,x3,x4 = [vC(o) for o in gamma.coefficient_tuple()]
+        hi = self._HH.gen(0)
+        phi = lambda x:self._HH(x.real()) + hi * x.imag()
+        m = Pinv * Matrix(CC,2,2,[x1 + x2*sa, x3 + x4*sa, x3*bb - x4*bsa, x1- x2*sa])* P
+        if gamma.reduced_norm() != 1:
+            scal = 1/m.determinant().sqrt()
+            m *= scal
+        a,b,c,d = m.apply_map(phi).list()
+        hj = self._HH.gen(1)
+        A = ((a+d.conjugate()) + (b-c.conjugate())*hj)
+        B = ((b+c.conjugate()) + (a-d.conjugate())*hj)
+        C = ((c+b.conjugate()) + (d-a.conjugate())*hj)
+        D = ((d+a.conjugate()) + (c-b.conjugate())*hj)
+        return Matrix(self._HH,2,2,[A,B,C,D])
+
     @cached_method
     def fundamental_domain(self):
         raise NotImplementedError
@@ -1611,43 +1639,456 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             raise RuntimeError('Error in word problem from Aurel 2')
         return c
 
-    def _kleinianmatrix(self,gamma):
-        B = gamma.parent()
-        K = gamma.parent().base_ring()
-        CC = ComplexField(self._RR.precision())
-        vC = self._vC
-        aa,bb = [vC(o) for o in B.invariants()]
-        sa = aa.sqrt()
-        bsa = bb * sa
-        P, Pinv = self._Pmat, self._Pmatinv
-        x1,x2,x3,x4 = [vC(o) for o in gamma.coefficient_tuple()]
-        hi = self._HH.gen(0)
-        phi = lambda x:self._HH(x.real()) + hi * x.imag()
-        m = Pinv * Matrix(CC,2,2,[x1 + x2*sa, x3 + x4*sa, x3*bb - x4*bsa, x1- x2*sa])* P
-        if gamma.reduced_norm() != 1:
-            scal = 1/m.determinant().sqrt()
-            m *= scal
-        a,b,c,d = m.apply_map(phi).list()
-        hj = self._HH.gen(1)
-        A = ((a+d.conjugate()) + (b-c.conjugate())*hj)
-        B = ((b+c.conjugate()) + (a-d.conjugate())*hj)
-        C = ((c+b.conjugate()) + (d-a.conjugate())*hj)
-        D = ((d+a.conjugate()) + (c-b.conjugate())*hj)
-        return Matrix(self._HH,2,2,[A,B,C,D])
+class ArithGroup_matrix_generic(ArithGroup_generic):
+    def find_matrix_from_cusp(self, cusp):
+        r'''
+        Returns a matrix gamma and a cusp representative modulo Gamma0(N) (c2:d2),
+        represented as a matrix (a,b;c,d), such that gamma * cusp = (c2:d2).
+        '''
+        a, c = cusp
+        reduction_table, _ = self.cusp_reduction_table()
+        P = self.get_P1List()
+        if hasattr(P.N(),'number_field'):
+            K = P.N().number_field()
+        else:
+            K = QQ
 
-class ArithGroup_nf_matrix(ArithGroup_nf_kleinian):
-    @cached_method()
-    def matrix_rep(self, x):
-        try:
-            x = x.quaternion_rep
-        except AttributeError:
-            pass
+        # Find a matrix g = [a,b,c,d] in SL2(O_K) such that g * a/c = oo
+        # Define (c1:d1) to be the rep in P1(O_K/N) such that (c1:d1) == (c:d).
+        if c == 0: ## case cusp infinity: (a,c) should equal (1,0)
+            a = 1
+            g = Matrix(2,2,[1,0,0,1])
+            c1, d1 = P.normalize(0, 1)
+        else:
+            if K == QQ:
+                g0, d, b = ZZ(a).xgcd(-c)
+                if g0 != 1:
+                    a /= g0
+                    c /= g0
+            else:
+                """
+                Compute gcd if a,c are coprime in F, and x,y such that
+                    ax + cy = 1.
+                """
+                if a.parent() != c.parent():
+                    raise ValueError('a,c not in the same field.')
+                if a.gcd(c) != 1:
+                    raise ValueError('a,c not coprime.')
+
+                d = next(o for o in K.ideal(c).residues() if a * o - 1 in K.ideal(c))
+                b = (a * d - 1) / c
+
+            g = Matrix(2,2,[[d,-b],[-c,a]]) # the inverse
+            c1, d1 = P.normalize(c, d)
+        assert g.determinant() == 1
+
+        A, T = reduction_table[(c1,d1)]
+        gamma = A.parent()(A * T * g)
+        return gamma, A
+
+    def compute_cusp_stabiliser(self,cusp_matrix):
+        """
+        Compute (a finite index subgroup of) the stabiliser of a cusp 
+        in Q or a quadratic imaginary field.
+
+        We know the stabiliser of infinity is given by matrices of form 
+        (u, a; 0, u^-1), so a finite index subgroup is generated by (1, alpha; 0, 1)
+        and (1, 1; 0, 1) for K = Q(alpha). Given the cusp, we use a matrix
+        sending infinty to that cusp, and the conjugate by it, before taking powers
+        to ensure the result is integral and lies in Gamma_0(N).
+
+        Input: 
+            - a cusp (in matrix form: as output by cusp_set)
+            - N (the level: an ideal in K).
+
+        Outputs a list of the generators (as matrices).
+        """
+
+        P = self.get_P1List()
+        if hasattr(P.N(),'number_field'):
+            K = P.N().number_field()
+            ## Write down generators of a finite index subgroup in Stab_Gamma(infinity)
+            infinity_gens = [matrix(K,[[1,1],[0,1]]), matrix(K,[[1,K.gen()],[0,1]])]
+            N_ideal = P.N()
+        else:
+            K = QQ
+            infinity_gens = [matrix([[1,1],[0,1]])]
+            N_ideal = ZZ.ideal(P.N())
+
+        ## Initilise (empty) list of generators of Stab_Gamma(cusp)
+        cusp_gens = []
+
+        ## Loop over all the generators of stab at infinity, conjugate into stab at cusp
+        for T in infinity_gens:
+            T_conj = cusp_matrix * T * cusp_matrix.adjugate()
+            gen = T_conj
+
+            ## Now take successive powers until the result is in Gamma_0(N)
+            while not gen[1][0] in N_ideal:
+                 gen *= T_conj
+
+            ## We've found an element in Stab_Gamma(cusp): add to our list of generators
+            cusp_gens.append(gen)
+        return cusp_gens
+
+    @cached_method
+    def cusp_reduction_table(self):
+        r'''
+        Returns a dictionary and the set of cusps.
+
+        Assumes we have a finite set surjecting to the cusps (namely, P^1(O_F/N)). Runs through
+        and computes a subset which represents the cusps, and shows how to go from any element 
+        of P^1(O_F/N) to the chosen equivalent cusp.
+
+        Takes as input the object representing P^1(O_F/N), where F is a number field
+        (that is possibly Q), and N is some ideal in the field.  Runs the following algorithm:
+                - take a remaining element C = (c:d) of P^1(O_F/N);
+                - add this to the set of cusps, declaring it to be our chosen rep;
+                - run through every translate C' = (c':d') of C under the stabiliser of infinity, and
+                        remove this translate from the set of remaining elements;
+                - store the matrix T in the stabiliser such that C' * T = C (as elements in P^1)
+                        in the dictionary, with key C'.
+        '''
+        P = self.get_P1List()
+        if hasattr(P.N(),'number_field'):
+            K = P.N().number_field()
+        else:
+            K = QQ
+
+        from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok
+        from sage.modular.modsym.p1list import lift_to_sl2z
+        ## Define new function on the fly to pick which of Q/more general field we work in
+        ## lift_to_matrix takes parameters c,d, then lifts (c:d) to a 2X2 matrix over the NF representing it
+        lift_to_matrix = lambda c, d: lift_to_sl2z(c,d,P.N()) if K.degree() == 1 else lift_to_sl2_Ok(P.N(), c, d)
+
+        ## Put all the points of P^1(O_F/N) into a list; these will corr. to our dictionary keys
+        remaining_points = set(list(P)) if K == QQ else set([c.tuple() for c in P])
+        reduction_table = {}
+        cusp_set = []
+
+        initial_points = len(remaining_points)
+
+        ## Loop over all points of P^1(O_F/N)
+        while len(remaining_points) > 0:
+            ## Pick a new cusp representative
+            c = remaining_points.pop()
+            update_progress(1 - float(len(remaining_points)) / float(initial_points), "Finding cusps...")
+            ## c is an MSymbol so not hashable. Create tuple that is
+            ## Represent the cusp as a matrix, add to list of cusps, and add to dictionary
+            new_cusp = Matrix(2,2,lift_to_matrix(c[0], c[1])) 
+            new_cusp.set_immutable()
+            cusp_set.append(new_cusp)
+            reduction_table[c]=(new_cusp,matrix(2,2,1)) ## Set the value to I_2
+            ## Now run over the whole orbit of this point under the stabiliser at infinity.
+            ## For each elt of the orbit, explain how to reduce to the chosen cusp.
+
+            ## Run over lifts of elements of O_F/N:
+            if K == QQ:
+                residues = Zmod(P.N())
+                units = [1, -1]
+            else:
+                residues = P.N().residues()
+                units = K.roots_of_unity()
+
+            for hh in residues:
+                h = K(hh) ## put into the number field
+                ## Run over all finite order units in the number field
+                for u in units:
+                    ## Now have the matrix (u,h; 0,u^-1).
+                    ## Compute the action of this matrix on c
+                    new_c = P.normalize(u * c[0], u**-1 * c[1] + h * c[0])
+                    if K != QQ: 
+                        new_c = new_c.tuple()
+                    if new_c not in reduction_table:
+                        ## We've not seen this point before! But it's equivalent to c, so kill it!
+                        ## (and also store the matrix we used to get to it)
+                        remaining_points.remove(new_c)
+                        T = matrix(2,2,[u,h,0,u**-1]) ## we used this matrix to get from c to new_c
+                        reduction_table[new_c]=(new_cusp, T) ## update dictionary with the new_c + the matrix
+                        if K != QQ:
+                            assert P.normalize(*(vector(c) * T)).tuple() == new_c ## sanity check
+                        else:
+                            assert P.normalize(*(vector(c) * T)) == new_c ## sanity check
+
+        return reduction_table, cusp_set
+
+    @cached_method
+    def get_P1List(self):
+        """
+        Generates the projective line of O_F/N, where N is an ideal specified
+        in the input, or computed from a parent object (e.g. arithmetic group).
+        """
+        N = self.level
+
+        ## Return object representing Projective line over O_F/N
+        if hasattr(N,'number_field'): ## Base field not Q
+            from sage.modular.modsym.p1list_nf import P1NFList
+            return P1NFList(N)
+        else:   ## Base field Q
+            from sage.modular.modsym.p1list import P1List
+            return P1List(N)
+
+class ArithGroup_nf_matrix_new(ArithGroup_matrix_generic, ArithGroup_nf_generic):
+    def __init__(self,base,level,level0 = None, info_magma = None,grouptype =  'PSL2',magma = None,timeout = 0, compute_presentation = None):
+        assert level0 is None
+        verbose('Initializing small group...')
+        if level0 is None:
+            level0 = base.ideal(1)
+        self.G0 = ArithGroup_nf_matrix(base, base(1), base(1), level0, grouptype=grouptype, magma=magma, timeout=timeout, compute_presentation=True)
+        self._G0_gens_as_matrices = [self.G0.quaternion_to_matrix(g.quaternion_rep) for g in self.G0.gens()]
+        verbose('Done initializing small level group.')
+        self.F = base
+        self.B = self.G0.B
+        self.magma = magma
+        self._grouptype = grouptype
+        self.level = base.ideal(level)
+        """
+        Compute generators of the subgroup Gamma_0(N), where N is the specified level.
+
+        Write down representatives of the cosets
+        for Gamma_0(N) in Gamma(1), which we identify with P^1(O_F/N). We already have
+        code to compute with this: namely, cusp_reduction_table does precisely this.
+
+        ALGORITHM :
+
+        Retrieve the cusp reduction table. Recall that this is a dictionary with keys
+        given by tuples (a,c) representing the element (a:c) in P^1(O_F/N). The entries
+        are C, A, where c is the corresponding cusp (from cusp_set) and A is a matrix 
+        taking C to a matrix with bottom row (a:c).
+        Generate the coset representatives: this is given by taking A*C as we range 
+        over all (A,C) in the values of cusp_reduction_table
+        coset_reps is now a dictionary: keys are elements of P^1(O_F/N), and values are
+        matrices which are coset reps for Gamma_0(N) in Gamma(1) cor. to these elements.
+        """
+        verbose('Computing coset reps...')
+        self._coset_reps = { key : set_immutable(a * c) for key, (a, c) in self.cusp_reduction_table()[0].items() }
+        verbose('Done computing coset reps.')
+        ## compute the generators of H
+        verbose('Computing the auxiliar data...')
+        self._gens_dict_auxiliary, self._gens_matrices_auxiliary, self._gens_words_auxiliary = self._generators_auxiliary()
+        if len(self._gens_dict_auxiliary) == 0: # DEBUG line
+            return # DEBUG line
+        verbose('Done computing the auxiliary data.')
+        verbose('Computing GAP information...')
+        self._compute_gap_information()
+        verbose('Done with GAP information...')
+        ArithGroup_nf_generic.__init__(self, base, base(1), base(1),self.level,info_magma = None,grouptype =  grouptype,magma = magma,timeout = timeout, compute_presentation = False)
+
+    def _repr_(self):
+        return 'Gamma0(%s) over %s'%(self.level.gens_reduced()[0], self.F)
+
+    def get_word_rep(self, x):
+        wd_aux = self._get_word_rep_auxiliary(self.G0.quaternion_to_matrix(x))
+        iso = self._iso_mapping
+        ans = []
+        for i in wd_aux:
+            if i > 0:
+                ans += iso[i-1]
+            else:
+                ans += [-o for o in list(reversed(iso[-i-1]))]
+        return ans
+
+    def embed(self, x):
+        return self.quaternion_to_matrix(x).apply_map(self._F_to_local)
+
+    def _compute_gap_information(self):
+        gens = [o.quaternion_rep for o in self.G0.gens()]
+        relation_words = self.G0.get_relation_words()
+        new_generators = self._gens_words_auxiliary
+        G1 = FreeGroup(len(gens)).quotient(relation_words).gap()
+        G1gens = G1.GeneratorsOfGroup()
+        H1 = G1.Subgroup([prod((G1gens[ZZ(i).abs() - 1]**ZZ(i).sign() for i in wd),G1gens[0]**0) for wd in new_generators])
+        iso = H1.IsomorphismFpGroup()
+        H2 = iso.Range()
+        H2gens = H2.GeneratorsOfGroup()
+        H2relators = H2.RelatorsOfFpGroup()
+        # Parse generators of H2 into Sage
+        H2genlen = len(H2gens)
+        self._final_gens = []
+        self.Ugens = []
+        for idx, g in enumerate(H2gens):
+            update_progress(float(idx+1) / float(H2genlen), 'Parsing generators of H2')
+            wd = iso.PreImagesRepresentative(g).UnderlyingElement().LetterRepAssocWord().sage()
+            self._final_gens.append(wd)
+            self.Ugens.append(prod(gens[ZZ(i).abs() - 1]**ZZ(i).sign() for i in wd))
+        self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [i+1],check = False) for i,g in enumerate(self.Ugens) ]
+
+
+
+        H2relatorlen = len(H2relators)
+        if H2relatorlen > 0:
+            # Parse relators
+            self._relation_words = []
+            for idx, wd in enumerate(H2relators):
+                update_progress(float(idx+1) / float(H2relatorlen), 'Parsing relators for H2')
+                self._relation_words.append(wd.UnderlyingElement().LetterRepAssocWord().sage())
+
+        # Calculate final_gens as matrices
+        self._iso_mapping = []
+        H1gens = H1.GeneratorsOfGroup()
+        H1genlen = len(H1gens)
+        for idx, g in enumerate(H1gens):
+            update_progress(float(idx+1) / float(H1genlen), 'Parsing isomorphism')
+            self._iso_mapping.append( iso.ImageElm(g).UnderlyingElement().LetterRepAssocWord().sage())
+        return
+
+    def _represent_in_coset(self,g, check=False):
+        """
+        g is an element of Gamma(1). Represent it as h * p, where h in Gamma_0 and p is a rep.
+        """
+        ## We can read off the class from the bottom row, computing in P(O_F/N)
+        c, d = g.row(1)
+        P = self.get_P1List()
+        N = P.N()
+        coset_class = P.normalize(c,d) if self.F == QQ else P.normalize(c,d).tuple()
+        rep = self._coset_reps[coset_class]
+        h = g * rep.adjugate()
+        set_immutable(h)
+        if check:
+            ## Now check that h really is in Gamma_0(N)
+            if self.F == QQ:
+                assert h[1][0] % N == 0
+            else:
+                assert h[1][0] in N
+        return h, rep
+
+    @cached_method
+    def _generators_auxiliary(self):
+        """
+        Compute generators for Gamma_0(N) via its right coset representatives in Gamma(1).
+
+        OUTPUT:
+            - small_gens_matrices, a dictionary: the keys are matrices A,
+                which are generators of the small group, and the values are integers;
+
+            - small_gens_words, a list: the D[A]-th entry is the matrix A written
+                as a word in the generators of Gamma(1).
+
+        The words are written in Tietze form, i.e. [1,2,1,-2,-1,2] corr. to
+        g * h * g * h^(-1) * g^(-1) * h, where g,h = (ordered) gens of Gamma(1).
+
+        """
+        g0gens = self._G0_gens_as_matrices
+        small_gens_matrices_dict = {} ## This will contain the output: matrix form, dictionary with keys the matrices
+        small_gens_matrices = [] ## list of the matrices in order
+        small_gens_words = [] ## This will contain the output: word form.
+        current_index = 0
+
+        ## Loop over all gens of big group
+        total_iterations = len(2 * g0gens) * len(self._coset_reps.items())
+        iteration = 0
+        for g in g0gens + [~g for g in g0gens]:
+            ## Loop over all coset reps
+            for key, p in self._coset_reps.items():
+                ## compute p*g, represent as h * p_prime for h in subgroup
+                h, p_prime = self._represent_in_coset(p * g)
+                ## check h is not 1 and not repeating gens or their inverses
+                hinv = h.adjugate()
+                set_immutable(hinv)
+                set_immutable(h)
+                iteration += 1
+                update_progress(float(iteration) / float(total_iterations), "Computing auxiliary generators")
+                if not h == 1 and not h in small_gens_matrices_dict and not hinv in small_gens_matrices_dict:
+                    ## This is new. Add h to the dictionary and add one to the index for next time
+                    small_gens_matrices_dict[h] = current_index
+                    current_index += 1
+                    ## also add h to the list of matrices
+                    small_gens_matrices.append(h)
+                    ## Now solve the word problem
+                    word = self.G0.get_word_rep(self.G0.matrix_to_quaternion(h))
+                    small_gens_words.append(word)
+        return small_gens_matrices_dict, small_gens_matrices, small_gens_words
+
+    def _get_word_rep_auxiliary(self,h, check=False):
+        """
+        Solve the word problem in the small group Gamma_0(N) in the list of generators output 
+        by _generators_auxiliary.
+
+        Firstly, we write this as h = 1.h. Then we write h = gh', where g in Gens(G) (so we must be
+        able to solve the word problem for G). Then write 1.g = zp', so that
+            h = z * p' * h'. Now iterate. We will end up with z_1 z_2 ... z_t p_0, where p_0 = id rep.
+
+        OUTPUT:
+
+        - a list of integers in {-t,-t+1,...,t-1,t}, where the output of _generators_auxiliary is
+          [a_1,...,a_t].
+
+        For example,
+
+           h = abc in H, a,b,c in Gens(G)
+           h = 1.abc
+             = 1ap^(-1) . pbc
+             = 1ap^(-1) . pbq^(-1) . qc
+             = 1ap^(-1) . pbq^(-1) . qc1^(-1)
+             = z1 . z2 . z3, where each zi is in the generating set.
+        """
+        gens_G = self._G0_gens_as_matrices
+
+        ## Initialise final output
+        h_level_N_wp = []
+
+        ## Write h in the generators of g
+        h_level0_wp = self.G0.get_word_rep(self.G0.matrix_to_quaternion(h))
+
+        ## We start with p_0 = id representative
+        current_p = matrix([[1,0],[0,1]])
+        set_immutable(current_p)
+
+        ## loop through every generator that appears in the word of h (in G)
+        for gen_ind in h_level0_wp:
+            ## Compute the generator we're processing
+            current_gen = gens_G[ZZ(gen_ind).abs()-1]
+            if ZZ(gen_ind).sign() == -1:
+                current_gen = current_gen.adjugate()
+            ## Compute the generator and update p_i to p_{i+1}
+            h_current, current_p = self._represent_in_coset(current_p * current_gen)
+            ## h_current should be one of our generators! As it is of form p'gp^(-1)
+            if h_current != 1: ## check not identity
+                try:
+                    gen_number = self._gens_dict_auxiliary[h_current]
+                    ## Great, we've found a generator. Let's move on
+                    ## Compute the index corresponding to this generator
+                    ## The generator appearing is not inverse. So append the index
+                    h_level_N_wp.append(gen_number + 1)
+                except KeyError:
+                    ## h_current^(-1) should be in the dictionary
+                    h_curr_inv = h_current.adjugate()
+                    set_immutable(h_curr_inv)
+                    ## Great, we've found a generator. Let's move on
+                    ## Compute the index corresponding to this generator
+                    gen_number = self._gens_dict_auxiliary[h_curr_inv]
+                    ## The generator appearing is an inverse. So append negative the index
+                    h_level_N_wp.append(-gen_number-1)
+
+        ## Check that we have actually solved the word problem correctly
+        if check:
+            check_h = prod(self._gens_matrices_auxiliary[ZZ(i).abs() - 1]**(ZZ(i).sign()) for i in h_level_N_wp)
+            assert check_h == h
+        return h_level_N_wp
+
+class ArithGroup_nf_matrix(ArithGroup_matrix_generic, ArithGroup_nf_kleinian):
+    @cached_method
+    def matrix_basis(self):
         F = self.F
         M = MatrixSpace(F,2,2)
-        basis = [M([1,0,0,1]), M([1,0,0,-1]), M([0,-1,-1,0]), M([0,-1,1,0])]
-        return sum((a * b for a, b in zip(list(self.B(x)), basis)), M(0))
+        return [M([1,0,0,1]), M([1,0,0,-1]), M([0,-1,-1,0]), M([0,-1,1,0])]
 
-    def __init_magma_objects(self,info_magma = None):
+    @cached_method
+    def matrix_to_quaternion(self, x):
+        F = self.B
+        a, b, c, d = x.list()
+        return self.B([(a+d) / 2, (a-d) / 2 , (-b - c) / 2, (c - b) / 2])
+
+    @cached_method
+    def quaternion_to_matrix(self, x):
+        try:
+            x = x.quaternion_rep
+        except AttributeError: pass
+        ans = sum((a * b for a, b in zip(list(self.B(x)), self.matrix_basis())))
+        set_immutable(ans)
+        return ans
+
+    def _init_magma_objects(self,info_magma = None):
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
         if info_magma is None:
@@ -1669,7 +2110,8 @@ class ArithGroup_nf_matrix(ArithGroup_nf_kleinian):
             self._Omax_magma = self.magma.Order([(on + i)/2, (j+k)/2, (j-k)/2, (on - i)/2])
             if self.level != self.F.ideal(1):
                 levgen = sage_F_elt_to_magma(self._B_magma.BaseRing(), self.level.gens_reduced()[0])
-                self._O_magma = self.magma.Order([(on + i)/2, (j+k)/2, levgen * (j-k)/2, (on-i)/2])
+                self._O_magma = self.magma.Order([(on + i)/2, -(j+k)/2, levgen * (k-j)/2, (on-i)/2])
+                print self._O_magma.Discriminant().Norm()
             else:
                 self._O_magma = self._Omax_magma
             if self._compute_presentation:
@@ -1690,7 +2132,10 @@ class ArithGroup_nf_matrix(ArithGroup_nf_kleinian):
             if self._compute_presentation:
                 self._D_magma = self.magma.UnitDisc(Precision = 300)
             else:
-                self._D_magma = info_magma._D_magma
+                try:
+                    self._D_magma = info_magma._D_magma
+                except AttributeError:
+                    pass
         if not hasattr(self,'_F_magma'):
             self._F_magma = self._B_magma.BaseRing()
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
