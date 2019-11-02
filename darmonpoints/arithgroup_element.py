@@ -114,7 +114,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         selfquatrep = self.quaternion_rep
         rightquatrep = right.quaternion_rep
         if 'P' not in self.parent()._grouptype:
-            return selfquatrep.__cmp__(rightquatrep)
+            return cmp(selfquatrep, rightquatrep)
         tmp = selfquatrep/rightquatrep
         try:
             tmp = self.parent().F(tmp)

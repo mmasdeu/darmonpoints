@@ -1132,7 +1132,7 @@ class ArithGroup_rationalmatrix(ArithGroup_generic):
             return candidate
 
     def non_positive_unit(self):
-        return self.B([1,0,0,-1])
+        return self.B([-1,0,0,1])
 
     def _is_in_order(self,x):
         entries = x.list()
@@ -1220,7 +1220,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             self._B_magma = info_magma._B_magma
             self._Omax_magma = info_magma._Omax_magma
             if self.level != self.F.ideal(1):
-                M = sage_F_ideal_to_magma(self._F_magma,info_magma.level)
+                M = sage_F_ideal_to_magma(self._F_magma,self.level) # DEBUG
                 self._O_magma = info_magma._Omax_magma.Order(M)
             else:
                 self._O_magma = self._Omax_magma
@@ -2087,6 +2087,20 @@ class ArithGroup_nf_matrix(ArithGroup_matrix_generic, ArithGroup_nf_kleinian):
         ans = sum((a * b for a, b in zip(list(self.B(x)), self.matrix_basis())))
         set_immutable(ans)
         return ans
+
+    @cached_method(key = lambda self, N, use_magma, return_all, radius, max_elements : (self, N, return_all))
+    def element_of_norm(self,N,use_magma = False,return_all = False, radius = None, max_elements = None): # in rationalmatrix
+        mat = matrix(2,2,[self.F.ideal(N).gens_reduced()[0][0],0,0,1])
+        candidate = self.matrix_to_quaternion(mat)
+        set_immutable(candidate)
+        if return_all:
+            return [candidate]
+        else:
+            return candidate
+
+    def non_positive_unit(self):
+        mat = matrix(self.F, 2,2,[-1,0,0,1])
+        return self.matrix_to_quaternion(mat)
 
     def _init_magma_objects(self,info_magma = None):
         wtime = walltime()

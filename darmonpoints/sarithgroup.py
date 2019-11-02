@@ -736,6 +736,6 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, gro
             return ArithGroup_nf_fuchsian(base,a,b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
         else:
             if implementation is None:
-                return ArithGroup_nf_kleinian(base,a,b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
+                return ArithGroup_nf_kleinian(base, a,b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
             else:
                 return MatrixArithGroup(base, level, info_magma=info_magma, grouptype=grouptype, magma=magma, timeout=timeout, compute_presentation=compute_presentation, implementation=implementation)

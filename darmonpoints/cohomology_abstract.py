@@ -283,6 +283,7 @@ class CohomologyGroup(Parent):
             self._acting_matrix = acting_matrix
         gens_local = [ (g, g**-1) for g in G.gens() ]
         GA = GroupAlgebra(G)
+        self._GA = GA
         for g, ginv in gens_local:
             self._gen_pows.append([GA(one), GA(g)])
             self._gen_pows_neg.append([GA(one), GA(ginv)])
