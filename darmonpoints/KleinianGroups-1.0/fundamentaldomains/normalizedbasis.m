@@ -289,7 +289,7 @@ function CommUnits(O,x)
   return L;
 end function;
 
-intrinsic NormalizedBasis(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodEnum := 100, Level := 1, BoundPrimes := -1, PairingMethod := "Reduction", GroupType := "NormOne", EnumMethod := "SmallBalls", Maple := false, zetas := [], zK2 := 0, Center := "Auto", index := 1, pr := DefaultPrecision, max_time := 0) -> SeqEnum, SeqEnum, SeqEnum, SeqEnum, FldReElt, SeqEnum, SeqEnum, FldReElt, FldReElt, FldReElt, RngIntElt, RngIntElt, AlgQuatElt
+intrinsic NormalizedBasis(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodEnum := 100, Level := 1, BoundPrimes := -1, PairingMethod := "Reduction", GroupType := "NormOne", EnumMethod := "SmallBalls", Maple := false, zetas := [], zK2 := 0, Center := "Auto", index := 1, pr := DefaultPrecision, pr_zetas := DefaultPrecision, max_time := 0) -> SeqEnum, SeqEnum, SeqEnum, SeqEnum, FldReElt, SeqEnum, SeqEnum, FldReElt, FldReElt, FldReElt, RngIntElt, RngIntElt, AlgQuatElt
 {
     Computes a fundamental domain for the Kleinian group attached to the order O.
 
@@ -480,7 +480,7 @@ end if;
 vprint Kleinian, 3: "NbEnum = ", NbEnum;
 
 if not Fuchsian and zetas eq [] then
-    zetas := ComputeZetas(pr);
+    zetas := ComputeZetas(pr_zetas);
 end if;
 
 F := [];
