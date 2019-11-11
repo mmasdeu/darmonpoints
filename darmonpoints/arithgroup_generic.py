@@ -491,7 +491,8 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
         else:
             K = QQ
 
-        from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok
+        # from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok
+        from darmonpoints.my_p1list_nf import lift_to_sl2_Ok
         from sage.modular.modsym.p1list import lift_to_sl2z
         ## Define new function on the fly to pick which of Q/more general field we work in
         ## lift_to_matrix takes parameters c,d, then lifts (c:d) to a 2X2 matrix over the NF representing it
@@ -558,7 +559,8 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
 
         ## Return object representing Projective line over O_F/N
         if hasattr(N,'number_field'): ## Base field not Q
-            from sage.modular.modsym.p1list_nf import P1NFList
+            # from sage.modular.modsym.p1list_nf import P1NFList
+            from darmonpoints.my_p1list_nf import P1NFList
             return P1NFList(N)
         else:   ## Base field Q
             from sage.modular.modsym.p1list import P1List
