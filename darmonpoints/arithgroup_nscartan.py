@@ -100,8 +100,6 @@ class ArithGroup_nscartan(ArithGroup_generic):
 
         self.B = MatrixSpace(QQ,2,2)
 
-        self._O_discriminant = ZZ.ideal(self.level * self.q)
-
         # Here we initialize the non-split Cartan, properly
         self.GFq = FiniteField(self.q)
         if not self.GFq(-1).is_square():

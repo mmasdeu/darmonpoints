@@ -63,6 +63,10 @@ class CohomologyElement(ModuleElement):
             self._val = [V(data(b)) for b in G.gens()]
         ModuleElement.__init__(self,parent)
 
+    def _evaluate_word_tietze(self, word):
+        return self._evaluate_word_tietze_naive(word)
+        # return self._evaluate_word_tietze_foxderivative(word)
+
     def values(self):
         return self._val
 
@@ -128,9 +132,7 @@ class CohomologyElement(ModuleElement):
         else:
             return self._evaluate_word_tietze_identity(wd)
 
-    # @cached_method
     def evaluate(self,x,parallelize = False):
-        verbose('Entering evaluate...')
         H = self.parent()
         G = H.group()
         if x.parent() is G:
@@ -138,7 +140,7 @@ class CohomologyElement(ModuleElement):
         else:
             x = G(x)
             wd = x.word_rep
-        verbose(' (got word rep)')
+        verbose('Got word rep', level=2)
         if self.parent().trivial_action():
             return self._evaluate_word_tietze_trivial(wd)
         else:
@@ -161,6 +163,9 @@ class CohomologyElement(ModuleElement):
                 return function(self.evaluate(g1*g2) - self.evaluate(g1) - g1 * self.evaluate(g2))
 
     def _evaluate_word_tietze_naive(self,word):
+        G = self.parent().group()
+        if len(word) == 0:
+            return self.parent().coefficient_module()(0)
         g = word[0]
         if g > 0:
             ans = self._val[g-1]
@@ -179,7 +184,7 @@ class CohomologyElement(ModuleElement):
                 ans -= gamma * self._val[g0]
         return ans
 
-    def _evaluate_word_tietze(self,word):
+    def _evaluate_word_tietze_foxgradient(self,word):
         G = self.parent().group()
         V = self.parent().coefficient_module()
 
@@ -194,12 +199,12 @@ class CohomologyElement(ModuleElement):
             MS = MatrixSpace(R, dim, dim)
         else:
             MS = lambda x:x
-        verbose(' Computing Alist')
-        fgrad = self.parent().fox_gradient(word)
-        verbose('%s'%str([len(f) for f in fgrad]))
-        Alist = [MS(self.parent().GA_to_local(o)) for o in fgrad]
-        ans = V(sum(A * self._val[i]._moments for i, A in enumerate(Alist)))
-        verbose('Done')
+        verbose(' Computing Alist', level=2)
+        fgrad = self.parent().fox_gradient(tuple(word))
+        verbose('%s'%str([len(f) for f in fgrad]), level=2)
+        Alist = [self.parent().GA_to_local(o) for o in fgrad]
+        ans = V(sum(A * val._moments for A, val in zip(Alist, self._val)))
+        verbose('Done', level=2)
         return ans
 
     def _evaluate_word_tietze_identity(self,word):
@@ -262,31 +267,21 @@ class CohomologyGroup(Parent):
             V._unset_coercions_used()
             V.register_action(action)
 
-        if hasattr(V, 'dimension'):
-            dim = V.dimension()
-        elif hasattr(V, 'basis'):
-            dim = len(V.basis())
-        else:
-            Parent.__init__(self)
-            self._acting_matrix = None
-            self._gen_pows = None
-            self._gen_pows_neg = None
-            return
-
-        one = G(1)
-
         if trivial_action:
             self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
         else:
-            def acting_matrix(x,y):
-                return V.acting_matrix(x,y)
-            self._acting_matrix = acting_matrix
+            if hasattr(V, 'acting_matrix'):
+                def acting_matrix(x,y):
+                    return V.acting_matrix(x,y)
+                self._acting_matrix = acting_matrix
+            else:
+                self._acting_matrix = None
         gens_local = [ (g, g**-1) for g in G.gens() ]
         GA = GroupAlgebra(G)
         self._GA = GA
         for g, ginv in gens_local:
-            self._gen_pows.append([GA(one), GA(g)])
-            self._gen_pows_neg.append([GA(one), GA(ginv)])
+            self._gen_pows.append([GA(G(1)), GA(g)])
+            self._gen_pows_neg.append([GA(G(1)), GA(ginv)])
 
         Parent.__init__(self)
         return
@@ -341,7 +336,7 @@ class CohomologyGroup(Parent):
         # Now find the subspace of cocycles
         A = Matrix(R, Vdim * len(gens), 0)
         for r in G.get_relation_words():
-            Alist = [MatrixSpace(R, Vdim, Vdim)(self.GA_to_local(o)) for o in self.fox_gradient(r)]
+            Alist = [MatrixSpace(R, Vdim, Vdim)(self.GA_to_local(o)) for o in self.fox_gradient(tuple(r))]
             newA = block_matrix(Alist, nrows = 1)
             A = A.augment(newA.transpose())
         A = A.transpose()
@@ -394,6 +389,7 @@ class CohomologyGroup(Parent):
     def _repr_(self):
         return 'H^1(G,V), with G being %s and V = %s'%(self.group(),self.coefficient_module())
 
+    @cached_method
     def fox_gradient(self, word, red = None):
         if red is None:
             red = lambda x:x

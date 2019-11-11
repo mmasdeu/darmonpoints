@@ -808,8 +808,8 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         found = False
         while not found:
             try:
-                xi10,xi20 = lattice_homology_cycle(G, g0_shapiro, working_prec)
-                xi11,xi21 = lattice_homology_cycle(G, g1_shapiro, working_prec)
+                xi10,xi20 = lattice_homology_cycle(P, G.Gn, G.wp(), g0_shapiro, working_prec)
+                xi11,xi21 = lattice_homology_cycle(P, G.Gn, G.wp(), g1_shapiro, working_prec)
                 found = True
             except PrecisionError:
                 working_prec *= 2

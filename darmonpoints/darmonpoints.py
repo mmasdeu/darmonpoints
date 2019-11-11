@@ -5,13 +5,14 @@ from sage.rings.number_field.number_field import is_fundamental_discriminant
 from sage.arith.misc import fundamental_discriminant, factor
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.rings.padics.precision_error import PrecisionError
-from sage.rings.all import ZZ, QQ, Qp, Zmod
+from sage.rings.all import ZZ, RR, QQ, Qp, Zmod
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.infinity import Infinity
 from sage.schemes.curves.constructor import Curve
 from sage.misc.misc import walltime, verbose
 from sage.misc.misc_c import prod
 from sarithgroup import BigArithGroup
-from homology import construct_homology_cycle
+from homology import *
 from cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
 from integrals import double_integral_zero_infty,integrate_H1
 from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
@@ -40,6 +41,79 @@ def darmon_discriminants(bound, split_primes = None, inert_primes = None):
             continue
         good_D.append(D)
     return good_D
+
+def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
+    F = G.base_ring()
+    t = PolynomialRing(F, names = 't').gen()
+    K = F.extension(t*t - D, names = 'beta')
+    if F.degree() == 1:
+        assert len(K.embeddings(RR)) == 2
+    else:
+        if len(F.embeddings(RR)) > 1:
+            raise NotImplementedError
+        elif len(F.embeddings(RR)) == 1:
+            if F.degree() != 3:
+                raise NotImplementedError
+            assert len(K.embeddings(RR)) == 0
+
+    # Choose the prime to do Hecke smoothen later
+    q = ZZ(2)
+    D = G.order_discriminant() * G.level
+    try:
+        D = D.norm()
+    except AttributeError: pass
+    try:
+        D = D.gens_reduced()[0]
+    except AttributeError: pass
+    while D % q == 0:
+        q = q.next_prime()
+    if F == QQ:
+        q1 = q
+    else:
+        q1 = F.ideal(q).factor()[0][0]
+    verbose('q1 = %s'%q1)
+    gamma, tau1 = G.embed_order(P,K,prec,outfile = outfile,return_all = False)
+    Div = Divisors(tau1.parent())
+    H1 = OneChains(G,Div)
+    D1 = Div(tau1)
+    ans0 = H1({gamma: D1})
+    assert ans0.is_cycle()
+    ans = H1({})
+    ans += ans0
+    # Do hecke_smoothen to kill Eisenstein part
+    ans = ans.hecke_smoothen(q1,prec = prec)
+    assert ans.is_cycle()
+    if elliptic_curve is not None:
+        if F == QQ:
+            a_ell = elliptic_curve.ap(q1)
+        else:
+            Q = F.ideal(q1).factor()[0][0]
+            a_ell = ZZ(Q.norm() + 1 - elliptic_curve.reduction(Q).count_points())
+        f = hecke_poly_getter(q1)
+        R = f.parent()
+        x = R.gen()
+        while True:
+            try:
+                f = R(f/(x-a_ell))
+            except TypeError:
+                break
+        while True:
+            try:
+                f = R(f/(x-(q1+1)))
+            except TypeError:
+                break
+        f0 = f.parent()(1)
+        for g, e in f.factor():
+            ans = ans.act_by_poly_hecke(q1,g**e,prec = prec)
+            f0 *= g**e
+            try:
+                ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
+                return ans, n * f0(a_ell), q1
+            except ValueError: pass
+        verbose('Passed the check!')
+    # Find zero degree equivalent
+    ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
+    return ans, n * f(a_ell), q1
 
 def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data = None, magma = None, working_prec = None, recognize_point = True, **kwargs):
     r'''
@@ -84,7 +158,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     # Get general parameters
     outfile = param.get('outfile')
     use_ps_dists = param.get('use_ps_dists',False)
-    use_shapiro = param.get('use_shapiro',True)
+    use_shapiro = param.get('use_shapiro',False)
     use_sage_db = param.get('use_sage_db',False)
     magma_seed = param.get('magma_seed',1515316)
     parallelize = param.get('parallelize',False)
@@ -210,7 +284,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             if F == QQ:
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
-                abtuple = quaternion_algebra_invariants_from_ramification(F, DB, ramification_at_infinity)
+                abtuple = quaternion_algebra_invariants_from_ramification(F, DB, ramification_at_infinity, magma=magma)
 
             G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro, nscartan=Ncartan)
 
@@ -218,7 +292,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             Coh = ArithCoh(G)
             while True:
                 try:
-                    cycleGn,nn,ell = construct_homology_cycle(G,beta,working_prec,lambda q: Coh.hecke_matrix(q).minpoly(), outfile = outfile, elliptic_curve = E)
+                    cycleGn, nn, ell = construct_homology_cycle(p, G.Gn, beta, working_prec, lambda q: Coh.hecke_matrix(q).minpoly(), outfile = outfile, elliptic_curve = E)
                     break
                 except PrecisionError:
                     working_prec *= 2

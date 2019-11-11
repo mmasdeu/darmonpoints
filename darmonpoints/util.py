@@ -1115,7 +1115,10 @@ def magma_integral_quaternion_to_sage(B_sage,O_magma,F_magma,x,magma):
 
 def magma_F_ideal_to_sage(F_sage,x,magma):
     gens = x.TwoElement(nvals = 2)
-    return F_sage.ideal([magma_F_elt_to_sage(F_sage,gens[0],magma),magma_F_elt_to_sage(F_sage,gens[1],magma)])
+    if F_sage == QQ:
+        return ZZ.ideal(magma_F_elt_to_sage(QQ, gens[0], magma)) + ZZ.ideal(magma_F_elt_to_sage(QQ, gens[1], magma))
+    else:
+        return F_sage.ideal([magma_F_elt_to_sage(F_sage,gens[0],magma),magma_F_elt_to_sage(F_sage,gens[1],magma)])
 
 def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_through_magma = True, magma = None):
     r"""
@@ -1494,7 +1497,7 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
             continue
         for w3 in w3s:
             try:
-                c4pol = algdep((c4root * w3).add_bigoh(prec),deg)
+                c4pol = algdep((c4root * w3).add_bigoh(prec), deg)
             except ValueError:
                 continue
             if height_polynomial(c4pol,base = p) > height_threshold * prec:

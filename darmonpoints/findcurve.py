@@ -8,6 +8,7 @@ from homology import lattice_homology_cycle
 from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
 from integrals import integrate_H1,double_integral_zero_infty
 from sage.all import QQ, ZZ, Qp, QuaternionAlgebra, factor, Infinity
+from sage.misc.misc import verbose
 import sys, os, datetime, ConfigParser
 
 def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, implementation = None, **kwargs):
@@ -51,7 +52,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     # Get general parameters
     outfile = param.get('outfile')
     use_ps_dists = param.get('use_ps_dists',False)
-    use_shapiro = param.get('use_shapiro',True)
+    use_shapiro = param.get('use_shapiro',False)
     use_sage_db = param.get('use_sage_db',False)
     magma_seed = param.get('magma_seed',1515316)
     parallelize = param.get('parallelize',False)
@@ -145,7 +146,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
             if F == QQ:
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
-                abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity)
+                abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity, magma=magma)
             G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout, use_shapiro = use_shapiro, nscartan = Ncartan, implementation = implementation)
         except RuntimeError as e:
             if quit_when_done:
@@ -212,7 +213,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         found = False
         while not found:
             try:
-                xi1, xi2 = lattice_homology_cycle(G,xgenlist,working_prec,outfile = outfile)
+                xi1, xi2 = lattice_homology_cycle(p, G.Gn, G.wp(), xgenlist,working_prec,outfile = outfile)
                 found = True
             except PrecisionError:
                 working_prec  = 2 * working_prec

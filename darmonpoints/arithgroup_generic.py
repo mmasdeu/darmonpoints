@@ -46,6 +46,42 @@ class ArithGroup_generic(AlgebraicGroup):
     def _an_element_(self):
         return self.gen(0)
 
+    def _get_F_magma(self):
+        return self._F_magma
+
+    def _get_B_magma(self):
+        return self._B_magma
+
+    @cached_method
+    def _get_basis_invmat(self):
+        tmpObasis = self._get_O_basis()
+        Obasis = [[u for o in elt.coefficient_tuple() for u in o.list()] for elt in tmpObasis]
+        return matrix(QQ,4*self.F.degree(),4*self.F.degree(),Obasis).transpose().inverse()
+
+    def _get_O_magma(self):
+        return self._O_magma
+
+    @cached_method
+    def order_discriminant(self):
+        if not hasattr(self.B, 'invariants') or self.B.invariants() == (1,1):
+            return self.level
+        else:
+            O_magma = self._get_O_magma()
+            return magma_F_ideal_to_sage(self.F, O_magma.Discriminant(), self.magma)
+
+    @cached_method
+    def _get_O_basis(self):
+        if not hasattr(self.B, 'invariants'):
+            return [matrix(ZZ,2,2,v) for v in [[1,0,0,0],[0,1,0,0],[0,0,self.level,0],[0,0,0,1]]]
+        elif self.B.invariants() == (1,1):
+            i, j, k = self.B.gens()
+            Pgen = self.level.gens_reduced()[0]
+            tmpObasis_F = [(1 + i)/2, (j+k)/2, (Pgen/2)*(j-k), (1-i)/2]
+            return [self.F.gen()**i * o  for o in tmpObasis_F for i in range(self.F.degree())]
+        else:
+            O_magma = self._get_O_magma()
+            return [magma_quaternion_to_sage(self.B,o,self.magma) for o in O_magma.ZBasis()]
+
     def get_relation_words(self):
         return self._relation_words
 
@@ -170,12 +206,12 @@ class ArithGroup_generic(AlgebraicGroup):
             if self.F == QQ:
                 lnorm = ZZ(l).abs()
                 try:
-                    num_reps = lnorm if ZZ(self._O_discriminant) % lnorm == 0 else lnorm + 1
+                    num_reps = lnorm if ZZ(self.order_discriminant()) % lnorm == 0 else lnorm + 1
                 except TypeError:
-                    num_reps = lnorm if ZZ(self._O_discriminant.gen()) % ZZ(lnorm) == 0 else lnorm + 1
+                    num_reps = lnorm if ZZ(self.order_discriminant().gen()) % ZZ(lnorm) == 0 else lnorm + 1
             else:
                 lnorm = self.F.ideal(l).norm()
-                num_reps = lnorm if self.F.ideal(l).divides(self._O_discriminant) else lnorm + 1
+                num_reps = lnorm if self.F.ideal(l).divides(self.order_discriminant()) else lnorm + 1
 
             while len(reps) < num_reps:
                 n_iters += 1
@@ -190,7 +226,7 @@ class ArithGroup_generic(AlgebraicGroup):
         return tuple([set_immutable(o) for o in reps])
 
     @cached_method
-    def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False, reps = None):
+    def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False, reps = None, conservative=False):
         r"""
 
         INPUT:
@@ -204,19 +240,30 @@ class ArithGroup_generic(AlgebraicGroup):
         - t_{gk1}(gamma)
 
         """
+        # verbose('Hecke %s: gk1 = %s, gamma = %s'%(l,gk1, gamma))
         elt = gk1**-1 * gamma.quaternion_rep
         if reps is None:
             reps = self.get_Up_reps() if l is None else self.get_hecke_reps(l,use_magma = use_magma)
+        ans = None
         for gk2 in reps:
             ti = elt * gk2
             is_in_order = self._is_in_order(ti)
             if self._is_in_order(ti):
                 if l is None and self.embed(set_immutable(ti),20)[1,0].valuation() > 0: # Up
-                    return self(ti)
+                    assert ans is None
+                    ans = self(ti)
+                    if not conservative:
+                        return ans
                 else:
-                    return self(ti)
-        verbose("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
-        raise RuntimeError("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
+                    assert ans is None
+                    ans = self(ti)
+                    if not conservative:
+                        return ans
+        if ans is None:
+            verbose("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
+            raise RuntimeError("ti not found. gk1 = %s, gamma = %s, l = %s"%(gk1,gamma,l))
+        else:
+            return ans
 
     def gen(self,i):
         return self._gens[i]
@@ -306,3 +353,213 @@ class ArithGroup_generic(AlgebraicGroup):
     def abelianization(self):
         from homology_abstract import Abelianization
         return Abelianization(self)
+
+class ArithGroup_matrix_generic(ArithGroup_generic):
+    @cached_method
+    def matrix_to_quaternion(self, x):
+        F = self.B # Assume it's matrix space
+        a, b, c, d = x.list()
+        return self.B([a, b, c, d])
+
+    @cached_method
+    def quaternion_to_matrix(self, x):
+        try:
+            x = x.quaternion_rep
+        except AttributeError: pass
+        ans = sum((a * b for a, b in zip(list(self.B(x)), self.matrix_basis())))
+        set_immutable(ans)
+        return ans
+
+    @cached_method
+    def matrix_basis(self):
+        F = self.F
+        M = MatrixSpace(F,2,2)
+        return [M([1,0,0,0]), M([0,1,0,0]), M([0,0, 1, 0]), M([0,0, 0, 1])]
+
+    def find_matrix_from_cusp(self, cusp):
+        r'''
+        Returns a matrix gamma and a cusp representative modulo Gamma0(N) (c2:d2),
+        represented as a matrix (a,b;c,d), such that gamma * cusp = (c2:d2).
+        '''
+        a, c = cusp
+        reduction_table, _ = self.cusp_reduction_table()
+        P = self.get_P1List()
+        if hasattr(P.N(),'number_field'):
+            K = P.N().number_field()
+        else:
+            K = QQ
+
+        # Find a matrix g = [a,b,c,d] in SL2(O_K) such that g * a/c = oo
+        # Define (c1:d1) to be the rep in P1(O_K/N) such that (c1:d1) == (c:d).
+        if c == 0: ## case cusp infinity: (a,c) should equal (1,0)
+            a = 1
+            g = Matrix(2,2,[1,0,0,1])
+            c1, d1 = P.normalize(0, 1)
+        else:
+            if K == QQ:
+                g0, d, b = ZZ(a).xgcd(-c)
+                if g0 != 1:
+                    a /= g0
+                    c /= g0
+            else:
+                """
+                Compute gcd if a,c are coprime in F, and x,y such that
+                    ax + cy = 1.
+                """
+                if a.parent() != c.parent():
+                    raise ValueError('a,c not in the same field.')
+                if a.gcd(c) != 1:
+                    raise ValueError('a,c not coprime.')
+
+                d = next(o for o in K.ideal(c).residues() if a * o - 1 in K.ideal(c))
+                b = (a * d - 1) / c
+
+            g = Matrix(2,2,[[d,-b],[-c,a]]) # the inverse
+            c1, d1 = P.normalize(c, d)
+        assert g.determinant() == 1
+
+        A, T = reduction_table[(c1,d1)]
+        gamma = A.parent()(A * T * g)
+        return gamma, A
+
+    def compute_cusp_stabiliser(self,cusp_matrix):
+        """
+        Compute (a finite index subgroup of) the stabiliser of a cusp 
+        in Q or a quadratic imaginary field.
+
+        We know the stabiliser of infinity is given by matrices of form 
+        (u, a; 0, u^-1), so a finite index subgroup is generated by (1, alpha; 0, 1)
+        and (1, 1; 0, 1) for K = Q(alpha). Given the cusp, we use a matrix
+        sending infinty to that cusp, and the conjugate by it, before taking powers
+        to ensure the result is integral and lies in Gamma_0(N).
+
+        Input: 
+            - a cusp (in matrix form: as output by cusp_set)
+            - N (the level: an ideal in K).
+
+        Outputs a list of the generators (as matrices).
+        """
+
+        P = self.get_P1List()
+        if hasattr(P.N(),'number_field'):
+            K = P.N().number_field()
+            ## Write down generators of a finite index subgroup in Stab_Gamma(infinity)
+            infinity_gens = [matrix(K,[[1,1],[0,1]]), matrix(K,[[1,K.gen()],[0,1]])]
+            N_ideal = P.N()
+        else:
+            K = QQ
+            infinity_gens = [matrix([[1,1],[0,1]])]
+            N_ideal = ZZ.ideal(P.N())
+
+        ## Initilise (empty) list of generators of Stab_Gamma(cusp)
+        cusp_gens = []
+
+        ## Loop over all the generators of stab at infinity, conjugate into stab at cusp
+        for T in infinity_gens:
+            T_conj = cusp_matrix * T * cusp_matrix.adjugate()
+            gen = T_conj
+
+            ## Now take successive powers until the result is in Gamma_0(N)
+            while not gen[1][0] in N_ideal:
+                 gen *= T_conj
+
+            ## We've found an element in Stab_Gamma(cusp): add to our list of generators
+            cusp_gens.append(gen)
+        return cusp_gens
+
+    @cached_method
+    def cusp_reduction_table(self):
+        r'''
+        Returns a dictionary and the set of cusps.
+
+        Assumes we have a finite set surjecting to the cusps (namely, P^1(O_F/N)). Runs through
+        and computes a subset which represents the cusps, and shows how to go from any element 
+        of P^1(O_F/N) to the chosen equivalent cusp.
+
+        Takes as input the object representing P^1(O_F/N), where F is a number field
+        (that is possibly Q), and N is some ideal in the field.  Runs the following algorithm:
+                - take a remaining element C = (c:d) of P^1(O_F/N);
+                - add this to the set of cusps, declaring it to be our chosen rep;
+                - run through every translate C' = (c':d') of C under the stabiliser of infinity, and
+                        remove this translate from the set of remaining elements;
+                - store the matrix T in the stabiliser such that C' * T = C (as elements in P^1)
+                        in the dictionary, with key C'.
+        '''
+        P = self.get_P1List()
+        if hasattr(P.N(),'number_field'):
+            K = P.N().number_field()
+        else:
+            K = QQ
+
+        from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok
+        from sage.modular.modsym.p1list import lift_to_sl2z
+        ## Define new function on the fly to pick which of Q/more general field we work in
+        ## lift_to_matrix takes parameters c,d, then lifts (c:d) to a 2X2 matrix over the NF representing it
+        lift_to_matrix = lambda c, d: lift_to_sl2z(c,d,P.N()) if K.degree() == 1 else lift_to_sl2_Ok(P.N(), c, d)
+
+        ## Put all the points of P^1(O_F/N) into a list; these will corr. to our dictionary keys
+        remaining_points = set(list(P)) if K == QQ else set([c.tuple() for c in P])
+        reduction_table = {}
+        cusp_set = []
+
+        initial_points = len(remaining_points)
+
+        ## Loop over all points of P^1(O_F/N)
+        while len(remaining_points) > 0:
+            ## Pick a new cusp representative
+            c = remaining_points.pop()
+            update_progress(1 - float(len(remaining_points)) / float(initial_points), "Finding cusps...")
+            ## c is an MSymbol so not hashable. Create tuple that is
+            ## Represent the cusp as a matrix, add to list of cusps, and add to dictionary
+            new_cusp = Matrix(2,2,lift_to_matrix(c[0], c[1])) 
+            new_cusp.set_immutable()
+            cusp_set.append(new_cusp)
+            reduction_table[c]=(new_cusp,matrix(2,2,1)) ## Set the value to I_2
+            ## Now run over the whole orbit of this point under the stabiliser at infinity.
+            ## For each elt of the orbit, explain how to reduce to the chosen cusp.
+
+            ## Run over lifts of elements of O_F/N:
+            if K == QQ:
+                residues = Zmod(P.N())
+                units = [1, -1]
+            else:
+                residues = P.N().residues()
+                units = K.roots_of_unity()
+
+            for hh in residues:
+                h = K(hh) ## put into the number field
+                ## Run over all finite order units in the number field
+                for u in units:
+                    ## Now have the matrix (u,h; 0,u^-1).
+                    ## Compute the action of this matrix on c
+                    new_c = P.normalize(u * c[0], u**-1 * c[1] + h * c[0])
+                    if K != QQ: 
+                        new_c = new_c.tuple()
+                    if new_c not in reduction_table:
+                        ## We've not seen this point before! But it's equivalent to c, so kill it!
+                        ## (and also store the matrix we used to get to it)
+                        remaining_points.remove(new_c)
+                        T = matrix(2,2,[u,h,0,u**-1]) ## we used this matrix to get from c to new_c
+                        reduction_table[new_c]=(new_cusp, T) ## update dictionary with the new_c + the matrix
+                        if K != QQ:
+                            assert P.normalize(*(vector(c) * T)).tuple() == new_c ## sanity check
+                        else:
+                            assert P.normalize(*(vector(c) * T)) == new_c ## sanity check
+
+        return reduction_table, cusp_set
+
+    @cached_method
+    def get_P1List(self):
+        """
+        Generates the projective line of O_F/N, where N is an ideal specified
+        in the input, or computed from a parent object (e.g. arithmetic group).
+        """
+        N = self.level
+
+        ## Return object representing Projective line over O_F/N
+        if hasattr(N,'number_field'): ## Base field not Q
+            from sage.modular.modsym.p1list_nf import P1NFList
+            return P1NFList(N)
+        else:   ## Base field Q
+            from sage.modular.modsym.p1list import P1List
+            return P1List(N)

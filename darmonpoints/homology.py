@@ -41,91 +41,18 @@ class Scaling(Action):
     def _act_(self,g,v):
         return v.scale_by(g)
 
-def construct_homology_cycle(G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
-    F = G.F
-    t = PolynomialRing(F, names = 't').gen()
-    K = F.extension(t*t - D, names = 'beta')
-    if F.degree() == 1:
-        assert len(K.embeddings(RR)) == 2
-    else:
-        if len(F.embeddings(RR)) > 1:
-            raise NotImplementedError
-        elif len(F.embeddings(RR)) == 1:
-            if F.degree() != 3:
-                raise NotImplementedError
-            assert len(K.embeddings(RR)) == 0
-
-    # Choose the prime to do Hecke smoothen later
-    q = ZZ(2)
-    D = G.prime() * G.discriminant * G.level
-    try:
-        D = D.norm()
-    except AttributeError: pass
-    while D % q == 0:
-        q = q.next_prime()
-    if F == QQ:
-        q1 = q
-    else:
-        q1 = F.ideal(q).factor()[0][0]
-
-    gamma, tau1 = G.large_group().embed_order(G.prime(),K,prec,outfile = outfile,return_all = False)
-    Div = Divisors(tau1.parent())
-    H1 = OneChains(G.large_group(),Div)
-    D1 = Div(tau1)
-    ans0 = H1({gamma: D1})
-    assert ans0.is_cycle()
-    ans = H1({})
-    ans += ans0
-    # Do hecke_smoothen to kill Eisenstein part
-    ans = ans.hecke_smoothen(q1,prec = prec)
-    assert ans.is_cycle()
-    if elliptic_curve is not None:
-        if F == QQ:
-            a_ell = elliptic_curve.ap(q1)
-        else:
-            Q = F.ideal(q1).factor()[0][0]
-            a_ell = ZZ(Q.norm() + 1 - elliptic_curve.reduction(Q).count_points())
-        f = hecke_poly_getter(q1)
-        R = f.parent()
-        x = R.gen()
-        while True:
-            try:
-                f = R(f/(x-a_ell))
-            except TypeError:
-                break
-        while True:
-            try:
-                f = R(f/(x-(q1+1)))
-            except TypeError:
-                break
-        f0 = f.parent()(1)
-        for g, e in f.factor():
-            ans = ans.act_by_poly_hecke(q1,g**e,prec = prec)
-            f0 *= g**e
-            try:
-                ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
-                return ans, n * f0(a_ell), q1
-            except ValueError: pass
-        verbose('Passed the check!')
-    # Find zero degree equivalent
-    ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
-    return ans, n * f(a_ell), q1
-
-def lattice_homology_cycle(G, xlist, prec, outfile = None, smoothen = None):
-    p = G.prime()
-    Gn = G.large_group()
+def lattice_homology_cycle(p, G, wp, xlist, prec, outfile = None, smoothen = None):
     Cp = Qq(p**2,prec,names = 'g')
-    wp = G.wp()
     wpmat = (G.embed(wp,prec)**-1).change_ring(Cp)
     a,b,c,d = wpmat.list()
     tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     Div = Divisors(Cp)
-    H1 = OneChains(Gn,Div)
+    H1 = OneChains(G,Div)
     xi1 = H1(dict([]))
     xi2 = H1(dict([]))
     for x, a in xlist:
-        xi1 += H1(dict([(Gn(x.quaternion_rep), Div(tau1))])).__rmul__(a)
-        xi2 += H1(dict([(Gn(wp**-1 * x.quaternion_rep * wp), Div(tau1).left_act_by_matrix(wpmat))])).__rmul__(a)
+        xi1 += H1(dict([(G(x.quaternion_rep), Div(tau1))])).__rmul__(a)
+        xi2 += H1(dict([(G(wp**-1 * x.quaternion_rep * wp), Div(tau1).left_act_by_matrix(wpmat))])).__rmul__(a)
     xi10 = xi1
     xi20 = xi2
     while True:
@@ -337,12 +264,18 @@ class DivisorsElement(ModuleElement):
     def __setitem__(self, P, val):
         self._ptdict[P] = val
 
-    def rational_function(self, as_map = False):
+    def rational_function(self, as_map = False, dlog=False):
         if as_map:
-            return lambda z: prod(((1 - z/P)**n for P, n in self), z.parent()(1))
+            if dlog:
+                return lambda z: sum((n/(z-P) for P, n in self), z.parent()(0))
+            else:
+                return lambda z: prod(((1 - z/P)**n for P, n in self), z.parent()(1))
         else:
             z = PolynomialRing(self.parent()._field, names='z').gen()
-            return prod(((1 - z/P)**n for P, n in self), z.parent()(1))
+            if dlog:
+                return sum((n/(z-P) for P, n in self), z.parent()(0))
+            else:
+                return prod(((1 - z/P)**n for P, n in self), z.parent()(1))
 
 class Divisors(Parent, CachedRepresentation):
     Element = DivisorsElement
@@ -694,7 +627,10 @@ class MeromorphicFunctionsElement(ModuleElement):
                     if Q.valuation() >= 0:
                         raise ValueError('Divisor is not defined over the right open')
                     if additive:
-                        self._value += n * parent._V((phi(K(Q)).log()).list())
+                        if parent._dlog:
+                            self._value += n * parent._V((phi(K(Q)).log().derivative()).list())
+                        else:
+                            self._value += n * parent._V((phi(K(Q)).log()).list()) # DEBUG
                     else:
                         self._value *= phi(K(Q))**n
             else:
@@ -715,9 +651,10 @@ class MeromorphicFunctionsElement(ModuleElement):
         assert isinstance(D.parent(), Divisors) and D.degree() == 0
         if self.parent().is_additive():
             poly = self.parent()._Ps(self._value.list()).polynomial()
+            if self.parent()._dlog:
+                poly = poly.integral() # DEBUG
             ans = K(0)
             for P, n in D:
-                assert P.valuation() >= 0
                 ans += n * poly(P)
             if ans == 0:
                 return K(1)
@@ -779,7 +716,8 @@ class MeromorphicFunctionsElement(ModuleElement):
         if self.parent().is_additive():
             M = self.parent().get_action_data(g)
             ans = M.change_ring(K) * self._value
-            ans[0] = 0
+            if not self.parent()._dlog:
+                ans[0] = 0
         else:
             zz_ps_vec = self.parent().get_action_data(g)
             poly = self._value.polynomial()
@@ -790,12 +728,14 @@ class MeromorphicFunctionsElement(ModuleElement):
 
 class MeromorphicFunctions(Parent, CachedRepresentation):
     Element = MeromorphicFunctionsElement
-    def __init__(self, K, additive = True):
+    def __init__(self, K, additive = True, dlog = False):
         Parent.__init__(self)
         self._additive = additive
+        self._dlog = dlog
         self._base_ring = K
         self._prec = K.precision_cap()
-        self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec=self._prec)
+        psprec = self._prec + 1 if dlog else self._prec
+        self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec=psprec)
         if self._additive:
             self._V = FreeModule(K, self._prec) # ZpCA(K.prime(), self._prec)
         t = self._Ps.gen()

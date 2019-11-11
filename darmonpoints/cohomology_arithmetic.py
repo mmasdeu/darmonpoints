@@ -60,24 +60,6 @@ from time import sleep
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
 # from sage.modular.cusps import Cusp
 
-def find_newans(Coh,glocs,ti):
-    gens = Coh.group().gens()
-    V = Coh.coefficient_module()
-    try:
-        N = len(V(0)._moments.list())
-    except AttributeError:
-        N = 1
-    newans = [V.acting_matrix(glocs[0], N).new_matrix() for u in gens]
-    for gk0,tik in zip(glocs,ti):
-        gk = V.acting_matrix(gk0, N)
-        fox_grad_k = Coh.fox_gradient(tik, red = lambda x:x.apply_map(lambda y: y % Coh._pN))
-        for j,gj in enumerate(gens):
-            newans[j] += gk * fox_grad_k[j]
-            try:
-                newans[j] = newans[j].apply_map(lambda x: x % Coh._pN)
-            except PrecisionError:
-                pass
-    return newans
 
 def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
@@ -142,6 +124,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
         except IOError: pass
     verbose('Computing moments...')
     CohOC = ArithCohOverconvergent(G,base = base_ring,use_ps_dists = use_ps_dists)
+    CohOC.P_gen = G.ideal_p
     Phi0 = CohOC(phiE)
     verbose('Now lifting...')
     Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
@@ -509,7 +492,7 @@ class ArithCoh_generic(CohomologyGroup):
         M = matrix(R,dim,dim,0)
         for j,cocycle in enumerate(self.gens()):
             # Construct column j of the matrix
-            verbose('Constructing column %s/%s of the matrix'%(j,dim))
+            verbose('Constructing column %s/%s of the hecke matrix for prime %s'%(j,dim,l))
             fvals = self.apply_hecke_operator(cocycle, l, use_magma = use_magma, g0 = g0)
             M.set_column(j,list(vector(fvals)))
         return M
@@ -586,6 +569,7 @@ class BianchiArithAction(Action):
         return V.Sigma0Squared()(first,second) * v
 
 class CohArbitrary(CohomologyGroup):
+    Element = ArithCohElement
     def __init__(self, G, V, action_map=None):
         self._V = V
         self._G = G
@@ -687,6 +671,25 @@ class ArithCohOverconvergent(ArithCoh_generic):
         r"""
         Apply the Up Hecke operator operator to ``c``.
         """
+        def find_newans(Coh,glocs,ti):
+            gens = Coh.group().gens()
+            V = Coh.coefficient_module()
+            try:
+                N = len(V(0)._moments.list())
+            except AttributeError:
+                N = 1
+            newans = [V.acting_matrix(glocs[0], N).new_matrix() for u in gens]
+            for gk0,tik in zip(glocs,ti):
+                gk = V.acting_matrix(gk0, N)
+                fox_grad_k = Coh.fox_gradient(tik, red = lambda x:x.apply_map(lambda y: y % Coh._pN))
+                for j,gj in enumerate(gens):
+                    newans[j] += gk * fox_grad_k[j]
+                    try:
+                        newans[j] = newans[j].apply_map(lambda x: x % Coh._pN)
+                    except PrecisionError:
+                        pass
+            return newans
+
         assert steps >= 1
 
         V = self.coefficient_module()
@@ -794,35 +797,15 @@ class ArithCohOverconvergent(ArithCoh_generic):
             ans = self([V(o) for o in vals])
         else: # not shapiro
             Gpn = G.small_group()
-            if self.trivial_action():
-                def calculate_Up_contribution(lst,c,num_gamma):
-                    return sum([c.evaluate(tt) for sk, tt in lst], V(0,normalize=False))
-            else:
-                def calculate_Up_contribution(lst,c,num_gamma,pb_fraction=None):
-                    i = num_gamma * len(lst)
-                    ans = V(0, normalize=False)
-                    j = 0
-                    for sk, tt in lst:
-                        j += 1
-                        verbose(' %s / %s'%(j, len(lst)))
-                        ans += sk * c.evaluate(tt)
-                        i += 1
-                    return ans
-            input_vec = []
-            for j,gamma in enumerate(gammas):
-                input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma)) for sk, g in zip(repslocal, Up_reps)], c, j))
-            vals = [V(0,normalize=False) for gamma in gammas]
-            if parallelize:
-                for inp,outp in parallel(calculate_Up_contribution)(input_vec):
-                    vals[inp[0][-1]] += outp
-            else:
-                for counter, inp in enumerate(input_vec):
-                    verbose('count = %s / %s'%(counter, len(input_vec)))
-                    outp = calculate_Up_contribution(*inp, pb_fraction=float(1)/float(len(repslocal) * len(input_vec)))
-                    vals[inp[-1]] += outp
+            vals = []
+            for gamma in gammas:
+                if self.trivial_action():
+                    vals.append(sum((c.evaluate(Gpn.get_hecke_ti(g,gamma)) for g in Up_reps),V(0, normalize=False)))
+                else:
+                    vals.append(sum((sk * c.evaluate(Gpn.get_hecke_ti(g,gamma)) for sk, g in zip(repslocal, Up_reps)),V(0, normalize=False)))
             ans = self(vals)
         if scale != 1:
-            ans = scale * ans
+            ans *= scale
         return ans
 
     def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'naive', steps = 1):
@@ -885,6 +868,84 @@ class ArithCohOverconvergent(ArithCoh_generic):
         else:
             assert method == 'bigmatrix'
             return self.apply_Up(Phi, group = group, scale = 1, parallelize = parallelize,times = len(ZZ(prec-1).bits()),progress_bar = progress_bar,method = 'bigmatrix',repslocal = repslocal, steps = steps)
+
+
+    def get_Lseries_term(self, phi, n, cov = None):
+        r"""
+        Return the `n`-th coefficient of the `p`-adic `L`-series attached to an
+        element phi of H^1(G,D): One-variable case.
+
+        Input:
+            - phi, an ArithCohElement object, representing a cohomology class 
+                in the underlying group self;
+
+            - n an integer;
+
+            - cov, a set of representing matrices for the U_p operator.
+
+        Outputs:
+            a p-adic number, the coefficient of z^n in the p-adic L-series 
+            attached to phi. This will give the series attached to the identity
+            component in weight space; in the notation of Masdeu-Palvannan-Williams, 
+            this is the power series L_p(mu,id,z), mu the p-adic L-function of phi.
+
+        """
+        ## Perhaps we've already computed this. If we have, then return it
+        if n in phi._Lseries_coefficients:
+            return phi._Lseries_coefficients[n]
+        else:
+            ## We need to compute this for the first time
+            G = self.S_arithgroup() ## G = Gamma
+            F = G.base_field()
+            p = G.prime() ## underlying prime
+            ap = phi._sign_ap
+            pi = self.P_gen
+
+            ## Specify a topological generator of 1 + pZp: used in computation of log coeffs
+            if p == 2:
+                gamma = 1 + 4
+            else:
+                gamma = 1 + p
+
+            K = self.coefficient_module().base_ring() ## p-adic ring
+            precision = K.precision_cap()
+
+            ## Initialise power series ring, where output will be valued
+            S = K[['z']]
+            z = S.gen()
+            M = precision
+
+            ## Compute the coefficients c_j^(n)
+            if n == 0:
+                precision = M
+                lb_n = [1] + [0 for a in range(M - 1)]
+            else:
+                lb_n = log_gamma_binomial(p, gamma, n, 2 * M) ## p, top gen, target, 2* precision
+                if precision is None: ## compute precision automatically
+                    precision = min([j + lb_n[j].valuation(p)
+                                     for j in range(M, len(lb_n))])
+                lb_n = [lb_n[a] for a in range(M)]
+
+            ## Find U_p representatives, if necessary
+            if cov is None:
+                U_P_reps = G.get_Up_reps()
+                ## Write down matrices for U_p operator: exclude the rep that
+                ## corr. to the open not in Zp*
+                cov = U_P_reps[1:]
+
+            dn = 0 ## Initialise output to 0
+
+            ## Range over all remaining reps of the U_p operator, and add the relevant integral
+            ## To add twists by psi: only need to add psi_P(aa) to the sum for f
+            for h in cov:
+                alpha = h[0,1] / h[1,1] ## If h = (p, a; 0, 1), this is a
+                aa = K.teichmuller(alpha) ## compute Teich lift of alpha
+                f = sum(lj * (1/aa * z - 1)**j \
+                                    for j, lj in enumerate(lb_n))
+                dn += phi.BI(h, None).evaluate_at_poly(f)
+            ## Store in dictionary of L_p series coefficients
+            phi._Lseries_coefficients[n] = dn.add_bigoh(precision)
+            return phi._Lseries_coefficients[n]
 
 class ArithCohBianchi(ArithCoh_generic):
     def __init__(self, G, base, use_ps_dists = False):
@@ -1056,7 +1117,9 @@ class ArithCohBianchi(ArithCoh_generic):
             ## We need to compute this for the first time
             r,s = n ## specify indices
             G = self.S_arithgroup() ## G = Gamma
+            F = G.base_field()
             p = G.prime() ## underlying prime
+            pi,pibar = self.P_gen,self.Pbar_gen
             ap = phi._sign_ap
 
             ## Specify a topological generator of 1 + pZp: used in computation of log coeffs
@@ -1097,12 +1160,11 @@ class ArithCohBianchi(ArithCoh_generic):
 
             ## Find U_p representatives, if necessary
             if cov is None:
-                pi,pibar = self.P_gen,self.Pbar_gen
                 U_P_reps, U_Pbar_reps = G.get_Up_reps_Bianchi(pi,pibar)
                 ## Write down matrices for U_p operator: exclude all reps that
                 ## corr. to opens not in Zp* x Zp*
                 cov = [A*B for A in U_P_reps[1:] for B in U_Pbar_reps[1:]]
-       
+
             dn = 0 ## Initialise output to 0
 
             ## Range over all remaining reps of the U_p operator, and add the relevant integral
@@ -1139,8 +1201,11 @@ class ArithCoh(ArithCoh_generic):
             K = (self.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
-        disc = self.S_arithgroup().Gpn._O_discriminant
-        discnorm = disc.norm()
+        disc = self.S_arithgroup().Gpn.order_discriminant()
+        try:
+            discnorm = disc.norm()
+        except AttributeError:
+            discnorm = disc
         try:
             N = ZZ(discnorm.gen())
         except AttributeError:
@@ -1163,7 +1228,7 @@ class ArithCoh(ArithCoh_generic):
         while K.dimension() > 1:
             q = q.next_prime()
             for qq,e in F.ideal(q).factor():
-                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
+                if  ZZ(qq.norm()).is_prime() and not qq.divides(disc):
                     try:
                         ap = getap(qq)
                     except (ValueError,ArithmeticError):
@@ -1185,7 +1250,7 @@ class ArithCoh(ArithCoh_generic):
         else:
             K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
 
-        disc = self.S_arithgroup().Gpn._O_discriminant
+        disc = self.S_arithgroup().Gpn.order_discriminant()
         discnorm = disc.norm()
         try:
             N = ZZ(discnorm.gen())
@@ -1230,7 +1295,7 @@ class ArithCoh(ArithCoh_generic):
         else:
             component_list.append(K)
 
-        disc = self.S_arithgroup().Gpn._O_discriminant
+        disc = self.S_arithgroup().Gpn.order_discriminant()
         discnorm = disc.norm()
         try:
             N = ZZ(discnorm.gen())
@@ -1249,9 +1314,11 @@ class ArithCoh(ArithCoh_generic):
             q = q.next_prime()
             for qq,e in F.ideal(q).factor():
                 if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
+                    verbose('qq_gens = %s (norm = %s)'%(qq.gens_reduced()[0], qq.norm()))
                     try:
                         Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
                     except (RuntimeError,TypeError) as e:
+                        verbose('error_reported by hecke_matrix: %s'%e)
                         continue
                     verbose('Computed hecke matrix at qq = %s'%qq)
                     old_component_list = component_list
@@ -1306,7 +1373,7 @@ class ArithCoh(ArithCoh_generic):
             K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
             if K.dimension() >= 2:
                 component_list.append((K, []))
-        disc = self.S_arithgroup().Gpn._O_discriminant
+        disc = self.S_arithgroup().Gpn.order_discriminant()
         discnorm = disc.norm()
         try:
             N = ZZ(discnorm.gen())

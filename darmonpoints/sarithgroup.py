@@ -47,7 +47,7 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
-def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None, nscartan = None, matrix_group = False, implementation = None):
+def BigArithGroup(p, quat_data, level, base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = False, implementation = None):
     if magma is None:
         from sage.interfaces.magma import Magma
         magma = Magma(logfile = logfile)
@@ -79,20 +79,20 @@ def BigArithGroup(p,quat_data,level,base = None, grouptype = None,seed = None,us
         if base == QQ:
             grouptype = 'PSL2'
         else:
-            grouptype = 'PGL2'
+            grouptype = 'PSL2' # DEBUG, was PGL2
 
     if use_sage_db:
         try:
             newobj = db(fname)
         except IOError:
             verbose('Group not found in database. Computing from scratch.')
-            newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, matrix_group = matrix_group, implementation=implementation)
+            newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, hardcode_matrices = hardcode_matrices, implementation=implementation)
             newobj.save_to_db()
     else:
         if a is not None:
-            newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, matrix_group = matrix_group, implementation=implementation)
+            newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, hardcode_matrices = hardcode_matrices, implementation=implementation)
         else:
-            newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, matrix_group = matrix_group, implementation=implementation)
+            newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, hardcode_matrices = hardcode_matrices, implementation=implementation)
     return newobj
 
 
@@ -117,11 +117,11 @@ class BigArithGroup_class(AlgebraicGroup):
         sage: b.quaternion_rep # random #  optional - magma
         846 - 429*i + 286*j + 286*k
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None, nscartan = None, matrix_group = False, implementation = None):
+    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = False, implementation = None):
         self.seed = seed
         self.magma = magma
         self._use_shapiro = use_shapiro
-        self._matrix_group = matrix_group
+        self._hardcode_matrices = hardcode_matrices
         if seed is not None:
             verbose('Setting Magma seed to %s'%seed)
             self.magma.eval('SetSeed(%s)'%seed)
@@ -140,6 +140,9 @@ class BigArithGroup_class(AlgebraicGroup):
 
         if nscartan is not None:
             self.level *= nscartan
+
+        if hardcode_matrices:
+            assert abtuple is None and self.discriminant == 1 or abtuple == (1,1)
 
         self.p = self.norm_p.prime_divisors()[0]
         if not self.ideal_p.is_prime():
@@ -173,8 +176,8 @@ class BigArithGroup_class(AlgebraicGroup):
 
         self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
-        if hasattr(self.Gn.B,'is_division_algebra'):
-            fwrite('# B = F<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gn.B.gens()[0]**2,self.Gn.B.gens()[1]**2),outfile)
+        if hasattr(self.Gpn.B,'is_division_algebra'):
+            fwrite('# B = F<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gpn.B.gens()[0]**2,self.Gpn.B.gens()[1]**2),outfile)
         else:
             fwrite('# B = M_2(F)',outfile)
         try:
@@ -183,9 +186,9 @@ class BigArithGroup_class(AlgebraicGroup):
                 basis_data_p = list(self.Gpn.Obasis)
         except AttributeError:
             try:
-                basis_data_1 = self.Gn.basis_invmat.inverse().columns()
+                basis_data_1 = self.Gn._get_basis_invmat().inverse().columns()
                 if not self.use_shapiro():
-                    basis_data_p = self.Gpn.basis_invmat.inverse().columns()
+                    basis_data_p = self.Gpn._get_basis_invmat().inverse().columns()
             except AttributeError:
                 basis_data_1 = '?'
                 basis_data_p = '?'
@@ -236,9 +239,9 @@ class BigArithGroup_class(AlgebraicGroup):
         if self.seed is not None:
             self.magma.eval('SetSeed(%s)'%self.seed)
         R = Qp(prime,prec+10) #Zmod(prime**prec) #
-        B_magma = self.Gn._B_magma
-        a,b = self.Gn.B.invariants()
-        if self._matrix_group:
+        B_magma = self.Gpn._get_B_magma()
+        a,b = self.Gpn.B.invariants()
+        if self._hardcode_matrices:
             self._II = matrix(R,2,2,[1,0,0,-1])
             self._JJ = matrix(R,2,2,[0,1,1,0])
             goodroot = self.F.gen().minpoly().change_ring(R).roots()[0][0]
@@ -246,10 +249,10 @@ class BigArithGroup_class(AlgebraicGroup):
         else:
             verbose('Calling magma pMatrixRing')
             if self.F == QQ:
-                _,f = self.magma.pMatrixRing(self.Gn._O_magma,prime*self.Gn._O_magma.BaseRing(),Precision = 20,nvals = 2)
+                _,f = self.magma.pMatrixRing(self.Gpn._Omax_magma,prime*self.Gpn._Omax_magma.BaseRing(),Precision = 20,nvals = 2)
                 self._F_to_local = QQ.hom([R(1)])
             else:
-                _,f = self.magma.pMatrixRing(self.Gn._O_magma,sage_F_ideal_to_magma(self.Gn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
+                _,f = self.magma.pMatrixRing(self.Gpn._Omax_magma,sage_F_ideal_to_magma(self.Gpn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
                 try:
                     self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
                 except SyntaxError:
@@ -317,25 +320,25 @@ class BigArithGroup_class(AlgebraicGroup):
         return self.Gpn._is_in_order(x)
 
     def Gpn_Obasis(self):
-        return self.Gpn.Obasis
+        return self.Gpn._get_O_basis()
 
     def Gpn_denominator(self, x):
         return self.Gpn._denominator(x)
 
     @cached_method
     def get_BT_reps(self):
-        reps = [self.Gn.B(1)] + [None for i in xrange(self.p)]
+        reps = [self.Gpn.B(1)] + [None for i in xrange(self.p)]
         emb = self.get_embedding(20)
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in xrange(self.p)]
-        if self._matrix_group: # DEBUG
+        if self._hardcode_matrices: # DEBUG
             verbose('Using hard-coded matrices for BT (Bianchi)')
             if self.F == QQ:
                 wp = self.wp()
-                return [self.Gn(1).quaternion_rep] + [1 / self.p * wp * matrix(QQ,2,2,[1,-i,0,self.p]) for i in xrange(self.p)]
+                return [self.Gpn(1).quaternion_rep] + [1 / self.p * wp * matrix(QQ,2,2,[1,-i,0,self.prime()]) for i in xrange(self.prime())]
 
             else:
                 pi = self.ideal_p.gens_reduced()[0]
-                B = self.Gn.B
+                B = self.Gpn.B
                 BTreps0 = [ Matrix(self.F,2,2,[0, -1, 1, -i]) for a in range(self.prime()) ]
                 BTreps = [self.Gn(1).quaternion_rep] + [self.Gn(B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2])).quaternion_rep for o in BTreps0]
                 return BTreps
@@ -380,11 +383,17 @@ class BigArithGroup_class(AlgebraicGroup):
 
     @cached_method
     def get_Up_reps(self):
-        if self._matrix_group:
+        if self._hardcode_matrices:
             B = self.small_group().B
-            pi = self.ideal_p.gens_reduced()[0]
-            Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in range(pi.norm()) ]
-            Upreps = [B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2]) for o in Upreps0]
+            try:
+                pi = self.ideal_p.gens_reduced()[0]
+                pinorm = pi.norm()
+            except AttributeError:
+                pi = self.prime()
+                pinorm = pi
+
+            Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in range(pinorm) ]
+            Upreps = [self.small_group().matrix_to_quaternion(o) for o in Upreps0]
             for o in Upreps:
                 set_immutable(o)
             return Upreps
@@ -435,10 +444,10 @@ class BigArithGroup_class(AlgebraicGroup):
         return self.subdivide(newEgood,1-parity,depth - 1)
 
     def set_wp(self, wp):
-        epsinv = matrix(QQ,2,2,[0,-1,self.p,0])**-1
+        epsinv = matrix(QQ,2,2,[0, -1, self.p, 0])**-1
         set_immutable(wp)
         assert is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False)
-        assert all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn_Obasis()))
+        assert all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn._get_O_basis()))
         assert self.is_in_Gpn_order(wp)
         self._wp = wp
         return self._wp
@@ -602,7 +611,7 @@ class BigArithGroup_class(AlgebraicGroup):
         if hecke_data is None:
             hecke_data = []
         wp = self.wp()
-        Gn = self.large_group()
+        Gn = self.Gn
         B = ArithHomology(self, ZZ**1, trivial_action = True)
         C = HomologyGroup(Gn, ZZ**1, trivial_action = True)
         group = B.group()
@@ -657,7 +666,7 @@ class BigArithGroup_class(AlgebraicGroup):
         return good_ker
 
     def inverse_shapiro(self, x):
-        Gn = self.large_group()
+        Gn = self.Gn
         B = ArithHomology(self, ZZ**1, trivial_action = True)
         group = B.group()
         ans = []
@@ -706,10 +715,19 @@ def MatrixArithGroup(base = None, level = 1, info_magma = None, grouptype = None
             raise NotImplementedError("The base should be either QQ or an imaginary quadratic field.")
         if implementation == 'coset_enum':
             return ArithGroup_nf_matrix_new(base,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
-        else:
+        elif implementation == 'geometric':
             return ArithGroup_nf_matrix(base,base(1),base(1),level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
+        else:
+            raise RuntimeError('Implementation should be "geometric" or "coset_enum"')
 
 def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0, nscartan = None, implementation=None):
+    if implementation is not None:
+        if abtuple is not None:
+            if abtuple != (1,1):
+                raise ValueError('Matrix implementations only available for matrix quaternion algebra')
+        else:
+            if discriminant != 1:
+                raise ValueError('Matrix implementations only available for matrix quaternion algebra')
     if base == QQ:
         if timeout != 0:
             raise NotImplementedError("Timeout not implemented for rational base yet")
@@ -736,6 +754,6 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, gro
             return ArithGroup_nf_fuchsian(base,a,b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
         else:
             if implementation is None:
-                return ArithGroup_nf_kleinian(base, a,b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
+                return ArithGroup_nf_kleinian(base, a, b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
             else:
                 return MatrixArithGroup(base, level, info_magma=info_magma, grouptype=grouptype, magma=magma, timeout=timeout, compute_presentation=compute_presentation, implementation=implementation)
