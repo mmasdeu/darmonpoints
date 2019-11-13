@@ -53,13 +53,19 @@ def attach_kleinian_code(magma):
     magma.eval('Page_initialized := true')
     return
 
+def is_page_initialized(magma):
+    try:
+        return magma.eval('Page_initialized') == 'true'
+    except RuntimeError:
+        return False
+
 def BigArithGroup(p, quat_data, level, base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = False, implementation = None):
     if magma is None:
         from sage.interfaces.magma import Magma
         magma = Magma(logfile = logfile)
     if seed is not None:
         magma.eval('SetSeed(%s)'%seed)
-    if magma.eval('Page_initialized') != 'true':
+    if not is_page_initialized(magma):
         attach_kleinian_code(magma)
     a, b = None, None
     if logfile is not None:
@@ -758,7 +764,7 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, gro
         if base.signature()[1] == 0:
             return ArithGroup_nf_fuchsian(base,a,b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
         else:
-            if magma.eval('Page_initialized') != 'true':
+            if not is_page_initialized(magma):
                 attach_kleinian_code(magma)
             if implementation is None:
                 return ArithGroup_nf_kleinian(base, a, b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
