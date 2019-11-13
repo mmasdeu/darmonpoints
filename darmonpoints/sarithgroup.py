@@ -47,15 +47,20 @@ class BTEdge(SageObject):
     def __iter__(self):
         return iter([self.reverse,self.gamma])
 
+def attach_kleinian_code(magma):
+    page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
+    magma.attach_spec(page_path)
+    magma.eval('Page_initialized := true')
+    return
+
 def BigArithGroup(p, quat_data, level, base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = False, implementation = None):
     if magma is None:
         from sage.interfaces.magma import Magma
         magma = Magma(logfile = logfile)
-        page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
-        if seed is not None:
-            magma.eval('SetSeed(%s)'%seed)
-        magma.attach_spec(page_path)
-    magma.eval('Page_initialized := true')
+    if seed is not None:
+        magma.eval('SetSeed(%s)'%seed)
+    if magma.eval('Page_initialized') != 'true':
+        attach_kleinian_code(magma)
     a, b = None, None
     if logfile is not None:
         magma.eval('SetVerbose("Kleinian",2)')
@@ -701,7 +706,7 @@ class BigArithGroup_class(AlgebraicGroup):
         theta2 = -a01 * ker[0] + a00 * ker[1]
         return theta1, theta2, determinant
 
-def MatrixArithGroup(base = None, level = 1, info_magma = None, grouptype = None, magma = None, compute_presentation = True, timeout = 0, implementation='coset_enum'):
+def MatrixArithGroup(base = None, level = 1, info_magma = None, implementation = 'coset_enum', grouptype = None, magma = None, compute_presentation = True, timeout = 0):
     if implementation not in ['coset_enum', 'geometric']:
         raise NotImplementedError
     if base is None:
@@ -714,13 +719,13 @@ def MatrixArithGroup(base = None, level = 1, info_magma = None, grouptype = None
         if base.signature() != (0,1):
             raise NotImplementedError("The base should be either QQ or an imaginary quadratic field.")
         if implementation == 'coset_enum':
-            return ArithGroup_nf_matrix_new(base,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
+            return ArithGroup_nf_matrix_new(base,level,info_magma=info_magma,grouptype = grouptype, magma = magma,timeout = timeout, compute_presentation = compute_presentation)
         elif implementation == 'geometric':
-            return ArithGroup_nf_matrix(base,base(1),base(1),level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
+            return ArithGroup_nf_matrix(base,base(1),base(1),level,info_magma=info_magma,grouptype = grouptype, magma = magma,timeout = timeout, compute_presentation = compute_presentation)
         else:
             raise RuntimeError('Implementation should be "geometric" or "coset_enum"')
 
-def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None,magma = None, compute_presentation = True, timeout = 0, nscartan = None, implementation=None):
+def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None, magma = None, compute_presentation = True, timeout = 0, nscartan = None, implementation=None):
     if implementation is not None:
         if abtuple is not None:
             if abtuple != (1,1):
@@ -753,6 +758,8 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, gro
         if base.signature()[1] == 0:
             return ArithGroup_nf_fuchsian(base,a,b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
         else:
+            if magma.eval('Page_initialized') != 'true':
+                attach_kleinian_code(magma)
             if implementation is None:
                 return ArithGroup_nf_kleinian(base, a, b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
             else:
