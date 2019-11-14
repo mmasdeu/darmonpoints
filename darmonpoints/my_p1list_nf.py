@@ -607,7 +607,7 @@ def make_coprime(N, c, d):
         True
     """
     k = N.number_field()
-    if new_is_coprime(k.ideald):
+    if new_is_coprime(k.ideal(d)):
         return c, d
     else:
         q = k.ideal(c).prime_to_idealM_part(d)
