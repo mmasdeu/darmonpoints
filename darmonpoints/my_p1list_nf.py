@@ -539,6 +539,11 @@ def lift_to_sl2_Ok(N, c, d):
         ValueError: <0> + <7> and the Fractional ideal (7, a) are not coprime.
     """
     k = N.number_field()
+    if type(c) is int:
+        c = k(c)
+    if type(d) is int:
+        d = k(d)
+        
     #check the input
     if c == 0 and d == 0:
         raise ValueError("Cannot lift (%s, %s) to an element of Sl2(Ok)."%(c, d))
