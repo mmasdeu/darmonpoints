@@ -540,7 +540,7 @@ def lift_to_sl2_Ok(N, c, d):
     """
     k = N.number_field()
     #check the input
-    if c.is_zero() and d.is_zero():
+    if c == 0 and d == 0:
         raise ValueError("Cannot lift (%s, %s) to an element of Sl2(Ok)."%(c, d))
     if not new_is_coprime(N,k.ideal(c, d)):
         raise ValueError("<%s> + <%s> and the %s are not coprime."%(c, d, N))
@@ -549,7 +549,7 @@ def lift_to_sl2_Ok(N, c, d):
         return [k(0), k(-1), 1, d]
     if (d - 1).mod(N) == 0:
         return [k(1), k(0), c, 1]
-    if c.is_zero(): # and d!=1, so won't happen for normalized M-symbols (c: d)
+    if c == 0: # and d!=1, so won't happen for normalized M-symbols (c: d)
         it = k.primes_of_degree_one_iter()
         q = k.ideal(1)
         while not (new_is_coprime(q,d) and (q*N).is_principal()):
@@ -557,7 +557,7 @@ def lift_to_sl2_Ok(N, c, d):
         m = (q*N).gens_reduced()[0]
         B = k.ideal(m).element_1_mod(k.ideal(d))
         return [(1-B)/d, -B/m, m, d]
-    if d.is_zero(): # and c!=1, so won't happen for normalized M-symbols (c: d)
+    if d == 0: # and c!=1, so won't happen for normalized M-symbols (c: d)
         it = k.primes_of_degree_one_iter()
         q = k.ideal(1)
         while not (new_is_coprime(q,c) and (q*N).is_principal()):
