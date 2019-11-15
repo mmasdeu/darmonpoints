@@ -59,7 +59,7 @@ def is_page_initialized(magma):
     except RuntimeError:
         return False
 
-def BigArithGroup(p, quat_data, level, base = None, grouptype = None,seed = None,use_sage_db = False,outfile = None, magma = None, timeout = 0, logfile = None, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = False, implementation = None):
+def BigArithGroup(p, quat_data, level, base = None, grouptype = None, seed = None, use_sage_db = False, magma = None, logfile = None, **kwargs):
     if magma is None:
         from sage.interfaces.magma import Magma
         magma = Magma(logfile = logfile)
@@ -97,13 +97,13 @@ def BigArithGroup(p, quat_data, level, base = None, grouptype = None,seed = None
             newobj = db(fname)
         except IOError:
             verbose('Group not found in database. Computing from scratch.')
-            newobj = BigArithGroup_class(base,p,discriminant,level,seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, hardcode_matrices = hardcode_matrices, implementation=implementation)
+            newobj = BigArithGroup_class(base,p,discriminant,level,seed,grouptype = grouptype,magma = magma, **kwargs)
             newobj.save_to_db()
     else:
         if a is not None:
-            newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, hardcode_matrices = hardcode_matrices, implementation=implementation)
+            newobj = BigArithGroup_class(base,p,discriminant,abtuple = (a,b),level = level,seed = seed,grouptype = grouptype,magma = magma, **kwargs)
         else:
-            newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,outfile = outfile,grouptype = grouptype,magma = magma,timeout = timeout, use_shapiro = use_shapiro, character = character, nscartan = nscartan, hardcode_matrices = hardcode_matrices, implementation=implementation)
+            newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,grouptype = grouptype,magma = magma, **kwargs)
     return newobj
 
 
@@ -128,7 +128,7 @@ class BigArithGroup_class(AlgebraicGroup):
         sage: b.quaternion_rep # random #  optional - magma
         846 - 429*i + 286*j + 286*k
     '''
-    def __init__(self,base,p,discriminant,abtuple = None,level = 1,grouptype = None,seed = None,outfile = None,magma = None,timeout = 0, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = False, implementation = None):
+    def __init__(self, base, p, discriminant, abtuple = None, level = 1, seed = None, outfile = None, magma = None, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = False, **kwargs): # timeout=0, grouptype = None, implementation = None):
         self.seed = seed
         self.magma = magma
         self._use_shapiro = use_shapiro
@@ -171,7 +171,7 @@ class BigArithGroup_class(AlgebraicGroup):
         lev = self.ideal_p * self.level
         if character is not None:
             lev = [lev, character]
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,grouptype = grouptype,magma = magma, compute_presentation = not self._use_shapiro, timeout = timeout,nscartan=nscartan, implementation=implementation)
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,magma = magma, compute_presentation = not self._use_shapiro,nscartan=nscartan, **kwargs)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
         self.Gpn.embed_matrix = self.embed_matrix
@@ -179,7 +179,7 @@ class BigArithGroup_class(AlgebraicGroup):
         lev = self.level
         if character is not None:
             lev = [lev, character]
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev,info_magma = self.Gpn,grouptype = grouptype,magma = magma, compute_presentation = True, timeout = timeout,nscartan=nscartan, implementation=implementation)
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev,info_magma = self.Gpn,magma = magma, compute_presentation = True, nscartan=nscartan, **kwargs)
         self.Gn.embed_matrix = self.embed_matrix
         t = walltime(t)
         verbose('Time for calculation T = %s'%t)
@@ -712,26 +712,24 @@ class BigArithGroup_class(AlgebraicGroup):
         theta2 = -a01 * ker[0] + a00 * ker[1]
         return theta1, theta2, determinant
 
-def MatrixArithGroup(base = None, level = 1, info_magma = None, implementation = 'coset_enum', grouptype = None, magma = None, compute_presentation = True, timeout = 0):
+def MatrixArithGroup(base = None, level = 1, implementation = 'coset_enum', **kwargs):
     if implementation not in ['coset_enum', 'geometric']:
         raise NotImplementedError
     if base is None:
         base = QQ
     if base == QQ:
-        if timeout != 0:
-            raise NotImplementedError("Timeout not implemented for rational base yet")
-        return ArithGroup_rationalmatrix(level,info_magma=info_magma,grouptype = grouptype, magma = magma, compute_presentation = compute_presentation)
+        return ArithGroup_rationalmatrix(level, **kwargs)
     else:
         if base.signature() != (0,1):
             raise NotImplementedError("The base should be either QQ or an imaginary quadratic field.")
         if implementation == 'coset_enum':
-            return ArithGroup_nf_matrix_new(base,level,info_magma=info_magma,grouptype = grouptype, magma = magma,timeout = timeout, compute_presentation = compute_presentation)
+            return ArithGroup_nf_matrix_new(base,level, **kwargs)
         elif implementation == 'geometric':
-            return ArithGroup_nf_matrix(base,base(1),base(1),level,info_magma=info_magma,grouptype = grouptype, magma = magma,timeout = timeout, compute_presentation = compute_presentation)
+            return ArithGroup_nf_matrix(base, base(1), base(1), level, **kwargs)
         else:
             raise RuntimeError('Implementation should be "geometric" or "coset_enum"')
 
-def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, grouptype = None, magma = None, compute_presentation = True, timeout = 0, nscartan = None, implementation=None):
+def ArithGroup(base, discriminant, abtuple = None, level = 1, magma = None, implementation=None, nscartan=None, **kwargs):
     if implementation is not None:
         if abtuple is not None:
             if abtuple != (1,1):
@@ -740,33 +738,30 @@ def ArithGroup(base,discriminant,abtuple = None,level = 1,info_magma = None, gro
             if discriminant != 1:
                 raise ValueError('Matrix implementations only available for matrix quaternion algebra')
     if base == QQ:
-        if timeout != 0:
-            raise NotImplementedError("Timeout not implemented for rational base yet")
         discriminant = ZZ(discriminant)
         if discriminant == 1:
             if nscartan is not None:
                 from arithgroup_nscartan import ArithGroup_nscartan
-                return ArithGroup_nscartan(nscartan,level,info_magma=info_magma,grouptype = grouptype, magma = magma, compute_presentation = compute_presentation)
+                return ArithGroup_nscartan(nscartan, level, magma=magma, **kwargs)
             else:
-                return ArithGroup_rationalmatrix(level,info_magma=info_magma,grouptype = grouptype, magma = magma, compute_presentation = compute_presentation)
+                return ArithGroup_rationalmatrix(level, magma=magma, **kwargs)
         else:
             if magma is None:
                 raise ValueError('Should specify magma session')
-
             if abtuple is not None:
-                return ArithGroup_rationalquaternion(abtuple,level,info_magma=info_magma,grouptype = grouptype,magma = magma, compute_presentation = compute_presentation)
+                return ArithGroup_rationalquaternion(abtuple, level, magma=magma, **kwargs)
             else:
-                return ArithGroup_rationalquaternion(discriminant,level,info_magma=info_magma,grouptype = grouptype,magma = magma, compute_presentation = compute_presentation)
+                return ArithGroup_rationalquaternion(discriminant, level, magma=magma, **kwargs)
     else: # Number Field
         a,b = abtuple
         if magma is None:
             raise ValueError('Should specify magma session')
         if base.signature()[1] == 0:
-            return ArithGroup_nf_fuchsian(base,a,b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
+            return ArithGroup_nf_fuchsian(base, a, b, level, magma=magma, **kwargs)
         else:
             if not is_page_initialized(magma):
                 attach_kleinian_code(magma)
             if implementation is None:
-                return ArithGroup_nf_kleinian(base, a, b,level,info_magma=info_magma,grouptype = grouptype,magma = magma,timeout = timeout, compute_presentation = compute_presentation)
+                return ArithGroup_nf_kleinian(base, a, b, level, magma=magma, **kwargs)
             else:
-                return MatrixArithGroup(base, level, info_magma=info_magma, grouptype=grouptype, magma=magma, timeout=timeout, compute_presentation=compute_presentation, implementation=implementation)
+                return MatrixArithGroup(base, level, implementation=implementation, magma=magma, **kwargs)

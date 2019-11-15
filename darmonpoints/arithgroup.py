@@ -568,7 +568,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         return self._II_inf, self._JJ_inf, self._KK_inf
 
 class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
-    def __init__(self,discriminant,level,info_magma = None,grouptype = None,magma = None, compute_presentation = True):
+    def __init__(self,discriminant,level,info_magma = None,grouptype = None,magma = None, compute_presentation = True, **kwargs):
         assert grouptype in ['SL2','PSL2','PGL2'] # Need to find how to return the other groups with Voight's algorithm
         self._grouptype = grouptype
         self._compute_presentation = compute_presentation
@@ -594,7 +594,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         # self.basis_invmat = matrix(QQ,4,4,[list(self.O.gen(n)) for n in xrange(4)]).transpose().inverse()
         if self._compute_presentation:
             self.compute_presentation()
-        super(ArithGroup_rationalquaternion,self).__init__()
+        super(ArithGroup_rationalquaternion,self).__init__(**kwargs)
 
     def _repr_(self):
         return 'Arithmetic Group attached to rational quaternion algebra, disc = %s, level = %s'%(self.discriminant,self.level)
@@ -804,7 +804,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                     return candidate
 
 class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
-    def __init__(self,level,info_magma = None,grouptype = None,magma = None, compute_presentation = True):
+    def __init__(self,level,info_magma = None,grouptype = None,magma = None, compute_presentation = True, **kwargs):
         from sage.modular.arithgroup.congroup_gammaH import GammaH_constructor
         assert grouptype in ['SL2','PSL2']
         self._grouptype = grouptype
@@ -873,8 +873,8 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
                 sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1))
                 assert sign == self.B(1)
                 self._relation_words.append(syllables_to_tietze(newrel))
-        super(ArithGroup_rationalmatrix,self).__init__()
-        ArithGroup_generic.__init__(self)
+        super(ArithGroup_rationalmatrix,self).__init__(**kwargs)
+        ArithGroup_generic.__init__(self, **kwargs)
 
     def _repr_(self):
         return 'Matrix Arithmetic Group of level = %s'%(self.level)
@@ -1152,7 +1152,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
             return False
 
 class ArithGroup_nf_generic(ArithGroup_generic):
-    def __init__(self,base,a,b,level,info_magma = None,grouptype = 'PSL2', magma = None, timeout = 0, compute_presentation = True):
+    def __init__(self,base,a,b,level,info_magma = None,grouptype = 'PSL2', magma = None, timeout = 0, compute_presentation = True, **kwargs):
         verbose('Calling ArithGroup_nf_generic with parameters: %s, %s, %s, %s'%(base, a, b, level))
         self.magma = magma
         if base.signature()[1] == 0:
@@ -1174,8 +1174,8 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         self.B = QuaternionAlgebra(self.F,self.a,self.b)
         self._init_magma_objects(info_magma)
         if self._compute_presentation:
-            self._init_geometric_data(timeout = timeout)
-        super(ArithGroup_nf_generic,self).__init__()
+            self._init_geometric_data(**kwargs)
+        super(ArithGroup_nf_generic,self).__init__(**kwargs)
 
     def _repr_(self):
         return 'Arithmetic Group attached to quaternion algebra with a = %s, b = %s and level = %s'%(self.a,self.b,self.level)
@@ -1449,7 +1449,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                     return candidate
 
 class ArithGroup_nf_fuchsian(ArithGroup_nf_generic, ArithGroup_fuchsian_generic):
-    def _init_geometric_data(self, timeout = 0): # nf quaternion
+    def _init_geometric_data(self, timeout = 0, **kwargs): # nf quaternion
         if timeout != 0:
             raise NotImplementedError("Timeout functionality not implemented yet")
 
@@ -1498,8 +1498,8 @@ class ArithGroup_nf_fuchsian(ArithGroup_nf_generic, ArithGroup_fuchsian_generic)
                 self._relation_words.append(newrel)
 
 class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
-    def _init_geometric_data(self,prec = 1000,periodenum = 10, center = None, timeout = 0):
-        verbose('Computing normalized basis')
+    def _init_geometric_data(self,prec = 1000, periodenum = 10, center = None, timeout = 0):
+        verbose('Computing normalized basis (center = %s)'%center)
         if 'GL' in self._grouptype:
             # raise NotImplementedError,'This implementation has bugs'
             grouptype = '"Units"'
@@ -1517,6 +1517,8 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
         verbose(' ZBasis = %s'%self._O_magma.ZBasis())
         verbose('Grouptype = %s, prec = %s, periodenum = %s, timeout = %s'%(grouptype,prec, periodenum, timeout))
 
+        verbose('magma_center = %s'%magma_center)
+        
         _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, pr_zetas = 200, PeriodEnum = periodenum, Center = magma_center, max_time = timeout)
         verbose('Done normalizedbasis')
         if f == self.magma(False):
@@ -1669,7 +1671,7 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
         return c
 
 class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic):
-    def __init__(self,base,level,level0 = None, info_magma = None,grouptype =  'PSL2',magma = None,timeout = 0, compute_presentation = None):
+    def __init__(self,base,level,level0 = None, info_magma = None,grouptype =  'PSL2',magma = None,timeout = 0, compute_presentation = None, **kwargs):
         assert level0 is None
         verbose('Initializing small group...')
         if level0 is None:
@@ -1712,7 +1714,7 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
         verbose('Computing GAP information...')
         self._compute_gap_information()
         verbose('Done with GAP information...')
-        ArithGroup_nf_generic.__init__(self, base, base(1), base(1),self.level,info_magma = None,grouptype =  grouptype,magma = magma,timeout = timeout, compute_presentation = False)
+        ArithGroup_nf_generic.__init__(self, base, base(1), base(1),self.level,info_magma = None,grouptype =  grouptype,magma = magma,timeout = timeout, compute_presentation = False, **kwargs)
 
     def _repr_(self):
         return 'Gamma0(%s) over %s'%(self.level.gens_reduced()[0], self.F)

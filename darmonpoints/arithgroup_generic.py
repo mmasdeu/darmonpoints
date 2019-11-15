@@ -34,7 +34,7 @@ from arithgroup_element import ArithGroupElement
 
 class ArithGroup_generic(AlgebraicGroup):
     Element = ArithGroupElement
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(ArithGroup_generic,self).__init__()
 
     def base_field(self):

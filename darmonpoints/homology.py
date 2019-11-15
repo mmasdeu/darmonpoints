@@ -264,18 +264,12 @@ class DivisorsElement(ModuleElement):
     def __setitem__(self, P, val):
         self._ptdict[P] = val
 
-    def rational_function(self, as_map = False, dlog=False):
+    def rational_function(self, as_map = False):
         if as_map:
-            if dlog:
-                return lambda z: sum((n/(z-P) for P, n in self), z.parent()(0))
-            else:
-                return lambda z: prod(((1 - z/P)**n for P, n in self), z.parent()(1))
+            return lambda z: prod(((1 - z/P)**n for P, n in self), z.parent()(1))
         else:
             z = PolynomialRing(self.parent()._field, names='z').gen()
-            if dlog:
-                return sum((n/(z-P) for P, n in self), z.parent()(0))
-            else:
-                return prod(((1 - z/P)**n for P, n in self), z.parent()(1))
+            return prod(((1 - z/P)**n for P, n in self), z.parent()(1))
 
 class Divisors(Parent, CachedRepresentation):
     Element = DivisorsElement
@@ -630,7 +624,7 @@ class MeromorphicFunctionsElement(ModuleElement):
                         if parent._dlog:
                             self._value += n * parent._V((phi(K(Q)).log().derivative()).list())
                         else:
-                            self._value += n * parent._V((phi(K(Q)).log()).list()) # DEBUG
+                            self._value += n * parent._V((phi(K(Q)).log()).list())
                     else:
                         self._value *= phi(K(Q))**n
             else:
@@ -728,7 +722,7 @@ class MeromorphicFunctionsElement(ModuleElement):
 
 class MeromorphicFunctions(Parent, CachedRepresentation):
     Element = MeromorphicFunctionsElement
-    def __init__(self, K, additive = True, dlog = False):
+    def __init__(self, K, additive = True, dlog = True):
         Parent.__init__(self)
         self._additive = additive
         self._dlog = dlog
@@ -756,22 +750,23 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
                 K = ZpCA(p, prec)
             else:
                 K = g.parent().base_ring()
-        R = PolynomialRing(K,'z')
         Ps = PowerSeriesRing(K,'t', default_prec=prec)
-        z = R.gen()
+        z = Ps.gen()
         zz = (d * z - b) / (-c * z + a)
         zz_ps0 = Ps(zz).add_bigoh(prec)
-        zz_ps = zz_ps0
+        if self._dlog:
+            zz_ps = ((a*d - b*c) * (-c * z + a)**-2).add_bigoh(prec)
+        else:
+            zz_ps = Ps(1).add_bigoh(prec) # zz_ps0
         if self.is_additive():
             M = Matrix(ZZ, prec, prec, 0)
-            M[0, 0] = 1 # This corresponds to the power series '1'
-            for i, aij in enumerate(zz_ps.list()):
-                M[i, 1] = aij
-            for j in range(2, prec):
-                zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
+            for j in range(prec):
                 for i, aij in enumerate(zz_ps.list()):
                     M[i, j] = aij
-            return M
+                if j < prec - 1: # Don't need the last multiplication
+                    zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
+                else:
+                    return M
         else:
             ans = [Ps(1), zz_ps]
             for _ in range(prec - 1):
