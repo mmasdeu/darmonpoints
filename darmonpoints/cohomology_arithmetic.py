@@ -136,7 +136,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     Phi._sign_ap = sign_ap
     return Phi
 
-def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity,sign_ap, parallelize = False, progress_bar = False,method = None,Ename = 'unknown'):
+def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity=1,sign_ap=1, parallelize = False, progress_bar = False,method = None,Ename = 'unknown'):
     if parallelize:
         raise NotImplementedError
     p = ZZ(P.norm().factor()[0][0])
