@@ -646,7 +646,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         if self.parent().is_additive():
             poly = self.parent()._Ps(self._value.list()).polynomial()
             if self.parent()._dlog:
-                poly = poly.integral() # DEBUG
+                poly = poly.integral()
             ans = K(0)
             for P, n in D:
                 ans += n * poly(P)
@@ -731,7 +731,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         psprec = self._prec + 1 if dlog else self._prec
         self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec=psprec)
         if self._additive:
-            self._V = FreeModule(K, self._prec) # ZpCA(K.prime(), self._prec)
+            self._V = FreeModule(K, self._prec)
         t = self._Ps.gen()
         self._Ps_local_variable = lambda Q : 1 - t / Q
         self._unset_coercions_used()
@@ -757,7 +757,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         if self._dlog:
             zz_ps = ((a*d - b*c) * (-c * z + a)**-2).add_bigoh(prec)
         else:
-            zz_ps = Ps(1).add_bigoh(prec) # zz_ps0
+            zz_ps = Ps(1).add_bigoh(prec)
         if self.is_additive():
             M = Matrix(ZZ, prec, prec, 0)
             for j in range(prec):

@@ -128,7 +128,7 @@ class BigArithGroup_class(AlgebraicGroup):
         sage: b.quaternion_rep # random #  optional - magma
         846 - 429*i + 286*j + 286*k
     '''
-    def __init__(self, base, p, discriminant, abtuple = None, level = 1, seed = None, outfile = None, magma = None, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = False, **kwargs): # timeout=0, grouptype = None, implementation = None):
+    def __init__(self, base, p, discriminant, abtuple = None, level = 1, seed = None, outfile = None, magma = None, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = True, **kwargs): # timeout=0, grouptype = None, implementation = None):
         self.seed = seed
         self.magma = magma
         self._use_shapiro = use_shapiro
@@ -421,11 +421,16 @@ class BigArithGroup_class(AlgebraicGroup):
 
     @cached_method
     def get_Up_reps_bianchi(self, pi, pi_bar):
+        if not self._hardcode_matrices:
+            raise NotImplementedError('For Bianchi, need to hardcode matrices')
         B = self.small_group().B
         Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in range(self.prime()) ]
         Upreps_bar0 = [ Matrix(self.F,2,2,[pi_bar, a, 0, 1]) for a in range(self.prime()) ]
-        Upreps = [B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2]) for o in Upreps0]
-        Upreps_bar = [B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2]) for o in Upreps_bar0]
+        Upreps = [self.small_group().matrix_to_quaternion(o) for o in Upreps0]
+        Upreps_bar = [self.small_group().matrix_to_quaternion(o) for o in Upreps_bar0]
+
+        # Upreps = [B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2]) for o in Upreps0]
+        # Upreps_bar = [B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2]) for o in Upreps_bar0]
 
         for o in Upreps:
             set_immutable(o)

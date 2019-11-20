@@ -1518,7 +1518,7 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
         verbose('Grouptype = %s, prec = %s, periodenum = %s, timeout = %s'%(grouptype,prec, periodenum, timeout))
 
         verbose('magma_center = %s'%magma_center)
-        
+
         _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, pr_zetas = 200, PeriodEnum = periodenum, Center = magma_center, max_time = timeout)
         verbose('Done normalizedbasis')
         if f == self.magma(False):

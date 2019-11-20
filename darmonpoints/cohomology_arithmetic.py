@@ -146,9 +146,6 @@ def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity,
     Pbar = pOF[0] if P == pOF[1] else pOF[1]
     assert P * Pbar == F.ideal(p)
 
-    self._aP = aP
-    self._aPbar = aPbar
-
     if method is None:
         method = 'naive'
     else:
@@ -176,8 +173,13 @@ def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity,
     assert F.ideal(pi) == G.ideal_p
     CohOC.P_gen = pi
     CohOC.Pbar_gen = pi_bar
+    Phi0._aP = aP
+    Phi0._aPbar = aPbar
+
     verbose('Now lifting...')
     Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
+    Phi._aP = aP
+    Phi._aPbar = aPbar
     verbose('Done.')
     Phi.set_liftee(phiE)
     Phi._sign_ap = sign_ap
