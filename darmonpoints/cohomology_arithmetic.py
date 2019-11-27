@@ -487,18 +487,6 @@ class ArithCoh_generic(CohomologyGroup):
             V = self.coefficient_module()
             return self.element_class(self, [V(data) for g in G.gens()])
 
-    @cached_method
-    def hecke_matrix(self, l, use_magma = True, g0 = None): # l can be oo
-        dim = self.dimension()
-        R = self.coefficient_module().base_ring()
-        M = matrix(R,dim,dim,0)
-        for j,cocycle in enumerate(self.gens()):
-            # Construct column j of the matrix
-            verbose('Constructing column %s/%s of the hecke matrix for prime %s'%(j,dim,l))
-            fvals = self.apply_hecke_operator(cocycle, l, use_magma = use_magma, g0 = g0)
-            M.set_column(j,list(vector(fvals)))
-        return M
-
     def Up_matrix(self):
         dim = self.dimension()
         R = self.coefficient_module().base_ring()
@@ -565,9 +553,15 @@ class BianchiArithAction(Action):
     def _act_(self,g,v):
         V = v.parent()
         prec = V.precision_cap()
-        qrep = g.parent().matrix_rep(g) # This method is only available for matrix ring (not quaternionic)
-        qrep_bar = qrep.apply_map(lambda x:x.trace() - x)
-        first, second = g.parent().embed_matrix(qrep, prec), g.parent().embed_matrix(qrep_bar, prec)
+
+        G = g.parent()
+        qrep = G.quaternion_to_matrix(g)
+        qrep_bar = qrep.apply_map(lambda x: x.trace() - x)
+        first, second = qrep.apply_map(G._F_to_local), qrep_bar.apply_map(G._F_to_local)
+        # qrep = g.parent().matrix_rep(g) # This method is only available for matrix ring (not quaternionic)
+        # qrep_bar = qrep.apply_map(lambda x:x.trace() - x)
+        # first, second = g.parent().embed_matrix(qrep, prec), g.parent().embed_matrix(qrep_bar, prec)
+
         return V.Sigma0Squared()(first,second) * v
 
 class CohArbitrary(CohomologyGroup):
@@ -579,7 +573,9 @@ class CohArbitrary(CohomologyGroup):
             action = ArithAction(G, V, action_map)
             V._unset_coercions_used()
             V.register_action(action)
-        CohomologyGroup.__init__(self, self._G, self._V, False)
+            CohomologyGroup.__init__(self, self._G, self._V, trivial_action=False)
+        else:
+            CohomologyGroup.__init__(self, self._G, self._V, trivial_action=True)
 
     def group(self):
         return self._G
@@ -587,6 +583,7 @@ class CohArbitrary(CohomologyGroup):
     def coefficient_module(self):
         return self._V
 
+    @cached_method(key=lambda self, ell, hecke_reps, use_magma, g0: ell)
     def get_hecke_data(self, ell, hecke_reps = None, use_magma= True, g0=None):
         group = self.group()
         if hecke_reps is None:
@@ -611,7 +608,10 @@ class CohArbitrary(CohomologyGroup):
             l = None
         if hecke_data is None:
             hecke_data = self.get_hecke_data(l, hecke_reps, use_magma=use_magma, g0=g0)
-        vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]).left_act_by_matrix(group(g).matrix()) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
+        if self.trivial_action():
+            vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]) for g in hecke_reps) for gamma in group.gens()]
+        else:
+            vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]).left_act_by_matrix(group(g).matrix()) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
         return scale * self(vals)
 
 

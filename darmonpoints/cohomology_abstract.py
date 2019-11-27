@@ -136,7 +136,9 @@ class CohomologyElement(ModuleElement):
         H = self.parent()
         G = H.group()
         if x.parent() is G:
+            verbose('Obtaining word_rep for %s'%x)
             wd  = x.word_rep
+            verbose(' = %s'%str(wd))
         else:
             x = G(x)
             wd = x.word_rep
@@ -335,7 +337,10 @@ class CohomologyGroup(Parent):
         ambient = R**(Vdim * len(gens))
         # Now find the subspace of cocycles
         A = Matrix(R, Vdim * len(gens), 0)
-        for r in G.get_relation_words():
+        for nr, r in enumerate(G.get_relation_words()):
+            set_verbose(verb)
+            verbose('Processing relation word %s'%nr)
+            set_verbose(0)
             Alist = [MatrixSpace(R, Vdim, Vdim)(self.GA_to_local(o)) for o in self.fox_gradient(tuple(r))]
             newA = block_matrix(Alist, nrows = 1)
             A = A.augment(newA.transpose())
@@ -472,3 +477,15 @@ class CohomologyGroup(Parent):
                 ans = V(v) + V(genpows[1] * ans._val)
             ans = V(-genpows[1] * ans._val)
             return ans.reduce_mod()
+
+    @cached_method
+    def hecke_matrix(self, l, use_magma = True, g0 = None): # l can be oo
+        dim = self.dimension()
+        R = self.coefficient_module().base_ring()
+        M = matrix(R,dim,dim,0)
+        for j,cocycle in enumerate(self.gens()):
+            # Construct column j of the matrix
+            verbose('Constructing column %s/%s of the hecke matrix for prime %s'%(j,dim,l))
+            fvals = self.apply_hecke_operator(cocycle, l, use_magma = use_magma, g0 = g0)
+            M.set_column(j,list(vector(fvals)))
+        return M
