@@ -128,11 +128,15 @@ class BigArithGroup_class(AlgebraicGroup):
         sage: b.quaternion_rep # random #  optional - magma
         846 - 429*i + 286*j + 286*k
     '''
-    def __init__(self, base, p, discriminant, abtuple = None, level = 1, seed = None, outfile = None, magma = None, use_shapiro = True, character = None, nscartan = None, hardcode_matrices = True, **kwargs): # timeout=0, grouptype = None, implementation = None):
+    def __init__(self, base, p, discriminant, abtuple = None, level = 1, outfile = None, magma = None, character = None, **kwargs):
+        seed = kwargs.get('seed', None)
         self.seed = seed
         self.magma = magma
-        self._use_shapiro = use_shapiro
-        self._hardcode_matrices = hardcode_matrices
+        self._use_shapiro = kwargs.get('use_shapiro', True)
+        hardcode_matrices = kwargs.get('hardcode_matrices', None)
+        if hardcode_matrices is None:
+            self._hardcode_matrices = ((abtuple is None and discriminant == 1) or abtuple == (1,1))
+        nscartan = kwargs.get('nscartan', None)
         if seed is not None:
             verbose('Setting Magma seed to %s'%seed)
             self.magma.eval('SetSeed(%s)'%seed)
@@ -152,7 +156,7 @@ class BigArithGroup_class(AlgebraicGroup):
         if nscartan is not None:
             self.level *= nscartan
 
-        if hardcode_matrices:
+        if self._hardcode_matrices:
             assert abtuple is None and self.discriminant == 1 or abtuple == (1,1)
 
         self.p = self.norm_p.prime_divisors()[0]
@@ -171,16 +175,14 @@ class BigArithGroup_class(AlgebraicGroup):
         lev = self.ideal_p * self.level
         if character is not None:
             lev = [lev, character]
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,magma = magma, compute_presentation = not self._use_shapiro,nscartan=nscartan, **kwargs)
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,magma = magma, compute_presentation = not self._use_shapiro, **kwargs)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
-        self.Gpn.embed_matrix = self.embed_matrix
         verbose('Initializing arithmetic group G(n)...')
         lev = self.level
         if character is not None:
             lev = [lev, character]
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev,info_magma = self.Gpn,magma = magma, compute_presentation = True, nscartan=nscartan, **kwargs)
-        self.Gn.embed_matrix = self.embed_matrix
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev,info_magma = self.Gpn,magma = magma, compute_presentation = True, **kwargs)
         t = walltime(t)
         verbose('Time for calculation T = %s'%t)
         verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
@@ -344,15 +346,17 @@ class BigArithGroup_class(AlgebraicGroup):
         if self._hardcode_matrices: # DEBUG
             verbose('Using hard-coded matrices for BT (Bianchi)')
             if self.F == QQ:
-                wp = self.wp()
-                return [self.Gpn(1).quaternion_rep] + [1 / self.p * wp * matrix(QQ,2,2,[1,-i,0,self.prime()]) for i in xrange(self.prime())]
-
+                alist = range(self.prime())
+                pi = self.prime()
             else:
+                alist = self.ideal_p.residues()
                 pi = self.ideal_p.gens_reduced()[0]
-                B = self.Gpn.B
-                BTreps0 = [ Matrix(self.F,2,2,[0, -1, 1, -i]) for a in range(self.prime()) ]
-                BTreps = [self.Gn(1).quaternion_rep] + [self.Gn(B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2])).quaternion_rep for o in BTreps0]
-                return BTreps
+            wp = self.wp()
+            return [self.Gpn(1).quaternion_rep] + [1 / self.prime() * wp * self.Gn.matrix_to_quaternion(matrix(self.F,2,2,[1,-a,0,self.prime()])) for a in alist]
+
+        # BTreps0 = [ Matrix(self.F,2,2,[0, -1, 1, -i]) for i in self.ideal_p.residues() ]
+        # BTreps = [self.Gn(1).quaternion_rep] + [self.Gn.matrix_to_quaternion(o) for o in BTreps0]
+        # return BTreps
 
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)
@@ -399,11 +403,13 @@ class BigArithGroup_class(AlgebraicGroup):
             try:
                 pi = self.ideal_p.gens_reduced()[0]
                 pinorm = pi.norm()
+                alist = list(self.ideal_p.residues())
             except AttributeError:
                 pi = self.prime()
                 pinorm = pi
+                alist = [a for a in range(pinorm)]
 
-            Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in range(pinorm) ]
+            Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in alist ]
             Upreps = [self.small_group().matrix_to_quaternion(o) for o in Upreps0]
             for o in Upreps:
                 set_immutable(o)
@@ -424,14 +430,12 @@ class BigArithGroup_class(AlgebraicGroup):
         if not self._hardcode_matrices:
             raise NotImplementedError('For Bianchi, need to hardcode matrices')
         B = self.small_group().B
-        Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in range(self.prime()) ]
-        Upreps_bar0 = [ Matrix(self.F,2,2,[pi_bar, a, 0, 1]) for a in range(self.prime()) ]
+        # alist = range(self.prime())
+        alist = list(self.ideal_p.residues())
+        Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in alist ]
+        Upreps_bar0 = [ Matrix(self.F,2,2,[pi_bar, a, 0, 1]) for a in alist ]
         Upreps = [self.small_group().matrix_to_quaternion(o) for o in Upreps0]
         Upreps_bar = [self.small_group().matrix_to_quaternion(o) for o in Upreps_bar0]
-
-        # Upreps = [B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2]) for o in Upreps0]
-        # Upreps_bar = [B([(o[0,0] + o[1,1])/2, (o[0,0] - o[1,1])/2, (-o[0,1] - o[1,0])/2, (-o[0,1] + o[1,0])/2]) for o in Upreps_bar0]
-
         for o in Upreps:
             set_immutable(o)
         for o in Upreps_bar:
@@ -473,7 +477,6 @@ class BigArithGroup_class(AlgebraicGroup):
             return self._wp
         except AttributeError:
             pass
-        B = self.Gn.B
         verbose('Finding a suitable wp...')
         i = 0
         max_iterations = kwargs.get('max_iterations',-1)
@@ -530,23 +533,19 @@ class BigArithGroup_class(AlgebraicGroup):
         if self.F == QQ and self.discriminant == 1:
             return set_immutable(q.change_ring(Qp(self.p,prec)))
         else:
+            if hasattr(q,'rows'):
+                return q.apply_map(self._F_to_local)
+            try:
+                return self.Gn.quaternion_to_matrix(q).apply_map(self._F_to_local)
+            except AttributeError:
+                pass
             try:
                 q = q.coefficient_tuple()
-            except AttributeError: pass
+            except AttributeError:
+                q = q.list()
             I,J,K = self.local_splitting(prec)
             f = self._F_to_local
             return set_immutable((f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K).change_ring(Qp(self.p, prec)))
-
-    @cached_method
-    def embed_matrix(self,q,prec):
-        if prec is None:
-            return None
-        elif prec == -1:
-            prec = self._prec
-        if self.F == QQ and self.discriminant == 1:
-            return set_immutable(q.change_ring(Qp(self.p,prec)))
-        else:
-            return q.apply_map(self._F_to_local)
 
     @cached_method
     def reduce_in_amalgam(self,x,return_word = False, check = True):
@@ -734,7 +733,8 @@ def MatrixArithGroup(base = None, level = 1, implementation = 'coset_enum', **kw
         else:
             raise RuntimeError('Implementation should be "geometric" or "coset_enum"')
 
-def ArithGroup(base, discriminant, abtuple = None, level = 1, magma = None, implementation=None, nscartan=None, **kwargs):
+def ArithGroup(base, discriminant, abtuple = None, level = 1, magma = None, implementation=None, **kwargs):
+    nscartan = kwargs.get('nscartan', None)
     if implementation is not None:
         if abtuple is not None:
             if abtuple != (1,1):

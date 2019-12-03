@@ -627,6 +627,8 @@ class MeromorphicFunctionsElement(ModuleElement):
                             self._value += n * parent._V((phi(K(Q)).log()).list())
                     else:
                         self._value *= phi(K(Q))**n
+            elif data.parent() == parent._V:
+                self._value = parent._V(data)
             else:
                 val = Ps(data)
                 val.add_bigoh(prec)
@@ -637,6 +639,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         else:
             self._value = data
         # assert min([o.valuation() for o in self._value.list()]) >= 0
+        self._moments = self._value
         ModuleElement.__init__(self,parent)
 
     def __call__(self, D):
@@ -738,10 +741,16 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         self.register_action(Scaling(ZZ,self))
         self.register_action(MatrixAction(MatrixSpace(K,2,2),self))
 
+    def acting_matrix(self, g, dim=None):
+        try:
+            g = g.matrix()
+        except AttributeError:
+            pass
+        return self.get_action_data(g)
+
     @cached_method
     def get_action_data(self, g, K = None):
         a, b, c, d = g.list()
-        verbose('g belongs to %s'%g.parent().base_ring())
         prec = self._prec
         if K is None:
             if hasattr(a, 'lift'):

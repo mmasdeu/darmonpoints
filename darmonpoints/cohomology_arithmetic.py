@@ -130,7 +130,6 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
     if use_sage_db:
         raise NotImplementedError
-        # db_save(Phi._val,fname)
     verbose('Done.')
     Phi.set_liftee(phiE)
     Phi._sign_ap = sign_ap
@@ -382,7 +381,7 @@ class ArithCohElement(CohomologyElement):
         of the p-adic L-function.
 
         Input a 2x2 matrix h in SL2(OK) (which embeds as an element of Sigma_0(p)), and a value j.
-        
+
         Options for j:
             - classical case: specify a non-negative integer j. Then returns the value 
                     BI_{h,j} := Int_{h.Zp} z^j . d Phi{0 --> infty},
@@ -558,10 +557,6 @@ class BianchiArithAction(Action):
         qrep = G.quaternion_to_matrix(g)
         qrep_bar = qrep.apply_map(lambda x: x.trace() - x)
         first, second = qrep.apply_map(G._F_to_local), qrep_bar.apply_map(G._F_to_local)
-        # qrep = g.parent().matrix_rep(g) # This method is only available for matrix ring (not quaternionic)
-        # qrep_bar = qrep.apply_map(lambda x:x.trace() - x)
-        # first, second = g.parent().embed_matrix(qrep, prec), g.parent().embed_matrix(qrep_bar, prec)
-
         return V.Sigma0Squared()(first,second) * v
 
 class CohArbitrary(CohomologyGroup):
@@ -596,6 +591,29 @@ class CohArbitrary(CohomologyGroup):
                 set_immutable(ti)
                 hecke_data[(g, gamma.quaternion_rep)] = ti
         return hecke_data
+
+    def act_by_poly_hecke(self, c, r, f, **kwargs):
+        if f == 1:
+            return self
+        facts = f.factor()
+        if len(facts) == 1:
+            verbose('Acting by f = %s and r = %s'%(f.factor(),r))
+            x = f.parent().gen()
+            V = [ZZ(o) for o in f.coefficients(sparse = False)]
+            ans = ZZ(V[-1]) * c
+            for ai in reversed(V[:-1]):
+                ans = self.apply_hecke_operator(ans, r, **kwargs)
+                ans += ZZ(ai) * c
+            return ans
+        else:
+            f0 = facts[0][0]
+            ans = self.act_by_poly_hecke(c, r, f0, **kwargs)
+            for i in range(facts[0][1] - 1):
+                ans = self.act_by_poly_hecke(ans, r, f0, **kwargs)
+            for f0, e in facts[1:]:
+                for i in range(e):
+                    ans = self.act_by_poly_hecke(ans, r, f0, **kwargs)
+            return ans
 
     def apply_hecke_operator(self,c,l, hecke_reps = None,scale = 1,use_magma = True,g0 = None, as_Up = False, hecke_data = None):
         r"""

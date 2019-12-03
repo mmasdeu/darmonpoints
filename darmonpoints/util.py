@@ -22,13 +22,14 @@ from sage.misc.misc_c import prod
 from sage.functions.generalized import sgn
 from sage.misc.functional import cyclotomic_polynomial
 from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
+from sage.arith.misc import valuation
 import sys, ConfigParser
 
 
 def is_smooth(x, B):
     for p in B:
         x /= p**(valuation(x,p))
-    return x == 1
+    return x == 1 or x == -1
 
 def is_infinity(x):
     try:

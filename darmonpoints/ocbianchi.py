@@ -709,9 +709,6 @@ class BianchiDistributions(Module,UniqueRepresentation):
         qrep = G.quaternion_to_matrix(g)
         qrep_bar = qrep.apply_map(lambda x: x.trace() - x)
         first, second = qrep.apply_map(G._F_to_local), qrep_bar.apply_map(G._F_to_local)
-        # qrep = g.parent().matrix_rep(g) # This method is only available for matrix ring (not quaternionic)
-        # qrep_bar = qrep.apply_map(lambda x:x.trace() - x)
-        # first, second = g.parent().embed_matrix(qrep, M), g.parent().embed_matrix(qrep_bar, M)
         return self._get_powers(self.Sigma0Squared()(first,second))
 
     def _get_powers(self,g,emb = None):

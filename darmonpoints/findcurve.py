@@ -102,6 +102,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
             raise ValueError,'Conductor (NE) should be divisible by P*DB'
 
     Ncartan = kwargs.get('Ncartan',None)
+    param_dict['nscartan'] = Ncartan
     Np = NE / (P * DB)
     if Ncartan is not None:
         Np = Np / Ncartan**2
@@ -147,7 +148,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity, magma=magma)
-            G = BigArithGroup(P, abtuple, Np, use_sage_db = use_sage_db, grouptype = grouptype, magma = magma, seed = magma_seed, timeout = timeout, use_shapiro = use_shapiro, nscartan = Ncartan, implementation = implementation)
+            G = BigArithGroup(P, abtuple, Np, magma = magma, seed = magma_seed, **param_dict)
         except RuntimeError as e:
             if quit_when_done:
                 magma.quit()

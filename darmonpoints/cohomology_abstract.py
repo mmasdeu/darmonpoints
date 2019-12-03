@@ -64,8 +64,8 @@ class CohomologyElement(ModuleElement):
         ModuleElement.__init__(self,parent)
 
     def _evaluate_word_tietze(self, word):
-        return self._evaluate_word_tietze_naive(word)
-        # return self._evaluate_word_tietze_foxderivative(word)
+        # return self._evaluate_word_tietze_naive(word)
+        return self._evaluate_word_tietze_foxgradient(word)
 
     def values(self):
         return self._val
@@ -136,13 +136,13 @@ class CohomologyElement(ModuleElement):
         H = self.parent()
         G = H.group()
         if x.parent() is G:
-            verbose('Obtaining word_rep for %s'%x)
+            # verbose('Obtaining word_rep for %s'%x)
             wd  = x.word_rep
-            verbose(' = %s'%str(wd))
+            # verbose(' = %s'%str(wd))
         else:
             x = G(x)
             wd = x.word_rep
-        verbose('Got word rep', level=2)
+        # verbose('Got word rep', level=2)
         if self.parent().trivial_action():
             return self._evaluate_word_tietze_trivial(wd)
         else:
@@ -201,12 +201,16 @@ class CohomologyElement(ModuleElement):
             MS = MatrixSpace(R, dim, dim)
         else:
             MS = lambda x:x
-        verbose(' Computing Alist', level=2)
         fgrad = self.parent().fox_gradient(tuple(word))
-        verbose('%s'%str([len(f) for f in fgrad]), level=2)
-        Alist = [self.parent().GA_to_local(o) for o in fgrad]
-        ans = V(sum(A * val._moments for A, val in zip(Alist, self._val)))
-        verbose('Done', level=2)
+        # verbose('%s'%str([len(f) for f in fgrad]), level=2)
+        try:
+            tmp = [self.parent().GA_to_local(A) for A in fgrad]
+            if hasattr(self._val[0], '_moments'):
+                ans = V(sum(self.parent().GA_to_local(A) * val._moments for A, val in zip(fgrad, self._val)))
+            else:
+                ans = V(sum(self.parent().GA_to_local(A) * val for A, val in zip(fgrad, self._val)))
+        except (AttributeError,TypeError):
+            ans = V(sum(sum((a * (g.support()[0] * val) for a, g in zip(o.coefficients(), o.monomials()))) for o, val in zip(fgrad,self._val)))
         return ans
 
     def _evaluate_word_tietze_identity(self,word):
