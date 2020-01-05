@@ -3,6 +3,7 @@ from sage.structure.element import Element
 from sage.categories.fields import Fields
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.element import FieldElement
+from sage.structure.richcmp import richcmp
 from sage.rings.ring import Field
 from sage.rings.integer_ring import Z as ZZ
 from sage.rings.all import QQ
@@ -113,9 +114,8 @@ class QuadExtElement(FieldElement):
             den = c*c + c*d*r + d*d*s
             return self.__class__(self.parent(), ((a*c+a*d*r+b*d*s) / den, (b*c-a*d) / den), check = False)
 
-    def _cmp_(self, right):
-        return cmp((self._a,self._b),(right._a,right._b))
-    __cmp__ = _cmp_
+    def _richcmp_(left, right, op):
+        return richcmp((left._a, left._b), (right._a, right._b), op)
 
     def valuation(self, p = None):
         return min([2 * self._a.valuation(p), 2 * self._b.valuation(p) + 1])
