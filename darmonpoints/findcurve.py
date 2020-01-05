@@ -92,7 +92,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         F = P.ring()
         Fdisc = F.discriminant()
         if not (P*DB).divides(NE):
-            raise ValueError,'Conductor (NE) should be divisible by P*DB'
+            raise ValueError('Conductor (NE) should be divisible by P*DB')
         p = ZZ(P.norm()).abs()
 
     except AttributeError:
@@ -101,7 +101,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         p = ZZ(P)
         Fdisc = ZZ(1)
         if NE % (P*DB) != 0:
-            raise ValueError,'Conductor (NE) should be divisible by P*DB'
+            raise ValueError('Conductor (NE) should be divisible by P*DB')
 
     Ncartan = kwargs.get('Ncartan',None)
     param_dict['nscartan'] = Ncartan
@@ -112,7 +112,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         use_ps_dists = False # More efficient our own implementation
 
     if not p.is_prime():
-        raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
+        raise ValueError('P (= %s) should be a prime, of inertia degree 1'%P)
 
     working_prec = max([2 * prec + 10, 100])
 
@@ -129,7 +129,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
             if F.signature()[1] == 1:
                 ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'
             else:
-                raise ValueError,'Please specify the ramification at infinity'
+                raise ValueError('Please specify the ramification at infinity')
         elif F.signature()[0] == 1:
             if len(F.ideal(DB).factor()) % 2 == 0:
                 ramification_at_infinity = [] # Split at infinity

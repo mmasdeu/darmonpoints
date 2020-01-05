@@ -973,7 +973,7 @@ def HalfPeriodsInTermsOfLambdas(L1, L2, L3, lvec_and_Mlist = None, HP0 = None, p
         if all([u == v for u,v in zip(Pn.list(), Pnn.list())]):
             return Pn
         Pn = Pnn
-    raise RuntimeError,"Does not converge"
+    raise RuntimeError("Does not converge")
 
 def normalize_periods(A, B, alpha, T, a, b, outfile = None):
     r'''

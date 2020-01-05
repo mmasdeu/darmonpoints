@@ -343,7 +343,7 @@ class OneChains_element(ModuleElement):
 
         '''
         if not isinstance(data,dict):
-            raise ValueError,'data should be a dictionary indexed by elements of ArithGroup'
+            raise ValueError('data should be a dictionary indexed by elements of ArithGroup')
         self._data = data
         ModuleElement.__init__(self,parent)
 

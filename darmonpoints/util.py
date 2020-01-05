@@ -419,7 +419,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
 
     tt = -xx/yy
     if tt.valuation(p) <= 0:
-        raise ValueError, "The point must lie in the formal group (valuation = %s should be positive)."%tt.valuation(p)
+        raise ValueError("The point must lie in the formal group (valuation = %s should be positive)."%tt.valuation(p))
 
     eqhat = Eq.formal()
     eqlog = eqhat.log(prec + 3)
@@ -503,7 +503,7 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
         newJJ = oldJJ + pn*matrix(R,2,2,[y1,y2,y3,-y1])
         current_prec = n
         if n_iters > 2 * prec:
-            raise RuntimeError,'Hensel iteration does not seem to converge'
+            raise RuntimeError('Hensel iteration does not seem to converge')
     R = Qp(p,prec)
     return newII.change_ring(R),newJJ.change_ring(R)
 
@@ -516,14 +516,14 @@ def hensel_lift(f, x0, max_iters=None):
     if max_iters is None:
         max_iters = 1 + RR(x0.parent().precision_cap()).log(2).ceiling()
     if f(xn).valuation() <= 2 * fder(xn).valuation():
-        raise ValueError,"Approximation is not good enough"
+        raise ValueError("Approximation is not good enough")
     while n_iters < max_iters:
         n_iters += 1
         xnn = xn - f(xn)/fder(xn)
         if xn == xnn:
             return xn
         xn = xnn
-    raise RuntimeError,"Does not seem to converge"
+    raise RuntimeError("Does not seem to converge")
 
 # Returns the change of coordinates function resulting of sending
 # x1p |-> oo
@@ -626,7 +626,7 @@ def our_sqrt(xx,K = None,return_all = False):
         if return_all:
             return []
         else:
-            raise ValueError,'Not a square'
+            raise ValueError('Not a square')
     x = K.uniformizer()**(-valp) * xx
     try:
         z = K.unramified_generator()
@@ -647,7 +647,7 @@ def our_sqrt(xx,K = None,return_all = False):
         if return_all:
             return []
         else:
-            raise ValueError,'Not a square'
+            raise ValueError('Not a square')
     y, y1 = 0, y0
     while y != y1:
         y, y1 = y1, (y1+x/y1)/2
@@ -674,7 +674,7 @@ def our_cuberoot(xx,K = None,return_all = False):
         eK = 1
     valpi = eK * valp
     if valpi % 3 != 0:
-        raise ValueError,'Not a cube'
+        raise ValueError('Not a cube')
     x = K.uniformizer()**(-valp) * xx
     try:
         z = K.unramified_generator()
@@ -699,7 +699,7 @@ def our_cuberoot(xx,K = None,return_all = False):
                 found = True
                 break
     if found == False:
-        raise ValueError,'Not a cube'
+        raise ValueError('Not a cube')
     y1 = y0
     y = K(0)
     num_iters = 0
@@ -741,7 +741,7 @@ def our_nroot(xx,n,K = None,return_all = False):
         if return_all:
             return []
         else:
-            raise ValueError,'Not an n-th power'
+            raise ValueError('Not an n-th power')
     x = K.uniformizer()**(-valp) * xx
     try:
         z = K.unramified_generator()
@@ -776,7 +776,7 @@ def our_nroot(xx,n,K = None,return_all = False):
                 if not return_all:
                     break
     if len(y0list) == 0 and not return_all:
-        raise ValueError,'Not an n-th power'
+        raise ValueError('Not an n-th power')
     ans_list = []
     for y0 in y0list:
         y1 = y0
@@ -915,14 +915,14 @@ def _get_heegner_params_numberfield(P,N,beta):
     x = PolynomialRing(F,names = 'x').gen()
     K = F.extension(x*x-beta,names = 'b')
     if not P.divides(N):
-        raise ValueError,'p (=%s) must divide conductor (=%s)'%(P,N)
+        raise ValueError('p (=%s) must divide conductor (=%s)'%(P,N))
     PK = K.ideal(P)
     if len(PK.factor()) > 1:
-        raise ValueError,'p (=%s) must be inert in K (=Q(sqrt{%s}))'%(P,beta)
+        raise ValueError('p (=%s) must be inert in K (=Q(sqrt{%s}))'%(P,beta))
     PK = PK.factor()[0] #    if PK.relative_ramification_index() > 1 or not PK.is_prime():
     N1 = N/P
     if P.divides(N1):
-        raise ValueError,'p (=%s) must exactly divide the conductor (=%s)'%(p,N)
+        raise ValueError('p (=%s) must exactly divide the conductor (=%s)'%(p,N))
     DB = F.ideal(1)
     Np = F.ideal(1)
     num_inert_primes = 0
@@ -942,17 +942,17 @@ def _get_heegner_params_numberfield(P,N,beta):
     assert N == P * DB * Np
     inert_primes_at_infty =  K.signature()[1] - 2 * F.signature()[1]
     if (inert_primes_at_infty + num_inert_primes) % 2 != 0:
-        raise ValueError,'There should an even number of primes different than p which are inert'
+        raise ValueError('There should an even number of primes different than p which are inert')
     return DB,Np,None
 
 def _get_heegner_params_rational(p,N,beta):
     if N % p != 0:
-        raise ValueError,'p (=%s) must divide conductor (=%s)'%(p,N)
+        raise ValueError('p (=%s) must divide conductor (=%s)'%(p,N))
     if ZZ(beta).kronecker(p) != -1:
-        raise ValueError,'p (=%s) must be inert in K (=Q(sqrt{%s}))'%(p,beta)
+        raise ValueError('p (=%s) must be inert in K (=Q(sqrt{%s}))'%(p,beta))
     N1 = ZZ(N/p)
     if N1 % p == 0:
-        raise ValueError,'p (=%s) must exactly divide the conductor (=%s)'%(p,N)
+        raise ValueError('p (=%s) must exactly divide the conductor (=%s)'%(p,N))
     DB = 1
     Np = 1
     Ncartan = None
@@ -1181,9 +1181,9 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
     I = F.ideal(I)
     P = I.factor()
     if (len(P) + len(S)) % 2 != 0:
-        raise ValueError, 'Number of ramified places must be even'
+        raise ValueError('Number of ramified places must be even')
     if any([ri > 1 for _,ri in P]):
-        raise ValueError, 'All exponents in the discriminant factorization must be odd'
+        raise ValueError('All exponents in the discriminant factorization must be odd')
 
     if optimize_through_magma:
         if magma is None:
@@ -1217,7 +1217,7 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
                 T.remove(w)
                 break
     if  len(S) != len(Sold):
-        raise ValueError,'Please specify more precision for the places.'
+        raise ValueError('Please specify more precision for the places.')
     a = weak_approximation(F,I,J = None,S = S,T = [v for v in Foo if v not in S])
     if len(P) == 0 and all([F.hilbert_symbol(-F.one(),a,pp) == 1 for pp,_ in F.ideal(2*a).factor()]):
         return -F.one(), a
@@ -1353,7 +1353,7 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
     if T is None:
         T = []
     if (len(S) > 0 or len(T) > 0) and len(self.narrow_class_group()) > 1:
-        raise NotImplementedError, 'Only implemented for fields of narrow class number 1'
+        raise NotImplementedError('Only implemented for fields of narrow class number 1')
     from itertools import chain
     nf = self.pari_nf()
     n = 0

@@ -67,7 +67,7 @@ def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = 
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     if use_ps_dists == False:
-        raise NotImplementedError, 'Must use distributions from Pollack-Stevens code in the split case'
+        raise NotImplementedError('Must use distributions from Pollack-Stevens code in the split case')
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
@@ -1261,7 +1261,7 @@ class ArithCoh(ArithCoh_generic):
                         continue
                     K = K.intersection(K1)
         if K.dimension() != 1:
-            raise ValueError,'Did not obtain a one-dimensional space corresponding to E'
+            raise ValueError('Did not obtain a one-dimensional space corresponding to E')
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a * self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
@@ -1298,7 +1298,7 @@ class ArithCoh(ArithCoh_generic):
                         continue
                     K = K.intersection(K1)
         if K.dimension() != 1:
-            raise ValueError,'Group does not have the required system of eigenvalues'
+            raise ValueError('Group does not have the required system of eigenvalues')
 
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self(0))

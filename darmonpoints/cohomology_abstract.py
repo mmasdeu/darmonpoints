@@ -99,7 +99,7 @@ class CohomologyElement(ModuleElement):
                 except (IndexError, ZeroDivisionError):
                     pass
         if ans is None:
-            raise RuntimeError, "It seems that we are trying to divide by 0"
+            raise RuntimeError("It seems that we are trying to divide by 0")
         return ans
 
     def __rmul__(self,right):

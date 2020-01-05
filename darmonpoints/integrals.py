@@ -83,7 +83,7 @@ def double_integral_zero_infty(Phi,tau1,tau2):
                         phimap = Phi._map(M2Z([b,d,a,c]))
                     except OverflowError:
                         print(a,b,c,d)
-                        raise OverflowError,'Matrix too large?'
+                        raise OverflowError('Matrix too large?')
                     # mu_e0 = ZZ(phimap.moment(0).rational_reconstruction())
                     mu_e0 = ZZ(Phi._liftee._map(M2Z([b,d,a,c])).moment(0))
                     mu_e = [mu_e0] + [phimap.moment(o).lift() for o in range(1,len(V))]
@@ -118,7 +118,7 @@ def double_integral_zero_infty(Phi,tau1,tau2):
 ##----------------------------------------------------------
 def double_integral(Phi,tau1,tau2,r,s):
    if r == [0,0] or s == [0,0]:
-       raise ValueError,'r and s must be valid projective coordinates.'
+       raise ValueError('r and s must be valid projective coordinates.')
    if r[0] == 0 and s[1] == 0: # From 0 to infinity
        return double_integral_zero_infty(Phi,tau1,tau2)
    elif s[1] == 0:

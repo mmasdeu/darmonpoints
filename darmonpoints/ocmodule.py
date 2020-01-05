@@ -257,7 +257,7 @@ class OCVnElement(ModuleElement):
         """
         if not self._parent.base_ring().is_exact():
             if(not l is None and l!=self._parent._Rmod.prime()):
-                raise ValueError, "This function can only be called with the base prime"
+                raise ValueError("This function can only be called with the base prime")
             l = self._parent._Rmod.prime()
             return min([self._val[ii,0].valuation(l) for ii in range(self._depth)])
         else:
@@ -272,7 +272,7 @@ class OCVnElement(ModuleElement):
         """
         if not self._parent.base_ring().is_exact():
             if(not l is None and l!=self._parent._Rmod.prime()):
-                raise ValueError, "This function can only be called with the base prime"
+                raise ValueError("This function can only be called with the base prime")
             l = self._parent._Rmod.prime()
             return [self._val[ii,0].valuation(l) for ii in range(self._depth)]
         else:

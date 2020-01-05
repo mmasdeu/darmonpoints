@@ -214,7 +214,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     except TypeError:
         p = ZZ(P.norm())
     if not p.is_prime():
-        raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
+        raise ValueError('P (= %s) should be a prime, of inertia degree 1'%P)
 
     if F == QQ:
         dK = ZZ(beta)
@@ -275,7 +275,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                     if F.signature()[1] == 1:
                         ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'
                     else:
-                        raise ValueError,'Please specify the ramification at infinity'
+                        raise ValueError('Please specify the ramification at infinity')
                 elif F.signature()[0] == 1:
                     if len(F.ideal(DB).factor()) % 2 == 0:
                         ramification_at_infinity = [] # Split at infinity
