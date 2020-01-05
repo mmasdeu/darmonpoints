@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ######################
 ##                  ##
 ##    ARITHMETIC    ##
@@ -43,19 +45,19 @@ from sage.arith.all import gcd, lcm, xgcd
 
 from util import *
 import os
-from ocmodule import OCVn
-from ocbianchi import BianchiDistributions, left_ps_adjuster
+from .ocmodule import OCVn
+from .ocbianchi import BianchiDistributions, left_ps_adjuster
 from sage.misc.persist import db, db_save
 from sage.parallel.decorate import fork,parallel
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 from sage.categories.action import Action
 import operator
-from cohomology_abstract import *
+from .cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
-from ocmodule import our_adjuster, ps_adjuster
+from .ocmodule import our_adjuster, ps_adjuster
 from sage.modules.free_module_element import free_module_element, vector
-from representations import *
+from .representations import *
 from time import sleep
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
 # from sage.modular.cusps import Cusp

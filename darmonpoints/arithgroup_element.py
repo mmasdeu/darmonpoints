@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ######################
 ##                  ##
 ##    ARITHMETIC    ##
@@ -19,7 +21,7 @@ from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from util import *
+from .util import *
 from sage.structure.sage_object import save,load
 from copy import copy
 from sage.misc.persist import db

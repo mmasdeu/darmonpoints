@@ -1,10 +1,12 @@
+from __future__ import absolute_import
+
 from sage.matrix.all import matrix,Matrix
 from itertools import starmap,izip,product,chain
 from operator import mul,itemgetter
 from functools import wraps
 import os.path
 import gc,errno,signal,os,types
-from util import *
+from .util import *
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,Zmod
 from sage.groups.generic import discrete_log
 from sage.all import prod

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ##########################################################################
 ### Darmon (Stark-Heegner) points for quaternion algebras                #
 ##########################################################################
@@ -11,12 +13,12 @@ from sage.rings.infinity import Infinity
 from sage.schemes.curves.constructor import Curve
 from sage.misc.misc import walltime, verbose
 from sage.misc.misc_c import prod
-from sarithgroup import BigArithGroup
-from homology import *
-from cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
-from integrals import double_integral_zero_infty,integrate_H1
-from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
-from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,config_section_map, Bunch
+from .sarithgroup import BigArithGroup
+from .homology import *
+from .cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
+from .integrals import double_integral_zero_infty,integrate_H1
+from .limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
+from .util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,config_section_map, Bunch
 
 import os, datetime, ConfigParser, sys
 

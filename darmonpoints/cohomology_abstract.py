@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ######################
 ##                  ##
 ##    COHOMOLOGY    ##
@@ -15,7 +17,7 @@ from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod, Infinity
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from util import *
+from .util import *
 import os
 from sage.misc.persist import db,db_save
 from sage.parallel.decorate import fork,parallel

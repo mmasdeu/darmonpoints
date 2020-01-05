@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ######################
 ##                  ##
 ##    QUATERNIONIC  ##
@@ -24,15 +26,15 @@ from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
 from sage.matrix.matrix_space import MatrixSpace
-from arithgroup_element import ArithGroupElement
+from .arithgroup_element import ArithGroupElement
 from sage.misc.sage_eval import sage_eval
-from util import *
+from .util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.rings.finite_rings.finite_field_constructor import FiniteField
 from sage.rings.infinity import Infinity
-from homology_abstract import HomologyGroup
-from arithgroup import ArithGroup_generic
+from .homology_abstract import HomologyGroup
+from .arithgroup import ArithGroup_generic
 from sage.modular.modsym.p1list import lift_to_sl2z
 from sage.matrix.constructor import diagonal_matrix, identity_matrix, block_diagonal_matrix
 oo = Infinity
@@ -224,7 +226,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
     def embed_order(self,p,K,prec,outfile = None, return_all = False):
         r'''
         '''
-        from limits import find_the_unit_of
+        from .limits import find_the_unit_of
         verbose('Computing quadratic embedding to precision %s'%prec)
         verbose('Finding module generators')
         w = module_generators(K)[1]

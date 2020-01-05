@@ -1,12 +1,14 @@
+from __future__ import absolute_import
+
 ######################################
 #####     Curve finding           ####
 ######################################
 from sage.rings.padics.precision_error import PrecisionError
-from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
-from sarithgroup import BigArithGroup
-from homology import lattice_homology_cycle
-from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
-from integrals import integrate_H1,double_integral_zero_infty
+from .util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
+from .sarithgroup import BigArithGroup
+from .homology import lattice_homology_cycle
+from .cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
+from .integrals import integrate_H1,double_integral_zero_infty
 from sage.all import QQ, ZZ, Qp, QuaternionAlgebra, factor, Infinity
 from sage.misc.misc import verbose
 import sys, os, datetime, ConfigParser

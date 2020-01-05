@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ######################
 ##                  ##
 ##    QUATERNIONIC  ##
@@ -26,19 +27,19 @@ from sage.functions.generalized import sgn
 from sage.matrix.matrix_space import MatrixSpace
 
 from sage.misc.sage_eval import sage_eval
-from util import *
+from .util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
 from sage.rings.infinity import Infinity
-from arithgroup_generic import ArithGroup_generic, ArithGroup_matrix_generic
+from .arithgroup_generic import ArithGroup_generic, ArithGroup_matrix_generic
 from sage.plot.hyperbolic_polygon import hyperbolic_polygon
 from sage.repl.rich_output.pretty_print import show
 from sage.plot.plot import plot
 from sage.plot.hyperbolic_arc import hyperbolic_arc
 from sage.plot.hyperbolic_polygon import hyperbolic_polygon
 from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
-from util import update_progress
+from .util import update_progress
 from sage.groups.free_group import FreeGroup
 
 def geodesic_circle(alpha, beta, return_equation=True):
@@ -1059,7 +1060,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
 
     # rationalmatrix
     def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1):
-        from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
+        from .limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
         M = self.level
         extra_conductor = ZZ(extra_conductor)
         r = K.gen()
@@ -1080,7 +1081,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
     def embed_order_legacy(self,p,K,prec,outfile = None,return_all = False):
         r'''
         '''
-        from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit, find_the_unit_of
+        from .limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit, find_the_unit_of
 
         verbose('Computing quadratic embedding to precision %s'%prec)
         mu = find_optimal_embeddings(K,use_magma = True, extra_conductor = 1, magma=self.magma)[-1]

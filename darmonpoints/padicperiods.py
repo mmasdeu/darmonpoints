@@ -1,18 +1,20 @@
+from __future__ import absolute_import
+
 from itertools import product
 from sage.arith.all import algdep
 from sage.rings.padics.precision_error import PrecisionError
-from util import *
-from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
-from sarithgroup import BigArithGroup
-from homology import lattice_homology_cycle
+from .util import *
+from .cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
+from .sarithgroup import BigArithGroup
+from .homology import lattice_homology_cycle
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
 from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
-from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
+from .util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
 from sage.misc.persist import db
 from sage.rings.padics.precision_error import PrecisionError
-from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
-from integrals import integrate_H1
+from .util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
+from .integrals import integrate_H1
 from sage.misc.misc import alarm, cancel_alarm
 from sage.rings.integer_ring import ZZ
 
@@ -818,7 +820,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         Phif = get_overconvergent_class_quaternionic(P, flist[0], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
         fwrite('# Overconvergent lift completed', outfile)
 
-        from integrals import integrate_H1
+        from .integrals import integrate_H1
         numadd, numval, numroot = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
         denadd, denval, denroot = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
         Alog = take_to_Qp(numadd - denadd)

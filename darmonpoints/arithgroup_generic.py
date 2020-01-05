@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ######################
 ##                  ##
 ##    GENERIC       ##
@@ -25,12 +26,12 @@ from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.sage_eval import sage_eval
-from util import *
+from .util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
 from sage.rings.infinity import Infinity
-from arithgroup_element import ArithGroupElement
+from .arithgroup_element import ArithGroupElement
 
 class ArithGroup_generic(AlgebraicGroup):
     Element = ArithGroupElement
@@ -351,7 +352,7 @@ class ArithGroup_generic(AlgebraicGroup):
 
     @cached_method
     def abelianization(self):
-        from homology_abstract import Abelianization
+        from .homology_abstract import Abelianization
         return Abelianization(self)
 
 class ArithGroup_matrix_generic(ArithGroup_generic):
@@ -492,7 +493,7 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
             K = QQ
 
         # from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok
-        from my_p1list_nf import lift_to_sl2_Ok
+        from .my_p1list_nf import lift_to_sl2_Ok
         from sage.modular.modsym.p1list import lift_to_sl2z
         ## Define new function on the fly to pick which of Q/more general field we work in
         ## lift_to_matrix takes parameters c,d, then lifts (c:d) to a 2X2 matrix over the NF representing it
@@ -560,7 +561,7 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
         ## Return object representing Projective line over O_F/N
         if hasattr(N,'number_field'): ## Base field not Q
             # from sage.modular.modsym.p1list_nf import P1NFList
-            from my_p1list_nf import P1NFList
+            from .my_p1list_nf import P1NFList
             return P1NFList(N)
         else:   ## Base field Q
             from sage.modular.modsym.p1list import P1List

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.rings.all import ZZ,QQ,Qp,RR,CC,RealField
 from sage.matrix.all import matrix,Matrix

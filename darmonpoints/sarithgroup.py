@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ######################
 ##                  ##
 ##    QUATERNIONIC  ##
@@ -18,15 +20,15 @@ from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from arithgroup import ArithGroup_nf_fuchsian, ArithGroup_nf_kleinian,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix,ArithGroup_nf_matrix, ArithGroup_nf_matrix_new
+from .arithgroup import ArithGroup_nf_fuchsian, ArithGroup_nf_kleinian,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix,ArithGroup_nf_matrix, ArithGroup_nf_matrix_new
 
-from util import *
+from .util import *
 from sage.structure.sage_object import save,load
 from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 import os,datetime
-from homology_abstract import ArithHomology, HomologyGroup
+from .homology_abstract import ArithHomology, HomologyGroup
 from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor as Gamma0
 from sage.modular.cusps import Cusp
 
@@ -746,7 +748,7 @@ def ArithGroup(base, discriminant, abtuple = None, level = 1, magma = None, impl
         discriminant = ZZ(discriminant)
         if discriminant == 1:
             if nscartan is not None:
-                from arithgroup_nscartan import ArithGroup_nscartan
+                from .arithgroup_nscartan import ArithGroup_nscartan
                 return ArithGroup_nscartan(nscartan, level, magma=magma, **kwargs)
             else:
                 return ArithGroup_rationalmatrix(level, magma=magma, **kwargs)

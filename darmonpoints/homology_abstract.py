@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ######################
 ##                  ##
 ##    ABSTRACT      ##
@@ -15,10 +17,10 @@ from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
 from sage.sets.set import Set
 from sage.modules.free_module_element import vector
-from util import *
+from .util import *
 import os
 import operator
-from representations import *
+from .representations import *
 
 class HomologyElement(ModuleElement):
     def __init__(self, parent, data):

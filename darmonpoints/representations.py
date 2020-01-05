@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ######################
 ##                  ##
 ##  REPRESENTATIONS ##
@@ -16,7 +18,7 @@ from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod
 from collections import defaultdict
 from itertools import product,chain,izip,groupby,islice,tee,starmap
-from util import *
+from .util import *
 import os
 from sage.misc.persist import db,db_save
 from sage.parallel.decorate import fork,parallel
@@ -24,7 +26,7 @@ from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 from sage.categories.action import Action
 import operator
-from cohomology_abstract import *
+from .cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
 from sage.modules.free_module_element import vector
 from sage.modules.vector_integer_dense import Vector_integer_dense

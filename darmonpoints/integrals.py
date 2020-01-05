@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ######################
 ##                  ##
 ##  INTEGRATION     ##
@@ -9,9 +11,9 @@ from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing, Infinity,Zmod
 from sage.all import prod
 from operator import mul
-from util import *
-from sarithgroup import BTEdge
-from limits import num_evals,find_center
+from .util import *
+from .sarithgroup import BTEdge
+from .limits import num_evals,find_center
 from sage.parallel.decorate import fork,parallel
 from sage.misc.getusage import get_memory_usage
 from sage.structure.sage_object import SageObject

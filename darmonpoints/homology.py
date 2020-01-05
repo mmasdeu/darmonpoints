@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ######################
 ##                  ##
 ##     HOMOLOGY     ##
@@ -16,7 +18,7 @@ from sage.rings.integer_ring import ZZ
 from sage.rings.power_series_ring import PowerSeriesRing
 from sage.sets.set import Set
 from sage.arith.all import GCD
-from util import *
+from .util import *
 import os
 import operator
 from sage.rings.padics.precision_error import PrecisionError
