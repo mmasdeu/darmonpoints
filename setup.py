@@ -43,7 +43,7 @@ if __name__ == "__main__":
     ]
 
     # Specify the required Sage version
-    sage_required_version = u'>=7.4'
+    sage_required_version = u'>=9.0'
     REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
 
     setup(
@@ -64,7 +64,7 @@ if __name__ == "__main__":
           'Intended Audience :: Science/Research',
           'Topic :: Scientific/Engineering :: Mathematics',
           'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
-          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.0',
         ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
         keywords = "SageMath, Darmon points, elliptic curves, p-adic periods",
         # this grabs the requirements from requirements.txt
