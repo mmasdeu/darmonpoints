@@ -1,6 +1,7 @@
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.structure.element import Element
 from sage.categories.fields import Fields
+from sage.structure.richcmp import richcmp
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.element import FieldElement
 from sage.structure.richcmp import richcmp
@@ -114,8 +115,9 @@ class QuadExtElement(FieldElement):
             den = c*c + c*d*r + d*d*s
             return self.__class__(self.parent(), ((a*c+a*d*r+b*d*s) / den, (b*c-a*d) / den), check = False)
 
-    def _richcmp_(left, right, op):
-        return richcmp((left._a, left._b), (right._a, right._b), op)
+    def _richcmp_(self, right, op):
+        return richcmp((self._a, self._b), (right._a, right._b), op)
+    __richcmp__ = _richcmp_
 
     def valuation(self, p = None):
         return min([2 * self._a.valuation(p), 2 * self._b.valuation(p) + 1])
