@@ -655,6 +655,9 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             ans = {}
             ans['B'] = self.B
             ans['O'] = self.O
+            ans['_II_inf'] = self._II_inf
+            ans['_JJ_inf'] = self._JJ_inf
+            ans['_KK_inf'] = self._KK_inf
             ans['_fundamental_domain'] = self._fundamental_domain
             ans['Ugens'] = self.Ugens
             ans['Uside'] = self.Uside
@@ -725,7 +728,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         return magma_quaternion_to_sage(self.B,Btmp(mu_magma),self.magma)
 
     # rationalquaternion
-    def embed_order(self,p,K,prec,outfile = None,return_all = False, extra_conductor=1):
+    def embed_order(self,p,K,prec,outfile = None,return_all = False, extra_conductor=1, **kwargs):
         r'''
         sage: from darmonpoints.sarithgroup import ArithGroup
         sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
@@ -766,6 +769,11 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         gamma = self(phi(eps))
 
         a,b,c,d = iotap(gamma.quaternion_rep).list()
+
+        padic_field = kwargs.pop('padic_field', None)
+        if padic_field is not None:
+            Cp = padic_field
+
         DD = our_sqrt(Cp((a+d)**2 - 4))
         tau1 = (Cp(a - d) + DD) / Cp(2*c)
         tau2 = (Cp(a - d) - DD) / Cp(2*c)
@@ -773,7 +781,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         fwrite('# \cO_K to R_0 given by w_K |-> %s'%phi(w),outfile)
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)
-        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
+        fwrite('# (where {g} satisfies: {defpoly})'.format(g = Cp._names[0], defpoly=Cp.defining_polynomial(exact=True)),outfile)
         if return_all:
             return gamma, tau1, tau2
         else:
@@ -1058,7 +1066,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
                     yield  v1 * tmp * v2
 
     # rationalmatrix
-    def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1):
+    def embed_order(self,p,K,prec,orientation = None, use_magma = True,outfile = None, return_all = False, extra_conductor = 1, **kwargs):
         from limits import _find_initial_embedding_list,find_optimal_embeddings,order_and_unit
         M = self.level
         extra_conductor = ZZ(extra_conductor)
@@ -1075,7 +1083,36 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         WD = wDvec[0] + wDvec[1] * W
         tau, gamma = _find_initial_embedding_list(v0, M, WD, orientation, OD, u)[0]
         gamma.set_immutable()
-        return self(gamma), v0(tau)
+
+        padic_field = kwargs.pop('padic_field', None)
+        if padic_field is not None:
+            Cp = padic_field
+
+        a, b, c, d = gamma.list()
+        DD = our_sqrt(Cp((a+d)**2 - 4))
+        tau1 = (Cp(a - d) + DD) / Cp(2*c)
+        tau2 = (Cp(a - d) - DD) / Cp(2*c)
+
+        fwrite('# gamma_psi = %s'%gamma,outfile)
+        fwrite('# tau_psi = %s'%tau1,outfile)
+        fwrite('# (where {g} satisfies: {defpoly})'.format(g = Cp._names[0],defpoly=Cp.defining_polynomial(exact=True)),outfile)
+
+        padic_field = kwargs.pop('padic_field', None)
+        if padic_field is not None:
+            Cp = padic_field
+
+        DD = our_sqrt(Cp((a+d)**2 - 4))
+        tau1 = (Cp(a - d) + DD) / Cp(2*c)
+        tau2 = (Cp(a - d) - DD) / Cp(2*c)
+
+        fwrite('# \cO_K to R_0 given by w_K |-> %s'%phi(w),outfile)
+        fwrite('# gamma_psi = %s'%gamma,outfile)
+        fwrite('# tau_psi = %s'%tau1,outfile)
+        fwrite('# (where {g} satisfies: {defpoly})'.format(g = Cp._names[0],defpoly=Cp.defining_polynomial(exact=True)),outfile)
+        if return_all:
+            return self(gamma), tau1, tau2
+        else:
+            return self(gamma), tau1
 
     def embed_order_legacy(self,p,K,prec,outfile = None,return_all = False):
         r'''
@@ -1096,9 +1133,9 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         assert r0 + r1 * w == K.gen()
         padic_Kgen = Cp(r0)+Cp(r1)*Cp.gen()
         try:
-            fwrite('# d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
+            fwrite('# d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())), outfile)
         except NotImplementedError: pass
-        fwrite('# w_K satisfies: %s'%w.minpoly(),outfile)
+        fwrite('# w_K satisfies: %s'%w.minpoly(), outfile)
         mu = r0 + r1*mu
         assert K.gen(0).trace() == mu.trace() and K.gen(0).norm() == mu.determinant()
         iotap = self.get_embedding(prec)
@@ -1124,10 +1161,10 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
                 gammaq *= gammaquatrep
         a, b, c, d = iotap(gamma.quaternion_rep).list()
         assert (c*tau1**2 + (d-a)*tau1 - b) == 0
-        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
-        fwrite('# gamma_psi = %s'%gamma,outfile)
-        fwrite('# tau_psi = %s'%tau1,outfile)
-        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
+        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu, outfile)
+        fwrite('# gamma_psi = %s'%gamma, outfile)
+        fwrite('# tau_psi = %s'%tau1, outfile)
+        fwrite('# (where g satisfies: %s)'%w.minpoly(), outfile)
         if return_all:
             return gamma, tau1, tau2
         else:
@@ -1333,7 +1370,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             return ans
 
     # nf_quaternion
-    def embed_order(self,p,K,prec,outfile = None,return_all = False, extra_conductor = 1):
+    def embed_order(self, p, K, prec, outfile = None, return_all = False, extra_conductor = 1, F_to_Qp = None, **kwargs):
         r'''
         '''
         verbose('Computing quadratic embedding to precision %s'%prec)
@@ -1341,7 +1378,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         verbose('Finding module generators')
         w = module_generators(K)[1]
         verbose('Done')
-        w_minpoly = PolynomialRing(Qp(p,prec),names = 'x')([self._F_to_local(o) for o in w.minpoly().coefficients(sparse=False)])
+        w_minpoly = PolynomialRing(Qp(p,prec),names = 'x')([F_to_Qp(o) for o in w.minpoly().coefficients(sparse=False)])
         verbose('w_minpoly = %s'%w_minpoly)
         Cp = Qp(p,prec).extension(w_minpoly,names = 'g')
         verbose('Cp is %s'%Cp)
@@ -1350,7 +1387,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         r0 = -wl[0]/wl[1]
         r1 = 1/wl[1]
         assert r0+r1*w == K.gen()
-        padic_Kgen = Cp(self._F_to_local(r0))+Cp(self._F_to_local(r1))*Cp.gen()
+        padic_Kgen = Cp(F_to_Qp(r0))+Cp(F_to_Qp(r1))*Cp.gen()
         try:
             fwrite('# d_K = %s, h_K = %s, h_K^- = %s'%(K.discriminant(),K.class_number(),len(K.narrow_class_group())),outfile)
         except NotImplementedError: pass
@@ -1385,14 +1422,18 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 gammaq *= gammaquatrep
 
         a,b,c,d = iotap(gamma.quaternion_rep).list()
+        padic_field = kwargs.pop('padic_field', None)
+        if padic_field is not None:
+            Cp = padic_field
+
         DD = our_sqrt(Cp((a+d)**2 - 4))
         tau1 = (Cp(a - d) + DD) / Cp(2*c)
         tau2 = (Cp(a - d) - DD) / Cp(2*c)
-        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
+
+        fwrite('# \cO_K to R_0 given by w_K |-> %s'%phi(w),outfile)
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)
-        fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)
-
+        fwrite('# (where {g} satisfies: {defpoly})'.format(g = Cp._names[0],defpoly=Cp.defining_polynomial(exact=True)),outfile)
         if return_all:
             return gamma, tau1, tau2
         else:
@@ -1829,9 +1870,6 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
                 ans += [-o for o in list(reversed(iso[-i-1]))]
         return ans
 
-    # def embed(self, x):
-    #     return self.quaternion_to_matrix(x).apply_map(self._F_to_local)
-
     def _compute_gap_information(self):
         gens = [o.quaternion_rep for o in self.G0.gens()]
         relation_words = self.G0.get_relation_words()
@@ -2043,9 +2081,6 @@ class ArithGroup_nf_matrix(ArithGroup_nf_kleinian, ArithGroup_matrix_generic):
     def non_positive_unit(self):
         mat = matrix(self.F, 2,2,[-1,0,0,1])
         return self.matrix_to_quaternion(mat)
-
-    # def embed(self, x):
-    #     return self.quaternion_to_matrix(x).apply_map(self._F_to_local)
 
     def generate_wp_candidates(self, p, ideal_p, **kwargs):
         initial_wp = kwargs.get('initial_wp')

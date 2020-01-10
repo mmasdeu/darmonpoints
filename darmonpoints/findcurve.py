@@ -67,6 +67,8 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     timeout = param.get('timeout',0)
     check_conductor = param.get('check_conductor',True)
 
+    kwargs.update(param_dict) # DEBUG
+
     if initial_data is None:
         page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
         if magma is None:
@@ -246,7 +248,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
         fwrite('qE = %s'%qE,outfile)
         fwrite('Linv = %s'%Linv,outfile)
-        curve = discover_equation(qE,G._F_to_local,NE,prec,check_conductor = check_conductor)
+        curve = discover_equation(qE,G.base_ring_local_embedding(working_prec),NE,prec,check_conductor = check_conductor)
         if curve is None:
             if quit_when_done:
                 magma.quit()

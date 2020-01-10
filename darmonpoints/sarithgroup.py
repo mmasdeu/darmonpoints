@@ -133,9 +133,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.seed = seed
         self.magma = magma
         self._use_shapiro = kwargs.get('use_shapiro', True)
-        hardcode_matrices = kwargs.get('hardcode_matrices', None)
-        if hardcode_matrices is None:
-            self._hardcode_matrices = ((abtuple is None and discriminant == 1) or abtuple == (1,1))
+        self._hardcode_matrices = kwargs.get('hardcode_matrices', ((abtuple is None and discriminant == 1) or abtuple == (1,1)))
         nscartan = kwargs.get('nscartan', None)
         if seed is not None:
             verbose('Setting Magma seed to %s'%seed)
@@ -191,6 +189,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.Gn.embed = self.embed
         if hasattr(self.Gpn.B,'is_division_algebra'):
             fwrite('# B = F<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gpn.B.gens()[0]**2,self.Gpn.B.gens()[1]**2),outfile)
+            fwrite('# disc(B) = %s'%self.Gpn.B.discriminant(), outfile)
         else:
             fwrite('# B = M_2(F)',outfile)
         try:
@@ -206,7 +205,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 basis_data_1 = '?'
                 basis_data_p = '?'
         self._prec = -1
-        self.get_embedding(200)
+        self.get_embedding(2000)
         fwrite('# R with basis %s'%basis_data_1,outfile)
         self.Gn.get_Up_reps = self.get_Up_reps
         if not self.use_shapiro():
@@ -214,8 +213,6 @@ class BigArithGroup_class(AlgebraicGroup):
             self.Gpn.get_Up_reps = self.get_Up_reps
         self.Gn.wp = self.wp
         self.Gpn.wp = self.wp
-        self.Gn._F_to_local = self._F_to_local
-        self.Gpn._F_to_local = self._F_to_local
         verbose('Done initializing arithmetic groups')
         verbose('Done initialization of BigArithmeticGroup')
 
@@ -239,58 +236,20 @@ class BigArithGroup_class(AlgebraicGroup):
     def use_shapiro(self):
         return self._use_shapiro
 
-    def base_ring_local_embedding(self,prec):
+    def base_ring_local_embedding(self, prec = None):
         if self.F == QQ:
-            return lambda x:x
+            if prec is not None:
+                return self.F.hom([Qp(self.p, prec)(1)], check=False)
+            else:
+                return self.F.Hom(self.F).identity()
         else:
             self.local_splitting(prec)
-            return self._F_to_local
-
-    def _compute_padic_splitting(self,prec):
-        verbose('Entering compute_padic_splitting')
-        prime = self.p
-        if self.seed is not None:
-            self.magma.eval('SetSeed(%s)'%self.seed)
-        R = Qp(prime,prec+10) #Zmod(prime**prec) #
-        B_magma = self.Gpn._get_B_magma()
-        a,b = self.Gpn.B.invariants()
-        if self._hardcode_matrices:
-            self._II = matrix(R,2,2,[1,0,0,-1])
-            self._JJ = matrix(R,2,2,[0,1,1,0])
-            goodroot = self.F.gen().minpoly().change_ring(R).roots()[0][0]
-            self._F_to_local = self.F.hom([goodroot])
-        else:
-            verbose('Calling magma pMatrixRing')
-            if self.F == QQ:
-                _,f = self.magma.pMatrixRing(self.Gpn._Omax_magma,prime*self.Gpn._Omax_magma.BaseRing(),Precision = 20,nvals = 2)
-                self._F_to_local = QQ.hom([R(1)])
+            if hasattr(self.Gpn,'_F_to_local'):
+                self.Gn._F_to_local = self.Gpn._F_to_local
+                return self.Gpn._F_to_local
             else:
-                _,f = self.magma.pMatrixRing(self.Gpn._Omax_magma,sage_F_ideal_to_magma(self.Gpn._F_magma,self.ideal_p),Precision = 20,nvals = 2)
-                try:
-                    self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
-                except SyntaxError:
-                    raise SyntaxError("Magma has trouble finding local splitting")
-                self._F_to_local = None
-                for o,_ in self.F.gen().minpoly().change_ring(R).roots():
-                    if (o - self._goodroot).valuation() > 5:
-                        self._F_to_local = self.F.hom([o])
-                        break
-                assert self._F_to_local is not None
-            verbose('Initializing II,JJ,KK')
-            v = f.Image(B_magma.gen(1)).Vector()
-            self._II = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
-            v = f.Image(B_magma.gen(2)).Vector()
-            self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
-            v = f.Image(B_magma.gen(3)).Vector()
-            self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
-            self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
-        self.Gn._F_to_local = self._F_to_local
-        if not self.use_shapiro():
-            self.Gpn._F_to_local = self._F_to_local
-
-        self._KK = self._II * self._JJ
-        self._prec = prec
-        return self._II, self._JJ, self._KK
+                self.Gpn._F_to_local = self.Gn._F_to_local
+                return self.Gn._F_to_local
 
     def local_splitting(self,prec):
         r"""
@@ -315,9 +274,12 @@ class BigArithGroup_class(AlgebraicGroup):
             True
 
         """
-        if prec <= self._prec:
-            return self._II,self._JJ,self._KK
-        return self._compute_padic_splitting(prec)
+        if prec is None or prec <= self._prec:
+            try:
+                return self.Gpn._II,self.Gpn._JJ,self.Gpn._KK
+            except AttributeError:
+                pass
+        return self.Gpn._compute_padic_splitting(self.ideal_p, prec)
 
     def save_to_db(self):
         fname = 'arithgroup%s_%s_%s_%s.sobj'%(self.seed,self.p,self.discriminant,self.level)
@@ -505,15 +467,15 @@ class BigArithGroup_class(AlgebraicGroup):
         """
         if prec == -1:
             prec = self._prec
+        if prec > self._prec: # DEBUG
+            self._prec = prec
         if self.F == QQ and self.discriminant == 1:
             R =  Qp(self.p,prec)
-            self._F_to_local = QQ.hom([R(1)])
             def iota(q):
                 return q.change_ring(R)
-            if prec > self._prec: # DEBUG
-                self._prec = prec
         else:
             I,J,K = self.local_splitting(prec)
+            v = self.base_ring_local_embedding(prec)
             mats = [1,I,J,K]
             def iota(q):
                 R=I.parent()
@@ -521,7 +483,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     q = q.coefficient_tuple()
                 except AttributeError:
                     q = q.list()
-                return sum(self._F_to_local(a)*b for a,b in zip(q,mats))
+                return sum(v(a)*b for a,b in zip(q,mats))
         return iota
 
     @cached_method
@@ -533,10 +495,11 @@ class BigArithGroup_class(AlgebraicGroup):
         if self.F == QQ and self.discriminant == 1:
             return set_immutable(q.change_ring(Qp(self.p,prec)))
         else:
+            v = self.base_ring_local_embedding(prec)
             if hasattr(q,'rows'):
-                return q.apply_map(self._F_to_local)
+                return q.apply_map(v)
             try:
-                return self.Gn.quaternion_to_matrix(q).apply_map(self._F_to_local)
+                return self.Gn.quaternion_to_matrix(q).apply_map(v)
             except AttributeError:
                 pass
             try:
@@ -544,8 +507,7 @@ class BigArithGroup_class(AlgebraicGroup):
             except AttributeError:
                 q = q.list()
             I,J,K = self.local_splitting(prec)
-            f = self._F_to_local
-            return set_immutable((f(q[0]) + f(q[1]) * I + f(q[2]) * J + f(q[3]) * K).change_ring(Qp(self.p, prec)))
+            return set_immutable((v(q[0]) + v(q[1]) * I + v(q[2]) * J + v(q[3]) * K).change_ring(Qp(self.p, prec)))
 
     @cached_method
     def reduce_in_amalgam(self,x,return_word = False, check = True):
