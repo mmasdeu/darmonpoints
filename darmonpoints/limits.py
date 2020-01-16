@@ -1,14 +1,13 @@
 from sage.matrix.all import matrix,Matrix
-from itertools import starmap,izip,product,chain
-from operator import mul,itemgetter
-from functools import wraps
-import os.path
-import gc,errno,signal,os,types
-from util import *
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,Zmod
 from sage.groups.generic import discrete_log
 from sage.all import prod
-from random import shuffle
+
+from itertools import starmap,product,chain
+from operator import mul,itemgetter
+
+from .util import *
+
 
 ##########################################################################################
 # now the new functions that we need...they follow pretty close the article we're writting
@@ -28,7 +27,7 @@ def factorize_matrix(m,M):
         if alpha.abs() >= aabs:
             continue
         delta0 = (Zm(alpha)**(-1)).lift()
-        for delta in xrange(delta0-10*M,delta0+10*M,M):
+        for delta in range(delta0-10*M,delta0+10*M,M):
             if alpha * delta == 1:
                 continue
             gamma0 = ZZ( (alpha*delta -1) / M)
@@ -70,7 +69,7 @@ def find_lambda(M,p,n_results = 1):
             return res[:n_results]
     if len(res) == 0:
         verbose('Lambda not found')
-        raise RuntimeError,'Lambda not found'
+        raise RuntimeError('Lambda not found')
     return res[:n_results]
 
 #we want to know if the class of c mod a is represented by a unit in F
@@ -211,7 +210,7 @@ def _find_initial_embedding_list(v0,M,W,orientation,OD,u):
             gtau_orig_2 = u0vec_inv[0] + u0vec_inv[1] * W_M
             emblist.extend([(tau0,gtau_orig_1),(tau0,gtau_orig_2)])
     if len(emblist) == 0:
-        raise RuntimeError,'No embeddings found !'
+        raise RuntimeError('No embeddings found !')
     verbose("Found %s initial embeddings."%len(emblist))
     return emblist
 
@@ -250,7 +249,7 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
     Cp = v0.codomain()
     p = Cp.base_ring().prime()
     if F.degree() != 2 or len(F.ideal(p).factor()) > 1 or ZZ(p).gcd(F.disc()) !=1:
-        raise ValueError,'Not a valid field'
+        raise ValueError('Not a valid field')
     w=F.maximal_order().ring_generators()[0]
     assert w.minpoly() == W.minpoly()
     OD,u = order_and_unit(F,extra_conductor)
@@ -262,7 +261,7 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
     #assert F.real_embeddings()[0](u) > 1
     if algorithm == 'darmon_pollack':
         if M != 1:
-            raise ValueError,'the level (=%s) must be =1'%M
+            raise ValueError('the level (=%s) must be =1'%M)
         u0vec = wD.coordinates_in_terms_of_powers()(u) # Finds a,b such that u = a + b w
         gtau = u0vec[0]+u0vec[1]*WD
         tau0 = compute_tau0(v0,WD,wD)
@@ -304,11 +303,11 @@ def find_tau0_and_gtau(v0,M,W,orientation = None,extra_conductor = 1,algorithm =
             if opt_evals is not None and opt_evals < 5 * (p+1)*p**2: # FIXME
                 break
         if opt_tau is None:
-            raise RuntimeError,'No embedding found'
+            raise RuntimeError('No embedding found')
         verbose('The optimal number of evaluations found is %s'%opt_evals)
         return opt_tau,opt_gtau,opt_sign,opt_V
     else:
-        raise ValueError, 'Algorithm must be either "guitart_masdeu" or "darmon_pollack"'
+        raise ValueError('Algorithm must be either "guitart_masdeu" or "darmon_pollack"')
 
 def find_optimal_embeddings(F,use_magma = False,extra_conductor = 1,magma = None):
     w=F.maximal_order().ring_generators()[0]
@@ -400,7 +399,7 @@ def _find_limits_original(tau,gtau,level,v0):
 def find_limits(tau,gtau = None,level = 1,v0 = None,method = 1):
     if gtau is None: return []
     if gtau.determinant() == 0:
-        raise ValueError,'gtau must have nonzero determinant.'
+        raise ValueError('gtau must have nonzero determinant.')
 
     if level == 1: # Use Manin trick
         return _find_limits_manin_trick(tau,gtau)

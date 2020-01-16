@@ -17,14 +17,15 @@ from sage.modules.all import vector
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
-from collections import defaultdict
-from itertools import product,chain,izip,groupby,islice,tee,starmap
-from util import *
 from sage.structure.sage_object import save,load
-from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
+
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+
+from .util import *
 
 class ArithGroupElement(MultiplicativeGroupElement):
     def __init__(self,parent, word_rep = None, quaternion_rep = None, check = False):
@@ -110,20 +111,37 @@ class ArithGroupElement(MultiplicativeGroupElement):
             quaternion_rep = self.quaternion_rep**(-1)
         return self.__class__(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
 
-    def __cmp__(self,right):
+    def _eq_(self,right):
         selfquatrep = self.quaternion_rep
         rightquatrep = right.quaternion_rep
         if 'P' not in self.parent()._grouptype:
-            return cmp(selfquatrep, rightquatrep)
+            return selfquatrep == rightquatrep
         tmp = selfquatrep/rightquatrep
         try:
             tmp = self.parent().F(tmp)
         except TypeError:
-            return 1
+            return False
         if not tmp.is_integral():
-            return -1
+            return False
         elif not (1/tmp).is_integral():
+            return False
+        else:
+            return True
+
+    def _richcmp_(self,right, op):
+        selfquatrep = self.quaternion_rep
+        rightquatrep = right.quaternion_rep
+        if 'P' not in self.parent()._grouptype:
+            return richcmp(selfquatrep, rightquatrep, op)
+        tmp = selfquatrep/rightquatrep
+        try:
+            tmp = self.parent().F(tmp)
+        except TypeError:
+            return 2
+        if not tmp.is_integral():
             return 1
+        elif not (1/tmp).is_integral():
+            return -1
         else:
             return 0
 

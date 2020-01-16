@@ -10,7 +10,6 @@ from sage.structure.element import ModuleElement
 from sage.modules.module import Module
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
-from copy import copy
 from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.all import Integer,Zp
 from sage.rings.padics.factory import ZpCA
@@ -23,10 +22,10 @@ from sage.categories.pushout import pushout
 from sage.rings.infinity import Infinity
 from sage.structure.sage_object import load,save
 from sage.categories.monoids import Monoids
+from sage.structure.richcmp import richcmp
 from sage.structure.element import MonoidElement
 from sage.structure.factory import UniqueFactory
 from sage.categories.action import Action
-import operator
 from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.modular.pollack_stevens.sigma0 import _default_adjuster
 from sage.modules.vector_integer_dense import Vector_integer_dense
@@ -35,7 +34,8 @@ from sage.structure.parent import Parent
 from sage.structure.element import Element
 from sage.modules.free_module_element import free_module_element as vector
 from sage.misc.misc import verbose
-oo = Infinity
+
+import operator
 ##===========================================================================================
 
 
@@ -410,8 +410,8 @@ class BianchiDistributionElement(ModuleElement):
         s = str(sum([ZZ(self._moments[idx,0])*self._parent.monomial_from_index(idx,R) for idx in range(self._moments.nrows())]))
         return s
 
-    def __cmp__(self,other):
-        return cmp(self._moments,other._moments)
+    def __richcmp__(self,other):
+        return richcmp(self._moments,other._moments)
 
     def __nonzero__(self):
         return self._moments != 0
@@ -502,7 +502,7 @@ class BianchiDistributionElement(ModuleElement):
             r = self.max_filtration_step()
         V = self._moments
         p = self._parent._p
-        for n in xrange(self._moments.nrows()):
+        for n in range(self._moments.nrows()):
             k = r - sum(tuple(self.parent().ij_from_pos(n)))
             self._moments[n, 0] = self._moments[n, 0] % p**k
         return self

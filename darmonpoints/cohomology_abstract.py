@@ -12,24 +12,25 @@ from sage.matrix.constructor import Matrix,matrix
 from sage.misc.cachefunc import cached_method
 from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod, Infinity
-from collections import defaultdict
-from itertools import product,chain,izip,groupby,islice,tee,starmap
-from util import *
-import os
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod
 from sage.misc.persist import db,db_save
 from sage.parallel.decorate import fork,parallel
-oo = Infinity
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 from sage.categories.action import Action
-import operator
 from sage.matrix.constructor import column_matrix
 from sage.misc.lazy_attribute import lazy_attribute
 from sage.matrix.matrix_space import MatrixSpace
 from sage.algebras.group_algebra import GroupAlgebra
 from sage.rings.padics.precision_error import PrecisionError
 from sage.modules.free_module_element import free_module_element, vector
+
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+import os
+import operator
+
+from .util import *
 
 class CohomologyElement(ModuleElement):
     def __init__(self, parent, data):
@@ -97,7 +98,7 @@ class CohomologyElement(ModuleElement):
                 except (IndexError, ZeroDivisionError):
                     pass
         if ans is None:
-            raise RuntimeError, "It seems that we are trying to divide by 0"
+            raise RuntimeError("It seems that we are trying to divide by 0")
         return ans
 
     def __rmul__(self,right):
@@ -364,7 +365,7 @@ class CohomologyGroup(Parent):
             return self.space().rank()
 
     def zero(self):
-        return self.element_class(self,[self._coeffmodule(0) for g in xrange(len(self.group().gens()))])
+        return self.element_class(self,[self._coeffmodule(0) for g in range(len(self.group().gens()))])
 
     def _an_element_(self):
         return self.zero()
@@ -393,7 +394,7 @@ class CohomologyGroup(Parent):
         return CohomologyElement(self, data)
 
     def gens(self):
-        return [self.gen(i) for i in xrange(self.dimension())]
+        return [self.gen(i) for i in range(self.dimension())]
 
     def _repr_(self):
         return 'H^1(G,V), with G being %s and V = %s'%(self.group(),self.coefficient_module())
@@ -409,7 +410,7 @@ class CohomologyGroup(Parent):
             return ans
         word = tietze_to_syllables(word)
         lenword = len(word)
-        for j in xrange(lenword):
+        for j in range(lenword):
             i,a = word[j]
             ans[i] += h  * self.get_fox_term(i,a, red)
             ans[i] = red(ans[i])
@@ -442,7 +443,7 @@ class CohomologyGroup(Parent):
         elif a > 1:
             genpows = self._gen_pows[i]
             ans = genpows[0] + genpows[1]
-            for o in xrange(a-2):
+            for o in range(a-2):
                 ans = red(ans)
                 ans = genpows[0] + genpows[1] * ans
             return red(ans)
@@ -450,7 +451,7 @@ class CohomologyGroup(Parent):
             a = -a
             genpows = self._gen_pows_neg[i]
             ans = genpows[0] + genpows[1]
-            for o in xrange(a-2):
+            for o in range(a-2):
                 ans = red(ans)
                 ans = genpows[0] + genpows[1] * ans
             ans = -genpows[1] * ans
@@ -468,7 +469,7 @@ class CohomologyGroup(Parent):
         elif a > 1:
             genpows = self._gen_pows[i]
             ans = V(v + genpows[1] * v)
-            for o in xrange(a-2):
+            for o in range(a-2):
                 ans.reduce_mod()
                 ans = V(v) + V(genpows[1] * ans._val)
             return ans.reduce_mod()
@@ -476,7 +477,7 @@ class CohomologyGroup(Parent):
             a = -a
             genpows = self._gen_pows_neg[i]
             ans = V(v) + V(genpows[1] * v)
-            for o in xrange(a-2):
+            for o in range(a-2):
                 ans.reduce_mod()
                 ans = V(v) + V(genpows[1] * ans._val)
             ans = V(-genpows[1] * ans._val)

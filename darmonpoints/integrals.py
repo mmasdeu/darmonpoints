@@ -3,19 +3,19 @@
 ##  INTEGRATION     ##
 ##                  ##
 ######################
-import itertools
-from collections import defaultdict
-from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing, Infinity,Zmod
 from sage.all import prod
-from operator import mul
-from util import *
-from sarithgroup import BTEdge
-from limits import num_evals,find_center
 from sage.parallel.decorate import fork,parallel
 from sage.misc.getusage import get_memory_usage
 from sage.structure.sage_object import SageObject
-import os
+
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+from operator import mul
+
+from .util import *
+from .sarithgroup import BTEdge
+from .limits import num_evals,find_center
 
 def act_on_polynomial(P,num,den,N = None):
     if N is None:
@@ -81,18 +81,18 @@ def double_integral_zero_infty(Phi,tau1,tau2):
                         phimap = Phi._map(M2Z([b,d,a,c]))
                     except OverflowError:
                         print(a,b,c,d)
-                        raise OverflowError,'Matrix too large?'
+                        raise OverflowError('Matrix too large?')
                     # mu_e0 = ZZ(phimap.moment(0).rational_reconstruction())
                     mu_e0 = ZZ(Phi._liftee._map(M2Z([b,d,a,c])).moment(0))
                     mu_e = [mu_e0] + [phimap.moment(o).lift() for o in range(1,len(V))]
-                    resadd += sum(starmap(mul,izip(V,mu_e)))
+                    resadd += sum(starmap(mul,zip(V,mu_e)))
                     resmul *= val**mu_e0
                     percentage += increment
                     total_evals += 1
                 else:
                     newE.extend([e*e0 for e0 in E0Zp])
             except ZeroDivisionError:
-                #raise RuntimeError,'Probably not enough working precision...'
+                #raise RuntimeError('Probably not enough working precision...')
                 newE.extend([e*e0 for e0 in E0Zp])
         E = newE
     verbose('total evaluations = %s'%total_evals)
@@ -116,7 +116,7 @@ def double_integral_zero_infty(Phi,tau1,tau2):
 ##----------------------------------------------------------
 def double_integral(Phi,tau1,tau2,r,s):
    if r == [0,0] or s == [0,0]:
-       raise ValueError,'r and s must be valid projective coordinates.'
+       raise ValueError('r and s must be valid projective coordinates.')
    if r[0] == 0 and s[1] == 0: # From 0 to infinity
        return double_integral_zero_infty(Phi,tau1,tau2)
    elif s[1] == 0:
@@ -190,7 +190,7 @@ def evaluate_parallel(hc,gamma,pol,c0):
     K = pol.parent().base_ring()
     p = K.prime()
     if HOC._use_ps_dists:
-        newresadd = sum([a*mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments)])
+        newresadd = sum([a*mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments)])
     else:
         newresadd = mu_e.evaluate_at_poly(pol,K,HOC.precision_cap())
     resadd += newresadd
@@ -337,7 +337,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                     x = hp1 / hp0
                     v = [K.zero(),K(x)]
                     xpow = K(x)
-                    for m in xrange(2, coeff_depth + 1):
+                    for m in range(2, coeff_depth + 1):
                         xpow *= x
                         v.append( xpow / QQ(m) )
                     pol -= QQ(n) * R(v)
@@ -356,7 +356,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
                 continue
             if HOC._use_ps_dists:
-                resadd += sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
+                resadd += sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
             else:
                 resadd += mu_e.evaluate_at_poly(pol, K, coeff_depth)
             try:
@@ -414,7 +414,7 @@ def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
             verbose('...')
             continue
         if HOC._use_ps_dists:
-            tmp = sum(a * mu_e.moment(i) for a,i in izip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
+            tmp = sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
         else:
             tmp = mu_e.evaluate_at_poly(pol, Cp, coeff_depth)
         resadd += tmp

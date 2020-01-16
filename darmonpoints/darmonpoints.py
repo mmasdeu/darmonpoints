@@ -11,14 +11,15 @@ from sage.rings.infinity import Infinity
 from sage.schemes.curves.constructor import Curve
 from sage.misc.misc import walltime, verbose
 from sage.misc.misc_c import prod
-from sarithgroup import BigArithGroup
-from homology import *
-from cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
-from integrals import double_integral_zero_infty,integrate_H1
-from limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
-from util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,config_section_map, Bunch
 
-import os, datetime, ConfigParser, sys
+from .sarithgroup import BigArithGroup
+from .homology import *
+from .cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
+from .integrals import double_integral_zero_infty,integrate_H1
+from .limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
+from .util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,config_section_map, Bunch
+
+import os, datetime, configparser, sys
 
 r'''
     TESTS:
@@ -32,7 +33,7 @@ r'''
 '''
 def darmon_discriminants(bound, split_primes = None, inert_primes = None):
     good_D = []
-    for D in xrange(2,bound):
+    for D in range(2,bound):
         if not is_fundamental_discriminant(D):
             continue
         if not all(ZZ(D).kronecker(p) == 1 for p in split_primes):
@@ -150,7 +151,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     '''
     # global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
 
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     param_dict = config_section_map(config, 'General')
     param_dict.update(config_section_map(config, 'DarmonPoint'))
@@ -214,7 +215,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     except TypeError:
         p = ZZ(P.norm())
     if not p.is_prime():
-        raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
+        raise ValueError('P (= %s) should be a prime, of inertia degree 1'%P)
 
     if F == QQ:
         dK = ZZ(beta)
@@ -275,7 +276,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                     if F.signature()[1] == 1:
                         ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'
                     else:
-                        raise ValueError,'Please specify the ramification at infinity'
+                        raise ValueError('Please specify the ramification at infinity')
                 elif F.signature()[0] == 1:
                     if len(F.ideal(DB).factor()) % 2 == 0:
                         ramification_at_infinity = [] # Split at infinity

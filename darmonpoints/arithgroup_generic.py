@@ -16,21 +16,28 @@ from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRi
 from sage.arith.all import lcm
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
-from collections import defaultdict
-from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.structure.sage_object import save,load
-from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.sage_eval import sage_eval
-from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
 from sage.rings.infinity import Infinity
-from arithgroup_element import ArithGroupElement
+from sage.modular.modsym.p1list import lift_to_sl2z, P1List
+
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+
+from .util import *
+from .arithgroup_element import ArithGroupElement
+from .homology_abstract import Abelianization
+# from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok, P1NFList
+from .my_p1list_nf import lift_to_sl2_Ok, P1NFList
+
+
 
 class ArithGroup_generic(AlgebraicGroup):
     Element = ArithGroupElement
@@ -198,11 +205,11 @@ class ArithGroup_generic(AlgebraicGroup):
             assert self._F_to_local is not None
         verbose('Initializing II,JJ,KK')
         v = f.Image(B_magma.gen(1)).Vector()
-        self._II = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
+        self._II = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         v = f.Image(B_magma.gen(2)).Vector()
-        self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
+        self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         v = f.Image(B_magma.gen(3)).Vector()
-        self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in xrange(4)])
+        self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
 
         self._KK = self._II * self._JJ
@@ -358,7 +365,7 @@ class ArithGroup_generic(AlgebraicGroup):
         sum_abxlist = vector(sum(abxlist))
         if not sum_abxlist == 0:
             raise ValueError('Must yield trivial element in the abelianization (%s)'%(sum_abxlist))
-        oldwordlist = [copy(x.word_rep) for x,n in xlist]
+        oldwordlist = [x.word_rep[:] for x,n in xlist]
         return oldwordlist, self._calculate_relation(sum(n * self.get_weight_vector(x) for x,n in xlist), separated = separated)
 
     def decompose_into_commutators(self,x):
@@ -369,7 +376,7 @@ class ArithGroup_generic(AlgebraicGroup):
         # We use the identity:
         # C W0 g^a W1 = C [W0,g^a] g^a W0 W1
         commutator_list = []
-        for i in xrange(len(self.gens())):
+        for i in range(len(self.gens())):
             while True:
                 # Find the first occurence of generator i
                 try:
@@ -390,7 +397,6 @@ class ArithGroup_generic(AlgebraicGroup):
 
     @cached_method
     def abelianization(self):
-        from homology_abstract import Abelianization
         return Abelianization(self)
 
 class ArithGroup_matrix_generic(ArithGroup_generic):
@@ -545,9 +551,6 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
         else:
             K = QQ
 
-        # from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok
-        from my_p1list_nf import lift_to_sl2_Ok
-        from sage.modular.modsym.p1list import lift_to_sl2z
         ## Define new function on the fly to pick which of Q/more general field we work in
         ## lift_to_matrix takes parameters c,d, then lifts (c:d) to a 2X2 matrix over the NF representing it
         lift_to_matrix = lambda c, d: lift_to_sl2z(c,d,P.N()) if K.degree() == 1 else lift_to_sl2_Ok(P.N(), c, d)
@@ -613,9 +616,6 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
 
         ## Return object representing Projective line over O_F/N
         if hasattr(N,'number_field'): ## Base field not Q
-            # from sage.modular.modsym.p1list_nf import P1NFList
-            from my_p1list_nf import P1NFList
             return P1NFList(N)
         else:   ## Base field Q
-            from sage.modular.modsym.p1list import P1List
             return P1List(N)

@@ -16,26 +16,25 @@ from sage.modules.all import vector
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp,Zmod
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
-from collections import defaultdict
-from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.structure.sage_object import save,load
-from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
 from sage.matrix.matrix_space import MatrixSpace
-from arithgroup_element import ArithGroupElement
 from sage.misc.sage_eval import sage_eval
-from util import *
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.rings.finite_rings.finite_field_constructor import FiniteField
-from sage.rings.infinity import Infinity
-from homology_abstract import HomologyGroup
-from arithgroup import ArithGroup_generic
+from sage.rings.infinity import Infinity as oo
 from sage.modular.modsym.p1list import lift_to_sl2z
 from sage.matrix.constructor import diagonal_matrix, identity_matrix, block_diagonal_matrix
-oo = Infinity
+
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+
+from .arithgroup import ArithGroup_generic
+from .arithgroup_element import ArithGroupElement
+from .util import *
 
 def lift(A, N):
     r"""
@@ -263,7 +262,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
         set_verbose(verb_level)
         emb = K.hom([mtx])
         mu = emb(w)
-        fwrite('# \cO_K to R_0 given by w_K |-> %s'%mu,outfile)
+        fwrite('# O_K to R_0 given by w_K |-> %s'%mu,outfile)
         fwrite('# gamma_psi = %s'%gamma,outfile)
         fwrite('# tau_psi = %s'%tau1,outfile)
         fwrite('# (where g satisfies: %s)'%w.minpoly(),outfile)

@@ -2,14 +2,16 @@
 #####     Curve finding           ####
 ######################################
 from sage.rings.padics.precision_error import PrecisionError
-from util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
-from sarithgroup import BigArithGroup
-from homology import lattice_homology_cycle
-from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
-from integrals import integrate_H1,double_integral_zero_infty
 from sage.all import QQ, ZZ, Qp, QuaternionAlgebra, factor, Infinity
 from sage.misc.misc import verbose
-import sys, os, datetime, ConfigParser
+
+import sys, os, datetime, configparser
+
+from .sarithgroup import BigArithGroup
+from .homology import lattice_homology_cycle
+from .cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
+from .integrals import integrate_H1,double_integral_zero_infty
+from .util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
 
 def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, implementation = None, **kwargs):
     r'''
@@ -42,7 +44,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     ...
 
     '''
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     param_dict = config_section_map(config, 'General')
     param_dict.update(config_section_map(config, 'FindCurve'))
@@ -67,8 +69,6 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     timeout = param.get('timeout',0)
     check_conductor = param.get('check_conductor',True)
 
-    kwargs.update(param_dict) # DEBUG
-
     if initial_data is None:
         page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
         if magma is None:
@@ -86,13 +86,11 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
 
     sys.setrecursionlimit(10**6)
 
-    # global qE, Linv, G, Coh, phiE, xgen, xi1, xi2, Phi
-
     try:
         F = P.ring()
         Fdisc = F.discriminant()
         if not (P*DB).divides(NE):
-            raise ValueError,'Conductor (NE) should be divisible by P*DB'
+            raise ValueError('Conductor (NE) should be divisible by P*DB')
         p = ZZ(P.norm()).abs()
 
     except AttributeError:
@@ -101,7 +99,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         p = ZZ(P)
         Fdisc = ZZ(1)
         if NE % (P*DB) != 0:
-            raise ValueError,'Conductor (NE) should be divisible by P*DB'
+            raise ValueError('Conductor (NE) should be divisible by P*DB')
 
     Ncartan = kwargs.get('Ncartan',None)
     param_dict['nscartan'] = Ncartan
@@ -112,7 +110,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         use_ps_dists = False # More efficient our own implementation
 
     if not p.is_prime():
-        raise ValueError,'P (= %s) should be a prime, of inertia degree 1'%P
+        raise ValueError('P (= %s) should be a prime, of inertia degree 1'%P)
 
     working_prec = max([2 * prec + 10, 100])
 
@@ -129,7 +127,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
             if F.signature()[1] == 1:
                 ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'
             else:
-                raise ValueError,'Please specify the ramification at infinity'
+                raise ValueError('Please specify the ramification at infinity')
         elif F.signature()[0] == 1:
             if len(F.ideal(DB).factor()) % 2 == 0:
                 ramification_at_infinity = [] # Split at infinity
@@ -248,6 +246,10 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
         fwrite('qE = %s'%qE,outfile)
         fwrite('Linv = %s'%Linv,outfile)
+        Cp = qE.parent()
+        if Cp.defining_polynomial().degree() > 1:
+            fwrite('# (where {g} satisfies: {defpoly})'.format(g = Cp._names[0],defpoly=Cp.defining_polynomial(exact=True)), outfile)
+
         curve = discover_equation(qE,G.base_ring_local_embedding(working_prec),NE,prec,check_conductor = check_conductor)
         if curve is None:
             if quit_when_done:
@@ -256,7 +258,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         else:
             try:
                 curve = curve.global_minimal_model()
-            except AttributeError,NotImplementedError:
+            except (AttributeError,NotImplementedError):
                 pass
             fwrite('EllipticCurve(F, %s )'%(list(curve.a_invariants())), outfile)
             fwrite('=' * 60, outfile)

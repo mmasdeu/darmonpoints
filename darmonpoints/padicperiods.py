@@ -1,24 +1,20 @@
-from itertools import product
-from sage.arith.all import algdep
 from sage.rings.padics.precision_error import PrecisionError
-from util import *
-from cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
-from sarithgroup import BigArithGroup
-from homology import lattice_homology_cycle
-from itertools import product,chain,izip,groupby,islice,tee,starmap
 from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
 from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
-from util import tate_parameter,update_progress,get_C_and_C2,getcoords,recognize_point,fwrite
 from sage.misc.persist import db
 from sage.rings.padics.precision_error import PrecisionError
-from util import enumerate_words, discover_equation,get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps
-from integrals import integrate_H1
 from sage.misc.misc import alarm, cancel_alarm
 from sage.rings.integer_ring import ZZ
 
-import os, datetime, ConfigParser
+from itertools import product,chain,groupby,islice,tee,starmap
+import os, datetime, configparser
 
-# load('mixed_extension.spyx')
+from .integrals import integrate_H1
+from .util import *
+from .cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
+from .sarithgroup import BigArithGroup
+from .homology import lattice_homology_cycle
+from .mixed_extension import QuadExt
 
 def precompute_powers(p,q,N):
     irange = range(-N, N+1)
@@ -62,7 +58,7 @@ def Thetas(p1, p2, p3, q1,q2,q3,prec=None):
     p1dict = {}
     p3dict = {}
     p2dict = precompute_powers(p2,q2,imax)
-    for i in xrange(-imax,imax+1):
+    for i in range(-imax,imax+1):
         newjmax = RR(2*prec - .25 - i**2 + RR(i).abs())
         if newjmax >= 0:
             newjmax = (newjmax.sqrt()+.5).ceiling()
@@ -81,7 +77,7 @@ def Thetas(p1, p2, p3, q1,q2,q3,prec=None):
                     tmp *= p3
                 p3dict[k] = tmp
     for i,jmax in jdict.items():
-        for j in xrange(-jmax,jmax + 1):
+        for j in range(-jmax,jmax + 1):
             P = p1dict[j**2-j] * p2dict[i**2-i] * p3dict[(i-j)**2-(i-j)]
             p11 = p1dict[j]
             p22 = p2dict[i]
@@ -163,12 +159,12 @@ def Theta(p1, p2, p3, version, prec=None):
         raise ValueError("Wrong version? version = %s"%version)
     res = 0
     assert imax > 0
-    for i in xrange(-imax,imax + 1):
+    for i in range(-imax,imax + 1):
         jmax = RR(2*prec - .25 - i**2 + RR(i).abs())
         if jmax < 0:
             continue
         jmax = (jmax.sqrt()+.5).ceiling()
-        for j in xrange(-jmax,jmax + 1):
+        for j in range(-jmax,jmax + 1):
             newterm = p2**(i**2) * p1**(j**2) * p3**((i-j)**2)
             if version is None:
                 p1l = p1**j
@@ -393,7 +389,7 @@ def recognize_invariant(j_invariant,base = None,threshold = None,prec = None, ou
     threshold = threshold * RR(Kp.prime()).log(10)
     for i in twopowlist:
         twopow = 2**i
-        fx = algdep(j_invariant/twopow,deg)
+        fx = our_algdep(j_invariant/twopow,deg)
         hfx = height_polynomial(fx)
         trash_height = threshold * j_invariant.precision_relative()
         if hfx < trash_height:
@@ -707,7 +703,7 @@ def euler_factor_twodim_tn(q,t,n):
 
 def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, return_all = True, compute_G = True, compute_cohomology = True, abtuple = None, logfile = None, **kwargs):
 
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     param_dict = config_section_map(config, 'General')
     param_dict.update(config_section_map(config, 'GuessEquation'))
@@ -971,7 +967,7 @@ def HalfPeriodsInTermsOfLambdas(L1, L2, L3, lvec_and_Mlist = None, HP0 = None, p
         if all([u == v for u,v in zip(Pn.list(), Pnn.list())]):
             return Pn
         Pn = Pnn
-    raise RuntimeError,"Does not converge"
+    raise RuntimeError("Does not converge")
 
 def normalize_periods(A, B, alpha, T, a, b, outfile = None):
     r'''

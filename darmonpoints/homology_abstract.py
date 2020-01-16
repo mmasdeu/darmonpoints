@@ -6,19 +6,21 @@
 ######################
 from sage.structure.sage_object import SageObject
 from sage.misc.cachefunc import cached_method
-from collections import defaultdict
 from sage.matrix.all import matrix,Matrix
-from itertools import product,chain,izip,groupby,islice,tee,starmap
-#from distributions import Distributions, Symk
 from sage.structure.parent import Parent
 from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
 from sage.sets.set import Set
 from sage.modules.free_module_element import vector
-from util import *
+
 import os
 import operator
-from representations import *
+
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+
+from .representations import *
+from .util import *
 
 class HomologyElement(ModuleElement):
     def __init__(self, parent, data):
@@ -155,9 +157,9 @@ class HomologyGroup(Parent):
             if self.coefficient_module().dimension() > 1:
                 raise NotImplementedError
             else:
-                return self.element_class(self,[self._coeffmodule(0) for g in xrange(len(self.group().abelianization()))])
+                return self.element_class(self,[self._coeffmodule(0) for g in range(len(self.group().abelianization()))])
         else:
-            return self.element_class(self,[self._coeffmodule(0) for g in xrange(len(self.group().gens()))])
+            return self.element_class(self,[self._coeffmodule(0) for g in range(len(self.group().gens()))])
 
     def _an_element_(self):
         return self.zero()
@@ -227,7 +229,7 @@ class HomologyGroup(Parent):
         return ans
 
     def gens(self):
-        return [self.gen(i) for i in xrange(self.ngens())]
+        return [self.gen(i) for i in range(self.ngens())]
 
     def ngens(self):
         return self.space().ngens()
@@ -245,7 +247,7 @@ class HomologyGroup(Parent):
             return ans
         word = tietze_to_syllables(word)
         lenword = len(word)
-        for j in xrange(lenword):
+        for j in range(lenword):
             i,a = word[j]
             ans[i] += self.get_twisted_fox_term(i,a, red) * h
             ans[i] = red(ans[i])
@@ -281,7 +283,7 @@ class HomologyGroup(Parent):
         elif a > 1:
             genpows = self._gen_pows[i]
             ans = genpows[0] + genpows[1]**-1
-            for o in xrange(a-2):
+            for o in range(a-2):
                 ans = red(ans)
                 ans = genpows[0] + genpows[1]**-1 * ans
             ans = red(ans)
@@ -289,7 +291,7 @@ class HomologyGroup(Parent):
             a = -a
             genpows = self._gen_pows_neg[i]
             ans = genpows[0] + genpows[1]**-1
-            for o in xrange(a-2):
+            for o in range(a-2):
                 ans = red(ans)
                 ans = genpows[0] + genpows[1]**-1 * ans
             ans = -genpows[1]**-1 * ans

@@ -8,28 +8,31 @@ from sage.structure.sage_object import SageObject
 from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement,ModuleElement
 from sage.structure.parent import Parent
+from sage.structure.richcmp import richcmp
 from sage.categories.homset import Hom
 from sage.matrix.constructor import Matrix,matrix
 from sage.misc.cachefunc import cached_method
 from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod
-from collections import defaultdict
-from itertools import product,chain,izip,groupby,islice,tee,starmap
-from util import *
-import os
 from sage.misc.persist import db,db_save
 from sage.parallel.decorate import fork,parallel
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 from sage.categories.action import Action
-import operator
-from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
 from sage.modules.free_module_element import vector
 from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.modules.vector_rational_dense import Vector_rational_dense
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
+
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+import operator
+import os
+
+from .cohomology_abstract import *
+from .util import *
 
 class CoIndAction(Action):
     def __init__(self, algebra , V, G, trivial_action = False):
@@ -127,9 +130,9 @@ class CoIndElement(ModuleElement):
     def __rmul__(self,right):
         return self.__class__(self.parent(),[ ZZ(right) * a for a in self._val])
 
-    def _cmp_(self, right):
+    def _richcmp_(self, right):
         for u, v in zip(self._val, right._val):
-            c = u._cmp_(v)
+            c = u._richcmp_(v)
             if c:
                 return c
         return 0
@@ -250,7 +253,7 @@ class CoIndModule(Parent):
             gens = V.gens()
         except AttributeError:
             gens = V.basis()
-        i0 = i / len(gens)
+        i0 = i // len(gens)
         i1 = i % len(gens)
         ans = [V(0) for g in self._G.coset_reps()]
         ans[i0] = gens[i1]

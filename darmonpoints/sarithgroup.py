@@ -16,19 +16,19 @@ from sage.modules.all import vector
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp,Zmod
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
-from collections import defaultdict
-from itertools import product,chain,izip,groupby,islice,tee,starmap
-from arithgroup import ArithGroup_nf_fuchsian, ArithGroup_nf_kleinian,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix,ArithGroup_nf_matrix, ArithGroup_nf_matrix_new
-
-from util import *
 from sage.structure.sage_object import save,load
-from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
-import os,datetime
-from homology_abstract import ArithHomology, HomologyGroup
 from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor as Gamma0
 from sage.modular.cusps import Cusp
+
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+import os,datetime
+
+from .arithgroup import ArithGroup_nf_fuchsian, ArithGroup_nf_kleinian,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix,ArithGroup_nf_matrix, ArithGroup_nf_matrix_new
+from .homology_abstract import ArithHomology, HomologyGroup
+from .util import *
 
 class BTEdge(SageObject):
     r'''
@@ -132,7 +132,7 @@ class BigArithGroup_class(AlgebraicGroup):
         seed = kwargs.get('seed', None)
         self.seed = seed
         self.magma = magma
-        self._use_shapiro = kwargs.get('use_shapiro', True)
+        self._use_shapiro = kwargs.get('use_shapiro', False)
         self._hardcode_matrices = kwargs.get('hardcode_matrices', ((abtuple is None and discriminant == 1) or abtuple == (1,1)))
         nscartan = kwargs.get('nscartan', None)
         if seed is not None:
@@ -302,9 +302,9 @@ class BigArithGroup_class(AlgebraicGroup):
 
     @cached_method
     def get_BT_reps(self):
-        reps = [self.Gpn.B(1)] + [None for i in xrange(self.p)]
+        reps = [self.Gpn.B(1)] + [None for i in range(self.p)]
         emb = self.get_embedding(20)
-        matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in xrange(self.p)]
+        matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in range(self.p)]
         if self._hardcode_matrices: # DEBUG
             verbose('Using hard-coded matrices for BT (Bianchi)')
             if self.F == QQ:
