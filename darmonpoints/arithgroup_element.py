@@ -17,14 +17,15 @@ from sage.modules.all import vector
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
-from collections import defaultdict
-from itertools import product,chain,izip,groupby,islice,tee,starmap
-from util import *
 from sage.structure.sage_object import save,load
-from copy import copy
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
+
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+
+from .util import *
 
 class ArithGroupElement(MultiplicativeGroupElement):
     def __init__(self,parent, word_rep = None, quaternion_rep = None, check = False):

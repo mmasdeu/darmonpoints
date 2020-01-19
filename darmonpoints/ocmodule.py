@@ -9,7 +9,6 @@ from sage.structure.element import ModuleElement
 from sage.modules.module import Module
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
-from copy import copy
 from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.all import Integer,Zp
 from sage.rings.padics.factory import ZpCA
@@ -20,15 +19,14 @@ from sage.rings.integer_ring import ZZ
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.categories.pushout import pushout
 from sage.rings.infinity import Infinity
+from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import load,save
 from sage.categories.action import Action
-import operator
 from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
 
-
-oo = Infinity
+import operator
 
 class our_adjuster(Sigma0ActionAdjuster):
     """
@@ -240,11 +238,11 @@ class OCVnElement(ModuleElement):
         if depth is None and hasattr(P,'degree'):
             try:
                 depth = min([P.degree()+1,self._depth])
-                return sum(R(self._val[ii,0])*P[ii] for ii in xrange(depth))
+                return sum(R(self._val[ii,0])*P[ii] for ii in range(depth))
             except NotImplementedError: pass
             return R(self._val[0,0])*P
         else:
-            return sum(R(self._val[ii,0])*P[ii] for ii in xrange(self._depth))
+            return sum(R(self._val[ii,0])*P[ii] for ii in range(self._depth))
 
     def valuation(self,l=None):
         r"""
@@ -255,7 +253,7 @@ class OCVnElement(ModuleElement):
         """
         if not self._parent.base_ring().is_exact():
             if(not l is None and l!=self._parent._Rmod.prime()):
-                raise ValueError, "This function can only be called with the base prime"
+                raise ValueError("This function can only be called with the base prime")
             l = self._parent._Rmod.prime()
             return min([self._val[ii,0].valuation(l) for ii in range(self._depth)])
         else:
@@ -270,7 +268,7 @@ class OCVnElement(ModuleElement):
         """
         if not self._parent.base_ring().is_exact():
             if(not l is None and l!=self._parent._Rmod.prime()):
-                raise ValueError, "This function can only be called with the base prime"
+                raise ValueError("This function can only be called with the base prime")
             l = self._parent._Rmod.prime()
             return [self._val[ii,0].valuation(l) for ii in range(self._depth)]
         else:

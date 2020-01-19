@@ -36,36 +36,36 @@ from sage.misc.cachefunc import cached_method
 from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod,FiniteField
-from collections import defaultdict
-from itertools import product,chain,izip,groupby,islice,tee,starmap
-from sage.rings.infinity import Infinity
+from sage.rings.infinity import Infinity as oo
 from sage.arith.all import gcd, lcm, xgcd
-
-from util import *
-import os
-from ocmodule import OCVn
-from ocbianchi import BianchiDistributions, left_ps_adjuster
 from sage.misc.persist import db, db_save
 from sage.parallel.decorate import fork,parallel
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 from sage.categories.action import Action
-import operator
-from cohomology_abstract import *
 from sage.matrix.matrix_space import MatrixSpace
-from ocmodule import our_adjuster, ps_adjuster
 from sage.modules.free_module_element import free_module_element, vector
-from representations import *
-from time import sleep
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
-# from sage.modular.cusps import Cusp
 
+import os
+import operator
+
+from time import sleep
+from collections import defaultdict
+from itertools import product,chain,groupby,islice,tee,starmap
+
+from .util import *
+from .ocmodule import OCVn
+from .cohomology_abstract import *
+from .representations import *
+from .ocmodule import our_adjuster, ps_adjuster
+from .ocbianchi import BianchiDistributions, left_ps_adjuster
 
 def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     if use_ps_dists == False:
-        raise NotImplementedError, 'Must use distributions from Pollack-Stevens code in the split case'
+        raise NotImplementedError('Must use distributions from Pollack-Stevens code in the split case')
 
     sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
     dist_type = 'ps' if use_ps_dists == True else 'fm'
@@ -765,7 +765,7 @@ class ArithCohOverconvergent(ArithCoh_generic):
             bvec = scale_factor * bvec
         valmat = A * bvec
         appr_module = V.approx_module(N)
-        ans = self([V(appr_module(valmat.submatrix(row=i,nrows = N).list())) for i in xrange(0,valmat.nrows(),N)])
+        ans = self([V(appr_module(valmat.submatrix(row=i,nrows = N).list())) for i in range(0,valmat.nrows(),N)])
         return ans
 
     def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive', repslocal = None, Up_reps = None, steps = 1): # one-variable overconvergent
@@ -1259,7 +1259,7 @@ class ArithCoh(ArithCoh_generic):
                         continue
                     K = K.intersection(K1)
         if K.dimension() != 1:
-            raise ValueError,'Did not obtain a one-dimensional space corresponding to E'
+            raise ValueError('Did not obtain a one-dimensional space corresponding to E')
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a * self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
@@ -1296,7 +1296,7 @@ class ArithCoh(ArithCoh_generic):
                         continue
                     K = K.intersection(K1)
         if K.dimension() != 1:
-            raise ValueError,'Group does not have the required system of eigenvalues'
+            raise ValueError('Group does not have the required system of eigenvalues')
 
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self(0))

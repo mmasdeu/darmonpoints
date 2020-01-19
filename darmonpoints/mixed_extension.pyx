@@ -1,12 +1,13 @@
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.structure.element import Element
 from sage.categories.fields import Fields
+from sage.structure.richcmp import richcmp
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.element import FieldElement
 from sage.rings.ring import Field
 from sage.rings.integer_ring import Z as ZZ
 from sage.rings.all import QQ
-from util import our_sqrt
+from .util import our_sqrt
 
 class QuadExtElement(FieldElement):
     def __init__(self, parent, x, y = None, check = True):

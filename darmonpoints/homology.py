@@ -5,10 +5,8 @@
 ######################
 from sage.structure.sage_object import SageObject
 from sage.misc.cachefunc import cached_method
-import itertools
-from collections import defaultdict
 from sage.matrix.all import matrix,Matrix
-from itertools import product,chain,izip,groupby,islice,tee,starmap
+from sage.structure.richcmp import richcmp
 from sage.structure.parent import Parent
 from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
@@ -16,9 +14,6 @@ from sage.rings.integer_ring import ZZ
 from sage.rings.power_series_ring import PowerSeriesRing
 from sage.sets.set import Set
 from sage.arith.all import GCD
-from util import *
-import os
-import operator
 from sage.rings.padics.precision_error import PrecisionError
 from sage.structure.element import MultiplicativeGroupElement,ModuleElement
 from sage.matrix.matrix_space import MatrixSpace
@@ -26,6 +21,15 @@ from sage.modules.free_module import FreeModule
 from sage.modules.free_module_element import  free_module_element
 from sage.structure.unique_representation import CachedRepresentation
 from sage.rings.padics.factory import ZpCA
+from sage.structure.richcmp import richcmp
+
+import os
+import operator
+
+from itertools import product,chain,groupby,islice,tee,starmap
+from collections import defaultdict
+
+from .util import *
 
 class MatrixAction(Action):
     def __init__(self,G,M):
@@ -341,7 +345,7 @@ class OneChains_element(ModuleElement):
 
         '''
         if not isinstance(data,dict):
-            raise ValueError,'data should be a dictionary indexed by elements of ArithGroup'
+            raise ValueError('data should be a dictionary indexed by elements of ArithGroup')
         self._data = data
         ModuleElement.__init__(self,parent)
 
@@ -387,7 +391,7 @@ class OneChains_element(ModuleElement):
         HH = self.parent()
         V = HH.coefficient_module()
         G = HH.group()
-        oldvals = self._data.values()
+        oldvals = list(self._data.values())
         aux_element = list(oldvals[0])[0][0]
         Gab = G.abelianization()
         xlist = [(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)]
