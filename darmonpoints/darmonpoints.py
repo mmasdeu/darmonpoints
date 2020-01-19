@@ -44,6 +44,8 @@ def darmon_discriminants(bound, split_primes = None, inert_primes = None):
     return good_D
 
 def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
+    F_to_Qp = G.base_ring_local_embedding(prec)
+    G = G.Gn
     F = G.base_ring()
     t = PolynomialRing(F, names = 't').gen()
     K = F.extension(t*t - D, names = 'beta')
@@ -73,7 +75,7 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
     else:
         q1 = F.ideal(q).factor()[0][0]
     verbose('q1 = %s'%q1)
-    gamma, tau1 = G.embed_order(P,K,prec,outfile = outfile,return_all = False)
+    gamma, tau1 = G.embed_order(P,K,prec,outfile = outfile,return_all = False, F_to_Qp = F_to_Qp)
     Div = Divisors(tau1.parent())
     H1 = OneChains(G,Div)
     D1 = Div(tau1)
