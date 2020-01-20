@@ -111,7 +111,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
             quaternion_rep = self.quaternion_rep**(-1)
         return self.__class__(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
 
-    def __cmp__(self,right):
+    def _cmp_(self,right):
         selfquatrep = self.quaternion_rep
         rightquatrep = right.quaternion_rep
         if 'P' not in self.parent()._grouptype:

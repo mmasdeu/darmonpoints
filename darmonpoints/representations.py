@@ -132,7 +132,7 @@ class CoIndElement(ModuleElement):
 
     def _cmp_(self, right):
         for u, v in zip(self._val, right._val):
-            c = u._cmp_(v)
+            c = (u > v) - (u < v)
             if c:
                 return c
         return 0

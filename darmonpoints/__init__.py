@@ -5,5 +5,5 @@ from .sarithgroup import BigArithGroup_class
 from .cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
 from .integrals import double_integral_zero_infty,integrate_H1
 from .limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
-# import pyximport; pyximport.install()
-# from .mixed_extension import QuadExt
+import pyximport; pyximport.install()
+from .mixed_extension import QuadExt

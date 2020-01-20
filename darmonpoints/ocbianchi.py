@@ -410,8 +410,8 @@ class BianchiDistributionElement(ModuleElement):
         s = str(sum([ZZ(self._moments[idx,0])*self._parent.monomial_from_index(idx,R) for idx in range(self._moments.nrows())]))
         return s
 
-    def __cmp__(self,other):
-        return cmp(self._moments,other._moments)
+    def __eq__(self,other):
+        return self._moments == other._moments
 
     def __nonzero__(self):
         return self._moments != 0
