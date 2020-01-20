@@ -219,8 +219,8 @@ class OCVnElement(ModuleElement):
         s = str(sum([R(self._val[ii,0]*z**ii) for ii in range(self._depth)]))
         return s
 
-    def __richcmp__(self,other):
-        return richcmp(self._val,other._val)
+    def _cmp_(self,other):
+        return (self._val > other._val) - (self._val < other._val)
 
     def __nonzero__(self):
         return self._val!=0

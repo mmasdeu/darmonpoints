@@ -163,8 +163,8 @@ class DivisorsElement(ModuleElement):
             mystr += '%s*(%s)'%(n,self._ptdict[hP])
         return mystr
 
-    def _richcmp_(self, right, op):
-        return richcmp(self._data, right._data, op)
+    def __eq__(self, right):
+        return self._data == self.parent()(right)._data
 
     def is_zero(self):
         return all((n == 0 for n in self._data.values()))
@@ -669,11 +669,8 @@ class MeromorphicFunctionsElement(ModuleElement):
                 ans *= (poly(P))**n
             return ans
 
-    def _eq_(self, right, op):
-        if self._value == right._value:
-            return True
-        else:
-            return False
+    def _cmp_(self, right):
+        return (self._value > right._value) - (self._value < right._value)
 
     def valuation(self, p=None):
         if self.parent().is_additive():

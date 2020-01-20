@@ -111,33 +111,17 @@ class ArithGroupElement(MultiplicativeGroupElement):
             quaternion_rep = self.quaternion_rep**(-1)
         return self.__class__(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
 
-    def _eq_(self,right):
-        selfquatrep = self.quaternion_rep
-        rightquatrep = right.quaternion_rep
-        if 'P' not in self.parent()._grouptype:
-            return selfquatrep == rightquatrep
-        tmp = selfquatrep/rightquatrep
-        try:
-            tmp = self.parent().F(tmp)
-        except TypeError:
-            return False
-        if not tmp.is_integral():
-            return False
-        elif not (1/tmp).is_integral():
-            return False
-        else:
-            return True
 
-    def _richcmp_(self,right, op):
+    def _cmp_(self,right):
         selfquatrep = self.quaternion_rep
         rightquatrep = right.quaternion_rep
         if 'P' not in self.parent()._grouptype:
-            return richcmp(selfquatrep, rightquatrep, op)
+            return (selfquatrep > rightquatrep) - (selfquatrep < rightquatrep)
         tmp = selfquatrep/rightquatrep
         try:
             tmp = self.parent().F(tmp)
         except TypeError:
-            return 2
+            return 1
         if not tmp.is_integral():
             return 1
         elif not (1/tmp).is_integral():
