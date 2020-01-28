@@ -252,8 +252,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         fdargs = self.fdargs
         ans = []
         oldji = 0
-        while delta != B(1):
-            if delta == B(-1):
+        while not delta.is_one():
+            if (-delta).is_one():
                 if 'P' not in self._grouptype:
                     ans += self.minus_one_long
                 delta = B(1)

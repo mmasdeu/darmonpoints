@@ -69,7 +69,6 @@ if __name__ == "__main__":
         keywords = "SageMath, Darmon points, elliptic curves, p-adic periods",
         # this grabs the requirements from requirements.txt
         install_requires=REQUIREMENTS,
-        # install_requires = ['sagemath', 'cython'],
         packages = ['darmonpoints'],
         ext_modules = cythonize(ext_modules, compiler_directives={'language_level' : "3"}),
         include_package_data = True,
