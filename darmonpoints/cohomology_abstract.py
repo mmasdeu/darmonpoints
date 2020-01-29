@@ -185,8 +185,9 @@ class CohomologyElement(ModuleElement):
         return ans
 
     def _evaluate_word_tietze_foxgradient(self,word):
-        G = self.parent().group()
-        V = self.parent().coefficient_module()
+        HH = self.parent()
+        G = HH.group()
+        V = HH.coefficient_module()
 
         if len(word) == 0:
             return V(0)
@@ -199,16 +200,19 @@ class CohomologyElement(ModuleElement):
             MS = MatrixSpace(R, dim, dim)
         else:
             MS = lambda x:x
-        fgrad = self.parent().fox_gradient(tuple(word))
+        fgrad = HH.fox_gradient(tuple(word))
         # verbose('%s'%str([len(f) for f in fgrad]), level=2)
         try:
-            tmp = [self.parent().GA_to_local(A) for A in fgrad]
+            tmp = [HH.GA_to_local(A) for A in fgrad]
             if hasattr(self._val[0], '_moments'):
-                ans = V(sum(self.parent().GA_to_local(A) * val._moments for A, val in zip(fgrad, self._val)))
+                ans = V(sum(HH.GA_to_local(A) * val._moments for A, val in zip(fgrad, self._val)))
+            elif hasattr(self._val[0], '_vector_'):
+                ans = V(sum(HH.GA_to_local(A) * val._vector_() for A, val in zip(fgrad, self._val)))
             else:
-                ans = V(sum(self.parent().GA_to_local(A) * val for A, val in zip(fgrad, self._val)))
+                ans = V(sum(HH.GA_to_local(A) * val for A, val in zip(fgrad, self._val)))
         except (AttributeError,TypeError):
-            ans = V(sum(sum((a * (g.support()[0] * val) for a, g in zip(o.coefficients(), o.monomials()))) for o, val in zip(fgrad,self._val)))
+            verbose('Should find a way to avoid this exception...proceeding at your own risk')
+            ans = V(sum(sum((a * (g.support()[0] * val) for a, g in zip(A.coefficients(), A.monomials()))) for A, val in zip(fgrad,self._val)))
         return ans
 
     def _evaluate_word_tietze_identity(self,word):
