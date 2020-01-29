@@ -54,9 +54,9 @@ class CoIndAction(Action):
             pass
         action_data = V.get_action_data(set_immutable(g))
         if self._trivial_action:
-            return self.V([v._val[ti] for g1, ti in action_data], check = False)
+            return self.V([v._val[ti] for g1, ti in action_data], check = True)
         else:
-            return self.V([g1 * v._val[ti] for g1, ti in action_data], check = False)
+            return self.V([g1 * v._val[ti] for g1, ti in action_data], check = True)
 
 class CoIndElement(ModuleElement):
     r'''
@@ -130,18 +130,17 @@ class CoIndElement(ModuleElement):
     def __rmul__(self,right):
         return self.__class__(self.parent(),[ ZZ(right) * a for a in self._val])
 
-    def _richcmp_(self, right):
-        for u, v in zip(self._val, right._val):
-            c = (u > v) - (u < v)
-            if c:
-                return c
-        return 0
+    def _richcmp_(self, right, op):
+        return richcmp(self._vector(), right._vector_(), op)
+
+    def is_zero(self):
+        return self._vector_() == 0
+
+    def __eq__(self, right):
+        return self._vector_() == right._vector_()
 
     def __nonzero__(self):
-        for v in self._val:
-            if v != 0:
-                return True
-        return False
+        return not (self._vector_() == 0)
 
     def _vector_(self, R = None):
         return vector(sum([list(vector(o)) for o in self.values()],[]))

@@ -105,10 +105,7 @@ class CohomologyElement(ModuleElement):
         return self.__class__(self.parent(), [ ZZ(right) * a for a in self._val ])
 
     def is_zero(self):
-        for u in self.values():
-            if not u.is_zero():
-                return False
-        return True
+        return self._vector_() == 0
 
     def valuation(self, p = None):
         return min([ u.valuation(p) for u in self._val ])
@@ -153,7 +150,7 @@ class CohomologyElement(ModuleElement):
         H = self.parent()
         G = H.group()
         if function is None:
-            function = lambda x:x == 0
+            function = lambda x : x.is_zero() #(x == 0)
         if function == -1:
             if g1 is None:
                 return [(self._evaluate_word_tietze(r)) for r in G.get_relation_words()]
