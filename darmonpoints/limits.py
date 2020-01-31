@@ -1,8 +1,8 @@
 from sage.matrix.all import matrix,Matrix
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,Zmod
 from sage.groups.generic import discrete_log
-from sage.all import prod
-
+from sage.misc.misc_c import prod
+from sage.functions.other import floor
 from itertools import starmap,product,chain
 from operator import mul,itemgetter
 
@@ -22,7 +22,7 @@ def factorize_matrix(m,M):
     assert a % M == 1
     aabs = ZZ(a).abs()
     Zm = Zmod(M)
-    for alphamul in sorted(range(-aabs.sqrt(50)/M,aabs.sqrt(50)/M),key = lambda x: ZZ(x).abs()):
+    for alphamul in sorted(range(floor(-aabs.sqrt(50)/M),floor(aabs.sqrt(50)/M)),key = lambda x: ZZ(x).abs()):
         alpha = 1 + M*alphamul
         if alpha.abs() >= aabs:
             continue
