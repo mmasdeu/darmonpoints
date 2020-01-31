@@ -61,7 +61,11 @@ class CohomologyElement(ModuleElement):
         elif hasattr(data, 'evaluate'):
             self._val = [V(data.evaluate(b)) for b in G.gens()]
         else:
-            self._val = [V(data(b)) for b in G.gens()]
+            try:
+                self._val = [V(data(b)) for b in G.gens()]
+            except TypeError:
+                # Assume constant cocycle
+                self._val = [V(data) for b in G.gens()]
         ModuleElement.__init__(self,parent)
 
     def _evaluate_word_tietze(self, word):

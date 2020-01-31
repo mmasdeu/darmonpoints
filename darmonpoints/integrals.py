@@ -291,7 +291,7 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     t = R.gen()
     phi = lambda t: prod([(t - P)**ZZ(n) for P,n in divisor],K(1))
     try:
-        hc = hc.get_liftee()
+        hc = hc['liftee']
     except AttributeError:
         pass
     ans = K(riemann_sum(G,phi,ShapiroImage(G,hc)(gamma.quaternion_rep),depth,mult = True,progress_bar = progress_bar, K = K))
@@ -361,9 +361,9 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 resadd += mu_e.evaluate_at_poly(pol, K, coeff_depth)
             try:
                 if G.use_shapiro():
-                    tmp = hc.get_liftee().evaluate_and_identity(newgamma)
+                    tmp = hc['liftee'].evaluate_and_identity(newgamma)
                 else:
-                    tmp = hc.get_liftee().evaluate(newgamma)
+                    tmp = hc['liftee'].evaluate(newgamma)
                 resval += c0val * ZZ(tmp[0])
                 resmul *= c0unit**ZZ(tmp[0])
             except IndexError: pass
@@ -420,8 +420,8 @@ def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
         resadd += tmp
         try:
             if G.use_shapiro():
-                tmp = cocycle.get_liftee().evaluate_and_identity(newgamma)
+                tmp = cocycle['liftee'].evaluate_and_identity(newgamma)
             else:
-                tmp = cocycle.get_liftee().evaluate(newgamma)
+                tmp = cocycle['liftee'].evaluate(newgamma)
         except IndexError: pass
     return resadd

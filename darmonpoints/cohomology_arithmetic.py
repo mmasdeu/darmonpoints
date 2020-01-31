@@ -131,8 +131,8 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     if use_sage_db:
         raise NotImplementedError
     verbose('Done.')
-    Phi.set_liftee(phiE)
-    Phi._sign_ap = sign_ap
+    Phi['liftee'] = phiE
+    Phi['sign_ap'] = sign_ap
     return Phi
 
 def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity=1,sign_ap=1, parallelize = False, progress_bar = False,method = None,Ename = 'unknown'):
@@ -180,8 +180,8 @@ def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity=
     Phi._aP = aP
     Phi._aPbar = aPbar
     verbose('Done.')
-    Phi.set_liftee(phiE)
-    Phi._sign_ap = sign_ap
+    Phi['liftee'] = phiE
+    Phi['sign_ap'] = sign_ap
     return Phi
 
 class ArithCohElement(CohomologyElement):
@@ -203,13 +203,14 @@ class ArithCohElement(CohomologyElement):
     def __init__(self, parent, data):
         ## dictionary of coefficients of the p-adic L-series
         self._Lseries_coefficients = {}
+        self._attribute_dict = {}
         super(ArithCohElement,self).__init__(parent, data)
 
-    def set_liftee(self,x):
-        self._liftee = x
+    def __getitem__(self, ky):
+        return self._attribute_dict[ky]
 
-    def get_liftee(self):
-        return self._liftee
+    def __setitem__(self, ky, val):
+        self._attribute_dict[ky] = val
 
     def _repr_(self):
         return 'Arithmetic cohomology class in %s'%self.parent()
@@ -226,7 +227,7 @@ class ArithCohElement(CohomologyElement):
         if hasattr(self, 'elliptic_curve'):
             return self.elliptic_curve.ap(ell)
         try:
-            f0 = self.get_liftee()
+            f0 = self['liftee']
         except AttributeError:
             f0 = self
         if not f0.parent().trivial_action():
@@ -470,7 +471,7 @@ class ArithCoh_generic(CohomologyGroup):
             except AttributeError:
                 prec = None
             try:
-                data = data.get_liftee()
+                data = data['liftee']
             except AttributeError:
                 pass
             try:
@@ -918,7 +919,7 @@ class ArithCohOverconvergent(ArithCoh_generic):
             G = self.S_arithgroup() ## G = Gamma
             F = G.base_field()
             p = G.prime() ## underlying prime
-            ap = phi._sign_ap
+            ap = phi['sign_ap']
             pi = self.P_gen
 
             ## Specify a topological generator of 1 + pZp: used in computation of log coeffs
@@ -1140,7 +1141,7 @@ class ArithCohBianchi(ArithCoh_generic):
             F = G.base_field()
             p = G.prime() ## underlying prime
             pi,pibar = self.P_gen,self.Pbar_gen
-            ap = phi._sign_ap
+            ap = phi['sign_ap']
 
             ## Specify a topological generator of 1 + pZp: used in computation of log coeffs
             if p == 2:
@@ -1527,7 +1528,7 @@ class ArithCoh(ArithCoh_generic):
             ## We need to compute this for the first time
             G = self.S_arithgroup() ## G = Gamma
             p = G.prime() ## underlying prime
-            ap = phi._sign_ap
+            ap = phi['sign_ap']
 
             ## Specify a topological generator of 1 + pZp
             if p == 2:
