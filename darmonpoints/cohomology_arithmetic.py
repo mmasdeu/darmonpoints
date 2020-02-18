@@ -46,6 +46,7 @@ from sage.categories.action import Action
 from sage.matrix.matrix_space import MatrixSpace
 from sage.modules.free_module_element import free_module_element, vector
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
+from sage.modular.pollack_stevens.distributions import OverconvergentDistributions
 
 import os
 import operator
@@ -631,6 +632,7 @@ class CohArbitrary(CohomologyGroup):
             vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]) for g in hecke_reps) for gamma in group.gens()]
         else:
             vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]).left_act_by_matrix(group(g).matrix()) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
+            #vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)], left_act_by = group(g)) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
         return scale * self(vals)
 
 
@@ -640,7 +642,6 @@ class ArithCohOverconvergent(ArithCoh_generic):
     def __init__(self, G, base, use_ps_dists = False):
         self._overconvergent = 1
         if use_ps_dists:
-            from sage.modular.pollack_stevens.distributions import OverconvergentDistributions
             V = OverconvergentDistributions(0,base = base, prec_cap = base.precision_cap(), act_on_left = True,adjuster = our_adjuster(), dettwist = 0) # Darmon convention
             V.Sigma0 = lambda :V._act._Sigma0
         else:
@@ -1558,7 +1559,7 @@ class ArithCoh(ArithCoh_generic):
             ## Find U_p representatives, if necessary, ignoring first <-> pZp
             if cov is None:
                 cov = G.get_Up_reps()[1:]
-       
+
             dn = 0 ## Initialise output to 0
 
             ## Range over all reps of the U_p operator, and add the relevant integral
