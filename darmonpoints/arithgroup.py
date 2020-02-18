@@ -30,15 +30,22 @@ from sage.plot.hyperbolic_polygon import hyperbolic_polygon
 from sage.repl.rich_output.pretty_print import show
 from sage.plot.plot import plot
 from sage.plot.hyperbolic_arc import hyperbolic_arc
-from sage.plot.hyperbolic_polygon import hyperbolic_polygon
+from sage.plot.hyperbolic_polygon import hyperbolic_polygon, hyperbolic_triangle
+from sage.plot.point import point2d
 from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
 from sage.groups.free_group import FreeGroup
+from sage.functions.hyperbolic import acosh
 
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap
 
 from .arithgroup_generic import ArithGroup_generic, ArithGroup_matrix_generic
 from .util import *
+
+def hyperbolic_distance(alpha, beta):
+    x1, y1 = alpha.real(), alpha.imag()
+    x2, y2 = beta.real(), beta.imag()
+    return acosh(1 + ((x2-x1)**2 +(y2-y1)**2) / (2*y1*y2))
 
 def geodesic_circle(alpha, beta, return_equation=True):
     r'''
@@ -989,20 +996,28 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
                 g = g * Matrix(ZZ,2,2,[0,-1,1,0])
         return tau,g
 
-    def mat_list(self, x1, x2, v0=None, check_fundom=True): # rationalmatrix
+    def mat_list(self, x1, x2, v0=None, check_fundom=True, debug=False): # rationalmatrix
         r'''
-        Returns a list S of matrices such that the geodesic (x1, g * x1) is contained in the union
+        Returns a list S of matrices such that the geodesic (x1, x2) is contained in the union
         of the translates s*D (with s in S) of the standard fundamental domain D.
         '''
+        CC = x1.parent()
+        x1 += CC.random_element(10**-2)
+        x2 += CC.random_element(10**-2)
+        if debug:
+            from sage.repl.rich_output.pretty_print import show
+            self._debug_plot = hyperbolic_polygon([CC(-.5,10^2),self.fundamental_domain()[1], self.fundamental_domain()[2],CC(.5,10^2)])
         if v0 is None:
             v0 = lambda x:x
-
 
         # We first deal with the case of x1 or x2 being Infinity
         if x1 == Infinity or x2 == Infinity:
             raise NotImplementedError
 
         verbose('Calling mat_list with x1 = %s and x2 = %s'%(x1,x2))
+
+        if debug:
+            show(self._debug_plot + hyperbolic_arc(x1, x2))
         x1_orig = x1
         x2_orig = x2
         n = 0
@@ -1010,31 +1025,44 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         if check_fundom and not self.is_in_fundom(x1):
             t0, g = self.find_fundom_rep(x1)
             x1, x2 = t0, self(g**-1) * x2
+            if debug:
+                show(self._debug_plot + hyperbolic_arc(x1, x2))
             verbose('x1 = %s, x2 = %s (move to fundom)'%(x1,x2))
 
         # Here we can assume that x1 is in the fundamental domain
         ans = [self(g)]
         while not self.is_in_fundom(x2):
             found = False
+            candidate_list = []
             for v1, v2, g in self.fundamental_domain_data():
                 z = intersect_geodesic_arcs(v1, v2, x1, x2)
                 if z is not None:
-                    # We take a perturbation of z to avoid boundary problems
-                    eps = 10**-4
-                    z1, z2 = perturb_point_on_arc(x1, x2, z, eps)
-                    if not self.is_in_fundom(z1):
-                        z1, z2 = z2, z1
-                    assert self.is_in_fundom(z1), 'z1 fails'
-                    assert not self.is_in_fundom(z2), 'z2 fails'
-                    t0 = g**-1 * z2
-                    assert self.is_in_fundom(t0)
+                    candidate_list.append((z, g))
+            verbose('len(candidate_list) = %s'%len(candidate_list))
+            assert len(candidate_list) > 0, ':-('
+            found = False
+            for z, g in candidate_list:
+                # We take a perturbation of z to avoid boundary problems
+                eps = 10**-3
+                z1, z2 = perturb_point_on_arc(x1, x2, z, eps)
+                if not self.is_in_fundom(z1):
+                    z1, z2 = z2, z1
+                assert self.is_in_fundom(z1), 'z1 fails'
+                assert not self.is_in_fundom(z2), 'z2 fails'
+                t0 = g**-1 * z2
+                verbose('t0 = %s'%t0)
+                if debug:
+                    show(self._debug_plot + hyperbolic_arc(z1, z2) + point2d(t0, color='red'))
+                if self.is_in_fundom(t0):
                     x1 = t0
                     x2 = g**-1 * x2
+                    if debug:
+                        show(self._debug_plot + hyperbolic_arc(x1, x2))
                     verbose('x1 = %s, x2 = %s'%(x1,x2))
                     ans.append(ans[-1] * g)
                     found = True
                     break
-            assert found,':-('
+            assert found
         return ans
 
     def generate_wp_candidates(self,p,ideal_p,**kwargs):
