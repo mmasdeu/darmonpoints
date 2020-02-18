@@ -5,8 +5,3 @@ from .sarithgroup import BigArithGroup_class
 from .cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
 from .integrals import double_integral_zero_infty,integrate_H1
 from .limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
-from sage.misc.banner import version as sage_version
-sage_current_version = sage_version()
-if not bool('8.' in sage_current_version or '7.' in sage_current_version):
-    import pyximport; pyximport.install()
-from .mixed_extension import QuadExt

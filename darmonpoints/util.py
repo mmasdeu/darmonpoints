@@ -22,11 +22,17 @@ from sage.functions.generalized import sgn
 from sage.misc.functional import cyclotomic_polynomial
 from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
 from sage.arith.misc import valuation
+from sage.misc.misc_c import prod
+from sage.functions.transcendental import Function_zeta
+from sage.groups.finitely_presented import wrap_FpGroup
+from sage.misc.all import cartesian_product_iterator
+from sage.misc.latex import latex, LatexExpr
+from sage.rings.padics.padic_generic import local_print_mode
 
 from itertools import product,chain,groupby,islice,tee,starmap
 from functools import reduce
 import sys, configparser
-
+import types
 
 def is_smooth(x, B):
     for p in B:
@@ -1173,7 +1179,6 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
         ...
         ValueError: Number of ramified places must be even
     """
-    from sage.misc.misc_c import prod
     if S is None:
         S = []
     I = F.ideal(I)
@@ -1352,7 +1357,6 @@ def weak_approximation(self,I = None,S = None,J = None,T = None):
         T = []
     if (len(S) > 0 or len(T) > 0) and len(self.narrow_class_group()) > 1:
         raise NotImplementedError('Only implemented for fields of narrow class number 1')
-    from itertools import chain
     nf = self.pari_nf()
     n = 0
     entrylist = []
@@ -1523,7 +1527,6 @@ def discover_equation(qE,emb,conductor,prec,field = None,check_conductor = True,
     return None
 
 def covolume(F,D,M = 1,prec = None,zeta = None):
-    from sage.symbolic.constants import pi
     n = F.degree()
     if prec is None:
         prec = 53
@@ -1534,7 +1537,6 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
         else:
             zetaf = zeta
     else:
-        from sage.functions.transcendental import Function_zeta
         if zeta is None:
             zetaf = Function_zeta()(RealField(prec)(2))
         else:
@@ -1558,8 +1560,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
         for np,e in M.factor():
             Psi *= np**(ZZ(e)-1) * (np + 1)
     RR = RealField(prec)
-    pi = RR(pi)
-    covol =  (RR(disc).abs()**(3.0/2.0) * zetaf * Phi)/((4 * pi**2)**(F.degree()-1))
+    covol =  (RR(disc).abs()**(3.0/2.0) * zetaf * Phi)/((4 * RR.pi()**2)**(F.degree()-1))
     index = RR(Psi)
     indexunits = 1 # There is a factor missing here, due to units.
     return covol * index / indexunits
@@ -1597,7 +1598,6 @@ def simplification_isomorphism(G,return_inverse = False):
 
     Uses GAP.
     """
-    from sage.groups.finitely_presented import wrap_FpGroup
     I = G.gap().IsomorphismSimplifiedFpGroup()
     domain = G
     codomain = wrap_FpGroup(I.Range())
@@ -1645,7 +1645,6 @@ def selmer_group_iterator(self, S, m, proof=True):
     f = lambda o: m if o is Infinity else o.gcd(m)
     orders = [f(a.multiplicative_order()) for a in KSgens]
     one = self.one()
-    from sage.misc.all import cartesian_product_iterator
     for ev in cartesian_product_iterator([range(-o//2,(1+o)//2) for o in orders]):
         yield prod([p**e for p,e in zip(KSgens,ev)],one)
 
@@ -1682,9 +1681,6 @@ def print_table_latex(self, header_string = None):
         \end{array}\right)$ & $5$ & $6$ \\ \hline
         \end{tabular}
     """
-    from latex import latex, LatexExpr
-    import types
-
     rows = self._rows
     nc = len(rows[0])
     if len(rows) == 0 or nc == 0:
@@ -1755,7 +1751,6 @@ def config_section_map(config, section):
     return dict1
 
 def print_padic(x):
-    from sage.rings.padics.padic_generic import local_print_mode
     R = x.parent()
     with local_print_mode(R,'val-unit'):
         print(x)

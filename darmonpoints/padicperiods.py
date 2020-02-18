@@ -14,6 +14,10 @@ from .util import *
 from .cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
 from .sarithgroup import BigArithGroup
 from .homology import lattice_homology_cycle
+from sage.misc.banner import version as sage_version
+sage_current_version = sage_version()
+if not bool('8.' in sage_current_version or '7.' in sage_current_version):
+    import pyximport; pyximport.install()
 from .mixed_extension import QuadExt
 
 def precompute_powers(p,q,N):
