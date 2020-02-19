@@ -88,7 +88,8 @@ def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = 
     verbose('Lifting..')
     Phi = phi0.lift(p,M = prec - 1,algorithm = 'greenberg',eigensymbol = True)
     verbose('Done lifting.')
-    Phi._liftee = phi0
+    Phi['liftee'] = phi0
+    Phi['sign_ap'] = 1
     return Phi
 
 def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap, use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False,method = None,Ename = 'unknown'):
@@ -229,7 +230,7 @@ class ArithCohElement(CohomologyElement):
             return self.elliptic_curve.ap(ell)
         try:
             f0 = self['liftee']
-        except AttributeError:
+        except KeyError:
             f0 = self
         if not f0.parent().trivial_action():
             raise NotImplementedError
@@ -473,7 +474,7 @@ class ArithCoh_generic(CohomologyGroup):
                 prec = None
             try:
                 data = data['liftee']
-            except AttributeError:
+            except KeyError:
                 pass
             try:
                 vals = [V(data.evaluate(g).moment(0), normalize=False).lift(M=prec) for g in G.gens()]
@@ -631,8 +632,8 @@ class CohArbitrary(CohomologyGroup):
         if self.trivial_action():
             vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]) for g in hecke_reps) for gamma in group.gens()]
         else:
-            vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]).left_act_by_matrix(group(g).matrix()) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
-            #vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)], left_act_by = group(g)) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
+            # vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]).left_act_by_matrix(group(g).matrix()) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
+            vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)], left_act_by = group(g)) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
         return scale * self(vals)
 
 

@@ -103,7 +103,7 @@ class ArithGroup_generic(AlgebraicGroup):
         return relation_matrix
 
     def one(self):
-        return self.element_class(self,word_rep = [],quaternion_rep = self.B(1),check = False)
+        return self.element_class(self,word_rep = [],quaternion_rep = self.B.one(),check = False)
 
     def _element_constructor_(self,x):
         if isinstance(x,int):
@@ -190,7 +190,7 @@ class ArithGroup_generic(AlgebraicGroup):
 
         if self.F == QQ:
             _,f = self.magma.pMatrixRing(self._Omax_magma,prime * self._Omax_magma.BaseRing(), Precision = 20, nvals = 2)
-            self._F_to_local = QQ.hom([R(1)])
+            self._F_to_local = QQ.hom([R.one()])
         else:
             _,f = self.magma.pMatrixRing(self._Omax_magma,sage_F_ideal_to_magma(self._F_magma, P), Precision = 20, nvals = 2)
             try:
@@ -226,7 +226,7 @@ class ArithGroup_generic(AlgebraicGroup):
             if max_length is not None and len(v) > max_length:
                 raise StopIteration
             else:
-                yield prod([Ugens[i] for i in v],self.B(1))
+                yield prod([Ugens[i] for i in v],self.B.one())
 
     @cached_method(key = lambda self, l, use_magma, g0, progress: (self, l))
     def get_hecke_reps(self,l,use_magma = True,g0 = None,progress = False): # generic
@@ -319,7 +319,7 @@ class ArithGroup_generic(AlgebraicGroup):
 
     def check_word(self,delta,wd):
         Ugens = [o.quaternion_rep for o in self.gens()]
-        tmp = multiply_out(wd, Ugens, self.B(1))
+        tmp = multiply_out(wd, Ugens, self.B.one())
         assert tmp == delta,"tmp = %s, delta = %s, wd = %s"%(tmp,delta,wd)
         return wd
 

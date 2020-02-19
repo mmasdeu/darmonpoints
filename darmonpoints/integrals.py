@@ -83,7 +83,7 @@ def double_integral_zero_infty(Phi,tau1,tau2):
                         print(a,b,c,d)
                         raise OverflowError('Matrix too large?')
                     # mu_e0 = ZZ(phimap.moment(0).rational_reconstruction())
-                    mu_e0 = ZZ(Phi._liftee._map(M2Z([b,d,a,c])).moment(0))
+                    mu_e0 = ZZ(Phi['liftee']._map(M2Z([b,d,a,c])).moment(0))
                     mu_e = [mu_e0] + [phimap.moment(o).lift() for o in range(1,len(V))]
                     resadd += sum(starmap(mul,zip(V,mu_e)))
                     resmul *= val**mu_e0
@@ -348,9 +348,9 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                 if rev:
                     newgamma = newgamma.conjugate_by(G.wp())
                 if G.use_shapiro():
-                    mu_e = hc.evaluate_and_identity(newgamma, parallelize)
+                    mu_e = hc.evaluate_and_identity(newgamma)
                 else:
-                    mu_e = hc.evaluate(newgamma,parallelize)
+                    mu_e = hc.evaluate(newgamma)
             except(ValueError):
                 verbose('Subdividing...')
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])

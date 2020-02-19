@@ -542,6 +542,30 @@ def affine_transformation(x1p, x2p, x3p):
 def height_polynomial(x,base = 10):
     return sum(((RR(o).abs()+1).log(base) for o in x.coefficients()))
 
+def recognize_DV_point(J, degree, height_threshold=None, prime_bound=None, outfile=None):
+    K = J.parent()
+    p = K.prime()
+    if prime_bound is None:
+        prime_bound = max(1000, min((K.precision_cap()**p) // 4, 100000))
+    B = prime_range(prime_bound)
+    roots_of_unity = our_nroot(K(1),lcm(12,(p**2-1)),return_all=True)
+    if height_threshold is None:
+        height_threshold = .9 * K.precision_cap() * degree
+    for i, zz in enumerate(roots_of_unity):
+        Jz = J * zz
+        ff = our_algdep(Jz, degree)
+        height_poly = height_polynomial(ff, base=p)
+        if height_poly < height_threshold:
+            disc = QQ(ff.discriminant())
+            # print("%s (disc=%s)\t (J * z^%s\t (height=%s)"%(ff.factor(), disc, i, height_polynomial(ff, base=p)))
+            if disc.prime_to_S_part(B).abs() == 1:
+                fwrite("# SUCCESS!", outfile)
+                fwrite("# %s (disc=%s)\t (J * z^%s\t (height=%s)"%(ff.factor(), disc.factor(), i, height_polynomial(ff, base=p)), outfile)
+                fwrite("x = QQ['x'].gen()", outfile)
+                fwrite("f = %s"%ff, outfile)
+                return Jz, ff
+    return None, None
+
 def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   hF = F.class_number()
   if HCF is None:

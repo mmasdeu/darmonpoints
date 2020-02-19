@@ -21,7 +21,6 @@ from sage.structure.sage_object import save,load
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
-
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap
 
@@ -117,7 +116,9 @@ class ArithGroupElement(MultiplicativeGroupElement):
         rightquatrep = right.quaternion_rep
         if 'P' not in self.parent()._grouptype:
             return (selfquatrep > rightquatrep) - (selfquatrep < rightquatrep)
-        tmp = selfquatrep/rightquatrep
+        if selfquatrep == rightquatrep:
+            return 0
+        tmp = selfquatrep / rightquatrep
         try:
             tmp = self.parent().F(tmp)
         except TypeError:
@@ -150,7 +151,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         '''
         Gamma = self.parent()
         self.has_quaternion_rep = True
-        self.quaternion_rep = prod([Gamma.Ugens[g]**a for g,a in tietze_to_syllables(self.word_rep)], z = Gamma.B(1))
+        self.quaternion_rep = prod([Gamma.Ugens[g]**a for g,a in tietze_to_syllables(self.word_rep)], z = Gamma.B.one())
         set_immutable(self.quaternion_rep)
         return self.quaternion_rep
 

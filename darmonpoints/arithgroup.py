@@ -263,7 +263,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             if (-delta).is_one():
                 if 'P' not in self._grouptype:
                     ans += self.minus_one_long
-                delta = B(1)
+                delta = B.one()
                 continue
             z0 = act_flt_in_disc(emb(delta),CC(0),P)
             az0 = CC(z0).argument()
@@ -293,7 +293,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             oldji = ji
             ans = ans + newcs
         if 'P' not in self._grouptype:
-            delta1 = multiply_out(ans, self.Ugens, self.B(1))
+            delta1 = multiply_out(ans, self.Ugens, self.B.one())
             if delta1 != delta:
                 ans.extend(self.minus_one_long)
         return ans
@@ -317,7 +317,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             x = quaternion_to_magma_quaternion(self._B_magma,self.B(sum(a*b for a,b in zip(self._get_O_basis(),x))))
         x_magma = Gm(x)
         V = self.magma.WordProblem(x_magma).ElementToSequence()._sage_()
-        delta1 = self.B(1)
+        delta1 = self.B.one()
         for v in V:
             delta1 = delta1 * self.Ugens[v - 1] if v > 0 else delta1 * self.Ugens[-v - 1]
         if delta1 != x0 and 'P' not in self._grouptype:
@@ -404,10 +404,10 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         fdargs = self.fdargs
         wd = []
         oldji = 0
-        oldgg = B(1)
-        gg = B(1)
+        oldgg = B.one()
+        gg = B.one()
         embgg = embgammas[1]**0
-        delta = B(1)
+        delta = B.one()
         n_iters = 0
         t0 = z0_H
         t1 = z0_H
@@ -649,12 +649,12 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         temp_relation_words = [Um.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in range(len(Um.Relations()))] + [ [len(self.Ugens),len(self.Ugens)] ]
         self._relation_words = []
         for rel in temp_relation_words:
-            sign = multiply_out(rel, self.Ugens, self.B(1))
+            sign = multiply_out(rel, self.Ugens, self.B.one())
             if sign == 1 or 'P' in self._grouptype:
                 self._relation_words.append(rel)
             else:
                 newrel = rel + self.minus_one_long
-                assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
+                assert multiply_out(newrel, self.Ugens, self.B.one()) == 1
                 self._relation_words.append(newrel)
 
         if filename is not None:
@@ -909,14 +909,14 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
             self.minus_one_long = syllables_to_tietze(minus_one)
         self._relation_words = []
         for rel in temp_relation_words:
-            sign = prod((self._gens[g].quaternion_rep**a for g,a in rel), z = self.B(1))
-            if sign == self.B(1) or 'P' in self._grouptype:
+            sign = prod((self._gens[g].quaternion_rep**a for g,a in rel), z = self.B.one())
+            if sign == self.B.one() or 'P' in self._grouptype:
                 self._relation_words.append(syllables_to_tietze(rel))
             else:
                 assert sign == self.B(-1)
                 newrel = rel + tietze_to_syllables(self.minus_one_long)
-                sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B(1))
-                assert sign == self.B(1)
+                sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B.one())
+                assert sign == self.B.one()
                 self._relation_words.append(syllables_to_tietze(newrel))
         super(ArithGroup_rationalmatrix,self).__init__(**kwargs)
         ArithGroup_generic.__init__(self, **kwargs)
@@ -1202,9 +1202,9 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
             except (RuntimeError, AssertionError):
                 print('Delta = %s'%delta)
                 assert 0
-        tmp = multiply_out(ans, self.Ugens, self.B(1))
+        tmp = multiply_out(ans, self.Ugens, self.B.one())
         delta = SL2Z(delta.list())
-        err = SL2Z(delta * SL2Z(tmp**-1))
+        err = delta * tmp**-1
         I = SL2Z([1,0,0,1])
         E = SL2Z([-1,0,0,-1])
         gens = self._Gamma0_farey.generators()
@@ -1594,7 +1594,7 @@ class ArithGroup_nf_fuchsian(ArithGroup_nf_generic, ArithGroup_fuchsian_generic)
                 self._relation_words.append(rel)
             else:
                 newrel = rel + self.minus_one
-                assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
+                assert multiply_out(newrel, self.Ugens, self.B.one()) == 1
                 self._relation_words.append(newrel)
 
 class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
@@ -1706,7 +1706,7 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
         self.Ugens = []
         wrds = sage_eval(self.magma.eval('[ElementToSequence(%s!(%s.i)) : i in [1..%s]]'%(G.name(),Hm.name(),len(Hm.gens()))))
         for wd in wrds:
-            self.Ugens.append(multiply_out(wd, tmp_quaternions, self.B(1)))
+            self.Ugens.append(multiply_out(wd, tmp_quaternions, self.B.one()))
         verbose('Done calculating Ugens. Now initializing relations')
         self.F_unit_offset = len(self.Ugens)
         if 'P' not in self._grouptype:
@@ -1714,11 +1714,11 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             temp_relation_words = [Hm.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in range(len(Hm.Relations()))] + [ [self.F_unit_offset + i + 1] * ZZ(u.multiplicative_order()) for i,u in enumerate(self.F_units.gens()) if u.multiplicative_order() != Infinity]
             self._relation_words = []
             for rel in temp_relation_words:
-                remaining_unit = self.F_units(self.F(multiply_out(rel, self.Ugens, self.B(1))))
+                remaining_unit = self.F_units(self.F(multiply_out(rel, self.Ugens, self.B.one())))
                 assert remaining_unit.multiplicative_order() != Infinity
                 ulist = remaining_unit.exponents()
                 newrel = rel + syllables_to_tietze([(self.F_unit_offset + i,a) for i,a in enumerate(ulist) if a != 0 ])
-                assert multiply_out(newrel, self.Ugens, self.B(1)) == 1
+                assert multiply_out(newrel, self.Ugens, self.B.one()) == 1
                 self._relation_words.append(newrel)
         else:
             self._relation_words = [Hm.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in range(len(Hm.Relations()))]
@@ -1787,7 +1787,7 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             if len(boundary) == 0:
                 raise RuntimeError('Empty boundary')
             lengthw = 0
-            delta = B(1)
+            delta = B.one()
             while True:
                 d = R(1)
                 i0 = None

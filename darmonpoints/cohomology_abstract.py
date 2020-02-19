@@ -68,9 +68,11 @@ class CohomologyElement(ModuleElement):
                 self._val = [V(data) for b in G.gens()]
         ModuleElement.__init__(self,parent)
 
-    def _evaluate_word_tietze(self, word):
-        # return self._evaluate_word_tietze_naive(word)
-        return self._evaluate_word_tietze_foxgradient(word)
+    def _evaluate_word_tietze(self, word, left_act_by=None):
+        if self.parent()._acting_matrix is None:
+            return self._evaluate_word_tietze_naive(word, left_act_by=left_act_by)
+        else:
+            return self._evaluate_word_tietze_foxgradient(word, left_act_by=left_act_by)
 
     def values(self):
         return self._val
@@ -134,21 +136,19 @@ class CohomologyElement(ModuleElement):
         else:
             return self._evaluate_word_tietze_identity(wd)
 
-    def evaluate(self,x,parallelize = False):
+    @cached_method
+    def evaluate(self, x, left_act_by = None, parallelize = False):
         H = self.parent()
         G = H.group()
         if x.parent() is G:
-            # verbose('Obtaining word_rep for %s'%x)
             wd  = x.word_rep
-            # verbose(' = %s'%str(wd))
         else:
             x = G(x)
             wd = x.word_rep
-        # verbose('Got word rep', level=2)
         if self.parent().trivial_action():
             return self._evaluate_word_tietze_trivial(wd)
         else:
-            return self._evaluate_word_tietze(wd)
+            return self._evaluate_word_tietze(wd, left_act_by=left_act_by)
 
     def check_cocycle_property(self, g1=None,g2=None, function = None):
         H = self.parent()
@@ -166,7 +166,7 @@ class CohomologyElement(ModuleElement):
             else:
                 return function(self.evaluate(g1*g2) - self.evaluate(g1) - g1 * self.evaluate(g2))
 
-    def _evaluate_word_tietze_naive(self,word):
+    def _evaluate_word_tietze_naive(self,word, left_act_by = None):
         G = self.parent().group()
         if len(word) == 0:
             return self.parent().coefficient_module()(0)
@@ -186,9 +186,9 @@ class CohomologyElement(ModuleElement):
                 g0 = -g-1
                 gamma = gamma * G.gen(g0)**-1
                 ans -= gamma * self._val[g0]
-        return ans
+        return ans if left_act_by is None else left_act_by * ans
 
-    def _evaluate_word_tietze_foxgradient(self,word):
+    def _evaluate_word_tietze_foxgradient(self, word, left_act_by = None):
         HH = self.parent()
         G = HH.group()
         V = HH.coefficient_module()
@@ -205,19 +205,14 @@ class CohomologyElement(ModuleElement):
         else:
             MS = lambda x:x
         fgrad = HH.fox_gradient(tuple(word))
-        # verbose('%s'%str([len(f) for f in fgrad]), level=2)
-        try:
-            tmp = [HH.GA_to_local(A) for A in fgrad]
-            if hasattr(self._val[0], '_moments'):
-                ans = V(sum(HH.GA_to_local(A) * val._moments for A, val in zip(fgrad, self._val)))
-            elif hasattr(self._val[0], '_vector_'):
-                ans = V(sum(HH.GA_to_local(A) * val._vector_() for A, val in zip(fgrad, self._val)))
-            else:
-                ans = V(sum(HH.GA_to_local(A) * val for A, val in zip(fgrad, self._val)))
-        except (AttributeError,TypeError):
-            verbose('Should find a way to avoid this exception...proceeding at your own risk')
-            ans = V(sum(sum((a * (g.support()[0] * val) for a, g in zip(A.coefficients(), A.monomials()))) for A, val in zip(fgrad,self._val)))
-        return ans
+        if hasattr(self._val[0], '_moments'):
+            ff = lambda v : v._moments.lift()
+        elif hasattr(self._val[0], '_vector_'):
+            ff = lambda v : v._vector_()
+        else:
+            ff = lambda v : v
+        ans = sum(HH.GA_to_local(A, left_act_by) * ff(val) for A, val in zip(fgrad, self._val))
+        return V(ans)
 
     def _evaluate_word_tietze_identity(self,word):
         G = self.parent().group()
@@ -310,8 +305,11 @@ class CohomologyGroup(Parent):
         return self._acting_matrix(g, dim)
 
     @cached_method
-    def GA_to_local(self, x):
-        return sum((a * self.generator_acting_matrix(g.support()[0]) for a, g in zip(x.coefficients(), x.monomials())))
+    def GA_to_local(self, x, g0=None):
+        if g0 is None:
+            return sum((a * self.generator_acting_matrix(g.support()[0]) for a, g in zip(x.coefficients(), x.monomials())))
+        else:
+            return self.generator_acting_matrix(g0) * sum((a * self.generator_acting_matrix(g.support()[0]) for a, g in zip(x.coefficients(), x.monomials())))
 
     def trivial_action(self):
         return self._trivial_action
