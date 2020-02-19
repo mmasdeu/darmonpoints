@@ -22,6 +22,7 @@ from sage.rings.infinity import Infinity
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import load,save
 from sage.categories.action import Action
+from sage.structure.parent import Parent
 from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
