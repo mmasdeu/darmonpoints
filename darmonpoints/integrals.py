@@ -40,6 +40,7 @@ def double_integral_zero_infty(Phi,tau1,tau2):
     x = R.gen()
     R1 = PowerSeriesRing(K,'r1')
     r1 = R1.gen()
+    Phi_liftee = Phi._liftee
     try:
         R1.set_default_prec(Phi.precision_absolute())
     except AttributeError:
@@ -83,7 +84,7 @@ def double_integral_zero_infty(Phi,tau1,tau2):
                         print(a,b,c,d)
                         raise OverflowError('Matrix too large?')
                     # mu_e0 = ZZ(phimap.moment(0).rational_reconstruction())
-                    mu_e0 = ZZ(Phi['liftee']._map(M2Z([b,d,a,c])).moment(0))
+                    mu_e0 = ZZ(Phi_liftee._map(M2Z([b,d,a,c])).moment(0))
                     mu_e = [mu_e0] + [phimap.moment(o).lift() for o in range(1,len(V))]
                     resadd += sum(starmap(mul,zip(V,mu_e)))
                     resmul *= val**mu_e0
@@ -292,8 +293,12 @@ def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     phi = lambda t: prod([(t - P)**ZZ(n) for P,n in divisor],K(1))
     try:
         hc = hc['liftee']
-    except AttributeError:
-        pass
+    except KeyError:
+        try:
+            hc = hc._liftee
+        except AttributeError:
+            pass
+
     ans = K(riemann_sum(G,phi,ShapiroImage(G,hc)(gamma.quaternion_rep),depth,mult = True,progress_bar = progress_bar, K = K))
     return ans, ans.log(p_branch = 0)
 

@@ -88,8 +88,7 @@ def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = 
     verbose('Lifting..')
     Phi = phi0.lift(p,M = prec - 1,algorithm = 'greenberg',eigensymbol = True)
     verbose('Done lifting.')
-    Phi['liftee'] = phi0
-    Phi['sign_ap'] = 1
+    Phi._liftee = phi0
     return Phi
 
 def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap, use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False,method = None,Ename = 'unknown'):
