@@ -21,6 +21,7 @@ from sage.categories.pushout import pushout
 from sage.rings.infinity import Infinity
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import load,save
+from sage.structure.unique_representation import CachedRepresentation
 from sage.categories.action import Action
 from sage.structure.parent import Parent
 from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
