@@ -28,7 +28,8 @@ from sage.groups.finitely_presented import wrap_FpGroup
 from sage.misc.all import cartesian_product_iterator
 from sage.misc.latex import latex, LatexExpr
 from sage.rings.padics.padic_generic import local_print_mode
-
+from sage.rings.fast_arith import prime_range
+from sage.arith.functions import lcm
 from itertools import product,chain,groupby,islice,tee,starmap
 from functools import reduce
 import sys, configparser

@@ -142,7 +142,7 @@ class DivisorsElement(ModuleElement):
         return self.parent()([(n, f(self._ptdict[hP])) for hP, n in self._data.items()])
 
     def restrict(self, condition):
-        return self.parent()([(n, self._ptdict[hP]) for hP, n in self._data.items() if condition(hP)])
+        return self.parent()([(n, self._ptdict[hP]) for hP, n in self._data.items() if condition(self._ptdict[hP])])
 
     def __iter__(self):
         return iter(((self._ptdict[hP],n) for hP,n in self._data.items()))
