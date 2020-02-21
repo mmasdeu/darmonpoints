@@ -37,8 +37,6 @@ from .homology_abstract import Abelianization
 # from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok, P1NFList
 from .my_p1list_nf import lift_to_sl2_Ok, P1NFList
 
-
-
 class ArithGroup_generic(AlgebraicGroup):
     Element = ArithGroupElement
     def __init__(self, **kwargs):
@@ -146,6 +144,7 @@ class ArithGroup_generic(AlgebraicGroup):
         if len(all_initial) == 0:
             raise RuntimeError('Found no initial candidates for wp')
         verbose('Found %s initial candidates for wp'%len(all_initial))
+        verbose('Initial candidates: %s'%all_initial)
         try:
             pgen = ideal_p.gens_reduced()[0]
         except AttributeError:
@@ -177,22 +176,24 @@ class ArithGroup_generic(AlgebraicGroup):
     def _denominator_valuation(self,x,l):
         return max((o.denominator().valuation(l) for o in self._quaternion_to_list(x)))
 
-    def _compute_padic_splitting(self, P, prec):
+    def _compute_padic_splitting(self, P, prec): # arithgroup_generic
         verbose('Entering compute_padic_splitting')
         try:
             prime = P.norm()
         except AttributeError:
             prime = P
-        R = Qp(prime, prec+10)
+        R = Qp(prime, prec)
         verbose('Calling magma pMatrixRing')
         a,b = self.B.invariants()
         B_magma = self._get_B_magma()
 
         if self.F == QQ:
-            _,f = self.magma.pMatrixRing(self._Omax_magma,prime * self._Omax_magma.BaseRing(), Precision = 20, nvals = 2)
+            self.magma.eval('delete %s`pMatrixRings' % (self._Omax_magma.name()))
+            _,f = self.magma.pMatrixRing(self._Omax_magma,prime * self._Omax_magma.BaseRing(), Precision = prec+10, nvals = 2)
             self._F_to_local = QQ.hom([R.one()])
         else:
-            _,f = self.magma.pMatrixRing(self._Omax_magma,sage_F_ideal_to_magma(self._F_magma, P), Precision = 20, nvals = 2)
+            self.magma.eval('delete %s`pMatrixRings' % (self._Omax_magma.name()))
+            _,f = self.magma.pMatrixRing(self._Omax_magma,sage_F_ideal_to_magma(self._F_magma, P), Precision = prec+10, nvals = 2)
             try:
                 self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
             except SyntaxError:
@@ -210,9 +211,8 @@ class ArithGroup_generic(AlgebraicGroup):
         self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         v = f.Image(B_magma.gen(3)).Vector()
         self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
-        self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
-
-        self._KK = self._II * self._JJ
+        # self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
+        # self._KK = self._II * self._JJ
         self._prec = prec
         return self._II, self._JJ, self._KK
 

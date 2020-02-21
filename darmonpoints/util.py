@@ -543,13 +543,14 @@ def affine_transformation(x1p, x2p, x3p):
 def height_polynomial(x,base = 10):
     return sum(((RR(o).abs()+1).log(base) for o in x.coefficients()))
 
-def recognize_DV_point(J, degree, height_threshold=None, prime_bound=None, outfile=None):
+def recognize_DV_point(J, degree, height_threshold=None, prime_bound=None, roots_of_unity=None, outfile=None):
     K = J.parent()
     p = K.prime()
     if prime_bound is None:
         prime_bound = max(1000, min((K.precision_cap()**p) // 4, 100000))
     B = prime_range(prime_bound)
-    roots_of_unity = our_nroot(K(1),lcm(12,(p**2-1)),return_all=True)
+    if roots_of_unity is None:
+        roots_of_unity = our_nroot(K(1),lcm(12,(p**2-1)),return_all=True)
     if height_threshold is None:
         height_threshold = .9 * K.precision_cap() * degree
     for i, zz in enumerate(roots_of_unity):
@@ -988,7 +989,7 @@ def _get_heegner_params_rational(p,N,beta):
     num_inert_semistable_primes = 0
     for ell,r in N1.factor():
         ks = ZZ(beta).kronecker(ell)
-        if ks == -1: # inert
+        if ks == -1 or ks == 0: # inert # DEBUG - or ramified!!!
             if r != 1:
                 if r > 2:
                     raise ValueError('The inert prime l = %s divides too much the conductor.'%ell)
@@ -1447,7 +1448,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     for twopow in twopowlist:
         addpart = addpart0 / twopow
         success = False
-        power = 1/(twopow * known_multiple)
+        power = QQ(twopow * known_multiple)**-1
         pnum = E.torsion_order() * power.numerator()
         pden = E.torsion_order() * power.denominator()
         for J1 in our_nroot(J**pnum, pden, return_all = True):

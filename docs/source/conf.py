@@ -312,7 +312,7 @@ if (os.environ.get('SAGE_DOC_MATHJAX', 'no') != 'no'
     # html_theme_options['mathjax_macros'] = sage_mathjax_macros()
 
     from pkg_resources import Requirement, working_set
-    sagenb_path = working_set.find(Requirement.parse('sagenb')).location
+    sagenb_path = SAGE_SRC
     mathjax_relative = os.path.join('sagenb','data','mathjax')
 
     # It would be really nice if sphinx would copy the entire mathjax directory,

@@ -148,7 +148,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity, magma=magma)
-            G = BigArithGroup(P, abtuple, Np, magma = magma, seed = magma_seed, **param_dict)
+            G = BigArithGroup(P, abtuple, Np, magma = magma, seed = magma_seed, outfile = outfile, **param_dict)
         except RuntimeError as e:
             if quit_when_done:
                 magma.quit()

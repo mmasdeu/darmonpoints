@@ -194,26 +194,27 @@ class BigArithGroup_class(AlgebraicGroup):
             fwrite('# B = M_2(F)',outfile)
         try:
             basis_data_1 = list(self.Gn.Obasis)
+            wp = self.wp()
             if not self.use_shapiro():
                 basis_data_p = list(self.Gpn.Obasis)
         except AttributeError:
             try:
                 basis_data_1 = self.Gn._get_basis_invmat().inverse().columns()
+                wp = self.wp()
                 if not self.use_shapiro():
                     basis_data_p = self.Gpn._get_basis_invmat().inverse().columns()
             except AttributeError:
                 basis_data_1 = '?'
                 basis_data_p = '?'
         self._prec = -1
-        self.get_embedding(2000)
         fwrite('# R with basis %s'%basis_data_1,outfile)
         self.Gn.get_Up_reps = self.get_Up_reps
         if not self.use_shapiro():
             fwrite('# R(p) with basis %s'%basis_data_p,outfile)
             self.Gpn.get_Up_reps = self.get_Up_reps
-        self.Gn.wp = self.wp
-        self.Gpn.wp = self.wp
         verbose('Done initializing arithmetic groups')
+        iotap = self.Gn.get_embedding(2000)
+        fwrite('# Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.Gn.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.Gn.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
         verbose('Done initialization of BigArithmeticGroup')
 
     def base_field(self):
@@ -315,10 +316,6 @@ class BigArithGroup_class(AlgebraicGroup):
                 pi = self.ideal_p.gens_reduced()[0]
             wp = self.wp()
             return [self.Gpn(1).quaternion_rep] + [1 / self.prime() * wp * self.Gn.matrix_to_quaternion(matrix(self.F,2,2,[1,-a,0,self.prime()])) for a in alist]
-
-        # BTreps0 = [ Matrix(self.F,2,2,[0, -1, 1, -i]) for i in self.ideal_p.residues() ]
-        # BTreps = [self.Gn(1).quaternion_rep] + [self.Gn.matrix_to_quaternion(o) for o in BTreps0]
-        # return BTreps
 
         for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
             new_inv = elt**(-1)
@@ -428,9 +425,15 @@ class BigArithGroup_class(AlgebraicGroup):
     def set_wp(self, wp):
         epsinv = matrix(QQ,2,2,[0, -1, self.p, 0])**-1
         set_immutable(wp)
-        assert is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False)
-        assert all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn._get_O_basis()))
-        assert self.is_in_Gpn_order(wp)
+        ans = 0
+        if not is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False):
+            ans += 1
+        if not all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn._get_O_basis())):
+            ans += 2
+        if not self.is_in_Gpn_order(wp):
+            ans += 4
+        if ans > 0:
+            return ans
         self._wp = wp
         return self._wp
 
@@ -442,18 +445,18 @@ class BigArithGroup_class(AlgebraicGroup):
         verbose('Finding a suitable wp...')
         i = 0
         max_iterations = kwargs.get('max_iterations',-1)
-        for wp in self.Gn.generate_wp_candidates(self.p,self.ideal_p,**kwargs):
+        for wp in self.Gn.generate_wp_candidates(self.p,self.ideal_p, **kwargs):
             if i % 50000 == 0:
                 verbose('Done %s iterations'%i)
             if i == max_iterations:
                 raise RuntimeError('Trouble finding wp by enumeration')
             i += 1
-            try:
-                wp = self.set_wp(wp)
-                verbose('wp = %s'%list(wp))
-                return wp
-            except AssertionError:
-                pass
+            wp = self.set_wp(wp)
+            if wp in [1, 2, 3, 4, 5, 6, 7]:
+                # print('wp_error = %s'%wp)
+                continue
+            verbose('wp = %s'%list(wp))
+            return wp
 
     def get_embedding(self,prec):
         r"""

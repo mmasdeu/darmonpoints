@@ -61,21 +61,21 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
 
     # Choose the prime to do Hecke smoothen later
     q = ZZ(2)
-    D = G.order_discriminant() * G.level
+    Nbad = P * G.order_discriminant() * G.level
     try:
-        D = D.norm()
+        Nbad = Nbad.norm()
     except AttributeError: pass
     try:
-        D = D.gens_reduced()[0]
+        Nbad = Nbad.gens_reduced()[0]
     except AttributeError: pass
-    while D % q == 0:
+    while Nbad % q == 0:
         q = q.next_prime()
     if F == QQ:
         q1 = q
     else:
         q1 = F.ideal(q).factor()[0][0]
     verbose('q1 = %s'%q1)
-    gamma, tau1 = G.embed_order(P,K,prec,outfile = outfile,return_all = False, F_to_Qp = F_to_Qp)
+    gamma, tau1 = G.embed_order(P, D, prec,outfile = outfile,return_all = False, F_to_Qp = F_to_Qp)
     Div = Divisors(tau1.parent())
     H1 = OneChains(G,Div)
     D1 = Div(tau1)
@@ -217,6 +217,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     if not p.is_prime():
         raise ValueError('P (= %s) should be a prime, of inertia degree 1'%P)
 
+    Jlist = []
     if F == QQ:
         dK = ZZ(beta)
         extra_conductor_sq = dK/fundamental_discriminant(dK)
@@ -375,7 +376,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,progress_bar = progress_bar)
 
             J = 1
-            Jlist = []
             for i,emb in enumerate(emblist):
                 fwrite("Computing %s-th period, attached to the embedding: %s"%(i,Wlist[i].list()), outfile)
                 tau, gtau,sign,limits = emb
