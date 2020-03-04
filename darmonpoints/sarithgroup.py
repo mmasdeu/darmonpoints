@@ -168,60 +168,76 @@ class BigArithGroup_class(AlgebraicGroup):
         verbose('Estimated Covolume = %s'%covol)
         difficulty = covol**2
         verbose('Estimated Difficulty = %s'%difficulty)
+
         verbose('Initializing arithmetic group G(pn)...')
+        kwargs['O_magma'] = kwargs.pop('GpnBasis',None)
         t = walltime()
         lev = self.ideal_p * self.level
         if character is not None:
             lev = [lev, character]
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev,magma = magma, compute_presentation = not self._use_shapiro, **kwargs)
+        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev, magma = magma, compute_presentation = not self._use_shapiro, **kwargs)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
+
         verbose('Initializing arithmetic group G(n)...')
         lev = self.level
         if character is not None:
             lev = [lev, character]
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev,info_magma = self.Gpn,magma = magma, compute_presentation = True, **kwargs)
+        kwargs['O_magma'] = kwargs.pop('GnBasis',None)
+        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev, info_magma = self.Gpn, magma = magma, compute_presentation = True, **kwargs)
         t = walltime(t)
         verbose('Time for calculation T = %s'%t)
         verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
-
-        self.Gn.get_embedding = self.get_embedding
         self.Gn.embed = self.embed
+        self.Gn.get_embedding = self.get_embedding
+
+
         if hasattr(self.Gpn.B,'is_division_algebra'):
             fwrite('# B = F<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gpn.B.gens()[0]**2,self.Gpn.B.gens()[1]**2),outfile)
             fwrite('# disc(B) = %s'%self.Gpn.B.discriminant(), outfile)
         else:
             fwrite('# B = M_2(F)',outfile)
+        self._prec = -1
+        iotap = self.get_embedding(200)
+        fwrite('# Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.Gn.B.gen(0)).apply_map(lambda o:o.add_bigoh(5)).list(),iotap(self.Gn.B.gen(1)).apply_map(lambda o:o.add_bigoh(5)).list()),outfile)
         try:
             basis_data_1 = list(self.Gn.Obasis)
-            wp = self.wp()
             if not self.use_shapiro():
                 basis_data_p = list(self.Gpn.Obasis)
         except AttributeError:
             try:
                 basis_data_1 = self.Gn._get_basis_invmat().inverse().columns()
-                wp = self.wp()
                 if not self.use_shapiro():
                     basis_data_p = self.Gpn._get_basis_invmat().inverse().columns()
             except AttributeError:
                 basis_data_1 = '?'
                 basis_data_p = '?'
-        self._prec = -1
         fwrite('# R with basis %s'%basis_data_1,outfile)
         self.Gn.get_Up_reps = self.get_Up_reps
         if not self.use_shapiro():
             fwrite('# R(p) with basis %s'%basis_data_p,outfile)
             self.Gpn.get_Up_reps = self.get_Up_reps
+        try:
+            fwrite('# R gens: %s'%str(self.Gn._O_magma.Basis()), outfile)
+        except AttributeError:
+            pass
+        try:
+            fwrite('# R(p) gens: %s'%str(self.Gn._O_magma.Basis()), outfile)
+        except AttributeError:
+            pass
+        wp = kwargs.pop('wp',None)
+        if wp is None:
+            wp = self.wp()
+        else:
+            wp = self.set_wp(wp)
         verbose('Done initializing arithmetic groups')
-        iotap = self.Gn.get_embedding(2000)
-        fwrite('# Local embedding B to M_2(Q_p) sends i to %s and j to %s'%(iotap(self.Gn.B.gens()[0]).change_ring(Qp(p,5)).list(),iotap(self.Gn.B.gens()[1]).change_ring(Qp(p,5)).list()),outfile)
         verbose('Done initialization of BigArithmeticGroup')
 
     def base_field(self):
         return self.F
 
     def quaternion_algebra(self):
-        return self.B
+        return self.Gn.B
 
     def clear_cache(self):
         self.Gn.clear_cache()
@@ -251,6 +267,11 @@ class BigArithGroup_class(AlgebraicGroup):
             else:
                 self.Gpn._F_to_local = self.Gn._F_to_local
                 return self.Gn._F_to_local
+
+    def clear_local_splitting(self):
+        del self.Gpn._II
+        del self.Gpn._JJ
+        del self.Gpn._KK
 
     def local_splitting(self,prec):
         r"""
@@ -424,6 +445,7 @@ class BigArithGroup_class(AlgebraicGroup):
 
     def set_wp(self, wp):
         epsinv = matrix(QQ,2,2,[0, -1, self.p, 0])**-1
+        wp = self.quaternion_algebra()(wp)
         set_immutable(wp)
         ans = 0
         if not is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False):
@@ -433,7 +455,7 @@ class BigArithGroup_class(AlgebraicGroup):
         if not self.is_in_Gpn_order(wp):
             ans += 4
         if ans > 0:
-            return ans
+            raise TypeError('Wrong wp (code %s)'%ans)
         self._wp = wp
         return self._wp
 
@@ -451,9 +473,9 @@ class BigArithGroup_class(AlgebraicGroup):
             if i == max_iterations:
                 raise RuntimeError('Trouble finding wp by enumeration')
             i += 1
-            wp = self.set_wp(wp)
-            if wp in [1, 2, 3, 4, 5, 6, 7]:
-                # print('wp_error = %s'%wp)
+            try:
+                wp = self.set_wp(wp)
+            except TypeError:
                 continue
             verbose('wp = %s'%list(wp))
             return wp
@@ -470,8 +492,6 @@ class BigArithGroup_class(AlgebraicGroup):
         """
         if prec == -1:
             prec = self._prec
-        if prec > self._prec: # DEBUG
-            self._prec = prec
         if self.F == QQ and self.discriminant == 1:
             R =  Qp(self.p,prec)
             def iota(q):
@@ -487,6 +507,8 @@ class BigArithGroup_class(AlgebraicGroup):
                 except AttributeError:
                     q = q.list()
                 return sum(v(a)*b for a,b in zip(q,mats))
+        if prec > self._prec: # DEBUG
+            self._prec = prec
         return iota
 
     @cached_method
@@ -544,7 +566,7 @@ class BigArithGroup_class(AlgebraicGroup):
     def _reduce_in_amalgam(self,x):
         p = self.p
         denval = lambda y, val: self.Gn._denominator_valuation(y, p) < val
-        if self.Gpn._is_in_order(x):
+        if self.is_in_Gpn_order(x):
             return x, []
         else:
             gis = [ g**-1 for g in self.get_BT_reps() ]
@@ -564,7 +586,7 @@ class BigArithGroup_class(AlgebraicGroup):
             if valx == 0:
                 valx = 1
 
-            if self.Gpn._is_in_order(x):
+            if self.is_in_Gpn_order(x):
                 return set_immutable(x), new_wd
 
             i = next((i for i,g in enumerate(gitildes) if denval(x * g,valx)),0)

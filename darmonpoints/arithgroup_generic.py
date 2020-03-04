@@ -136,7 +136,7 @@ class ArithGroup_generic(AlgebraicGroup):
     def generate_wp_candidates(self, p, ideal_p,**kwargs):
         epsinv = matrix(QQ,2,2,[0,-1,p,0])**-1
         if self.F == QQ:
-            all_elts = self.element_of_norm(ideal_p,use_magma = True,return_all = True,radius = -1, max_elements = 1)
+            all_elts = self.element_of_norm(ideal_p,use_magma = False,return_all = True,radius = -1, max_elements = 1)
         else:
             all_elts = self.element_of_norm(ideal_p.gens_reduced()[0],use_magma = True,return_all = True,radius = -1, max_elements = 1)
         found = False
@@ -152,6 +152,7 @@ class ArithGroup_generic(AlgebraicGroup):
         for v1,v2 in cantor_diagonal(self.enumerate_elements(),self.enumerate_elements()):
             for tmp in all_initial:
                 new_candidate =  v1 * tmp * v2
+                # verbose('new_candidate = %s'%new_candidate)
                 yield new_candidate
 
     def _coerce_map_from_(self,S):
@@ -186,14 +187,13 @@ class ArithGroup_generic(AlgebraicGroup):
         verbose('Calling magma pMatrixRing')
         a,b = self.B.invariants()
         B_magma = self._get_B_magma()
-
+        self.magma.eval('delete %s`pMatrixRings' % (self._O_magma.name()))
         if self.F == QQ:
-            self.magma.eval('delete %s`pMatrixRings' % (self._Omax_magma.name()))
-            _,f = self.magma.pMatrixRing(self._Omax_magma,prime * self._Omax_magma.BaseRing(), Precision = prec+10, nvals = 2)
+            _,f = self.magma.pMatrixRing(self._O_magma,prime * self._O_magma.BaseRing(), Precision = prec+10, nvals = 2)
             self._F_to_local = QQ.hom([R.one()])
         else:
-            self.magma.eval('delete %s`pMatrixRings' % (self._Omax_magma.name()))
-            _,f = self.magma.pMatrixRing(self._Omax_magma,sage_F_ideal_to_magma(self._F_magma, P), Precision = prec+10, nvals = 2)
+
+            _,f = self.magma.pMatrixRing(self._O_magma,sage_F_ideal_to_magma(self._F_magma, P), Precision = prec+10, nvals = 2)
             try:
                 self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
             except SyntaxError:
@@ -211,8 +211,8 @@ class ArithGroup_generic(AlgebraicGroup):
         self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         v = f.Image(B_magma.gen(3)).Vector()
         self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
-        # self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
-        # self._KK = self._II * self._JJ
+        self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
+        self._KK = self._II * self._JJ
         self._prec = prec
         return self._II, self._JJ, self._KK
 

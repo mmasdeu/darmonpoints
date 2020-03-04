@@ -254,6 +254,7 @@ def is_in_Gamma0loc(A,det_condition = True,p = None):
     else:
         return all((o.valuation() >= 0 for o in A.list())) and A[1,0].valuation() > 0
 
+
 def set_immutable(x):
     try:
         x.set_immutable()
@@ -476,7 +477,7 @@ def our_algdep(z,degree,prec = None):
         f = -f
     ans = R(f.denominator() * f)
     for fact,_ in ans.factor():
-        if R(fact)(z) == O(p**prec):
+        if R(fact)(z).valuation() >= prec:
             return R(fact/fact.content())
     return R(ans/ans.content())
 
