@@ -441,6 +441,34 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     un = u * qE**(-(u.valuation()/qE.valuation()).floor())
     return un
 
+def our_lindep(V,prec = None, base=None):
+    if base is None:
+        K = V[0].parent()
+    else:
+        K = base
+    V = [K(o) for o in V]
+    if prec is None:
+        prec = min([o.precision_absolute() for o in V])
+    field_deg = K.degree()
+    p = K.prime()
+    pn = p**prec
+    n = len(V)
+    M = matrix(ZZ, n+field_deg, field_deg)
+    for k in range(n):
+        r = V[k]
+        if field_deg == 1:
+            M[k,0] = ZZ(r.lift()) % pn
+        else:
+            for j,o in enumerate(r.expansion()):
+                for i,u in enumerate(o):
+                    M[k,-1-i] += (p**(j+r.valuation())*u) % pn
+    for i in range(field_deg):
+        M[n+i,-1-i] = pn
+    verb_lev = get_verbose()
+    set_verbose(0)
+    tmp = M.transpose().right_kernel_matrix().change_ring(ZZ).LLL().row(0)
+    return list(tmp)[:n]
+
 def our_algdep(z,degree,prec = None):
     if prec is None:
         prec = z.precision_relative()
@@ -517,6 +545,17 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
     return newII.change_ring(R),newJJ.change_ring(R)
 
 
+def polynomial_roots(f, K):
+    ans = []
+    for rvec in product(range(2*K.prime()),repeat=K.degree()):
+        r = sum(r0 * K.gen()**i for i, r0 in enumerate(rvec))
+        try:
+            rt = hensel_lift(f, r)
+            ans.append(rt)
+        except(ValueError,RuntimeError):
+            pass
+    return ans
+
 # use hensel lemma to lift an approximate root x0 of the polynomial f to a root to the desired precision
 def hensel_lift(f, x0, max_iters=None):
     xn = x0
@@ -563,7 +602,7 @@ def recognize_DV_point(J, degree, height_threshold=None, prime_bound=None, roots
             # print("%s (disc=%s)\t (J * z^%s\t (height=%s)"%(ff.factor(), disc, i, height_polynomial(ff, base=p)))
             if disc.prime_to_S_part(B).abs() == 1:
                 fwrite("# SUCCESS!", outfile)
-                fwrite("# %s (disc=%s)\t (J * z^%s\t (height=%s)"%(ff.factor(), disc.factor(), i, height_polynomial(ff, base=p)), outfile)
+                fwrite("# %s (disc=%s)\t (J * exp(2 pi i %s / %s\t (height=%s)"%(ff.factor(), disc.factor(), i, lcm(12,(p**2-1)), height_polynomial(ff, base=p)), outfile)
                 fwrite("x = QQ['x'].gen()", outfile)
                 fwrite("f = %s"%ff, outfile)
                 return Jz, ff
@@ -1442,7 +1481,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     if qEpows is None:
         qEpows = [Cp(1)]
         for i in range(precp):
-            qEpows.append( qE * qEpows[-1])
+            qEpows.append( Cp(qE) * qEpows[-1])
 
     CEloc,_ = get_C_and_C2(Eloc,qEpows,Cp,precp)
     EH = E.change_ring(HCF)
