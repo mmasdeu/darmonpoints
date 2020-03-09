@@ -374,8 +374,9 @@ class OCVn(Module,UniqueRepresentation):
             y *= ratio
             ylist = y.list()[:self._depth]
             ylist.extend([R.base_ring().zero() for o in range(self._depth - len(ylist))])
-            xlist.append(ylist)
-        x = Matrix(R.base_ring(),self._depth,self._depth, xlist).apply_map(ZZ)
+            xlist.append([ZZ(o) for o in ylist])
+        # x = Matrix(R.base_ring(),self._depth,self._depth, xlist).apply_map(ZZ)
+        x = Matrix(ZZ,self._depth,self._depth, xlist)
         self._cache_powers[abcd] = x
         return x
 

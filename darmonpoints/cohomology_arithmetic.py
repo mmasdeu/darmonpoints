@@ -830,7 +830,7 @@ class ArithCohOverconvergent(ArithCoh_generic):
             ans *= scale
         return ans
 
-    def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'naive', steps = 1):
+    def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'naive', steps = 1, check_convergence=False):
         r"""
 
         Repeatedly applies U_p. Used in lifting theorems: 'improves' the precision of
@@ -873,12 +873,16 @@ class ArithCohOverconvergent(ArithCoh_generic):
                 else:
                     verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
                 h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', steps = steps)
-                try:
-                    current_val = min([(u-v).valuation() for u,v in zip([o for w in h2.values() for o in w.values()],[o for w in h1.values() for o in w.values()])])
-                except AttributeError:
-                    current_val = min([(u-v).valuation() for u,v in zip(h2.values(),h1.values())])
-                if ii == 2 and current_val <= old_val:
-                    raise RuntimeError("Not converging, maybe ap sign is wrong?")
+                if check_convergence:
+                    try:
+                        current_val = min([(u-v).valuation() for u,v in zip(h2.values(),h1.values())])
+                    except AttributeError:
+                        current_val = min([(u-v).valuation() for u,v in zip([o for w in h2.values() for o in w.values()],[o for w in h1.values() for o in w.values()])])
+
+                    if ii == 2 and current_val <= old_val:
+                        raise RuntimeError("Not converging, maybe ap sign is wrong?")
+                else:
+                    current_val = ii
                 if progress_bar and ii + 1 <= prec:
                     update_progress(float(current_val)/float(prec),'f|Up')
                 else:
@@ -1100,7 +1104,6 @@ class ArithCohBianchi(ArithCoh_generic):
 
             if progress_bar:
                 update_progress(float(current_val)/float(prec),'f|Up')
-            verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
             current_val = min([(u-v).valuation() for u,v in zip(h2.values(),h1.values())])
             if ii == 2 and current_val <= old_val:
                 raise RuntimeError("Not converging, maybe ap sign is wrong?")

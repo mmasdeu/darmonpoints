@@ -111,6 +111,7 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
             f0 *= g**e
             try:
                 ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
+                verbose('f0 = %s'%f0)
                 return ans, n * f0(a_ell), q1
             except ValueError: pass
         verbose('Passed the check!')
