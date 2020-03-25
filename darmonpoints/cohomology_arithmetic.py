@@ -1240,6 +1240,7 @@ class ArithCoh(ArithCoh_generic):
             x = QQ['x'].gen()
             F = NumberField(x,names='a')
             E = E.change_ring(F)
+            disc = F.ideal(N)
 
         def getap(q):
             if F == QQ:
@@ -1276,7 +1277,10 @@ class ArithCoh(ArithCoh_generic):
             K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
 
         disc = self.S_arithgroup().Gpn.order_discriminant()
-        discnorm = disc.norm()
+        try:
+            discnorm = disc.norm()
+        except AttributeError:
+            discnorm = disc
         try:
             N = ZZ(discnorm.gen())
         except AttributeError:
@@ -1321,7 +1325,10 @@ class ArithCoh(ArithCoh_generic):
             component_list.append(K)
 
         disc = self.S_arithgroup().Gpn.order_discriminant()
-        discnorm = disc.norm()
+        try:
+            discnorm = disc.norm()
+        except AttributeError:
+            discnorm = disc
         try:
             N = ZZ(discnorm.gen())
         except AttributeError:
@@ -1399,7 +1406,11 @@ class ArithCoh(ArithCoh_generic):
             if K.dimension() >= 2:
                 component_list.append((K, []))
         disc = self.S_arithgroup().Gpn.order_discriminant()
-        discnorm = disc.norm()
+        try:
+            discnorm = disc.norm()
+        except AttributeError:
+            discnorm = disc
+
         try:
             N = ZZ(discnorm.gen())
         except AttributeError:

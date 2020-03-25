@@ -30,6 +30,7 @@ from sage.misc.latex import latex, LatexExpr
 from sage.rings.padics.padic_generic import local_print_mode
 from sage.rings.fast_arith import prime_range
 from sage.arith.functions import lcm
+from sage.structure.factorization import Factorization
 from itertools import product,chain,groupby,islice,tee,starmap
 from functools import reduce
 import sys, configparser
@@ -466,7 +467,7 @@ def our_lindep(V,prec = None, base=None):
         M[n+i,-1-i] = pn
     verb_lev = get_verbose()
     set_verbose(0)
-    tmp = M.transpose().right_kernel_matrix().change_ring(ZZ).LLL().row(0)
+    tmp = M.transpose().right_kernel_matrix(algorithm='flint', proof=False).change_ring(ZZ).LLL().row(0)
     return list(tmp)[:n]
 
 def our_algdep(z,degree,prec = None):
@@ -547,12 +548,16 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
 
 def polynomial_roots(f, K):
     ans = []
-    for rvec in product(range(2*K.prime()),repeat=K.degree()):
+    p = K.prime()
+    rng = range(p) if p > 2 else range(8)
+    for rvec in product(rng,repeat=K.degree()):
         r = sum(r0 * K.gen()**i for i, r0 in enumerate(rvec))
         try:
             rt = hensel_lift(f, r)
+            if f(rt).valuation () < K.precision_cap() // 2: # DEBUG!!
+                raise RuntimeError("Couln't reach target valuation (%s), got only %s"%(K.precision_cap(), f(rt).valuation()))
             ans.append(rt)
-        except(ValueError,RuntimeError):
+        except ValueError:
             pass
     return ans
 
@@ -567,7 +572,7 @@ def hensel_lift(f, x0, max_iters=None):
         raise ValueError("Approximation is not good enough")
     while n_iters < max_iters:
         n_iters += 1
-        xnn = xn - f(xn)/fder(xn)
+        xnn = xn - f(xn) / fder(xn)
         if xn == xnn:
             return xn
         xn = xnn
@@ -607,6 +612,86 @@ def recognize_DV_point(J, degree, height_threshold=None, prime_bound=None, roots
                 fwrite("f = %s"%ff, outfile)
                 return Jz, ff
     return None, None
+
+def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebraic=True, units=None, extra_periods=None, **kwargs):
+    if extra_periods is None:
+        extra_periods = []
+    K = J.parent()
+    p = K.prime()
+    prec = J.precision_absolute()
+    # embed M in a field containing K
+    if Cp is None:
+        Cp = K
+        K_to_Cp = K.hom([K.gen()])
+    else:
+        K_to_Cp = K.hom([polynomial_roots(K._exact_modulus(), Cp)[0]])
+    debug_idx = kwargs.pop('debug_idx',0)
+    phi = kwargs.pop('phi', M.hom([polynomial_roots(M.polynomial(),Cp)[debug_idx]]))
+    V = [None]
+    Vlogs = [K_to_Cp(J.log())]
+    W = ['J']
+    if class_number is not None:
+        hM = class_number
+        for ell in prime_list:
+            for o in M.ideal(ell).factor():
+                gens0 = (o[0]**hM).gens_reduced(proof=False)[0]
+                phiv = phi(gens0)
+                if phiv.valuation() == 0:
+                    V.append(gens0)
+                    Vlogs.append(phiv.log())
+                    W.append(ell)
+    else:
+        hMlist = [1]
+        for ell in prime_list:
+            for L,e in M.ideal(ell).factor():
+                hM = 0
+                gens = [None, None]
+                while len(gens) > 1:
+                    hM += 1
+                    gens = (L**hM).gens_reduced(proof=False)
+                gens0 = gens[0]
+                phiv = phi(gens0)
+                if phiv.valuation() == 0:
+                    hMlist.append(hM)
+                    V.append(gens0)
+                    Vlogs.append(phiv.log())
+                    W.append(ell)
+        hM = lcm(hMlist)
+        assert len(V) == len(hMlist)
+        V = [None] + [o**(hM / e) for o, e in zip(V[1:], hMlist[1:])]
+        Vlogs = [Vlogs[0]] + [(hM / e) * o for o, e in zip(Vlogs[1:], hMlist[1:])]
+
+    if units is None:
+        units = list(M.units())
+    else:
+        units = [M(o) for o in units]
+    V.extend(units)
+    Vlogs.extend([phi(u) for u in units])
+    W.extend(['u%s'%i for i in range(len(units))])
+
+    # Add information about extra periods
+    Vlogs.extend([K_to_Cp(per.log()) for per in extra_periods])
+    W.extend(['period_%s'%i for i in range(len(extra_periods))])
+    clist = our_lindep(Vlogs)
+    print(clist)
+    if clist[0] < 0:
+        clist = [-o for o in clist]
+    if clist[0] == 0 or clist[0] > 10**5: # DEBUG - HARDCODED
+        raise ValueError('Not recognized: clist[0] = %s'%clist[0])
+    if not algebraic:
+        return [(u,v) for u,v in zip(clist,W) if u != 0]
+    else:
+        print([(u,v) for u,v in zip(clist,W) if u != 0])
+        if not clist[0] > 0:
+            raise ValueError('Redundant set of primes?')
+        fact = Factorization([(u,-a) for u, a in zip(V[1:],clist[1:])])
+        assert len(V) + len(extra_periods) == len(clist)
+        # assert clist[0] % hM == 0
+        hM = 1 # DEBUG
+        J_alg = fact.prod() # DEBUG # (M['x'].gen()**hM - fact.prod()).roots(M)[0][0]
+        remainder = clist[0] // hM
+        assert (phi(J_alg) / K_to_Cp(J)**remainder).log() == 0
+        return J_alg, remainder, fact
 
 def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   hF = F.class_number()
@@ -704,24 +789,45 @@ def our_sqrt(xx,K = None,return_all = False):
         z = K.gen()
     deg = K.residue_class_field().degree()
     found = False
-    ppow = p if p != 2 else 8
-    minval = 1 if p != 2 else 3
-    for avec in product(range(ppow),repeat=deg):
-        y0 = K(avec[0])
-        for a in avec[1:]:
-            y0 = y0*z + K(a)
-        if (y0**2-x).valuation() >= minval:
-            found = True
-            break
-    if found == False:
-        if return_all:
-            return []
-        else:
-            raise ValueError('Not a square')
-    y, y1 = 0, y0
-    while y != y1:
-        y, y1 = y1, (y1+x/y1)/2
+    if p != 2:
+        ppow = p if p != 2 else 8
+        minval = 1 if p != 2 else 3
+        for avec in product(range(ppow),repeat=deg):
+            y0 = K(avec[0])
+            for a in avec[1:]:
+                y0 = y0*z + K(a)
+            if (y0**2-x).valuation() >= minval:
+                found = True
+                break
+        if found == False:
+            if return_all:
+                return []
+            else:
+                raise ValueError('Not a square: %s'%x)
+        y, y1 = 0, y0
+        while y != y1:
+            y, y1 = y1, (y1+x/y1)/2
+    else:
+        ppow = 8
+        minval = 1
+        for avec in product(range(ppow),repeat=deg):
+            y0 = K(avec[0])
+            for a in avec[1:]:
+                y0 = y0*z + K(a)
+            if (y0**2-y0 + (1-x)/4).valuation() >= minval:
+                found = True
+                break
+        if found == False:
+            if return_all:
+                return []
+            else:
+                raise ValueError('Not a square: %s'%x)
+        y, y1 = 0, y0
+        while y != y1:
+            y, y1 = y1, (y1**2 - (1-x)/4)/(2*y1 - 1) #(y1+x/y1)/2
+        y = 2 * y - 1
     ans = K.uniformizer()**(ZZ(valp/2)) * y
+    assert ans**2 == xx
     if return_all:
         ans = [ans, -ans]
     return ans

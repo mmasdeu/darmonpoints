@@ -328,7 +328,7 @@ class BigArithGroup_class(AlgebraicGroup):
         emb = self.get_embedding(20)
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in range(self.p)]
         if self._hardcode_matrices: # DEBUG
-            verbose('Using hard-coded matrices for BT (Bianchi)')
+            verbose('Using hard-coded matrices for BT')
             if self.F == QQ:
                 alist = range(self.prime())
                 pi = self.prime()
@@ -644,9 +644,11 @@ class BigArithGroup_class(AlgebraicGroup):
         g = Bsp.hom([vector(C(phig(o))) for o in B.gens()])
         maplist = [f, g]
 
-        for ell, T in hecke_data:
+        R = QQ['x']
+        for ell, f_ell_0 in hecke_data:
+            f_ell = R(f_ell_0)
             Aq = B.hecke_matrix(ell, with_torsion = True)
-            tmap = Bsp.hom([sum([ZZ(a) * o for a, o in zip(col, Bsp.gens())]) for col in T.charpoly()(Aq).columns()])
+            tmap = Bsp.hom([sum([ZZ(a) * o for a, o in zip(col, Bsp.gens())]) for col in f_ell(Aq).columns()])
             maplist.append(tmap)
         fg = direct_sum_of_maps(maplist)
         ker = fg.kernel()
@@ -668,22 +670,15 @@ class BigArithGroup_class(AlgebraicGroup):
         return good_ker
 
     def inverse_shapiro(self, x):
-        Gn = self.Gn
-        B = ArithHomology(self, ZZ**1, trivial_action = True)
-        group = B.group()
+        if not self.use_shapiro():
+            return [(g, ZZ(v[0])) for g, v in zip(self.Gpn.gens(), x.values())]
         ans = []
-        for g, v in zip(group.gens(), x.values()):
-            if not self.use_shapiro():
-                if v[0] == 0:
-                    continue
-                ans.append((group(g), ZZ(v[0])))
-            else:
-                for a, ti in zip(v.values(), self.coset_reps()):
-                    if a[0] == 0:
-                        continue
+        for g, v in zip(self.Gn.gens(), x.values()):
+            for a, ti in zip(v.values(), self.coset_reps()):
+                if a[0] != 0:
                     # We are considering a * (g tns t_i)
-                    g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep))
-                    ans.append((Gn(g0), ZZ(a[0])))
+                    g0, _ = self.get_coset_ti(set_immutable(ti * g.quaternion_rep))
+                    ans.append((self.Gn(g0), ZZ(a[0])))
         return ans
 
     def get_pseudo_orthonormal_homology(self, cocycles, hecke_data = None, outfile = None):

@@ -175,7 +175,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
             G.save_to_db()
         fwrite('Cohomology class found', outfile)
     try:
-        ker = [G.inverse_shapiro(o) for o in G.get_homology_kernel()]
+        ker = [G.inverse_shapiro(o) for o in G.get_homology_kernel(hecke_data=kwargs.get('hecke_data',None))]
     except Exception as e:
         if quit_when_done:
             magma.quit()
@@ -198,8 +198,8 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
         try:
             found = False
-            for o in ker:
-                phi_o = sum( [phi.evaluate(t**a) for t, a in o], 0 )
+            for xgenlist in ker:
+                phi_o = sum( [phi.evaluate(t**a) for t, a in xgenlist], 0 )
                 if use_shapiro:
                     phi_o = phi_o.evaluate_at_identity()
                 if phi_o != 0:
@@ -210,7 +210,6 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         except Exception as e:
             ret_vals.append('Problem when choosing element in kernel: ' + str(e))
             continue
-        xgenlist = o
         found = False
         while not found:
             try:

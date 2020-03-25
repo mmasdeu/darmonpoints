@@ -45,18 +45,22 @@ class Scaling(Action):
     def _act_(self,g,v):
         return v.scale_by(g)
 
-def lattice_homology_cycle(p, G, wp, xlist, prec, outfile = None, smoothen = None):
-    Cp = Qq(p**2,prec,names = 'g')
-    wpmat = (G.embed(wp,prec)**-1).change_ring(Cp)
-    a,b,c,d = wpmat.list()
-    tau1 = (a*Cp.gen() + b)/(c*Cp.gen() + d)
+def lattice_homology_cycle(p, G, wp, xlist, prec, tau = None, outfile = None, smoothen = None):
+    if tau is None:
+        Cp = Qq(p**2,prec,names = 'g')
+        wpinv_mat = (G.embed(wp,prec)**-1).change_ring(Cp)
+        a,b,c,d = wpmat.list()
+        tau = (a*Cp.gen() + b)/(c*Cp.gen() + d)
+    else:
+        Cp = tau.parent()
+        wpinv_mat = (G.embed(wp,prec)**-1).change_ring(Cp)
     Div = Divisors(Cp)
     H1 = OneChains(G,Div)
     xi1 = H1(dict([]))
     xi2 = H1(dict([]))
     for x, a in xlist:
-        xi1 += H1(dict([(G(x.quaternion_rep), Div(tau1))])).__rmul__(a)
-        xi2 += H1(dict([(G(wp**-1 * x.quaternion_rep * wp), Div(tau1).left_act_by_matrix(wpmat))])).__rmul__(a)
+        xi1 += H1(dict([(G(x.quaternion_rep), Div(tau))])).__rmul__(a)
+        xi2 += H1(dict([(G(wp**-1 * x.quaternion_rep * wp), Div(tau).left_act_by_matrix(wpinv_mat))])).__rmul__(a)
     xi10 = xi1
     xi20 = xi2
     while True:
@@ -399,7 +403,7 @@ class OneChains_element(ModuleElement):
         sum_abxlist = free_module_element(sum(abxlist))
         x_ord = sum_abxlist.order()
         if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
-            raise ValueError('Must yield torsion element in abelianization (%s)'%(sum_abxlist))
+            raise ValueError('Must yield torsion element in abelianization (%s, order = %s)'%(sum_abxlist, x_ord))
         else:
             xlist = [(x,x_ord * n) for x,n in xlist]
         gwordlist, rel = G.calculate_weight_zero_word(xlist, separated = True)

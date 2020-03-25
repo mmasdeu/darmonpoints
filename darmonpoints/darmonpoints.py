@@ -43,7 +43,7 @@ def darmon_discriminants(bound, split_primes = None, inert_primes = None):
         good_D.append(D)
     return good_D
 
-def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None):
+def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None, smoothen_prime = None):
     F_to_Qp = G.base_ring_local_embedding(prec)
     G = G.Gn
     F = G.base_ring()
@@ -60,21 +60,26 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
             assert len(K.embeddings(RR)) == 0
 
     # Choose the prime to do Hecke smoothen later
-    q = ZZ(2)
-    Nbad = P * G.order_discriminant() * G.level
-    try:
-        Nbad = Nbad.norm()
-    except AttributeError: pass
-    try:
-        Nbad = Nbad.gens_reduced()[0]
-    except AttributeError: pass
-    while Nbad % q == 0:
-        q = q.next_prime()
+    if smoothen_prime is None:
+        q = ZZ(2)
+        Nbad = P * G.order_discriminant() * G.level
+        try:
+            Nbad = Nbad.norm()
+        except AttributeError: pass
+        try:
+            Nbad = Nbad.gens_reduced()[0]
+        except AttributeError: pass
+        while Nbad % q == 0:
+            q = q.next_prime()
+    else:
+        q = smoothen_prime
+
     if F == QQ:
         q1 = q
     else:
         q1 = F.ideal(q).factor()[0][0]
     verbose('q1 = %s'%q1)
+
     gamma, tau1 = G.embed_order(P, D, prec,outfile = outfile,return_all = False, F_to_Qp = F_to_Qp)
     Div = Divisors(tau1.parent())
     H1 = OneChains(G,Div)
@@ -291,19 +296,24 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             else:
                 abtuple = quaternion_algebra_invariants_from_ramification(F, DB, ramification_at_infinity, magma=magma)
 
-            G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro, nscartan=Ncartan)
+            G = kwargs.pop('G', None)
+            if G is None:
+                fwrite('# Initializing S-arithmetic group...', outfile)
+                G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro, nscartan=Ncartan)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             Coh = ArithCoh(G)
             while True:
                 try:
-                    cycleGn, nn, ell = construct_homology_cycle(p, G, beta, working_prec, lambda q: Coh.hecke_matrix(q).minpoly(), outfile = outfile, elliptic_curve = E)
+                    cycleGn, nn, ell = construct_homology_cycle(p, G, beta, working_prec, lambda q: Coh.hecke_matrix(q).minpoly(), outfile = outfile, elliptic_curve = E, smoothen_prime = kwargs.get('smoothen_prime',None))
                     break
                 except PrecisionError:
                     working_prec *= 2
                     verbose('Encountered precision error, trying with higher precision (= %s)'%working_prec)
-                except ValueError:
-                    fwrite('ValueError occurred when constructing homology cycle. Returning the S-arithmetic group.', outfile)
+                except ValueError as e:
+                    fwrite('ValueError occurred when constructing homology cycle.', outfile)
+                    fwrite('Error : %s'%str(e), outfile)
+                    fwrite('Returning the S-arithmetic group.', outfile)
                     if quit_when_done:
                         magma.quit()
                     return G
@@ -348,7 +358,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
 
             # Optimal embeddings of level one
             fwrite("Computing optimal embeddings of level one...", outfile)
-            Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor)
+            Wlist = find_optimal_embeddings(K,use_magma = use_magma, extra_conductor = extra_conductor, magma=magma)
             fwrite("Found %s such embeddings."%len(Wlist), outfile)
             if idx_embedding is not None:
                 if idx_embedding >= len(Wlist):
@@ -398,7 +408,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         local_embedding = Qp(p,working_prec)
         twopowlist = [4, 3, 2, 1, QQ(1)/2, QQ(3)/2, QQ(1)/3, QQ(2)/3, QQ(1)/4, QQ(3)/4, QQ(5)/2, QQ(4)/3]
 
-    known_multiple = QQ(nn * eisenstein_constant) # It seems that we are not getting it with present algorithm.
+    known_multiple = QQ(nn) # It seems that we are not getting eisenstein_constant
     while known_multiple % p == 0:
         known_multiple = ZZ(known_multiple / p)
 

@@ -338,7 +338,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                         hp0 = K(b + a * P)
                         hp1 = K(d + c * P)
                         if hp1.valuation() <= hp0.valuation():
-                            raise ValueError
+                            raise ValueError('Valuation problem')
                     x = hp1 / hp0
                     v = [K.zero(),K(x)]
                     xpow = K(x)
@@ -356,8 +356,8 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                     mu_e = hc.evaluate_and_identity(newgamma)
                 else:
                     mu_e = hc.evaluate(newgamma)
-            except(ValueError):
-                verbose('Subdividing...')
+            except ValueError as msg:
+                verbose('Subdividing because (%s)...'%str(msg))
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
                 continue
             if HOC._use_ps_dists:
