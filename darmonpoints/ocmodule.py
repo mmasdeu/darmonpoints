@@ -287,11 +287,11 @@ class OCVn(Module,UniqueRepresentation):
     Element=OCVnElement
     r"""
     This class represents objects in the overconvergent approximation modules used to
-    describe overconvergent p-adic automorphic forms. 
+    describe overconvergent p-adic automorphic forms.
 
     INPUT:
 
-     - ``n`` - integer 
+     - ``n`` - integer
 
      - ``R`` - ring
 
@@ -449,19 +449,16 @@ class MeromorphicFunctionsElement(ModuleElement):
             prec = parent._prec
             p = K.prime()
             Ps = parent._Ps
-            phi = parent._Ps_local_variable
+            phi = parent._divisors_to_pseries
             if data == 0:
                 self._value = parent._V(0) if additive else Ps(1)
             elif isinstance(data.parent(), Divisors):
                 self._value = parent._V(0) if additive else Ps(1)
                 for Q, n in data:
-                    if Q.valuation() >= 0:
-                        raise ValueError('Divisor is not defined over the right open')
+                    # if Q.valuation() >= 0:
+                    #     raise ValueError('Divisor is not defined over the right open')
                     if additive:
-                        if parent._dlog:
-                            self._value += n * parent._V([o._polynomial_list(pad=True) for o in (phi(K(Q)).log().derivative()).list()])
-                        else:
-                            self._value += n * parent._V([o._polynomial_list(pad=True) for o in (phi(K(Q)).log()).list()])
+                        self._value += n * parent._V([o._polynomial_list(pad=True) for o in (phi(K(Q)).log().derivative()).list()])
                     else:
                         self._value *= phi(K(Q))**n
             elif data.parent() == parent._V:
@@ -478,31 +475,51 @@ class MeromorphicFunctionsElement(ModuleElement):
                     self._value = val
         else:
             self._value = data
-        # assert min([o.valuation() for o in self._value.list()]) >= 0
         self._moments = self._value
         ModuleElement.__init__(self,parent)
+
+    def power_series(self):
+        K = self.parent().base_ring()
+        Ps = self.parent().power_series_ring()
+        if self.parent().is_additive():
+            return Ps([K(o.list()) for o in self._value.rows()])
+        else:
+            return Ps(self._value)
 
     def __call__(self, D):
         K = self.parent().base_ring()
         p = K.prime()
         assert isinstance(D.parent(), Divisors) and D.degree() == 0
+        phi = self.parent()._eval_pseries_map
         if self.parent().is_additive():
-            poly = self.parent()._Ps([K(o.list()) for o in self._value.rows()]).polynomial()
-            if self.parent()._dlog:
+            poly = self.power_series().polynomial()
+            if self.parent().distinguished_open() == 'Uinf':
                 poly = poly.integral()
+            else:
+                t = poly.parent().gen()
+                poly = poly(1/t).integral()
             ans = K(0)
             for P, n in D:
-                ans += n * poly(P)
+                phiP = P # phi(P)
+                assert phiP.valuation() >= 0
+                ans += n * poly(phiP)
             if ans == 0:
                 return K(1)
             else:
-                return ans.exp()
+                try:
+                    return ans.exp()
+                except ValueError:
+                    for P, n in D:
+                        if n != 0:
+                            print([o.valuation() for o in D.support()])
+                    assert 0
         else:
             poly = self._value.polynomial()
             ans = K(1)
             for P, n in D:
-                assert P.valuation() >= 0
-                ans *= (poly(P))**n
+                phiP = phi(P)
+                assert phiP.valuation() >= 0
+                ans *= poly(phiP)**n
             return ans
 
     def _cmp_(self, right):
@@ -554,9 +571,6 @@ class MeromorphicFunctionsElement(ModuleElement):
         if self.parent().is_additive():
             M = self.parent().get_action_data(g)
             ans = M * self._value
-            if not self.parent()._dlog:
-                ans[0,0] = 0
-                ans[0,1] = 0
         else:
             zz_ps_vec = self.parent().get_action_data(g)
             poly = self._value.polynomial()
@@ -566,19 +580,65 @@ class MeromorphicFunctionsElement(ModuleElement):
         return self.__class__(self.parent(),ans,check=False)
 
 class MeromorphicFunctions(Parent, CachedRepresentation):
+    r'''
+    TESTS:
+
+    sage: from darmonpoints.ocmodule import MeromorphicFunctions
+    sage: from darmonpoints.homology import Divisors
+    sage: from darmonpoints.sarithgroup import BigArithGroup
+    sage: K.<a> = Qq(7^2,10)
+    sage: G = BigArithGroup(7,1,1,use_shapiro=False)
+    sage: M = MeromorphicFunctions(K)
+    sage: Div = Divisors(K)
+    sage: D = Div(a/7) - Div((a+1)/7)
+    sage: f = M(D)
+    sage: print(f.power_series())
+    sage: E = Div((a+3)) - Div((a+2))
+    sage: print(f(E) == D.pair_with(E))
+    True
+
+    sage: g = G.Gpn.gen(1).quaternion_rep
+    sage: print(M(g * D)(E) == (g * f)(E))
+    True
+
+    sage: M = MeromorphicFunctions(K, distinguished_open='OCp', additive=False)
+    sage: Div = Divisors(K)
+    sage: D = Div(a) - Div((a+1))
+    sage: f = M(D)
+    sage: print(f.power_series())
+    sage: E = Div((a+3)/7) - Div((a+2)/7)
+    sage: print(f(E) == D.pair_with(E))
+    True
+
+    sage: g = G.Gpn.gen(1).quaternion_rep
+    sage: A = M(g * D)(E)
+    sage: print(A)
+    sage: B = (g * f)(E)
+    sage: print(B)
+    sage: print((A/B).log())
+
+
+    '''
     Element = MeromorphicFunctionsElement
-    def __init__(self, K, additive = True, dlog = True):
+    def __init__(self, K, additive = True, distinguished_open = 'Uinf'):
         Parent.__init__(self)
         self._additive = additive
-        self._dlog = dlog
         self._base_ring = K
         self._prec = K.precision_cap()
-        psprec = self._prec + 1 if dlog else self._prec
+        psprec = self._prec + 1 if additive else self._prec
         self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec=psprec)
         if self._additive:
             self._V = MatrixSpace(Zmod(K.prime()**self._prec), self._prec, 2)
         t = self._Ps.gen()
-        self._Ps_local_variable = lambda Q : 1 - t / Q
+        if distinguished_open == 'Uinf':
+            self._divisors_to_pseries = lambda Q : 1 - t / Q
+            self._eval_pseries_map = lambda Q : Q
+        else:
+            assert distinguished_open == 'OCp'
+            p = K.prime()
+            self._divisors_to_pseries = lambda Q : 1 - t * Q
+            self._eval_pseries_map = lambda Q : 1 / Q
+        self._distinguished_open = distinguished_open
         self._unset_coercions_used()
         self.register_action(Scaling(ZZ,self))
         self.register_action(MatrixAction(MatrixSpace(K,2,2),self))
@@ -592,28 +652,29 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
 
     @cached_method
     def get_action_data(self, g, K = None):
-        a, b, c, d = g.list()
         prec = self._prec
+        a, b, c, d = g.list()
+        p = self.base_ring().prime()
+        Ps = self.power_series_ring()
+        z = Ps.gen()
         if K is None:
             if hasattr(a, 'lift'):
                 a_inv = (a**-1).lift()
                 a, b, c, d = a.lift(), b.lift(), c.lift(), d.lift()
-                p = g.parent().base_ring().prime()
                 K = Zmod(p**prec)
             else:
                 a_inv = a**-1
                 K = g.parent().base_ring()
 
-        Ps = PowerSeriesRing(K,'t', default_prec=prec)
-        z = Ps.gen()
-        denom = a_inv * (-c * a_inv * z + 1)**-1
-        zz = (d * z - b) * denom
-        zz_ps0 = Ps(zz).add_bigoh(prec)
-        if self._dlog:
-            zz_ps = ((a*d - b*c) * denom**2).add_bigoh(prec)
-        else:
-            zz_ps = Ps(1).add_bigoh(prec)
-        if self.is_additive():
+        if self.distinguished_open() == 'OCp':
+            raise NotImplementedError
+            if not self.is_additive():
+                raise NotImplementedError
+            zz_ps = ((a*d - b*c) * (numer / z)**2).add_bigoh(prec)
+            denom = a_inv * (-c * a_inv * z + 1)**-1
+            zz = (d * z - b) * denom # zz = (d * z - b) / (-c * z  + a)
+            zz_ps0 = Ps(zz).add_bigoh(prec)
+            zz_ps = ((a*d - b*c) * denom**2).add_bigoh(prec) # zz_ps = det(g) * (-c * z + a)**-2
             M = Matrix(ZZ, prec, prec, 0)
             for j in range(prec):
                 for i, aij in enumerate(zz_ps.list()):
@@ -621,13 +682,29 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
                 if j < prec - 1: # Don't need the last multiplication
                     zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
                 else:
-                    return M
-        else:
-            ans = [Ps(1), zz_ps]
-            for _ in range(prec - 1):
-                zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
-                ans.append(zz_ps)
-            return ans
+                    return M # Contains, in each column j, the action of g on z^j: det(g) (-cz+a)**-2 * ((dz-b)/(-cz+a))**j
+
+        elif self.distinguished_open() == 'Uinf':
+            denom = a_inv * (-c * a_inv * z + 1)**-1
+            zz = (d * z - b) * denom # zz = (d * z - b) / (-c * z  + a)
+            zz_ps0 = Ps(zz).add_bigoh(prec)
+            if self.is_additive():
+                zz_ps = ((a*d - b*c) * denom**2).add_bigoh(prec) # zz_ps = det(g) * (-c * z + a)**-2
+                M = Matrix(ZZ, prec, prec, 0)
+                for j in range(prec):
+                    for i, aij in enumerate(zz_ps.list()):
+                        M[i, j] = aij
+                    if j < prec - 1: # Don't need the last multiplication
+                        zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
+                    else:
+                        return M # Contains, in each column j, the action of g on z^j: det(g) (-cz+a)**-2 * ((dz-b)/(-cz+a))**j
+            else:
+                zz_ps = Ps(1).add_bigoh(prec)
+                ans = [Ps(1), zz_ps]
+                for _ in range(prec - 1):
+                    zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
+                    ans.append(zz_ps)
+                return ans
 
     def is_additive(self):
         return self._additive
@@ -643,3 +720,5 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
 
     def _repr_(self):
         return "Meromorphic %s Functions over %s"%('Additive' if self._additive else 'Multiplicative', self._base_ring)
+    def distinguished_open(self):
+        return self._distinguished_open

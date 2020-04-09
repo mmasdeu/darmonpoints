@@ -611,7 +611,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
     def _repr_(self):
         return 'Arithmetic Group attached to rational quaternion algebra, disc = %s, level = %s'%(self.discriminant,self.level)
 
-    def _init_geometric_data(self, **kwargs):
+    def _init_geometric_data(self, **kwargs): # rationalquaternion
         filename = kwargs.get('filename', None)
         self.pi = 4 * RealField(300)(1).arctan()
         emb = self.get_archimedean_embedding(300)
@@ -620,14 +620,16 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             try:
                 from sage.misc.persist import load
                 geom_dict = load(filename)
-                for ky, val in geom_dict.iteritems():
+                for ky, val in geom_dict.items():
                     setattr(self, ky, val)
                 self.embgquats = [None] + [emb(g) for g in self.gquats[1:]]
                 self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [i+1],check = False) for i,g in enumerate(self.Ugens) ]
                 verbose("Initialized fundamental domain data from file %s"%filename)
+                print("Initialized fundamental domain data from file %s"%filename)
                 return
             except IOError:
                 verbose("Will save fundamental domain data to file %s"%filename)
+                print("Initialized fundamental domain data from file %s"%filename)
                 pass
 
         Gm = self.magma.FuchsianGroup(self._O_magma.name())
@@ -1093,7 +1095,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
             assert found
         return ans
 
-    def generate_wp_candidates(self,p,ideal_p,**kwargs):
+    def generate_wp_candidates(self,p,ideal_p,**kwargs): # rationalmatrix
         initial_wp = kwargs.get('initial_wp')
         if self.level == 1:
             try:
@@ -1235,8 +1237,9 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         except (RuntimeError,AssertionError):
             try:
                 ans = list(self._Gamma0_farey.word_problem(SL2Z((-delta).list()),output = 'standard'))
-            except (RuntimeError, AssertionError):
+            except (RuntimeError, AssertionError) as e:
                 print('Delta = %s'%delta)
+                print('Message: %s',str(e))
                 assert 0
         tmp = multiply_out(ans, self.Ugens, self.B.one())
         delta = SL2Z(delta.list())
@@ -1320,14 +1323,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             Qx_magma = self.magma.PolynomialRing(self.magma.Rationals())
             xm = Qx_magma.gen(1)
             f = self.F.gen().minpoly()
-            try:
-                fmagma = sum([self.magma(ZZ(c))*xm**i for c,i in zip(f.coefficients(),f.exponents())])
-            except:
-                print(self.F)
-                print(f.coefficients())
-                print(f.exponents())
-                print([self.magma(ZZ(c)) for c in f.coefficients()])
-                assert 0
+            fmagma = sum([self.magma(ZZ(c))*xm**i for c,i in zip(f.coefficients(),f.exponents())])
             if f.degree() == 1:
                 FF_magma = self.magma.RationalsAsNumberField()
             else:
@@ -1662,12 +1658,14 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             try:
                 from sage.misc.persist import load
                 geom_dict = load(filename)
-                for ky, val in geom_dict.iteritems():
+                for ky, val in geom_dict.items():
                     setattr(self, ky, val)
                 self._gens = [self.element_class(self,quaternion_rep = g, word_rep = [i+1],check = False) for i, g in enumerate(self.Ugens)]
                 verbose("Initialized fundamental domain data from file %s"%filename)
+                print("Initialized fundamental domain data from file %s"%filename)
                 return
             except IOError:
+                print("Will save fundamental domain data to file %s"%filename)
                 verbose("Will save fundamental domain data to file %s"%filename)
                 pass
         if 'GL' in self._grouptype:
@@ -2148,7 +2146,7 @@ class ArithGroup_nf_matrix(ArithGroup_nf_kleinian, ArithGroup_matrix_generic):
         mat = matrix(self.F, 2,2,[-1,0,0,1])
         return self.matrix_to_quaternion(mat)
 
-    def generate_wp_candidates(self, p, ideal_p, **kwargs):
+    def generate_wp_candidates(self, p, ideal_p, **kwargs): # In ArithGroup_nf_matrix
         initial_wp = kwargs.get('initial_wp')
         if self.level == 1:
             try:

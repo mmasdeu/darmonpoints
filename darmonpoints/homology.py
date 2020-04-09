@@ -49,7 +49,7 @@ def lattice_homology_cycle(p, G, wp, xlist, prec, tau = None, outfile = None, sm
     if tau is None:
         Cp = Qq(p**2,prec,names = 'g')
         wpinv_mat = (G.embed(wp,prec)**-1).change_ring(Cp)
-        a,b,c,d = wpmat.list()
+        a,b,c,d = wpinv_mat.list()
         tau = (a*Cp.gen() + b)/(c*Cp.gen() + d)
     else:
         Cp = tau.parent()
@@ -271,6 +271,10 @@ class DivisorsElement(ModuleElement):
 
     def __setitem__(self, P, val):
         self._ptdict[P] = val
+
+    def pair_with(self, D):
+        rat = self.rational_function(as_map = True)
+        return prod((rat(P)**n for P, n in D), self.parent().base_ring()(1))
 
     def rational_function(self, as_map = False):
         if as_map:

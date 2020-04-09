@@ -13,7 +13,7 @@ from .cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternion
 from .integrals import integrate_H1,double_integral_zero_infty
 from .util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
 
-def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, implementation = None, **kwargs):
+def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
     r'''
     EXAMPLES:
 
@@ -225,8 +225,8 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         if not found:
             continue
         try:
-            qE1 = integrate_H1(G,xi1,Phi,1,method = 'moments',prec = working_prec, twist = False,progress_bar = progress_bar)
-            qE2 = integrate_H1(G,xi2,Phi,1,method = 'moments',prec = working_prec, twist = True,progress_bar = progress_bar)
+            qE1 = integrate_H1(G,xi1,Phi,1,prec = working_prec, twist = False,progress_bar = progress_bar)
+            qE2 = integrate_H1(G,xi2,Phi,1,prec = working_prec, twist = True,progress_bar = progress_bar)
         except Exception as e:
             ret_vals.append('Problem with integration: %s'%str(e))
             continue

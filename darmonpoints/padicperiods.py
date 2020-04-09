@@ -819,8 +819,8 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         fwrite('# Overconvergent lift completed', outfile)
 
         from integrals import integrate_H1
-        numadd, numval, numroot = integrate_H1(G, xi10, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
-        denadd, denval, denroot = integrate_H1(G, xi20, Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        numadd, numval, numroot = integrate_H1(G, xi10, Phif, 1, prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        denadd, denval, denroot = integrate_H1(G, xi20, Phif, 1, prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
         Alog = take_to_Qp(numadd - denadd)
         Aval = numval - denval
         Amul = numroot / denroot
@@ -828,8 +828,8 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         # A = A.add_bigoh(prec + A.valuation())
         fwrite('A0 = p**(%s) * (%s) * (%s).exp()'%(Aval, Amul, Alog), outfile)
 
-        numadd, numval, numroot = integrate_H1(G, xi11, Phif, 1, method = 'moments', prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
-        denadd, denval, denroot = integrate_H1(G, xi21,Phif, 1, method = 'moments', prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        numadd, numval, numroot = integrate_H1(G, xi11, Phif, 1, prec = working_prec, twist = False, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
+        denadd, denval, denroot = integrate_H1(G, xi21,Phif, 1, prec = working_prec, twist = True, progress_bar = progress_bar, multiplicative = False, return_valuation = True)
         Blog = take_to_Qp(numadd - denadd)
         Bval = numval - denval
         Bmul = numroot / denroot

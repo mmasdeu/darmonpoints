@@ -21,10 +21,10 @@ from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor as Gamma0
 from sage.modular.cusps import Cusp
+from os.path import dirname
 
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap
-import os,datetime
 
 from .arithgroup import ArithGroup_nf_fuchsian, ArithGroup_nf_kleinian,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix,ArithGroup_nf_matrix, ArithGroup_nf_matrix_new
 from .homology_abstract import ArithHomology, HomologyGroup
@@ -48,7 +48,7 @@ class BTEdge(SageObject):
         return iter([self.reverse,self.gamma])
 
 def attach_kleinian_code(magma):
-    page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
+    page_path = dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
     magma.attach_spec(page_path)
     magma.eval('Page_initialized := true')
     return
@@ -61,15 +61,22 @@ def is_page_initialized(magma):
 
 def BigArithGroup(p, quat_data, level, base = None, grouptype = None, seed = None, use_sage_db = False, magma = None, logfile = None, **kwargs):
     if magma is None:
-        from sage.interfaces.magma import Magma
-        magma = Magma(logfile = logfile)
-    if seed is not None:
-        magma.eval('SetSeed(%s)'%seed)
-    if not is_page_initialized(magma):
-        attach_kleinian_code(magma)
+        try:
+            from sage.interfaces.magma import Magma
+            magma = Magma(logfile = logfile)
+        except RuntimeError:
+            print('Could not initialize Magma. Continue at your own risk!')
+            pass
+    try:
+        if seed is not None:
+            magma.eval('SetSeed(%s)'%seed)
+        if not is_page_initialized(magma):
+            attach_kleinian_code(magma)
+        if logfile is not None:
+            magma.eval('SetVerbose("Kleinian",2)')
+    except RuntimeError:
+        pass
     a, b = None, None
-    if logfile is not None:
-        magma.eval('SetVerbose("Kleinian",2)')
     try:
         discriminant = ZZ(quat_data)
         if base is not None:
@@ -133,7 +140,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.seed = seed
         self.magma = magma
         self._use_shapiro = kwargs.get('use_shapiro', False)
-        self._hardcode_matrices = kwargs.get('hardcode_matrices', ((abtuple is None and discriminant == 1) or abtuple == (1,1)))
+        self._hardcode_matrices = kwargs.get('hardcode_matrices', False) # ((abtuple is None and discriminant == 1) or abtuple == (1,1)))
         nscartan = kwargs.get('nscartan', None)
         if seed is not None:
             verbose('Setting Magma seed to %s'%seed)
@@ -329,34 +336,39 @@ class BigArithGroup_class(AlgebraicGroup):
         matrices = [(i+1,matrix(QQ,2,2,[i,1,-1,0])) for i in range(self.p)]
         if self._hardcode_matrices: # DEBUG
             verbose('Using hard-coded matrices for BT')
+            wp = self.wp()
+            if self.F == QQ and self.discriminant == 1:
+                lam = -wp.determinant()
+            else:
+                lam = -wp.reduced_norm()
+
             if self.F == QQ:
                 alist = range(self.prime())
                 pi = self.prime()
             else:
                 alist = self.ideal_p.residues()
                 pi = self.ideal_p.gens_reduced()[0]
-            wp = self.wp()
             return [self.Gpn(1).quaternion_rep] + [1 / self.prime() * wp * self.Gn.matrix_to_quaternion(matrix(self.F,2,2,[1,-a,0,self.prime()])) for a in alist]
-
-        for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
-            new_inv = elt**(-1)
-            embelt = emb(elt)
-            if (embelt[0,0]-1).valuation() > 0 and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
-                if hasattr(self.Gpn,'nebentypus'):
-                    tmp = self.do_tilde(embelt)**-1
-                    tmp = tmp[0,0] / (self.p**tmp[0,0].valuation())
-                    tmp = ZZ(tmp.lift()) % self.Gpn.level
-                    if tmp not in self.Gpn.nebentypus:
-                        continue
-                for idx,o1 in enumerate(matrices):
-                    i,mat = o1
-                    if is_in_Gamma0loc(embelt * mat, det_condition = False):
-                        reps[i] = set_immutable(elt)
-                        del matrices[idx]
-                        verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
-                        if len(matrices) == 0:
-                            return reps
-                        break
+        else:
+            for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
+                new_inv = elt**(-1)
+                embelt = emb(elt)
+                if (embelt[0,0]-1).valuation() > 0 and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
+                    if hasattr(self.Gpn,'nebentypus'):
+                        tmp = self.do_tilde(embelt)**-1
+                        tmp = tmp[0,0] / (self.p**tmp[0,0].valuation())
+                        tmp = ZZ(tmp.lift()) % self.Gpn.level
+                        if tmp not in self.Gpn.nebentypus:
+                            continue
+                    for idx,o1 in enumerate(matrices):
+                        i,mat = o1
+                        if is_in_Gamma0loc(embelt * mat, det_condition = False):
+                            reps[i] = set_immutable(elt)
+                            del matrices[idx]
+                            verbose('%s, len = %s/%s'%(n_iters,self.p+1-len(matrices),self.p+1))
+                            if len(matrices) == 0:
+                                return reps
+                            break
 
     def do_tilde(self, g, wp = None):
         if wp is None:
@@ -389,21 +401,21 @@ class BigArithGroup_class(AlgebraicGroup):
                 pinorm = pi
                 alist = [a for a in range(pinorm)]
 
-            Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in alist ]
+            Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in alist ] # This was written for p-adic L-functions
             Upreps = [self.small_group().matrix_to_quaternion(o) for o in Upreps0]
             for o in Upreps:
                 set_immutable(o)
             return Upreps
-
-        wp = self.wp()
-        if self.F == QQ and self.discriminant == 1:
-            lam = -wp.determinant()
         else:
-            lam = -wp.reduced_norm()
-        tmp = [ lam * o**-1 * wp**-1 for o in self.get_BT_reps()[1:]]
-        for o in tmp:
-            set_immutable(o)
-        return tmp
+            wp = self.wp()
+            if self.F == QQ and self.discriminant == 1:
+                lam = -wp.determinant()
+            else:
+                lam = -wp.reduced_norm()
+            Upreps = [ lam * o**-1 * wp**-1 for o in self.get_BT_reps()[1:]]
+            for o in Upreps:
+                set_immutable(o)
+            return Upreps
 
     @cached_method
     def get_Up_reps_bianchi(self, pi, pi_bar):
@@ -698,7 +710,8 @@ class BigArithGroup_class(AlgebraicGroup):
         theta2 = -a01 * ker[0] + a00 * ker[1]
         return theta1, theta2, determinant
 
-def MatrixArithGroup(base = None, level = 1, implementation = 'coset_enum', **kwargs):
+def MatrixArithGroup(base = None, level = 1, **kwargs):
+    implementation = kwargs.get('implementation', None)
     if implementation not in ['coset_enum', 'geometric']:
         raise NotImplementedError
     if base is None:
@@ -715,8 +728,9 @@ def MatrixArithGroup(base = None, level = 1, implementation = 'coset_enum', **kw
         else:
             raise RuntimeError('Implementation should be "geometric" or "coset_enum"')
 
-def ArithGroup(base, discriminant, abtuple = None, level = 1, magma = None, implementation=None, **kwargs):
+def ArithGroup(base, discriminant, abtuple = None, level = 1, magma = None, **kwargs):
     nscartan = kwargs.get('nscartan', None)
+    implementation = kwargs.get('implementation', None)
     if implementation is not None:
         if abtuple is not None:
             if abtuple != (1,1):
@@ -751,4 +765,4 @@ def ArithGroup(base, discriminant, abtuple = None, level = 1, magma = None, impl
             if implementation is None:
                 return ArithGroup_nf_kleinian(base, a, b, level, magma=magma, **kwargs)
             else:
-                return MatrixArithGroup(base, level, implementation=implementation, magma=magma, **kwargs)
+                return MatrixArithGroup(base, level, magma=magma, **kwargs)

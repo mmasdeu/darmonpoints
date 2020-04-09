@@ -338,7 +338,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar,Ename = Ename)
             # Integration with moments
             tot_time = walltime()
-            J = integrate_H1(G,cycleGn,Phi,1,method = 'moments',prec = working_prec,parallelize = parallelize,twist = True,progress_bar = progress_bar)
+            J = integrate_H1(G,cycleGn,Phi,1, prec = working_prec,parallelize = parallelize,twist = True,progress_bar = progress_bar)
             verbose('integration tot_time = %s'%walltime(tot_time))
             if use_sage_db:
                 G.save_to_db()

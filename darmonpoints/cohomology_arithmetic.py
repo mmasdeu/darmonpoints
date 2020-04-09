@@ -580,20 +580,6 @@ class CohArbitrary(CohomologyGroup):
     def coefficient_module(self):
         return self._V
 
-    @cached_method(key=lambda self, ell, hecke_reps, use_magma, g0: ell)
-    def get_hecke_data(self, ell, hecke_reps = None, use_magma= True, g0=None):
-        group = self.group()
-        if hecke_reps is None:
-            hecke_reps = group.get_hecke_reps(ell, use_magma = use_magma, g0 = g0)
-        hecke_data = {}
-        for gamma in group.gens():
-            for g in hecke_reps:
-                set_immutable(g)
-                ti = group.get_hecke_ti(g,gamma,ell,use_magma, reps = hecke_reps)
-                set_immutable(ti)
-                hecke_data[(g, gamma.quaternion_rep)] = ti
-        return hecke_data
-
     def act_by_poly_hecke(self, c, r, f, **kwargs):
         if f == 1:
             return self
@@ -627,7 +613,7 @@ class CohArbitrary(CohomologyGroup):
         if as_Up:
             l = None
         if hecke_data is None:
-            hecke_data = self.get_hecke_data(l, hecke_reps, use_magma=use_magma, g0=g0)
+            hecke_data = group.get_hecke_data(l, hecke_reps, use_magma=use_magma, g0=g0)
         if self.trivial_action():
             vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]) for g in hecke_reps) for gamma in group.gens()]
         else:
@@ -1345,7 +1331,7 @@ class ArithCoh(ArithCoh_generic):
             verbose('len(components_list) = %s'%len(component_list))
             q = q.next_prime()
             for qq,e in F.ideal(q).factor():
-                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
+                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc)):
                     verbose('qq_gens = %s (norm = %s)'%(qq.gens_reduced()[0], qq.norm()))
                     try:
                         Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)

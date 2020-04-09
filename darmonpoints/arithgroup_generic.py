@@ -134,7 +134,6 @@ class ArithGroup_generic(AlgebraicGroup):
             return self.element_class(self, quaternion_rep = x,check = False)
 
     def generate_wp_candidates(self, p, ideal_p,**kwargs):
-        epsinv = matrix(QQ,2,2,[0,-1,p,0])**-1
         if self.F == QQ:
             all_elts = self.element_of_norm(ideal_p,use_magma = False,return_all = True,radius = -1, max_elements = 1)
         else:
@@ -151,9 +150,7 @@ class ArithGroup_generic(AlgebraicGroup):
             pgen = ideal_p
         for v1,v2 in cantor_diagonal(self.enumerate_elements(),self.enumerate_elements()):
             for tmp in all_initial:
-                new_candidate =  v1 * tmp * v2
-                # verbose('new_candidate = %s'%new_candidate)
-                yield new_candidate
+                yield v1 * tmp * v2
 
     def _coerce_map_from_(self,S):
         r"""
@@ -271,6 +268,19 @@ class ArithGroup_generic(AlgebraicGroup):
                 update_progress(float(1.0),'Getting Hecke representatives (%s iterations)'%(n_iters))
         return tuple([set_immutable(o) for o in reps])
 
+    @cached_method(key=lambda self, ell, hecke_reps, use_magma, g0: ell)
+    def get_hecke_data(self, ell, hecke_reps = None, use_magma= True, g0=None):
+        if hecke_reps is None:
+            hecke_reps = self.get_hecke_reps(ell, use_magma = use_magma, g0 = g0)
+        hecke_data = {}
+        for gamma in self.gens():
+            for g in hecke_reps:
+                set_immutable(g)
+                ti = self.get_hecke_ti(g,gamma,ell,use_magma, reps = hecke_reps)
+                set_immutable(ti)
+                hecke_data[(g, gamma.quaternion_rep)] = ti
+        return hecke_data
+
     @cached_method
     def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False, reps = None, conservative=False):
         r"""
@@ -295,7 +305,7 @@ class ArithGroup_generic(AlgebraicGroup):
             ti = elt * gk2
             is_in_order = self._is_in_order(ti)
             if self._is_in_order(ti):
-                if l is None and self.embed(set_immutable(ti),20)[1,0].valuation() > 0: # Up
+                if l is None and self.embed(set_immutable(ti),20)[1,0].valuation() > 0:
                     assert ans is None
                     ans = self(ti)
                     if not conservative:

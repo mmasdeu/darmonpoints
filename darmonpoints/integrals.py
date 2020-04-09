@@ -145,18 +145,13 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,method = 'moments',prec = None,parallelize = False,twist=False,progress_bar = False,multiplicative = True, return_valuation = False):
+def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,parallelize = False,twist=False,progress_bar = False,multiplicative = True, return_valuation = False):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
     Cp = cycle.parent().coefficient_module().base_field()
     R = PolynomialRing(Cp,names = 't')
     t = R.gen()
-    if method == 'moments':
-        integrate_H0 = integrate_H0_moments
-    else:
-        assert method == 'riemann'
-        integrate_H0 = integrate_H0_riemann
     jj = 0
     total_integrals = cycle.size_of_support()
     verbose('Will do %s integrals'%total_integrals)
@@ -219,41 +214,6 @@ def sample_point(G,e,prec = 20):
         return Infinity
     return b/d
 
-r'''
-Integration pairing of a function with an harmonic cocycle.
-'''
-def riemann_sum(G,phi,hc,depth = 1,mult = False, progress_bar = False, K = None):
-    prec = max([20,2*depth])
-    res = 1 if mult else 0
-    if K is None:
-        K = phi.parent().base_ring()
-    cover = G.get_covering(depth)
-    n_ints = 0
-    for e in cover:
-        if n_ints % 500 == 499:
-            verbose('Done %s percent'%(100*RealField(10)(n_ints)/len(cover)))
-        if progress_bar:
-            update_progress(float(RealField(10)(n_ints+1)/len(cover)),'Riemann sum')
-        n_ints += 1
-        val = hc(e)
-        vmom = val[0] #.moment(0)
-        if vmom.parent().is_exact():
-            hce = ZZ(vmom)
-        else:
-            hce = ZZ(vmom.rational_reconstruction())
-        if hce == 0:
-            continue
-        #verbose('hc = %s'%hce)
-        te = sample_point(G,e,prec)
-        if te == Infinity:
-            continue
-        if mult:
-            res *= phi(K(te))**hce
-        else:
-            res += phi(K(te)) * hce
-    return res
-
-
 class ShapiroImage(SageObject):
     def __init__(self,G,cocycle):
         self.G = G
@@ -282,27 +242,7 @@ class CoinducedElement(SageObject):
         else:
             return -ans
 
-def integrate_H0_riemann(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize):
-    # verbose('Integral %s/%s...'%(counter,total_counter))
-    HOC = hc.parent()
-    if prec is None:
-        prec = HOC.coefficient_module().precision_cap()
-    K = divisor.parent().base_ring()
-    R = PolynomialRing(K,names = 't').fraction_field()
-    t = R.gen()
-    phi = lambda t: prod([(t - P)**ZZ(n) for P,n in divisor],K(1))
-    try:
-        hc = hc['liftee']
-    except KeyError:
-        try:
-            hc = hc._liftee
-        except AttributeError:
-            pass
-
-    ans = K(riemann_sum(G,phi,ShapiroImage(G,hc)(gamma.quaternion_rep),depth,mult = True,progress_bar = progress_bar, K = K))
-    return ans, ans.log(p_branch = 0)
-
-def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize):
+def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize):
     # verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
     HOC = hc.parent()
@@ -323,9 +263,8 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
     while len(edgelist) > 0:
         newedgelist = []
         ii = 0
-        for parity, edge, wt in edgelist:
+        for parity, (rev, h), wt in edgelist:
             ii += 1
-            rev, h = edge
             a,b,c,d = [K(o) for o in G.embed(h,prec).list()]
             try:
                 c0unit = K.one()
@@ -358,7 +297,7 @@ def integrate_H0_moments(G,divisor,hc,depth,gamma,prec,counter,total_counter,pro
                     mu_e = hc.evaluate(newgamma)
             except ValueError as msg:
                 verbose('Subdividing because (%s)...'%str(msg))
-                newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([edge],parity,2)])
+                newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([(rev, h)],parity,2)])
                 continue
             if HOC._use_ps_dists:
                 resadd += sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
