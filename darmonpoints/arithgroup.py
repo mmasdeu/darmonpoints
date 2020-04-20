@@ -1675,7 +1675,6 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             grouptype = '"NormOne"'
             assert 'SL' in self._grouptype
         H = self.magma.QuaternionAlgebra(RealField(prec),-1,-1)
-        Hi, Hj, Hk = H.gens()
         if center is None:
             center = [-QQ(3)/19, QQ(5)/17, QQ(8)/11, 0]
         magma_center = H(center)

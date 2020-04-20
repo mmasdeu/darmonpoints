@@ -497,7 +497,8 @@ class MeromorphicFunctionsElement(ModuleElement):
             ans = K(0)
             for P, n in D:
                 phiP = phi(P)
-                assert phiP.valuation() >= 0
+                if phiP.valuation() < 0:
+                    raise ValueError('Negative valuation!')
                 ans += n * poly(phiP)
             if ans == 0:
                 return K(1)
@@ -601,7 +602,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
     sage: g = G.Gpn.gen(1).quaternion_rep
     sage: M(g * D)(E) == (g * f)(E)
     True
-    sage: M = MeromorphicFunctions(K, distinguished_open='OCp', additive=True)
+    sage: M = MeromorphicFunctions(K, twisting_matrix = G.wp(), additive=True)
     sage: Div = Divisors(K)
     sage: D = Div(a) - Div((a+1))
     sage: f = M(D)
@@ -617,7 +618,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
     True
     '''
     Element = MeromorphicFunctionsElement
-    def __init__(self, K, additive = True, distinguished_open = 'Uinf'):
+    def __init__(self, K, additive = True, twisting_matrix = None):
         Parent.__init__(self)
         self._additive = additive
         self._base_ring = K
@@ -627,15 +628,14 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         if self._additive:
             self._V = MatrixSpace(Zmod(K.prime()**self._prec), self._prec, 2)
         t = self._Ps.gen()
-        if distinguished_open == 'Uinf':
-            self._divisors_to_pseries = lambda Q : 1 - t / Q
-            self._eval_pseries_map = lambda x : x
+        if twisting_matrix is None:
+            self._twisting_matrix = Matrix(QQ,2,2,1)
         else:
-            assert distinguished_open == 'OCp'
-            p = K.prime()
-            self._divisors_to_pseries = lambda Q : 1 + p * Q * t
-            self._eval_pseries_map = lambda x : -1 / (p * x)
-        self._distinguished_open = distinguished_open
+            self._twisting_matrix = twisting_matrix
+        a, b, c, d = self._twisting_matrix.list()
+        self._divisors_to_pseries = lambda Q : 1 - (c * Q + d) * t / (a * Q + b)
+        a, b, c, d = (self._twisting_matrix**-1).list()
+        self._eval_pseries_map = lambda Q : (a * Q + b) / (c * Q + d)
         self._unset_coercions_used()
         self.register_action(Scaling(ZZ,self))
         self.register_action(MatrixAction(MatrixSpace(K,2,2),self))
@@ -650,29 +650,19 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
     @cached_method
     def get_action_data(self, g, K = None):
         prec = self._prec
-        a, b, c, d = g.list()
         p = self.base_ring().prime()
-        if self.distinguished_open() == 'OCp':
-            a, b, c, d = d, -c / p, -b * p, a
+        w = self.twisting_matrix()
+        a, b, c, d = (w**-1 * g * w).list()
         Ps = self.power_series_ring()
         z = Ps.gen()
         if K is None:
             if hasattr(a, 'lift'):
                 a_inv = (a**-1).lift()
-                d_inv = (d**-1).lift()
                 a, b, c, d = a.lift(), b.lift(), c.lift(), d.lift()
                 K = Zmod(p**prec)
             else:
                 a_inv = a**-1
-                d_inv = d**-1
                 K = g.parent().base_ring()
-
-        # if self.distinguished_open() == 'OCp':
-        #     denom = d_inv * (b * p * d_inv * z + 1)**-1
-        #     zz = (a * z + c / p) * denom
-        # elif self.distinguished_open() == 'Uinf':
-        #     denom = a_inv * (-c * a_inv * z + 1)**-1
-        #     zz = (d * z - b) * denom # zz = (d * z - b) / (-c * z  + a)
 
         denom = a_inv * (-c * a_inv * z + 1)**-1
         zz = (d * z - b) * denom # zz = (d * z - b) / (-c * z  + a)
@@ -710,5 +700,5 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
 
     def _repr_(self):
         return "Meromorphic %s Functions over %s"%('Additive' if self._additive else 'Multiplicative', self._base_ring)
-    def distinguished_open(self):
-        return self._distinguished_open
+    def twisting_matrix(self):
+        return self._twisting_matrix

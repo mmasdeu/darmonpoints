@@ -154,6 +154,9 @@ class DivisorsElement(ModuleElement):
     def _repr_(self):
         return 'Divisor of degree %s'%self.degree()
 
+    def _cache_key(self):
+        return tuple([self.parent(),tuple([(hP, n) for hP, n in self._data.items()])])
+
     def value(self):
         if len(self._data) == 0:
             return '0'
@@ -274,7 +277,7 @@ class DivisorsElement(ModuleElement):
 
     def pair_with(self, D):
         rat = self.rational_function(as_map = True)
-        return prod((rat(P)**n for P, n in D), self.parent().base_ring()(1))
+        return prod((rat(P)**n for P, n in D), self.parent().base_ring()(1)).log(0)
 
     def rational_function(self, as_map = False):
         if as_map:
@@ -357,8 +360,11 @@ class OneChains_element(ModuleElement):
         self._data = data
         ModuleElement.__init__(self,parent)
 
-    def get_data(self):
+    def __iter__(self):
         return iter(self._data.items())
+
+    def _cache_key(self):
+        return tuple([self.parent(), tuple([(g, v._cache_key()) for g, v in self._data.items()])])
 
     def size_of_support(self):
         return len(self._data)

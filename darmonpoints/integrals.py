@@ -159,14 +159,14 @@ def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,parallelize = False,twist
     resmul = Cp(1)
     resadd = Cp(0)
     resval = ZZ(0)
-    for g,divisor in cycle.get_data():
+    for g, D in cycle:
         jj += 1
-        if divisor.degree() != 0:
-            raise ValueError('Divisor must be of degree 0. Now it is of degree %s. And g = %s.'%(divisor.degree(),g.quaternion_rep))
+        if D.degree() != 0:
+            raise ValueError('Divisor must be of degree 0. Now it is of degree %s. And g = %s.'%(D.degree(),g.quaternion_rep))
         if twist:
-            divisor = divisor.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
+            D = D.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
             g = g.conjugate_by(G.wp()**-1)
-        newresadd, newresmul, newresval = integrate_H0(G,divisor,cocycle,depth,g,prec,jj,total_integrals,progress_bar,parallelize)
+        newresadd, newresmul, newresval = integrate_H0(G, D, cocycle,depth,g,prec,jj,total_integrals,progress_bar,parallelize)
         resadd += newresadd
         resmul *= newresmul
         resval += newresval

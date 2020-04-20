@@ -120,7 +120,7 @@ class CohomologyElement(ModuleElement):
         if self.parent().trivial_action():
             return sum([a * self.evaluate(g) for a, g in zip(xi.values(), self.parent().group().gens())])
         else:
-            return sum([self.evaluate(g).evaluate(a) for a, g in zip(xi.values(), self.parent().group().gens())])
+            return sum(self.evaluate(g).pair_with(a) for g, a in xi)
 
     @cached_method
     def evaluate_and_identity(self,x,parallelize = False):
