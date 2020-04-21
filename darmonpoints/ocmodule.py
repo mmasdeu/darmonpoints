@@ -585,11 +585,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
     sage: from darmonpoints.sarithgroup import BigArithGroup
     sage: padic_printing.mode('val-unit')
     sage: K.<a> = Qq(7^2,5)
-    sage: G = BigArithGroup(7,1,1,use_shapiro=False)
-    # B = M_2(F)
-    # Local embedding B to M_2(Q_p) sends i to [1 + O(7^5), O(7^5), O(7^5), O(7^5)] and j to [O(7^5), 1 + O(7^5), O(7^5), O(7^5)]
-    # R with basis ?
-    # R(p) with basis ?
+    sage: G = BigArithGroup(7,1,1,use_shapiro=False, outfile='/dev/null')
     sage: M = MeromorphicFunctions(K)
     sage: Div = Divisors(K)
     sage: D = Div(a/7) - Div((a+1)/7)
@@ -597,7 +593,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
     sage: f.power_series()
     7 * (1205 + 401*a) + O(7^5) + (7^2 * (59 + 229*a) + O(7^5))*t + (7^3 * (23 + 13*a) + O(7^5))*t^2 + (7^4 * (6 + 2*a) + O(7^5))*t^3 + O(7^5)*t^4
     sage: E = Div((a+3)) - Div((a+2))
-    sage: f(E) == D.pair_with(E)
+    sage: f(E).log(0) == D.pair_with(E)
     True
     sage: g = G.Gpn.gen(1).quaternion_rep
     sage: M(g * D)(E) == (g * f)(E)
@@ -609,7 +605,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
     sage: f.power_series()
     7 * 2400 + O(7^5) + (7^2 * (1 + 2*a) + O(7^5))*t + (7^3 * (8 + 15*a) + O(7^5))*t^2 + (7^4 * (6 + 2*a) + O(7^5))*t^3 + O(7^5)*t^4
     sage: E = Div((a+3)/7) - Div((a+2)/7)
-    sage: f(E) == D.pair_with(E)
+    sage: f(E).log(0) == D.pair_with(E)
     True
     sage: g = G.Gpn.gen(1).quaternion_rep
     sage: A = M(g * D)(E)
