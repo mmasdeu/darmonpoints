@@ -70,9 +70,9 @@ class CohomologyElement(ModuleElement):
 
     def _evaluate_word_tietze(self, word, left_act_by=None):
         if self.parent()._acting_matrix is None:
-            return self._evaluate_word_tietze_naive(word, left_act_by=left_act_by)
+            return self._evaluate_word_tietze_naive(tuple(word), left_act_by=left_act_by)
         else:
-            return self._evaluate_word_tietze_foxgradient(word, left_act_by=left_act_by)
+            return self._evaluate_word_tietze_foxgradient(tuple(word), left_act_by=left_act_by)
 
     def values(self):
         return self._val

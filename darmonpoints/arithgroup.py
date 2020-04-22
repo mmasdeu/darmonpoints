@@ -633,7 +633,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                 pass
 
         Gm = self.magma.FuchsianGroup(self._O_magma.name())
-        FDom_magma = Gm.FundamentalDomain() # self._D_magma.name()) # DEBUG
+        FDom_magma = Gm.FundamentalDomain()
         self._fundamental_domain = [ComplexField(1000)(o.Real().sage(), o.Imaginary().sage()) for o in FDom_magma]
         Um, _, m2_magma = Gm.Group(nvals = 3)
         self.Ugens = [magma_quaternion_to_sage(self.B, self._B_magma(m2_magma.Image(Um.gen(n+1))),self.magma) for n in range(len(Um.gens()))]
@@ -881,6 +881,12 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
 class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
     def __init__(self,level,info_magma = None,grouptype = None,magma = None, compute_presentation = True, **kwargs):
         from sage.modular.arithgroup.congroup_gammaH import GammaH_constructor
+        if grouptype == 'PGL2':
+            verbose('Changing grouptype to PSL2!!')
+            grouptype = 'PSL2'
+        elif grouptype == 'GL2':
+            verbose('Changing grouptype to SL2!!')
+            grouptype = 'SL2'
         assert grouptype in ['SL2','PSL2']
         self._grouptype = grouptype
         self._compute_presentation = compute_presentation
@@ -899,9 +905,6 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         self._prec_inf = -1
 
         self.B = MatrixSpace(QQ,2,2)
-        # self.Obasis = [matrix(ZZ,2,2,v) for v in [[1,0,0,0],[0,1,0,0],[0,0,self.level,0],[0,0,0,1]]]
-        # self._O_discriminant = ZZ.ideal(self.level)
-
         self.Ugens = []
         self._gens = []
         temp_relation_words = []
@@ -1365,7 +1368,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                     on = self._B_magma.One()
                     self._O_magma = self.magma.Order([(on + i)/2, (j+k)/2,  Pgen * (j-k)/2, (on-i)/2])
                 else:
-                    M = sage_F_ideal_to_magma(self._F_magma,self.level) # DEBUG
+                    M = sage_F_ideal_to_magma(self._F_magma,self.level)
                     self._O_magma = info_magma._Omax_magma.Order(M)
             else:
                 self._O_magma = self._Omax_magma
@@ -1735,7 +1738,7 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             i0 = tt * chunk_length + 1
             i1 = min((tt+1) * chunk_length,ngens)
             newvec = sage_eval(self.magma.eval('[ElementToSequence(Image(%s,%s.i)) : i in [%s..%s]]'%(GtoHm.name(),G.name(),i0,i1)))
-            self._simplification_iso.extend(newvec)
+            self._simplification_iso.extend(list(newvec))
             tmp_quaternions.extend(sage_eval(self.magma.eval('[%s[i] : i in [%s..%s]]'%(gens.name(),i0,i1)).replace('$.1','r'),{'r':r, 'i':i, 'j':j, 'k':k}))
 
         assert len(self._simplification_iso) == len(self._fundom_data), "Simplification iso and facerels have different lengths (%s != %s)"%(len(self._simplification_iso),len(self._fundom_data))
@@ -1847,7 +1850,7 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
                 raise RuntimeError('Error in word problem from Aurel 1')
         deltaword.reverse()
         try:
-            c = sum((list(self._simplification_iso[o-1]) for o in deltaword),[])
+            c = sum((self._simplification_iso[o-1] for o in deltaword),[])
         except IndexError:
             raise RuntimeError('Error in word problem from Aurel 2')
         return c

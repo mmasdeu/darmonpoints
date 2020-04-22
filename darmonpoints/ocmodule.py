@@ -28,6 +28,7 @@ from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.misc.cachefunc import cached_method
+from sage.misc.misc import cputime, get_verbose, set_verbose
 from .homology import MatrixAction, Scaling, Divisors
 import operator
 
@@ -645,11 +646,13 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
 
     @cached_method
     def get_action_data(self, g, K = None):
+        verb_level = get_verbose()
+        set_verbose(0)
         prec = self._prec
         p = self.base_ring().prime()
         w = self.twisting_matrix()
         a, b, c, d = (w**-1 * g * w).list()
-        Ps = self.power_series_ring()
+        Ps = PowerSeriesRing(Zmod(p**prec), names='z', default_prec=prec)
         z = Ps.gen()
         if K is None:
             if hasattr(a, 'lift'):
@@ -660,19 +663,20 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
                 a_inv = a**-1
                 K = g.parent().base_ring()
 
-        denom = a_inv * (-c * a_inv * z + 1)**-1
+        denom = (a_inv * (-c * a_inv * z + 1)**-1).polynomial().truncate(prec)
         zz = (d * z - b) * denom # zz = (d * z - b) / (-c * z  + a)
 
-        zz_ps0 = Ps(zz).add_bigoh(prec)
+        zz_ps0 = zz.truncate(prec) # Ps(zz).add_bigoh(prec)
         if self.is_additive():
-            zz_ps = ((a*d - b*c) * denom**2).add_bigoh(prec) # zz_ps = det(g) * (-c * z + a)**-2
+            zz_ps = (a*d - b*c) * (denom**2).truncate(prec) # (a*d - b*c) * denom**2 # zz_ps = det(g) * (-c * z + a)**-2
             M = Matrix(ZZ, prec, prec, 0)
             for j in range(prec):
                 for i, aij in enumerate(zz_ps.list()):
                     M[i, j] = aij
                 if j < prec - 1: # Don't need the last multiplication
-                    zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
+                    zz_ps = (zz_ps0 * zz_ps).truncate(prec)
                 else:
+                    set_verbose(verb_level)
                     return M # Contains, in each column j, the action of g on z^j: det(g) (-cz+a)**-2 * ((dz-b)/(-cz+a))**j
         else:
             zz_ps = Ps(1).add_bigoh(prec)
@@ -680,6 +684,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
             for _ in range(prec - 1):
                 zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
                 ans.append(zz_ps)
+            set_verbose(verb_level)
             return ans
 
     def is_additive(self):
