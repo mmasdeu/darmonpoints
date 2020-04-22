@@ -468,6 +468,7 @@ def our_lindep(V,prec = None, base=None):
     verb_lev = get_verbose()
     set_verbose(0)
     tmp = M.transpose().right_kernel_matrix(algorithm='flint', proof=False).change_ring(ZZ).LLL().row(0)
+    set_verbose(verb_lev)
     return list(tmp)[:n]
 
 def our_algdep(z,degree,prec = None):
@@ -547,9 +548,16 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
 
 
 def polynomial_roots(f, K):
+    r'''
+    Finds the roots of f in the field K, using Hensel lift.
+    sage: x = QQ['x'].gen()
+    sage: K.<g> = Qp(5,20).extension(x^2-x-13)
+    sage: polynomial_roots(x^8 - 576*x^6 + 86568*x^4 - 731648*x^2 + 3283344, K)[0]
+    g + 2*g*5 + (2*g + 4)*5^2 + (3*g + 1)*5^3 + 2*g*5^4 + (g + 2)*5^5 + 4*5^6 + (4*g + 1)*5^7 + (g + 3)*5^8 + (4*g + 4)*5^9 + (g + 3)*5^10 + (2*g + 3)*5^11 + 2*g*5^12 + (2*g + 2)*5^13 + (3*g + 1)*5^14 + (4*g + 4)*5^15 + (g + 3)*5^16 + (2*g + 1)*5^17 + (4*g + 4)*5^18 + (3*g + 3)*5^19 + O(5^20)
+    '''
     ans = []
     p = K.prime()
-    rng = range(p) if p > 2 else range(8)
+    rng = range(2*p) if p > 2 else range(8) # DEBUG: why do we need the 2*p??
     for rvec in product(rng,repeat=K.degree()):
         r = sum(r0 * K.gen()**i for i, r0 in enumerate(rvec))
         try:
@@ -614,6 +622,16 @@ def recognize_DV_point(J, degree, height_threshold=None, prime_bound=None, roots
     return None, None
 
 def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebraic=True, units=None, extra_periods=None, **kwargs):
+    r'''
+    TESTS::
+
+        sage: x = QQ['x'].gen()
+        sage: K.<g> = Qp(3, 50).extension(x^2 - x - 13)
+        sage: J = 2263329212681251489468 + 6644010739654744556634*g + O(3^46)
+        sage: M, units = construct_conjectural_field(53, 92, magma)
+        sage: recognize_DV_lindep(J, M, prime_list,units=units)[0]
+        -13428645981838725687412006731311862260036393144131037/10123703733988823910171240*z^7 + 502251030640733316048398658264063553664790384283703/111249491582294768243640*z^6 - 78087412685818809900149065029193200175121886536303713/723121695284915993583660*z^5 + 360197566171315300839811303760308434387346557656952719/1446243390569831987167320*z^4 - 328443350618302355160156798244617357988335950232624503/144624339056983198716732*z^3 + 4292871523894753582996266008524500005117955042867614873/1446243390569831987167320*z^2 - 67162984345562285571830625452336658244873103523458655491/10123703733988823910171240*z + 910176854599770721768378903080137047536350642333530723/389373220538031688852740
+    '''
     if extra_periods is None:
         extra_periods = []
     K = J.parent()
@@ -666,14 +684,14 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebr
     else:
         units = [M(o) for o in units]
     V.extend(units)
-    Vlogs.extend([phi(u) for u in units])
+    Vlogs.extend([phi(u).log() for u in units])
     W.extend(['u%s'%i for i in range(len(units))])
 
     # Add information about extra periods
     Vlogs.extend([K_to_Cp(per.log()) for per in extra_periods])
     W.extend(['period_%s'%i for i in range(len(extra_periods))])
     clist = our_lindep(Vlogs)
-    print(clist)
+    verbose('clist = %s'%str(clist))
     if clist[0] < 0:
         clist = [-o for o in clist]
     if clist[0] == 0 or clist[0] > 10**5: # DEBUG - HARDCODED
@@ -681,7 +699,7 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebr
     if not algebraic:
         return [(u,v) for u,v in zip(clist,W) if u != 0]
     else:
-        print([(u,v) for u,v in zip(clist,W) if u != 0])
+        verbose(str(([(u,v) for u,v in zip(clist,W) if u != 0])))
         if not clist[0] > 0:
             raise ValueError('Redundant set of primes?')
         fact = Factorization([(u,-a) for u, a in zip(V[1:],clist[1:])])
@@ -690,7 +708,7 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebr
         hM = 1 # DEBUG
         J_alg = fact.prod() # DEBUG # (M['x'].gen()**hM - fact.prod()).roots(M)[0][0]
         remainder = clist[0] // hM
-        assert (phi(J_alg) / K_to_Cp(J)**remainder).log() == 0
+        assert (phi(J_alg) / K_to_Cp(J)**remainder).log(0) == 0
         return J_alg, remainder, fact
 
 def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
