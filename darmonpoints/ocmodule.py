@@ -652,7 +652,8 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         p = self.base_ring().prime()
         w = self.twisting_matrix()
         a, b, c, d = (w**-1 * g * w).list()
-        Ps = PowerSeriesRing(Zmod(p**prec), names='z', default_prec=prec)
+        Zm = Zmod(p**prec)
+        Ps = PowerSeriesRing(Zm, names='z', default_prec=prec)
         z = Ps.gen()
         if K is None:
             if hasattr(a, 'lift'):
@@ -661,6 +662,14 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
                 K = Zmod(p**prec)
             else:
                 a_inv = a**-1
+                try:
+                    a = Zm(a)
+                    b = Zm(b)
+                    c = Zm(c)
+                    d = Zm(d)
+                    a_inv = Zm(a_inv)
+                except TypeError:
+                    pass
                 K = g.parent().base_ring()
 
         denom = (a_inv * (-c * a_inv * z + 1)**-1).polynomial().truncate(prec)

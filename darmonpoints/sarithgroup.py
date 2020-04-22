@@ -479,7 +479,12 @@ class BigArithGroup_class(AlgebraicGroup):
         verbose('Finding a suitable wp...')
         i = 0
         max_iterations = kwargs.get('max_iterations',-1)
-        for wp in self.Gn.generate_wp_candidates(self.p,self.ideal_p, **kwargs):
+        try:
+            iter_candidates = self._iter_candidates
+        except AttributeError:
+            self._iter_candidates = self.Gn.generate_wp_candidates(self.p,self.ideal_p, **kwargs)
+            iter_candidates = self._iter_candidates
+        for wp in iter_candidates:
             if i % 50000 == 0:
                 verbose('Done %s iterations'%i)
             if i == max_iterations:
