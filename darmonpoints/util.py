@@ -625,7 +625,7 @@ def recognize_DV_point(J, degree, height_threshold=None, prime_bound=None, roots
                 return Jz, ff
     return None, None
 
-def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebraic=True, units=None, extra_periods=None, **kwargs):
+def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebraic=True, units=None, extra_periods=None, outfile=None, **kwargs):
     r'''
     TESTS::
 
@@ -702,10 +702,13 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebr
         clist = [-o for o in clist]
     if clist[0] == 0 or clist[0] > 10**5: # DEBUG - HARDCODED
         raise ValueError('Not recognized: clist[0] = %s'%clist[0])
+    clist_ans = [(u,v) for u,v in zip(clist,W) if u != 0]
+    fwrite("# SUCCESS!", outfile)
+    fwrite('# ' + str(clist_ans), outfile)
     if not algebraic:
-        return [(u,v) for u,v in zip(clist,W) if u != 0]
+        return clist_ans
     else:
-        verbose(str(([(u,v) for u,v in zip(clist,W) if u != 0])))
+        verbose(str(clist_ans))
         if not clist[0] > 0:
             raise ValueError('Redundant set of primes?')
         fact = Factorization([(u,-a) for u, a in zip(V[1:],clist[1:])])
@@ -715,7 +718,7 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebr
         J_alg = fact.prod() # DEBUG # (M['x'].gen()**hM - fact.prod()).roots(M)[0][0]
         remainder = clist[0] // hM
         assert (phi(J_alg) / K_to_Cp(J)**remainder).log(0) == 0
-        return J_alg, remainder, fact
+        return J_alg, remainder, fact, clist_ans
 
 def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   hF = F.class_number()
