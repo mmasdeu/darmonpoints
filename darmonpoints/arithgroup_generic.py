@@ -27,6 +27,7 @@ from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
 from sage.rings.infinity import Infinity
 from sage.modular.modsym.p1list import lift_to_sl2z, P1List
+from sage.misc.misc import get_verbose, set_verbose
 
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap
@@ -36,6 +37,7 @@ from .arithgroup_element import ArithGroupElement
 from .homology_abstract import Abelianization
 # from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok, P1NFList
 from .my_p1list_nf import lift_to_sl2_Ok, P1NFList
+
 
 class ArithGroup_generic(AlgebraicGroup):
     Element = ArithGroupElement
@@ -572,6 +574,9 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
 
         initial_points = len(remaining_points)
 
+        verb_level = get_verbose()
+        set_verbose(0)
+
         ## Loop over all points of P^1(O_F/N)
         while len(remaining_points) > 0:
             ## Pick a new cusp representative
@@ -601,7 +606,7 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
                     ## Now have the matrix (u,h; 0,u^-1).
                     ## Compute the action of this matrix on c
                     new_c = P.normalize(u * c[0], u**-1 * c[1] + h * c[0])
-                    if K != QQ: 
+                    if K != QQ:
                         new_c = new_c.tuple()
                     if new_c not in reduction_table:
                         ## We've not seen this point before! But it's equivalent to c, so kill it!
@@ -613,7 +618,7 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
                             assert P.normalize(*(vector(c) * T)).tuple() == new_c ## sanity check
                         else:
                             assert P.normalize(*(vector(c) * T)) == new_c ## sanity check
-
+        set_verbose(verb_level)
         return reduction_table, cusp_set
 
     @cached_method

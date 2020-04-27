@@ -456,8 +456,12 @@ class BigArithGroup_class(AlgebraicGroup):
         return self.subdivide(newEgood,1-parity,depth - 1)
 
     def set_wp(self, wp):
-        epsinv = matrix(QQ,2,2,[0, -1, self.p, 0])**-1
         wp = self.quaternion_algebra()(wp)
+        if self._hardcode_matrices: # DEBUG, this is untested!
+            self._wp = wp
+            return self._wp
+        epsinv = matrix(QQ,2,2,[0, -1, self.p, 0])**-1
+
         set_immutable(wp)
         ans = 0
         if not is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False):
@@ -472,6 +476,8 @@ class BigArithGroup_class(AlgebraicGroup):
         return self._wp
 
     def wp(self, **kwargs):
+        if self._hardcode_matrices:
+            return self.Gn.matrix_to_quaternion(matrix(self.F,2,2,[0,-1,self.prime(),0]))
         try:
             return self._wp
         except AttributeError:
@@ -768,6 +774,9 @@ def ArithGroup(base, discriminant, abtuple = None, level = 1, magma = None, **kw
             if not is_page_initialized(magma):
                 attach_kleinian_code(magma)
             if implementation is None:
-                return ArithGroup_nf_kleinian(base, a, b, level, magma=magma, **kwargs)
+                if (a, b) == (1, 1):
+                    return MatrixArithGroup(base, level, magma=magma, implementation='geometric', **kwargs)
+                else:
+                    return ArithGroup_nf_kleinian(base, a, b, level, magma=magma, **kwargs)
             else:
                 return MatrixArithGroup(base, level, magma=magma, **kwargs)

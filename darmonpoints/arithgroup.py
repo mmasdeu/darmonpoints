@@ -1637,7 +1637,7 @@ class ArithGroup_nf_fuchsian(ArithGroup_nf_generic, ArithGroup_fuchsian_generic)
                 self._relation_words.append(newrel)
 
 class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
-    def _init_geometric_data(self, prec = 1000, periodenum = 10, center = None, timeout = 0, **kwargs):
+    def _init_geometric_data(self, prec = 500, center = None, timeout = 0, **kwargs):
         verbose('Computing normalized basis (center = %s)'%center)
         '''
         Initialize the following attributes:
@@ -1679,8 +1679,12 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             assert 'SL' in self._grouptype
         H = self.magma.QuaternionAlgebra(RealField(prec),-1,-1)
         if center is None:
-            center = [-QQ(3)/19, QQ(5)/17, QQ(8)/11, 0]
-        magma_center = H(center)
+            center = [QQ(1)/3, QQ(-1)/2, QQ(17)/5, 0]
+            magma_center = H(center)
+        else:
+            magma_center = H(center)
+        periodenum = kwargs.get('periodenum',100)
+        enummethod = kwargs.get('enummethod','"SmallBalls"')
         verbose('Seed = %s'%self.magma.eval('GetSeed()'))
         verbose(' O = %s'%self._O_magma)
         verbose(' Basis = %s'%self._O_magma.Basis())
@@ -1689,7 +1693,8 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
 
         verbose('magma_center = %s'%magma_center)
 
-        _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, pr_zetas = 200, PeriodEnum = periodenum, Center = magma_center, max_time = timeout)
+        _,f,e = self._O_magma.NormalizedBasisSage(GroupType = grouptype, nvals = 3, pr = prec, pr_zetas = 200, PeriodEnum = periodenum, EnumMethod = enummethod, Center = magma_center, max_time = timeout)
+        # _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, pr_zetas = 200, PeriodEnum = periodenum, Center = magma_center, max_time = timeout)
         verbose('Done normalizedbasis')
         if f == self.magma(False):
             raise RuntimeError("Timed out (%s sec) in NormalizedBasis"%timeout)
@@ -1957,8 +1962,6 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
             self._final_gens.append(wd)
             self.Ugens.append(prod(gens[ZZ(i).abs() - 1]**ZZ(i).sign() for i in wd))
         self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [i+1],check = False) for i,g in enumerate(self.Ugens) ]
-
-
 
         H2relatorlen = len(H2relators)
         if H2relatorlen > 0:
