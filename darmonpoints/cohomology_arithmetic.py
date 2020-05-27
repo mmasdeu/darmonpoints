@@ -1267,7 +1267,7 @@ class ArithCoh(ArithCoh_generic):
                         continue
                     K = K.intersection(K1)
         if K.dimension() != 1:
-            raise ValueError(f'Did not obtain a one-dimensional space corresponding to E ({K.dimension() = })')
+            raise ValueError(f'Did not obtain a one-dimensional space corresponding to E (K.dimension() = {K.dimension()})')
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a * self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 
