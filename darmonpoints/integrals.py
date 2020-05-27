@@ -8,6 +8,7 @@ from sage.all import prod
 from sage.parallel.decorate import fork,parallel
 from sage.misc.getusage import get_memory_usage
 from sage.structure.sage_object import SageObject
+from sage.misc.misc import cputime
 
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap
@@ -145,7 +146,7 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,parallelize = False,twist=False,progress_bar = False,multiplicative = True, return_valuation = False):
+def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,parallelize = False,twist=False,progress_bar = False,multiplicative = True, return_valuation = True):
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
@@ -172,11 +173,11 @@ def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,parallelize = False,twist
         resval += newresval
     if not multiplicative:
         if return_valuation:
-            return resadd, resval, Cp.teichmuller(resmul)
+            return resadd, resval, resmul
         else:
             return resadd
     else:
-        return Cp.prime()**resval * Cp.teichmuller(resmul) * resadd.exp()
+        return Cp.prime()**resval * resadd.exp() * resmul
 
 def evaluate_parallel(hc,gamma,pol,c0):
     HOC = hc.parent()
@@ -214,34 +215,6 @@ def sample_point(G,e,prec = 20):
         return Infinity
     return b/d
 
-class ShapiroImage(SageObject):
-    def __init__(self,G,cocycle):
-        self.G = G
-        self.cocycle = cocycle
-
-    def __call__(self,gamma):
-        return CoinducedElement(self.G,self.cocycle,gamma)
-
-class CoinducedElement(SageObject):
-    def __init__(self,G,cocycle,gamma):
-        self.G = G
-        self.cocycle = cocycle
-        self.gamma = gamma
-
-    def __call__(self,h,check = False):
-        rev, b = h
-        if check:
-            assert self.G.reduce_in_amalgam(b) == 1
-        a = self.G.reduce_in_amalgam(b * self.gamma)
-        if self.G.use_shapiro():
-            ans = self.cocycle.evaluate_and_identity(a)
-        else:
-            ans = self.cocycle.evaluate(a)
-        if rev == False:
-            return ans
-        else:
-            return -ans
-
 def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize):
     # verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
@@ -255,7 +228,6 @@ def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_ba
     K = divisor.parent().base_ring()
     QQp = Qp(p,prec)
     R = PolynomialRing(K,'r')
-    divisor_list = [(P,n) for P,n in divisor]
     resadd = ZZ(0)
     resval = ZZ(0)
     resmul = ZZ(1)
@@ -270,7 +242,7 @@ def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_ba
                 c0unit = K.one()
                 c0val = 0
                 pol = R.zero()
-                for P,n in divisor_list:
+                for P,n in divisor:
                     if P == Infinity:
                         continue
                     else:
@@ -278,6 +250,8 @@ def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_ba
                         hp1 = K(d + c * P)
                         if hp1.valuation() <= hp0.valuation():
                             raise ValueError('Valuation problem')
+                    # We compute n * log(1 - hp1 / hp0 z)
+                    # Doing it with power series built-in log is about 10 times slower...
                     x = hp1 / hp0
                     v = [K.zero(),K(x)]
                     xpow = K(x)
@@ -287,7 +261,7 @@ def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_ba
                     pol -= QQ(n) * R(v)
                     c0unit *= (-hp0).unit_part() ** n
                     c0val += n * hp0.valuation()
-                pol += c0unit.log( p_branch = 0 )
+                #  pol += c0unit.log( p_branch = 0 ) # DEBUG
                 newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)
                 if rev:
                     newgamma = newgamma.conjugate_by(G.wp())
@@ -299,10 +273,7 @@ def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_ba
                 verbose('Subdividing because (%s)...'%str(msg))
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([(rev, h)],parity,2)])
                 continue
-            if HOC._use_ps_dists:
-                resadd += sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
-            else:
-                resadd += mu_e.evaluate_at_poly(pol, K, coeff_depth)
+            resadd += sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e.moments()))
             try:
                 if G.use_shapiro():
                     tmp = hc['liftee'].evaluate_and_identity(newgamma)

@@ -65,8 +65,8 @@ def lattice_homology_cycle(p, G, wp, xlist, prec, tau = None, outfile = None, sm
     xi20 = xi2
     while True:
         try:
-            newxi1 = xi1.zero_degree_equivalent(prec = prec)
-            newxi2 = xi2.zero_degree_equivalent(prec = prec)
+            newxi1 = xi1.zero_degree_equivalent()
+            newxi2 = xi2.zero_degree_equivalent()
             break
         except ValueError:
             xi1 = xi1 + xi10
@@ -394,7 +394,7 @@ class OneChains_element(ModuleElement):
     def radius(self):
         return max([0] + [v.radius() for g,v in self._data.items()])
 
-    def zero_degree_equivalent(self, prec, allow_multiple = False):
+    def zero_degree_equivalent(self, allow_multiple = False):
         r'''
         Use the relations:
             * gh|v = g|v + h|g^-1 v
@@ -452,7 +452,7 @@ class OneChains_element(ModuleElement):
                     oldv = (g**-1) * oldv
         verbose('Done zero_degree_equivalent')
         ans = HH(newdict)
-        assert ans.is_degree_zero_valued()
+        # assert ans.is_degree_zero_valued() # DEBUG
         if allow_multiple:
             return ans, x_ord
         else:
@@ -611,10 +611,12 @@ class OneChains(Parent):
         return self._coeffmodule
 
     def _element_constructor_(self,data):
+        if data == 0:
+            return self.element_class(self, {})
         if isinstance(data,dict):
             return self.element_class(self,data)
         else:
-            return self.element_class(self,dict([(data,ZZ(1))]))
+            return self.element_class(self, {data : ZZ(1)})
 
     def _coerce_map_from_(self,S):
         if isinstance(S,self.__class__):

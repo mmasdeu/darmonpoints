@@ -783,11 +783,11 @@ return NB,F,FE,IE,Vol,primes,enumtime,pairingtime,ksgtime,totalvect,totalgpelt,u
 end intrinsic;
 
 
-intrinsic NormalizedBasisSage(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodEnum := 100, Level := 1, BoundPrimes := -1, PairingMethod := "None", GroupType := "NormOne", EnumMethod := "SmallBalls", Maple := false, zetas := [], zK2 := 0, Center := "Auto", index := 1, pr := DefaultPrecision, pr_zetas := DefaultPrecision, max_time := 0) -> SeqEnum, SeqEnum, SeqEnum, SeqEnum, FldReElt, SeqEnum
+intrinsic NormalizedBasisSage(O :: AlgAssVOrd : InitialG := [], NbEnum := 0, PeriodEnum := 100, Level := 1, BoundPrimes := -1, PairingMethod := "Reduction", GroupType := "NormOne", EnumMethod := "SmallBalls", Maple := false, zetas := [], zK2 := 0, Center := "Auto", index := 1, pr := DefaultPrecision, pr_zetas := DefaultPrecision, max_time := 0) -> SeqEnum, SeqEnum, SeqEnum, SeqEnum, FldReElt, SeqEnum
 {
     Computes a fundamental domain for the Kleinian group attached to the order O.
 
-    Returns the normalized boundary of the domain, the faces, the finite edges, the infinite edges, the volume, elements with prime norm, the time spent enumerating, the time spent repairing, the time spent in KeepSameGroup, the number of enumerated vectors, the number of enumerated group elements.
+    Returns the normalized boundary of the domain, the faces, the finite edges, the infinite edges, the volume, elements with prime norm.
 }
 nbit := 0;
 if EnumMethod notin {"BigBall", "ManyBalls", "SmallBalls", "None"} then
@@ -936,8 +936,8 @@ end if;
 
 if not Fuchsian then
 	vprint Kleinian: "Computing the covolume";
-	if Type(Level) ne RngIntElt then
-		index *:= Psi(Level);
+ if Type(Level) ne RngIntElt then
+       index *:= Psi(Level);
 	end if;
 	Covol := R!Covolume(B : zK2 := zK2)*index/indexunits;
 	vprint Kleinian, 2: "covolume", RealField(10)!Covol;
@@ -945,7 +945,7 @@ else
 	vprint Kleinian: "Computing the coarea";
 	
 	if Type(Level) ne RngIntElt then
-		index *:= Psi(Level);
+	index *:= Psi(Level);
 	end if;
 	Covol := R!Coarea(B : zK2 := zK2)*index/indexunits;
 	vprint Kleinian, 2: "coarea", RealField(10)!Covol, "rational", BestApproximation(Covol/Pi(RealField(50)), 1000);

@@ -37,7 +37,7 @@ from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod,FiniteField
 from sage.rings.infinity import Infinity as oo
-from sage.arith.all import gcd, lcm, xgcd
+from sage.arith.all import gcd, lcm, xgcd, dedekind_sum
 from sage.misc.persist import db, db_save
 from sage.parallel.decorate import fork,parallel
 from sage.matrix.constructor import block_matrix
@@ -1202,6 +1202,22 @@ class ArithCoh(ArithCoh_generic):
         self._V = V
         ArithCoh_generic.__init__(self, G, V,use_ps_dists = use_ps_dists, trivial_action = True)
 
+    def get_dedekind_rademacher_cocycle(self):
+        vals = []
+        p = self.S_arithgroup().prime()
+        V = self.coefficient_module()
+        for gamma in self.group().gens():
+            a, b, c, d = gamma.quaternion_rep.list()
+            if c == 0:
+                vals.append(V([(p - 1) * b / d]))
+            else:
+                c = ZZ(c)
+                if c > 0:
+                    vals.append(V([(p-1) * (a + d) / c + 12 * (dedekind_sum(a,c) - dedekind_sum(a, ZZ(c//p)))]))
+                else:
+                    vals.append(V([(p-1) * (a + d) / c - 12 * (dedekind_sum(a,-c) - dedekind_sum(a, -ZZ(c//p)))]))
+        return self(vals)
+
     def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
         if sign == 0:
             return self.get_cocycle_from_elliptic_curve(E,1,use_magma) + self.get_cocycle_from_elliptic_curve(E,-1,use_magma)
@@ -1251,7 +1267,7 @@ class ArithCoh(ArithCoh_generic):
                         continue
                     K = K.intersection(K1)
         if K.dimension() != 1:
-            raise ValueError('Did not obtain a one-dimensional space corresponding to E')
+            raise ValueError(f'Did not obtain a one-dimensional space corresponding to E ({K.dimension() = })')
         col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
         return sum([a * self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
 

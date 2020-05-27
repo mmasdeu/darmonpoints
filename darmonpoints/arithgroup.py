@@ -1689,12 +1689,13 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
         verbose(' O = %s'%self._O_magma)
         verbose(' Basis = %s'%self._O_magma.Basis())
         verbose(' ZBasis = %s'%self._O_magma.ZBasis())
-        verbose('Grouptype = %s, prec = %s, periodenum = %s, timeout = %s'%(grouptype,prec, periodenum, timeout))
+        verbose(f'{grouptype = }, {prec = }, {periodenum = }, {timeout = }')
 
-        verbose('magma_center = %s'%magma_center)
+        verbose(f'{magma_center = }')
 
-        _,f,e = self._O_magma.NormalizedBasisSage(GroupType = grouptype, nvals = 3, pr = prec, pr_zetas = 200, PeriodEnum = periodenum, EnumMethod = enummethod, Center = magma_center, max_time = timeout)
-        # _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, pr_zetas = 200, PeriodEnum = periodenum, Center = magma_center, max_time = timeout)
+        # magma_level = sage_F_ideal_to_magma(self._F_magma, self.level)
+        # verbose(f'{magma_level =}')
+        _,f,e = self._O_magma.NormalizedBasis(GroupType = grouptype, nvals = 3, pr = prec, pr_zetas = 200, PeriodEnum = periodenum, Center = magma_center, max_time = timeout)
         verbose('Done normalizedbasis')
         if f == self.magma(False):
             raise RuntimeError("Timed out (%s sec) in NormalizedBasis"%timeout)

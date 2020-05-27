@@ -43,7 +43,7 @@ def darmon_discriminants(bound, split_primes = None, inert_primes = None):
         good_D.append(D)
     return good_D
 
-def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None, smoothen_prime = None):
+def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, max_n = None, elliptic_curve = None, smoothen_prime = None, **kwargs):
     F_to_Qp = G.base_ring_local_embedding(prec)
     G = G.Gn
     F = G.base_ring()
@@ -78,9 +78,10 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
         q1 = q
     else:
         q1 = F.ideal(q).factor()[0][0]
+        a_ell=None
     verbose('q1 = %s'%q1)
 
-    gamma, tau1 = G.embed_order(P, D, prec,outfile = outfile,return_all = False, F_to_Qp = F_to_Qp)
+    gamma, tau1 = G.embed_order(P, D, prec,outfile = outfile,return_all = False, F_to_Qp = F_to_Qp, **kwargs)
     Div = Divisors(tau1.parent())
     H1 = OneChains(G,Div)
     D1 = Div(tau1)
@@ -89,9 +90,14 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
     ans = H1({})
     ans += ans0
     # Do hecke_smoothen to kill Eisenstein part
-    ans = ans.hecke_smoothen(q1,prec = prec)
+    if q1 != 1:
+        ans = ans.hecke_smoothen(q1,prec = prec)
     assert ans.is_cycle()
-    if elliptic_curve is not None:
+    if elliptic_curve is None:
+        # Find zero degree equivalent
+        ans, n = ans.zero_degree_equivalent(allow_multiple = True)
+        return ans, n, q1
+    else:
         if F == QQ:
             a_ell = elliptic_curve.ap(q1)
         else:
@@ -115,13 +121,13 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
             ans = ans.act_by_poly_hecke(q1,g**e,prec = prec)
             f0 *= g**e
             try:
-                ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
+                ans, n = ans.zero_degree_equivalent(allow_multiple = True)
                 verbose('f0 = %s'%f0)
                 return ans, n * f0(a_ell), q1
             except ValueError: pass
         verbose('Passed the check!')
     # Find zero degree equivalent
-    ans, n = ans.zero_degree_equivalent(prec = prec, allow_multiple = True)
+    ans, n = ans.zero_degree_equivalent(allow_multiple = True)
     return ans, n * f(a_ell), q1
 
 def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data = None, magma = None, working_prec = None, recognize_point = True, **kwargs):
@@ -256,6 +262,8 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         Ename = 'unknown'
     fname = 'moments_%s_%s_%s_%s.sobj'%(P,Ename,sgninfty,prec)
 
+    print(f'{fname = }')
+
     if use_sage_db:
         print("Moments will be stored in database as %s"%(fname))
 
@@ -298,14 +306,15 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
 
             G = kwargs.pop('G', None)
             if G is None:
-                fwrite('# Initializing S-arithmetic group...', outfile)
+                fwrite(f'# Initializing S-arithmetic group...', outfile)
+                print(f'{abtuple = } {Np = } {F = }', outfile)
                 G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro, nscartan=Ncartan)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             Coh = ArithCoh(G)
             while True:
                 try:
-                    cycleGn, nn, ell = construct_homology_cycle(p, G, beta, working_prec, lambda q: Coh.hecke_matrix(q).minpoly(), outfile = outfile, elliptic_curve = E, smoothen_prime = kwargs.get('smoothen_prime',None))
+                    cycleGn, nn, ell = construct_homology_cycle(p, G, beta, working_prec, lambda q: Coh.hecke_matrix(q).minpoly(), outfile = outfile, elliptic_curve = E, smoothen_prime = kwargs.get('smoothen_prime',None), **kwargs)
                     break
                 except PrecisionError:
                     working_prec *= 2
@@ -336,6 +345,9 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                     sign_ap = ZZ(P.norm() + 1 - Curve(E).change_ring(P.residue_field()).count_points(1)[0])
 
             Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar,Ename = Ename)
+            debug_period = kwargs.pop('debug_period', False)
+            if debug_period:
+                return integrate_H1(G,cycleGn,Phi,1, prec = working_prec,parallelize = parallelize,twist = True,progress_bar = progress_bar, multiplicative = False)
             # Integration with moments
             tot_time = walltime()
             J = integrate_H1(G,cycleGn,Phi,1, prec = working_prec,parallelize = parallelize,twist = True,progress_bar = progress_bar)

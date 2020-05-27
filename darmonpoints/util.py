@@ -467,8 +467,9 @@ def our_lindep(V,prec = None, base=None):
         M[n+i,-1-i] = pn
     verb_lev = get_verbose()
     set_verbose(0)
-    tmp = M.transpose().right_kernel_matrix(algorithm='flint', proof=False).change_ring(ZZ).LLL().row(0)
+    tmp = M.transpose().change_ring(ZZ).right_kernel_matrix(algorithm='flint', proof=False)
     set_verbose(verb_lev)
+    tmp = tmp.LLL().row(0)
     return list(tmp)[:n]
 
 def our_algdep(z,degree,prec = None):
@@ -625,7 +626,7 @@ def recognize_DV_point(J, degree, height_threshold=None, prime_bound=None, roots
                 return Jz, ff
     return None, None
 
-def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebraic=True, units=None, extra_periods=None, outfile=None, **kwargs):
+def recognize_DV_lindep(J, M, prime_list, Cp = None, units=None, extra_periods=None, outfile=None, **kwargs):
     r'''
     TESTS::
 
@@ -634,8 +635,9 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebr
         sage: K.<g> = Qp(3, 50).extension(x^2 - x - 13)
         sage: J = 2263329212681251489468 + 6644010739654744556634*g + O(3^46)
         sage: M.<a> = NumberField(x^8 - 576*x^6 + 86568*x^4 - 731648*x^2 + 3283344)
-        sage: units = M.units()
-        sage: recognize_DV_lindep(J, M, [2,23,31], units=units)[0]
+        sage: recognize_DV_lindep(J, M, [2,23,31])[0]
+        # SUCCESS!
+        # [(6, 'J'), (1, 2), (-1, 2), (-4, 31), (4, 31), (-17, 'u0'), (18, 'u1')]
         -2023766261856852224157889645739554791178142975141/64123261752694158155920896*a^7 - 8601876357860750019664552395000178878450369571/15728050466689761627648*a^6 + 140102678524498815922492788991049292355611508943465/16030815438173539538980224*a^5 + 1201118951642641758359269597885536171557346723799/7864025233344880813824*a^4 - 1199190966402726284878208547401597299835758304299493/16030815438173539538980224*a^3 - 1713685325217167494723250386405237863606210720109/1310670872224146802304*a^2 + 151680504206008565246390913358498624811291743172863/445300428838153876082784*a + 3902196650282110078512851578578376225186895141249/655335436112073401152
     '''
     if extra_periods is None:
@@ -652,22 +654,52 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebr
     debug_idx = kwargs.pop('debug_idx',0)
     phi = kwargs.pop('phi', M.hom([polynomial_roots(M.polynomial(),Cp)[debug_idx]]))
     V = [None]
-    Vlogs = [K_to_Cp(J.log())]
+    Vlogs = [K_to_Cp(J.log(0))]
     W = ['J']
+    xp = phi(M.gen())
+    xpconj = xp.trace() - xp
+    # We find sigma in Gal(M) such that it corresponds to conjugation in Cp.
+    found = False
+    for sigma in M.automorphisms():
+        if xpconj == phi(sigma(M.gen())):
+            found = True
+            break
+    assert found
+    class_number = kwargs.get('class_number', None)
     if class_number is not None:
         hM = class_number
         for ell in prime_list:
+            ell_set = set([])
             for o in M.ideal(ell).factor():
+                verbose(f'(Factoring {ell})')
+                gens = (o[0]**hM).gens_reduced(proof=False)
+                assert len(gens) == 1, f'Wrong class number ( = {class_number}). Witness: {ell}'
                 gens0 = (o[0]**hM).gens_reduced(proof=False)[0]
                 phiv = phi(gens0)
                 if phiv.valuation() == 0:
-                    V.append(gens0)
-                    Vlogs.append(phiv.log())
+                    ell_set.add(gens0)
+            while ell_set:
+                g0 = ell_set.pop()
+                sg0 = sigma(g0)
+                count = 1
+                g1_list = [g1 for g1 in ell_set if sg0 in M.ideal(g1)]
+                for g1 in g1_list:
+                    ell_set.remove(g1)
+                assert len(g1_list) <= 1
+                if len(g1_list) == 0:
+                    V.append(g0)
+                    Vlogs.append(phi(g0).log(0))
+                    W.append(ell)
+                elif len(g1_list) == 1:
+                    quot = g0 / g1_list[0]
+                    V.append(quot)
+                    Vlogs.append(phi(quot).log(0))
                     W.append(ell)
     else:
         hMlist = [1]
         for ell in prime_list:
             for L,e in M.ideal(ell).factor():
+                verbose(f'(Factoring {ell}')
                 hM = 0
                 gens = [None, None]
                 while len(gens) > 1:
@@ -678,47 +710,73 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, class_number = None, algebr
                 if phiv.valuation() == 0:
                     hMlist.append(hM)
                     V.append(gens0)
-                    Vlogs.append(phiv.log())
+                    Vlogs.append(phiv.log(0))
                     W.append(ell)
         hM = lcm(hMlist)
         assert len(V) == len(hMlist)
         V = [None] + [o**(hM / e) for o, e in zip(V[1:], hMlist[1:])]
         Vlogs = [Vlogs[0]] + [(hM / e) * o for o, e in zip(Vlogs[1:], hMlist[1:])]
 
+    # Add units
     if units is None:
-        units = list(M.units())
+        units = list(M.units(proof=False))
     else:
         units = [M(o) for o in units]
-    V.extend(units)
-    Vlogs.extend([phi(u).log() for u in units])
-    W.extend(['u%s'%i for i in range(len(units))])
+    for i, u in enumerate(units):
+        V.append(u)
+        Vlogs.append(phi(u).log(0))
+        W.append(f'u{i}')
 
-    # Add information about extra periods
-    Vlogs.extend([K_to_Cp(per.log()) for per in extra_periods])
-    W.extend(['period_%s'%i for i in range(len(extra_periods))])
+    # Add extra periods
+    for i, per in enumerate(extra_periods):
+        Vlogs.append(K_to_Cp(per.log(0)))
+        W.append(f'period_{i}')
+
+    # Truncate precision if prec is specified
+    prec = kwargs.get('prec',prec)
+    if prec is not None:
+        Vlogs = [o.add_bigoh(prec) for o in Vlogs]
+
+    # OK now cross fingers...
+    clist = kwargs.get('clist', None)
+    if clist is not None:
+        assert len(clist) == len(Vlogs), f'Provided clist is of incorrect length (should be {len(Vlogs)})'
+        return sum([c * o for c, o in zip(clist, Vlogs)])
     clist = our_lindep(Vlogs)
-    verbose('clist = %s'%str(clist))
+    verbose(f'{clist = }')
+    verbose(f'{W = }')
+    verbose(f'Should be zero : {sum([c * o for c, o in zip(clist, Vlogs)])}')
     if clist[0] < 0:
         clist = [-o for o in clist]
-    if clist[0] == 0 or clist[0] > 10**5: # DEBUG - HARDCODED
-        raise ValueError('Not recognized: clist[0] = %s'%clist[0])
+    if clist[0] == 0:
+        verbose(f'Not recognized: {clist[0] = }')
+        return None
+    ht = 2 * sum((1+RR(o).abs()).log(p) for o in clist)
+    verbose(f'(confidence factor: { ht / prec})')
+    if ht > prec:
+        verbose(f'Not recognized (confidence factor: {ht / prec = }): {clist = }')
+        return None
     clist_ans = [(u,v) for u,v in zip(clist,W) if u != 0]
     fwrite("# SUCCESS!", outfile)
-    fwrite('# ' + str(clist_ans), outfile)
+    fwrite(f'# {clist_ans}', outfile)
+    algebraic = kwargs.get('algebraic', True)
     if not algebraic:
         return clist_ans
     else:
         verbose(str(clist_ans))
         if not clist[0] > 0:
-            raise ValueError('Redundant set of primes?')
+            verbose(f'Redundant set of primes?')
+            return None
         fact = Factorization([(u,-a) for u, a in zip(V[1:],clist[1:])])
         assert len(V) + len(extra_periods) == len(clist)
         # assert clist[0] % hM == 0
         hM = 1 # DEBUG
         J_alg = fact.prod() # DEBUG # (M['x'].gen()**hM - fact.prod()).roots(M)[0][0]
         remainder = clist[0] // hM
-        assert (phi(J_alg) / K_to_Cp(J)**remainder).log(0) == 0
-        return J_alg, remainder, fact, clist_ans
+        if len(extra_periods) > 0 or ((phi(J_alg) / K_to_Cp(J)**remainder).log(0) == 0):
+            return J_alg, remainder, fact, clist_ans
+        else:
+            return None
 
 def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   hF = F.class_number()
@@ -743,7 +801,9 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
       else:
           return E.change_ring(HCF)(0),True
   elif E.base_ring() == QQ and hF == 1:
-      assert w.minpoly()(Cp.gen()) == 0
+      # We need to ensure that w and g are compatible
+      wp = polynomial_roots(w.minpoly(), Cp)[0]
+      # assert w.minpoly()(Cp.gen()) == 0
       x1 = 0
       x2 = 0
       for i,o in enumerate(x.expansion()):
@@ -751,11 +811,24 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
               x1 += o[0] * p**i
           if len(o) > 1:
               x2 += o[1] * p**i
+      u = 0
+      v = 0
+      for i,o in enumerate(wp.expansion()):
+          if len(o) > 0:
+              u += o[0] * p**i
+          if len(o) > 1:
+              v += o[1] * p**i
+
+      u = (p**wp.valuation())*Floc(u).add_bigoh(prec)
+      v = (p**wp.valuation())*Floc(v).add_bigoh(prec)
+      u = QQ(u)
+      v = QQ(v)
+      # wrote wp = u + g * v
       x1 = (p**x.valuation())*Floc(x1).add_bigoh(prec)
       x2 = (p**x.valuation())*Floc(x2).add_bigoh(prec)
       x1 = QQ(x1)
       x2 = QQ(x2)
-      list_candidate_x = [x1+x2*w]
+      list_candidate_x = [x1+x2*w] # [x1 - x2 * u / v + (x2 / v) * w] # DEBUG
   else:
       candidate_x = our_algdep(x,E.base_ring().degree()*2*hF,prec)
       pol_height = height_polynomial(candidate_x,base = p)
@@ -1265,7 +1338,7 @@ def find_the_unit_of(F,K):
                 return OK(ans)
     # Not found so far..
     norm = unit_not_in_F.norm(F)
-    ans = unit_not_in_F**2/norm
+    ans = unit_not_in_F**2 / norm
     assert ans not in F, "Expected unit not to be in F, but it is (= %s)"%ans
     assert ans.multiplicative_order() == Infinity, "Expected unit to be nontorsion, but it is (= %s)"%ans
     assert ans.norm(F) == 1, "Expected unit to be of relative norm 1, but it is not (= %s, Norm = %s)"%(ans, ans.norm(F))
@@ -1746,7 +1819,7 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
         Phi = QQ(1)
         for P,_ in D.factor():
             Phi *= QQ(P.norm().abs() - 1)
-        Psi = QQ(M.norm()).abs()
+        Psi = ZZ(1)
         for P,e in M.factor():
             np = QQ(P.norm())
             Psi *= np**(ZZ(e)-1) * (np + 1)
@@ -1755,10 +1828,13 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
         Phi = ZZ(D)
         for np,_ in D.factor():
             Phi *= QQ(1)-QQ(1)/np
-        Psi = ZZ(M).abs()
+        Psi = ZZ(1)
         for np,e in M.factor():
             Psi *= np**(ZZ(e)-1) * (np + 1)
     RR = RealField(prec)
+    # verbose(f'{Phi = }')
+    # verbose(f'{Psi = }')
+    # verbose(f'{disc = }')
     covol =  (RR(disc).abs()**(3.0/2.0) * zetaf * Phi)/((4 * RR.pi()**2)**(F.degree()-1))
     index = RR(Psi)
     indexunits = 1 # There is a factor missing here, due to units.

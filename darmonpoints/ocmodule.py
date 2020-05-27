@@ -11,7 +11,7 @@ from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.all import Integer,Zp
-from sage.rings.padics.factory import ZpCA
+from sage.rings.padics.factory import ZpCA, Qp
 from sage.rings.power_series_ring import PowerSeriesRing
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.rings.rational_field import QQ
@@ -107,6 +107,9 @@ class OCVnElement(ModuleElement):
 
     def moment(self, i):
         return self._parent._Rmod(self._moments[i,0])
+
+    def moments(self):
+        return self._moments.list()
 
     def __getitem__(self,r):
         r"""
@@ -453,6 +456,12 @@ class MeromorphicFunctionsElement(ModuleElement):
             phi = parent._divisors_to_pseries
             if data == 0:
                 self._value = parent._V(0) if additive else Ps(1)
+            elif isinstance(data.parent(), OCVn):
+                if not additive:
+                    raise NotImplementedError('Only implemented additive version')
+                self._value = Matrix(Zmod(K.prime()**prec), prec, 2)
+                for i in range(min(prec, len(data.moments()))-1):
+                    self._value[i+1, 0] = data.moment(i) # WIP
             elif isinstance(data.parent(), Divisors):
                 self._value = parent._V(0) if additive else Ps(1)
                 for Q, n in data:
@@ -488,6 +497,37 @@ class MeromorphicFunctionsElement(ModuleElement):
             return Ps(self._value)
 
     def __call__(self, D):
+        ans = self._evaluate_additive(D)
+        if ans == 0:
+            return ans.parent().one()
+        else:
+            return ans.exp()
+
+    def _evaluate_multiplicative(self, D):
+        K = self.parent().base_ring()
+        p = K.prime()
+        assert isinstance(D.parent(), Divisors) and D.degree() == 0
+        phi = self.parent()._eval_pseries_map
+        if self.parent().is_additive():
+            poly = self.power_series().polynomial()
+            poly = poly.integral()
+            ans = K(0)
+            for P, n in D:
+                phiP = phi(P)
+                if phiP.valuation() < 0:
+                    raise ValueError('Negative valuation!')
+                ans += n * poly(phiP)
+            return K(1) if ans == 0 else ans.exp()
+        else:
+            poly = self._value.polynomial()
+            ans = K(1)
+            for P, n in D:
+                phiP = phi(P)
+                assert phiP.valuation() >= 0
+                ans *= poly(phiP)**ZZ(n)
+            return ans
+
+    def _evaluate_additive(self, D):
         K = self.parent().base_ring()
         p = K.prime()
         assert isinstance(D.parent(), Divisors) and D.degree() == 0
@@ -502,22 +542,16 @@ class MeromorphicFunctionsElement(ModuleElement):
                     raise ValueError('Negative valuation!')
                 ans += n * poly(phiP)
             if ans == 0:
-                return K(1)
+                return K(0)
             else:
-                try:
-                    return ans.exp()
-                except ValueError:
-                    for P, n in D:
-                        if n != 0:
-                            print([o.valuation() for o in D.support()])
-                    assert 0
+                return ans
         else:
             poly = self._value.polynomial()
-            ans = K(1)
+            ans = K(0)
             for P, n in D:
                 phiP = phi(P)
                 assert phiP.valuation() >= 0
-                ans *= poly(phiP)**n
+                ans += n * poly(phiP).log()
             return ans
 
     def _cmp_(self, right):
@@ -630,9 +664,10 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         else:
             self._twisting_matrix = twisting_matrix
         a, b, c, d = self._twisting_matrix.list()
-        self._divisors_to_pseries = lambda Q : 1 - (c * Q + d) * t / (a * Q + b)
+        # Maps Q to 1 - t / ((a*Q+b)/(c*Q+d))
+        self._divisors_to_pseries = lambda Q : 1 - (Q.parent()(c) * Q + Q.parent()(d)) * t / (Q.parent()(a) * Q + Q.parent()(b))
         a, b, c, d = (self._twisting_matrix**-1).list()
-        self._eval_pseries_map = lambda Q : (a * Q + b) / (c * Q + d)
+        self._eval_pseries_map = lambda Q : (Q.parent()(a) * Q + Q.parent()(b)) / (Q.parent()(c) * Q + Q.parent()(d))
         self._unset_coercions_used()
         self.register_action(Scaling(ZZ,self))
         self.register_action(MatrixAction(MatrixSpace(K,2,2),self))
@@ -652,10 +687,8 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         p = self.base_ring().prime()
         w = self.twisting_matrix()
         a, b, c, d = (w**-1 * g * w).list()
-        Zm = Zmod(p**prec)
-        Ps = PowerSeriesRing(Zm, names='z', default_prec=prec)
-        z = Ps.gen()
         if K is None:
+            Zm = Zmod(p**prec)
             if hasattr(a, 'lift'):
                 a_inv = (a**-1).lift()
                 a, b, c, d = a.lift(), b.lift(), c.lift(), d.lift()
@@ -671,8 +704,13 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
                 except TypeError:
                     pass
                 K = g.parent().base_ring()
+        else:
+            Zm = K
+            a_inv = a**-1
 
-        denom = (a_inv * (-c * a_inv * z + 1)**-1).polynomial().truncate(prec)
+        Ps = PowerSeriesRing(Zm, names='z', default_prec=prec)
+        z = Ps.gen()
+        denom = (a_inv * (-c * a_inv * z + 1)**-1).polynomial().truncate(prec) # 1 / (-c*z + a)
         zz = (d * z - b) * denom # zz = (d * z - b) / (-c * z  + a)
 
         zz_ps0 = zz.truncate(prec) # Ps(zz).add_bigoh(prec)
