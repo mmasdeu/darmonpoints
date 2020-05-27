@@ -743,18 +743,18 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, units=None, extra_periods=N
         assert len(clist) == len(Vlogs), f'Provided clist is of incorrect length (should be {len(Vlogs)})'
         return sum([c * o for c, o in zip(clist, Vlogs)])
     clist = our_lindep(Vlogs)
-    verbose(f'{clist = }')
-    verbose(f'{W = }')
+    verbose(f'clist = {clist}')
+    verbose(f'W = {W}')
     verbose(f'Should be zero : {sum([c * o for c, o in zip(clist, Vlogs)])}')
     if clist[0] < 0:
         clist = [-o for o in clist]
     if clist[0] == 0:
-        verbose(f'Not recognized: {clist[0] = }')
+        verbose(f'Not recognized: clist[0] = {clist[0]}')
         return None
     ht = 2 * sum((1+RR(o).abs()).log(p) for o in clist)
     verbose(f'(confidence factor: { ht / prec})')
     if ht > prec:
-        verbose(f'Not recognized (confidence factor: {ht / prec = }): {clist = }')
+        verbose(f'Not recognized (confidence factor: ht / prec = {ht / prec}): clist = {clist}')
         return None
     clist_ans = [(u,v) for u,v in zip(clist,W) if u != 0]
     fwrite("# SUCCESS!", outfile)
@@ -1832,9 +1832,6 @@ def covolume(F,D,M = 1,prec = None,zeta = None):
         for np,e in M.factor():
             Psi *= np**(ZZ(e)-1) * (np + 1)
     RR = RealField(prec)
-    # verbose(f'{Phi = }')
-    # verbose(f'{Psi = }')
-    # verbose(f'{disc = }')
     covol =  (RR(disc).abs()**(3.0/2.0) * zetaf * Phi)/((4 * RR.pi()**2)**(F.degree()-1))
     index = RR(Psi)
     indexunits = 1 # There is a factor missing here, due to units.
