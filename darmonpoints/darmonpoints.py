@@ -262,7 +262,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         Ename = 'unknown'
     fname = 'moments_%s_%s_%s_%s.sobj'%(P,Ename,sgninfty,prec)
 
-    print(f'{fname = }')
+    print(f'fname = {fname}')
 
     if use_sage_db:
         print("Moments will be stored in database as %s"%(fname))
@@ -307,7 +307,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             G = kwargs.pop('G', None)
             if G is None:
                 fwrite(f'# Initializing S-arithmetic group...', outfile)
-                print(f'{abtuple = } {Np = } {F = }', outfile)
+                print(f'abtuple = {abtuple} Np = {Np} F = {F}', outfile)
                 G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro, nscartan=Ncartan)
 
             # Define the cycle ( in H_1(G,Div^0 Hp) )
