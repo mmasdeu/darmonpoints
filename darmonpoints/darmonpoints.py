@@ -262,8 +262,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         Ename = 'unknown'
     fname = 'moments_%s_%s_%s_%s.sobj'%(P,Ename,sgninfty,prec)
 
-    print(f'fname = {fname}')
-
     if use_sage_db:
         print("Moments will be stored in database as %s"%(fname))
 
@@ -273,6 +271,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         outfile = '/tmp/darmonpoint_' + outfile
 
     fwrite("Starting computation of the Darmon point",outfile)
+    fwrite(f'## fname = {fname}',outfile)
     fwrite('D_B = %s  %s'%(DB,factor(DB)),outfile)
     fwrite('Np = %s'%Np,outfile)
     if Ncartan is not None:
