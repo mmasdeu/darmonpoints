@@ -720,8 +720,6 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     use_shapiro = param.use_shapiro
     use_sage_db = param.use_sage_db
     magma_seed = param.magma_seed
-    parallelize = param.parallelize
-    Up_method = param.up_method
     use_magma = param.use_magma
     progress_bar = param.progress_bar
     sign_at_infinity = param.sign_at_infinity
@@ -731,10 +729,6 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     hecke_bound = param.hecke_bound
     timeout = param.timeout
 
-    if Up_method == "bigmatrix" and use_shapiro == True:
-        import warnings
-        warnings.warn('Use of "bigmatrix" for Up iteration is incompatible with Shapiro Lemma trick. Using "naive" method for Up.')
-        Up_method = 'naive'
 
     global G, Coh, flist, hecke_data, g0, g1, Alog, Aval, Amul, Blog, Bval, Bmul, Dlog, Dval, Dmul, a, b, T, xi10, xi20, xi11, xi21, Phif
     if pol is None or pol.degree() == 1:
@@ -815,7 +809,7 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
                 working_prec *= 2
                 fwrite('# Raising working precision to %s and trying again'%working_prec, outfile)
         fwrite('# Defined homology cycles', outfile)
-        Phif = get_overconvergent_class_quaternionic(P, flist[0], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar)
+        Phif = get_overconvergent_class_quaternionic(P, flist[0], G, prec, sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,progress_bar = progress_bar)
         fwrite('# Overconvergent lift completed', outfile)
 
         from integrals import integrate_H1

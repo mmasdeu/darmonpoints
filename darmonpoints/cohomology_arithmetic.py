@@ -62,7 +62,7 @@ from .representations import *
 from .ocmodule import our_adjuster, ps_adjuster
 from .ocbianchi import BianchiDistributions, left_ps_adjuster
 
-def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False):
+def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = False,use_sage_db = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
     if use_ps_dists == False:
@@ -91,7 +91,7 @@ def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = 
     Phi._liftee = phi0
     return Phi
 
-def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap, use_ps_dists = False,use_sage_db = False,parallelize = False,progress_bar = False,method = None,Ename = 'unknown'):
+def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap, use_ps_dists = False,use_sage_db = False,progress_bar = False,Ename = 'unknown'):
     try:
         p = ZZ(P)
         Pnorm = p
@@ -101,11 +101,6 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
         Pnorm = ZZ(P.norm())
         F = P.number_field()
 
-    if method is None:
-        method = 'naive'
-    else:
-        if method != 'naive' and method != 'bigmatrix':
-            raise ValueError('method should be either "naive" or "bigmatrix"')
     if Pnorm != p:
         raise NotImplementedError('For now I can only work over totally split')
 
@@ -128,7 +123,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     CohOC.P_gen = G.ideal_p
     Phi0 = CohOC(phiE)
     verbose('Now lifting...')
-    Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
+    Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, progress_bar = progress_bar)
     if use_sage_db:
         raise NotImplementedError
     verbose('Done.')
@@ -136,9 +131,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
     Phi['sign_ap'] = sign_ap
     return Phi
 
-def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity=1,sign_ap=1, parallelize = False, progress_bar = False,method = None,Ename = 'unknown'):
-    if parallelize:
-        raise NotImplementedError
+def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity=1,sign_ap=1, progress_bar = False,Ename = 'unknown'):
     p = ZZ(P.norm().factor()[0][0])
     Pnorm = ZZ(P.norm())
     F = P.number_field()
@@ -146,11 +139,6 @@ def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity=
     Pbar = pOF[0] if P == pOF[1] else pOF[1]
     assert P * Pbar == F.ideal(p)
 
-    if method is None:
-        method = 'naive'
-    else:
-        if method != 'naive' and method != 'bigmatrix':
-            raise ValueError('method should be either "naive" or "bigmatrix"')
     if Pnorm != p:
         raise NotImplementedError('For now I can only work over totally split')
 
@@ -177,7 +165,7 @@ def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity=
     Phi0._aPbar = aPbar
 
     verbose('Now lifting...')
-    Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, parallelize = parallelize,progress_bar = progress_bar,method = method)
+    Phi = CohOC.improve(Phi0, prec = prec,sign = sign_ap, progress_bar = progress_bar)
     Phi._aP = aP
     Phi._aPbar = aPbar
     verbose('Done.')
@@ -639,30 +627,6 @@ class ArithCohOverconvergent(ArithCoh_generic):
         self._V = V
         ArithCoh_generic.__init__(self, G, V,use_ps_dists = use_ps_dists, trivial_action = False)
 
-    @cached_method
-    def precompute_Up_data(self):
-        gammas = self.group().gens()
-        if repslocal is None:
-            try:
-                prec = V.base_ring().precision_cap()
-            except AttributeError:
-                prec = None
-            repslocal = self.get_Up_reps_local(prec)
-
-        V = self.coefficient_module()
-        R = V.base_ring()
-        try:
-            N = len(V(0)._moments.list())
-        except AttributeError:
-            N = 1
-
-        ans_list = []
-        Up_reps = self.S_arithgroup().get_Up_reps()
-        for i,gi in enumerate(self.group().gens()):
-            tk_list = [tuple(self.group().get_hecke_ti(sk,gi).word_rep) for sk in Up_reps]
-            for tk in tk_list:
-                fox_grad_k = self.fox_gradient(tik)
-
     def get_Up_reps_local(self,prec):
         Up_reps = self.S_arithgroup().get_Up_reps()
         if prec is None:
@@ -675,95 +639,10 @@ class ArithCohOverconvergent(ArithCoh_generic):
         S0 = V.Sigma0()
         return [S0(self.group().embed(g,prec), check = False) for g in Up_reps]
 
-    def apply_Up_bigmatrix(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False, repslocal = None, Up_reps = None, steps = 1): # one-variable overconvergent
+    def apply_Up(self,c,group = None,scale = 1, times = 0,progress_bar = False, repslocal = None, Up_reps = None): # one-variable overconvergent
         r"""
         Apply the Up Hecke operator operator to ``c``.
         """
-        def find_newans(Coh,glocs,ti):
-            gens = Coh.group().gens()
-            V = Coh.coefficient_module()
-            try:
-                N = len(V(0)._moments.list())
-            except AttributeError:
-                N = 1
-            newans = [V.acting_matrix(glocs[0], N).new_matrix() for u in gens]
-            for gk0,tik in zip(glocs,ti):
-                gk = V.acting_matrix(gk0, N)
-                fox_grad_k = Coh.fox_gradient(tik, red = lambda x:x.apply_map(lambda y: y % Coh._pN))
-                for j,gj in enumerate(gens):
-                    newans[j] += gk * fox_grad_k[j]
-                    try:
-                        newans[j] = newans[j].apply_map(lambda x: x % Coh._pN)
-                    except PrecisionError:
-                        pass
-            return newans
-
-        assert steps >= 1
-
-        V = self.coefficient_module()
-        R = V.base_ring()
-        gammas = self.group().gens()
-
-        if Up_reps is None:
-            Up_reps = self.S_arithgroup().get_Up_reps()
-
-        if repslocal is None:
-            try:
-                prec = V.base_ring().precision_cap()
-            except AttributeError:
-                prec = None
-            repslocal = self.get_Up_reps_local(prec)
-        i = 0
-        verbose('Getting Up matrices...')
-        try:
-            N = len(V(0)._moments.list())
-        except AttributeError:
-            N = 1
-        nreps = len(Up_reps)
-        ngens = len(self.group().gens())
-        NN = ngens * N
-        A = Matrix(ZZ,NN,NN,0)
-        total_counter = ngens**2
-        counter = 0
-        iS = 0
-        for i,gi in enumerate(self.group().gens()):
-            ti = [tuple(self.group().get_hecke_ti(sk,gi).word_rep) for sk in Up_reps]
-            jS = 0
-            for ans in find_newans(self,repslocal,ti):
-                A.set_block(iS,jS,ans)
-                jS += N
-                if progress_bar:
-                    counter +=1
-                    update_progress(float(counter)/float(total_counter),'Up matrix')
-            iS += N
-        verbose('Computing 2^(%s)-th power of a %s x %s matrix'%(times,A.nrows(),A.ncols()))
-        for i in range(times):
-            A = A**2
-            if N != 0:
-                A = A.apply_map(lambda x: x % self._pN)
-            if progress_bar:
-                update_progress(float(i+1)/float(times),'Exponentiating matrix')
-        verbose('Done computing 2^(%s)-th power'%times)
-        if times > 0:
-            scale_factor = ZZ(scale).powermod(2**times,self._pN)
-        else:
-            scale_factor = ZZ(scale)
-        bvec = Matrix(R,NN,1,[o for b in c._val for o in b._moments.list()])
-        if scale_factor != 1:
-            bvec = scale_factor * bvec
-        valmat = A * bvec
-        appr_module = V.approx_module(N)
-        ans = self([V(appr_module(valmat.submatrix(row=i,nrows = N).list())) for i in range(0,valmat.nrows(),N)])
-        return ans
-
-    def apply_Up(self,c,group = None,scale = 1,parallelize = False,times = 0,progress_bar = False,method = 'naive', repslocal = None, Up_reps = None, steps = 1): # one-variable overconvergent
-        r"""
-        Apply the Up Hecke operator operator to ``c``.
-        """
-        if method != 'naive':
-            raise NotImplementedError
-        assert steps == 1
-
         V = self.coefficient_module()
         R = V.base_ring()
         gammas = self.group().gens()
@@ -795,13 +674,9 @@ class ArithCohOverconvergent(ArithCoh_generic):
                     delta = Gn(G.get_coset_ti(set_immutable(xi * gamma.quaternion_rep))[0])
                     input_vec.append(([(sk, Gn.get_hecke_ti(g,delta)) for sk, g in zip(repslocal, Up_reps)], c, i, j))
             vals = [[V.coefficient_module()(0,normalize=False) for xi in G.coset_reps()] for gamma in gammas]
-            if parallelize:
-                for inp, outp in parallel(calculate_Up_contribution)(input_vec):
-                    vals[inp[0][-1]][inp[0][-2]] += outp
-            else:
-                for inp in input_vec:
-                    outp = calculate_Up_contribution(*inp)
-                    vals[inp[-1]][inp[-2]] += outp
+            for inp in input_vec:
+                outp = calculate_Up_contribution(*inp)
+                vals[inp[-1]][inp[-2]] += outp
             ans = self([V(o) for o in vals])
         else: # not shapiro
             Gpn = G.small_group()
@@ -816,7 +691,7 @@ class ArithCohOverconvergent(ArithCoh_generic):
             ans *= scale
         return ans
 
-    def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'naive', steps = 1, check_convergence=False):
+    def improve(self, Phi, prec = None, sign = None,progress_bar = False, check_convergence=False):
         r"""
 
         Repeatedly applies U_p. Used in lifting theorems: 'improves' the precision of
@@ -831,56 +706,52 @@ class ArithCohOverconvergent(ArithCoh_generic):
             prec = U.base_ring().precision_cap()
         assert prec is not None
         repslocal = self.get_Up_reps_local(prec)
-        if method == 'naive':
-            h2 = self.apply_Up(Phi, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', steps = steps)
-            if progress_bar:
-                update_progress(float(0)/float(prec),'f|Up')
-            else:
-                verbose('Applied Up once')
 
-            h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', steps = steps)
-            ii = 0
-            try:
-                current_val = min([(u-v).valuation() for u,v in zip([o for w in h2.values() for o in w.values()],[o for w in Phi.values() for o in w.values()])])
-            except AttributeError:
-                current_val = min([(u-v).valuation() for u,v in zip(h2.values(),Phi.values())])
+        h2 = self.apply_Up(Phi, group = group, scale = 1,times = 0,progress_bar = False)
+        if progress_bar:
+            update_progress(float(0)/float(prec),'f|Up')
+        else:
+            verbose('Applied Up once')
+
+        h2 = self.apply_Up(h2, group = group, scale = 1,times = 0,progress_bar = False)
+        ii = 0
+        try:
+            current_val = min([(u-v).valuation() for u,v in zip([o for w in h2.values() for o in w.values()],[o for w in Phi.values() for o in w.values()])])
+        except AttributeError:
+            current_val = min([(u-v).valuation() for u,v in zip(h2.values(),Phi.values())])
+        if progress_bar:
+            update_progress(float(current_val)/float(prec),'f|Up')
+        else:
+            verbose("Applied Up twice")
+        old_val = current_val - 1
+        while current_val < prec and current_val > old_val:
+            h1 = h2
+            old_val = current_val
+            ii += 2
+            h2 = self.apply_Up(h1, group = group, scale = 1,times = 0,progress_bar = False)
             if progress_bar:
                 update_progress(float(current_val)/float(prec),'f|Up')
             else:
-                verbose("Applied Up twice")
-            old_val = current_val - 1
-            while current_val < prec and current_val > old_val:
-                h1 = h2
-                old_val = current_val
-                ii += 2
-                h2 = self.apply_Up(h1, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', steps = steps)
-                if progress_bar:
-                    update_progress(float(current_val)/float(prec),'f|Up')
-                else:
-                    verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
-                h2 = self.apply_Up(h2, group = group, scale = 1,parallelize = parallelize,times = 0,progress_bar = False,method = 'naive', steps = steps)
-                if check_convergence:
-                    try:
-                        current_val = min([(u-v).valuation() for u,v in zip(h2.values(),h1.values())])
-                    except AttributeError:
-                        current_val = min([(u-v).valuation() for u,v in zip([o for w in h2.values() for o in w.values()],[o for w in h1.values() for o in w.values()])])
+                verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
+            h2 = self.apply_Up(h2, group = group, scale = 1,times = 0,progress_bar = False)
+            if check_convergence:
+                try:
+                    current_val = min([(u-v).valuation() for u,v in zip(h2.values(),h1.values())])
+                except AttributeError:
+                    current_val = min([(u-v).valuation() for u,v in zip([o for w in h2.values() for o in w.values()],[o for w in h1.values() for o in w.values()])])
 
-                    if ii == 2 and current_val <= old_val:
-                        raise RuntimeError("Not converging, maybe ap sign is wrong?")
-                else:
-                    current_val = ii
-                if progress_bar and ii + 1 <= prec:
-                    update_progress(float(current_val)/float(prec),'f|Up')
-                else:
-                    verbose('Applied Up %s times (val = %s)'%(ii+2,current_val))
-            Phi._val = h2._val
-            if progress_bar and current_val < 1:
-                update_progress(float(1.0),'f|Up')
-            return h2
-        else:
-            assert method == 'bigmatrix'
-            return self.apply_Up(Phi, group = group, scale = 1, parallelize = parallelize,times = len(ZZ(prec-1).bits()),progress_bar = progress_bar,method = 'bigmatrix',repslocal = repslocal, steps = steps)
-
+                if ii == 2 and current_val <= old_val:
+                    raise RuntimeError("Not converging, maybe ap sign is wrong?")
+            else:
+                current_val = ii
+            if progress_bar and ii + 1 <= prec:
+                update_progress(float(current_val)/float(prec),'f|Up')
+            else:
+                verbose('Applied Up %s times (val = %s)'%(ii+2,current_val))
+        Phi._val = h2._val
+        if progress_bar and current_val < 1:
+            update_progress(float(1.0),'f|Up')
+        return h2
 
     def get_Lseries_term(self, phi, n, cov = None):
         r"""
@@ -1048,7 +919,7 @@ class ArithCohBianchi(ArithCoh_generic):
             ans = scale * ans
         return ans
 
-    def improve(self, Phi, prec = None, sign = None, parallelize = False,progress_bar = False,method = 'naive', steps = 1):
+    def improve(self, Phi, prec = None, sign = None, progress_bar = False):
         r"""
 
         Repeatedly applies U_p. Used in lifting theorems: 'improves' the precision of
@@ -1065,8 +936,6 @@ class ArithCohBianchi(ArithCoh_generic):
 
         pi, pi_bar = self.P_gen, self.Pbar_gen
         p = pi.norm()
-        if method != 'naive':
-            raise NotImplementedError
 
         h2 = self.apply_Up(Phi, group = group, scale = sign,progress_bar = progress_bar)
 

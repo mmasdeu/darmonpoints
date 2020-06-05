@@ -94,7 +94,17 @@ class ArithGroupElement(MultiplicativeGroupElement):
         # if left.has_word_rep and right.has_word_rep:
         #     word_rep = left.word_rep + right.word_rep
         if (left.has_quaternion_rep and right.has_quaternion_rep) or word_rep is None:
-            quaternion_rep = left.quaternion_rep * right.quaternion_rep
+            try:
+                quaternion_rep = left.quaternion_rep * right.quaternion_rep
+            except TypeError:
+                print(left.quaternion_rep)
+                print(right.quaternion_rep)
+                print(left.quaternion_rep.parent().base_ring())
+                print(right.quaternion_rep.parent().base_ring())
+                print(left.quaternion_rep.parent().base_ring() is right.quaternion_rep.parent().base_ring())
+                pick = [left.quaternion_rep, right.quaternion_rep]
+                save(pick, 'test')
+                assert 0
         return left.__class__(left.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
 
     def is_one(self):

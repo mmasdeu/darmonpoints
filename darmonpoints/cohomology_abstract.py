@@ -123,7 +123,7 @@ class CohomologyElement(ModuleElement):
             return sum(self.evaluate(g).pair_with(a) for g, a in xi)
 
     @cached_method
-    def evaluate_and_identity(self,x,parallelize = False):
+    def evaluate_and_identity(self,x):
         H = self.parent()
         G = H.group()
         if x.parent() is G:
@@ -137,7 +137,7 @@ class CohomologyElement(ModuleElement):
             return self._evaluate_word_tietze_identity(wd)
 
     @cached_method
-    def evaluate(self, x, left_act_by = None, parallelize = False):
+    def evaluate(self, x, left_act_by = None):
         H = self.parent()
         G = H.group()
         if x.parent() is G:

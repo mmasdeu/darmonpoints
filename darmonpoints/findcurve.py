@@ -57,8 +57,6 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     use_shapiro = param.get('use_shapiro',False)
     use_sage_db = param.get('use_sage_db',False)
     magma_seed = param.get('magma_seed',1515316)
-    parallelize = param.get('parallelize',False)
-    Up_method = param.get('up_method','naive')
     use_magma = param.get('use_magma',True)
     progress_bar = param.get('progress_bar',True)
     sign_at_infinity = param.get('sign_at_infinity',ZZ(1))
@@ -189,7 +187,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     ret_vals = []
     for phi in phiE:
         try:
-            Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,sign_ap,use_ps_dists,method = Up_method, progress_bar = progress_bar)
+            Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,sign_ap,use_ps_dists, progress_bar = progress_bar)
         except ValueError as e:
             ret_vals.append('Problem when getting overconvergent class: ' + str(e))
             continue
@@ -211,6 +209,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
             ret_vals.append('Problem when choosing element in kernel: ' + str(e))
             continue
         found = False
+        xi1, xi2 = lattice_homology_cycle(p, G.Gn, G.wp(), xgenlist,working_prec,outfile = outfile) # DEBUG
         while not found:
             try:
                 xi1, xi2 = lattice_homology_cycle(p, G.Gn, G.wp(), xgenlist,working_prec,outfile = outfile)

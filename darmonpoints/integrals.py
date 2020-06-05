@@ -8,6 +8,7 @@ from sage.all import prod
 from sage.parallel.decorate import fork,parallel
 from sage.misc.getusage import get_memory_usage
 from sage.structure.sage_object import SageObject
+from sage.arith.misc import algdep
 from sage.misc.misc import cputime
 
 from collections import defaultdict
@@ -146,7 +147,9 @@ Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
 Note that it is a multiplicative integral.
 '''
-def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,parallelize = False,twist=False,progress_bar = False,multiplicative = True, return_valuation = True):
+def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,twist=False,progress_bar = False,multiplicative = True, return_valuation = True):
+    if not cycle.is_degree_zero_valued():
+        raise ValueError('Cycle should take values in divisors of degree 0')
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
@@ -162,12 +165,10 @@ def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,parallelize = False,twist
     resval = ZZ(0)
     for g, D in cycle:
         jj += 1
-        if D.degree() != 0:
-            raise ValueError('Divisor must be of degree 0. Now it is of degree %s. And g = %s.'%(D.degree(),g.quaternion_rep))
         if twist:
             D = D.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
             g = g.conjugate_by(G.wp()**-1)
-        newresadd, newresmul, newresval = integrate_H0(G, D, cocycle,depth,g,prec,jj,total_integrals,progress_bar,parallelize)
+        newresadd, newresmul, newresval = integrate_H0(G, D, cocycle,depth,g,prec,jj,total_integrals,progress_bar)
         resadd += newresadd
         resmul *= newresmul
         resval += newresval
@@ -177,29 +178,9 @@ def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,parallelize = False,twist
         else:
             return resadd
     else:
-        return Cp.prime()**resval * resadd.exp() * resmul
+        # return Cp.prime()**resval * resadd.exp() * resmul # DEBUG
+        return Cp.prime()**resval * resadd.exp().log().exp() * Cp.teichmuller(resmul)
 
-def evaluate_parallel(hc,gamma,pol,c0):
-    HOC = hc.parent()
-    mu_e = hc.evaluate(gamma)
-    resadd = ZZ(0)
-    resmul = ZZ(1)
-    K = pol.parent().base_ring()
-    p = K.prime()
-    if HOC._use_ps_dists:
-        newresadd = sum([a*mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments)])
-    else:
-        newresadd = mu_e.evaluate_at_poly(pol,K,HOC.precision_cap())
-    resadd += newresadd
-    try:
-        resmul *= c0**ZZ(mu_e.moment(0).rational_reconstruction())
-    except IndexError: pass
-
-    val =  resmul.valuation(p)
-    tmp = p**val * K.teichmuller(p**(-val)*resmul)
-    if resadd != 0:
-        tmp *= resadd.exp()
-    return tmp
 
 def sample_point(G,e,prec = 20):
     r'''
@@ -215,7 +196,7 @@ def sample_point(G,e,prec = 20):
         return Infinity
     return b/d
 
-def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar,parallelize):
+def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar):
     # verbose('Integral %s/%s...'%(counter,total_counter))
     p = G.p
     HOC = hc.parent()
@@ -261,7 +242,7 @@ def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_ba
                     pol -= QQ(n) * R(v)
                     c0unit *= (-hp0).unit_part() ** n
                     c0val += n * hp0.valuation()
-                #  pol += c0unit.log( p_branch = 0 ) # DEBUG
+                pol += c0unit.log(0) # DEBUG
                 newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)
                 if rev:
                     newgamma = newgamma.conjugate_by(G.wp())
@@ -284,9 +265,21 @@ def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_ba
             except IndexError: pass
             if progress_bar:
                 update_progress(float(QQ(ii)/QQ(len(edgelist))),'Integration %s/%s'%(counter,total_counter))
-
         edgelist = newedgelist
     return resadd, resmul, resval
+
+def multiplicative_integral(mu, phi):
+    r'''
+    Calculates the multiplicative integral of the rational function phi against mu.
+    '''
+    phi_rat = phi.rational_function()
+    R = PowerSeriesRing(phi.parent().base_ring(),'z')
+    z = R.gen()
+    c0 = phi_rat(0)
+    moment_0 = ZZ(algdep(mu.moment(0),1).roots()[0][0])
+    pol = R(phi_rat / c0).log() # DEBUG: this is going to be slow
+    Jadd = sum(a * mu.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu.moments()))
+    return c0**moment_0 * Jadd.exp()
 
 def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
     p = G.p

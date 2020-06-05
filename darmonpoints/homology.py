@@ -56,11 +56,11 @@ def lattice_homology_cycle(p, G, wp, xlist, prec, tau = None, outfile = None, sm
         wpinv_mat = (G.embed(wp,prec)**-1).change_ring(Cp)
     Div = Divisors(Cp)
     H1 = OneChains(G,Div)
-    xi1 = H1(dict([]))
-    xi2 = H1(dict([]))
+    xi1 = H1(0)
+    xi2 = H1(0)
     for x, a in xlist:
-        xi1 += H1(dict([(G(x.quaternion_rep), Div(tau))])).__rmul__(a)
-        xi2 += H1(dict([(G(wp**-1 * x.quaternion_rep * wp), Div(tau).left_act_by_matrix(wpinv_mat))])).__rmul__(a)
+        xi1 += H1({G(x.quaternion_rep) : Div(tau)}).mult_by(a)
+        xi2 += H1({G(wp**-1 * x.quaternion_rep * wp) :  wpinv_mat * Div(tau)}).mult_by(a)
     xi10 = xi1
     xi20 = xi2
     while True:
@@ -322,31 +322,15 @@ class ArithGroupAction(Action):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
     def _act_(self,g,v):
-        K = v.parent().base_ring()
-        if K is ZZ:
-            try:
-                return v.parent()(v._data,v._ptdata)
-            except AttributeError:
-                return v.parent()(v)
         try:
+            K = v.parent().base_ring()
             prec = K.precision_cap()
         except AttributeError:
             prec = -1
         G = g.parent()
-        a,b,c,d = [K(o) for o in G.embed(g.quaternion_rep,prec).list()]
-        newdict = defaultdict(ZZ)
-        new_pts = {}
-        for P,n in v:
-            new_pt = (a*P+b) / (c*P+d)
-            hp = _hash(new_pt)
-            newdict[hp] += n
-            new_pts[hp] = new_pt
-            if newdict[hp] == 0:
-                del newdict[hp]
-                del new_pts[hp]
-        return v.parent()(newdict,new_pts)
+        return v.left_act_by_matrix(G.embed(g.quaternion_rep, prec))
 
-class OneChains_element(ModuleElement):
+class TensorElement(ModuleElement):
     def __init__(self, parent, data):
         r'''
         Define an element of `H_1(G,V)`
@@ -385,6 +369,82 @@ class OneChains_element(ModuleElement):
     def short_rep(self):
         return [(g.size(),v.degree(),v.size()) for g,v in self._data.items()]
 
+    def _add_(self,right):
+        newdict = dict()
+        for g,v in chain(self._data.items(),right._data.items()):
+            try:
+                newdict[g] += v
+                if newdict[g].is_zero():
+                    del newdict[g]
+            except KeyError:
+                newdict[g] = v
+        return self.parent()(newdict)
+
+    def _sub_(self,right):
+        newdict = dict(self._data)
+        for g,v in right._data.items():
+            try:
+                newdict[g] -= v
+                if newdict[g].is_zero():
+                    del newdict[g]
+            except KeyError:
+                newdict[g] = -v
+        return self.parent(newdict)
+
+    def mult_by(self,a):
+        return self.__rmul__(a)
+
+    def __rmul__(self,a):
+        newdict = {g: a * v for g,v in self._data.items()} if a != 0 else {}
+        return self.parent()(newdict)
+
+class TensorProduct(Parent):
+    Element = TensorElement
+    def __init__(self,G,V):
+        r'''
+        INPUT:
+        - G: an ArithGroup
+        - V: a CoeffModule
+        '''
+        self._group = G
+        self._coeffmodule = V
+        Parent.__init__(self)
+        V._unset_coercions_used()
+        V.register_action(ArithGroupAction(G,V))
+        self._populate_coercion_lists_()
+
+    def _an_element_(self):
+        return self.element_class(self,dict([(self.group().gen(0),self._coeffmodule._an_element_())]))
+
+    def _repr_(self):
+        return 'Tensor product of the group ring of %s with %s'%(self.group(), self.coefficient_module())
+
+    def group(self):
+        return self._group
+
+    def coefficient_module(self):
+        return self._coeffmodule
+
+    def _element_constructor_(self,data):
+        if data == 0:
+            return self.element_class(self, {})
+        if isinstance(data,dict):
+            return self.element_class(self,data)
+        elif isinstance(data, tuple):
+            assert len(tuple) == 2
+            return self.element_class(self, {data[0] : data[1]})
+        elif isinstance(data, list):
+            return self.element_class(self, dict(data))
+        else:
+            return self.element_class(self, {data : ZZ(1)})
+
+    def _coerce_map_from_(self,S):
+        if isinstance(S,self.__class__):
+            return S.group() is self.group() and S.coefficient_module() is self.coefficient_module()
+        else:
+            return False
+
+class OneChainsElement(TensorElement):
     def is_degree_zero_valued(self):
         for v in self._data.values():
             if v.degree() != 0:
@@ -452,7 +512,11 @@ class OneChains_element(ModuleElement):
                     oldv = (g**-1) * oldv
         verbose('Done zero_degree_equivalent')
         ans = HH(newdict)
-        # assert ans.is_degree_zero_valued() # DEBUG
+        if not ans.is_degree_zero_valued():
+            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            print('The cycle is not valued in degree-zero divisors.')
+            print('EXPECT THINGS TO BREAK BADLY')
+            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         if allow_multiple:
             return ans, x_ord
         else:
@@ -486,28 +550,6 @@ class OneChains_element(ModuleElement):
                     assert oldv == newv
         return self.parent()(newdict)
 
-    def _add_(self,right):
-        newdict = dict()
-        for g,v in chain(self._data.items(),right._data.items()):
-            try:
-                newdict[g] += v
-                if newdict[g].is_zero():
-                    del newdict[g]
-            except KeyError:
-                newdict[g] = v
-        return self.parent()(newdict)
-
-    def _sub_(self,right):
-        newdict = dict(self._data)
-        for g,v in right._data.items():
-            try:
-                newdict[g] -= v
-                if newdict[g].is_zero():
-                    del newdict[g]
-            except KeyError:
-                newdict[g] = -v
-        return self.parent(newdict)
-
     def act_by_hecke(self,l,prec,g0 = None):
         newdict = dict()
         G = self.parent().group()
@@ -533,16 +575,13 @@ class OneChains_element(ModuleElement):
 
     def is_cycle(self,return_residue = False):
         res = self.parent().coefficient_module()(0)
-        for g,v in self._data.items():
+        for g, v in self:
             res += (g**-1) * v - v
         if res.is_zero():
             ans = True
         else:
             ans = False
         return ans if return_residue == False else (ans,res)
-
-    def mult_by(self,a):
-        return self.__rmul__(a)
 
     def hecke_smoothen(self,r,prec = None):
         if prec is None:
@@ -578,48 +617,7 @@ class OneChains_element(ModuleElement):
                     ans = ans.act_by_poly_hecke(r,f0,prec = prec)
             return ans
 
-    def __rmul__(self,a):
-        newdict = {g: a * v for g,v in self._data.items()} if a != 0 else {}
-        return self.parent()(newdict)
-
-class OneChains(Parent):
-    Element = OneChains_element
-
-    def __init__(self,G,V):
-        r'''
-        INPUT:
-        - G: an ArithGroup
-        - V: a CoeffModule
-        '''
-        self._group = G
-        self._coeffmodule = V
-        Parent.__init__(self)
-        V._unset_coercions_used()
-        V.register_action(ArithGroupAction(G,V))
-        self._populate_coercion_lists_()
-
-    def _an_element_(self):
-        return self.element_class(self,dict([(self.group().gen(0),self._coeffmodule._an_element_())]))
-
+class OneChains(TensorProduct):
+    Element = OneChainsElement
     def _repr_(self):
         return 'Group of 1-chains on %s with values in %s'%(self.group(), self.coefficient_module())
-
-    def group(self):
-        return self._group
-
-    def coefficient_module(self):
-        return self._coeffmodule
-
-    def _element_constructor_(self,data):
-        if data == 0:
-            return self.element_class(self, {})
-        if isinstance(data,dict):
-            return self.element_class(self,data)
-        else:
-            return self.element_class(self, {data : ZZ(1)})
-
-    def _coerce_map_from_(self,S):
-        if isinstance(S,self.__class__):
-            return S.group() is self.group() and S.coefficient_module() is self.coefficient_module()
-        else:
-            return False

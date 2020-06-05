@@ -1298,18 +1298,26 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         self._grouptype = grouptype
         self._compute_presentation = compute_presentation
         self._elements_of_prime_norm = []
-        self.F = base
+        if info_magma is not None:
+            assert base is info_magma.F
+            assert (a,b) == info_magma.B.invariants()
+            self.F = info_magma.F
+            self.B = info_magma.B
+        else:
+            self.F = base
+            self.a,self.b = base(a),base(b)
+            self.abtuple = (self.a, self.b)
+            self.B = QuaternionAlgebra(self.F,self.a,self.b)
         self.level = base.ideal(level)
-        self.a,self.b = base(a),base(b)
-        self.abtuple = (self.a, self.b)
-        self.B = QuaternionAlgebra(self.F,self.a,self.b)
         self._init_magma_objects(info_magma)
         if self._compute_presentation:
             self._init_geometric_data(**kwargs)
         super(ArithGroup_nf_generic,self).__init__(**kwargs)
 
     def _repr_(self):
-        return 'Arithmetic Group attached to quaternion algebra with a = %s, b = %s and level = %s'%(self.a,self.b,self.level)
+        a, b = self.B.invariants()
+        return f'Arithmetic Group attached to quaternion algebra with a = {a}, b = {b} and level = {self.level}'
+
     def _init_magma_objects(self,info_magma = None): # NF generic
         r'''
         Initializes different Magma objects needed for calculations:
@@ -1781,6 +1789,8 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             ans['_Pmat'] = self._Pmat
             ans['_Pmatinv'] = self._Pmatinv
             ans['_simplification_iso'] = self._simplification_iso
+            ans['F'] = self.F
+            ans['B'] = self.B
             ans['Ugens'] = self.Ugens
             ans['F_unit_offset'] = self.F_unit_offset
             ans['_relation_words'] = self._relation_words

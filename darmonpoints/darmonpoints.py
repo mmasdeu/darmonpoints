@@ -176,8 +176,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     use_shapiro = param.get('use_shapiro',False)
     use_sage_db = param.get('use_sage_db',False)
     magma_seed = param.get('magma_seed',1515316)
-    parallelize = param.get('parallelize',False)
-    Up_method = param.get('up_method','naive')
     use_magma = param.get('use_magma',True)
     progress_bar = param.get('progress_bar',True)
     sign_at_infinity = param.get('sign_at_infinity',ZZ(1))
@@ -188,11 +186,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     algorithm = param.get('algorithm')
     quaternionic = param.get('quaternionic')
     cohomological = param.get('cohomological',True)
-
-    if Up_method == "bigmatrix" and use_shapiro == True:
-        import warnings
-        warnings.warn('Use of "bigmatrix" for Up iteration is incompatible with Shapiro Lemma trick. Using "naive" method for Up.')
-        Up_method = 'naive'
 
     if working_prec is None:
         working_prec = max([2 * prec + 10, 30])
@@ -343,13 +336,10 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                 except ValueError:
                     sign_ap = ZZ(P.norm() + 1 - Curve(E).change_ring(P.residue_field()).count_points(1)[0])
 
-            Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,method = Up_method, progress_bar = progress_bar,Ename = Ename)
-            debug_period = kwargs.pop('debug_period', False)
-            if debug_period:
-                return integrate_H1(G,cycleGn,Phi,1, prec = working_prec,parallelize = parallelize,twist = True,progress_bar = progress_bar, multiplicative = False)
+            Phi = get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db, progress_bar = progress_bar,Ename = Ename)
             # Integration with moments
             tot_time = walltime()
-            J = integrate_H1(G,cycleGn,Phi,1, prec = working_prec,parallelize = parallelize,twist = True,progress_bar = progress_bar)
+            J = integrate_H1(G,cycleGn,Phi,1, prec = working_prec,twist = True,progress_bar = progress_bar)
             verbose('integration tot_time = %s'%walltime(tot_time))
             if use_sage_db:
                 G.save_to_db()
@@ -395,7 +385,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                 emblist.append((tau,gtau,sign,limits))
 
             # Get the cohomology class from E
-            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,parallelize = parallelize,progress_bar = progress_bar)
+            Phi = get_overconvergent_class_matrices(P,E,prec,sign_at_infinity,use_ps_dists = use_ps_dists,use_sage_db = use_sage_db,progress_bar = progress_bar)
 
             J = 1
             for i,emb in enumerate(emblist):
