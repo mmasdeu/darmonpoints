@@ -11,7 +11,7 @@ import os, datetime, configparser
 
 from .integrals import integrate_H1
 from .util import *
-from .cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic
+from .cohomology_arithmetic import *
 from .sarithgroup import BigArithGroup
 from .homology import lattice_homology_cycle
 from sage.misc.banner import version as sage_version
@@ -781,10 +781,10 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
         return_all = False
 
     if return_all:
-        all_twodim_cocycles = Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = True, outfile = outfile)
+        all_twodim_cocycles = get_twodim_cocycle(Coh, sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = True, outfile = outfile)
     else:
         try:
-            all_twodim_cocycles = [ Coh.get_twodim_cocycle(sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = False, outfile = outfile) ]
+            all_twodim_cocycles = [ get_twodim_cocycle(Coh, sign_at_infinity, hecke_data = hecke_data_init, bound = hecke_bound, return_all = False, outfile = outfile) ]
         except ValueError:
             all_twodim_cocycles = []
     if len(all_twodim_cocycles) == 0:

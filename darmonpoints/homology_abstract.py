@@ -12,6 +12,8 @@ from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
 from sage.sets.set import Set
 from sage.modules.free_module_element import vector
+from sage.modules.module import Module
+from sage.structure.unique_representation import UniqueRepresentation
 
 import os
 import operator
@@ -20,6 +22,7 @@ from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap
 
 from .representations import *
+from .homology import TrivialAction
 from .util import *
 
 class HomologyElement(ModuleElement):
@@ -70,25 +73,30 @@ class HomologyElement(ModuleElement):
     def valuation(self, p = None):
         return min([ u.valuation(p) for u in self._val ])
 
-class HomologyGroup(Parent):
+    def order(self):
+        return self._vector_().order()
+
+class HomologyGroup(Module, UniqueRepresentation):
     Element = HomologyElement
-    def __init__(self, G, V, trivial_action = False):
+    def __init__(self, G, V):
         self._group = G
         self._coeffmodule = V
-        self._trivial_action = trivial_action
         self._gen_pows = []
         self._gen_pows_neg = []
-        if trivial_action:
-            self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
-            gens_local = [ (None, None) for g in G.gens() ]
-        else:
-            def acting_matrix(x,y):
+        # if trivial_action:
+        #     self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
+        #     gens_local = [ (None, None) for g in G.gens() ]
+        # else:
+        def acting_matrix(x,y):
+            if hasattr(V, 'acting_matrix'):
                 try:
                     return V.acting_matrix(x,y)
                 except:
                     return V.acting_matrix(G.embed(x.quaternion_rep,V.base_ring().precision_cap()), y)
-            self._acting_matrix = acting_matrix
-            gens_local = [ (g, g**-1) for g in G.gens() ]
+            else:
+                return MatrixSpace(V.base_ring(), V.dimension(), V.dimension())(1)
+        self._acting_matrix = acting_matrix
+        gens_local = [ (g, g**-1) for g in G.gens() ]
         onemat = G(1)
         try:
             dim = V.dimension()
@@ -102,9 +110,6 @@ class HomologyGroup(Parent):
             self._gen_pows_neg.append([one, Ainv])
         Parent.__init__(self)
         return
-
-    def trivial_action(self):
-        return self._trivial_action
 
     def group(self):
         return self._group
@@ -125,16 +130,13 @@ class HomologyGroup(Parent):
         G = self.group()
         gens = G.gens()
         ambient = R**(Vdim * len(gens))
-        if self.trivial_action():
-            cycles = ambient
-        else:
-            # Now find the subspace of cycles
-            A = Matrix(R, Vdim, 0)
-            for g in gens:
-                for v in V.gens():
-                    A = A.augment(matrix(R,Vdim,1,list(vector(g**-1 * v - v))))
-            K = A.right_kernel_matrix()
-            cycles = ambient.submodule([ambient(list(o)) for o in K.rows()])
+        # Now find the subspace of cycles
+        A = Matrix(R, Vdim, 0)
+        for g in gens:
+            for v in V.gens():
+                A = A.augment(matrix(R,Vdim,1,list(vector(g**-1 * v - v))))
+        K = A.right_kernel_matrix()
+        cycles = ambient.submodule([ambient(list(o)) for o in K.rows()])
         boundaries = []
         for r in G.get_relation_words():
             grad = self.twisted_fox_gradient(G(r).word_rep)
@@ -153,13 +155,7 @@ class HomologyGroup(Parent):
             return self.space().rank()
 
     def zero(self):
-        if self.trivial_action():
-            if self.coefficient_module().dimension() > 1:
-                raise NotImplementedError
-            else:
-                return self.element_class(self,[self._coeffmodule(0) for g in range(len(self.group().abelianization()))])
-        else:
-            return self.element_class(self,[self._coeffmodule(0) for g in range(len(self.group().gens()))])
+        return self.element_class(self,[self._coeffmodule(0) for g in range(len(self.group().gens()))])
 
     def _an_element_(self):
         return self.zero()
@@ -305,16 +301,16 @@ class ArithHomologyElement(HomologyElement):
 
 class ArithHomology(HomologyGroup):
     Element = ArithHomologyElement
-    def __init__(self, G, V, trivial_action = True):
+    def __init__(self, G, V):
         self._use_shapiro = G._use_shapiro
         if self._use_shapiro:
             group = G.large_group()
-            W = IndModule(G,V, trivial_action = trivial_action)
-            HomologyGroup.__init__(self, group, W, trivial_action = False)
+            W = IndModule(G,V)
+            HomologyGroup.__init__(self, group, W)
         else:
             group = G.small_group()
             W = V
-            HomologyGroup.__init__(self, group, W, trivial_action = trivial_action)
+            HomologyGroup.__init__(self, group, W)
 
     @cached_method
     def hecke_matrix(self, l, use_magma = True, g0 = None, with_torsion = False): # l can be oo
@@ -366,15 +362,15 @@ class ArithHomology(HomologyGroup):
         # verbose('Calculating action')
         for gamma, v in zip(gammas, c.values()):
             for g in hecke_reps:
-                if self.trivial_action():
-                    ans += self((group.get_hecke_ti(g,gamma,l,use_magma),v))
-                else:
-                    ans += self((group.get_hecke_ti(g,gamma,l,use_magma),g.conjugate() * v))
+                ans += self((group.get_hecke_ti(g,gamma,l,use_magma),g.conjugate() * v))
         return scale * ans
 
 class Abelianization(HomologyGroup):
     def __init__(self,G):
-        HomologyGroup.__init__(self, G, ZZ**1, trivial_action = True)
+        ZZ1 = ZZ**1
+        G._unset_coercions_used()
+        G.register_action(TrivialAction(G, ZZ1))
+        HomologyGroup.__init__(self, G, ZZ1)
 
     def ambient(self):
         return self.space().V()

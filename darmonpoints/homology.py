@@ -31,6 +31,13 @@ from collections import defaultdict
 
 from .util import *
 
+class TrivialAction(Action):
+    def __init__(self,G,M):
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
+
+    def _act_(self,g,v):
+        return v
+
 class MatrixAction(Action):
     def __init__(self,G,M):
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
@@ -469,8 +476,7 @@ class OneChainsElement(TensorElement):
         aux_element = list(oldvals[0])[0][0]
         Gab = G.abelianization()
         xlist = [(g,v.degree()) for g,v in zip(self._data.keys(),oldvals)]
-        abxlist = [ Gab((x,n)) for x,n in xlist]
-        sum_abxlist = free_module_element(sum(abxlist))
+        sum_abxlist = sum([Gab((x,n)) for x,n in xlist])
         x_ord = sum_abxlist.order()
         if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
             raise ValueError('Must yield torsion element in abelianization (%s, order = %s)'%(sum_abxlist, x_ord))

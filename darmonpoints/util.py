@@ -1677,7 +1677,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     ulog = 1/numqE * (ZZ(p)**numqE/qE**denqE).log()
     Jlog = J.log(p_branch = ulog)
     Cp = Jlog.parent()
-    addpart0 = Jlog/known_multiple
+    addpart0 = Jlog / known_multiple
     candidate = None
     if twopowlist is None:
         twopowlist = [2, 1, QQ(1)/QQ(2)]

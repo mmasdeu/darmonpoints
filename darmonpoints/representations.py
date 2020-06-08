@@ -35,10 +35,9 @@ from .cohomology_abstract import *
 from .util import *
 
 class CoIndAction(Action):
-    def __init__(self, algebra , V, G, trivial_action = False):
+    def __init__(self, algebra , V, G):
         self._G = G
         self.V = V
-        self._trivial_action = trivial_action
         Action.__init__(self,algebra,V,is_left = True,op = operator.mul)
 
     def _act_(self,g,v):
@@ -53,10 +52,7 @@ class CoIndAction(Action):
         except AttributeError:
             pass
         action_data = V.get_action_data(set_immutable(g))
-        if self._trivial_action:
-            return self.V([v._val[ti] for g1, ti in action_data], check = True)
-        else:
-            return self.V([g1 * v._val[ti] for g1, ti in action_data], check = True)
+        return self.V([g1 * v._val[ti] for g1, ti in action_data], check = True)
 
 class CoIndElement(ModuleElement):
     r'''
@@ -101,10 +97,7 @@ class CoIndElement(ModuleElement):
         except AttributeError:
             pass
         g0, idx = self.parent().get_action_data(set_immutable(g), 0)
-        if self.parent()._base_trivial_action:
-            return self._val[idx]
-        else:
-            return g0 * self._val[idx]
+        return g0 * self._val[idx]
 
     def evaluate(self, x):
         return sum([a * b for a, b in zip(self.values(), x.values())])
@@ -160,13 +153,12 @@ class CoIndModule(Parent):
         sage: G = BigArithGroup(5,6,1,outfile='/tmp/darmonpoints.tmp') #  optional - magma
     '''
     Element = CoIndElement
-    def __init__(self, G, V, trivial_action = False):
+    def __init__(self, G, V):
         self._G = G
         self._V = V
         Parent.__init__(self)
-        self._act = CoIndAction(G.large_group(), self, G, trivial_action = trivial_action)
-        quat_act = CoIndAction(G.large_group().B, self, G, trivial_action = trivial_action)
-        self._base_trivial_action = trivial_action
+        self._act = CoIndAction(G.large_group(), self, G)
+        quat_act = CoIndAction(G.large_group().B, self, G)
         self._unset_coercions_used()
         self.register_action(self._act)
         self.register_action(quat_act)
@@ -177,9 +169,6 @@ class CoIndModule(Parent):
 
     def coefficient_module(self):
         return self._V
-
-    def trivial_action(self):
-        return self._base_trivial_action
 
     def base_ring(self):
         return self._V.base_ring()
@@ -210,10 +199,7 @@ class CoIndModule(Parent):
         G = self._G
         g = G.large_group().gen(i).quaternion_rep**a
         action_data = self.get_action_data(set_immutable(g))
-        if self._base_trivial_action:
-            return [v[ti] for g1, ti in action_data]
-        else:
-            return [g1 * v[ti] for g1, ti in action_data]
+        return [g1 * v[ti] for g1, ti in action_data]
 
     @cached_method
     def get_action_data(self, g, idx = None):
@@ -267,13 +253,12 @@ class IndAction(CoIndAction):
 
 class IndModule(CoIndModule):
     Element = IndElement
-    def __init__(self, G, V, trivial_action = False):
+    def __init__(self, G, V):
         self._G = G
         self._V = V
         Parent.__init__(self)
-        self._act = IndAction(G.large_group(), self, G, trivial_action = trivial_action)
-        quat_act = IndAction(G.large_group().B, self, G, trivial_action = trivial_action)
-        self._base_trivial_action = trivial_action
+        self._act = IndAction(G.large_group(), self, G)
+        quat_act = IndAction(G.large_group().B, self, G)
         self._unset_coercions_used()
         self.register_action(self._act)
         self.register_action(quat_act)

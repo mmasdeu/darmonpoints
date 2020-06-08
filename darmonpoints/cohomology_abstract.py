@@ -117,13 +117,10 @@ class CohomologyElement(ModuleElement):
         return min([ u.valuation(p) for u in self._val ])
 
     def pair_with_cycle(self, xi):
-        if self.parent().trivial_action():
-            return sum([a * self.evaluate(g) for a, g in zip(xi.values(), self.parent().group().gens())])
-        else:
-            return sum(self.evaluate(g).pair_with(a) for g, a in xi)
+        return sum(self.evaluate(g).pair_with(a) for g, a in xi)
 
-    @cached_method
-    def evaluate_and_identity(self,x):
+    @cached_method(name='evaluate_abstract')
+    def evaluate(self, x, left_act_by = None, at_identity=False):
         H = self.parent()
         G = H.group()
         if x.parent() is G:
@@ -131,22 +128,8 @@ class CohomologyElement(ModuleElement):
         else:
             x = G(x)
             wd = x.word_rep
-        if self.parent().trivial_action():
-            return self._evaluate_word_tietze_trivial_identity(wd)
-        else:
-            return self._evaluate_word_tietze_identity(wd)
-
-    @cached_method
-    def evaluate(self, x, left_act_by = None):
-        H = self.parent()
-        G = H.group()
-        if x.parent() is G:
-            wd  = x.word_rep
-        else:
-            x = G(x)
-            wd = x.word_rep
-        if self.parent().trivial_action():
-            return self._evaluate_word_tietze_trivial(wd)
+        if at_identity:
+            return self._evaluate_word_tietze_identity(wd, left_act_by=left_act_by)
         else:
             return self._evaluate_word_tietze(wd, left_act_by=left_act_by)
 
@@ -214,7 +197,7 @@ class CohomologyElement(ModuleElement):
         ans = sum(HH.GA_to_local(A, left_act_by) * ff(val) for A, val in zip(fgrad, self._val))
         return V(ans)
 
-    def _evaluate_word_tietze_identity(self,word):
+    def _evaluate_word_tietze_identity(self,word, left_act_by=None):
         G = self.parent().group()
         V = self.parent().coefficient_module()
 
@@ -236,7 +219,7 @@ class CohomologyElement(ModuleElement):
                 g0 = -g-1
                 gamma = gamma * G.gen(g0)**-1
                 ans -= self._val[g0].act_and_evaluate_at_identity(gamma)
-        return ans
+        return ans if left_act_by is None else left_act_by * ans
 
     def _evaluate_word_tietze_trivial(self,word):
         G = self.parent().group()
@@ -261,10 +244,9 @@ class CohomologyElement(ModuleElement):
         return ans
 
 class CohomologyGroup(Parent):
-    def __init__(self, G, V, trivial_action = False, action_map = None):
+    def __init__(self, G, V, action_map = None):
         self._group = G
         self._coeffmodule = V
-        self._trivial_action = trivial_action
         onemat = G(1)
         self._gen_pows = []
         self._gen_pows_neg = []
@@ -274,15 +256,12 @@ class CohomologyGroup(Parent):
             V._unset_coercions_used()
             V.register_action(action)
 
-        if trivial_action:
-            self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
+        if hasattr(V, 'acting_matrix'):
+            def acting_matrix(x,y):
+                return V.acting_matrix(x,y)
+            self._acting_matrix = acting_matrix
         else:
-            if hasattr(V, 'acting_matrix'):
-                def acting_matrix(x,y):
-                    return V.acting_matrix(x,y)
-                self._acting_matrix = acting_matrix
-            else:
-                self._acting_matrix = None
+            self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
         gens_local = [ (g, g**-1) for g in G.gens() ]
         GA = GroupAlgebra(G)
         self._GA = GA
@@ -311,9 +290,6 @@ class CohomologyGroup(Parent):
         else:
             return self.generator_acting_matrix(g0) * sum((a * self.generator_acting_matrix(g.support()[0]) for a, g in zip(x.coefficients(), x.monomials())))
 
-    def trivial_action(self):
-        return self._trivial_action
-
     def group(self):
         return self._group
 
@@ -333,7 +309,7 @@ class CohomologyGroup(Parent):
         sage: GS = BigArithGroup(5, 6,1,use_shapiro=False,outfile='/tmp/darmonpoints.tmp') #  optional - magma
         sage: G = GS.large_group() #  optional - magma
         sage: V = OCVn(5,1)     #  optional - magma
-        sage: Coh = CohomologyGroup(G,V,trivial_action = False) #  optional - magma
+        sage: Coh = CohomologyGroup(G,V) #  optional - magma
         '''
         verb = get_verbose()
         set_verbose(0)

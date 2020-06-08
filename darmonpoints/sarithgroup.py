@@ -28,6 +28,7 @@ from itertools import product,chain,groupby,islice,tee,starmap
 
 from .arithgroup import ArithGroup_nf_fuchsian, ArithGroup_nf_kleinian,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix,ArithGroup_nf_matrix, ArithGroup_nf_matrix_new
 from .homology_abstract import ArithHomology, HomologyGroup
+from .homology import TrivialAction
 from .util import *
 
 class BTEdge(SageObject):
@@ -637,8 +638,15 @@ class BigArithGroup_class(AlgebraicGroup):
             hecke_data = []
         wp = self.wp()
         Gn = self.Gn
-        B = ArithHomology(self, ZZ**1, trivial_action = True)
-        C = HomologyGroup(Gn, ZZ**1, trivial_action = True)
+        ZZ1 = ZZ**1
+        self.Gn._unset_coercions_used()
+        self.Gn.register_action(TrivialAction(self.Gn, ZZ1))
+        self.Gpn._unset_coercions_used()
+        self.Gpn.register_action(TrivialAction(self.Gpn, ZZ1))
+        self.Gpn.B._unset_coercions_used()
+        self.Gpn.B.register_action(TrivialAction(self.Gpn.B, ZZ1))
+        B = ArithHomology(self, ZZ1)
+        C = HomologyGroup(Gn, ZZ1)
         group = B.group()
         Bsp = B.space()
         def phif(x):

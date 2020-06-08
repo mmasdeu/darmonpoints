@@ -178,9 +178,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,twist=False,progress_bar 
         else:
             return resadd
     else:
-        # return Cp.prime()**resval * resadd.exp() * resmul # DEBUG
-        return Cp.prime()**resval * resadd.exp().log().exp() * Cp.teichmuller(resmul)
-
+        return Cp.prime()**resval * Cp.teichmuller(resmul) * resadd.exp() # DEBUG
 
 def sample_point(G,e,prec = 20):
     r'''
@@ -243,23 +241,21 @@ def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_ba
                     c0unit *= (-hp0).unit_part() ** n
                     c0val += n * hp0.valuation()
                 pol += c0unit.log(0) # DEBUG
-                newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)
-                if rev:
-                    newgamma = newgamma.conjugate_by(G.wp())
-                if G.use_shapiro():
-                    mu_e = hc.evaluate_and_identity(newgamma)
-                else:
-                    mu_e = hc.evaluate(newgamma)
+                mu_e = hc.evaluate(gamma, h, twist=rev, at_identity=G.use_shapiro())
+                # newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)
+                # if rev:
+                #     newgamma = newgamma.conjugate_by(G.wp())
+                # if G.use_shapiro():
+                #     mu_e = hc.evaluate_and_identity(newgamma)
+                # else:
+                #     mu_e = hc.evaluate(newgamma)
             except ValueError as msg:
                 verbose('Subdividing because (%s)...'%str(msg))
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([(rev, h)],parity,2)])
                 continue
             resadd += sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e.moments()))
             try:
-                if G.use_shapiro():
-                    tmp = hc['liftee'].evaluate_and_identity(newgamma)
-                else:
-                    tmp = hc['liftee'].evaluate(newgamma)
+                tmp = hc['liftee'].evaluate(gamma, h=h, twist=rev, at_identity=G.use_shapiro())
                 resval += c0val * ZZ(tmp[0])
                 resmul *= c0unit**ZZ(tmp[0])
             except IndexError: pass
@@ -311,13 +307,7 @@ def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
             pol -= Cp.teichmuller(center)
             pol = pol**j
             pol = pol.polynomial()
-            newgamma = G.Gpn(G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False))
-            if rev: # DEBUG
-                newgamma = newgamma.conjugate_by(G.wp())
-            if G.use_shapiro():
-                mu_e = cocycle.evaluate_and_identity(newgamma)
-            else:
-                mu_e = cocycle.evaluate(newgamma)
+            mu_e = cycle.evaluate(gamma, h, twist=rev, at_identity=G.use_shapiro())
         except AttributeError:
             verbose('...')
             continue

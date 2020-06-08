@@ -14,7 +14,7 @@ from sage.misc.misc_c import prod
 
 from .sarithgroup import BigArithGroup
 from .homology import *
-from .cohomology_arithmetic import get_overconvergent_class_matrices, get_overconvergent_class_quaternionic, ArithCoh
+from .cohomology_arithmetic import *
 from .integrals import double_integral_zero_infty,integrate_H1
 from .limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 from .util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,config_section_map, Bunch
@@ -85,14 +85,12 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
     Div = Divisors(tau1.parent())
     H1 = OneChains(G,Div)
     D1 = Div(tau1)
-    ans0 = H1({gamma: D1})
-    assert ans0.is_cycle()
-    ans = H1({})
-    ans += ans0
+    ans = H1({gamma: D1})
+    assert ans.is_cycle()
     # Do hecke_smoothen to kill Eisenstein part
     if q1 != 1:
         ans = ans.hecke_smoothen(q1,prec = prec)
-    assert ans.is_cycle()
+
     if elliptic_curve is None:
         # Find zero degree equivalent
         ans, n = ans.zero_degree_equivalent(allow_multiple = True)
@@ -106,11 +104,11 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
         f = hecke_poly_getter(q1)
         R = f.parent()
         x = R.gen()
-        while True:
-            try:
-                f = R(f/(x-a_ell))
-            except TypeError:
-                break
+        # while True:
+        #     try:
+        #         f = R(f/(x-a_ell))
+        #     except TypeError:
+        #         break
         while True:
             try:
                 f = R(f/(x-(q1+1)))
@@ -162,7 +160,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
 
     '''
     # global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
-
     config = configparser.ConfigParser()
     config.read('config.ini')
     param_dict = config_section_map(config, 'General')
@@ -236,7 +233,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     else:
         dK = beta
 
-    # Compute the completion of K at p
     x = QQ['x'].gen()
     K = F.extension(x*x - dK,names = 'alpha')
     if F == QQ:
@@ -327,7 +323,7 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
             eisenstein_constant = -ZZ(E.reduction(ell).count_points())
             fwrite('r = %s, so a_r(E) - r - 1 = %s'%(ell,eisenstein_constant), outfile)
             fwrite('exponent = %s'%nn, outfile)
-            phiE = Coh.get_cocycle_from_elliptic_curve(E, sign = sign_at_infinity)
+            phiE = get_cocycle_from_elliptic_curve(Coh, E, sign = sign_at_infinity)
             if hasattr(E,'ap'):
                 sign_ap = E.ap(P)
             else:
@@ -404,12 +400,11 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
     #Try to recognize a generator
     if quaternionic:
         local_embedding = G.base_ring_local_embedding(working_prec)
-        twopowlist = [4, 3, 2, 1, QQ(1)/2, QQ(3)/2, QQ(1)/3, QQ(2)/3, QQ(1)/4, QQ(3)/4, QQ(5)/2, QQ(4)/3]
     else:
         local_embedding = Qp(p,working_prec)
-        twopowlist = [4, 3, 2, 1, QQ(1)/2, QQ(3)/2, QQ(1)/3, QQ(2)/3, QQ(1)/4, QQ(3)/4, QQ(5)/2, QQ(4)/3]
+    twopowlist = [4, 3, 2, 1, QQ(1)/2, QQ(3)/2, QQ(1)/3, QQ(2)/3, QQ(1)/4, QQ(3)/4, QQ(5)/2, QQ(4)/3]
 
-    known_multiple = QQ(nn) # It seems that we are not getting eisenstein_constant
+    known_multiple = ZZ(nn * eisenstein_constant)
     while known_multiple % p == 0:
         known_multiple = ZZ(known_multiple / p)
 
@@ -418,7 +413,9 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         if quit_when_done:
             magma.quit()
         return J, Jlist
-
+    verbose(f'About to call recognize_J')
+    verbose(f'known_multiple = {known_multiple}')
+    verbose(f'twopowlist = {twopowlist}')
     candidate,twopow,J1 = recognize_J(E,J,K,local_embedding = local_embedding,known_multiple = known_multiple,twopowlist = twopowlist,prec = prec, outfile = outfile)
 
     if candidate is not None:

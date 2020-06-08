@@ -30,12 +30,13 @@ from sage.structure.sage_object import SageObject
 from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement,ModuleElement
 from sage.structure.parent import Parent
+from sage.structure.unique_representation import UniqueRepresentation
 from sage.categories.homset import Hom
 from sage.matrix.constructor import Matrix,matrix
 from sage.misc.cachefunc import cached_method
 from sage.structure.sage_object import load,save
 from sage.misc.misc_c import prod
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod,FiniteField
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod,FiniteField, polygen
 from sage.rings.infinity import Infinity as oo
 from sage.arith.all import gcd, lcm, xgcd, dedekind_sum
 from sage.misc.persist import db, db_save
@@ -61,6 +62,7 @@ from .cohomology_abstract import *
 from .representations import *
 from .ocmodule import our_adjuster, ps_adjuster
 from .ocbianchi import BianchiDistributions, left_ps_adjuster
+from .homology import TrivialAction
 
 def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = False,use_sage_db = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
@@ -204,10 +206,28 @@ class ArithCohElement(CohomologyElement):
     def _repr_(self):
         return 'Arithmetic cohomology class in %s'%self.parent()
 
+    def evaluate(self, g, h = None, check = True, twist = False, at_identity=False):
+        r'''
+        If h is None, then gamma1 should be in Gamma0(p), and return the value of the cocycle at g.
+        If h is not None, then g is assumed to be in Gamma, and return the evaluation of the corresponding
+        element in the Coinduced module, via Shapiro's isomorphism.
+        '''
+        G = self.parent().S_arithgroup()
+        if h is None:
+            return super(ArithCohElement, self).evaluate(g, at_identity=at_identity)
+        hp = G.reduce_in_amalgam(h, return_word = False) if check else 1
+        he = hp**-1 * h # So that h = hp * he
+        hp = G.Gpn(hp)
+        newg = G.reduce_in_amalgam(he * g.quaternion_rep, return_word = False)
+        if twist:
+            newg = newg.conjugate_by(G.wp())
+            hp = hp.conjugate_by(G.wp())
+        return hp * super(ArithCohElement, self).evaluate(newg, at_identity=at_identity)
+
     def Tq_eigenvalue(self, ell, check = True):
         r"""
         Computes the eigenvalue of the T_q operator (where q = ell in the input)
-        acting on the cohomology class self. 
+        acting on the cohomology class self.
 
         Warning: assumes that self IS a Hecke eigenclass, and that the eigenvalue
         thus exists.
@@ -219,8 +239,6 @@ class ArithCohElement(CohomologyElement):
             f0 = self['liftee']
         except KeyError:
             f0 = self
-        if not f0.parent().trivial_action():
-            raise NotImplementedError
         f = f0.parent().apply_hecke_operator(f0, ell)
         ans = ZZ(f / f0)
         if check:
@@ -420,10 +438,10 @@ class ArithCohElement(CohomologyElement):
         coefficient of z^n. If in the Bianchi case, n should be a tuple (j,k), 
         and we return the coefficient of z^j * w^k.
         """
-        return self.parent().get_Lseries_term(self,n,cov)
+        return self.parent().get_Lseries_term(self, n, cov)
 
 
-class ArithCoh_generic(CohomologyGroup):
+class ArithCoh(CohomologyGroup, UniqueRepresentation):
     r"""
     Class for computing with arithmetic cohomology groups.
 
@@ -433,14 +451,23 @@ class ArithCoh_generic(CohomologyGroup):
     coefficient module.
     """
     Element = ArithCohElement
-    def __init__(self,G, V,use_ps_dists = False, trivial_action = True):
+    def __init__(self,G, V = None, **kwargs):
+        if V is None:
+            base_ring = kwargs.get('base_ring', ZZ)
+            V = base_ring**1
+            G.Gn._unset_coercions_used()
+            G.Gn.register_action(TrivialAction(G.Gn, V))
+            G.Gpn._unset_coercions_used()
+            G.Gpn.register_action(TrivialAction(G.Gpn, V))
+            G.Gpn.B._unset_coercions_used()
+            G.Gpn.B.register_action(TrivialAction(G.Gpn.B, V))
         self._S_arithgroup = G
-        self._use_ps_dists = use_ps_dists
+        self._use_ps_dists = kwargs.get('use_ps_dists', False)
         self._use_shapiro = G._use_shapiro
         if self._use_shapiro:
-            CohomologyGroup.__init__(self, G.large_group(), CoIndModule(G,V,trivial_action = trivial_action), False)
+            super(ArithCoh, self).__init__(G.large_group(), CoIndModule(G,V))
         else:
-            CohomologyGroup.__init__(self, G.small_group(), V, trivial_action)
+            super(ArithCoh, self).__init__(G.small_group(), V)
 
     def use_shapiro(self):
         return self._use_shapiro
@@ -465,10 +492,10 @@ class ArithCoh_generic(CohomologyGroup):
                 pass
             try:
                 vals = [V(data.evaluate(g).moment(0), normalize=False).lift(M=prec) for g in G.gens()]
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError) as e:
                 try:
                     vals = [V(data.evaluate(g), normalize=False).lift(M=prec) for g in G.gens()]
-                except (AttributeError, TypeError):
+                except (AttributeError, TypeError) as e:
                     vals = [V(data.evaluate(g)) for g in G.gens()]
             return self.element_class(self, vals)
         else:
@@ -512,10 +539,7 @@ class ArithCoh_generic(CohomologyGroup):
         for j, gamma in enumerate(gammas):
             # verbose('generator %s/%s...'%(j+1,len(gammas)))
             for g in hecke_reps:
-                if self.trivial_action():
-                    vals[j] += c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
-                else:
-                    vals[j] += g * c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
+                vals[j] += g * c.evaluate(group.get_hecke_ti(g,gamma,l,use_magma, reps = hecke_reps))
         return scale * self(vals)
 
 class ArithAction(Action):
@@ -552,21 +576,16 @@ class BianchiArithAction(Action):
 class CohArbitrary(CohomologyGroup):
     Element = ArithCohElement
     def __init__(self, G, V, action_map=None):
-        self._V = V
-        self._G = G
         if action_map is not None:
             action = ArithAction(G, V, action_map)
             V._unset_coercions_used()
             V.register_action(action)
-            CohomologyGroup.__init__(self, self._G, self._V, trivial_action=False)
+            CohomologyGroup.__init__(self, G, V)
         else:
-            CohomologyGroup.__init__(self, self._G, self._V, trivial_action=True)
+            CohomologyGroup.__init__(self, G, V)
 
     def group(self):
         return self._G
-
-    def coefficient_module(self):
-        return self._V
 
     def act_by_poly_hecke(self, c, r, f, **kwargs):
         if f == 1:
@@ -602,17 +621,13 @@ class CohArbitrary(CohomologyGroup):
             l = None
         if hecke_data is None:
             hecke_data = group.get_hecke_data(l, hecke_reps, use_magma=use_magma, g0=g0)
-        if self.trivial_action():
-            vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]) for g in hecke_reps) for gamma in group.gens()]
-        else:
-            # vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)]).left_act_by_matrix(group(g).matrix()) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
-            vals = [sum(c.evaluate(hecke_data[(g, gamma.quaternion_rep)], left_act_by = group(g)) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
+        vals = [sum(super(ArithCohElement,c).evaluate(hecke_data[(g, gamma.quaternion_rep)], left_act_by = group(g)) for g in hecke_reps) for gamma in group.gens()] # DEBUG: g need not be in group...
         return scale * self(vals)
 
 
 ##=================================================================================
 
-class ArithCohOverconvergent(ArithCoh_generic):
+class ArithCohOverconvergent(ArithCoh):
     def __init__(self, G, base, use_ps_dists = False):
         self._overconvergent = 1
         if use_ps_dists:
@@ -623,9 +638,7 @@ class ArithCohOverconvergent(ArithCoh_generic):
         arith_act = ArithAction(G.small_group(), V)
         V._unset_coercions_used()
         V.register_action( arith_act )
-        self._pN = V._p**base.precision_cap()
-        self._V = V
-        ArithCoh_generic.__init__(self, G, V,use_ps_dists = use_ps_dists, trivial_action = False)
+        ArithCoh.__init__(self, G, V, use_ps_dists = use_ps_dists)
 
     def get_Up_reps_local(self,prec):
         Up_reps = self.S_arithgroup().get_Up_reps()
@@ -661,31 +674,18 @@ class ArithCohOverconvergent(ArithCoh_generic):
         G = self.S_arithgroup()
         Gn = G.large_group()
         if self.use_shapiro():
-            if self.coefficient_module().trivial_action():
-                def calculate_Up_contribution(lst, c, i, j):
-                    return sum([c.evaluate_and_identity(tt) for sk, tt in lst])
-            else:
-                def calculate_Up_contribution(lst, c, i, j):
-                    return sum([sk * c.evaluate_and_identity(tt) for sk, tt in lst])
-
-            input_vec = []
+            vals = [[V.coefficient_module()(0,normalize=False) for xi in G.coset_reps()] for gamma in gammas]
             for j, gamma in enumerate(gammas):
                 for i, xi in enumerate(G.coset_reps()):
                     delta = Gn(G.get_coset_ti(set_immutable(xi * gamma.quaternion_rep))[0])
-                    input_vec.append(([(sk, Gn.get_hecke_ti(g,delta)) for sk, g in zip(repslocal, Up_reps)], c, i, j))
-            vals = [[V.coefficient_module()(0,normalize=False) for xi in G.coset_reps()] for gamma in gammas]
-            for inp in input_vec:
-                outp = calculate_Up_contribution(*inp)
-                vals[inp[-1]][inp[-2]] += outp
+                    vals[j][i] += sum((sk * c.evaluate(Gn.get_hecke_ti(g,delta), at_identity=True) \
+                                       for sk, g in zip(repslocal, Up_reps)))
             ans = self([V(o) for o in vals])
         else: # not shapiro
             Gpn = G.small_group()
             vals = []
             for gamma in gammas:
-                if self.trivial_action():
-                    vals.append(sum((c.evaluate(Gpn.get_hecke_ti(g,gamma)) for g in Up_reps),V(0, normalize=False)))
-                else:
-                    vals.append(sum((sk * c.evaluate(Gpn.get_hecke_ti(g,gamma)) for sk, g in zip(repslocal, Up_reps)),V(0, normalize=False)))
+                vals.append(sum((sk * c.evaluate(Gpn.get_hecke_ti(g,gamma)) for sk, g in zip(repslocal, Up_reps)),V(0, normalize=False)))
             ans = self(vals)
         if scale != 1:
             ans *= scale
@@ -830,7 +830,7 @@ class ArithCohOverconvergent(ArithCoh_generic):
             phi._Lseries_coefficients[n] = dn.add_bigoh(precision)
             return phi._Lseries_coefficients[n]
 
-class ArithCohBianchi(ArithCoh_generic):
+class ArithCohBianchi(ArithCoh):
     def __init__(self, G, base, use_ps_dists = False):
         self._overconvergent = 2
         V = BianchiDistributions(base.prime(), 1 + base.precision_cap(), act_on_left=True, adjuster=left_ps_adjuster())
@@ -839,9 +839,9 @@ class ArithCohBianchi(ArithCoh_generic):
         V.register_action( arith_act )
         self.P_gen = None
         self.Pbar_gen = None
-        self._pN = V._p**base.precision_cap()
-        self._V = V
-        ArithCoh_generic.__init__(self, G, V,use_ps_dists = use_ps_dists, trivial_action = False)
+        # self._pN = V._p**base.precision_cap()
+        # self._V = V
+        ArithCoh.__init__(self, G, V,use_ps_dists = use_ps_dists)
 
 
     @cached_method
@@ -1061,398 +1061,276 @@ class ArithCohBianchi(ArithCoh_generic):
             phi._Lseries_coefficients[n] = dn.add_bigoh(precision)
             return phi._Lseries_coefficients[n]
 
-class ArithCoh(ArithCoh_generic):
-    def __init__(self, G, base = None, use_ps_dists = False):
-        self._overconvergent = 0
-        if base is None:
-            base = ZZ
-        self._pN = None
-        V = base**1
-        self._V = V
-        ArithCoh_generic.__init__(self, G, V,use_ps_dists = use_ps_dists, trivial_action = True)
-
-    def get_dedekind_rademacher_cocycle(self):
-        vals = []
-        p = self.S_arithgroup().prime()
-        V = self.coefficient_module()
-        for gamma in self.group().gens():
-            a, b, c, d = gamma.quaternion_rep.list()
-            if c == 0:
-                vals.append(V([(p - 1) * b / d]))
+def get_dedekind_rademacher_cocycle(Coh):
+    vals = []
+    p = Coh.S_arithgroup().prime()
+    V = Coh.coefficient_module()
+    for gamma in Coh.group().gens():
+        a, b, c, d = gamma.quaternion_rep.list()
+        if c == 0:
+            vals.append(V([(p - 1) * b / d]))
+        else:
+            c = ZZ(c)
+            if c > 0:
+                vals.append(V([(p-1) * (a + d) / c + 12 * (dedekind_sum(a,c) - dedekind_sum(a, ZZ(c//p)))]))
             else:
-                c = ZZ(c)
-                if c > 0:
-                    vals.append(V([(p-1) * (a + d) / c + 12 * (dedekind_sum(a,c) - dedekind_sum(a, ZZ(c//p)))]))
-                else:
-                    vals.append(V([(p-1) * (a + d) / c - 12 * (dedekind_sum(a,-c) - dedekind_sum(a, -ZZ(c//p)))]))
-        return self(vals)
+                vals.append(V([(p-1) * (a + d) / c - 12 * (dedekind_sum(a,-c) - dedekind_sum(a, -ZZ(c//p)))]))
+    return Coh(vals)
 
-    def get_cocycle_from_elliptic_curve(self,E,sign = 1,use_magma = True):
-        if sign == 0:
-            return self.get_cocycle_from_elliptic_curve(E,1,use_magma) + self.get_cocycle_from_elliptic_curve(E,-1,use_magma)
-        if not sign in [1, -1]:
-            raise NotImplementedError
-        F = self.group().base_ring()
-        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
-        else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
-        disc = self.S_arithgroup().Gpn.order_discriminant()
-        try:
-            discnorm = disc.norm()
-        except AttributeError:
-            discnorm = disc
-        try:
-            N = ZZ(discnorm.gen())
-        except AttributeError:
-            N = ZZ(discnorm)
+def get_cocycle_from_elliptic_curve(Coh,E,sign = 1,use_magma = True):
+    if sign == 0:
+        return Coh.get_cocycle_from_elliptic_curve(E,1,use_magma) + Coh.get_cocycle_from_elliptic_curve(E,-1,use_magma)
+    if not sign in [1, -1]:
+        raise NotImplementedError
+    F = E.base_ring()
+    if F == QQ:
+        F = NumberField(polygen(QQ), names='a')
+        E = E.change_ring(F)
+    def getap(Q):
+        return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
+    return get_rational_cocycle_from_ap(Coh, getap, sign=sign, use_magma=use_magma)
 
-        if F == QQ:
-            x = QQ['x'].gen()
-            F = NumberField(x,names='a')
-            E = E.change_ring(F)
-            disc = F.ideal(N)
+def get_rational_cocycle_from_ap(Coh,getap,sign = 1,use_magma = True):
+    F = Coh.group().base_ring()
+    if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in Coh.group()._grouptype):
+        K = (Coh.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
+    else:
+        K = Matrix(QQ,Coh.dimension(),Coh.dimension(),0).kernel()
 
-        def getap(q):
-            if F == QQ:
-                return E.ap(q)
-            else:
-                Q = F.ideal(q).factor()[0][0]
-                return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
+    disc = Coh.S_arithgroup().Gpn.order_discriminant()
+    try:
+        discnorm = disc.norm()
+    except AttributeError:
+        discnorm = disc
+    try:
+        N = ZZ(discnorm.gen())
+    except AttributeError:
+        N = ZZ(discnorm)
 
-        q = ZZ(1)
-        g0 = None
-        while K.dimension() > 1:
-            q = q.next_prime()
-            for qq,e in F.ideal(q).factor():
-                if  ZZ(qq.norm()).is_prime() and not qq.divides(disc):
-                    try:
-                        ap = getap(qq)
-                    except (ValueError,ArithmeticError):
-                        continue
-                    try:
-                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose()-ap).kernel()
-                    except RuntimeError:
-                        continue
-                    K = K.intersection(K1)
-        if K.dimension() != 1:
-            raise ValueError(f'Did not obtain a one-dimensional space corresponding to E (K.dimension() = {K.dimension()})')
-        col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-        return sum([a * self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
+    if F == QQ:
+        F = NumberField(polygen(QQ), names='a')
+    q = ZZ(1)
+    g0 = None
+    while K.dimension() > 1:
+        q = q.next_prime()
+        for qq,e in F.ideal(q).factor():
+            if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc)):
+                try:
+                    ap = getap(qq)
+                except (ValueError,ArithmeticError):
+                    continue
+                try:
+                    K1 = (Coh.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose()-ap).kernel()
+                except RuntimeError:
+                    continue
+                K = K.intersection(K1)
+    if K.dimension() != 1:
+        raise ValueError('Group does not have the required system of eigenvalues')
 
-    def get_rational_cocycle_from_ap(self,getap,sign = 1,use_magma = True):
-        F = self.group().base_ring()
-        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
-        else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
+    col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
+    return sum([ a * Coh.gen(i) for i,a in enumerate(col) if a != 0], Coh(0))
 
-        disc = self.S_arithgroup().Gpn.order_discriminant()
-        try:
-            discnorm = disc.norm()
-        except AttributeError:
-            discnorm = disc
-        try:
-            N = ZZ(discnorm.gen())
-        except AttributeError:
-            N = ZZ(discnorm)
+def get_rational_cocycle(Coh,sign = 1,use_magma = True,bound = 3, return_all = False):
+    F = Coh.group().base_ring()
+    if F.signature()[1] == 0 or (F.signature()[1] == 1 and 'G' not in Coh.group()._grouptype):
+        K = (Coh.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
+    else:
+        K = Matrix(QQ,Coh.dimension(),Coh.dimension(),0).kernel()
 
-        if F == QQ:
-            x = QQ['x'].gen()
-            F = NumberField(x,names='a')
-        q = ZZ(1)
-        g0 = None
-        while K.dimension() > 1:
-            q = q.next_prime()
-            for qq,e in F.ideal(q).factor():
-                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
-                    try:
-                        ap = getap(qq)
-                    except (ValueError,ArithmeticError):
-                        continue
-                    try:
-                        K1 = (self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose()-ap).kernel()
-                    except RuntimeError:
-                        continue
-                    K = K.intersection(K1)
-        if K.dimension() != 1:
-            raise ValueError('Group does not have the required system of eigenvalues')
+    component_list = []
+    good_components = []
+    if K.dimension() == 1:
+        good_components.append(K)
+    else:
+        component_list.append(K)
 
-        col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-        return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self(0))
+    disc = Coh.S_arithgroup().Gpn.order_discriminant()
+    try:
+        discnorm = disc.norm()
+    except AttributeError:
+        discnorm = disc
+    try:
+        N = ZZ(discnorm.gen())
+    except AttributeError:
+        N = ZZ(discnorm)
 
-    def get_rational_cocycle(self,sign = 1,use_magma = True,bound = 3, return_all = False):
-        F = self.group().base_ring()
-        if F.signature()[1] == 0 or (F.signature()[1] == 1 and 'G' not in self.group()._grouptype):
-            K = (self.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
-        else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
-
-        component_list = []
-        good_components = []
-        if K.dimension() == 1:
-            good_components.append(K)
-        else:
-            component_list.append(K)
-
-        disc = self.S_arithgroup().Gpn.order_discriminant()
-        try:
-            discnorm = disc.norm()
-        except AttributeError:
-            discnorm = disc
-        try:
-            N = ZZ(discnorm.gen())
-        except AttributeError:
-            N = ZZ(discnorm)
-
-        if F == QQ:
-            x = QQ['x'].gen()
-            F = NumberField(x,names='a')
-        q = ZZ(1)
-        g0 = None
-        num_hecke_operators = 0
-        while len(component_list) > 0 and num_hecke_operators < bound:
-            verbose('num_hecke_ops = %s'%num_hecke_operators)
-            verbose('len(components_list) = %s'%len(component_list))
-            q = q.next_prime()
-            for qq,e in F.ideal(q).factor():
-                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc)):
-                    verbose('qq_gens = %s (norm = %s)'%(qq.gens_reduced()[0], qq.norm()))
-                    try:
-                        Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
-                    except (RuntimeError,TypeError) as e:
-                        verbose('error_reported by hecke_matrix: %s'%e)
-                        continue
-                    verbose('Computed hecke matrix at qq = %s'%qq)
-                    old_component_list = component_list
-                    component_list = []
-                    num_hecke_operators += 1
-                    for U in old_component_list:
-                        V = Aq.decomposition_of_subspace(U)
-                        for U0,is_irred in V:
-                            if Aq.restrict(U0).eigenvalues()[0] == ZZ(qq.norm()) + 1:
-                                continue # Do not take Eisenstein classes.
-                            if U0.dimension() == 1:
-                                good_components.append(U0)
-                            elif is_irred:
-                                # Bad
-                                continue
-                            else: # U0.dimension() > 1 and not is_irred
-                                component_list.append(U0)
-                    if len(good_components) > 0 and not return_all:
-                        K = good_components[0]
-                        col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-                        return sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0))
-                    if len(component_list) == 0 or num_hecke_operators >= bound:
-                        break
-
-        if len(good_components) == 0:
-            raise ValueError('Group does not seem to be attached to an elliptic curve')
-        else:
-            if return_all:
-                ans = []
-                for K in good_components:
+    if F == QQ:
+        x = QQ['x'].gen()
+        F = NumberField(x,names='a')
+    q = ZZ(1)
+    g0 = None
+    num_hecke_operators = 0
+    while len(component_list) > 0 and num_hecke_operators < bound:
+        verbose('num_hecke_ops = %s'%num_hecke_operators)
+        verbose('len(components_list) = %s'%len(component_list))
+        q = q.next_prime()
+        for qq,e in F.ideal(q).factor():
+            if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc)):
+                verbose('qq_gens = %s (norm = %s)'%(qq.gens_reduced()[0], qq.norm()))
+                try:
+                    Aq = Coh.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
+                except (RuntimeError,TypeError) as e:
+                    verbose('error_reported by hecke_matrix: %s'%e)
+                    continue
+                verbose('Computed hecke matrix at qq = %s'%qq)
+                old_component_list = component_list
+                component_list = []
+                num_hecke_operators += 1
+                for U in old_component_list:
+                    V = Aq.decomposition_of_subspace(U)
+                    for U0,is_irred in V:
+                        if Aq.restrict(U0).eigenvalues()[0] == ZZ(qq.norm()) + 1:
+                            continue # Do not take Eisenstein classes.
+                        if U0.dimension() == 1:
+                            good_components.append(U0)
+                        elif is_irred:
+                            # Bad
+                            continue
+                        else: # U0.dimension() > 1 and not is_irred
+                            component_list.append(U0)
+                if len(good_components) > 0 and not return_all:
+                    K = good_components[0]
                     col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-                    ans.append( sum([a*self.gen(i) for i,a in enumerate(col) if a != 0],self(0)))
-                return ans
-            else:
-                K = good_components[0]
+                    return sum([a*Coh.gen(i) for i,a in enumerate(col) if a != 0],Coh(0))
+                if len(component_list) == 0 or num_hecke_operators >= bound:
+                    break
+
+    if len(good_components) == 0:
+        raise ValueError('Group does not seem to be attached to an elliptic curve')
+    else:
+        if return_all:
+            ans = []
+            for K in good_components:
                 col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
-                return sum([ a * self.gen(i) for i,a in enumerate(col) if a != 0], self(0))
-
-    def get_twodim_cocycle(self,sign = 1,use_magma = True,bound = 5, hecke_data = None, return_all = False, outfile = None):
-        F = self.group().base_ring()
-        if F == QQ:
-            F = NumberField(PolynomialRing(QQ,'x').gen(),names='r')
-        component_list = []
-        good_components = []
-        if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in self.group()._grouptype):
-            Tinf = self.hecke_matrix(oo).transpose()
-            K = (Tinf-sign).kernel().change_ring(QQ)
-            if K.dimension() >= 2:
-                component_list.append((K, [(oo,Tinf)]))
-            fwrite('Too charpoly = %s'%Tinf.charpoly().factor(),outfile)
+                ans.append( sum([a*Coh.gen(i) for i,a in enumerate(col) if a != 0],Coh(0)))
+            return ans
         else:
-            K = Matrix(QQ,self.dimension(),self.dimension(),0).kernel()
-            if K.dimension() >= 2:
-                component_list.append((K, []))
-        disc = self.S_arithgroup().Gpn.order_discriminant()
-        try:
-            discnorm = disc.norm()
-        except AttributeError:
-            discnorm = disc
+            K = good_components[0]
+            col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
+            return sum([ a * Coh.gen(i) for i,a in enumerate(col) if a != 0], Coh(0))
 
-        try:
-            N = ZZ(discnorm.gen())
-        except AttributeError:
-            N = ZZ(discnorm)
+def get_twodim_cocycle(Coh,sign = 1,use_magma = True,bound = 5, hecke_data = None, return_all = False, outfile = None):
+    F = Coh.group().base_ring()
+    if F == QQ:
+        F = NumberField(PolynomialRing(QQ,'x').gen(),names='r')
+    component_list = []
+    good_components = []
+    if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in Coh.group()._grouptype):
+        Tinf = Coh.hecke_matrix(oo).transpose()
+        K = (Tinf-sign).kernel().change_ring(QQ)
+        if K.dimension() >= 2:
+            component_list.append((K, [(oo,Tinf)]))
+        fwrite('Too charpoly = %s'%Tinf.charpoly().factor(),outfile)
+    else:
+        K = Matrix(QQ,Coh.dimension(),Coh.dimension(),0).kernel()
+        if K.dimension() >= 2:
+            component_list.append((K, []))
+    disc = Coh.S_arithgroup().Gpn.order_discriminant()
+    try:
+        discnorm = disc.norm()
+    except AttributeError:
+        discnorm = disc
 
-        if F == QQ:
-            x = QQ['x'].gen()
-            F = NumberField(x,names='a')
-        q = ZZ(1)
-        g0 = None
-        num_hecke_operators = 0
-        if hecke_data is not None:
-            qq = F.ideal(hecke_data[0])
-            pol = hecke_data[1]
-            Aq = self.hecke_matrix(qq.gens_reduced()[0], use_magma = use_magma).transpose().change_ring(QQ)
-            fwrite('ell = (%s,%s), T_ell charpoly = %s'%(qq.norm(), qq.gens_reduced()[0], Aq.charpoly().factor()),outfile)
-            U0 = component_list[0][0].intersection(pol.subs(Aq).left_kernel())
-            if U0.dimension() != 2:
-                raise ValueError('Hecke data does not suffice to cut out space')
-            good_component = (U0.denominator() * U0,component_list[0][1] + [(qq.gens_reduced()[0],Aq)])
-            row0 = good_component[0].matrix().rows()[0]
+    try:
+        N = ZZ(discnorm.gen())
+    except AttributeError:
+        N = ZZ(discnorm)
+
+    if F == QQ:
+        x = QQ['x'].gen()
+        F = NumberField(x,names='a')
+    q = ZZ(1)
+    g0 = None
+    num_hecke_operators = 0
+    if hecke_data is not None:
+        qq = F.ideal(hecke_data[0])
+        pol = hecke_data[1]
+        Aq = Coh.hecke_matrix(qq.gens_reduced()[0], use_magma = use_magma).transpose().change_ring(QQ)
+        fwrite('ell = (%s,%s), T_ell charpoly = %s'%(qq.norm(), qq.gens_reduced()[0], Aq.charpoly().factor()),outfile)
+        U0 = component_list[0][0].intersection(pol.subs(Aq).left_kernel())
+        if U0.dimension() != 2:
+            raise ValueError('Hecke data does not suffice to cut out space')
+        good_component = (U0.denominator() * U0,component_list[0][1] + [(qq.gens_reduced()[0],Aq)])
+        row0 = good_component[0].matrix().rows()[0]
+        col0 = [QQ(o) for o in row0.list()]
+        clcm = lcm([o.denominator() for o in col0])
+        col0 = [ZZ(clcm * o ) for o in col0]
+        flist = []
+        for row0 in good_component[0].matrix().rows():
             col0 = [QQ(o) for o in row0.list()]
             clcm = lcm([o.denominator() for o in col0])
             col0 = [ZZ(clcm * o ) for o in col0]
-            flist = []
-            for row0 in good_component[0].matrix().rows():
-                col0 = [QQ(o) for o in row0.list()]
-                clcm = lcm([o.denominator() for o in col0])
-                col0 = [ZZ(clcm * o ) for o in col0]
-                flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-            return flist,[(ell, o.restrict(good_component[0])) for ell, o in good_component[1]]
-        while len(component_list) > 0 and num_hecke_operators < bound:
-            verbose('num_hecke_ops = %s'%num_hecke_operators)
-            verbose('len(components_list) = %s'%len(component_list))
-            q = q.next_prime()
-            verbose('q = %s'%q)
-            fact = F.ideal(q).factor()
-            dfact = F.ideal(disc.gens_reduced()[0]).factor()
-            for qq,e in fact:
-                verbose('Trying qq = %s'%qq)
-                if qq in [o for o,_ in dfact]:
-                    verbose('Skipping because qq divides D...')
+            flist.append(sum([a * phi for a,phi in zip(col0,Coh.gens())],Coh(0)))
+        return flist,[(ell, o.restrict(good_component[0])) for ell, o in good_component[1]]
+    while len(component_list) > 0 and num_hecke_operators < bound:
+        verbose('num_hecke_ops = %s'%num_hecke_operators)
+        verbose('len(components_list) = %s'%len(component_list))
+        q = q.next_prime()
+        verbose('q = %s'%q)
+        fact = F.ideal(q).factor()
+        dfact = F.ideal(disc.gens_reduced()[0]).factor()
+        for qq,e in fact:
+            verbose('Trying qq = %s'%qq)
+            if qq in [o for o,_ in dfact]:
+                verbose('Skipping because qq divides D...')
+                continue
+            if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
+                try:
+                    Aq = Coh.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
+                except (RuntimeError,TypeError) as e:
+                    verbose('Skipping qq (=%s) because Hecke matrix could not be computed...'%qq.gens_reduced()[0])
                     continue
-                if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
-                    try:
-                        Aq = self.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
-                    except (RuntimeError,TypeError) as e:
-                        verbose('Skipping qq (=%s) because Hecke matrix could not be computed...'%qq.gens_reduced()[0])
-                        continue
-                    except KeyboardInterrupt:
-                        verbose('Skipping qq (=%s) by user request...'%qq.gens_reduced()[0])
-                        num_hecke_operators += 1
-                        sleep(1)
-                        continue
-                    verbose('Computed hecke matrix at qq = %s'%qq)
-                    fwrite('ell = (%s,%s), T_ell charpoly = %s'%(qq.norm(), qq.gens_reduced()[0], Aq.charpoly().factor()),outfile)
-                    old_component_list = component_list
-                    component_list = []
+                except KeyboardInterrupt:
+                    verbose('Skipping qq (=%s) by user request...'%qq.gens_reduced()[0])
                     num_hecke_operators += 1
-                    for U,hecke_data in old_component_list:
-                        V = Aq.decomposition_of_subspace(U)
-                        for U0,is_irred in V:
-                            if U0.dimension() == 1:
-                                continue
-                            if U0.dimension() == 2 and is_irred:
-                                good_components.append((U0.denominator() * U0,hecke_data+[(qq.gens_reduced()[0],Aq)]))
-                            else: # U0.dimension() > 2 or not is_irred
-                                component_list.append((U0.denominator() * U0,hecke_data + [(qq.gens_reduced()[0],Aq)]))
-                    if len(good_components) > 0 and not return_all:
-                        flist = []
-                        for row0 in good_components[0][0].matrix().rows():
-                            col0 = [QQ(o) for o in row0.list()]
-                            clcm = lcm([o.denominator() for o in col0])
-                            col0 = [ZZ(clcm * o ) for o in col0]
-                            flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-                        return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
-                    if len(component_list) == 0 or num_hecke_operators >= bound:
-                        break
+                    sleep(1)
+                    continue
+                verbose('Computed hecke matrix at qq = %s'%qq)
+                fwrite('ell = (%s,%s), T_ell charpoly = %s'%(qq.norm(), qq.gens_reduced()[0], Aq.charpoly().factor()),outfile)
+                old_component_list = component_list
+                component_list = []
+                num_hecke_operators += 1
+                for U,hecke_data in old_component_list:
+                    V = Aq.decomposition_of_subspace(U)
+                    for U0,is_irred in V:
+                        if U0.dimension() == 1:
+                            continue
+                        if U0.dimension() == 2 and is_irred:
+                            good_components.append((U0.denominator() * U0,hecke_data+[(qq.gens_reduced()[0],Aq)]))
+                        else: # U0.dimension() > 2 or not is_irred
+                            component_list.append((U0.denominator() * U0,hecke_data + [(qq.gens_reduced()[0],Aq)]))
+                if len(good_components) > 0 and not return_all:
+                    flist = []
+                    for row0 in good_components[0][0].matrix().rows():
+                        col0 = [QQ(o) for o in row0.list()]
+                        clcm = lcm([o.denominator() for o in col0])
+                        col0 = [ZZ(clcm * o ) for o in col0]
+                        flist.append(sum([a * phi for a,phi in zip(col0,Coh.gens())],Coh(0)))
+                    return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
+                if len(component_list) == 0 or num_hecke_operators >= bound:
+                    break
 
-        if len(good_components) == 0:
-            if not return_all:
-                raise ValueError('Group does not seem to be attached to an abelian surface')
-            else:
-                return []
-        if return_all:
-            ans = []
-            for K,hecke_data in good_components:
-                flist = []
-                for row0 in K.matrix().rows():
-                    col0 = [QQ(o) for o in row0.list()]
-                    clcm = lcm([o.denominator() for o in col0])
-                    col0 = [ZZ(clcm * o ) for o in col0]
-                    flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-                ans.append((flist,[(ell, o.restrict(K)) for ell, o in hecke_data]))
-            return ans
+    if len(good_components) == 0:
+        if not return_all:
+            raise ValueError('Group does not seem to be attached to an abelian surface')
         else:
+            return []
+    if return_all:
+        ans = []
+        for K,hecke_data in good_components:
             flist = []
-            for row0 in good_components[0][0].matrix().rows():
+            for row0 in K.matrix().rows():
                 col0 = [QQ(o) for o in row0.list()]
                 clcm = lcm([o.denominator() for o in col0])
                 col0 = [ZZ(clcm * o ) for o in col0]
-                flist.append(sum([a * phi for a,phi in zip(col0,self.gens())],self(0)))
-            return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
-
-
-    def get_Lseries_term(self, phi, n, cov = None):
-        r"""
-        Return the `n`-th coefficient of the `p`-adic `L`-series attached to an
-        element phi of H^1(G,D).
-
-        Input:
-            - phi, an ArithCohElement object, representing a cohomology class 
-                in the underlying group self;
-
-            - n, an integer;
-
-            - cov, a set of representing matrices for the U_p operator.
-
-        Outputs:
-            a p-adic number, the coefficient of z^n in the p-adic L-series 
-            attached to phi. This will give the series attached to the identity
-            component in weight space; in the notation of Pollack-Stevens, this is
-            the power series L_p(mu,id,z), mu the p-adic L-function of phi.
-
-        """
-        ## Perhaps we've already computed this. If we have, then return it
-        if n in phi._Lseries_coefficients:
-            return phi._Lseries_coefficients[n]
-        else:
-            ## We need to compute this for the first time
-            G = self.S_arithgroup() ## G = Gamma
-            p = G.prime() ## underlying prime
-            ap = phi['sign_ap']
-
-            ## Specify a topological generator of 1 + pZp
-            if p == 2:
-                gamma = 1 + 4
-            else:
-                gamma = 1 + p
-
-            K = self.coefficient_module().base_ring() ## p-adic ring
-            precision = K.precision_cap()
-
-            ## Initialise power series ring, where output will be valued
-            S = K[['z']]
-            z = S.gen()
-            M = precision
-
-            ## find coefficients of the log function wrt our top gen
-            if n == 0:
-                precision = M
-                lb = [1] + [0 for a in range(M - 1)]
-            else:
-                lb = log_gamma_binomial(p, gamma, n, 2 * M)
-                if precision is None:
-                    precision = min([j + lb[j].valuation(p)
-                                     for j in range(M, len(lb))])
-                lb = [lb[a] for a in range(M)]
-
-            ## Find U_p representatives, if necessary, ignoring first <-> pZp
-            if cov is None:
-                cov = G.get_Up_reps()[1:]
-
-            dn = 0 ## Initialise output to 0
-
-            ## Range over all reps of the U_p operator, and add the relevant integral
-            for h in cov:
-                aa = K.teichmuller(h[0,1] / h[1,1])
-                f = sum(lj * (1/aa * z - 1)**j for j, lj in enumerate(lb))
-                dn += phi.BI(h, None).evaluate_at_poly(f)
-            ## Store in dictionary of L_p series coefficients
-            phi._Lseries_coefficients[n] = dn.add_bigoh(precision)
-            return phi._Lseries_coefficients[n]
-
+                flist.append(sum([a * phi for a,phi in zip(col0,Coh.gens())],Coh(0)))
+            ans.append((flist,[(ell, o.restrict(K)) for ell, o in hecke_data]))
+        return ans
+    else:
+        flist = []
+        for row0 in good_components[0][0].matrix().rows():
+            col0 = [QQ(o) for o in row0.list()]
+            clcm = lcm([o.denominator() for o in col0])
+            col0 = [ZZ(clcm * o ) for o in col0]
+            flist.append(sum([a * phi for a,phi in zip(col0,Coh.gens())],Coh(0)))
+        return flist,[(ell, o.restrict(good_components[0][0])) for ell, o in good_components[0][1]]
