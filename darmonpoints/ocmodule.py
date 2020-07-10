@@ -161,30 +161,30 @@ class OCVnElement(ModuleElement):
         """
         return self.element()
 
-    def matrix_rep(self,B=None):
+    def matrix_rep(self):
         r"""
         Returns a matrix representation of ``self``.
         """
-        #Express the element in terms of the basis B
-        if B is None:
-            B = self._parent.basis()
-        A=Matrix(self._parent._R,self._parent.dimension(),self._parent.dimension(),[[b._val[ii,0] for b in B] for ii in range(self._depth)])
-        tmp=A.solve_right(self._val)
-        return tmp
+        B = self._parent.basis()
+        A = Matrix(self._parent._R,self._parent.dimension(),self._parent.dimension(),[[b._val[ii,0] for b in B] for ii in range(self._depth)])
+        if A == 1:
+            return MatrixSpace(self._parent._R,self._parent.dimension(),1)(self._val)
+        else:
+            return A.solve_right(self._val)
 
     def _add_(self,y):
         r"""
         Add two elements.
         """
-        val=self._val+y._val
-        return self.__class__(self._parent,val, check = False)
+        val = self._val + y._val
+        return self.__class__(self._parent, val, check = False)
 
     def _sub_(self,y):
         r"""
         Subtract two elements.
         """
-        val=self._val-y._val
-        return self.__class__(self._parent,val, check = False)
+        val = self._val - y._val
+        return self.__class__(self._parent, val, check = False)
 
     def _div_(self,right):
         r"""
@@ -206,7 +206,6 @@ class OCVnElement(ModuleElement):
         r"""
         Act on the right by a matrix.
         """
-        #assert(x.nrows()==2 and x.ncols()==2) #An element of GL2
         return self._acted_upon_(x.adjugate(), False)
 
     def _acted_upon_(self,x, right_action): # Act by x on the left
@@ -216,17 +215,15 @@ class OCVnElement(ModuleElement):
         if right_action:
             return self._acted_upon_(x.adjugate(), False)
         else:
-            R = self._parent._R
-            A = self._parent._get_powers(x)
-            tmp = A * self._val
+            tmp = self._parent._get_powers(x) * self._val
             return self.__class__(self._parent, tmp, check = False)
 
     def _neg_(self):
-        return self.__class__(self._parent,-self._val, check = False)
+        return self.__class__(self._parent, -self._val, check = False)
 
     def _rmul_(self,a):
         #assume that a is a scalar
-        return self.__class__(self._parent,self._parent._Rmod(a)*self._val, check = False)
+        return self.__class__(self._parent, self._parent._Rmod(a) * self._val, check = False)
 
     def _repr_(self):
         r"""
@@ -234,8 +231,7 @@ class OCVnElement(ModuleElement):
         """
         R = PowerSeriesRing(self._parent._R,default_prec=self._depth,name='z')
         z = R.gen()
-        s = str(sum([R(self._val[ii,0]*z**ii) for ii in range(self._depth)]))
-        return s
+        return str(sum([R(self._val[ii,0]*z**ii) for ii in range(self._depth)]))
 
     def _cmp_(self,other):
         return (self._val > other._val) - (self._val < other._val)
@@ -300,7 +296,7 @@ class OCVnElement(ModuleElement):
 
 
 class OCVn(Module,UniqueRepresentation):
-    Element=OCVnElement
+    Element = OCVnElement
     r"""
     This class represents objects in the overconvergent approximation modules used to
     describe overconvergent p-adic automorphic forms.
@@ -320,6 +316,7 @@ class OCVn(Module,UniqueRepresentation):
 
     - Cameron Franc (2012-02-20)
     - Marc Masdeu (2012-02-20)
+
     """
     def __init__(self,p,depth):
         Module.__init__(self,base = Zmod(p**(depth-1)))
@@ -329,6 +326,7 @@ class OCVn(Module,UniqueRepresentation):
         self._depth = depth
         self._pN = self._p**(depth - 1)
         self._PowerSeries = PowerSeriesRing(self._Rmod, default_prec = self._depth,name='z')
+        self._PowerSeries.set_default_prec(self._depth) # DEBUG
         self._cache_powers = dict()
         self._unset_coercions_used()
         self._Sigma0 = Sigma0(self._p, base_ring = self._Rmod, adjuster = our_adjuster())
@@ -370,7 +368,7 @@ class OCVn(Module,UniqueRepresentation):
         except AttributeError: pass
         return self._get_powers(g).submatrix(0,0,M,M)
 
-    def _get_powers(self,abcd,emb = None):
+    def _get_powers(self,abcd, emb = None):
         abcd = tuple(abcd.list())
         try:
             return self._cache_powers[abcd]
@@ -391,8 +389,7 @@ class OCVn(Module,UniqueRepresentation):
             ylist = y.list()[:self._depth]
             ylist.extend([R.base_ring().zero() for o in range(self._depth - len(ylist))])
             xlist.append([ZZ(o) for o in ylist])
-        # x = Matrix(R.base_ring(),self._depth,self._depth, xlist).apply_map(ZZ)
-        x = Matrix(ZZ,self._depth,self._depth, xlist)
+        x = Matrix(ZZ, self._depth, self._depth, xlist)
         self._cache_powers[abcd] = x
         return x
 
@@ -500,11 +497,19 @@ class MeromorphicFunctionsElement(ModuleElement):
                     rf = data.rational_function()
                     t = rf.parent().gen()
                     a,b,c,d = parent.twisting_matrix().list()
+                    Ps.set_default_prec(Ps.default_prec() + 1)
                     rf = Ps(rf((a*t+b)/(c*t+d)))
                     rf /= rf(K(0))
-                    self._value = parent._V([o._polynomial_list(pad=True) for o in rf.log().derivative().list()])
+                    ans = parent._V(0)
+                    rflogp = rf.log().derivative()
+                    for a, i in zip(rflogp.coefficients(), rflogp.exponents()):
+                        try:
+                            ans.set_row(i, a._polynomial_list(pad=True))
+                        except ValueError:
+                            pass
+                    self._value = ans
                 else:
-                    self._value = Ps((wp*data).rational_function())
+                    self._value = Ps((wp * data).rational_function())
             elif data.parent() == parent._V:
                 self._value = parent._V(data)
             elif hasattr(data,'nrows'): # A matrix
@@ -536,21 +541,23 @@ class MeromorphicFunctionsElement(ModuleElement):
         else:
             return ans.exp()
 
+    def pair_with(self, D):
+        return self.evaluate_additive(D)
+
     def evaluate_multiplicative(self, D):
         K = self.parent().base_ring()
         p = K.prime()
-        assert isinstance(D.parent(), Divisors) #  and D.degree() == 0 # DEBUG
+        assert isinstance(D.parent(), Divisors) and D.degree() == 0
         phi = self.parent()._eval_pseries_map
         if self.parent().is_additive():
-            poly = self.power_series().polynomial()
-            poly = poly.integral()
-            ans = K(0)
+            poly = self.power_series().integral().exp().polynomial()
+            ans = K(1)
             for P, n in D:
                 phiP = phi(P)
                 if phiP.valuation() < 0:
                     raise ValueError('Negative valuation!')
-                ans += n * poly(phiP)
-            return K(1) if ans == 0 else ans.exp()
+                ans *= poly(phiP)**n
+            return ans # K(1) if ans == 0 else ans.exp()
         else:
             poly = self._value.polynomial()
             ans = K(1)
@@ -563,7 +570,7 @@ class MeromorphicFunctionsElement(ModuleElement):
     def evaluate_additive(self, D):
         K = self.parent().base_ring()
         p = K.prime()
-        assert isinstance(D.parent(), Divisors) # and D.degree() == 0 # DEBUG
+        assert isinstance(D.parent(), Divisors) and D.degree() == 0
         phi = self.parent()._eval_pseries_map
         if self.parent().is_additive():
             poly = self.power_series().polynomial()
@@ -691,7 +698,8 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         self._base_ring = K
         self._prec = K.precision_cap()
         psprec = self._prec + 1 if additive else self._prec
-        self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec=psprec)
+        self._Ps = PowerSeriesRing(self._base_ring, names='t')
+        self._Ps.set_default_prec(psprec)
         if self._additive:
             self._V = MatrixSpace(Zmod(K.prime()**self._prec), self._prec, 2)
         t = self._Ps.gen()
@@ -744,6 +752,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
             a_inv = a**-1
 
         Ps = PowerSeriesRing(Zm, names='z', default_prec=prec)
+        Ps.set_default_prec(prec) # DEBUG
         z = Ps.gen()
         denom = (a_inv * (-c * a_inv * z + 1)**-1).polynomial().truncate(prec) # 1 / (-c*z + a)
         zz = (d * z - b) * denom # zz = (d * z - b) / (-c * z  + a)
@@ -817,8 +826,11 @@ class RationalFunctionsElement(ModuleElement):
         return self._value
 
     def __call__(self, D):
-        assert isinstance(D.parent(), Divisors) # and D.degree() == 0 # DEBUG
+        assert isinstance(D.parent(), Divisors) and D.degree() == 0
         return prod(self._value(P)**ZZ(n) for P, n in D)
+
+    def pair_with(self, D):
+        return self(D).log(0)
 
     def _cmp_(self, right):
         return (self._value > right._value) - (self._value < right._value)

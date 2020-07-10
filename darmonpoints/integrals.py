@@ -142,6 +142,55 @@ def double_integral(Phi,tau1,tau2,r,s):
       i2 = double_integral(Phi,tau1,tau2,s,[1,0])
       return i1/i2
 
+def log_pseries(R, x, prec = None):
+    r'''
+    Calculate efficiently log(1 - x*z), where z is the variable of R
+    Doing it with power series built-in log is about 10 times slower...
+    '''
+    if x.valuation() <= 0:
+        raise ValueError('Valuation problem')
+    K = R.base_ring()
+    if prec is None:
+        prec = R.default_precision()
+    v = [K.zero(),K(x)]
+    xpow = K(x)
+    for m in range(2, prec + 1):
+        xpow *= x
+        v.append( xpow / QQ(m) )
+    return -R(v)
+
+def lift_to_locally_analytic(G, divisor, prec=None):
+    K = divisor.parent().base_ring()
+    if prec is None:
+        prec = K.precision_cap()
+    p = G.p
+    R = PolynomialRing(K,'r')
+    edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
+    ans = []
+    while len(edgelist) > 0:
+        newedgelist = []
+        ii = 0
+        for parity, (rev, h), wt in edgelist:
+            ii += 1
+            a,b,c,d = [K(o) for o in G.embed(h,prec).list()]
+            try:
+                c0unit = K.one()
+                c0val = 0
+                pol = R.zero()
+                for P, n in divisor:
+                    hp0 = K(a * P + b)
+                    pol += QQ(n) * log_pseries(R, K(c * P + d) / hp0, prec)
+                    c0unit *= (-hp0).unit_part() ** n
+                    c0val += n * hp0.valuation()
+                pol += c0unit.log(0)
+                ans.append(((h, rev), pol, c0val, c0unit))
+            except ValueError as msg:
+                verbose('Subdividing because (%s)...'%str(msg))
+                newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([(rev, h)],parity,2)])
+                continue
+        edgelist = newedgelist
+    return ans
+
 r'''
 Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
@@ -156,27 +205,23 @@ def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,twist=False,progress_bar 
     Cp = cycle.parent().coefficient_module().base_field()
     R = PolynomialRing(Cp,names = 't')
     t = R.gen()
-    jj = 0
     total_integrals = cycle.size_of_support()
     verbose('Will do %s integrals'%total_integrals)
-    input_vec = []
     resmul = Cp(1)
     resadd = Cp(0)
     resval = ZZ(0)
     for g, D in cycle:
-        jj += 1
         if twist:
             D = D.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
             g = g.conjugate_by(G.wp()**-1)
-        newresadd, newresmul, newresval = integrate_H0(G, D, cocycle,depth,g,prec,jj,total_integrals,progress_bar)
-        resadd += newresadd
-        resmul *= newresmul
-        resval += newresval
+        for (h, rev), pol, c0val, c0unit in lift_to_locally_analytic(G, D, prec):
+            mu = cocycle.evaluate(g, h, twist=rev, at_identity=G.use_shapiro())
+            resadd += sum(a * mu.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu.moments()))
+            mu0 = cocycle['liftee'].evaluate(g, h=h, twist=rev, at_identity=G.use_shapiro())[0]
+            resval += c0val * ZZ(mu0)
+            resmul *= c0unit**ZZ(mu0)
     if not multiplicative:
-        if return_valuation:
-            return resadd, resval, resmul
-        else:
-            return resadd
+        return resadd, resval, resmul if return_valuation else resadd
     else:
         return Cp.prime()**resval * Cp.teichmuller(resmul) * resadd.exp() # DEBUG
 
@@ -194,89 +239,6 @@ def sample_point(G,e,prec = 20):
         return Infinity
     return b/d
 
-def integrate_H0(G,divisor,hc,depth,gamma,prec,counter,total_counter,progress_bar):
-    # verbose('Integral %s/%s...'%(counter,total_counter))
-    p = G.p
-    HOC = hc.parent()
-    if prec is None:
-        prec = HOC.coefficient_module().precision_cap()
-    try:
-        coeff_depth = HOC.coefficient_module().precision_cap()
-    except AttributeError:
-        coeff_depth = HOC.coefficient_module().coefficient_module().precision_cap()
-    K = divisor.parent().base_ring()
-    QQp = Qp(p,prec)
-    R = PolynomialRing(K,'r')
-    resadd = ZZ(0)
-    resval = ZZ(0)
-    resmul = ZZ(1)
-    edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(depth)]
-    while len(edgelist) > 0:
-        newedgelist = []
-        ii = 0
-        for parity, (rev, h), wt in edgelist:
-            ii += 1
-            a,b,c,d = [K(o) for o in G.embed(h,prec).list()]
-            try:
-                c0unit = K.one()
-                c0val = 0
-                pol = R.zero()
-                for P,n in divisor:
-                    if P == Infinity:
-                        continue
-                    else:
-                        hp0 = K(b + a * P)
-                        hp1 = K(d + c * P)
-                        if hp1.valuation() <= hp0.valuation():
-                            raise ValueError('Valuation problem')
-                    # We compute n * log(1 - hp1 / hp0 z)
-                    # Doing it with power series built-in log is about 10 times slower...
-                    x = hp1 / hp0
-                    v = [K.zero(),K(x)]
-                    xpow = K(x)
-                    for m in range(2, coeff_depth + 1):
-                        xpow *= x
-                        v.append( xpow / QQ(m) )
-                    pol -= QQ(n) * R(v)
-                    c0unit *= (-hp0).unit_part() ** n
-                    c0val += n * hp0.valuation()
-                pol += c0unit.log(0) # DEBUG
-                mu_e = hc.evaluate(gamma, h, twist=rev, at_identity=G.use_shapiro())
-                # newgamma = G.reduce_in_amalgam(h * gamma.quaternion_rep, return_word = False)
-                # if rev:
-                #     newgamma = newgamma.conjugate_by(G.wp())
-                # if G.use_shapiro():
-                #     mu_e = hc.evaluate_and_identity(newgamma)
-                # else:
-                #     mu_e = hc.evaluate(newgamma)
-            except ValueError as msg:
-                verbose('Subdividing because (%s)...'%str(msg))
-                newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([(rev, h)],parity,2)])
-                continue
-            resadd += sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e.moments()))
-            try:
-                tmp = hc['liftee'].evaluate(gamma, h=h, twist=rev, at_identity=G.use_shapiro())
-                resval += c0val * ZZ(tmp[0])
-                resmul *= c0unit**ZZ(tmp[0])
-            except IndexError: pass
-            if progress_bar:
-                update_progress(float(QQ(ii)/QQ(len(edgelist))),'Integration %s/%s'%(counter,total_counter))
-        edgelist = newedgelist
-    return resadd, resmul, resval
-
-def multiplicative_integral(mu, phi):
-    r'''
-    Calculates the multiplicative integral of the rational function phi against mu.
-    '''
-    phi_rat = phi.rational_function()
-    R = PowerSeriesRing(phi.parent().base_ring(),'z')
-    z = R.gen()
-    c0 = phi_rat(0)
-    moment_0 = ZZ(algdep(mu.moment(0),1).roots()[0][0])
-    pol = R(phi_rat / c0).log() # DEBUG: this is going to be slow
-    Jadd = sum(a * mu.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu.moments()))
-    return c0**moment_0 * Jadd.exp()
-
 def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
     p = G.p
     HOC = cocycle.parent()
@@ -290,7 +252,6 @@ def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
     PS = PowerSeriesRing(Cp, names = 'z')
     t = R.gen()
     z = PS.gen()
-
     if prec is None:
         prec = V.precision_cap()
     try:
@@ -300,26 +261,8 @@ def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
     resadd = ZZ(0)
     edgelist = G.get_covering(1)[1:]
     for rev, h in edgelist:
+        mu_e = cycle.evaluate(gamma, h, twist=rev, at_identity=G.use_shapiro())
         a,b,c,d = [Cp(o) for o in G.embed(h,prec).list()]
-        try:
-            c0val = 0
-            pol =  PS(d * z + b) / PS(c * z + a)
-            pol -= Cp.teichmuller(center)
-            pol = pol**j
-            pol = pol.polynomial()
-            mu_e = cycle.evaluate(gamma, h, twist=rev, at_identity=G.use_shapiro())
-        except AttributeError:
-            verbose('...')
-            continue
-        if HOC._use_ps_dists:
-            tmp = sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e._moments))
-        else:
-            tmp = mu_e.evaluate_at_poly(pol, Cp, coeff_depth)
-        resadd += tmp
-        try:
-            if G.use_shapiro():
-                tmp = cocycle['liftee'].evaluate_and_identity(newgamma)
-            else:
-                tmp = cocycle['liftee'].evaluate(newgamma)
-        except IndexError: pass
+        pol = ((PS(d * z + b) / PS(c * z + a) - Cp.teichmuller(center))**j).polynomial()
+        resadd += sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e.moments()))
     return resadd

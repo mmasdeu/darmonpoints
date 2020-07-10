@@ -16,12 +16,14 @@ from sage.sets.set import Set
 from sage.arith.all import GCD
 from sage.rings.padics.precision_error import PrecisionError
 from sage.structure.element import MultiplicativeGroupElement,ModuleElement
+from sage.modules.module import Module
 from sage.matrix.matrix_space import MatrixSpace
 from sage.modules.free_module import FreeModule
 from sage.modules.free_module_element import  free_module_element
 from sage.structure.unique_representation import CachedRepresentation
 from sage.rings.padics.factory import ZpCA
 from sage.structure.richcmp import richcmp
+from sage.structure.unique_representation import UniqueRepresentation
 
 import os
 import operator
@@ -405,7 +407,7 @@ class TensorElement(ModuleElement):
         newdict = {g: a * v for g,v in self._data.items()} if a != 0 else {}
         return self.parent()(newdict)
 
-class TensorProduct(Parent):
+class TensorProduct(Module, UniqueRepresentation):
     Element = TensorElement
     def __init__(self,G,V):
         r'''
@@ -415,7 +417,7 @@ class TensorProduct(Parent):
         '''
         self._group = G
         self._coeffmodule = V
-        Parent.__init__(self)
+        Module.__init__(self, base=ZZ)
         V._unset_coercions_used()
         V.register_action(ArithGroupAction(G,V))
         self._populate_coercion_lists_()
@@ -458,10 +460,19 @@ class OneChainsElement(TensorElement):
                 return False
         return True
 
+    def is_zero(self):
+        return len(self._data) == 0
+
+    def _nonzero_(self):
+        return not self.is_zero()
+
+    def __eq__(self, other):
+        return (self - other).is_zero()
+
     def radius(self):
         return max([0] + [v.radius() for g,v in self._data.items()])
 
-    def zero_degree_equivalent(self, allow_multiple = False):
+    def zero_degree_equivalent(self, allow_multiple = False, prec=None):
         r'''
         Use the relations:
             * gh|v = g|v + h|g^-1 v

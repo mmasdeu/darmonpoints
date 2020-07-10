@@ -467,7 +467,7 @@ def our_lindep(V,prec = None, base=None):
         M[n+i,-1-i] = pn
     verb_lev = get_verbose()
     set_verbose(0)
-    tmp = M.transpose().change_ring(ZZ).right_kernel_matrix(algorithm='flint', proof=False)
+    tmp = M.transpose().change_ring(ZZ).right_kernel_matrix(proof=False, algorithm='flint')
     set_verbose(verb_lev)
     tmp = tmp.LLL().row(0)
     return list(tmp)[:n]
@@ -549,6 +549,9 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
 
 
 def polynomial_roots(f, K):
+    return [o for o, _ in f.change_ring(K).roots()]
+
+def polynomial_roots_old(f, K):
     r'''
     Finds the roots of f in the field K, using Hensel lift.
 
@@ -651,46 +654,53 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, units=None, extra_periods=N
         K_to_Cp = K.hom([K.gen()])
     else:
         K_to_Cp = K.hom([polynomial_roots(K._exact_modulus(), Cp)[0]])
-    debug_idx = kwargs.pop('debug_idx',0)
-    phi = kwargs.pop('phi', M.hom([polynomial_roots(M.polynomial(),Cp)[debug_idx]]))
+    debug_idx = kwargs.pop('debug_idx', 0)
+    embeddings = polynomial_roots(M.polynomial(), Cp)
+    if len(embeddings) == 0:
+        raise ValueError(f'M (={M}) does not embed into Cp (={Cp})')
+    phi = kwargs.pop('phi', None)
+    if phi is None:
+        phi_list = []
+        for rt in embeddings:
+            phi = M.hom([rt])
+            xp = phi(M.gen())
+            xpconj = xp.trace() - xp
+            # We find sigma in Gal(M) such that it corresponds to conjugation in Cp.
+            found = False
+            for sigma in M.automorphisms():
+                if xpconj == phi(sigma(M.gen())):
+                    found = True
+                    break
+            if found:
+                phi_list.append((phi, sigma))
+        try:
+            phi, sigma = phi_list[debug_idx]
+        except IndexError:
+            raise ValueError(f'There are only {len(phi_list)} embeddings but debug_idx is {debug_idx}')
     V = [None]
     Vlogs = [K_to_Cp(J.log(0))]
     W = ['J']
-    xp = phi(M.gen())
-    xpconj = xp.trace() - xp
-    # We find sigma in Gal(M) such that it corresponds to conjugation in Cp.
-    found = False
-    for sigma in M.automorphisms():
-        if xpconj == phi(sigma(M.gen())):
-            found = True
-            break
-    assert found
     class_number = kwargs.get('class_number', None)
     if class_number is not None:
-        hM = class_number
         for ell in prime_list:
             ell_set = set([])
-            for o in M.ideal(ell).factor():
+            for pp, _ in M.ideal(ell).factor():
                 verbose(f'(Factoring {ell})')
-                gens = (o[0]**hM).gens_reduced(proof=False)
+                gens = (pp**class_number).gens_reduced(proof=False)
                 assert len(gens) == 1, f'Wrong class number ( = {class_number}). Witness: {ell}'
-                gens0 = (o[0]**hM).gens_reduced(proof=False)[0]
-                phiv = phi(gens0)
-                if phiv.valuation() == 0:
-                    ell_set.add(gens0)
+                if phi(gens[0]).valuation() == 0:
+                    ell_set.add(gens[0])
             while ell_set:
                 g0 = ell_set.pop()
                 sg0 = sigma(g0)
-                count = 1
                 g1_list = [g1 for g1 in ell_set if sg0 in M.ideal(g1)]
-                for g1 in g1_list:
-                    ell_set.remove(g1)
                 assert len(g1_list) <= 1
                 if len(g1_list) == 0:
                     V.append(g0)
                     Vlogs.append(phi(g0).log(0))
                     W.append(ell)
                 elif len(g1_list) == 1:
+                    ell_set.remove(g1_list[0])
                     quot = g0 / g1_list[0]
                     V.append(quot)
                     Vlogs.append(phi(quot).log(0))
@@ -698,13 +708,13 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, units=None, extra_periods=N
     else:
         hMlist = [1]
         for ell in prime_list:
-            for L,e in M.ideal(ell).factor():
+            for pp, _ in M.ideal(ell).factor():
                 verbose(f'(Factoring {ell}')
                 hM = 0
                 gens = [None, None]
                 while len(gens) > 1:
                     hM += 1
-                    gens = (L**hM).gens_reduced(proof=False)
+                    gens = (pp**hM).gens_reduced(proof=False)
                 gens0 = gens[0]
                 phiv = phi(gens0)
                 if phiv.valuation() == 0:
@@ -759,7 +769,7 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, units=None, extra_periods=N
     clist_ans = [(u,v) for u,v in zip(clist,W) if u != 0]
     fwrite("# SUCCESS!", outfile)
     fwrite(f'# {clist_ans}', outfile)
-    algebraic = kwargs.get('algebraic', True)
+    algebraic = kwargs.get('algebraic', False)
     if not algebraic:
         return clist_ans
     else:
@@ -830,7 +840,7 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
       x2 = QQ(x2)
       list_candidate_x = [x1+x2*w] # [x1 - x2 * u / v + (x2 / v) * w] # DEBUG
   else:
-      candidate_x = our_algdep(x,E.base_ring().degree()*2*hF,prec)
+      candidate_x = our_algdep(x, E.base_ring().degree()*2*hF,prec)
       pol_height = height_polynomial(candidate_x,base = p)
       if pol_height < .9 * prec: # .9 is quite arbitrary...
           list_candidate_x = [rt for rt,pw in candidate_x.change_ring(HCF).roots()]
@@ -842,6 +852,8 @@ def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
       for candidate_x in list_candidate_x:
           try:
               Pt = E_over_HCF.lift_x(candidate_x)
+              if Pt.is_finite_order(): # DEBUG
+                  raise ValueError
               verbose('Point is in curve: %s'%Pt,level=2)
               return Pt,True
           except ValueError:
@@ -1677,10 +1689,9 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     ulog = 1/numqE * (ZZ(p)**numqE/qE**denqE).log()
     Jlog = J.log(p_branch = ulog)
     Cp = Jlog.parent()
-    addpart0 = Jlog / known_multiple
     candidate = None
     if twopowlist is None:
-        twopowlist = [2, 1, QQ(1)/QQ(2)]
+        twopowlist = [QQ(2), QQ(1), QQ(1)/QQ(2)]
     HCF = K.hilbert_class_field(names = 'r1') if hK > 1 else K
     # Precalculate powers of qE
     precp = max((prec/valqE).floor() + 4, ((prec+4)/valqE).floor() + 2)
@@ -1692,7 +1703,6 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
     CEloc,_ = get_C_and_C2(Eloc,qEpows,Cp,precp)
     EH = E.change_ring(HCF)
     for twopow in twopowlist:
-        addpart = addpart0 / twopow
         success = False
         power = QQ(twopow * known_multiple)**-1
         pnum = E.torsion_order() * power.numerator()
@@ -1732,7 +1742,7 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
                     break
         if success:
             assert known_multiple * twopow * J1.log(p_branch = ulog) == J.log(p_branch = ulog)
-            return candidate,twopow,J1
+            return candidate, twopow, J1
     assert not success
     return None,None,None
 

@@ -212,9 +212,9 @@ class ArithCohElement(CohomologyElement):
         If h is not None, then g is assumed to be in Gamma, and return the evaluation of the corresponding
         element in the Coinduced module, via Shapiro's isomorphism.
         '''
-        G = self.parent().S_arithgroup()
         if h is None:
             return super(ArithCohElement, self).evaluate(g, at_identity=at_identity)
+        G = self.parent().S_arithgroup()
         hp = G.reduce_in_amalgam(h, return_word = False) if check else 1
         he = hp**-1 * h # So that h = hp * he
         hp = G.Gpn(hp)
@@ -584,9 +584,6 @@ class CohArbitrary(CohomologyGroup):
         else:
             CohomologyGroup.__init__(self, G, V)
 
-    def group(self):
-        return self._G
-
     def act_by_poly_hecke(self, c, r, f, **kwargs):
         if f == 1:
             return self
@@ -839,8 +836,6 @@ class ArithCohBianchi(ArithCoh):
         V.register_action( arith_act )
         self.P_gen = None
         self.Pbar_gen = None
-        # self._pN = V._p**base.precision_cap()
-        # self._V = V
         ArithCoh.__init__(self, G, V,use_ps_dists = use_ps_dists)
 
 

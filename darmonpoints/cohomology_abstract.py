@@ -6,6 +6,7 @@
 from sage.structure.sage_object import SageObject
 from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement,ModuleElement
+from sage.modules.module import Module
 from sage.structure.parent import Parent
 from sage.categories.homset import Hom
 from sage.matrix.constructor import Matrix,matrix
@@ -243,7 +244,7 @@ class CohomologyElement(ModuleElement):
                 ans -= self._val[-g-1][0]
         return ans
 
-class CohomologyGroup(Parent):
+class CohomologyGroup(Module):
     def __init__(self, G, V, action_map = None):
         self._group = G
         self._coeffmodule = V
@@ -251,7 +252,12 @@ class CohomologyGroup(Parent):
         self._gen_pows = []
         self._gen_pows_neg = []
 
-        if action_map is not None:
+        if action_map is None:
+            if hasattr(V, 'dimension'):
+                self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
+            else:
+                self._acting_matrix = None
+        else:
             action = ArithAction(G, V, action_map)
             V._unset_coercions_used()
             V.register_action(action)
@@ -260,16 +266,13 @@ class CohomologyGroup(Parent):
             def acting_matrix(x,y):
                 return V.acting_matrix(x,y)
             self._acting_matrix = acting_matrix
-        else:
-            self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
         gens_local = [ (g, g**-1) for g in G.gens() ]
         GA = GroupAlgebra(G)
         self._GA = GA
         for g, ginv in gens_local:
             self._gen_pows.append([GA(G(1)), GA(g)])
             self._gen_pows_neg.append([GA(G(1)), GA(ginv)])
-
-        Parent.__init__(self)
+        Module.__init__(self,base=ZZ)
         return
 
     @cached_method

@@ -20,6 +20,7 @@ from .limits import find_optimal_embeddings,find_tau0_and_gtau,num_evals
 from .util import get_heegner_params,fwrite,quaternion_algebra_invariants_from_ramification, recognize_J,config_section_map, Bunch
 
 import os, datetime, configparser, sys
+from itertools import product
 
 r'''
     TESTS:
@@ -104,11 +105,11 @@ def construct_homology_cycle(P, G, D, prec, hecke_poly_getter, outfile = None, m
         f = hecke_poly_getter(q1)
         R = f.parent()
         x = R.gen()
-        # while True:
-        #     try:
-        #         f = R(f/(x-a_ell))
-        #     except TypeError:
-        #         break
+        while True:
+            try:
+                f = R(f/(x-a_ell))
+            except TypeError:
+                break
         while True:
             try:
                 f = R(f/(x-(q1+1)))
@@ -402,7 +403,11 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         local_embedding = G.base_ring_local_embedding(working_prec)
     else:
         local_embedding = Qp(p,working_prec)
-    twopowlist = [4, 3, 2, 1, QQ(1)/2, QQ(3)/2, QQ(1)/3, QQ(2)/3, QQ(1)/4, QQ(3)/4, QQ(5)/2, QQ(4)/3]
+    mysterious_multiples = [1, 3, 5, 7, 9]
+    twopowlist = [QQ(1)/4, QQ(1)/2, QQ(1), QQ(2), QQ(4)]
+    twopowlist = [a * b for a, b in product(mysterious_multiples, twopowlist)]
+    twopowlist = twopowlist + [o**-1 for o in twopowlist]
+    twopowlist  = sorted(list(set(twopowlist)))
 
     known_multiple = ZZ(nn * eisenstein_constant)
     while known_multiple % p == 0:
