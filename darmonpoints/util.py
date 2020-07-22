@@ -549,9 +549,6 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
 
 
 def polynomial_roots(f, K):
-    return [o for o, _ in f.change_ring(K).roots()]
-
-def polynomial_roots_old(f, K):
     r'''
     Finds the roots of f in the field K, using Hensel lift.
 
@@ -560,9 +557,17 @@ def polynomial_roots_old(f, K):
         sage: from darmonpoints.util import polynomial_roots
         sage: x = QQ['x'].gen()
         sage: K.<g> = Qp(5,20).extension(x^2-x-13)
-        sage: polynomial_roots(x^8 - 576*x^6 + 86568*x^4 - 731648*x^2 + 3283344, K)[0]
-        g + 2*g*5 + (2*g + 4)*5^2 + (3*g + 1)*5^3 + 2*g*5^4 + (g + 2)*5^5 + 4*5^6 + (4*g + 1)*5^7 + (g + 3)*5^8 + (4*g + 4)*5^9 + (g + 3)*5^10 + (2*g + 3)*5^11 + 2*g*5^12 + (2*g + 2)*5^13 + (3*g + 1)*5^14 + (4*g + 4)*5^15 + (g + 3)*5^16 + (2*g + 1)*5^17 + (4*g + 4)*5^18 + (3*g + 3)*5^19 + O(5^20)
+        sage: f = x^8 - 576*x^6 + 86568*x^4 - 731648*x^2 + 3283344
+        sage: alpha = polynomial_roots(f, K)[0]
+        sage: alpha.precision_absolute()
+        20
+        sage: f(alpha)
+        O(5^20)
     '''
+
+    return [o for o, _ in f.change_ring(K).roots()]
+
+def polynomial_roots_old(f, K):
     ans = []
     p = K.prime()
     rng = range(2*p) if p > 2 else range(8) # DEBUG: why do we need the 2*p??
@@ -638,10 +643,10 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, units=None, extra_periods=N
         sage: K.<g> = Qp(3, 50).extension(x^2 - x - 13)
         sage: J = 2263329212681251489468 + 6644010739654744556634*g + O(3^46)
         sage: M.<a> = NumberField(x^8 - 576*x^6 + 86568*x^4 - 731648*x^2 + 3283344)
-        sage: recognize_DV_lindep(J, M, [2,23,31])[0]
+        sage: Jrec = recognize_DV_lindep(J, M, [2,23,31], algebraic=True)[0]
         # SUCCESS!
-        # [(6, 'J'), (1, 2), (-1, 2), (-4, 31), (4, 31), (-17, 'u0'), (18, 'u1')]
-        -2023766261856852224157889645739554791178142975141/64123261752694158155920896*a^7 - 8601876357860750019664552395000178878450369571/15728050466689761627648*a^6 + 140102678524498815922492788991049292355611508943465/16030815438173539538980224*a^5 + 1201118951642641758359269597885536171557346723799/7864025233344880813824*a^4 - 1199190966402726284878208547401597299835758304299493/16030815438173539538980224*a^3 - 1713685325217167494723250386405237863606210720109/1310670872224146802304*a^2 + 151680504206008565246390913358498624811291743172863/445300428838153876082784*a + 3902196650282110078512851578578376225186895141249/655335436112073401152
+        ...
+
     '''
     if extra_periods is None:
         extra_periods = []
