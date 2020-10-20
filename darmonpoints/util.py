@@ -609,7 +609,7 @@ def affine_transformation(x1p, x2p, x3p):
 def height_polynomial(x,base = 10):
     return sum(((RR(o).abs()+1).log(base) for o in x.coefficients()))
 
-def recognize_DV_point(J, degree, height_threshold=None, prime_bound=None, roots_of_unity=None, outfile=None):
+def recognize_DV_algdep(J, degree, height_threshold=None, prime_bound=None, roots_of_unity=None, outfile=None):
     K = J.parent()
     p = K.prime()
     if prime_bound is None:
@@ -774,7 +774,7 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, units=None, extra_periods=N
     clist_ans = [(u,v) for u,v in zip(clist,W) if u != 0]
     fwrite("# SUCCESS!", outfile)
     fwrite(f'# {clist_ans}', outfile)
-    algebraic = kwargs.get('algebraic', False)
+    algebraic = kwargs.get('algebraic', True)
     if not algebraic:
         return clist_ans
     else:
@@ -788,10 +788,13 @@ def recognize_DV_lindep(J, M, prime_list, Cp = None, units=None, extra_periods=N
         hM = 1 # DEBUG
         J_alg = fact.prod() # DEBUG # (M['x'].gen()**hM - fact.prod()).roots(M)[0][0]
         remainder = clist[0] // hM
-        if len(extra_periods) > 0 or ((phi(J_alg) / K_to_Cp(J)**remainder).log(0) == 0):
-            return J_alg, remainder, fact, clist_ans
-        else:
-            return None
+        try:
+            check = ((phi(J_alg) / K_to_Cp(J)**remainder).log(0) == 0)
+            if not check:
+                print('Did not pass check! Returning value anyway...')
+        except ValueError as e:
+            print('Did not pass check because it errored! (error = %s)'%str(e))
+        return J_alg, remainder, fact, clist_ans  # DEBUG - didn't check that they match...
 
 def recognize_point(x,y,E,F,prec = None,HCF = None,E_over_HCF = None):
   hF = F.class_number()

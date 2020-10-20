@@ -218,10 +218,15 @@ class ArithGroup_generic(AlgebraicGroup):
     def quaternion_algebra(self):
         return self.B
 
-    def enumerate_elements(self,max_length = None):
+    def enumerate_elements(self,max_length = None, random=False):
         gens = self.gens()
         Ugens = [o.quaternion_rep for o in gens] + [o.quaternion_rep**-1 for o in gens if o.quaternion_rep != 1]
-        for v in enumerate_words(range(len(Ugens))):
+        ngens = len(Ugens)
+        if random:
+            my_iter = ([ZZ.random_element(ngens) for _ in range(20 * ngens)] for _ in ZZ)
+        else:
+            my_iter = enumerate_words(range(ngens))
+        for v in my_iter:
             if max_length is not None and len(v) > max_length:
                 raise StopIteration
             else:

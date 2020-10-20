@@ -114,7 +114,6 @@ def BigArithGroup(p, quat_data, level, base = None, grouptype = None, seed = Non
             newobj = BigArithGroup_class(base,p,discriminant,level = level,seed = seed,grouptype = grouptype,magma = magma, **kwargs)
     return newobj
 
-
 class BigArithGroup_class(AlgebraicGroup):
     r'''
     This class holds information about the group `\Gamma`: a finite
@@ -225,14 +224,6 @@ class BigArithGroup_class(AlgebraicGroup):
         if not self.use_shapiro():
             fwrite('# R(p) with basis %s'%basis_data_p,outfile)
             self.Gpn.get_Up_reps = self.get_Up_reps
-        try:
-            fwrite('# R gens: %s'%str(self.Gn._O_magma.Basis()), outfile)
-        except AttributeError:
-            pass
-        try:
-            fwrite('# R(p) gens: %s'%str(self.Gn._O_magma.Basis()), outfile)
-        except AttributeError:
-            pass
         wp = kwargs.pop('wp',None)
         if wp is None:
             wp = self.wp()
@@ -351,8 +342,9 @@ class BigArithGroup_class(AlgebraicGroup):
                 pi = self.ideal_p.gens_reduced()[0]
             return [self.Gpn(1).quaternion_rep] + [1 / self.prime() * wp * self.Gn.matrix_to_quaternion(matrix(self.F,2,2,[1,-a,0,self.prime()])) for a in alist]
         else:
-            for n_iters,elt in enumerate(self.Gn.enumerate_elements()):
-                new_inv = elt**(-1)
+            n_iters = 0
+            for elt in self.Gn.enumerate_elements(random=True):
+                new_inv = elt**-1
                 embelt = emb(elt)
                 if (embelt[0,0]-1).valuation() > 0 and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
                     if hasattr(self.Gpn,'nebentypus'):

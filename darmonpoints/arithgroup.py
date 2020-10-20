@@ -351,6 +351,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         ans = [self(g)]
         while not self.is_in_fundom(x2):
             found = False
+            intersection_candidates = []
             for i, (v1, v2) in enumerate(self.fundamental_domain_data()):
                 z = intersect_geodesic_arcs(v1, v2, x1, x2)
                 if z is not None:
@@ -359,21 +360,27 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
                     z1, z2 = perturb_point_on_arc(x1, x2, z, eps)
                     if not self.is_in_fundom(z1):
                         z1, z2 = z2, z1
-                    assert self.is_in_fundom(z1), 'z1 fails'
-                    assert not self.is_in_fundom(z2), 'z2 fails'
-                    for g in self.gquats[1:]:
-                        t0 = self(g)**-1 * z2
-                        if self.is_in_fundom(t0):
-                            assert not found
-                            found = True
-                            x1 = t0
-                            x2 = self(g)**-1 * x2
-                            verbose('x1 = %s, x2 = %s'%(x1,x2))
-                            ans.append(ans[-1] * self(g))
-                            break
-                    assert found,'Did not find any to move...'
-                    break
-            assert found,':-('
+                    try:
+                        assert self.is_in_fundom(z1), 'z1 and z2 are both outside of fundom!'
+                        assert not self.is_in_fundom(z2), 'z1 and z2 are both inside of fundom!'
+                        intersection_candidates.append(((z1,z2), i, (v1, v2)))
+                    except AssertionError:
+                        pass
+            assert len(intersection_candidates) > 0, 'No intersection candidates!!'
+            if len(intersection_candidates) > 1:
+                verbose(intersection_candidates)
+            z1, z2 = intersection_candidates[ZZ.random_element(len(intersection_candidates))][0]
+            for g in self.gquats[1:]:
+                t0 = self(g)**-1 * z2
+                if self.is_in_fundom(t0):
+                    assert not found, "Found more than one!"
+                    found = True
+                    x1 = t0
+                    x2 = self(g)**-1 * x2
+                    verbose('x1 = %s, x2 = %s'%(x1,x2))
+                    ans.append(ans[-1] * self(g))
+                    break # DEBUG
+            assert found,'Did not find any to move...'
         return [o.quaternion_rep for o in ans]
 
     def _fix_sign(self,x,N):
@@ -571,6 +578,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             self._JJ_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in range(4)])
             v = f.Image(B_magma.gen(3)).Vector()
             self._KK_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in range(4)])
+
 
             RR = RealField(prec)
             rimg = f.Image(B_magma(sage_F_elt_to_magma(B_magma.BaseRing(),self.F.gen()))).Vector()
@@ -1080,8 +1088,8 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
                 z1, z2 = perturb_point_on_arc(x1, x2, z, eps)
                 if not self.is_in_fundom(z1):
                     z1, z2 = z2, z1
-                assert self.is_in_fundom(z1), 'z1 fails'
-                assert not self.is_in_fundom(z2), 'z2 fails'
+                assert self.is_in_fundom(z1), 'z1 and z2 are both outside of fundom!'
+                assert not self.is_in_fundom(z2), 'z1 and z2 are both inside of fundom!'
                 t0 = g**-1 * z2
                 verbose('t0 = %s'%t0)
                 if debug:
