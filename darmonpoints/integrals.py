@@ -166,7 +166,6 @@ def lift_to_locally_analytic(G, divisor, prec=None):
     p = G.p
     R = PolynomialRing(K,'r')
     edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
-    ans = []
     while len(edgelist) > 0:
         newedgelist = []
         ii = 0
@@ -183,13 +182,12 @@ def lift_to_locally_analytic(G, divisor, prec=None):
                     c0unit *= (-hp0).unit_part() ** n
                     c0val += n * hp0.valuation()
                 pol += c0unit.log(0)
-                ans.append(((h, rev), pol, c0val, c0unit))
+                yield ((h, rev), pol, c0val, c0unit)
             except ValueError as msg:
                 verbose('Subdividing because (%s)...'%str(msg))
                 newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([(rev, h)],parity,2)])
                 continue
         edgelist = newedgelist
-    return ans
 
 r'''
 Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
@@ -203,7 +201,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,twist=False,progress_bar 
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
     Cp = cycle.parent().coefficient_module().base_field()
-    R = PolynomialRing(Cp,names = 't')
+    R = PolynomialRing(Cp, names = 't')
     t = R.gen()
     total_integrals = cycle.size_of_support()
     verbose('Will do %s integrals'%total_integrals)

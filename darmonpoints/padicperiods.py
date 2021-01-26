@@ -13,11 +13,9 @@ from .integrals import integrate_H1
 from .util import *
 from .cohomology_arithmetic import *
 from .sarithgroup import BigArithGroup
-from .homology import lattice_homology_cycle
+from .homology import lattice_homology_cycle, get_homology_kernel, inverse_shapiro
 from sage.misc.banner import version as sage_version
-sage_current_version = sage_version()
-if not bool('8.' in sage_current_version or '7.' in sage_current_version):
-    import pyximport; pyximport.install()
+import pyximport; pyximport.install()
 from .mixed_extension import QuadExt
 
 def precompute_powers(p,q,N):
@@ -705,6 +703,23 @@ def euler_factor_twodim(p,T):
 def euler_factor_twodim_tn(q,t,n):
     return QQ['x']([q*q,-q*t,2*q+n,-t,1])
 
+def get_pseudo_orthonormal_homology(G, cocycles, hecke_data = None, outfile = None):
+    if hecke_data is None:
+        hecke_data = []
+    ker = get_homology_kernel(G, hecke_data = tuple(hecke_data))
+    assert len(ker) == 2
+    f0, f1 = cocycles
+    a00 = f0.pair_with_cycle(ker[0])
+    a01 = f0.pair_with_cycle(ker[1])
+    a10 = f1.pair_with_cycle(ker[0])
+    a11 = f1.pair_with_cycle(ker[1])
+    a00, a01, a10, a11 = ZZ(a00), ZZ(a01), ZZ(a10), ZZ(a11)
+    determinant = a00*a11 - a01*a10
+    fwrite('scaling = %s; mat = Matrix(ZZ,2,2,[%s, %s, %s, %s])'%(determinant, a00, a01, a10, a11), outfile)
+    theta1 =  a11 * ker[0] - a10 * ker[1]
+    theta2 = -a01 * ker[0] + a00 * ker[1]
+    return theta1, theta2, determinant
+
 def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec = -1, hecke_data_init = None, working_prec = None, recognize_invariants = True, return_all = True, compute_G = True, compute_cohomology = True, abtuple = None, logfile = None, **kwargs):
 
     config = configparser.ConfigParser()
@@ -794,8 +809,8 @@ def guess_equation(code,pol,Pgen,Dgen,Npgen, Sinf = None,  sign_ap = None, prec 
     fwrite('# Obtained cocycles',outfile)
     for flist, hecke_data in all_twodim_cocycles:
         fwrite('Hecke data: %s'%str(hecke_data),outfile)
-        g0, g1, scaling = G.get_pseudo_orthonormal_homology(flist, hecke_data = hecke_data, outfile = outfile)
-        g0_shapiro, g1_shapiro = G.inverse_shapiro(g0), G.inverse_shapiro(g1)
+        g0, g1, scaling = get_pseudo_orthonormal_homology(G, flist, hecke_data = hecke_data, outfile = outfile)
+        g0_shapiro, g1_shapiro = inverse_shapiro(G, g0), inverse_shapiro(G, g1)
         fwrite('# Obtained homology generators',outfile)
         if working_prec is None:
             working_prec = max([2 * prec + 10, 30])

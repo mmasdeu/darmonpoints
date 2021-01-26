@@ -6,6 +6,7 @@
 ##                  ##
 ######################
 from sage.structure.sage_object import SageObject
+from sage.structure.unique_representation import UniqueRepresentation
 from sage.misc.all import cached_method,walltime
 from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement
@@ -189,7 +190,7 @@ class ArithGroup_generic(AlgebraicGroup):
         self.magma.eval('delete %s`pMatrixRings' % (self._O_magma.name()))
         if self.F == QQ:
             _,f = self.magma.pMatrixRing(self._O_magma,prime * self._O_magma.BaseRing(), Precision = prec+10, nvals = 2)
-            self._F_to_local = QQ.hom([R.one()])
+            F_to_local = QQ.hom([R.one()])
         else:
 
             _,f = self.magma.pMatrixRing(self._O_magma,sage_F_ideal_to_magma(self._F_magma, P), Precision = prec+10, nvals = 2)
@@ -197,12 +198,12 @@ class ArithGroup_generic(AlgebraicGroup):
                 self._goodroot = R(f.Image(B_magma(B_magma.BaseRing().gen(1))).Vector()[1]._sage_())
             except SyntaxError:
                 raise SyntaxError("Magma has trouble finding local splitting")
-            self._F_to_local = None
+            F_to_local = None
             for o,_ in self.F.gen().minpoly().change_ring(R).roots():
                 if (o - self._goodroot).valuation() > 5:
-                    self._F_to_local = self.F.hom([o])
+                    F_to_local = self.F.hom([o])
                     break
-            assert self._F_to_local is not None
+            assert F_to_local is not None
         verbose('Initializing II,JJ,KK')
         v = f.Image(B_magma.gen(1)).Vector()
         self._II = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
@@ -210,27 +211,29 @@ class ArithGroup_generic(AlgebraicGroup):
         self._JJ = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
         v = f.Image(B_magma.gen(3)).Vector()
         self._KK = matrix(R,2,2,[v[i+1]._sage_() for i in range(4)])
-        self._II , self._JJ = lift_padic_splitting(self._F_to_local(a),self._F_to_local(b),self._II,self._JJ,prime,prec)
+        self._II , self._JJ = lift_padic_splitting(F_to_local(a),F_to_local(b),self._II,self._JJ,prime,prec)
         self._KK = self._II * self._JJ
         self._prec = prec
-        return self._II, self._JJ, self._KK
+        return (self._II, self._JJ, self._KK), F_to_local
 
     def quaternion_algebra(self):
         return self.B
 
-    def enumerate_elements(self,max_length = None, random=False):
+    def enumerate_elements(self, **kwargs):
         gens = self.gens()
         Ugens = [o.quaternion_rep for o in gens] + [o.quaternion_rep**-1 for o in gens if o.quaternion_rep != 1]
         ngens = len(Ugens)
+        random = kwargs.get('random', False)
+        max_length = kwargs.get('max_length', None)
         if random:
-            my_iter = ([ZZ.random_element(ngens) for _ in range(20 * ngens)] for _ in ZZ)
+            my_iter = ([ZZ.random_element(ngens) for _ in range(15)] for _ in ZZ)#range(1+ZZ.random_element(ngens//2).abs())] for _ in ZZ)
         else:
             my_iter = enumerate_words(range(ngens))
         for v in my_iter:
             if max_length is not None and len(v) > max_length:
                 raise StopIteration
             else:
-                yield prod([Ugens[i] for i in v],self.B.one())
+                yield prod([Ugens[i] for i in v], self.B.one())
 
     @cached_method(key = lambda self, l, use_magma, g0, progress: (self, l))
     def get_hecke_reps(self,l,use_magma = True,g0 = None,progress = False): # generic
@@ -332,7 +335,13 @@ class ArithGroup_generic(AlgebraicGroup):
         return self._gens[i]
 
     def gens(self):
-        return self._gens
+        try:
+            gens = self._gens
+        except AttributeError:
+            self._init_geometric_data(**self._init_kwargs)
+            self._compute_presentation=True
+            gens = self._gens
+        return gens
 
     def check_word(self,delta,wd):
         Ugens = [o.quaternion_rep for o in self.gens()]
@@ -427,18 +436,16 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
         self._II = matrix(R,2,2,[1,0,0,-1])
         self._JJ = matrix(R,2,2,[0,1,1,0])
         goodroot = self.F.gen().minpoly().change_ring(R).roots()[0][0]
-        self._F_to_local = self.F.hom([goodroot])
+        F_to_local = self.F.hom([goodroot])
         self._KK = self._II * self._JJ
         self._prec = prec
-        return self._II, self._JJ, self._KK
+        return (self._II, self._JJ, self._KK), F_to_local
 
-    @cached_method
     def matrix_to_quaternion(self, x):
         F = self.B # Assume it's matrix space
         a, b, c, d = x.list()
         return self.B([a, b, c, d])
 
-    @cached_method
     def quaternion_to_matrix(self, x):
         try:
             x = x.quaternion_rep

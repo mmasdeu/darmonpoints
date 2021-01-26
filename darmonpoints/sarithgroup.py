@@ -13,7 +13,7 @@ from sage.structure.parent import Parent
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.matrix.all import matrix,Matrix
 from sage.modules.all import vector
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp,Zmod
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp,Qq,Zmod
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
 from sage.structure.sage_object import save,load
@@ -21,6 +21,7 @@ from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic
 from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor as Gamma0
 from sage.modular.cusps import Cusp
+from sage.modular.btquotients.btquotient import BruhatTitsTree
 from os.path import dirname
 
 from collections import defaultdict
@@ -28,7 +29,7 @@ from itertools import product,chain,groupby,islice,tee,starmap
 
 from .arithgroup import ArithGroup_nf_fuchsian, ArithGroup_nf_kleinian,ArithGroup_rationalquaternion,ArithGroup_rationalmatrix,ArithGroup_nf_matrix, ArithGroup_nf_matrix_new
 from .homology_abstract import ArithHomology, HomologyGroup
-from .homology import TrivialAction
+from .representations import TrivialAction
 from .util import *
 
 class BTEdge(SageObject):
@@ -153,6 +154,7 @@ class BigArithGroup_class(AlgebraicGroup):
             self.discriminant = Fideal(discriminant)
             self.level = Fideal(level)
         else:
+            Fideal = ZZ
             self.ideal_p = ZZ(p)
             self.norm_p = ZZ(p)
             self.discriminant = ZZ(discriminant)
@@ -176,30 +178,38 @@ class BigArithGroup_class(AlgebraicGroup):
         difficulty = covol**2
         verbose('Estimated Difficulty = %s'%difficulty)
 
+        info_magma = kwargs.pop('info_magma', None)
         verbose('Initializing arithmetic group G(pn)...')
         kwargs['O_magma'] = kwargs.pop('GpnBasis',None)
         t = walltime()
         lev = self.ideal_p * self.level
         if character is not None:
             lev = [lev, character]
-        self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev, magma = magma, compute_presentation = not self._use_shapiro, **kwargs)
+        self.Gpn = kwargs.get('Gpn', None)
+        if self.Gpn is None:
+            self.Gpn = ArithGroup(self.F,self.discriminant,abtuple,lev, info_magma = info_magma, magma = magma, compute_presentation = not self._use_shapiro, **kwargs)
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
 
         verbose('Initializing arithmetic group G(n)...')
-        lev = self.level
+        q = kwargs.get('extra_q', 1)
+        self.ideal_q = Fideal(q)
+        lev = self.ideal_q * self.level
         if character is not None:
             lev = [lev, character]
         kwargs['O_magma'] = kwargs.pop('GnBasis',None)
-        self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev, info_magma = self.Gpn, magma = magma, compute_presentation = True, **kwargs)
+        self.Gn = kwargs.get('Gn', None)
+        if self.Gn is None:
+            if info_magma is None:
+                info_magma = self.Gpn
+            self.Gn = ArithGroup(self.F,self.discriminant,abtuple,lev, info_magma = info_magma, magma = magma, compute_presentation = True, **kwargs)
         t = walltime(t)
         verbose('Time for calculation T = %s'%t)
         verbose('T = %s x difficulty'%RealField(25)(t/difficulty))
         self.Gn.embed = self.embed
         self.Gn.get_embedding = self.get_embedding
 
-
-        if hasattr(self.Gpn.B,'is_division_algebra'):
+        if hasattr(self.Gpn.B, 'is_division_algebra'):
             fwrite('# B = F<i,j,k>, with i^2 = %s and j^2 = %s'%(self.Gpn.B.gens()[0]**2,self.Gpn.B.gens()[1]**2),outfile)
             fwrite('# disc(B) = %s'%self.Gpn.B.discriminant(), outfile)
         else:
@@ -224,11 +234,8 @@ class BigArithGroup_class(AlgebraicGroup):
         if not self.use_shapiro():
             fwrite('# R(p) with basis %s'%basis_data_p,outfile)
             self.Gpn.get_Up_reps = self.get_Up_reps
-        wp = kwargs.pop('wp',None)
-        if wp is None:
-            wp = self.wp()
-        else:
-            wp = self.set_wp(wp)
+        wp = kwargs.pop('wp', self.wp())
+        self.BT = BruhatTitsTree(self.norm_p)
         verbose('Done initializing arithmetic groups')
         verbose('Done initialization of BigArithmeticGroup')
 
@@ -261,11 +268,18 @@ class BigArithGroup_class(AlgebraicGroup):
         else:
             self.local_splitting(prec)
             if hasattr(self.Gpn,'_F_to_local'):
-                self.Gn._F_to_local = self.Gpn._F_to_local
-                return self.Gpn._F_to_local
+                self.Gn._F_to_local = self._F_to_local
+                return self._F_to_local
             else:
-                self.Gpn._F_to_local = self.Gn._F_to_local
-                return self.Gn._F_to_local
+                self.Gpn._F_to_local = self._F_to_local
+                return self._F_to_local
+
+    @cached_method
+    def get_gis(self):
+        return [ g**-1 for g in self.get_BT_reps() ]
+    @cached_method
+    def get_gitildes(self):
+        return [self.Gn.B(1)] + [ g**-1 for g in self.get_BT_reps_twisted()[1:]]
 
     def clear_local_splitting(self):
         del self.Gpn._II
@@ -300,7 +314,9 @@ class BigArithGroup_class(AlgebraicGroup):
                 return self.Gpn._II,self.Gpn._JJ,self.Gpn._KK
             except AttributeError:
                 pass
-        return self.Gpn._compute_padic_splitting(self.ideal_p, prec)
+        (I, J, K), F_to_local = self.Gpn._compute_padic_splitting(self.ideal_p, prec)
+        self._F_to_local = F_to_local
+        return I, J, K
 
     def save_to_db(self):
         fname = 'arithgroup%s_%s_%s_%s.sobj'%(self.seed,self.p,self.discriminant,self.level)
@@ -320,6 +336,25 @@ class BigArithGroup_class(AlgebraicGroup):
 
     def Gpn_denominator(self, x):
         return self.Gpn._denominator(x)
+
+    def edge_from_quaternion(self, gamma): # DEBUG : hardcoded precision
+        p = self.norm_p
+        z0 = Qq(p**2, 30, names='g').gen()
+        z1 = 1 / (p*z0)
+        a, b, c, d = self.embed(gamma**-1, 30).list()
+        h_e1 = (a * z0 + b) / (c * z0 + d)
+        h_e2 = (a * z1 + b) / (c * z1 + d)
+        v1 = self.BT.find_containing_affinoid(h_e1)
+        v2 = self.BT.find_containing_affinoid(h_e2)
+        e = self.BT.edge_between_vertices(v1, v2)
+        e.set_immutable()
+        return e
+
+    def edges_leaving_even_vertex(self, gamma):
+        return [g * gamma for g in self.get_BT_reps()]
+
+    def edges_entering_odd_vertex(self, gamma):
+        return [g * gamma for g in self.get_BT_reps_twisted()]
 
     @cached_method
     def get_BT_reps(self):
@@ -343,7 +378,9 @@ class BigArithGroup_class(AlgebraicGroup):
             return [self.Gpn(1).quaternion_rep] + [1 / self.prime() * wp * self.Gn.matrix_to_quaternion(matrix(self.F,2,2,[1,-a,0,self.prime()])) for a in alist]
         else:
             n_iters = 0
-            for elt in self.Gn.enumerate_elements(random=True):
+            random = False if self.p <= 17 else True # DEBUG - hardcoded bound here...
+            for elt in self.Gn.enumerate_elements(random=random):
+                n_iters += 1
                 new_inv = elt**-1
                 embelt = emb(elt)
                 if (embelt[0,0]-1).valuation() > 0 and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
@@ -377,8 +414,7 @@ class BigArithGroup_class(AlgebraicGroup):
     @cached_method
     def get_BT_reps_twisted(self):
         ans = [self.Gn.B(1)] + [self.do_tilde(g) for g in self.get_BT_reps()[1:]]
-        for o in ans:
-            set_immutable(o)
+        _ = [set_immutable(o) for o in ans]
         return ans
 
     @cached_method
@@ -387,27 +423,20 @@ class BigArithGroup_class(AlgebraicGroup):
             B = self.small_group().B
             try:
                 pi = self.ideal_p.gens_reduced()[0]
-                pinorm = pi.norm()
                 alist = list(self.ideal_p.residues())
             except AttributeError:
                 pi = self.prime()
-                pinorm = pi
-                alist = [a for a in range(pinorm)]
+                alist = [a for a in range(pi)]
 
             Upreps0 = [ Matrix(self.F,2,2,[pi, a, 0, 1]) for a in alist ] # This was written for p-adic L-functions
             Upreps = [self.small_group().matrix_to_quaternion(o) for o in Upreps0]
-            for o in Upreps:
-                set_immutable(o)
+            _ = [set_immutable(o) for o in Upreps]
             return Upreps
         else:
             wp = self.wp()
-            if self.F == QQ and self.discriminant == 1:
-                lam = -wp.determinant()
-            else:
-                lam = -wp.reduced_norm()
+            lam = -wp.determinant() if self.F == QQ and self.discriminant == 1 else -wp.reduced_norm()
             Upreps = [ lam * o**-1 * wp**-1 for o in self.get_BT_reps()[1:]]
-            for o in Upreps:
-                set_immutable(o)
+            _ = [set_immutable(o) for o in Upreps]
             return Upreps
 
     @cached_method
@@ -432,6 +461,17 @@ class BigArithGroup_class(AlgebraicGroup):
 
     def get_Zp_covering(self, depth):
         return self.subdivide([BTEdge(False, o) for o in self.get_BT_reps_twisted()[1:]], 1, depth - 1)
+
+    def get_edges_upto(self, depth):
+        return [gamma for d in range(depth + 1) for rev, gamma in self.get_covering(d)]
+
+    def construct_edge_reps(self, depth):
+        edge_dict = {}
+        for gamma in self.get_edges_upto(depth):
+            e = self.edge_from_quaternion(gamma)
+            e.set_immutable()
+            edge_dict[e] = gamma
+        return edge_dict
 
     def subdivide(self,edgelist,parity,depth):
         if depth < 0:
@@ -459,9 +499,9 @@ class BigArithGroup_class(AlgebraicGroup):
         ans = 0
         if not is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False):
             ans += 1
-        if not all((self.is_in_Gpn_order(wp**-1 * g * wp) for g in self.Gpn._get_O_basis())):
+        if not all((self.Gpn._is_in_order(wp**-1 * g * wp) for g in self.Gpn._get_O_basis())):
             ans += 2
-        if not self.is_in_Gpn_order(wp):
+        if not self.Gpn._is_in_order(wp):
             ans += 4
         if ans > 0:
             raise TypeError('Wrong wp (code %s)'%ans)
@@ -527,7 +567,6 @@ class BigArithGroup_class(AlgebraicGroup):
             self._prec = prec
         return iota
 
-    @cached_method
     def embed(self,q,prec):
         if prec is None:
             return None
@@ -550,9 +589,8 @@ class BigArithGroup_class(AlgebraicGroup):
             I,J,K = self.local_splitting(prec)
             return set_immutable((v(q[0]) + v(q[1]) * I + v(q[2]) * J + v(q[3]) * K).change_ring(Qp(self.p, prec)))
 
-    @cached_method
-    def reduce_in_amalgam(self,x,return_word = False, check = True):
-        a,wd = self._reduce_in_amalgam(set_immutable(x))
+    def reduce_in_amalgam(self,x,return_word = False, check = False):
+        a, wd = self._reduce_in_amalgam(set_immutable(x))
         if check:
             assert self.is_in_Gpn_order(a)
             tmp = a
@@ -561,7 +599,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 tmp = tmp * reps[j][i]
             assert tmp == x
         if return_word:
-            return a,wd
+            return a, wd
         else:
             return a
 
@@ -581,145 +619,43 @@ class BigArithGroup_class(AlgebraicGroup):
 
     def _reduce_in_amalgam(self,x):
         p = self.p
-        denval = lambda y, val: self.Gn._denominator_valuation(y, p) < val
-        if self.is_in_Gpn_order(x):
+        if self.use_shapiro():
+            # Algebraic approach
+            dval = lambda y : self.Gn._denominator_valuation(y, p)
+            test_order = lambda x : self.is_in_Gpn_order(x)
+        else:
+            # Local approach
+            dval = lambda y : -min([o.valuation(p) for o in self.embed(y, 10).list()])
+            test_order = lambda x : is_in_Gamma0loc(self.embed(x, 10))
+
+        if test_order(x):
             return x, []
         else:
-            gis = [ g**-1 for g in self.get_BT_reps() ]
-            gitildes = [self.Gn.B(1)] + [ g**-1 for g in self.get_BT_reps_twisted()[1:]]
-
+            gis = self.get_gis()
+            gitildes = self.get_gitildes()
             xtilde = self.do_tilde(x)
-            valx = self.Gn._denominator_valuation(xtilde, p)
-            if valx == 0:
-                valx = 1
-            i = next((i for i,g in enumerate(gitildes) if denval(xtilde * g,valx)),0)
-            if i:
-                x = x * gis[i]
-                new_wd = [(i,0)]
-            else:
-                new_wd = []
-            valx = self.Gn._denominator_valuation(x,p)
+            valx = dval(xtilde)
             if valx == 0:
                 valx = 1
 
-            if self.is_in_Gpn_order(x):
+            i = next((i for i, g in enumerate(gitildes) if dval(xtilde * g) < valx), False)
+            x, new_wd = (x * gis[i], [(i,0)]) if i else (x, [])
+
+            if test_order(x):
                 return set_immutable(x), new_wd
 
-            i = next((i for i,g in enumerate(gitildes) if denval(x * g,valx)),0)
-            if i:
-                wd1 = (i,1)
-                x = set_immutable(x * gitildes[i])
-                new_wd = [wd1] + new_wd
+            valx = dval(x)
+            if valx == 0:
+                valx = 1
+            i, g = next(((i,g) for i,g in enumerate(gitildes) if dval(x * g) < valx), (False, None))
+            x, new_wd = (set_immutable(x *g), [(i,1)] + new_wd) if i else (x, new_wd)
+
             if len(new_wd) == 0:
+                return x, new_wd # DEBUG
                 print('Offending input: %s'%x)
                 raise RuntimeError
             a, wd = self._reduce_in_amalgam(x)
             return set_immutable(a), wd + new_wd
-
-    def smoothen(self,gi,ell):
-        hecke_reps = gi.parent().group().get_hecke_reps(ell,use_magma = True)
-        ans = gi.parent().apply_hecke_operator(gi, ell, hecke_reps = hecke_reps)
-        ans -=  (ZZ(self.F(ell).norm()) + 1) * gi
-        return ans
-
-    def get_homology_kernel(self, hecke_data = None):
-        verbose('Entering get_homology_kernel...')
-        verb = get_verbose()
-        set_verbose(0)
-        if hecke_data is None:
-            hecke_data = []
-        wp = self.wp()
-        Gn = self.Gn
-        ZZ1 = ZZ**1
-        self.Gn._unset_coercions_used()
-        self.Gn.register_action(TrivialAction(self.Gn, ZZ1))
-        self.Gpn._unset_coercions_used()
-        self.Gpn.register_action(TrivialAction(self.Gpn, ZZ1))
-        self.Gpn.B._unset_coercions_used()
-        self.Gpn.B.register_action(TrivialAction(self.Gpn.B, ZZ1))
-        B = ArithHomology(self, ZZ1)
-        C = HomologyGroup(Gn, ZZ1)
-        group = B.group()
-        Bsp = B.space()
-        def phif(x):
-            ans = C(0)
-            for g, v in zip(group.gens(), x.values()):
-                if not self.use_shapiro():
-                    ans += C((Gn(g), v))
-                else:
-                    for a, ti in zip(v.values(), self.coset_reps()):
-                        # We are considering a * (g tns t_i)
-                        g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep ))
-                        ans += C((Gn(g0), a))
-            return ans
-        f = Bsp.hom([vector(C(phif(o))) for o in B.gens()])
-        def phig(x):
-            ans = C(0)
-            for g, v in zip(group.gens(), x.values()):
-                if not self.use_shapiro():
-                    ans += C((Gn(wp**-1 * g.quaternion_rep * wp), v))
-                else:
-                    for a, ti in zip(v.values(), self.coset_reps()):
-                        # We are considering a * (g tns t_i)
-                        g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep ))
-                        ans += C((Gn(wp**-1 * g0 * wp), a))
-            return ans
-        g = Bsp.hom([vector(C(phig(o))) for o in B.gens()])
-        maplist = [f, g]
-
-        R = QQ['x']
-        for ell, f_ell_0 in hecke_data:
-            f_ell = R(f_ell_0)
-            Aq = B.hecke_matrix(ell, with_torsion = True)
-            tmap = Bsp.hom([sum([ZZ(a) * o for a, o in zip(col, Bsp.gens())]) for col in f_ell(Aq).columns()])
-            maplist.append(tmap)
-        fg = direct_sum_of_maps(maplist)
-        ker = fg.kernel()
-        try:
-            kerV = ker.V()
-            good_ker = [o.lift() for o,inv in zip(ker.gens(), ker.invariants()) if inv == 0]
-        except AttributeError:
-            kerV = ker
-            try:
-                good_ker = [kerV.lift(o) for o in ker.gens()]
-            except AttributeError:
-                good_ker = ker.gens()
-        kerVZ_amb = ZZ**(kerV.ambient_module().dimension())
-        kerVZ = kerVZ_amb.submodule([kerVZ_amb(o.denominator() * o) for o in kerV.basis()])
-        good_ker = kerVZ.span_of_basis([kerVZ((o.denominator() * o).change_ring(ZZ)) for o in good_ker])
-        good_ker = [B(o.denominator() * o) for o in good_ker.LLL().rows()]
-        set_verbose(verb)
-        verbose('Done with get_homology_kernel')
-        return good_ker
-
-    def inverse_shapiro(self, x):
-        if not self.use_shapiro():
-            return [(g, ZZ(v[0])) for g, v in zip(self.Gpn.gens(), x.values())]
-        ans = []
-        for g, v in zip(self.Gn.gens(), x.values()):
-            for a, ti in zip(v.values(), self.coset_reps()):
-                if a[0] != 0:
-                    # We are considering a * (g tns t_i)
-                    g0, _ = self.get_coset_ti(set_immutable(ti * g.quaternion_rep))
-                    ans.append((self.Gn(g0), ZZ(a[0])))
-        return ans
-
-    def get_pseudo_orthonormal_homology(self, cocycles, hecke_data = None, outfile = None):
-        if hecke_data is None:
-            hecke_data = []
-        ker = self.get_homology_kernel(hecke_data = tuple(hecke_data))
-        assert len(ker) == 2
-        f0, f1 = cocycles
-        a00 = f0.pair_with_cycle(ker[0])
-        a01 = f0.pair_with_cycle(ker[1])
-        a10 = f1.pair_with_cycle(ker[0])
-        a11 = f1.pair_with_cycle(ker[1])
-        a00, a01, a10, a11 = ZZ(a00), ZZ(a01), ZZ(a10), ZZ(a11)
-        determinant = a00*a11 - a01*a10
-        fwrite('scaling = %s; mat = Matrix(ZZ,2,2,[%s, %s, %s, %s])'%(determinant, a00, a01, a10, a11), outfile)
-        theta1 =  a11 * ker[0] - a10 * ker[1]
-        theta2 = -a01 * ker[0] + a00 * ker[1]
-        return theta1, theta2, determinant
 
 def MatrixArithGroup(base = None, level = 1, **kwargs):
     implementation = kwargs.get('implementation', None)

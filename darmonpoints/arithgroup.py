@@ -282,7 +282,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             z0 = act_flt_in_disc(embgg,CC(0),P)
             z0abs = z0.abs()
             if ji == -oldji:
-                ji = next((j for j in range(-ngquats,0) + range(1,ngquats + 1) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()),None)
+                ji = next((j for j in list(range(-ngquats,0)) + list(range(1,ngquats + 1)) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()),None)
             if ji > 0:
                 gg = gammas[ji]
                 newcs = self.translate[ji]
@@ -1106,7 +1106,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
             assert found
         return ans
 
-    def generate_wp_candidates(self,p,ideal_p,**kwargs): # rationalmatrix
+    def generate_wp_candidates(self, p, ideal_p, **kwargs): # rationalmatrix
         initial_wp = kwargs.get('initial_wp')
         if self.level == 1:
             try:
@@ -1129,7 +1129,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
                         all_initial.append(new_initial)
             else:
                 all_initial = [initial_wp]
-            for v1,v2 in cantor_diagonal(self.enumerate_elements(),self.enumerate_elements()):
+            for v1,v2 in cantor_diagonal(self.enumerate_elements(random=True),self.enumerate_elements(random=True)):
                 for tmp in all_initial:
                     yield  v1 * tmp * v2
 
@@ -1320,6 +1320,8 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         self._init_magma_objects(info_magma)
         if self._compute_presentation:
             self._init_geometric_data(**kwargs)
+        else:
+            self._init_kwargs = kwargs
         super(ArithGroup_nf_generic,self).__init__(**kwargs)
 
     def _repr_(self):
@@ -1369,7 +1371,8 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                     self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
             else:
                 self._O_magma = self._Omax_magma
-            if self._compute_presentation:
+            # if self._compute_presentation:
+            if True:
                 self._D_magma = self.magma.UnitDisc(Precision = 300)
         else:
             self._F_magma = info_magma._F_magma
@@ -1385,10 +1388,18 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                     self._O_magma = self.magma.Order([(on + i)/2, (j+k)/2,  Pgen * (j-k)/2, (on-i)/2])
                 else:
                     M = sage_F_ideal_to_magma(self._F_magma,self.level)
+                    # assert(self.level.divides(info_magma.level))
+                    # q = info_magma.level / self.level
                     self._O_magma = info_magma._Omax_magma.Order(M)
+
+                    # assert(self.level.divides(info_magma.level))
+                    # q = info_magma.level / self.level
+                    # M = sage_F_ideal_to_magma(self._F_magma,q) # was self.level
+                    # self._O_magma = info_magma._O_magma.pMaximalOrder(M)
             else:
                 self._O_magma = self._Omax_magma
-            if self._compute_presentation:
+            #if self._compute_presentation:
+            if True:
                 self._D_magma = self.magma.UnitDisc(Precision = 300)
             else:
                 try:
@@ -1409,7 +1420,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
 
     # nf_quaternion
     def compute_quadratic_embedding(self,D,return_generator = False, **kwargs):
-        O_magma = self._O_magma
+        O_magma = self._Omax_magma
         F_magma = self._F_magma
 
         F = self.base_ring()
@@ -1470,7 +1481,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         assert K.gen(0).trace(K.base_ring()) == mu.reduced_trace() and K.gen(0).norm(K.base_ring()) == mu.reduced_norm()
 
         found = False
-        coords = lambda x:K(x).list() #K.gen().coordinates_in_terms_of_powers()
+        coords = lambda x : K(x).list() #K.gen().coordinates_in_terms_of_powers()
         phi = K.hom([mu, self.B(self.F.gen())], check=False)
         u0 = find_the_unit_of(self.F,K)
         assert u0.is_integral() and (1/u0).is_integral()
@@ -1928,13 +1939,11 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
     def _repr_(self):
         return 'Gamma0(%s) over %s'%(self.level.gens_reduced()[0], self.F)
 
-    @cached_method
     def matrix_to_quaternion(self, x):
         F = self.B
         a, b, c, d = x.list()
         return self.B([(a+d) / 2, (a-d) / 2 , (-b - c) / 2, (c - b) / 2])
 
-    @cached_method
     def quaternion_to_matrix(self, x):
         try:
             x = x.quaternion_rep
@@ -2192,6 +2201,6 @@ class ArithGroup_nf_matrix(ArithGroup_nf_kleinian, ArithGroup_matrix_generic):
                 all_initial = [self.matrix_to_quaternion(ans)]
             else:
                 all_initial = [self.matrix_to_quaternion(initial_wp)]
-            for v1,v2 in cantor_diagonal(self.enumerate_elements(),self.enumerate_elements()):
+            for v1,v2 in cantor_diagonal(self.enumerate_elements(random=True),self.enumerate_elements(random=True)):
                 for tmp in all_initial:
                     yield  v1 * tmp * v2

@@ -34,6 +34,27 @@ import os
 from .cohomology_abstract import *
 from .util import *
 
+class TrivialAction(Action):
+    def __init__(self,G,M):
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
+
+    def _act_(self,g,v):
+        return v
+
+class MatrixAction(Action):
+    def __init__(self,G,M):
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
+
+    def _act_(self,g,v):
+        return v.left_act_by_matrix(g)
+
+class Scaling(Action):
+    def __init__(self,G,M):
+        Action.__init__(self,G,M,is_left = True,op = operator.mul)
+
+    def _act_(self,g,v):
+        return v.scale_by(g)
+
 class CoIndAction(Action):
     def __init__(self, algebra , V, G):
         self._G = G

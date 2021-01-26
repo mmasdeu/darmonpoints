@@ -6,7 +6,7 @@ from sage.schemes.elliptic_curves.constructor import EllipticCurve
 from sage.libs.pari.all import PariError, pari
 from sage.misc.sage_eval import sage_eval
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.misc.misc import verbose,get_verbose,set_verbose
+from sage.misc.verbose import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
 from sage.arith.all import divisors, kronecker_symbol, next_prime
 from sage.interfaces.gp import gp
@@ -417,7 +417,7 @@ def period_from_coords(R,E, P, prec = 20,K_to_Cp = None):
     precp = ((prec+4)/n).floor() + 2;
     tate_a4 = -5  * sk(qE,3,precp)
     tate_a6 = (tate_a4 - 7 * sk(qE,5,precp) )/12
-    Eq = EllipticCurve([R(1),R(0),R(0),tate_a4,tate_a6])
+    Eq = EllipticCurve([R(1),R(0),R(0),tate_a4,tate_a6]) # y^2 + xy = x^3 + a4x + a6
 
     C2 = (Eq.c6() * R(E.c4())) / (Eq.c4() * R(E.c6()))
     C = our_sqrt(R(C2),R) #.square_root()

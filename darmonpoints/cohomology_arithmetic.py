@@ -62,7 +62,7 @@ from .cohomology_abstract import *
 from .representations import *
 from .ocmodule import our_adjuster, ps_adjuster
 from .ocbianchi import BianchiDistributions, left_ps_adjuster
-from .homology import TrivialAction
+from .representations import TrivialAction
 
 def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = False,use_sage_db = False,progress_bar = False):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
@@ -217,12 +217,11 @@ class ArithCohElement(CohomologyElement):
         G = self.parent().S_arithgroup()
         hp = G.reduce_in_amalgam(h, return_word = False) if check else 1
         he = hp**-1 * h # So that h = hp * he
-        hp = G.Gpn(hp)
         newg = G.reduce_in_amalgam(he * g.quaternion_rep, return_word = False)
         if twist:
             newg = newg.conjugate_by(G.wp())
             hp = hp.conjugate_by(G.wp())
-        return hp * super(ArithCohElement, self).evaluate(newg, at_identity=at_identity)
+        return G.Gpn(hp) * super(ArithCohElement, self).evaluate(newg, at_identity=at_identity)
 
     def Tq_eigenvalue(self, ell, check = True):
         r"""
@@ -441,7 +440,7 @@ class ArithCohElement(CohomologyElement):
         return self.parent().get_Lseries_term(self, n, cov)
 
 
-class ArithCoh(CohomologyGroup, UniqueRepresentation):
+class ArithCoh(CohomologyGroup):#, UniqueRepresentation):
     r"""
     Class for computing with arithmetic cohomology groups.
 
@@ -455,19 +454,18 @@ class ArithCoh(CohomologyGroup, UniqueRepresentation):
         if V is None:
             base_ring = kwargs.get('base_ring', ZZ)
             V = base_ring**1
-            G.Gn._unset_coercions_used()
-            G.Gn.register_action(TrivialAction(G.Gn, V))
-            G.Gpn._unset_coercions_used()
-            G.Gpn.register_action(TrivialAction(G.Gpn, V))
-            G.Gpn.B._unset_coercions_used()
-            G.Gpn.B.register_action(TrivialAction(G.Gpn.B, V))
+            Gs = G.small_group()
+            Gs._unset_coercions_used()
+            Gs.register_action(TrivialAction(Gs, V))
+            Gs.B._unset_coercions_used()
+            Gs.B.register_action(TrivialAction(Gs.B, V))
         self._S_arithgroup = G
         self._use_ps_dists = kwargs.get('use_ps_dists', False)
         self._use_shapiro = G._use_shapiro
         if self._use_shapiro:
-            super(ArithCoh, self).__init__(G.large_group(), CoIndModule(G,V))
+            super(ArithCoh, self).__init__(G.large_group(), CoIndModule(G,V), **kwargs)
         else:
-            super(ArithCoh, self).__init__(G.small_group(), V)
+            super(ArithCoh, self).__init__(G.small_group(), V, **kwargs)
 
     def use_shapiro(self):
         return self._use_shapiro
@@ -1072,9 +1070,10 @@ def get_dedekind_rademacher_cocycle(Coh):
                 vals.append(V([(p-1) * (a + d) / c - 12 * (dedekind_sum(a,-c) - dedekind_sum(a, -ZZ(c//p)))]))
     return Coh(vals)
 
-def get_cocycle_from_elliptic_curve(Coh,E,sign = 1,use_magma = True):
+def get_cocycle_from_elliptic_curve(Coh, E, sign = 1, use_magma = True, **kwargs):
+    kwargs['bad_locus'] = E.conductor()
     if sign == 0:
-        return Coh.get_cocycle_from_elliptic_curve(E,1,use_magma) + Coh.get_cocycle_from_elliptic_curve(E,-1,use_magma)
+        return get_cocycle_from_elliptic_curve(Coh, E,1,use_magma, **kwargs) + get_cocycle_from_elliptic_curve(Coh, E,-1,use_magma, **kwargs)
     if not sign in [1, -1]:
         raise NotImplementedError
     F = E.base_ring()
@@ -1083,24 +1082,20 @@ def get_cocycle_from_elliptic_curve(Coh,E,sign = 1,use_magma = True):
         E = E.change_ring(F)
     def getap(Q):
         return ZZ(Q.norm() + 1 - E.reduction(Q).count_points())
-    return get_rational_cocycle_from_ap(Coh, getap, sign=sign, use_magma=use_magma)
+    return get_rational_cocycle_from_ap(Coh, getap, sign=sign, use_magma=use_magma, **kwargs)
 
-def get_rational_cocycle_from_ap(Coh,getap,sign = 1,use_magma = True):
+def get_rational_cocycle_from_ap(Coh, getap, sign = 1, use_magma = True, **kwargs):
     F = Coh.group().base_ring()
     if F.signature()[1] == 0 or (F.signature() == (0,1) and 'G' not in Coh.group()._grouptype):
         K = (Coh.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
     else:
         K = Matrix(QQ,Coh.dimension(),Coh.dimension(),0).kernel()
 
-    disc = Coh.S_arithgroup().Gpn.order_discriminant()
-    try:
-        discnorm = disc.norm()
-    except AttributeError:
-        discnorm = disc
-    try:
-        N = ZZ(discnorm.gen())
-    except AttributeError:
-        N = ZZ(discnorm)
+    bad_locus = kwargs.get('bad_locus',None)
+    if bad_locus is None:
+        disc = Coh.S_arithgroup().Gpn.order_discriminant()
+    else:
+        disc = bad_locus
 
     if F == QQ:
         F = NumberField(polygen(QQ), names='a')
@@ -1115,7 +1110,7 @@ def get_rational_cocycle_from_ap(Coh,getap,sign = 1,use_magma = True):
                 except (ValueError,ArithmeticError):
                     continue
                 try:
-                    K1 = (Coh.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose()-ap).kernel()
+                    K1 = (Coh.hecke_matrix(qq.gens_reduced()[0],g0 = g0, use_magma = use_magma).transpose()-ap).kernel()
                 except RuntimeError:
                     continue
                 K = K.intersection(K1)
@@ -1125,7 +1120,7 @@ def get_rational_cocycle_from_ap(Coh,getap,sign = 1,use_magma = True):
     col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
     return sum([ a * Coh.gen(i) for i,a in enumerate(col) if a != 0], Coh(0))
 
-def get_rational_cocycle(Coh,sign = 1,use_magma = True,bound = 3, return_all = False):
+def get_rational_cocycle(Coh, sign = 1, use_magma = True, bound = 3, return_all = False, **kwargs):
     F = Coh.group().base_ring()
     if F.signature()[1] == 0 or (F.signature()[1] == 1 and 'G' not in Coh.group()._grouptype):
         K = (Coh.hecke_matrix(oo).transpose()-sign).kernel().change_ring(QQ)
@@ -1139,15 +1134,11 @@ def get_rational_cocycle(Coh,sign = 1,use_magma = True,bound = 3, return_all = F
     else:
         component_list.append(K)
 
-    disc = Coh.S_arithgroup().Gpn.order_discriminant()
-    try:
-        discnorm = disc.norm()
-    except AttributeError:
-        discnorm = disc
-    try:
-        N = ZZ(discnorm.gen())
-    except AttributeError:
-        N = ZZ(discnorm)
+    bad_locus = kwargs.get('bad_locus',None)
+    if bad_locus is None:
+        disc = Coh.S_arithgroup().Gpn.order_discriminant()
+    else:
+        disc = bad_locus
 
     if F == QQ:
         x = QQ['x'].gen()
@@ -1178,8 +1169,7 @@ def get_rational_cocycle(Coh,sign = 1,use_magma = True,bound = 3, return_all = F
                             continue # Do not take Eisenstein classes.
                         if U0.dimension() == 1:
                             good_components.append(U0)
-                        elif is_irred:
-                            # Bad
+                        elif is_irred: # Bad
                             continue
                         else: # U0.dimension() > 1 and not is_irred
                             component_list.append(U0)
@@ -1204,7 +1194,8 @@ def get_rational_cocycle(Coh,sign = 1,use_magma = True,bound = 3, return_all = F
             col = [ZZ(o) for o in (K.denominator()*K.matrix()).list()]
             return sum([ a * Coh.gen(i) for i,a in enumerate(col) if a != 0], Coh(0))
 
-def get_twodim_cocycle(Coh,sign = 1,use_magma = True,bound = 5, hecke_data = None, return_all = False, outfile = None):
+def get_twodim_cocycle(Coh, sign = 1, use_magma = True,bound = 5, hecke_data = None, return_all = False, **kwargs):
+    outfile = kwargs.get('outfile', None)
     F = Coh.group().base_ring()
     if F == QQ:
         F = NumberField(PolynomialRing(QQ,'x').gen(),names='r')
@@ -1220,16 +1211,12 @@ def get_twodim_cocycle(Coh,sign = 1,use_magma = True,bound = 5, hecke_data = Non
         K = Matrix(QQ,Coh.dimension(),Coh.dimension(),0).kernel()
         if K.dimension() >= 2:
             component_list.append((K, []))
-    disc = Coh.S_arithgroup().Gpn.order_discriminant()
-    try:
-        discnorm = disc.norm()
-    except AttributeError:
-        discnorm = disc
 
-    try:
-        N = ZZ(discnorm.gen())
-    except AttributeError:
-        N = ZZ(discnorm)
+    bad_locus = kwargs.get('bad_locus',None)
+    if bad_locus is None:
+        disc = Coh.S_arithgroup().Gpn.order_discriminant()
+    else:
+        disc = bad_locus
 
     if F == QQ:
         x = QQ['x'].gen()

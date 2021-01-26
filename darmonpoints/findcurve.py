@@ -8,7 +8,7 @@ from sage.misc.misc import verbose
 import sys, os, datetime, configparser
 
 from .sarithgroup import BigArithGroup
-from .homology import lattice_homology_cycle
+from .homology import lattice_homology_cycle, get_homology_kernel, inverse_shapiro
 from .cohomology_arithmetic import *
 from .integrals import integrate_H1,double_integral_zero_infty
 from .util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
@@ -173,7 +173,7 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
             G.save_to_db()
         fwrite('Cohomology class found', outfile)
     try:
-        ker = [G.inverse_shapiro(o) for o in G.get_homology_kernel(hecke_data=kwargs.get('hecke_data',None))]
+        ker = [inverse_shapiro(G, o) for o in get_homology_kernel(G, hecke_data=kwargs.get('hecke_data',None))]
     except Exception as e:
         if quit_when_done:
             magma.quit()

@@ -70,7 +70,9 @@ class CohomologyElement(ModuleElement):
         ModuleElement.__init__(self,parent)
 
     def _evaluate_word_tietze(self, word, left_act_by=None):
-        if self.parent()._acting_matrix is None:
+        if self.parent()._trivial_action:
+            return self._evaluate_word_tietze_trivial(tuple(word))
+        elif self.parent()._acting_matrix is None:
             return self._evaluate_word_tietze_naive(tuple(word), left_act_by=left_act_by)
         else:
             return self._evaluate_word_tietze_foxgradient(tuple(word), left_act_by=left_act_by)
@@ -120,7 +122,6 @@ class CohomologyElement(ModuleElement):
     def pair_with_cycle(self, xi):
         return sum(self.evaluate(g).pair_with(a) for g, a in xi)
 
-    @cached_method(name='evaluate_abstract')
     def evaluate(self, x, left_act_by = None, at_identity=False):
         H = self.parent()
         G = H.group()
@@ -199,6 +200,9 @@ class CohomologyElement(ModuleElement):
         return V(ans)
 
     def _evaluate_word_tietze_identity(self,word, left_act_by=None):
+        if self.parent()._trivial_action:
+            return self._evaluate_word_tietze_trivial_identity(word)
+
         G = self.parent().group()
         V = self.parent().coefficient_module()
 
@@ -223,35 +227,19 @@ class CohomologyElement(ModuleElement):
         return ans if left_act_by is None else left_act_by * ans
 
     def _evaluate_word_tietze_trivial(self,word):
-        G = self.parent().group()
-        V = self.parent().coefficient_module()
-        ans = V(0)
-        for g in word:
-            if g > 0:
-                ans += self._val[g-1]
-            else:
-                ans -= self._val[-g-1]
-        return ans
+        return sum((self._val[g-1] if g > 0 else -self._val[-g-1] for g in word), self.parent().coefficient_module()(0))
 
     def _evaluate_word_tietze_trivial_identity(self,word):
-        G = self.parent().group()
-        V = self.parent().coefficient_module()
-        ans = V(0)[0]
-        for g in word:
-            if g > 0:
-                ans += self._val[g-1][0]
-            else:
-                ans -= self._val[-g-1][0]
-        return ans
+        return sum((self._val[g-1][0] if g > 0 else -self._val[-g-1][0] for g in word), self.parent().coefficient_module()(0)[0])
 
 class CohomologyGroup(Module):
-    def __init__(self, G, V, action_map = None):
+    def __init__(self, G, V, action_map = None, **kwargs):
         self._group = G
         self._coeffmodule = V
         onemat = G(1)
         self._gen_pows = []
         self._gen_pows_neg = []
-
+        self._trivial_action = kwargs.get('trivial_action', False)
         if action_map is None:
             if hasattr(V, 'dimension'):
                 self._acting_matrix = lambda x, y: matrix(V.base_ring(),V.dimension(),V.dimension(),1)
@@ -286,7 +274,6 @@ class CohomologyGroup(Module):
             dim = None
         return self._acting_matrix(g, dim)
 
-    @cached_method
     def GA_to_local(self, x, g0=None):
         if g0 is None:
             return sum((a * self.generator_acting_matrix(g.support()[0]) for a, g in zip(x.coefficients(), x.monomials())))

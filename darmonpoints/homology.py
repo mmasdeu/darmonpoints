@@ -31,28 +31,9 @@ import operator
 from itertools import product,chain,groupby,islice,tee,starmap
 from collections import defaultdict
 
+from .homology_abstract import ArithHomology, HomologyGroup
+from .representations import *
 from .util import *
-
-class TrivialAction(Action):
-    def __init__(self,G,M):
-        Action.__init__(self,G,M,is_left = True,op = operator.mul)
-
-    def _act_(self,g,v):
-        return v
-
-class MatrixAction(Action):
-    def __init__(self,G,M):
-        Action.__init__(self,G,M,is_left = True,op = operator.mul)
-
-    def _act_(self,g,v):
-        return v.left_act_by_matrix(g)
-
-class Scaling(Action):
-    def __init__(self,G,M):
-        Action.__init__(self,G,M,is_left = True,op = operator.mul)
-
-    def _act_(self,g,v):
-        return v.scale_by(g)
 
 def lattice_homology_cycle(p, G, wp, xlist, prec, tau = None, outfile = None, smoothen = None):
     if tau is None:
@@ -638,3 +619,86 @@ class OneChains(TensorProduct):
     Element = OneChainsElement
     def _repr_(self):
         return 'Group of 1-chains on %s with values in %s'%(self.group(), self.coefficient_module())
+
+
+def get_homology_kernel(self, hecke_data = None):
+    verbose('Entering get_homology_kernel...')
+    verb = get_verbose()
+    set_verbose(0)
+    if hecke_data is None:
+        hecke_data = []
+    wp = self.wp()
+    Gn = self.Gn
+    ZZ1 = ZZ**1
+    self.Gn._unset_coercions_used()
+    self.Gn.register_action(TrivialAction(self.Gn, ZZ1))
+    self.Gpn._unset_coercions_used()
+    self.Gpn.register_action(TrivialAction(self.Gpn, ZZ1))
+    self.Gpn.B._unset_coercions_used()
+    self.Gpn.B.register_action(TrivialAction(self.Gpn.B, ZZ1))
+    B = ArithHomology(self, ZZ1)
+    C = HomologyGroup(Gn, ZZ1)
+    group = B.group()
+    Bsp = B.space()
+    def phif(x):
+        ans = C(0)
+        for g, v in zip(group.gens(), x.values()):
+            if not self.use_shapiro():
+                ans += C((Gn(g), v))
+            else:
+                for a, ti in zip(v.values(), self.coset_reps()):
+                    # We are considering a * (g tns t_i)
+                    g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep ))
+                    ans += C((Gn(g0), a))
+        return ans
+    f = Bsp.hom([vector(C(phif(o))) for o in B.gens()])
+    def phig(x):
+        ans = C(0)
+        for g, v in zip(group.gens(), x.values()):
+            if not self.use_shapiro():
+                ans += C((Gn(wp**-1 * g.quaternion_rep * wp), v))
+            else:
+                for a, ti in zip(v.values(), self.coset_reps()):
+                    # We are considering a * (g tns t_i)
+                    g0, _ = self.get_coset_ti( set_immutable(ti * g.quaternion_rep ))
+                    ans += C((Gn(wp**-1 * g0 * wp), a))
+        return ans
+    g = Bsp.hom([vector(C(phig(o))) for o in B.gens()])
+    maplist = [f, g]
+
+    R = QQ['x']
+    for ell, f_ell_0 in hecke_data:
+        f_ell = R(f_ell_0)
+        Aq = B.hecke_matrix(ell, with_torsion = True)
+        tmap = Bsp.hom([sum([ZZ(a) * o for a, o in zip(col, Bsp.gens())]) for col in f_ell(Aq).columns()])
+        maplist.append(tmap)
+    fg = direct_sum_of_maps(maplist)
+    ker = fg.kernel()
+    try:
+        kerV = ker.V()
+        good_ker = [o.lift() for o,inv in zip(ker.gens(), ker.invariants()) if inv == 0]
+    except AttributeError:
+        kerV = ker
+        try:
+            good_ker = [kerV.lift(o) for o in ker.gens()]
+        except AttributeError:
+            good_ker = ker.gens()
+    kerVZ_amb = ZZ**(kerV.ambient_module().dimension())
+    kerVZ = kerVZ_amb.submodule([kerVZ_amb(o.denominator() * o) for o in kerV.basis()])
+    good_ker = kerVZ.span_of_basis([kerVZ((o.denominator() * o).change_ring(ZZ)) for o in good_ker])
+    good_ker = [B(o.denominator() * o) for o in good_ker.LLL().rows()]
+    set_verbose(verb)
+    verbose('Done with get_homology_kernel')
+    return good_ker
+
+def inverse_shapiro(self, x):
+    if not self.use_shapiro():
+        return [(g, ZZ(v[0])) for g, v in zip(self.Gpn.gens(), x.values())]
+    ans = []
+    for g, v in zip(self.Gn.gens(), x.values()):
+        for a, ti in zip(v.values(), self.coset_reps()):
+            if a[0] != 0:
+                # We are considering a * (g tns t_i)
+                g0, _ = self.get_coset_ti(set_immutable(ti * g.quaternion_rep))
+                ans.append((self.Gn(g0), ZZ(a[0])))
+    return ans

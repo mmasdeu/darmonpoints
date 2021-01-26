@@ -7,6 +7,7 @@
 ######################
 
 from sage.structure.sage_object import SageObject
+from sage.structure.richcmp import richcmp
 from sage.misc.all import cached_method,lazy_attribute,walltime
 from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement
@@ -120,25 +121,29 @@ class ArithGroupElement(MultiplicativeGroupElement):
             quaternion_rep = self.quaternion_rep**(-1)
         return self.__class__(self.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
 
-
-    def _cmp_(self,right):
+    def _eq_(self, right):
         selfquatrep = self.quaternion_rep
         rightquatrep = right.quaternion_rep
         if 'P' not in self.parent()._grouptype:
-            return (selfquatrep > rightquatrep) - (selfquatrep < rightquatrep)
-        if selfquatrep == rightquatrep:
-            return 0
+            return selfquatrep == rightquatrep
         tmp = selfquatrep / rightquatrep
         try:
             tmp = self.parent().F(tmp)
         except TypeError:
-            return 1
+            return False
         if not tmp.is_integral():
-            return 1
+            return False
         elif not (1/tmp).is_integral():
-            return -1
+            return False
         else:
-            return 0
+            return True
+
+    def __lt__(self, right):
+        selfquatrep = self.quaternion_rep
+        rightquatrep = right.quaternion_rep
+        if 'P' not in self.parent()._grouptype:
+            return selfquatrep < rightquatrep
+        return False
 
     def _reduce_word(self):
         if not self.has_word_rep:

@@ -22,7 +22,6 @@ from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap
 
 from .representations import *
-from .homology import TrivialAction
 from .util import *
 
 class HomologyElement(ModuleElement):
