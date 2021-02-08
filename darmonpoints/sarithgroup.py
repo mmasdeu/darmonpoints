@@ -337,6 +337,7 @@ class BigArithGroup_class(AlgebraicGroup):
     def Gpn_denominator(self, x):
         return self.Gpn._denominator(x)
 
+    @cached_method
     def edge_from_quaternion(self, gamma): # DEBUG : hardcoded precision
         p = self.norm_p
         z0 = Qq(p**2, 30, names='g').gen()
@@ -567,6 +568,7 @@ class BigArithGroup_class(AlgebraicGroup):
             self._prec = prec
         return iota
 
+    @cached_method
     def embed(self,q,prec):
         if prec is None:
             return None
@@ -617,6 +619,7 @@ class BigArithGroup_class(AlgebraicGroup):
             assert wd[0][1] == 0
             return a, wd[0][0]
 
+    @cached_method
     def _reduce_in_amalgam(self,x):
         p = self.p
         if self.use_shapiro():

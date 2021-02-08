@@ -8,6 +8,14 @@ from sage.rings.ring import Field
 from sage.rings.integer_ring import Z as ZZ
 from sage.rings.all import QQ
 from .util import our_sqrt
+from cpython cimport *
+from cysignals.signals cimport sig_check
+cimport cython
+from cpython.list cimport *
+from cpython.number cimport *
+from cpython.ref cimport *
+cimport sage.matrix.matrix2
+from sage.matrix.matrix2 cimport Matrix
 
 class QuadExtElement(FieldElement):
     def __init__(self, parent, x, y = None, check = True):
@@ -270,3 +278,4 @@ class QuadExt(UniqueRepresentation, Field): # Implement extension by x^2 - r*x +
 
     def is_finite(self):
         return self.base().is_finite()
+
