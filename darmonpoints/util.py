@@ -6,7 +6,7 @@ from sage.schemes.elliptic_curves.constructor import EllipticCurve
 from sage.libs.pari.all import PariError, pari
 from sage.misc.sage_eval import sage_eval
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.misc.verbose import verbose,get_verbose,set_verbose
+from sage.misc.all import verbose,get_verbose,set_verbose
 from sage.calculus.var import var
 from sage.arith.all import divisors, kronecker_symbol, next_prime
 from sage.interfaces.gp import gp

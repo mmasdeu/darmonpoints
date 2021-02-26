@@ -9,7 +9,7 @@ from sage.rings.all import ZZ, RR, QQ, Qp, Zmod
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.infinity import Infinity
 from sage.schemes.curves.constructor import Curve
-from sage.misc.misc import walltime, verbose
+from sage.misc.all import walltime, verbose
 from sage.misc.misc_c import prod
 
 from .sarithgroup import BigArithGroup

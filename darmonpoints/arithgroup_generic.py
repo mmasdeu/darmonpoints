@@ -7,7 +7,7 @@
 ######################
 from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
-from sage.misc.all import cached_method,walltime
+from sage.misc.all import cached_method,walltime,get_verbose, set_verbose
 from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement
 from sage.algebras.quatalg.all import QuaternionAlgebra
@@ -28,7 +28,6 @@ from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
 from sage.rings.infinity import Infinity
 from sage.modular.modsym.p1list import lift_to_sl2z, P1List
-from sage.misc.misc import get_verbose, set_verbose
 
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap

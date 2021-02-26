@@ -33,7 +33,7 @@ from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.structure.parent import Parent
 from sage.structure.element import Element
 from sage.modules.free_module_element import free_module_element as vector
-from sage.misc.misc import verbose
+from sage.misc.all import verbose
 
 import operator
 ##===========================================================================================

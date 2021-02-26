@@ -29,7 +29,7 @@ from sage.modular.pollack_stevens.sigma0 import Sigma0,Sigma0ActionAdjuster
 from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.misc.cachefunc import cached_method
-from sage.misc.misc import cputime, get_verbose, set_verbose
+from sage.misc.all import cputime, get_verbose, set_verbose
 from sage.misc.misc_c import prod
 from .homology import Divisors
 from .representations import MatrixAction, Scaling
