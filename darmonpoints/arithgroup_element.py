@@ -72,7 +72,6 @@ class ArithGroupElement(MultiplicativeGroupElement):
     def size(self):
         return len(self.word_rep)
 
-    @cached_method
     def __hash__(self):
         try:
             return hash((hash(self.parent()), hash(self.quaternion_rep.coefficient_tuple())))
@@ -92,25 +91,12 @@ class ArithGroupElement(MultiplicativeGroupElement):
     def _mul_(left,right):
         word_rep = None
         quaternion_rep = None
-        # if left.has_word_rep and right.has_word_rep:
-        #     word_rep = left.word_rep + right.word_rep
         if (left.has_quaternion_rep and right.has_quaternion_rep) or word_rep is None:
-            try:
-                quaternion_rep = left.quaternion_rep * right.quaternion_rep
-            except TypeError:
-                print(left.quaternion_rep)
-                print(right.quaternion_rep)
-                print(left.quaternion_rep.parent().base_ring())
-                print(right.quaternion_rep.parent().base_ring())
-                print(left.quaternion_rep.parent().base_ring() is right.quaternion_rep.parent().base_ring())
-                pick = [left.quaternion_rep, right.quaternion_rep]
-                save(pick, 'test')
-                assert 0
+            quaternion_rep = left.quaternion_rep * right.quaternion_rep
         return left.__class__(left.parent(),word_rep = word_rep, quaternion_rep = quaternion_rep, check = False)
 
     def is_one(self):
-        quatrep = self.quaternion_rep
-        return quatrep == 1
+        return self.quaternion_rep == 1
 
     def __invert__(self):
         word_rep = None
@@ -139,10 +125,8 @@ class ArithGroupElement(MultiplicativeGroupElement):
             return True
 
     def __lt__(self, right):
-        selfquatrep = self.quaternion_rep
-        rightquatrep = right.quaternion_rep
         if 'P' not in self.parent()._grouptype:
-            return selfquatrep < rightquatrep
+            return self.quaternion_rep < right.quaternion_rep
         return False
 
     def _reduce_word(self):
@@ -189,9 +173,9 @@ class ArithGroupElement(MultiplicativeGroupElement):
         return
 
     @cached_method
-    def embed(self,prec):
+    def embed(self, prec):
         assert self.has_quaternion_rep
-        return self.parent().embed(self.quaternion_rep,prec)
+        return self.parent().embed(self.quaternion_rep, prec)
 
     def __iter__(self):
         return self.embed(-1).list().__iter__()

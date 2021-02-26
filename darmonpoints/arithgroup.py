@@ -35,13 +35,14 @@ from sage.plot.point import point2d
 from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
 from sage.groups.free_group import FreeGroup
 from sage.functions.hyperbolic import acosh
-
+from copy import copy
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap
+from time import sleep
 
 from .arithgroup_generic import ArithGroup_generic, ArithGroup_matrix_generic
 from .util import *
-
+from .mixed_extension import get_word_rep_fast
 def hyperbolic_distance(alpha, beta):
     x1, y1 = alpha.real(), alpha.imag()
     x2, y2 = beta.real(), beta.imag()
@@ -243,23 +244,97 @@ def angle_sign(self, other):  # UHP
     return b1.sign()
 
 class ArithGroup_fuchsian_generic(ArithGroup_generic):
-    def get_word_rep(self,delta, P = None): # fuchsian generic
+    @cached_method
+    def get_embgquats_twisted(self, P=None):
+        if P is None:
+            CC = ComplexField(800)
+            P = CC(90)/CC(100) * CC.gen()
+        embgquats = self.embgquats
+        Pconj = P.conjugate()
+        m = Matrix([[Pconj, -P], [1, -1]])
+        madj = m.adjugate()
+        return [None] +[tuple((madj * o * m).list()) for o in self.embgquats[1:]]
+
+    def get_word_rep(self, delta, P = None): # fuchsian generic
+        while True:
+            try:
+                return get_word_rep_fast(self, delta, P) # DEBUG
+            except KeyboardInterrupt:
+                print('')
+                print(delta)
+                print('Press C-c again to really interrupt...')
+                sleep(5)
+
+        delta0 = delta.parent()(delta)
+        ngquats = self.ngquats
+        embgammas = self.embgquats
+        gammas = self.gquats
+        fdargs = self.fdargs
+        findex = self.findex
+
         if not self._is_in_order(delta):
             raise RuntimeError('delta (= %s) is not in order!'%delta)
         B = delta.parent()
-        CC = ComplexField(300)
+        CC = ComplexField(800)
         if P is None:
             P = CC(90)/CC(100) * CC.gen()
-        emb = self.get_archimedean_embedding(300)
-        ngquats = self.ngquats
-        gammas = self.gquats
-        embgammas = self.embgquats
+        emb = self.get_archimedean_embedding(800)
         pi = self.pi
-        findex = self.findex
-        fdargs = self.fdargs
         ans = []
         oldji = 0
+        z0 = act_flt_in_disc(emb(delta),CC(0),P)
+        while not delta.is_one() and not (-delta).is_one():
+            az0 = CC(z0).argument()
+            if az0 < fdargs[0]:
+                az0 += 2*pi
+            if az0 > fdargs[-1]:
+                ji = findex[0]
+                embgg = embgammas[ji]
+                if act_flt_in_disc(embgg,z0,P).abs() >= z0.abs():
+                    ji = findex[1]
+            else:
+                i = next((j for j,fda in enumerate(fdargs) if az0 < fda))
+                ji = findex[i+1]
+            embgg = embgammas[ji]
+            gg = gammas[ji]
+
+            z0 = act_flt_in_disc(embgg,z0,P)
+            delta = gg * delta
+            if ji == -oldji: # had a choice, need to pick the other
+                z0abs = z0.abs()
+                ji = next((j for j in list(range(-ngquats,0)) + list(range(1,ngquats + 1)) \
+                           if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0abs), -1)
+                gg = gammas[ji]
+            oldji = ji
+            ans.extend(self.translate[ji])
+        if 'P' not in self._grouptype:
+            delta1 = multiply_out(ans, self.Ugens, self.B.one())
+            if delta1 != delta:
+                ans.extend(self.minus_one_long)
+        ans = reduce_word_tietze(ans)
+        return ans
+
+    def get_word_rep_orig(self, delta, P = None): # fuchsian generic
+        delta0 = delta.parent()(delta)
+        ngquats = self.ngquats
+        embgammas = self.embgquats
+        gammas = self.gquats
+        fdargs = self.fdargs
+        findex = self.findex
+
+        if not self._is_in_order(delta):
+            raise RuntimeError('delta (= %s) is not in order!'%delta)
+        B = delta.parent()
+        CC = ComplexField(800)
+        if P is None:
+            P = CC(90)/CC(100) * CC.gen()
+        emb = self.get_archimedean_embedding(800)
+        pi = self.pi
+        ans = []
+        oldji = 0
+        n_iters = 0
         while not delta.is_one():
+            n_iters += 1
             if (-delta).is_one():
                 if 'P' not in self._grouptype:
                     ans += self.minus_one_long
@@ -282,7 +357,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             z0 = act_flt_in_disc(embgg,CC(0),P)
             z0abs = z0.abs()
             if ji == -oldji:
-                ji = next((j for j in list(range(-ngquats,0)) + list(range(1,ngquats + 1)) if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()),None)
+                ji = next((j for j in list(range(-ngquats,0)) + list(range(1,ngquats + 1)) \
+                           if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()), -1)
             if ji > 0:
                 gg = gammas[ji]
                 newcs = self.translate[ji]
@@ -389,7 +465,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         elif self.F.signature()[0] > 1:
             # raise NotImplementedError
             return x # FIXME this may not be correct
-        emb = self.F.embeddings(RealField(100))[0]
+        emb = self.F.embeddings(RealField(800))[0]
         try:
             N = N.gens_reduced()[0]
         except AttributeError:
@@ -532,7 +608,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
                     return True
         return False
 
-    def get_archimedean_embedding(self,prec):
+    @cached_method
+    def get_archimedean_embedding(self, prec):
         r"""
         Returns an embedding of the quaternion algebra
         into the algebra of 2x2 matrices with coefficients in `RR`.
@@ -542,14 +619,11 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         - prec -- Integer. The precision of the splitting.
 
         """
-        I,J,K = self._splitting_at_infinity(prec)
+        mats = self._splitting_at_infinity(prec)
         phi = self.F_into_RR
-        def iota(q):
-            R = I.parent()
-            v = q.coefficient_tuple()
-            return R(phi(v[0]) + phi(v[1]) * I + phi(v[2]) * J + phi(v[3]) * K)
-        return iota
+        return lambda q : sum(phi(o) * m for o, m in zip(q.coefficient_tuple(), mats))
 
+    @cached_method
     def _splitting_at_infinity(self,prec):
         r"""
         Finds an embedding of the quaternion algebra
@@ -578,16 +652,17 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             self._JJ_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in range(4)])
             v = f.Image(B_magma.gen(3)).Vector()
             self._KK_inf = matrix(RR,2,2,[v[i+1]._sage_() for i in range(4)])
-
+            self._11_inf = matrix(RR,2,2,1)
 
             RR = RealField(prec)
             rimg = f.Image(B_magma(sage_F_elt_to_magma(B_magma.BaseRing(),self.F.gen()))).Vector()
             rimg_matrix = matrix(RR,2,2,[rimg[i+1]._sage_() for i in range(4)])
             assert rimg_matrix.is_scalar()
             rimg = rimg_matrix[0,0]
+            self.rimg = rimg
             self.F_into_RR = self.F.hom([rimg],check = False)
 
-        return self._II_inf, self._JJ_inf, self._KK_inf
+        return self._11_inf, self._II_inf, self._JJ_inf, self._KK_inf
 
 class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
     def __init__(self,discriminant,level,info_magma = None,grouptype = None,magma = None, compute_presentation = True, **kwargs):
@@ -621,8 +696,8 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
 
     def _init_geometric_data(self, **kwargs): # rationalquaternion
         filename = kwargs.get('filename', None)
-        self.pi = 4 * RealField(300)(1).arctan()
-        emb = self.get_archimedean_embedding(300)
+        self.pi = 4 * RealField(800)(1).arctan()
+        emb = self.get_archimedean_embedding(800)
         if filename is not None:
             filename += '_ratquat_{quatalg}_{levelnorm}_{grouptype}_{code}.sobj'.format(quatalg = self.discriminant, code=ZZ(hash(self.level)).abs(), levelnorm=self.level, grouptype=self._grouptype)
             try:
@@ -643,7 +718,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         Gm = self.magma.FuchsianGroup(self._O_magma.name())
         FDom_magma = Gm.FundamentalDomain()
         self._fundamental_domain = [ComplexField(1000)(o.Real().sage(), o.Imaginary().sage()) for o in FDom_magma]
-        Um, _, m2_magma = Gm.Group(nvals = 3)
+        Um, m1_magma, m2_magma = Gm.Group(nvals = 3)
         self.Ugens = [magma_quaternion_to_sage(self.B, self._B_magma(m2_magma.Image(Um.gen(n+1))),self.magma) for n in range(len(Um.gens()))]
 
         Uside_magma = Gm.get_magma_attribute('ShimGroupSidepairs')
@@ -663,7 +738,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
 
         self.findex = [ZZ(x._sage_()) for x in Gm.get_magma_attribute('ShimGroupSidepairsIndex')]
-        self.fdargs = [RealField(300)(x._sage_()) for x in Gm.get_magma_attribute('ShimFDArgs')]
+        self.fdargs = [RealField(800)(x._sage_()) for x in Gm.get_magma_attribute('ShimFDArgs')]
 
         self.minus_one_long = [ len(self.Ugens) + 1 ]
         self.Ugens.append(self.B(-1))
@@ -720,7 +795,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                     self._O_magma = self._Omax_magma
             else:
                 self._O_magma = self.magma.Order([self._B_magma(o) for o in O_magma])
-            self._D_magma = self.magma.UnitDisc(Precision = 300)
+            self._D_magma = self.magma.UnitDisc(Precision = 800)
         else:
             ZZ_magma = info_magma._B_magma.BaseRing().Integers()
             self._B_magma = info_magma._B_magma
@@ -733,7 +808,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             else:
                 self._O_magma = self.magma.Order([self._B_magma(o) for o in O_magma])
             if self._compute_presentation:
-                self._D_magma = self.magma.UnitDisc(Precision = 300)
+                self._D_magma = self.magma.UnitDisc(Precision = 800)
             else:
                 try:
                     self._D_magma = info_magma._D_magma
@@ -1373,7 +1448,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 self._O_magma = self._Omax_magma
             # if self._compute_presentation:
             if True:
-                self._D_magma = self.magma.UnitDisc(Precision = 300)
+                self._D_magma = self.magma.UnitDisc(Precision = 800)
         else:
             self._F_magma = info_magma._F_magma
             OF_magma = info_magma._F_magma.Integers()
@@ -1400,7 +1475,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 self._O_magma = self._Omax_magma
             #if self._compute_presentation:
             if True:
-                self._D_magma = self.magma.UnitDisc(Precision = 300)
+                self._D_magma = self.magma.UnitDisc(Precision = 800)
             else:
                 try:
                     self._D_magma = info_magma._D_magma
@@ -1619,15 +1694,14 @@ class ArithGroup_nf_fuchsian(ArithGroup_nf_generic, ArithGroup_fuchsian_generic)
         if filename is not None:
             raise NotImplementedError
         Gm = self.magma.FuchsianGroup(self._O_magma.name())
+        self.Gm = Gm # DEBUG
         FDom_magma = Gm.FundamentalDomain() #self._D_magma.name()) # Debug
         self._fundamental_domain = [ComplexField(1000)(o.Real().sage(), o.Imaginary().sage()) for o in FDom_magma]
         Um,_,m2_magma = Gm.Group(nvals = 3)
-
         self.Ugens = [magma_quaternion_to_sage(self.B,self._B_magma(m2_magma.Image(Um.gen(n+1))),self.magma) for n in range(len(Um.gens()))]
 
         Uside_magma = Gm.get_magma_attribute('ShimGroupSidepairs')
         mside_magma = Gm.get_magma_attribute('ShimGroupSidepairsMap')
-        UsideFD_magma = Gm.get_magma_attribute('ShimFDSidepairs')
 
         self.Uside = [magma_quaternion_to_sage(self.B,self._B_magma(m2_magma.Image(mside_magma.Image(g))),self.magma) for g in Uside_magma.Generators()]
 
@@ -1636,18 +1710,16 @@ class ArithGroup_nf_fuchsian(ArithGroup_nf_generic, ArithGroup_fuchsian_generic)
 
         gquats_magma = Gm.get_magma_attribute('ShimGroupSidepairsQuats')
         self.ngquats = ZZ(len(gquats_magma[1]))
-        emb = self.get_archimedean_embedding(300)
+        emb = self.get_archimedean_embedding(800)
         self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion()),self.magma) for n in range(len(gquats_magma[i+1]))] for i in range(2)])
         self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
 
-        self.pi = 4 * RealField(300)(1).arctan()
+        self.pi = 4 * RealField(800)(1).arctan()
         self.findex = [ZZ(x._sage_()) for x in Gm.get_magma_attribute('ShimGroupSidepairsIndex')]
-        self.fdargs = [RealField(300)(x._sage_()) for x in Gm.get_magma_attribute('ShimFDArgs')]
+        self.fdargs = [float(x._sage_()) for x in Gm.get_magma_attribute('ShimFDArgs')] # DEBUG - low precision
 
         self.minus_one_long = [ len(self.Ugens) + 1 ]
         self.Ugens.append(self.B(-1))
-
-        self.translate = [None] + [self.magma_word_problem(Gm, g**-1) for g in self.gquats[1:]]
 
         self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [i+1],check = False) for i,g in enumerate(self.Ugens) ]
 
@@ -1663,8 +1735,17 @@ class ArithGroup_nf_fuchsian(ArithGroup_nf_generic, ArithGroup_fuchsian_generic)
                 assert multiply_out(newrel, self.Ugens, self.B.one()) == 1
                 self._relation_words.append(newrel)
 
+        F1 = FreeGroup(names=['x%s'%(i+1) for i in range(len(self.Uside))])
+        G1 = F1.quotient([F1(Um.Relations()[i+1].LHS().ElementToSequence()._sage_()) for i in range(len(Um.Relations()))])
+        G2 = FreeGroup(names=['y%s'%(i+1) for i in range(len(self._gens))]).quotient(self._relation_words)
+        self._G1 = G1
+        self._G2 = G2
+
+        self.translate = [None] + [self.magma_word_problem(Gm, g**-1) for g in self.gquats[1:]]
+        self.translate_inv =  [None] + [[-o for o in reversed(trans)] for trans in self.translate[1:]]
+
 class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
-    def _init_geometric_data(self, prec = 500, center = None, timeout = 0, **kwargs):
+    def _init_geometric_data(self, prec = 800, center = None, timeout = 0, **kwargs):
         verbose('Computing normalized basis (center = %s)'%center)
         '''
         Initialize the following attributes:
@@ -1732,7 +1813,7 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
         try:
             self._RR = RR = RealField((len(str(f[1].Radius)) * RealField(20)(10).log()/RealField(20)(2).log()).ceil()-13)
         except:
-            self._RR = RR = RealField(100)
+            self._RR = RR = RealField(800)
         verbose('Getting precision done')
         prec = RR.precision()
         CC = ComplexField(prec)

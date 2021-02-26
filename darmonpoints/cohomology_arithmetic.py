@@ -206,22 +206,31 @@ class ArithCohElement(CohomologyElement):
     def _repr_(self):
         return 'Arithmetic cohomology class in %s'%self.parent()
 
-    def evaluate(self, g, h = None, check = True, twist = False, at_identity=False):
+    def evaluate(self, g, he = None, check = True, twist = False, at_identity=False):
         r'''
-        If h is None, then gamma1 should be in Gamma0(p), and return the value of the cocycle at g.
-        If h is not None, then g is assumed to be in Gamma, and return the evaluation of the corresponding
+        If he is None, then gamma1 should be in Gamma0(p), and return the value of the cocycle at g.
+        If he is not None, then g is assumed to be in Gamma, and return the evaluation of the corresponding
         element in the Coinduced module, via Shapiro's isomorphism.
         '''
-        if h is None:
+        if he is None:
             return super(ArithCohElement, self).evaluate(g, at_identity=at_identity)
         G = self.parent().S_arithgroup()
-        hp = G.reduce_in_amalgam(h, return_word = False) if check else 1
-        he = hp**-1 * h # So that h = hp * he
-        newg = G.reduce_in_amalgam(he * g.quaternion_rep, return_word = False)
+        try:
+            g = g.quaternion_rep
+        except AttributeError:
+            pass
+        if check:
+            hp = G.reduce_in_amalgam(he, return_word = False)
+            he = hp**-1 * he # So that h = hp * he
+        newg = G.reduce_in_amalgam(he * g, return_word = False)
         if twist:
             newg = newg.conjugate_by(G.wp())
-            hp = hp.conjugate_by(G.wp())
-        return G.Gpn(hp) * super(ArithCohElement, self).evaluate(newg, at_identity=at_identity)
+            if check:
+                hp = hp.conjugate_by(G.wp())
+        if check:
+            return G.Gpn(hp) * super(ArithCohElement, self).evaluate(newg, at_identity=at_identity)
+        else:
+            return super(ArithCohElement, self).evaluate(newg, at_identity=at_identity)
 
     def Tq_eigenvalue(self, ell, check = True):
         r"""

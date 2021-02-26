@@ -275,13 +275,23 @@ class BigArithGroup_class(AlgebraicGroup):
                 return self._F_to_local
 
     @cached_method
+    def get_gis_local(self, prec):
+        return [self.embed(o, prec) for o in self.get_gis()]
+
+    @cached_method
+    def get_gitildes_local(self, prec):
+        return [self.embed(o, prec) for o in self.get_gitildes()]
+
+    @cached_method
     def get_gis(self):
         return [ g**-1 for g in self.get_BT_reps() ]
+
     @cached_method
     def get_gitildes(self):
         return [self.Gn.B(1)] + [ g**-1 for g in self.get_BT_reps_twisted()[1:]]
 
     def clear_local_splitting(self):
+        del self.Gpn._11
         del self.Gpn._II
         del self.Gpn._JJ
         del self.Gpn._KK
@@ -303,7 +313,7 @@ class BigArithGroup_class(AlgebraicGroup):
 
             sage: from darmonpoints.sarithgroup import BigArithGroup
             sage: X = BigArithGroup(13,2*3,1,outfile='/tmp/darmonpoints.tmp') #  optional - magma
-            sage: II, JJ, KK = X.local_splitting(10) #  optional - magma
+            sage: One, II, JJ, KK = X.local_splitting(10) #  optional - magma
             sage: B = X.Gn.B    #  optional - magma
             sage: II**2 == QQ(B.gen(0)**2) #  optional - magma
             True
@@ -311,12 +321,13 @@ class BigArithGroup_class(AlgebraicGroup):
         """
         if prec is None or prec <= self._prec:
             try:
-                return self.Gpn._II,self.Gpn._JJ,self.Gpn._KK
+                return self._11, self.Gpn._II,self.Gpn._JJ,self.Gpn._KK
             except AttributeError:
                 pass
         (I, J, K), F_to_local = self.Gpn._compute_padic_splitting(self.ideal_p, prec)
         self._F_to_local = F_to_local
-        return I, J, K
+        self._11 = I.parent()(1)
+        return self._11, I, J, K
 
     def save_to_db(self):
         fname = 'arithgroup%s_%s_%s_%s.sobj'%(self.seed,self.p,self.discriminant,self.level)
@@ -337,17 +348,12 @@ class BigArithGroup_class(AlgebraicGroup):
     def Gpn_denominator(self, x):
         return self.Gpn._denominator(x)
 
-    @cached_method
-    def edge_from_quaternion(self, gamma): # DEBUG : hardcoded precision
+    def edge_from_quaternion(self, gamma):
         p = self.norm_p
-        z0 = Qq(p**2, 30, names='g').gen()
-        z1 = 1 / (p*z0)
-        a, b, c, d = self.embed(gamma**-1, 30).list()
-        h_e1 = (a * z0 + b) / (c * z0 + d)
-        h_e2 = (a * z1 + b) / (c * z1 + d)
-        v1 = self.BT.find_containing_affinoid(h_e1)
-        v2 = self.BT.find_containing_affinoid(h_e2)
-        e = self.BT.edge_between_vertices(v1, v2)
+        g = self.embed(gamma.conjugate(), 20)
+        vv = min([o.valuation() for o in g.list()])
+        g = p**-vv * g
+        e = self.BT.opposite(self.BT.edge(g))
         e.set_immutable()
         return e
 
@@ -466,13 +472,9 @@ class BigArithGroup_class(AlgebraicGroup):
     def get_edges_upto(self, depth):
         return [gamma for d in range(depth + 1) for rev, gamma in self.get_covering(d)]
 
+    @cached_method
     def construct_edge_reps(self, depth):
-        edge_dict = {}
-        for gamma in self.get_edges_upto(depth):
-            e = self.edge_from_quaternion(gamma)
-            e.set_immutable()
-            edge_dict[e] = gamma
-        return edge_dict
+        return {self.edge_from_quaternion(gamma) : gamma for gamma in self.get_edges_upto(depth)}
 
     def subdivide(self,edgelist,parity,depth):
         if depth < 0:
@@ -508,6 +510,10 @@ class BigArithGroup_class(AlgebraicGroup):
             raise TypeError('Wrong wp (code %s)'%ans)
         self._wp = wp
         return self._wp
+
+    @cached_method
+    def embed_wp(self, prec):
+        return self.embed(self.wp(), prec)
 
     def wp(self, **kwargs):
         if self._hardcode_matrices:
@@ -554,22 +560,19 @@ class BigArithGroup_class(AlgebraicGroup):
             def iota(q):
                 return q.change_ring(R)
         else:
-            I,J,K = self.local_splitting(prec)
+            mats = self.local_splitting(prec)
             v = self.base_ring_local_embedding(prec)
-            mats = [1,I,J,K]
             def iota(q):
-                R=I.parent()
                 try:
                     q = q.coefficient_tuple()
                 except AttributeError:
                     q = q.list()
-                return sum(v(a)*b for a,b in zip(q,mats))
+                return sum(v(a)*b for a,b in zip(q, mats))
         if prec > self._prec: # DEBUG
             self._prec = prec
         return iota
 
-    @cached_method
-    def embed(self,q,prec):
+    def embed(self, q, prec):
         if prec is None:
             return None
         elif prec == -1:
@@ -588,11 +591,22 @@ class BigArithGroup_class(AlgebraicGroup):
                 q = q.coefficient_tuple()
             except AttributeError:
                 q = q.list()
-            I,J,K = self.local_splitting(prec)
-            return set_immutable((v(q[0]) + v(q[1]) * I + v(q[2]) * J + v(q[3]) * K).change_ring(Qp(self.p, prec)))
+            mats = self.local_splitting(prec)
+            # return sum(v(o) * m for o, m in zip(q, self.local_splitting(prec))).change_ring(Qp(self.p, prec))
+            return v(q[0]) + v(q[1]) * mats[1] + v(q[2]) * mats[2] + v(q[3]) * mats[3]
+
+    @cached_method
+    def get_amalgam_reps(self):
+        return [ [o**-1 for o in self.get_BT_reps()], [o**-1 for o in self.get_BT_reps_twisted()] ]
 
     def reduce_in_amalgam(self,x,return_word = False, check = False):
-        a, wd = self._reduce_in_amalgam(set_immutable(x))
+        if return_word:
+            a, wd = self._reduce_in_amalgam(set_immutable(x))
+        else:
+            try:
+                a = self._reduce_fast(set_immutable(x))
+            except RecursionError:
+                raise RuntimeError('Error in reduce_in_amalgam: %s'%x)
         if check:
             assert self.is_in_Gpn_order(a)
             tmp = a
@@ -619,17 +633,50 @@ class BigArithGroup_class(AlgebraicGroup):
             assert wd[0][1] == 0
             return a, wd[0][0]
 
-    @cached_method
+    def _reduce_fast(self,x, xl=None):
+        p = self.p
+        prec = 10
+        if xl is None:
+            xl = self.embed(x,prec)
+        dval = lambda y,z : -min([o.valuation(p) for o in (y*z).list()])
+        test_order = lambda y : is_in_Gamma0loc(y)
+
+        if test_order(xl):
+            return x
+        else:
+            gis = self.get_gis()
+            gis_local = self.get_gis_local(prec)
+            gitildes = self.get_gitildes()
+            gitildes_local = self.get_gitildes_local(prec)
+            wp = self.embed_wp(prec)
+            xtilde = -p**-1 * wp * xl * wp
+            valx = dval(xtilde,1)
+            if valx == 0:
+                valx = 1
+
+            i = next((i for i, gl in enumerate(gitildes_local) if dval(xtilde, gl) < valx), False)
+            if i:
+                x = x * gis[i]
+                xl = xl * gis_local[i]
+
+            if test_order(xl):
+                return set_immutable(x)
+
+            valx = dval(xl,1)
+            if valx == 0:
+                valx = 1
+            i, g, gl = next(((i,g,gl) for i,(g,gl) in enumerate(zip(gitildes, gitildes_local)) if dval(xl, gl) < valx), (False, None))
+            if i :
+                x = set_immutable(x*g)
+                xl = xl * gl
+            a = self._reduce_fast(x, xl)
+            return set_immutable(a)
+
     def _reduce_in_amalgam(self,x):
         p = self.p
-        if self.use_shapiro():
-            # Algebraic approach
-            dval = lambda y : self.Gn._denominator_valuation(y, p)
-            test_order = lambda x : self.is_in_Gpn_order(x)
-        else:
-            # Local approach
-            dval = lambda y : -min([o.valuation(p) for o in self.embed(y, 10).list()])
-            test_order = lambda x : is_in_Gamma0loc(self.embed(x, 10))
+        # Local approach
+        dval = lambda y : -min([o.valuation(p) for o in self.embed(y, 10).list()])
+        test_order = lambda y : is_in_Gamma0loc(self.embed(y, 10))
 
         if test_order(x):
             return x, []
@@ -654,7 +701,6 @@ class BigArithGroup_class(AlgebraicGroup):
             x, new_wd = (set_immutable(x *g), [(i,1)] + new_wd) if i else (x, new_wd)
 
             if len(new_wd) == 0:
-                return x, new_wd # DEBUG
                 print('Offending input: %s'%x)
                 raise RuntimeError
             a, wd = self._reduce_in_amalgam(x)

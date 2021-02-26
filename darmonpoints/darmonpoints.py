@@ -189,13 +189,15 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
         working_prec = max([2 * prec + 10, 30])
 
     if use_magma:
-        page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
+        page_path = param.get('page_path', os.path.dirname(__file__))
+        page_path += '/KleinianGroups-1.0/klngpspec'
         if magma is None:
             from sage.interfaces.magma import Magma
             magma = Magma()
             quit_when_done = True
         else:
             quit_when_done = False
+        print('Using Magma version : %s'%str(magma.version()))
         magma.attach_spec(page_path)
     else:
         quit_when_done = False

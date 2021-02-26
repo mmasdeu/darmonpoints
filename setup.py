@@ -41,6 +41,7 @@ if __name__ == "__main__":
              Extension('darmonpoints.mixed_extension',
              sources = [os.path.join('darmonpoints','mixed_extension.pyx')],
              include_dirs=sage_include_directories())
+
     ]
 
     # Specify the required Sage version

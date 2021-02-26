@@ -25,7 +25,7 @@ from sage.arith.misc import valuation
 from sage.misc.misc_c import prod
 from sage.functions.transcendental import Function_zeta
 from sage.groups.finitely_presented import wrap_FpGroup
-from sage.misc.all import cartesian_product_iterator
+from sage.misc.all import cartesian_product_iterator, cached_method
 from sage.misc.latex import latex, LatexExpr
 from sage.rings.padics.padic_generic import local_print_mode
 from sage.rings.fast_arith import prime_range
@@ -1127,8 +1127,7 @@ def cantor_diagonal(iter1,iter2):
 def act_flt_in_disc(g,x,P):
     Pconj = P.conjugate()
     z = (Pconj * x - P) / (x-1)
-    a,b,c,d = g.list()
-    z1 = (a * z + b) / (c * z + d)
+    z1 = (g[0,0] * z + g[0,1]) / (g[1,0] * z + g[1,1])
     return (z1 - P) / (z1 - Pconj)
 
 def translate_into_twosided_list(V):
@@ -1489,18 +1488,14 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
             Fm = magma.NumberField(F.gen().minpoly())
         if len(S) == len(F.real_places()):
             Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), Fm.RealPlaces())
-            return_ans = True
-        elif len(S) == len(F.real_places()) - 1:
-            v = Fm.RealPlaces()
-            Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), [v[i] for i in range(1,len(v))])
-            return_ans = True
         else:
-            return_ans = False
-        if return_ans:
-            a,b = Bm.StandardForm(nvals = 2)
-            a = magma_F_elt_to_sage(F,a,magma)
-            b = magma_F_elt_to_sage(F,b,magma)
-            return a, b
+            v = Fm.RealPlaces()
+            Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), [v[i] for i in S])
+
+        a,b = Bm.StandardForm(nvals = 2)
+        a = magma_F_elt_to_sage(F,a,magma)
+        b = magma_F_elt_to_sage(F,b,magma)
+        return a, b
 
     Foo = F.real_places(prec = Infinity)
     T = F.real_places(prec = Infinity)
@@ -2044,3 +2039,4 @@ def print_padic(x):
     R = x.parent()
     with local_print_mode(R,'val-unit'):
         print(x)
+

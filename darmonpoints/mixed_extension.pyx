@@ -14,8 +14,99 @@ cimport cython
 from cpython.list cimport *
 from cpython.number cimport *
 from cpython.ref cimport *
-cimport sage.matrix.matrix2
-from sage.matrix.matrix2 cimport Matrix
+# cimport sage.matrix.matrix2
+#from sage.matrix.matrix2 cimport Matrix
+from sage.matrix.constructor import Matrix
+from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp, AA
+from bisect import bisect_left as bisect
+from math import atan as atan
+
+def get_word_rep_fast(self, delta, Pold=None):
+    cdef int realprec = 800
+    cdef int ii = 0
+    cdef int i = 0
+    cdef int j = 0
+    cdef int ji = 0
+    cdef int oldji = 0
+
+    cdef list gammas = self.gquats
+    cdef list gammas_inv = [None] + [o.conjugate() for o in gammas[1:]]
+    cdef list translate_inv = self.translate_inv
+
+    cdef int ngquats = self.ngquats
+    cdef list fdargs = self.fdargs
+    cdef list findex = self.findex
+    cdef list ans = []
+    cdef list newcs = []
+    cdef B = delta.parent()
+
+    cdef CC = ComplexField(realprec)
+    cdef RR = RealField(realprec)
+    cdef z0 = CC(0)
+    cdef z1 = CC(0)
+    cdef a = RR(0)
+    cdef b = RR(0)
+    cdef c = RR(0)
+    cdef d = RR(0)
+    cdef P = CC(0,.9)
+    cdef x = P
+    cdef y = P.parent()(1)
+    cdef list embgammas_tw = self.get_embgquats_twisted(P)
+    cdef list embgammas = self.embgquats
+    cdef float az0 = 0
+
+    cdef float twopi = 2 * float(self.pi)
+    Pconj = P.conjugate()
+    mats = self._splitting_at_infinity(realprec)
+    phi = self.F_into_RR
+    emb = lambda q : phi(q[0]) + phi(q[1]) * mats[1] + phi(q[2]) * mats[2] + phi(q[3]) * mats[3]
+    embgg = emb(delta)
+    while not delta.is_one():
+        if (-delta).is_one():
+            delta = B.one()
+            break
+        x, y = embgg[0,0]*x+embgg[0,1]*y, embgg[1,0]*x+embgg[1,1]*y
+        az0 = float((x - P*y).argument()) - float((x-Pconj*y).argument())
+        while az0 < 0 :
+            az0 += twopi
+        while az0 > twopi:
+            az0 -= twopi
+        if az0 > fdargs[-1]: # LESS COMMON
+            z1 = x / y
+            z0 = (z1 - P) / (z1 - Pconj)
+            ji = findex[0]
+            a,b,c,d = embgammas_tw[ji]
+            if ((a*z0+b)/(c*z0+d)).abs() > z0.abs():
+                ji = findex[1]
+        else: # COMMON
+            ji = findex[bisect(fdargs, az0) + 1]
+        if ji == -oldji: # VERY RARE
+            a,b,c,d = embgammas_tw[ji]
+            z0 = (a*z0+b)/(c*z0+d)
+            ii = -ngquats
+            while ii <= ngquats:
+                if ii == 0:
+                    continue
+                if ii + ji != 0:
+                    a,b,c,d = embgammas_tw[ii]
+                    if ((a*z0+b)/(c*z0+d)).abs() < z0.abs():
+                        ji = ii
+                        break
+                    else:
+                        ii += 1
+        if ji > 0:
+            gg = gammas[ji]
+            embgg = embgammas[ji]
+            newcs = self.translate[ji]
+        else:
+            gg = gammas_inv[-ji]
+            embgg = embgammas[-ji].adjugate()
+            newcs = translate_inv[-ji]
+        delta = gg * delta
+        oldji = ji
+        ans.extend(newcs)
+    return ans
+
 
 class QuadExtElement(FieldElement):
     def __init__(self, parent, x, y = None, check = True):
