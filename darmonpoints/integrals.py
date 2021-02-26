@@ -215,7 +215,7 @@ def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,twist=False,progress_bar 
         for (h, rev), pol, c0val, c0unit in lift_to_locally_analytic(G, D, prec):
             mu = cocycle.evaluate(g, h, twist=rev, at_identity=G.use_shapiro())
             resadd += sum(a * mu.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu.moments()))
-            mu0 = cocycle['liftee'].evaluate(g, h=h, twist=rev, at_identity=G.use_shapiro())[0]
+            mu0 = cocycle['liftee'].evaluate(g, h, twist=rev, at_identity=G.use_shapiro())[0]
             resval += c0val * ZZ(mu0)
             resmul *= c0unit**ZZ(mu0)
     if not multiplicative:

@@ -233,6 +233,7 @@ class CohomologyElement(ModuleElement):
         return sum((self._val[g-1][0] if g > 0 else -self._val[-g-1][0] for g in word), self.parent().coefficient_module()(0)[0])
 
 class CohomologyGroup(Module):
+    Element = CohomologyElement
     def __init__(self, G, V, action_map = None, **kwargs):
         self._group = G
         self._coeffmodule = V
@@ -360,7 +361,7 @@ class CohomologyGroup(Module):
         data = []
         for i in range(0,len(vi),Vdim):
             data.append(V(vi[i:i+Vdim]))
-        return CohomologyElement(self, data)
+        return self.element_class(self, data)
 
     def gens(self):
         return [self.gen(i) for i in range(self.dimension())]
