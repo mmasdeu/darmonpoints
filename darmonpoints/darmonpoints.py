@@ -300,7 +300,6 @@ def darmon_point(P, E, beta, prec, ramification_at_infinity = None, input_data =
                 fwrite(f'# Initializing S-arithmetic group...', outfile)
                 print(f'abtuple = {abtuple} Np = {Np} F = {F}', outfile)
                 G = BigArithGroup(P,abtuple,Np,base = F,outfile = outfile,seed = magma_seed,use_sage_db = use_sage_db,magma = magma, use_shapiro = use_shapiro, nscartan=Ncartan)
-
             # Define the cycle ( in H_1(G,Div^0 Hp) )
             Coh = ArithCoh(G)
             while True:

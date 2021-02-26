@@ -743,6 +743,8 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         self.minus_one_long = [ len(self.Ugens) + 1 ]
         self.Ugens.append(self.B(-1))
         self.translate = [None] + [self.magma_word_problem(Gm, g**-1) for g in self.gquats[1:]]
+        self.translate_inv =  [None] + [[-o for o in reversed(trans)] for trans in self.translate[1:]]
+
         self._gens = [ self.element_class(self,quaternion_rep = g, word_rep = [i+1],check = False) for i,g in enumerate(self.Ugens) ]
         temp_relation_words = [Um.Relations()[n+1].LHS().ElementToSequence()._sage_() for n in range(len(Um.Relations()))] + [ [len(self.Ugens),len(self.Ugens)] ]
         self._relation_words = []
