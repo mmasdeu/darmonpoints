@@ -1490,7 +1490,7 @@ def quaternion_algebra_invariants_from_ramification(F, I, S = None, optimize_thr
             Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), Fm.RealPlaces())
         else:
             v = Fm.RealPlaces()
-            Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), [v[i] for i in S])
+            Bm = magma.QuaternionAlgebra(sage_F_ideal_to_magma(Fm,I), [v[i+1] for i in S])
 
         a,b = Bm.StandardForm(nvals = 2)
         a = magma_F_elt_to_sage(F,a,magma)
