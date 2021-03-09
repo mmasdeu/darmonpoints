@@ -582,9 +582,9 @@ class BigArithGroup_class(AlgebraicGroup):
         else:
             v = self.base_ring_local_embedding(prec)
             if hasattr(q,'rows'):
-                return q.apply_map(v)
+                return set_immutable(q.apply_map(v))
             try:
-                return self.Gn.quaternion_to_matrix(q).apply_map(v)
+                return set_immutable(self.Gn.quaternion_to_matrix(q).apply_map(v))
             except AttributeError:
                 pass
             try:
@@ -593,7 +593,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 q = q.list()
             mats = self.local_splitting(prec)
             # return sum(v(o) * m for o, m in zip(q, self.local_splitting(prec))).change_ring(Qp(self.p, prec))
-            return v(q[0]) + v(q[1]) * mats[1] + v(q[2]) * mats[2] + v(q[3]) * mats[3]
+            return set_immutable(v(q[0]) + v(q[1]) * mats[1] + v(q[2]) * mats[2] + v(q[3]) * mats[3])
 
     @cached_method
     def get_amalgam_reps(self):
