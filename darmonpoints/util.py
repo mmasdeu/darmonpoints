@@ -2040,3 +2040,5 @@ def print_padic(x):
     with local_print_mode(R,'val-unit'):
         print(x)
 
+def relativize_ATR(F, ff):
+    return [pp.discriminant() for pp, _ in ff.change_ring(F).factor()]

@@ -38,16 +38,17 @@ if __name__ == "__main__":
 
     # Cython modules
     ext_modules = [
-             Extension('darmonpoints.mixed_extension',
-             sources = [os.path.join('darmonpoints','mixed_extension.pyx')],
-             include_dirs=sage_include_directories())
-
+        Extension('darmonpoints.mixed_extension',
+            sources = [os.path.join('darmonpoints','mixed_extension.pyx')],
+            include_dirs=sage_include_directories()),
+        Extension('darmonpoints.sparse',
+            sources = [os.path.join('darmonpoints','sparse.pyx')],
+            include_dirs=sage_include_directories())
     ]
 
     # Specify the required Sage version
-    sage_required_version = u'>=8.9'
+    sage_required_version = u'>=9.1'
     sage_current_version = sage_version()
-    py2 = bool('8.' in sage_current_version or '7.' in sage_current_version)
     REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
 
     setup(
@@ -74,7 +75,7 @@ if __name__ == "__main__":
         # this grabs the requirements from requirements.txt
         install_requires=REQUIREMENTS,
         packages = ['darmonpoints'],
-        ext_modules = cythonize(ext_modules) if py2 else cythonize(ext_modules, compiler_directives={'language_level' : "3"}),
+        ext_modules = cythonize(ext_modules, compiler_directives={'language_level' : "3"}),
         include_package_data = True,
         cmdclass = {'build': build, 'test': SageTest} # adding a special setup command for tests
     )
