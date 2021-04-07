@@ -278,7 +278,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         CC = ComplexField(800)
         if P is None:
             P = CC(90)/CC(100) * CC.gen()
-        emb = self.get_archimedean_embedding(800)
+        emb = self.get_archimedean_embedding(1000)
         pi = self.pi
         ans = []
         oldji = 0
@@ -328,7 +328,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         CC = ComplexField(800)
         if P is None:
             P = CC(90)/CC(100) * CC.gen()
-        emb = self.get_archimedean_embedding(800)
+        emb = self.get_archimedean_embedding(1000)
         pi = self.pi
         ans = []
         oldji = 0
@@ -401,7 +401,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         return V
 
     def draw_mat_list(self, x0, g1, mlist, color='blue'):
-        phi = self.get_archimedean_embedding(100)
+        phi = self.get_archimedean_embedding(1000)
         P = hyperbolic_arc(x0, act_flt(phi(g1.quaternion_rep),x0), color='red')
         vlist = G._fundamental_domain
         for g in mlist:
@@ -697,7 +697,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
     def _init_geometric_data(self, **kwargs): # rationalquaternion
         filename = kwargs.get('filename', None)
         self.pi = 4 * RealField(800)(1).arctan()
-        emb = self.get_archimedean_embedding(800)
+        emb = self.get_archimedean_embedding(1000)
         if filename is not None:
             filename += '_ratquat_{quatalg}_{levelnorm}_{grouptype}_{code}.sobj'.format(quatalg = self.discriminant, code=ZZ(hash(self.level)).abs(), levelnorm=self.level, grouptype=self._grouptype)
             try:
@@ -797,7 +797,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                     self._O_magma = self._Omax_magma
             else:
                 self._O_magma = self.magma.Order([self._B_magma(o) for o in O_magma])
-            self._D_magma = self.magma.UnitDisc(Precision = 800)
+            self._D_magma = self.magma.UnitDisc(Precision = 1000)
         else:
             ZZ_magma = info_magma._B_magma.BaseRing().Integers()
             self._B_magma = info_magma._B_magma
@@ -810,7 +810,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             else:
                 self._O_magma = self.magma.Order([self._B_magma(o) for o in O_magma])
             if self._compute_presentation:
-                self._D_magma = self.magma.UnitDisc(Precision = 800)
+                self._D_magma = self.magma.UnitDisc(Precision = 1000)
             else:
                 try:
                     self._D_magma = info_magma._D_magma
@@ -1450,7 +1450,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 self._O_magma = self._Omax_magma
             # if self._compute_presentation:
             if True:
-                self._D_magma = self.magma.UnitDisc(Precision = 800)
+                self._D_magma = self.magma.UnitDisc(Precision = 1000)
         else:
             self._F_magma = info_magma._F_magma
             OF_magma = info_magma._F_magma.Integers()
@@ -1477,7 +1477,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 self._O_magma = self._Omax_magma
             #if self._compute_presentation:
             if True:
-                self._D_magma = self.magma.UnitDisc(Precision = 800)
+                self._D_magma = self.magma.UnitDisc(Precision = 1000)
             else:
                 try:
                     self._D_magma = info_magma._D_magma
@@ -1712,7 +1712,7 @@ class ArithGroup_nf_fuchsian(ArithGroup_nf_generic, ArithGroup_fuchsian_generic)
 
         gquats_magma = Gm.get_magma_attribute('ShimGroupSidepairsQuats')
         self.ngquats = ZZ(len(gquats_magma[1]))
-        emb = self.get_archimedean_embedding(800)
+        emb = self.get_archimedean_embedding(1000)
         self.gquats = translate_into_twosided_list([[magma_quaternion_to_sage(self.B,self._B_magma(gquats_magma[i+1][n+1].Quaternion()),self.magma) for n in range(len(gquats_magma[i+1]))] for i in range(2)])
         self.embgquats =  [None] + [emb(g) for g in self.gquats[1:]]
 
