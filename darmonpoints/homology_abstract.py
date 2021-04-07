@@ -14,6 +14,7 @@ from sage.sets.set import Set
 from sage.modules.free_module_element import vector
 from sage.modules.module import Module
 from sage.structure.unique_representation import UniqueRepresentation
+from sage.misc.verbose import verbose
 
 import os
 import operator

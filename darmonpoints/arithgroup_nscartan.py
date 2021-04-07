@@ -28,6 +28,7 @@ from sage.rings.finite_rings.finite_field_constructor import FiniteField
 from sage.rings.infinity import Infinity as oo
 from sage.modular.modsym.p1list import lift_to_sl2z
 from sage.matrix.constructor import diagonal_matrix, identity_matrix, block_diagonal_matrix
+from sage.misc.verbose import verbose
 
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap

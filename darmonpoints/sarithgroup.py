@@ -16,6 +16,7 @@ from sage.modules.all import vector
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp,Qq,Zmod
 from sage.functions.trig import arctan
 from sage.misc.misc_c import prod
+from sage.misc.verbose import verbose
 from sage.structure.sage_object import save,load
 from sage.misc.persist import db
 from sage.modules.free_module import FreeModule_generic

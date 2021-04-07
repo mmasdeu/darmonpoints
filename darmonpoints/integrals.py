@@ -10,6 +10,7 @@ from sage.misc.getusage import get_memory_usage
 from sage.structure.sage_object import SageObject
 from sage.arith.misc import algdep
 from sage.misc.misc import cputime
+from sage.misc.verbose import verbose
 
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap

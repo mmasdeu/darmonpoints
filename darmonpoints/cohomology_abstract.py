@@ -25,6 +25,7 @@ from sage.matrix.matrix_space import MatrixSpace
 from sage.algebras.group_algebra import GroupAlgebra
 from sage.rings.padics.precision_error import PrecisionError
 from sage.modules.free_module_element import free_module_element, vector
+from sage.misc.verbose import verbose
 
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap

@@ -3,7 +3,7 @@
 ######################################
 from sage.rings.padics.precision_error import PrecisionError
 from sage.all import QQ, ZZ, Qp, QuaternionAlgebra, factor, Infinity
-from sage.misc.all import verbose
+from sage.misc.verbose import verbose, get_verbose, set_verbose
 
 import sys, os, datetime, configparser
 

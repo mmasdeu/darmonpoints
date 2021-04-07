@@ -35,6 +35,8 @@ from sage.plot.point import point2d
 from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
 from sage.groups.free_group import FreeGroup
 from sage.functions.hyperbolic import acosh
+from sage.misc.verbose import verbose
+
 from copy import copy
 from collections import defaultdict
 from itertools import product,chain,groupby,islice,tee,starmap

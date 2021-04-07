@@ -2,6 +2,8 @@ from sage.matrix.all import matrix,Matrix
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,Zmod
 from sage.groups.generic import discrete_log
 from sage.misc.misc_c import prod
+from sage.misc.verbose import verbose
+
 from sage.functions.other import floor
 from itertools import starmap,product,chain
 from operator import mul,itemgetter

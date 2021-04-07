@@ -24,6 +24,7 @@ from sage.structure.unique_representation import CachedRepresentation
 from sage.rings.padics.factory import ZpCA
 from sage.structure.richcmp import richcmp
 from sage.structure.unique_representation import UniqueRepresentation
+from sage.misc.verbose import verbose
 
 import os
 import operator

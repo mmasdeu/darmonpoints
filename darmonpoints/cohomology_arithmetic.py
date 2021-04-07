@@ -48,6 +48,7 @@ from sage.matrix.matrix_space import MatrixSpace
 from sage.modules.free_module_element import free_module_element, vector
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
 from sage.modular.pollack_stevens.distributions import OverconvergentDistributions
+from sage.misc.verbose import verbose
 
 import os
 import operator

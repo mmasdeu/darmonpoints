@@ -7,7 +7,8 @@
 ######################
 from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
-from sage.misc.all import cached_method,walltime,get_verbose, set_verbose
+from sage.misc.all import cached_method,walltime
+from sage.misc.verbose import verbose, get_verbose, set_verbose
 from sage.groups.group import AlgebraicGroup
 from sage.structure.element import MultiplicativeGroupElement
 from sage.algebras.quatalg.all import QuaternionAlgebra
