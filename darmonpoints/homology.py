@@ -89,7 +89,7 @@ class DivisorsElement(ModuleElement):
         r'''
         A Divisor is given by a list of pairs (P,nP), where P is a point, and nP is an integer.
 
-        TESTS:
+        TESTS::
 
             sage: from darmonpoints.homology import Divisors
             sage: Cp.<g> = Qq(5^3,20)
@@ -251,9 +251,16 @@ class DivisorsElement(ModuleElement):
 
     @cached_method
     def degree(self):
+    r'''
+    Returns the degree of self.
+    '''
         return sum(self._data.values())
 
     @cached_method
+    r'''
+    Returns the size of self, defined as the sum of the absolute
+    values of the coefficients.
+    '''
     def size(self):
         return sum(ZZ(d).abs() for d in self._data.values())
 

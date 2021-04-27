@@ -458,7 +458,9 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
                     verbose('x1 = %s, x2 = %s'%(x1,x2))
                     ans.append(ans[-1] * self(g))
                     break # DEBUG
-            assert found,'Did not find any to move...'
+            if not found:
+                verbose('WARNING!!!! Did not find any to move. Continuing anyway...')
+                break
         return [o.quaternion_rep for o in ans]
 
     def _fix_sign(self,x,N):
