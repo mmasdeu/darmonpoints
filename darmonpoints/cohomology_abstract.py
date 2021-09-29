@@ -118,7 +118,10 @@ class CohomologyElement(ModuleElement):
         return self._vector_() == 0
 
     def valuation(self, p = None):
-        return min([ u.valuation(p) for u in self._val ])
+        try:
+            return min([ u.valuation(p) for u in self._val ])
+        except TypeError:
+            return min([ u.valuation() for u in self._val ])
 
     def pair_with_cycle(self, xi):
         return sum(self.evaluate(g).pair_with(a) for g, a in xi)

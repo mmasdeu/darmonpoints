@@ -160,18 +160,22 @@ def log_pseries(R, x, prec = None):
         v.append( xpow / QQ(m) )
     return -R(v)
 
-def lift_to_locally_analytic(G, divisor, prec=None):
+def lift_to_locally_analytic(G, divisor, prec=None, depth=1):
+    if depth % 2 != 1:
+        raise NotImplementedError('Need to allow for reversed edges.')
     K = divisor.parent().base_ring()
     if prec is None:
         prec = K.precision_cap()
     p = G.p
     R = PolynomialRing(K,'r')
-    edgelist = [(1,o,QQ(1)/QQ(p+1)) for o in G.get_covering(1)]
+    wplocinv = G.wp
+    edgelist = [((-1)**(depth+1),o,QQ(1)/QQ(p+1)) for o in G.get_covering(depth)]
     while len(edgelist) > 0:
         newedgelist = []
         ii = 0
         for parity, (rev, h), wt in edgelist:
             ii += 1
+            assert not rev # TODO: allow for reversed edges as well
             a,b,c,d = [K(o) for o in G.embed(h,prec).list()]
             try:
                 c0unit = K.one()
@@ -186,7 +190,7 @@ def lift_to_locally_analytic(G, divisor, prec=None):
                 yield ((h, rev), pol, c0val, c0unit)
             except ValueError as msg:
                 verbose('Subdividing because (%s)...'%str(msg))
-                newedgelist.extend([(parity,o,wt/QQ(p**2)) for o in G.subdivide([(rev, h)],parity,2)])
+                newedgelist.extend([((-1)**2 * parity,o,wt/QQ(p**2)) for o in G.subdivide([(rev, h)],parity,2)])
                 continue
         edgelist = newedgelist
 
@@ -213,16 +217,51 @@ def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,twist=False,progress_bar 
         if twist:
             D = D.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
             g = g.conjugate_by(G.wp()**-1)
-        for (h, rev), pol, c0val, c0unit in lift_to_locally_analytic(G, D, prec):
-            mu = cocycle.evaluate(g, h, twist=rev, at_identity=G.use_shapiro())
-            resadd += sum(a * mu.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu.moments()))
-            mu0 = cocycle['liftee'].evaluate(g, h, twist=rev, at_identity=G.use_shapiro())[0]
-            resval += c0val * ZZ(mu0)
-            resmul *= c0unit**ZZ(mu0)
+        for (h, rev), pol, c0val, c0unit in lift_to_locally_analytic(G, D, prec, depth):
+            mu = cocycle.evaluate(g, h, at_identity=G.use_shapiro())
+            mu0 = cocycle['liftee'].evaluate(g, h, at_identity=G.use_shapiro())[0]
+            newresadd = sum(a * mu.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu.moments()))
+            newresval = c0val * ZZ(mu0)
+            newresmul = c0unit**ZZ(mu0)
+            if rev:
+                newresadd = -newresadd
+                newresval = -newresval
+                newresmul = newresmul**-1
+            resadd += newresadd
+            resval += newresval
+            resmul *= newresmul
     if not multiplicative:
         return resadd, resval, resmul if return_valuation else resadd
     else:
         return Cp.prime()**resval * Cp.teichmuller(resmul) * resadd.exp() # DEBUG
+
+def integrate_H1_riemann(G,cycle,cocycle,depth,prec = None,twist=False,progress_bar = False):
+    if not cycle.is_degree_zero_valued():
+        raise ValueError('Cycle should take values in divisors of degree 0')
+    if prec is None:
+        prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
+    verbose('precision = %s'%prec)
+    Cp = cycle.parent().coefficient_module().base_field()
+    R = PolynomialRing(Cp, names = 't')
+    t = R.gen()
+    total_integrals = cycle.size_of_support()
+    verbose('Will do %s integrals'%total_integrals)
+    R = PolynomialRing(Cp,names = 't').fraction_field()
+    t = R.gen()
+    resmul = Cp(1)
+    resadd = Cp(0)
+    resval = ZZ(0)
+    try:
+        cocycle = cocycle['liftee']
+    except KeyError:
+        pass
+    for g, D in cycle:
+        if twist:
+            D = D.left_act_by_matrix(G.embed(G.wp(),prec).change_ring(Cp))
+            g = g.conjugate_by(G.wp()**-1)
+        phiD = lambda t: prod([(t - P)**ZZ(n) for P,n in D], Cp(1))
+        resmul *= Cp(riemann_sum(G,phiD,ShapiroImage(G,cocycle)(g.quaternion_rep), depth,mult = True,progress_bar = progress_bar, K = Cp))
+    return resmul
 
 def sample_point(G,e,prec = 20):
     r'''
@@ -265,3 +304,65 @@ def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
         pol = ((PS(d * z + b) / PS(c * z + a) - Cp.teichmuller(center))**j).polynomial()
         resadd += sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e.moments()))
     return resadd
+
+class ShapiroImage(SageObject):
+    def __init__(self,G,cocycle):
+        self.G = G
+        self.cocycle = cocycle
+
+    def __call__(self,gamma):
+        return CoinducedElement(self.G,self.cocycle,gamma)
+
+class CoinducedElement(SageObject):
+    def __init__(self,G,cocycle,gamma):
+        self.G = G
+        self.cocycle = cocycle
+        self.gamma = gamma
+
+    def __call__(self,h,check = False):
+        rev, b = h
+        if check:
+            assert self.G.reduce_in_amalgam(b) == 1
+        a = self.G.reduce_in_amalgam(b * self.gamma)
+        if self.G.use_shapiro():
+            ans = self.cocycle.evaluate_and_identity(a)
+        else:
+            ans = self.cocycle.evaluate(a)
+        if rev == False:
+            return ans
+        else:
+            return -ans
+
+r'''
+Integration pairing of a function with an harmonic cocycle.
+'''
+def riemann_sum(G,phi,hc,depth = 1,mult = False, progress_bar = False, K = None):
+    prec = max([20,2*depth])
+    res = 1 if mult else 0
+    if K is None:
+        K = phi.parent().base_ring()
+    cover = G.get_covering(depth)
+    n_ints = 0
+    for e in cover:
+        if n_ints % 500 == 499:
+            verbose('Done %s percent'%(100*RealField(10)(n_ints)/len(cover)))
+        if progress_bar:
+            update_progress(float(RealField(10)(n_ints+1)/len(cover)),'Riemann sum')
+        n_ints += 1
+        val = hc(e)
+        vmom = val[0] #.moment(0)
+        if vmom.parent().is_exact():
+            hce = ZZ(vmom)
+        else:
+            hce = ZZ(vmom.rational_reconstruction())
+        if hce == 0:
+            continue
+        #verbose('hc = %s'%hce)
+        te = sample_point(G,e,prec)
+        if te == Infinity:
+            continue
+        if mult:
+            res *= phi(K(te))**hce
+        else:
+            res += phi(K(te)) * hce
+    return res

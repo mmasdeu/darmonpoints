@@ -84,6 +84,7 @@ class PlecticGroup_class(AlgebraicGroup):
         assert all([Gp0._is_in_order(g) and Gp1._is_in_order(g) for g in self.GS._get_O_basis()])
 
         self.GS._init_kwargs = kwargs
+        self.GS.embeddings = self.embeddings
 
         kwargs['Gpn'] = Gp0
         kwargs['Gn'] = Gp1
@@ -112,6 +113,15 @@ class PlecticGroup_class(AlgebraicGroup):
         self.vstar = self.BT.origin(estar)
         self.vhat = self.BT.target(estar)
         self.depth = 1
+        e0, e1 = self.embeddings()
+        e00 = lambda o : e0(o, 5)
+        e10 = lambda o : e1(o, 5)
+        self.GG[0].local_condition = e10
+        self.GG[1].local_condition = e00
+        del self.GG[0]._wp
+        del self.GG[1]._wp
+        wp0 = self.GG[0].wp()
+        wp1 = self.GG[1].wp()
 
     def small_group(self):
         return self.GS
@@ -121,6 +131,9 @@ class PlecticGroup_class(AlgebraicGroup):
 
     def quaternion_algebra(self):
         return self.GG[0].Gpn.B
+
+    def embeddings(self):
+        return self.GG[0].embed, self.GG[1].embed
 
     def _repr_(self):
        return 'S-Arithmetic Rational Group attached to data \
@@ -181,6 +194,9 @@ class PlecticGroup_class(AlgebraicGroup):
                 edge_dict[self.edge_from_quaternion(h, h0, h1)] = (h, h0, h1)
         self.depth = depth
         return edge_dict
+
+    def get_Up_reps_bianchi(self, pi, pi_bar):
+        return self.GG[0].get_Up_reps(), self.GG[1].get_Up_reps()
 
     @cached_method
     def get_edge_rep(self, e0, e1):
@@ -507,7 +523,7 @@ def sample_point(h, r0, r1, prec = 20):
     ans.append(pt.parent()(pt))
     return ans
 
-def do_twist(G, tau0, tau1, gamma):
+def do_twist(G, gamma, tau0, tau1):
     Kp = tau0.parent()
     wp = G.GG[0].wp() * G.GG[1].wp()
     a, b, c, d = [Kp(o) for o in G.GG[0].embed(wp, 10).list()]
@@ -516,7 +532,7 @@ def do_twist(G, tau0, tau1, gamma):
     a, b, c, d = [Kp(o) for o in G.GG[1].embed(wp, 10).list()]
     tau1 = (a * tau1 + b)/(c * tau1 +d)
     gamma = wp * gamma * wp**-1
-    return tau0, tau1, gamma
+    return gamma, tau0, tau1
 
 def riemann_sum(G,tau0,tau1, gamma, Phi, depth = 1, progress_bar = True, max_iters = -1, F = None, twist=True, edge_dict=None):
     if F is None:
@@ -559,17 +575,18 @@ def riemann_sum(G,tau0,tau1, gamma, Phi, depth = 1, progress_bar = True, max_ite
             return res
     return [o.add_bigoh(depth) for o in res.list()]
 
-def riemann_sum_parallel(G,tau0, tau1, gammaquatrep, phiE, depth, Fdict, njobs=1, max_cpus=1):
-    arg_list = [(G,tau0, tau1, gammaquatrep, phiE, depth, Fdict, i, njobs) for i in range(njobs)]
+def riemann_sum_parallel(G,tau0, tau1, gammaquatrep, phiE, depth, Fdict, njobs=1, twist=True, max_cpus=1):
+    arg_list = [(G,tau0, tau1, gammaquatrep, phiE, depth, Fdict, i, njobs, twist) for i in range(njobs)]
     @parallel(ncpus=max_cpus)
-    def riemann_sum_parallel_aux(G, tau0, tau1, gamma, Phi, depth, F, idx, njobs, progress_bar=False):
+    def riemann_sum_parallel_aux(G, tau0, tau1, gamma, Phi, depth, F, idx, njobs, twist=True, progress_bar=False):
         from itertools import islice
         edge_dict = G.construct_edge_reps(depth)
         if F is None:
             F = {}
         prec = max([20,2*depth])
         ans = 0
-        tau0, tau1, gamma = do_twist(G, tau0, tau1, gamma)
+        if twist:
+            gamma, tau0, tau1 = do_twist(G, gamma, tau0, tau1)
         tau0bar, tau1bar = tau0.trace()-tau0, tau1.trace() - tau1
         p = tau0.parent().prime()
         K = Qp(p, prec)
@@ -668,3 +685,35 @@ def compute_plectic_point(G, phiE, Fdict, depth, beta, njobs=1, max_cpus=1, outf
     fwrite('tau0 = %s'%tau0, outfile)
     fwrite('tau1 = %s'%tau1, outfile)
     return riemann_sum_parallel(G, tau0, tau1, gammaquatrep, phiE, depth, Fdict, njobs=njobs, max_cpus=max_cpus)
+
+def additive_integral(mu, phi):
+    r'''
+    Calculates the additive integral of the rational function phi against mu.
+    '''
+    phi_rat = [o.rational_function() for o in phi]
+    R = PowerSeriesRing(phi_rat[0].parent().base_ring(),'z')
+    base = phi_rat[0].parent().base_ring().base_ring()
+    R0 = PowerSeriesRing(base,'z')
+    projection = lambda f: (f.map_coefficients(lambda o : o._polynomial_list(pad=True)[0], new_base_ring=base),\
+                            f.map_coefficients(lambda o : o._polynomial_list(pad=True)[1], new_base_ring=base))
+
+    c = [phi(0) for phi in phi_rat]
+    pol0, pol1 = [projection(R(c0.log()) + R(phi / c0).log()) for c0, phi in zip(c, phi_rat)]
+    ans = Matrix(base, 2, 2, 0)
+    S = mu.parent().analytic_functions()
+    S0 = S.base_ring()
+    for u, v in product([0,1], repeat=2):
+        ff = S0(pol0[u]) * S(pol1[v])
+        ans[u,v] = mu.evaluate_at_poly(ff)
+    return ans
+
+def check_is_cycle(G, cycle_list):
+    emb0 = G.GG[0].embed
+    emb1 = G.GG[1].embed
+    ans0 = 0
+    ans1 = 0
+    for sgn, gamma, D0, D1 in cycle_list:
+        ans0 += sgn * (emb0(gamma**-1, 20).change_ring(D0.parent().base_ring()) * D0 - D0)
+        ans1 += sgn * (emb1(gamma**-1, 20).change_ring(D1.parent().base_ring()) * D1 - D1)
+    print(ans0 == 0)
+    print(ans1 == 0)

@@ -385,12 +385,21 @@ class BigArithGroup_class(AlgebraicGroup):
                 pi = self.ideal_p.gens_reduced()[0]
             return [self.Gpn(1).quaternion_rep] + [1 / self.prime() * wp * self.Gn.matrix_to_quaternion(matrix(self.F,2,2,[1,-a,0,self.prime()])) for a in alist]
         else:
+            wp = self.wp()
+            try:
+                lam = -wp.determinant()
+            except AttributeError:
+                lam = -wp.reduced_norm()
             n_iters = 0
             random = False if self.p <= 17 else True # DEBUG - hardcoded bound here...
             for elt in self.Gn.enumerate_elements(random=random):
                 n_iters += 1
                 new_inv = elt**-1
                 embelt = emb(elt)
+                sk = lam * new_inv * wp**-1
+                embsk = emb(sk)
+                # if (embsk[0,0] - 1).valuation() > 0 and embsk[1,0].valuation() > 0\
+                #    and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
                 if (embelt[0,0]-1).valuation() > 0 and all([not self.is_in_Gpn_order(o * new_inv) for o in reps if o is not None]):
                     if hasattr(self.Gpn,'nebentypus'):
                         tmp = self.do_tilde(embelt)**-1
@@ -398,6 +407,8 @@ class BigArithGroup_class(AlgebraicGroup):
                         tmp = ZZ(tmp.lift()) % self.Gpn.level
                         if tmp not in self.Gpn.nebentypus:
                             continue
+                    if hasattr(self, 'local_condition') and ((self.local_condition(sk)[0,0] - 1).valuation() == 0 or (self.local_condition(sk)[1,0]).valuation() == 0):
+                        continue
                     for idx,o1 in enumerate(matrices):
                         i,mat = o1
                         if is_in_Gamma0loc(embelt * mat, det_condition = False):
@@ -507,6 +518,17 @@ class BigArithGroup_class(AlgebraicGroup):
             ans += 2
         if not self.Gpn._is_in_order(wp):
             ans += 4
+        # if hasattr(self, 'local_condition'):
+        #     wp1 = self.local_condition(wp)
+        #     if (wp1[0,0] - 1).valuation() == 0:
+        #         ans += 8
+        #     elif (wp1[1,1] - 1).valuation() == 0:
+        #         ans += 8
+        #     elif (wp1[1,0]).valuation() == 0:
+        #         ans += 8
+
+        #     if not all([o.valuation() > 0 for o in wp1.list()]):
+        #         ans += 8
         if ans > 0:
             raise TypeError('Wrong wp (code %s)'%ans)
         self._wp = wp
@@ -574,6 +596,10 @@ class BigArithGroup_class(AlgebraicGroup):
         return iota
 
     def embed(self, q, prec):
+        try:
+            q = q.quaternion_rep
+        except AttributeError:
+            pass
         if prec is None:
             return None
         elif prec == -1:

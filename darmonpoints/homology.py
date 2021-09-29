@@ -251,17 +251,14 @@ class DivisorsElement(ModuleElement):
 
     @cached_method
     def degree(self):
-    r'''
-    Returns the degree of self.
-    '''
         return sum(self._data.values())
 
     @cached_method
-    r'''
-    Returns the size of self, defined as the sum of the absolute
-    values of the coefficients.
-    '''
     def size(self):
+        r'''
+        Returns the size of self, defined as the sum of the absolute
+        values of the coefficients.
+        '''
         return sum(ZZ(d).abs() for d in self._data.values())
 
     def support(self):
@@ -316,7 +313,9 @@ class Divisors(Parent, CachedRepresentation):
         return 'Group of divisors over ' + self._field._repr_()
 
 class ArithGroupAction(Action):
-    def __init__(self,G,M):
+    def __init__(self,G,M,emb=None, emb_idx=None):
+        self.emb = G.embed if emb is None else emb
+        self.emb_idx = emb_idx
         Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
     def _act_(self,g,v):
@@ -325,8 +324,7 @@ class ArithGroupAction(Action):
             prec = K.precision_cap()
         except AttributeError:
             prec = -1
-        G = g.parent()
-        return v.left_act_by_matrix(G.embed(g.quaternion_rep, prec))
+        return v.left_act_by_matrix(self.emb(g.quaternion_rep, prec))
 
 class TensorElement(ModuleElement):
     def __init__(self, parent, data):
@@ -396,9 +394,9 @@ class TensorElement(ModuleElement):
         newdict = {g: a * v for g,v in self._data.items()} if a != 0 else {}
         return self.parent()(newdict)
 
-class TensorProduct(Module, UniqueRepresentation):
+class TensorProduct(Module):
     Element = TensorElement
-    def __init__(self,G,V):
+    def __init__(self,G,V,emb=None, emb_idx=None):
         r'''
         INPUT:
         - G: an ArithGroup
@@ -407,8 +405,9 @@ class TensorProduct(Module, UniqueRepresentation):
         self._group = G
         self._coeffmodule = V
         Module.__init__(self, base=ZZ)
+        self._arith_action = ArithGroupAction(G,V,emb, emb_idx)
         V._unset_coercions_used()
-        V.register_action(ArithGroupAction(G,V))
+        V.register_action(self._arith_action)
         self._populate_coercion_lists_()
 
     def _an_element_(self):
@@ -416,6 +415,9 @@ class TensorProduct(Module, UniqueRepresentation):
 
     def _repr_(self):
         return 'Tensor product of the group ring of %s with %s'%(self.group(), self.coefficient_module())
+
+    def get_arith_action(self):
+        return self._arith_action
 
     def group(self):
         return self._group
@@ -563,7 +565,7 @@ class OneChainsElement(TensorElement):
         for gk1 in hecke_reps:
             gk1inv = gk1**-1
             set_immutable(gk1inv)
-            gk1inv0 = G.embed(gk1inv, prec)
+            gk1inv0 = self.parent().get_arith_action().emb(gk1inv, prec)
             for g,v in self._data.items():
                 ti = G.get_hecke_ti(gk1,g,l,True)
                 try:
@@ -625,6 +627,9 @@ class OneChainsElement(TensorElement):
 
 class OneChains(TensorProduct):
     Element = OneChainsElement
+    def __init__(self,G,V,emb=None, emb_idx=None):
+        TensorProduct.__init__(self, G, V, emb, emb_idx)
+
     def _repr_(self):
         return 'Group of 1-chains on %s with values in %s'%(self.group(), self.coefficient_module())
 

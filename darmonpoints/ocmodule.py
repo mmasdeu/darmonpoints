@@ -822,7 +822,9 @@ class RationalFunctionsElement(ModuleElement):
         K = self.parent().base_ring()
         Ps = PowerSeriesRing(K,names)
         Ps.set_default_prec(K.precision_cap())
-        return Ps(self._value)
+        ans = Ps(self._value)
+        assert all((ans[i].valuation() >= i for i in range(K.precision_cap())))
+        return ans
 
     def rational_function(self):
         return self._value

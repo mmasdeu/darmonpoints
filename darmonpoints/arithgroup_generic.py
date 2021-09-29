@@ -177,6 +177,7 @@ class ArithGroup_generic(AlgebraicGroup):
     def _denominator_valuation(self,x,l):
         return max((o.denominator().valuation(l) for o in self._quaternion_to_list(x)))
 
+    @cached_method
     def _compute_padic_splitting(self, P, prec): # arithgroup_generic
         verbose('Entering compute_padic_splitting')
         try:
@@ -292,7 +293,7 @@ class ArithGroup_generic(AlgebraicGroup):
         return hecke_data
 
     @cached_method
-    def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False, reps = None, conservative=False):
+    def get_hecke_ti(self,gk1,gamma,l = None,use_magma = False, reps = None, embedding = None, conservative=False):
         r"""
 
         INPUT:
@@ -310,12 +311,14 @@ class ArithGroup_generic(AlgebraicGroup):
         elt = gk1**-1 * gamma.quaternion_rep
         if reps is None:
             reps = self.get_Up_reps() if l is None else self.get_hecke_reps(l,use_magma = use_magma)
+        if embedding is None:
+            embedding = lambda g, prec : self.embed(g, prec)
         ans = None
         for gk2 in reps:
             ti = elt * gk2
             is_in_order = self._is_in_order(ti)
             if self._is_in_order(ti):
-                if l is None and self.embed(set_immutable(ti),20)[1,0].valuation() > 0:
+                if l is None and embedding(set_immutable(ti),20)[1,0].valuation() > 0:
                     assert ans is None
                     ans = self(ti)
                     if not conservative:

@@ -269,7 +269,7 @@ class BianchiDistributionElement(ModuleElement):
                     self._moments[i,0] = o
             else:
                 try:
-                    self._moments = Matrix(self._parent._R,self._depth,1,val)
+                    self._moments = Matrix(self._parent._R,self._dimension,1,val)
                 except (TypeError, ValueError):
                     self._moments= self._parent._R(val) * MatrixSpace(self._parent._R,self._dimension,1)(1)
 
@@ -417,6 +417,49 @@ class BianchiDistributionElement(ModuleElement):
     def __nonzero__(self):
         return self._moments != 0
 
+    def evaluate_at_tensor(self, P, Q, R = None, depth=None):
+        r"""
+        Evaluate ``self`` at a polynomial P(x)Q(y).
+
+        By default, this function picks the ring R to be a ring that coerces to both the 
+        base ring of the polynomials and the Bianchi distribution.
+
+        You can specify depth, but this currently does nothing at all.
+
+        EXAMPLES::
+
+            sage: from darmonpoints.ocbianchi import BianchiDistributions
+            sage: D = BianchiDistributions(11,4)
+            sage: x,y = D.analytic_vars()
+            sage: mu = D.basis_vector((2,1)) + D.basis_vector((1,0))
+            sage: mu(x^2*y)
+            1
+            sage: mu(y)
+            0
+            sage: mu(x^2*y + x)
+            2
+        """
+        p = self._parent._p
+
+        ## Currently empty functionality
+        if depth is None:
+            depth = self._depth
+
+        # Define the ring R, if not specified
+        if R is None:
+            try:
+                R = pushout(P.parent().base_ring(),self.parent().base_ring())
+            except AttributeError:
+                R = self.parent().base_ring()
+
+        ans = 0
+        # tr = lambda o : o._polynomial_list(pad=True)[0]
+        for i in range(self._depth):
+            for j in range(self._depth):
+                new_ans = self[i,j] * P[i] * Q[j]
+                ans += new_ans
+        return ans
+
     def evaluate_at_poly(self,P,R = None,depth=None):
         r"""
         Evaluate ``self`` at a polynomial. The polynomial can be defined over ZZ or Zp.
@@ -453,19 +496,17 @@ class BianchiDistributionElement(ModuleElement):
                 R = self.parent().base_ring()
 
         ## Attempt to coerce the input into a form we can evaluate
-        P = self.parent().analytic_functions()(P)
+        # P = self.parent().analytic_functions()(P)
 
         ## For each monomial x^iy^j in the polynomial, multip] ly the coefficient of X^iY^j (in mu) by the 
         ## coefficient of x^iy^j (in f) and take the sum. This is our final value
         ##          --> P.coefficients is a dictionary which has monomials as keys; we generate monomials using exponents.
         ##         --> self._moments takes as input an index and spits out the cofficient. So generate the index from the exponent.
-        
         coefficient_list = []
         for polx in P.padded_list(self._depth):
-                coefficient_list.extend(polx.padded_list(self._depth))
-
+            coefficient_list.extend(polx.padded_list(self._depth))
         return ZZ((Matrix(coefficient_list)*self.moments())[0,0])
-        
+
     def __call__(self,P):
         r"""
         Call function; evaluates the distribution at an analytic function.
@@ -707,9 +748,13 @@ class BianchiDistributions(Module,UniqueRepresentation):
 
     def acting_matrix(self, g, M):
         G = g.parent()
-        qrep = G.quaternion_to_matrix(g)
-        qrep_bar = qrep.apply_map(lambda x: x.trace() - x)
-        first, second = qrep.apply_map(G._F_to_local), qrep_bar.apply_map(G._F_to_local)
+        try:
+            qrep = G.quaternion_to_matrix(g)
+            qrep_bar = qrep.apply_map(lambda x: x.trace() - x)
+            first, second = qrep.apply_map(G._F_to_local), qrep_bar.apply_map(G._F_to_local)
+        except AttributeError:
+            emb0, emb1 = G.embeddings()
+            first, second = emb0(g, M), emb1(g, M)
         return self._get_powers(self.Sigma0Squared()(first,second))
 
     def _get_powers(self,g,emb = None):
@@ -769,7 +814,7 @@ class BianchiDistributions(Module,UniqueRepresentation):
         ## Sanity check output
         verbose('The element [{},{}] has not been stored. Computing:'.format(abcdxZZ,abcdyZZ), level=2)
 
-        R = self._PowerSeries ## Zp[[x,y]
+        R = self._PowerSeries ## Zp[[x,y]]
         y = R.gen()
         x = R.base_ring().gen()
 

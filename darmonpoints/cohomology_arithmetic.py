@@ -450,7 +450,7 @@ class ArithCohElement(CohomologyElement):
         return self.parent().get_Lseries_term(self, n, cov)
 
 
-class ArithCoh(CohomologyGroup):#, UniqueRepresentation):
+class ArithCoh(CohomologyGroup, UniqueRepresentation):
     r"""
     Class for computing with arithmetic cohomology groups.
 
@@ -574,7 +574,6 @@ class BianchiArithAction(Action):
     def _act_(self,g,v):
         V = v.parent()
         prec = V.precision_cap()
-
         G = g.parent()
         qrep = G.quaternion_to_matrix(g)
         qrep_bar = qrep.apply_map(lambda x: x.trace() - x)
@@ -836,9 +835,11 @@ class ArithCohOverconvergent(ArithCoh):
             return phi._Lseries_coefficients[n]
 
 class ArithCohBianchi(ArithCoh):
-    def __init__(self, G, base, use_ps_dists = False):
+    def __init__(self, G, base, use_ps_dists = False, adjuster=None):
         self._overconvergent = 2
-        V = BianchiDistributions(base.prime(), 1 + base.precision_cap(), act_on_left=True, adjuster=left_ps_adjuster())
+        if adjuster is None:
+            adjuster = left_ps_adjuster()
+        V = BianchiDistributions(base.prime(), 1 + base.precision_cap(), act_on_left=True, adjuster=adjuster)
         arith_act = BianchiArithAction(G.small_group(), V)
         V._unset_coercions_used()
         V.register_action( arith_act )
@@ -846,12 +847,9 @@ class ArithCohBianchi(ArithCoh):
         self.Pbar_gen = None
         ArithCoh.__init__(self, G, V,use_ps_dists = use_ps_dists)
 
-
     @cached_method
     def get_Up_reps_local(self,prec, pi, pi_bar):
         Up_reps, Up_reps_bar = self.S_arithgroup().get_Up_reps_bianchi(pi, pi_bar)
-        phi = lambda x: self.group().matrix_rep(x)
-        emb = self.group().embed
         if prec is None:
             return Up_reps, Up_reps_bar
         V = self.coefficient_module()
@@ -862,12 +860,106 @@ class ArithCohBianchi(ArithCoh):
         S0 = V.Sigma0Squared()
         ans0 = []
         ans1 = []
-        conj = lambda m : m.parent()([o.trace() - o for o in list(m)])
+        try:
+            emb0, emb1 = self.S_arithgroup().embeddings()
+        except AttributeError:
+            conj = lambda m : m.parent()([o.trace() - o for o in list(m)])
+            emb0 = lambda x, prec : self.group().embed(x, prec)
+            emb1 = lambda x, prec : self.group().embed(conj(x), prec)
+
         for g in Up_reps:
-            ans0.append(S0(emb(g,prec), emb(conj(g),prec)))
+            ans0.append(S0(emb0(g,prec), emb1(g,prec)))
         for gbar in Up_reps_bar:
-            ans1.append(S0(emb(gbar,prec), emb(conj(gbar),prec)))
+            ans1.append(S0(emb0(gbar,prec), emb1(gbar,prec)))
         return ans0, ans1
+
+    def apply_Up1(self,c,group = None,scale = 1,progress_bar = False): # bianchi
+        V = self.coefficient_module()
+        R = V.base_ring()
+        gammas = self.group().gens()
+        pi, pi_bar = self.P_gen, self.Pbar_gen
+
+        Up_reps, Up_reps_bar = self.S_arithgroup().get_Up_reps_bianchi(pi, pi_bar)
+
+        try:
+            prec = V.base_ring().precision_cap()
+        except AttributeError:
+            prec = None
+        repslocal, repslocal_bar = self.get_Up_reps_local(prec, pi, pi_bar)
+
+        G = self.S_arithgroup()
+        Gpn = G.small_group()
+        i = 0
+        try:
+            emb0, emb1 = self.S_arithgroup().embeddings()
+        except AttributeError:
+            conj = lambda m : m.parent()([o.trace() - o for o in list(m)])
+            emb0 = lambda x, prec : self.group().embed(x, prec)
+            emb1 = lambda x, prec : self.group().embed(conj(x), prec)
+
+        input_vec = []
+        for j,gamma in enumerate(gammas):
+            input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma,reps = tuple(Up_reps), embedding = emb0)) for sk, g in zip(repslocal, Up_reps)], c, j))
+
+        vals = [V(0,normalize=False) for gamma in gammas]
+        pb_fraction = QQ(1) / (2 * len(repslocal) * len(input_vec))
+        progress = 0
+        for lst, c, j in input_vec:
+            outp = V(0, normalize=False)
+            for sk, tt in lst:
+                progress += pb_fraction
+                outp += sk * c.evaluate(tt)
+                if progress_bar:
+                    update_progress(float(progress), 'Up action (%s)'%(2 * len(repslocal) * len(input_vec)))
+            vals[j] += outp
+        ans = self(vals)
+        if scale != 1:
+            ans = scale * ans
+        return ans
+
+    def apply_Up2(self,c,group = None,scale = 1,progress_bar = False): # bianchi
+        V = self.coefficient_module()
+        R = V.base_ring()
+        gammas = self.group().gens()
+        pi, pi_bar = self.P_gen, self.Pbar_gen
+
+        Up_reps, Up_reps_bar = self.S_arithgroup().get_Up_reps_bianchi(pi, pi_bar)
+
+        try:
+            prec = V.base_ring().precision_cap()
+        except AttributeError:
+            prec = None
+        repslocal, repslocal_bar = self.get_Up_reps_local(prec, pi, pi_bar)
+
+        G = self.S_arithgroup()
+        Gpn = G.small_group()
+        i = 0
+        try:
+            emb0, emb1 = self.S_arithgroup().embeddings()
+        except AttributeError:
+            conj = lambda m : m.parent()([o.trace() - o for o in list(m)])
+            emb0 = lambda x, prec : self.group().embed(x, prec)
+            emb1 = lambda x, prec : self.group().embed(conj(x), prec)
+
+        input_vec = []
+        for j,gamma in enumerate(gammas):
+            input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma,reps = tuple(Up_reps_bar), embedding = emb0)) for sk, g in zip(repslocal_bar, Up_reps_bar)], c, j))
+
+        vals = [V(0,normalize=False) for gamma in gammas]
+        pb_fraction = QQ(1) / (2 * len(repslocal_bar) * len(input_vec))
+        progress = 0
+        for lst, c, j in input_vec:
+            outp = V(0, normalize=False)
+            for sk, tt in lst:
+                progress += pb_fraction
+                outp += sk * c.evaluate(tt)
+                if progress_bar:
+                    update_progress(float(progress), 'Up action (%s)'%(2 * len(repslocal_bar) * len(input_vec)))
+            vals[j] += outp
+        ans = self(vals)
+        if scale != 1:
+            ans = scale * ans
+        return ans
 
     def apply_Up(self,c,group = None,scale = 1,progress_bar = False): # bianchi
         V = self.coefficient_module()
@@ -884,12 +976,18 @@ class ArithCohBianchi(ArithCoh):
         repslocal, repslocal_bar = self.get_Up_reps_local(prec, pi, pi_bar)
 
         G = self.S_arithgroup()
-        Gn = G.large_group()
         Gpn = G.small_group()
         i = 0
+        try:
+            emb0, emb1 = self.S_arithgroup().embeddings()
+        except AttributeError:
+            conj = lambda m : m.parent()([o.trace() - o for o in list(m)])
+            emb0 = lambda x, prec : self.group.embed(x, prec)
+            emb1 = lambda x, prec : self.group.embed(conj(x), prec)
+
         input_vec = []
         for j,gamma in enumerate(gammas):
-            input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma,reps = tuple(Up_reps))) for sk, g in zip(repslocal, Up_reps)], c, j))
+            input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma,reps = tuple(Up_reps), embedding = emb0)) for sk, g in zip(repslocal, Up_reps)], c, j))
 
         vals = [V(0,normalize=False) for gamma in gammas]
         pb_fraction = QQ(1) / (2 * len(repslocal) * len(input_vec))
@@ -899,13 +997,14 @@ class ArithCohBianchi(ArithCoh):
             for sk, tt in lst:
                 progress += pb_fraction
                 outp += sk * c.evaluate(tt)
-                update_progress(float(progress), 'Up action (%s)'%(2 * len(repslocal) * len(input_vec)))
+                if progress_bar:
+                    update_progress(float(progress), 'Up action (%s)'%(2 * len(repslocal) * len(input_vec)))
             vals[j] += outp
         ans = self(vals)
         c = ans
         input_vec = []
         for j,gamma in enumerate(gammas):
-            input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma,reps = tuple(Up_reps_bar))) for sk, g in zip(repslocal_bar, Up_reps_bar)], c, j))
+            input_vec.append(([(sk, Gpn.get_hecke_ti(g,gamma,reps = tuple(Up_reps_bar), embedding = emb1)) for sk, g in zip(repslocal_bar, Up_reps_bar)], c, j))
 
         vals = [V(0,normalize=False) for gamma in gammas]
         for lst, c, j in input_vec:
