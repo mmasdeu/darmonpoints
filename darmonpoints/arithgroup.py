@@ -45,6 +45,10 @@ from time import sleep
 from .arithgroup_generic import ArithGroup_generic, ArithGroup_matrix_generic
 from .util import *
 from .mixed_extension import get_word_rep_fast
+
+from inspect import getfile, currentframe
+from os.path import dirname, abspath
+
 def hyperbolic_distance(alpha, beta):
     x1, y1 = alpha.real(), alpha.imag()
     x2, y2 = beta.real(), beta.imag()
@@ -150,10 +154,10 @@ def intersect_geodesic_arcs(x1, x2, y1, y2):
         # verbose('Done intersect_geodesic_arcs')
         return None
 
-def sorted_ideal_endpoints(self):
+def sorted_ideal_endpoints(geodesic):
     r"""
     Determine the ideal (boundary) endpoints of the complete
-    hyperbolic geodesic corresponding to ``self``.
+    hyperbolic geodesic corresponding to ``geodesic``.
 
     OUTPUT:
 
@@ -161,11 +165,11 @@ def sorted_ideal_endpoints(self):
 
     """
 
-    start = self._start.coordinates()
-    end = self._end.coordinates()
+    start = geodesic._start.coordinates()
+    end = geodesic._end.coordinates()
     [x1, x2] = [real_part(k) for k in [start, end]]
     [y1, y2] = [imag_part(k) for k in [start, end]]
-    M = self._model
+    M = geodesic._model
     # infinity is the first endpoint, so the other ideal endpoint
     # is just the real part of the second coordinate
     if start == Infinity:
@@ -217,13 +221,13 @@ def moebius_transform(A, z):
     raise TypeError("A must be an invertible 2x2 matrix over the"
                     " complex numbers or a symbolic ring")
 
-def angle_sign(self, other):  # UHP
+def angle_sign(left, right):  # UHP
     r"""
     Return the angle between any two given completed geodesics if
     they intersect.
     """
-    (p1, p2) = [k.coordinates() for k in sorted_ideal_endpoints(self)]
-    (q1, q2) = [k.coordinates() for k in sorted_ideal_endpoints(other)]
+    (p1, p2) = [k.coordinates() for k in sorted_ideal_endpoints(left)]
+    (q1, q2) = [k.coordinates() for k in sorted_ideal_endpoints(right)]
     if p1 != Infinity and  p2 != Infinity:  # geodesic not a straight line
         # So we send it to the geodesic with endpoints [0, oo]
         T = HyperbolicGeodesicUHP._crossratio_matrix(p1, (p1 + p2) / 2, p2)
@@ -234,11 +238,11 @@ def angle_sign(self, other):  # UHP
             T = HyperbolicGeodesicUHP._crossratio_matrix(p1, p2 + 1, p2)
         else:
             T = HyperbolicGeodesicUHP._crossratio_matrix(p1, p1 + 1, p2)
-    # b1 and b2 are the endpoints of the image of other
+    # b1 and b2 are the endpoints of the image of right
     if T.determinant().sign() < 0:
         q1, q2 = q2, q1
     b1, b2 = [moebius_transform(T,k) for k in [q1, q2]]
-    # If other is now a straight line...
+    # If right is now a straight line...
     if (b1 == Infinity or b2 == Infinity):
         # then since they intersect, they are equal
         return 0
@@ -314,66 +318,6 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             if delta1 != delta:
                 ans.extend(self.minus_one_long)
         ans = reduce_word_tietze(ans)
-        return ans
-
-    def get_word_rep_orig(self, delta, P = None): # fuchsian generic
-        delta0 = delta.parent()(delta)
-        ngquats = self.ngquats
-        embgammas = self.embgquats
-        gammas = self.gquats
-        fdargs = self.fdargs
-        findex = self.findex
-
-        if not self._is_in_order(delta):
-            raise RuntimeError('delta (= %s) is not in order!'%delta)
-        B = delta.parent()
-        CC = ComplexField(800)
-        if P is None:
-            P = CC(90)/CC(100) * CC.gen()
-        emb = self.get_archimedean_embedding(1000)
-        pi = self.pi
-        ans = []
-        oldji = 0
-        n_iters = 0
-        while not delta.is_one():
-            n_iters += 1
-            if (-delta).is_one():
-                if 'P' not in self._grouptype:
-                    ans += self.minus_one_long
-                delta = B.one()
-                continue
-            z0 = act_flt_in_disc(emb(delta),CC(0),P)
-            az0 = CC(z0).argument()
-            if az0 < fdargs[0]:
-                az0 += 2*pi
-            if az0 > fdargs[-1]:
-                ji = findex[0]
-                embgg = embgammas[ji]
-                if act_flt_in_disc(embgg,z0,P).abs() > z0.abs():
-                    ji = findex[1]
-                    embgg = embgammas[ji]
-            else:
-                i = next((j for j,fda in enumerate(fdargs) if az0 < fda))
-                ji = findex[i+1]
-                embgg = embgammas[ji]
-            z0 = act_flt_in_disc(embgg,CC(0),P)
-            z0abs = z0.abs()
-            if ji == -oldji:
-                ji = next((j for j in list(range(-ngquats,0)) + list(range(1,ngquats + 1)) \
-                           if j != -oldji and act_flt_in_disc(embgammas[j],z0,P).abs() < z0.abs()), -1)
-            if ji > 0:
-                gg = gammas[ji]
-                newcs = self.translate[ji]
-            else:
-                gg = gammas[-ji]**-1
-                newcs = [-o for o in reversed(self.translate[-ji])]
-            delta = gg * delta
-            oldji = ji
-            ans = ans + newcs
-        if 'P' not in self._grouptype:
-            delta1 = multiply_out(ans, self.Ugens, self.B.one())
-            if delta1 != delta:
-                ans.extend(self.minus_one_long)
         return ans
 
     def magma_word_problem(self, Gm, x):
@@ -596,10 +540,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         return True
 
     def is_in_fundom_exterior(self, z, tol = None):
-        if self.is_in_fundom_interior(z, tol) or self.is_in_fundom_boundary(z, tol):
-            return False
-        else:
-            return True
+        return not (self.is_in_fundom_interior(z, tol) or \
+                    self.is_in_fundom_boundary(z, tol) )
 
     def is_in_fundom_boundary(self, z, tol = None):
         in_interior_data = self.fundamental_domain_interior_data()
@@ -1390,11 +1332,13 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         if info_magma is not None:
             assert base is info_magma.F
             assert (a,b) == info_magma.B.invariants()
+            self.a, self.b = base(a), base(b)
+            self.abtuple = (self.a, self.b)
             self.F = info_magma.F
             self.B = info_magma.B
         else:
             self.F = base
-            self.a,self.b = base(a),base(b)
+            self.a, self.b = base(a), base(b)
             self.abtuple = (self.a, self.b)
             self.B = QuaternionAlgebra(self.F,self.a,self.b)
         self.level = base.ideal(level)
@@ -1415,12 +1359,25 @@ class ArithGroup_nf_generic(ArithGroup_generic):
 
         - self._F_magma (base number field)
         - self._B_magma (quaternion algebra)
-        - self._Omax_magma (maximal ordre in quaternion algebra)
+        - self._Omax_magma (maximal order in quaternion algebra)
         - self._O_magma
         - self._D_magma
         '''
         wtime = walltime()
         verbose('Calling _init_magma_objects...')
+        # Use order given by Pari/GP
+        w = self.F.maximal_order().ring_generators()[0]
+        wcoords = w.coordinates_in_terms_of_powers()
+        path = dirname(abspath(getfile(currentframe())))
+        verbose('Path = %s'%path)
+        ans = gp.eval('default(sopath, "%s/Fdoms")'%path)
+        ans = gp.eval('\\r %s/Fdoms/fdom.gp'%path)
+        yp = gp.variable()[2]
+        Fp = gp.nfinit(str(QQ['y'](w.minpoly())))
+        abtuple = [self.a, self.b]
+        Ap = gp.alginit(Fp, [QQ['y'](wcoords(o)) for o in abtuple])
+        self.Ap = Ap
+
         if info_magma is None:
             Qx_magma = self.magma.PolynomialRing(self.magma.Rationals())
             xm = Qx_magma.gen(1)
@@ -1440,7 +1397,10 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 on = self._B_magma.One()
                 self._Omax_magma = self.magma.Order([(on + i)/2, (j+k)/2, (j-k)/2, (on - i)/2])
             else:
-                self._Omax_magma = self._B_magma.MaximalOrder()
+                Omaxbasis = pari_ordmax_basis_to_sage(w, Ap)
+                Omaxbasis = [quaternion_to_magma_quaternion(self._B_magma, self.B(o)) for o in Omaxbasis]
+                self._Omax_magma = self.magma.Order(Omaxbasis)
+                # self._Omax_magma = MaximalOrder()
             if self.level != self.F.ideal(1):
                 if isinstance(self, ArithGroup_matrix_generic):
                     i, j = self._B_magma.gen(1), self._B_magma.gen(2)
@@ -1452,9 +1412,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                     self._O_magma = self._Omax_magma.Order(sage_F_ideal_to_magma(self._F_magma,self.level))
             else:
                 self._O_magma = self._Omax_magma
-            # if self._compute_presentation:
-            if True:
-                self._D_magma = self.magma.UnitDisc(Precision = 1000)
+            self._D_magma = self.magma.UnitDisc(Precision = 1000)
         else:
             self._F_magma = info_magma._F_magma
             OF_magma = info_magma._F_magma.Integers()
@@ -1469,27 +1427,23 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                     self._O_magma = self.magma.Order([(on + i)/2, (j+k)/2,  Pgen * (j-k)/2, (on-i)/2])
                 else:
                     M = sage_F_ideal_to_magma(self._F_magma,self.level)
-                    # assert(self.level.divides(info_magma.level))
-                    # q = info_magma.level / self.level
                     self._O_magma = info_magma._Omax_magma.Order(M)
-
-                    # assert(self.level.divides(info_magma.level))
-                    # q = info_magma.level / self.level
-                    # M = sage_F_ideal_to_magma(self._F_magma,q) # was self.level
-                    # self._O_magma = info_magma._O_magma.pMaximalOrder(M)
             else:
                 self._O_magma = self._Omax_magma
-            #if self._compute_presentation:
-            if True:
+            try:
+                self._D_magma = info_magma._D_magma
+            except AttributeError:
                 self._D_magma = self.magma.UnitDisc(Precision = 1000)
-            else:
-                try:
-                    self._D_magma = info_magma._D_magma
-                except AttributeError:
-                    pass
         if not hasattr(self,'_F_magma'):
             self._F_magma = self._B_magma.BaseRing()
+
+        # Create pari order
         verbose('Spent %s seconds in init_magma_objects'%walltime(wtime))
+
+    @cached_method
+    def _get_O_pari(self):
+        w = self.F.maximal_order().ring_generators()[0]
+        return sage_order_basis_to_pari(w, self.Ap, self._get_O_basis())
 
     def _quaternion_to_list(self,x):
         xlist = [u for o in x.coefficient_tuple() for u in o.list()]
@@ -1524,6 +1478,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             print('O_magma ='%O_magma)
             raise RuntimeError('Error while computing quadratic embedding')
         verbose('Calling magma Embed function done!')
+
         wm = K_magma(OK_magma.Basis()[2])
         w = K(magma_F_elt_to_sage(self.F,wm[1],self.magma) + magma_F_elt_to_sage(self.F,wm[2],self.magma) * K.gen())
         ans = magma_integral_quaternion_to_sage(self.B,O_magma,F_magma,iota.Image(OK_magma(K_magma.gen(1))),self.magma)

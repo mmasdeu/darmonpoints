@@ -1926,7 +1926,7 @@ def selmer_group_iterator(self, S, m, proof=True):
     if self == QQ:
         KSgens = [o for o in S] + [QQ(-1)]
     else:
-        KSgens = self.selmer_group(S=S, m=m, proof=proof)
+        KSgens = self.selmer_generators(S=S, m=m, proof=proof)
     f = lambda o: m if o is Infinity else o.gcd(m)
     orders = [f(a.multiplicative_order()) for a in KSgens]
     one = self.one()
@@ -2042,3 +2042,26 @@ def print_padic(x):
 
 def relativize_ATR(F, ff):
     return [pp.discriminant() for pp, _ in ff.change_ring(F).factor()]
+
+def field_element_pari_to_sage(w, Fp, elt):
+    gp = Fp.parent()
+    yp = gp.variable(Fp)
+    return sage_eval(str(elt), locals={'y': w})
+
+def pari_ordmax_basis_to_sage(w, Ap):
+    gp = Ap.parent()
+    Fp = Ap.algcenter()
+    stdbasis = [gp.mattranspose(list(e)) for e in (ZZ**(4*Fp[1].poldegree())).basis()]
+    c = lambda o : field_element_pari_to_sage(w, Fp, o)
+    Omaxbasis = [[c(o) for o in gp.algbasisto1ijk(Ap, e)] for e in stdbasis]
+    return Omaxbasis
+
+def sage_order_basis_to_pari(w, Ap, basis):
+    gp = Ap.parent()
+    paribasis = []
+    wcoords = w.coordinates_in_terms_of_powers()
+    for b in basis:
+        coefs = b.coefficient_tuple()
+        bp = gp.alg1ijktobasis(Ap, [QQ['y'](wcoords(o)) for o in coefs])
+        paribasis.append(bp)
+    return gp.matconcat(paribasis)

@@ -4,4 +4,5 @@ include darmonpoints/config.ini
 include darmonpoints/*.py
 include darmonpoints/*.pyx
 recursive-include darmonpoints/KleinianGroups-1.0 *
+recursive-include darmonpoints/Fdoms *
 global-exclude *.sig
