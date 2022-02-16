@@ -6,7 +6,6 @@
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing,PowerSeriesRing, Infinity,Zmod
 from sage.all import prod
 from sage.parallel.decorate import fork,parallel
-from sage.misc.getusage import get_memory_usage
 from sage.structure.sage_object import SageObject
 from sage.arith.misc import algdep
 from sage.misc.misc import cputime

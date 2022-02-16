@@ -1371,7 +1371,9 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         path = dirname(abspath(getfile(currentframe())))
         verbose('Path = %s'%path)
         ans = gp.eval('default(sopath, "%s/Fdoms")'%path)
+        verbose(ans)
         ans = gp.eval('\\r %s/Fdoms/fdom.gp'%path)
+        verbose(ans)
         yp = gp.variable()[2]
         Fp = gp.nfinit(str(QQ['y'](w.minpoly())))
         abtuple = [self.a, self.b]
