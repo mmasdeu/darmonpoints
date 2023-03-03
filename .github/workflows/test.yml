@@ -16,15 +16,12 @@ jobs:
           - optionals: "sage"
             sagelib: "9.8"
             environment: "environment.yml"
-            python: "3.7.12"
           - optionals: "sage"
             sagelib: "9.7"
             environment: "environment.yml"
-            python: "3.7.12"
           - optionals: "sage"
             sagelib: "9.6"
             environment: "environment.yml"
-            python: "3.7.12"
     steps:
       - uses: actions/checkout@v2
         with: { submodules: recursive }
