@@ -8,14 +8,11 @@ from sage.rings.ring import Field
 from sage.rings.integer_ring import Z as ZZ
 from sage.rings.all import QQ
 from .util import our_sqrt
-from cpython cimport *
 from cysignals.signals cimport sig_check
 cimport cython
 from cpython.list cimport *
 from cpython.number cimport *
 from cpython.ref cimport *
-# cimport sage.matrix.matrix2
-#from sage.matrix.matrix2 cimport Matrix
 from sage.matrix.constructor import Matrix
 from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp, AA
 from bisect import bisect_left as bisect

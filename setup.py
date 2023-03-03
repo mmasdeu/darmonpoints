@@ -75,7 +75,7 @@ if __name__ == "__main__":
         # this grabs the requirements from requirements.txt
         install_requires=REQUIREMENTS,
         packages = ['darmonpoints'],
-        ext_modules = cythonize(ext_modules, compiler_directives={'language_level' : "3"}),
+        ext_modules = cythonize(ext_modules, compiler_directives={"language_level": "3"}),
         include_package_data = True,
         cmdclass = {'build': build, 'test': SageTest} # adding a special setup command for tests
     )
