@@ -12,11 +12,8 @@ def readfile(filename):
     with open(filename,  encoding='utf-8') as f:
         return f.read()
 
-# Check the right Sage version
 class build(build_module.build):
     def run(self):
-        from sagemath.check_version import check_version
-        check_version(sage_required_version)
         build_module.build.run(self)
 
 
@@ -34,7 +31,6 @@ if __name__ == "__main__":
     from Cython.Build import cythonize
     import Cython.Compiler.Options
     from sage.env import sage_include_directories
-    from sage.misc.banner import version as sage_version
 
     # Cython modules
     ext_modules = [
@@ -46,9 +42,6 @@ if __name__ == "__main__":
             include_dirs=sage_include_directories())
     ]
 
-    # Specify the required Sage version
-    sage_required_version = u'>=9.1'
-    sage_current_version = sage_version()
     REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
 
     setup(
