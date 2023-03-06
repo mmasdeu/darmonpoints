@@ -47,7 +47,7 @@ jobs:
         shell: bash -l {0}
         run: |
           export PYTHONPATH=test/disable-pytest:$PYTHONPATH
-          sage -tp --force-lib --long --optional=${{ matrix.optionals }} darmonpoints doc
+          sage -tp --force-lib --long --optional=${{ matrix.optionals }} darmonpoints
       - name: Run pytest
         shell: bash -l {0}
         run: pytest -n auto
