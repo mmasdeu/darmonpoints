@@ -1,9 +1,9 @@
-==================================
+===========================================================================================
 A package to compute Darmon points
-==================================
-----------------------------------------------
-(or just p-adically construct elliptic curves)
-----------------------------------------------
+===========================================================================================
+-------------------------------------------------------------------------------
+(or just p-adically construct elliptic curves, or p-adic Darmon-Vonk points,...)
+--------------------------------------------------------------------------------
 (for the full documentation, please see http://mmasdeu.github.io/darmonpoints/doc/html/)
 
 What is this?
@@ -100,10 +100,25 @@ We can also *discover* equations of curves!
 
      y^2 + r*x*y + (r+1)*y = x^3 + (-575*r^2-829*r-1195)*x + (-13327*r^2-19221*r-27721)
 
+Finally, there is also code to compute Darmon-Vonk quantities. Here are a couple of examples.
+
+1) A Darmon-Vonk point for the matrix group::
+
+     sage: from darmonpoints.darmonvonk import darmon_vonk_point
+     sage: darmon_vonk_point(5, 1, 3, 13, 60, recognize_point='lindep')
+
+2) A quaternionic Darmon-Vonk point::
+
+     sage: from darmonpoints.darmonvonk import darmon_vonk_point
+     sage: darmon_vonk_point(5, 6, 53, 92, 120, scaling=12, recognize_point='algdep')
+
+
 ..   [Darmon] H.Darmon. *Integration on Hp x H and arithmetic applications*. Annals of Math.
+..   [DarmonVonk] H.Darmon, J.Vonk **. *Singular moduli for real quadratic fields: a rigid analytic approach*. Duke Math.
 ..   [Greenberg] M.Greenberg. *Stark-Heegner points and the cohomology of quaternionic Shimura varieties*. Duke Math.
 ..   [GM] X.Guitart, M.Masdeu. *Periods of modular GL2-type abelian varieties and p-adic integration*. Experimental Mathematics.
 ..   [GMS1] X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves over number fields of arbitrary signature*. Proc. LMS.
 ..   [GMS2] X.Guitart, M.Masdeu, M.H.Sengun. *Uniformization of modular elliptic curves via p-adic methods*. Journal of Algebra.
+..   [GMX] X.Guitart, M.Masdeu, X.Xarles *A quaternionic construction of p-adic singular moduli*. Res. Math. Sci.
 ..   [KP] A.Pacetti, D.Kohen (with an appendix by M.Masdeu) *On Heegner points for primes of additive reduction ramifying in the base field*. Transactions of the AMS.
 ..   [Trifkovic] M.Trifkovic. *Stark-Heegner points on elliptic curves defined over imaginary quadratic fields*. Duke Math.

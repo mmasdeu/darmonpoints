@@ -328,7 +328,6 @@ class OCVn(Module,UniqueRepresentation):
         self._depth = depth
         self._pN = self._p**(depth - 1)
         self._PowerSeries = PowerSeriesRing(self._Rmod, default_prec = self._depth,name='z')
-        self._PowerSeries.set_default_prec(self._depth) # DEBUG
         self._cache_powers = dict()
         self._unset_coercions_used()
         self._Sigma0 = Sigma0(self._p, base_ring = self._Rmod, adjuster = our_adjuster())
@@ -499,7 +498,6 @@ class MeromorphicFunctionsElement(ModuleElement):
                     rf = data.rational_function()
                     t = rf.parent().gen()
                     a,b,c,d = parent.twisting_matrix().list()
-                    Ps.set_default_prec(Ps.default_prec() + 1)
                     rf = Ps(rf((a*t+b)/(c*t+d)))
                     rf /= rf(K(0))
                     ans = parent._V(0)
@@ -700,8 +698,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         self._base_ring = K
         self._prec = K.precision_cap()
         psprec = self._prec + 1 if additive else self._prec
-        self._Ps = PowerSeriesRing(self._base_ring, names='t')
-        self._Ps.set_default_prec(psprec)
+        self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec = psprec)
         if self._additive:
             self._V = MatrixSpace(Zmod(K.prime()**self._prec), self._prec, 2)
         t = self._Ps.gen()
@@ -754,7 +751,6 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
             a_inv = a**-1
 
         Ps = PowerSeriesRing(Zm, names='z', default_prec=prec)
-        Ps.set_default_prec(prec) # DEBUG
         z = Ps.gen()
         denom = (a_inv * (-c * a_inv * z + 1)**-1).polynomial().truncate(prec) # 1 / (-c*z + a)
         zz = (d * z - b) * denom # zz = (d * z - b) / (-c * z  + a)
@@ -820,8 +816,7 @@ class RationalFunctionsElement(ModuleElement):
         if names is None:
             names = 'z'
         K = self.parent().base_ring()
-        Ps = PowerSeriesRing(K,names)
-        Ps.set_default_prec(K.precision_cap())
+        Ps = PowerSeriesRing(K,names, default_prec = K.precision_cap())
         ans = Ps(self._value)
         assert all((ans[i].valuation() >= i for i in range(K.precision_cap())))
         return ans

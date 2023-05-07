@@ -40,13 +40,13 @@ def double_integral_zero_infty(Phi,tau1,tau2):
     K = tau1.parent()
     R = PolynomialRing(K,'x')
     x = R.gen()
-    R1 = PowerSeriesRing(K,'r1')
-    r1 = R1.gen()
     Phi_liftee = Phi._liftee
     try:
-        R1.set_default_prec(Phi.precision_absolute())
+        prec = Phi.precision_absolute()
     except AttributeError:
-        R1.set_default_prec(Phi.precision_relative())
+        prec = Phi.precision_relative()
+    R1 = PowerSeriesRing(K,'r1', default_prec = prec)
+    r1 = R1.gen()
     level = Phi._map._manin.level()
     E0inf = [M2Z([0,-1,level,0])]
     E0Zp = [M2Z([p,a,0,1]) for a in range(p)]

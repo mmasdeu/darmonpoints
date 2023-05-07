@@ -198,11 +198,6 @@ def lambdavec(p1, p2, p3, prec = None, theta = None, prec_pseries = None):
 
     num = th['3p3m'] * th['2m3p']
     den = th['2p2m'] * th['2p3m']
-    if prec_pseries is not None:
-        try:
-            den.parent()._bg_ps_ring().set_default_prec(prec_pseries)
-        except AttributeError:
-            pass
     l1 = (num/den)**2
     num = th['1p1m'] * th['3m1p']
     den = th['3p3m'] * th['3p1m']
@@ -242,16 +237,8 @@ def xvec(p1, p2, p3, prec):
     l1,l2,l3 = lambdavec(p1,p2,p3,prec).list()
     x3 = l3 * ((p3-1)/(p3+1))**2
     den = l2
-    try:
-        den.parent()._bg_ps_ring().set_default_prec(prec)
-    except AttributeError:
-        pass
     x2 = 1 - 1/den
     den = 1-l1
-    try:
-        den.parent()._bg_ps_ring().set_default_prec(prec)
-    except AttributeError:
-        pass
     x1 = 1/den
     return (x1,x2,x3)
 
@@ -900,10 +887,8 @@ def jacobian_matrix(fvec):
     return Matrix(3,3,[f1.derivative(x), f1.derivative(y), f1.derivative(z),f2.derivative(x), f2.derivative(y), f2.derivative(z),f3.derivative(x), f3.derivative(y), f3.derivative(z)])
 
 def compute_lvec_and_Mlist(prec):
-    R = PowerSeriesRing(QQ,names = 'p', num_gens = 3)
+    R = PowerSeriesRing(QQ,names = 'p', num_gens = 3, default_prec = prec)
     p1, p2, p3 = R.gens()
-    R.set_default_prec(prec)
-    R._bg_ps_ring().set_default_prec(prec)
     theta = Theta(p1,p2,p3,version=None, prec = prec)
     lvec = lambdavec(p1, p2, p3, theta = theta,prec_pseries = prec)
     Mlist = compute_twisted_jacobian_data(lvec)
