@@ -114,7 +114,7 @@ Finally, there is also code to compute Darmon-Vonk quantities. Here are a couple
 
 
 ..   [Darmon] H.Darmon. *Integration on Hp x H and arithmetic applications*. Annals of Math.
-..   [DarmonVonk] H.Darmon, J.Vonk **. *Singular moduli for real quadratic fields: a rigid analytic approach*. Duke Math.
+..   [DarmonVonk] H.Darmon, J.Vonk. *Singular moduli for real quadratic fields: a rigid analytic approach*. Duke Math.
 ..   [Greenberg] M.Greenberg. *Stark-Heegner points and the cohomology of quaternionic Shimura varieties*. Duke Math.
 ..   [GM] X.Guitart, M.Masdeu. *Periods of modular GL2-type abelian varieties and p-adic integration*. Experimental Mathematics.
 ..   [GMS1] X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves over number fields of arbitrary signature*. Proc. LMS.
