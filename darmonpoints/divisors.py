@@ -8,9 +8,9 @@ from sage.misc.cachefunc import cached_method
 from sage.matrix.all import matrix,Matrix
 from sage.structure.richcmp import richcmp
 from sage.structure.parent import Parent
-from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
 from sage.rings.integer_ring import ZZ
+from sage.rings.integer import Integer
 from sage.rings.power_series_ring import PowerSeriesRing
 from sage.sets.set import Set
 from sage.arith.all import GCD
@@ -25,15 +25,13 @@ from sage.rings.padics.factory import ZpCA
 from sage.structure.richcmp import richcmp
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.misc.verbose import verbose
+from sage.rings.infinity import Infinity
 
 import os
 import operator
 
 from itertools import product,chain,groupby,islice,tee,starmap
 from collections import defaultdict
-
-from .representations import *
-from .util import *
 
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)
 def _hash(x):
@@ -72,9 +70,7 @@ class DivisorsElement(ModuleElement):
         self._data = defaultdict(ZZ)
         self._ptdict = {}
         ModuleElement.__init__(self,parent)
-        if data == 0:
-            return
-        elif isinstance(data,DivisorsElement):
+        if isinstance(data,DivisorsElement):
             self._data.update(data._data)
             self._ptdict.update(data._ptdict)
         elif isinstance(data,list):
@@ -192,7 +188,14 @@ class DivisorsElement(ModuleElement):
             newdict[P] = a * n
         return self.__class__(self.parent(),newdict,ptdata = new_ptdata)
 
-    def left_act_by_matrix(self,g): # divisors
+    def _acted_upon_(self, g, on_left):
+        assert not on_left
+        if isinstance(g, Integer):
+            return self.scale_by(g)
+        else:
+            return self.left_act_by_matrix(g)
+
+    def left_act_by_matrix(self, g):
         a,b,c,d = g.list()
         gp = self.parent()
         K = self.parent().base_ring()
@@ -241,11 +244,12 @@ class DivisorsElement(ModuleElement):
         rat = self.rational_function(as_map = True)
         return prod((rat(P)**n for P, n in D), self.parent().base_ring()(1)).log(0)
 
-    def rational_function(self, as_map = False):
+    def rational_function(self, as_map = False, z = None):
         if as_map:
             return lambda z: prod(((1 - z/P)**n for P, n in self), z.parent()(1))
         else:
-            z = PolynomialRing(self.parent()._field, names='z').gen()
+            if z is None:
+                z = PolynomialRing(self.parent()._field, names='z').gen()
             return prod(((1 - z/P)**n for P, n in self), z.parent()(1))
 
 class Divisors(Parent, CachedRepresentation):
@@ -254,9 +258,6 @@ class Divisors(Parent, CachedRepresentation):
     def __init__(self,field):
         self._field = field
         Parent.__init__(self)
-        self._unset_coercions_used()
-        self.register_action(Scaling(ZZ,self))
-        self.register_action(MatrixAction(MatrixSpace(self._field,2,2),self))
 
     def _an_element_(self):
         return self.element_class(self,[(3,self._field._an_element_())])
