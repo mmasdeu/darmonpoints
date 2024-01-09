@@ -551,7 +551,6 @@ class SchottkyGroup(SchottkyGroup_abstract):
             G = PreSchottkyGroup(K, generators)
             gp = G.group()
             good_gens, good_balls, _ = G.fundamental_domain()
-            print([o.Tietze() for o in good_gens])
             if all(len(o.Tietze()) == 1 for o in good_gens):
                 self.balls = {}
                 for j0, gg in enumerate(good_gens):
@@ -568,7 +567,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
             test_fundamental_domain(generators, self.balls)
         super().__init__(K, generators)
 
-    # @cached_method
+    @cached_method
     def a_point(self, in_interior=True):
         K = self.base_ring()
         x = K.random_element()
@@ -673,32 +672,39 @@ class SchottkyGroup(SchottkyGroup_abstract):
         return self.u_function(prec, self.generators()[i], a=a, **kwargs)
 
     def period(self, i, j, prec, **kwargs):
+        r'''
+        Computes the (i,j)-entry of the period matrix.
+
+        EXAMPLES ::
+
+        sage: from darmonpoints.schottky import *
+        sage: p = 3
+        sage: prec = 10
+        sage: working_prec = 200
+        sage: K = Qp(p,working_prec)
+        sage: h1 = matrix(K, 2, 2, [-5,32,-8,35])
+        sage: h2 = matrix(K, 2, 2, [-13,80,-8,43])
+        sage: G = SchottkyGroup(K, (h1,h2))
+        sage: q00g = G.period_naive(prec, 0, 0)
+        sage: q01g = G.period_naive(prec, 0, 1)
+        sage: q11g = G.period_naive(prec, 1, 1)
+        sage: q00 = G.period(0,0, prec)
+        sage: q01 = G.period(0,1, prec)
+        sage: q11 = G.period(1,1, prec)
+        sage: (q00g/q00-1).valuation() > prec
+        sage: (q01g/q01-1).valuation() > prec
+        sage: (q11g/q11-1).valuation() > prec
+        '''
         g1 = self.generators()[i]
         g2 = self.generators()[j]
         z1 = kwargs.pop('z1', None)
         if z1 is None:
             z1 = self.a_point()
-            # z1 = self.find_point(g1)
-            # z1 = act(g1.adjugate(), z1) # Understand why
         z2 = kwargs.pop('z2', None)
         if z2 is None:
             z2 = self.find_point(g2, eps = self.pi+1)
         T = self.u_gamma_i(prec, i, a=z1, **kwargs).improve(prec)
         return T(z2) / T(act(g2, z2))
-
-    def period_theta(self, i, j, prec, **kwargs):
-        g1 = self.generators()[i]
-        g2 = self.generators()[j]
-        z1 = kwargs.pop('z1', None)
-        if z1 is None:
-            z1 = self.find_point(g1)
-            z1 = act(g1.adjugate(), z1) # Understand why
-        z2 = kwargs.pop('z2', None)
-        if z2 is None:
-            z2 = self.find_point(g2, eps = self.pi+1)
-        T = self.u_gamma_i(prec, i, a=z1, **kwargs).improve(prec)
-        return T, z2, act(g2, z2)
-
 
     def period_naive(self, prec, i, j, **kwargs):
         g1 = self.generators()[i]
@@ -780,19 +786,13 @@ class Ball(Element):
         a, b, c, d = g.list()
         x = self.center
         x = x.lift_to_precision(x.parent().precision_cap())
-        if c == 0:
-            inf_in_image = False
-        else:
-            if self.is_open:
-                if (-d / c - x).valuation() > self.radius:
-                    inf_in_image = True
-                else:
-                    inf_in_image = False
+        try:
+            if (-d / c - x).valuation() > self.radius:
+                inf_in_image = True
             else:
-                if (-d / c - x).valuation() >= self.radius:
-                    inf_in_image = True
-                else:
-                    inf_in_image = False
+                inf_in_image = False
+        except ZeroDivisionError:
+            inf_in_image = False
 
         if inf_in_image:
             gpx = (g.determinant() / c**2).valuation()
@@ -898,12 +898,11 @@ class BTTree(UniqueRepresentation, Module):
     Element = BTVertex
     def __init__(self, K):
         self.prec = K.precision_cap()
-        # self.pi = K.uniformizer()
         Module.__init__(self, base=K)
 
     def _element_constructor_(self, a, rval=None):
         if rval is None:
-            rval = Infinity # DEBUG
+            rval = Infinity
         return self.element_class(self, a, rval)
 
     def _an_element_(self):
@@ -984,23 +983,16 @@ class NeighborJoiningTree(SageObject):
         try:
             tt, (l1, length) = next((tt, (p, l)) for (tt, (p, l)) in J if p is not None)
         except StopIteration:
-            # print(None, Infinity)
-            # print('A', new_leaf)
             subtree[1].append([None, new_leaf])
             return
-        # print(l1, length)
         if l1 == root:
-            # print('B', new_leaf)
             subtree[1] = [[None,new_leaf],[length,subtree[1]]]
             subtree[0] = subtree[0]-length
         else:
             next_subtree = subtree[1][0] if l1 == l0 else tt
             if not leaf(next_subtree):
-                # print('C', new_leaf)
                 self.add_leaf(new_leaf,next_subtree)
             else:
-                # print(f'{l1 = }, {root = }')
-                # print('D', new_leaf)
                 lf = next_subtree[1]
                 next_subtree[0] = length
                 next_subtree[1] = [[None,new_leaf],[None,lf]]
