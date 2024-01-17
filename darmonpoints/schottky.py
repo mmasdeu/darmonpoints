@@ -36,8 +36,8 @@ def change_variable(g0,g1,n,K=None):
     return K[['t']]([b,a]) / K[['t']]([d,c])
 
 @cached_function
-def find_eigenvector_matrix(g, pi=None):
-    vaps = sorted([o for o,_ in g.charpoly().roots()],key = lambda o : o.valuation(pi))
+def find_eigenvector_matrix(g): #, pi=None):
+    vaps = sorted([o for o,_ in g.charpoly().roots()],key = lambda o : o.valuation())
     verb_level = get_verbose()
     set_verbose(0)
     veps = sum(((g-l).right_kernel().basis() for l in vaps), [])
@@ -45,12 +45,12 @@ def find_eigenvector_matrix(g, pi=None):
     return g.matrix_space()(veps).transpose()
 
 @cached_function
-def find_parameter(g, r, p=None, ball=None):
-    if p is None:
-        p = g.parent().base_ring().prime()
+def find_parameter(g, r, pi=None, ball=None):
+    if pi is None:
+        pi = g.parent().base_ring().uniformizer()
     if ball is not None:
         assert r == ball.radius
-    S = find_eigenvector_matrix(g, p)
+    S = find_eigenvector_matrix(g)
     ans = S.adjugate()
     # column 0 means that the boundary of B_g (the ball attached to g)
     # gets sent to the circle of radius 1.
@@ -58,7 +58,7 @@ def find_parameter(g, r, p=None, ball=None):
     # As a consequence, P^1-B_g gets sent to the closed ball B(0,1).
     a, b = S.column(0)
     z0 = a / b
-    z0 += p**ZZ(r)
+    z0 += pi**ZZ(r)
     lam = (ans[0,0] * z0 + ans[0,1])/(ans[1,0] * z0 + ans[1,1])
     ans.rescale_row(0, 1/lam)
     return ans
@@ -161,7 +161,7 @@ class ThetaOC(SageObject):
         self.Div = Divisors(K)
         gens = [(i+1, o) for i, o in enumerate(generators)]
         gens.extend([(-i, o**-1) for i, o in gens])
-        self.gens = tuple((i, o, find_parameter(o, balls[i].radius, self.p, ball=balls[i]).change_ring(QQ)) for i, o in gens)
+        self.gens = tuple((i, o, find_parameter(o, balls[i].radius, self.p, ball=balls[i])) for i, o in gens)
         for i, o, t in self.gens:
             o.set_immutable()
             t.set_immutable()
@@ -193,7 +193,7 @@ class ThetaOC(SageObject):
             g.set_immutable()
             r = (g1 * balls[wd[-1]]).radius
             self.radius.append((g, r))
-            tau = find_parameter(g, r, self.p, ball=balls[wd[-1]]).change_ring(QQ)
+            tau = find_parameter(g, r, self.p, ball=balls[wd[-1]])
             self.parameters[wd] = tau
             D1dict[wd] = g * D
         self.radius = tuple(self.radius)

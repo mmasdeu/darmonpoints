@@ -2,7 +2,7 @@ from darmonpoints.util import *
 from sage.modular.pollack_stevens.manin_map import *
 from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
 from darmonpoints.homology import *
-from darmonpoints.ocmodule import MeromorphicFunctions, RationalFunctions
+from darmonpoints.ocmodule import MeromorphicFunctions
 from darmonpoints.cohomology_arithmetic import ArithAction, CohArbitrary
 from darmonpoints.arithgroup import intersect_geodesic_arcs, angle_sign
 from darmonpoints.sarithgroup import *
