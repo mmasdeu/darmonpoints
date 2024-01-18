@@ -180,9 +180,10 @@ class DivisorsElement(ModuleElement):
 
     def _acted_upon_(self, g, on_left):
         assert not on_left
-        if isinstance(g, Integer):
+        if isinstance(g, Integer) or isinstance(g, int):
             return self.scale_by(g)
         else:
+            assert hasattr(g, 'nrows')
             return self.left_act_by_matrix(g)
 
     def left_act_by_matrix(self, g):

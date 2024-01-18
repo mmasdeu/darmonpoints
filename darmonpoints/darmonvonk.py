@@ -547,13 +547,13 @@ class DVCocycle(SageObject):
         HH = HyperbolicPlane().UHP()
         Div = Divisors(self._tau.parent())
         if gamma.quaternion_rep == 1 or gamma.quaternion_rep == -1:
-            return Div([])
+            return Div(0)
         wlist = set([])
         x0 = self._x0
         gamma_of_x0 = gamma * x0
         tau = x0.parent()(self._tau_inf)
         tau_bar = x0.parent()(self._tau_inf_bar)
-        ans = Div([])
+        ans = Div(0)
         for g in self.all_matrix_candidates(gamma):
             c1 = HH.get_geodesic(x0, gamma_of_x0)
             gtau = g * tau
