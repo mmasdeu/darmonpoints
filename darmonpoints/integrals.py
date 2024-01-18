@@ -200,8 +200,7 @@ Note that it is a multiplicative integral.
 '''
 def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,twist=False,progress_bar = False,multiplicative = True, return_valuation = True):
     if not cycle.is_degree_zero_valued():
-        pass # DEBUG
-        # raise ValueError('Cycle should take values in divisors of degree 0')
+        raise ValueError('Cycle should take values in divisors of degree 0')
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
