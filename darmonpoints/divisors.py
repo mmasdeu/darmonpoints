@@ -25,6 +25,7 @@ from sage.rings.padics.factory import ZpCA
 from sage.structure.richcmp import richcmp
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.misc.verbose import verbose
+from sage.misc.misc_c import prod
 from sage.rings.infinity import Infinity
 
 import os

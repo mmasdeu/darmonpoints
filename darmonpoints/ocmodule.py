@@ -33,6 +33,7 @@ from sage.misc.all import cputime
 from sage.misc.verbose import verbose, get_verbose, set_verbose
 from sage.misc.misc_c import prod
 from .homology import Divisors
+from .rationalfunctions import RationalFunctions
 from .representations import MatrixAction, Scaling
 import operator
 
@@ -99,7 +100,7 @@ class OCVnElement(ModuleElement):
                 self._val = MatrixSpace(self._parent._R, self._depth, 1)(0)
                 for i,o in enumerate(val.list()):
                     self._val[i,0] = o
-            elif hasattr(val, 'parent') and isinstance(val.parent(), MeromorphicFunctions):
+            elif hasattr(val, 'parent') and isinstance(val.parent(), AddMeromorphicFunctions):
                 p = self._parent._Rmod.prime()
                 if val.parent().twisting_matrix() != Matrix(ZZ,2,2,[0,1,p,0]) and val.parent().twisting_matrix() != Matrix(ZZ,2,2,[0,1,1,0]):
                     raise NotImplementedError
@@ -455,73 +456,50 @@ class Sigma0Action(Action):
     def _act_(self,g,v):
         return v._acted_upon_(g.matrix(), False)
 
-class MeromorphicFunctionsElement(ModuleElement):
+class AddMeromorphicFunctionsElement(ModuleElement):
     def __init__(self, parent, data, check=True):
         ModuleElement.__init__(self,parent)
         if check:
-            additive = parent.is_additive()
             K = parent.base_ring()
             prec = parent._prec
             p = K.prime()
             Ps = parent._Ps
             phi = parent._divisors_to_pseries
             if data == 0:
-                self._value = parent._V(0) if additive else Ps(1)
+                self._value = parent._V(0)
             elif isinstance(data.parent(), OCVn):
                 if parent.twisting_matrix() != Matrix(ZZ,2,2,[0,1,p,0]) and parent.twisting_matrix() != Matrix(ZZ,2,2,[0,1,1,0]):
                     raise NotImplementedError
-                if additive:
-                    self._value = Matrix(Zmod(K.prime()**prec), prec, 2)
-                    c = parent.twisting_matrix()[1,0]
-                    for i in range(prec):
-                        self._value[i, 0] = -data.moment(i+1) * c**(i+1) # DEBUG the p-power
-                else:
-                    z = Ps.gen()
-                    a, b, c, d = parent.twisting_matrix().list()
-                    zz_ps0 = (c * z + d) / (a * z + b)
-                    zz_ps1 = 1
-                    zz_ps = 0
-                    for n in range(1, prec):
-                        zz_ps1 *= zz_ps0
-                        zz_ps -= zz_ps1 * data.moment(n) / n
-                    assert zz_ps.valuation() >= 0
-                    self._value = zz_ps.exp() # DEBUG - incorporate data.moment(0) somehow
+                self._value = Matrix(Zmod(K.prime()**prec), prec, 2)
+                c = parent.twisting_matrix()[1,0]
+                for i in range(prec):
+                    self._value[i, 0] = -data.moment(i+1) * c**(i+1) # DEBUG the p-power
             elif isinstance(data.parent(), Divisors):
-                self._value = parent._V(0) if additive else Ps(1)
+                self._value = parent._V(0)
                 for Q, n in data:
-                    if additive:
-                        self._value += n * parent._V([o._polynomial_list(pad=True) for o in (phi(K(Q)).log().derivative()).list()])
-                    else:
-                        self._value *= phi(K(Q))**n
+                    self._value += n * parent._V([o._polynomial_list(pad=True) for o in (phi(K(Q)).log().derivative()).list()])
             elif isinstance(data.parent(), RationalFunctions):
-                if additive:
-                    rf = data.rational_function()
-                    t = rf.parent().gen()
-                    a,b,c,d = parent.twisting_matrix().list()
-                    rf = Ps(rf((a*t+b)/(c*t+d)))
-                    rf /= rf(K(0))
-                    ans = parent._V(0)
-                    rflogp = rf.log().derivative()
-                    for a, i in zip(rflogp.coefficients(), rflogp.exponents()):
-                        try:
-                            ans.set_row(i, a._polynomial_list(pad=True))
-                        except ValueError:
-                            pass
-                    self._value = ans
-                else:
-                    self._value = Ps((wp * data).rational_function())
+                rf = data.rational_function()
+                t = rf.parent().gen()
+                a,b,c,d = parent.twisting_matrix().list()
+                rf = Ps(rf((a*t+b)/(c*t+d)))
+                rf /= rf(K(0))
+                ans = parent._V(0)
+                rflogp = rf.log().derivative()
+                for a, i in zip(rflogp.coefficients(), rflogp.exponents()):
+                    try:
+                        ans.set_row(i, a._polynomial_list(pad=True))
+                    except ValueError:
+                        pass
+                self._value = ans
             elif data.parent() == parent._V:
                 self._value = parent._V(data)
             elif hasattr(data,'nrows'): # A matrix
-                assert additive
                 self._value = parent._V(data)
             else:
                 val = Ps(data)
                 val.add_bigoh(prec)
-                if additive:
-                    self._value = parent._V([o._polynomial_list(pad=True) for o in val.list()])
-                else:
-                    self._value = val
+                self._value = parent._V([o._polynomial_list(pad=True) for o in val.list()])
         else:
             self._value = data
         self._moments = self._value
@@ -529,10 +507,7 @@ class MeromorphicFunctionsElement(ModuleElement):
     def power_series(self):
         K = self.parent().base_ring()
         Ps = self.parent().power_series_ring()
-        if self.parent().is_additive():
-            return Ps([K(o.list()) for o in self._value.rows()])
-        else:
-            return Ps(self._value)
+        return Ps([K(o.list()) for o in self._value.rows()])
 
     def __call__(self, D):
         ans = self.evaluate_additive(D)
@@ -549,49 +524,31 @@ class MeromorphicFunctionsElement(ModuleElement):
         p = K.prime()
         assert isinstance(D.parent(), Divisors) and D.degree() == 0
         phi = self.parent()._eval_pseries_map
-        if self.parent().is_additive():
-            poly = self.power_series().integral().exp().polynomial()
-            ans = K(1)
-            for P, n in D:
-                phiP = phi(P)
-                if phiP.valuation() < 0:
-                    raise ValueError('Negative valuation!')
-                ans *= poly(phiP)**n
-            return ans # K(1) if ans == 0 else ans.exp()
-        else:
-            poly = self._value.polynomial()
-            ans = K(1)
-            for P, n in D:
-                phiP = phi(P)
-                assert phiP.valuation() >= 0
-                ans *= poly(phiP)**ZZ(n)
-            return ans
+        poly = self.power_series().integral().exp().polynomial()
+        ans = K(1)
+        for P, n in D:
+            phiP = phi(P)
+            if phiP.valuation() < 0:
+                raise ValueError('Negative valuation!')
+            ans *= poly(phiP)**n
+        return ans # K(1) if ans == 0 else ans.exp()
 
     def evaluate_additive(self, D):
         K = self.parent().base_ring()
         p = K.prime()
         assert isinstance(D.parent(), Divisors) and D.degree() == 0
         phi = self.parent()._eval_pseries_map
-        if self.parent().is_additive():
-            poly = self.power_series().polynomial()
-            poly = poly.integral()
-            ans = K(0)
-            for P, n in D:
-                phiP = phi(P)
-                if phiP.valuation() < 0:
-                    raise ValueError('Negative valuation!')
-                ans += n * poly(phiP)
-            if ans == 0:
-                return K(0)
-            else:
-                return ans
+        poly = self.power_series().polynomial()
+        poly = poly.integral()
+        ans = K(0)
+        for P, n in D:
+            phiP = phi(P)
+            if phiP.valuation() < 0:
+                raise ValueError('Negative valuation!')
+            ans += n * poly(phiP)
+        if ans == 0:
+            return K(0)
         else:
-            poly = self._value.polynomial()
-            ans = K(0)
-            for P, n in D:
-                phiP = phi(P)
-                assert phiP.valuation() >= 0
-                ans += n * poly(phiP).log(0)
             return ans
 
     def _cmp_(self, right):
@@ -602,40 +559,25 @@ class MeromorphicFunctionsElement(ModuleElement):
 
     def valuation(self, p=None):
         K = self.parent().base_ring()
-        if self.parent().is_additive():
-            return min([Infinity] + [K(o.list()).valuation(p) for o in self._value.rows()])
-        else:
-            return min([Infinity] + [o.valuation(p) for o in (self._value-1).coefficients()])
+        return min([Infinity] + [K(o.list()).valuation(p) for o in self._value.rows()])
 
     def _add_(self, right):
-        if self.parent().is_additive():
-            ans = self._value + right._value
-        else:
-            ans = self._value * right._value
+        ans = self._value + right._value
         return self.__class__(self.parent(), ans, check=False)
 
     def _sub_(self, right):
-        if self.parent().is_additive():
-            ans = self._value - right._value
-        else:
-            ans = self._value / right._value
+        ans = self._value - right._value
         return self.__class__(self.parent(), ans, check=False)
 
     def _neg_(self):
-        if self.parent().is_additive():
-            ans = -self._value
-        else:
-            ans = self._value**-1
+        ans = -self._value
         return self.__class__(self.parent(), ans, check=False)
 
     def _repr_(self):
         return repr(self._value)
 
     def scale_by(self, k):
-        if self.parent().is_additive():
-            ans = k * self._value
-        else:
-            ans = self._value**k
+        ans = k * self._value
         return self.__class__(self.parent(), ans, check=False)
 
     def left_act_by_matrix(self, g): # meromorphic functions
@@ -643,28 +585,21 @@ class MeromorphicFunctionsElement(ModuleElement):
         K = Ps.base_ring()
         # Below we code the action which is compatible with the usual action
         # P |-> (aP+b)/(cP+D)
-        if self.parent().is_additive():
-            M = self.parent().get_action_data(g)
-            ans = M * self._value
-        else:
-            zz_ps_vec = self.parent().get_action_data(g)
-            poly = self._value.polynomial()
-            ans = sum(a * zz_ps_vec[e].change_ring(K) for a, e in zip(poly.coefficients(), poly.exponents()))
-            ans.add_bigoh(self.parent()._prec)
-            ans /= ans[0]
+        M = self.parent().get_action_data(g)
+        ans = M * self._value
         return self.__class__(self.parent(),ans,check=False)
 
-class MeromorphicFunctions(Parent, CachedRepresentation):
+class AddMeromorphicFunctions(Parent, CachedRepresentation):
     r'''
     TESTS:
 
-    sage: from darmonpoints.ocmodule import MeromorphicFunctions
+    sage: from darmonpoints.ocmodule import AddMeromorphicFunctions
     sage: from darmonpoints.homology import Divisors
     sage: from darmonpoints.sarithgroup import BigArithGroup
     sage: padic_printing.mode('val-unit')
     sage: K.<a> = Qq(7^2,5)
     sage: G = BigArithGroup(7,1,1,use_shapiro=False, outfile='/dev/null')
-    sage: M = MeromorphicFunctions(K)
+    sage: M = AddMeromorphicFunctions(K)
     sage: Div = Divisors(K)
     sage: D = Div(a/7) - Div((a+1)/7)
     sage: f = M(D)
@@ -676,7 +611,7 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
     sage: g = G.Gpn.gen(1).quaternion_rep
     sage: M(g * D)(E) == (g * f)(E)
     True
-    sage: M = MeromorphicFunctions(K, twisting_matrix = G.wp(), additive=True)
+    sage: M = AddMeromorphicFunctions(K, twisting_matrix = G.wp())
     sage: Div = Divisors(K)
     sage: D = Div(a) - Div((a+1))
     sage: f = M(D)
@@ -691,16 +626,14 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
     sage: A == B
     True
     '''
-    Element = MeromorphicFunctionsElement
-    def __init__(self, K, additive = True, twisting_matrix = None):
+    Element = AddMeromorphicFunctionsElement
+    def __init__(self, K, twisting_matrix = None):
         Parent.__init__(self)
-        self._additive = additive
         self._base_ring = K
         self._prec = K.precision_cap()
-        psprec = self._prec + 1 if additive else self._prec
+        psprec = self._prec + 1
         self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec = psprec)
-        if self._additive:
-            self._V = MatrixSpace(Zmod(K.prime()**self._prec), self._prec, 2)
+        self._V = MatrixSpace(Zmod(K.prime()**self._prec), self._prec, 2)
         t = self._Ps.gen()
         if twisting_matrix is None:
             self._twisting_matrix = Matrix(QQ,2,2,1)
@@ -756,28 +689,19 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         zz = (d * z - b) * denom # zz = (d * z - b) / (-c * z  + a)
 
         zz_ps0 = zz.truncate(prec) # Ps(zz).add_bigoh(prec)
-        if self.is_additive():
-            zz_ps = (a*d - b*c) * (denom**2).truncate(prec) # (a*d - b*c) * denom**2 # zz_ps = det(g) * (-c * z + a)**-2
-            M = Matrix(ZZ, prec, prec, 0)
-            for j in range(prec):
-                for i, aij in enumerate(zz_ps.list()):
-                    M[i, j] = aij
-                if j < prec - 1: # Don't need the last multiplication
-                    zz_ps = (zz_ps0 * zz_ps).truncate(prec)
-                else:
-                    set_verbose(verb_level)
-                    return M # Contains, in each column j, the action of g on z^j: det(g) (-cz+a)**-2 * ((dz-b)/(-cz+a))**j
-        else:
-            zz_ps = Ps(1).add_bigoh(prec)
-            ans = [Ps(1), zz_ps]
-            for _ in range(prec - 1):
-                zz_ps = (zz_ps0 * zz_ps).add_bigoh(prec)
-                ans.append(zz_ps)
-            set_verbose(verb_level)
-            return ans
+        zz_ps = (a*d - b*c) * (denom**2).truncate(prec) # (a*d - b*c) * denom**2 # zz_ps = det(g) * (-c * z + a)**-2
+        M = Matrix(ZZ, prec, prec, 0)
+        for j in range(prec):
+            for i, aij in enumerate(zz_ps.list()):
+                M[i, j] = aij
+            if j < prec - 1: # Don't need the last multiplication
+                zz_ps = (zz_ps0 * zz_ps).truncate(prec)
+            else:
+                set_verbose(verb_level)
+                return M # Contains, in each column j, the action of g on z^j: det(g) (-cz+a)**-2 * ((dz-b)/(-cz+a))**j
 
     def is_additive(self):
-        return self._additive
+        return True
 
     def base_ring(self):
         return self._base_ring
@@ -789,7 +713,8 @@ class MeromorphicFunctions(Parent, CachedRepresentation):
         return self.element_class(self, data)
 
     def _repr_(self):
-        return "Meromorphic %s Functions over %s"%('Additive' if self._additive else 'Multiplicative', self._base_ring)
+        return "Meromorphic (Additive) Functions over %s"%(self._base_ring)
+
     def twisting_matrix(self):
         return self._twisting_matrix
 

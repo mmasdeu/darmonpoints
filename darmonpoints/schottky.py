@@ -405,12 +405,12 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
     def fundamental_domain(self, level=1, check=True):
         while True:
             level += 1
-            print(f'Trying {level = }')
+            verbose(f'Trying {level = }')
             self.construct_tree(level)
             try:
                 return self._fundamental_domain(check=check)
             except ValueError as e:
-                print(e)
+                verbose(str(e))
 
     def _fundamental_domain(self, i0=None, check=True):
         tree = self.NJtree
@@ -692,8 +692,11 @@ class SchottkyGroup(SchottkyGroup_abstract):
         sage: q01 = G.period(0,1, prec)
         sage: q11 = G.period(1,1, prec)
         sage: (q00g/q00-1).valuation() > prec
+        True
         sage: (q01g/q01-1).valuation() > prec
+        True
         sage: (q11g/q11-1).valuation() > prec
+        True
         '''
         g1 = self.generators()[i]
         g2 = self.generators()[j]
@@ -1053,8 +1056,8 @@ def test_fundamental_domain(gens, balls):
     for i, g in all_gens:
         if not (g * balls[-i].complement()).is_equal(balls[i].closure()):
             fails.append(i)
-            print(f'Test *failed* for {i = }')
+            verbose(f'Test *failed* for {i = }')
         else:
-            print(f'Test passed for {i = }')
+            verbose(f'Test passed for {i = }')
     if len(fails) > 0:
         raise RuntimeError(f'Some tests failed. ({fails})')

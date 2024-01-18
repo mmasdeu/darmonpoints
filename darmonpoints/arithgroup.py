@@ -245,9 +245,9 @@ def angle_sign(left, right):  # UHP
     # If right is now a straight line...
     if (b1 == Infinity or b2 == Infinity):
         # then since they intersect, they are equal
-        return 0
+        return ZZ(0)
     assert b1 * b2 < 0
-    return b1.sign()
+    return ZZ(b1.sign())
 
 class ArithGroup_fuchsian_generic(ArithGroup_generic):
     @cached_method

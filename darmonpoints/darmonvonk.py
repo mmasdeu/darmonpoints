@@ -2,7 +2,7 @@ from darmonpoints.util import *
 from sage.modular.pollack_stevens.manin_map import *
 from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
 from darmonpoints.homology import *
-from darmonpoints.ocmodule import MeromorphicFunctions
+from darmonpoints.ocmodule import AddMeromorphicFunctions
 from darmonpoints.cohomology_arithmetic import ArithAction, CohArbitrary
 from darmonpoints.arithgroup import intersect_geodesic_arcs, angle_sign
 from darmonpoints.sarithgroup import *
@@ -28,9 +28,9 @@ class OverconvergentDVCocycle(SageObject):
         act = lambda g, v: g.matrix().change_ring(K) * v
 
         if distinguished_open == 'Uinf':
-            Mer = MeromorphicFunctions(K, additive=True)
+            Mer = AddMeromorphicFunctions(K)
         else:
-            Mer = MeromorphicFunctions(K, additive=True, twisting_matrix = Matrix(ZZ,2,2,[0,1,G.prime(),0])) # DEBUG: used to be wp
+            Mer = AddMeromorphicFunctions(K, twisting_matrix = Matrix(ZZ,2,2,[0,1,G.prime(),0])) # DEBUG: used to be wp
         self.HpMer = CohArbitrary(G.small_group(), Mer, action_map = act)
         Gpgens = G.small_group().gens()
         phi = self.HpMer([phi0.evaluate(G.Gpn(g.quaternion_rep)) for g in Gpgens])
@@ -170,6 +170,12 @@ def darmon_vonk_group(p, DB, outfile=None, **kwargs):
     return BigArithGroup(p, DB, additional_level, base = base, grouptype = grouptype, cohomological=True, use_shapiro=False, magma=magma, outfile=outfile, **kwargs) # DEBUG: wish could put PGL2 (sometimes it works, and it's much faster)
 
 def darmon_vonk_point(p, DB, D1, D2, prec, working_prec = None, magma = None, extra_conductor_1 = 1, extra_conductor_2 = 1, recognize_point = 'algdep', parity = 'all', degree_bound = 8, outfile=None, **kwargs):
+    r'''
+    EXAMPLES ::
+
+    sage: from darmonpoints.darmonvonk import darmon_vonk_point
+    sage: darmon_vonk_point(5, 1, 3, 13, 60, recognize_point='lindep')
+    '''
     if magma is None:
         from sage.interfaces.magma import Magma
         magma = Magma()
@@ -298,9 +304,10 @@ def darmon_vonk_point(p, DB, D1, D2, prec, working_prec = None, magma = None, ex
             elif parity == 'odd':
                 J = Jodd
             elif parity == '+':
-                J = Jeven - Jodd
+                J = Jeven / Jodd
             elif parity == '-':
-                J = Jeven + Jodd
+                J = Jeven * Jodd
+            J = J.log(0)
             if parity != 'odd':
                 J += J0
             print(f'factor = {factor}, scaling = {scaling}')
@@ -464,7 +471,7 @@ def trace_cycle(G, theta, twist=False):
     Gp = G.small_group()
     HpDiv = OneChains(Gp, Div)
     wpmat = G.embed(G.wp(),prec).change_ring(K)
-    theta1 = HpDiv(0)
+    theta1 = HpDiv({})
     if (distinguished_open == 'Uinf') == twist: # DEBUG - this is awful
         for gamma, D in theta:
             for _, h in G.get_covering(1):
@@ -540,13 +547,13 @@ class DVCocycle(SageObject):
         HH = HyperbolicPlane().UHP()
         Div = Divisors(self._tau.parent())
         if gamma.quaternion_rep == 1 or gamma.quaternion_rep == -1:
-            return Div(0)
+            return Div([])
         wlist = set([])
         x0 = self._x0
         gamma_of_x0 = gamma * x0
         tau = x0.parent()(self._tau_inf)
         tau_bar = x0.parent()(self._tau_inf_bar)
-        ans = Div(0)
+        ans = Div([])
         for g in self.all_matrix_candidates(gamma):
             c1 = HH.get_geodesic(x0, gamma_of_x0)
             gtau = g * tau

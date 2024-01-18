@@ -110,12 +110,12 @@ class MeromorphicFunctionsElement(ModuleElement):
         ans = self._value**-1
         return self.__class__(self.parent(), ans, check=False)
 
-    def _repr_(self):
-        return repr(self._value)
-
     def scale_by(self, k): # multiplicative!
         ans = self._value**k
         return self.__class__(self.parent(), ans, check=False)
+
+    def _repr_(self):
+        return repr(self._value)
 
     def _acted_upon_(self, g, on_left):
         assert not on_left
@@ -178,8 +178,6 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         self._eval_pseries_map = lambda Q : (Q.parent()(a) * Q + Q.parent()(b)) / (Q.parent()(c) * Q + Q.parent()(d))
         # Maps Q to 1 - t / ((a*Q+b)/(c*Q+d))
         self._divisors_to_pseries = lambda Q : 1 - (Q.parent()(c) * Q + Q.parent()(d)) * self._Ps.gen() / (Q.parent()(a) * Q + Q.parent()(b))
-        # Maps Q to t - Q
-        # self._divisors_to_pseries = lambda Q : self._Ps.gen() - (a * Q + b)/(c*Q+d)
 
 
     def prime(self):
@@ -227,125 +225,3 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
 
     def _repr_(self):
         return "Meromorphic Multiplicative Functions over %s with parameter %s, p = %s and prec = %s"%(self._base_ring, self._parameter, self._p, self._prec)
-
-class RationalFunctionsElement(ModuleElement):
-    def __init__(self, parent, data, check=True):
-        if check:
-            K = parent.base_ring()
-            FF = parent._V
-            z = FF.gen()
-            if data == 0:
-                self._value = FF(1)
-            elif isinstance(data.parent(), Divisors):
-                self._value = FF(1)
-                for Q, n in data:
-                    self._value *= (1 - z / K(Q))**n
-            elif data.parent() == FF:
-                self._value = FF(data)
-        else:
-            self._value = data
-        ModuleElement.__init__(self,parent)
-
-    def numerator(self):
-        return self._value.numerator()
-
-    def denominator(self):
-        return self._value.denominator()
-
-    def power_series(self, names = None):
-        if names is None:
-            names = 't'
-        K = self.parent().base_ring()
-        try:
-            prec = K.precision_cap()
-        except AttributeError:
-            prec = 20 # DEBUG
-        Ps = PowerSeriesRing(K,names,default_prec=prec)
-        ans = Ps(self._value)
-        return ans
-
-    def rational_function(self):
-        return self._value
-
-    def __call__(self, D):
-        return self.evaluate(D)
-
-    def evaluate(self, D):
-        if isinstance(D.parent(), Divisors):
-            return prod(self._value(P)**ZZ(n) for P, n in D)
-        else:
-            return self._value(D)
-
-    def _cmp_(self, right):
-        return (self._value > right._value) - (self._value < right._value)
-
-    def __nonzero__(self):
-        return self._value != 1
-
-    def _add_(self, right):
-        ans = self._value * right._value
-        return self.__class__(self.parent(), ans, check=False)
-
-    def _sub_(self, right):
-        ans = self._value / right._value
-        return self.__class__(self.parent(), ans, check=False)
-
-    def _neg_(self):
-        ans = self._value**-1
-        return self.__class__(self.parent(), ans, check=False)
-
-    def _repr_(self):
-        return repr(self._value)
-
-    def scale_by(self, k):
-        ans = self._value**k
-        return self.__class__(self.parent(), ans, check=False)
-
-    def _acted_upon_(self, g, on_left):
-        assert not on_left
-        if isinstance(g, Integer):
-            return self.scale_by(g)
-        else:
-            return self.left_act_by_matrix(g)
-
-    def left_act_by_matrix(self, g): # rational functions
-        Ps = self._value.parent()
-        K = Ps.base_ring()
-        # Below we code the action which is compatible with the usual action
-        # P |-> (aP+b)/(cP+D)
-        z = self._value.parent().gen()
-        a, b, c, d = g.list()
-        num, den = self._value.numerator(), self._value.denominator()
-        assert num.degree() == den.degree()
-        deg = num.degree()
-        new_num = sum(ai * (d*z-b)**i * (-c*z+a)**(deg-i) for ai, i in zip(num.coefficients(), num.exponents()))
-        new_num /= new_num(0)
-        new_den = sum(ai * (d*z-b)**i * (-c*z+a)**(deg-i) for ai, i in zip(den.coefficients(), den.exponents()))
-        new_den /= new_den(0)
-        try:
-            ans = new_num / new_den
-        except ZeroDivisionError:
-            print(f'{den = }')
-            print(f'{a = }, {b = }, {c = }, {d = }')
-            print(new_den)
-            assert 0
-        return self.__class__(self.parent(),ans,check=False)
-
-class RationalFunctions(Parent, CachedRepresentation):
-    r'''
-
-    '''
-    Element = RationalFunctionsElement
-    def __init__(self, K):
-        Parent.__init__(self)
-        self._base_ring = K
-        self._V = PolynomialRing(K, names = 'z')
-
-    def base_ring(self):
-        return self._base_ring
-
-    def _element_constructor_(self, data):
-        return self.element_class(self, data)
-
-    def _repr_(self):
-        return "Field of Rational Functions over %s"%(self._base_ring)

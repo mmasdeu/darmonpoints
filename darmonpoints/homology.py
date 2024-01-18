@@ -31,6 +31,7 @@ import operator
 
 from itertools import product,chain,groupby,islice,tee,starmap
 from collections import defaultdict
+from copy import deepcopy
 
 from .homology_abstract import ArithHomology, HomologyGroup
 from .divisors import *
@@ -95,7 +96,7 @@ class TensorElement(ModuleElement):
         '''
         if not isinstance(data,dict):
             raise ValueError('data should be a dictionary indexed by elements of ArithGroup')
-        self._data = data
+        self._data = data.copy()
         ModuleElement.__init__(self,parent)
 
     def __iter__(self):
@@ -282,6 +283,8 @@ class OneChainsElement(TensorElement):
             print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             print('The cycle is not valued in degree-zero divisors.')
             print('EXPECT THINGS TO BREAK BADLY')
+            print('residue:')
+            print([(ky, v.degree()) for ky, v in ans._data.items()])
             print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         if allow_multiple:
             return ans, x_ord
@@ -340,7 +343,7 @@ class OneChainsElement(TensorElement):
         return ans
 
     def is_cycle(self,return_residue = False):
-        res = self.parent().coefficient_module()(0)
+        res = self.parent().coefficient_module()([])
         for g, v in self:
             res += (g**-1) * v - v
         if res.is_zero():

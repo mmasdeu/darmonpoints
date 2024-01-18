@@ -256,9 +256,7 @@ class CohomologyGroup(Module):
             V.register_action(action)
 
         if hasattr(V, 'acting_matrix'):
-            def acting_matrix(x,y):
-                return V.acting_matrix(x,y)
-            self._acting_matrix = acting_matrix
+            self._acting_matrix = lambda x, y : V.acting_matrix(x,y)
         gens_local = [ (g, g**-1) for g in G.gens() ]
         GA = GroupAlgebra(G)
         self._GA = GA
