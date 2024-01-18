@@ -1,13 +1,9 @@
-######################
-##                  ##
-##     HOMOLOGY     ##
-##                  ##
-######################
 from sage.structure.sage_object import SageObject
 from sage.misc.cachefunc import cached_method
 from sage.matrix.all import matrix,Matrix
 from sage.structure.richcmp import richcmp
 from sage.structure.parent import Parent
+from sage.categories.action import Action
 from sage.rings.padics.factory import Qq
 from sage.rings.integer_ring import ZZ
 from sage.rings.integer import Integer
@@ -57,7 +53,7 @@ class DivisorsElement(ModuleElement):
 
         TESTS::
 
-            sage: from darmonpoints.homology import Divisors
+            sage: from darmonpoints.divisors import Divisors
             sage: Cp.<g> = Qq(5^3,20)
             sage: Div = Divisors(Cp)
             sage: D1 = Div(g+3)
@@ -89,10 +85,7 @@ class DivisorsElement(ModuleElement):
             self._data.update(data)
             self._ptdict.update(ptdata)
         else:
-            if data != Infinity:
-                P = self.parent().base_field()(data)
-            else:
-                P = data
+            P = data
             hP = _hash(P)
             self._data[hP] = 1
             self._ptdict[hP] = P
@@ -148,12 +141,6 @@ class DivisorsElement(ModuleElement):
             else:
                 new_ptdata[hP] = right._ptdict[hP]
         return self.__class__(self.parent(),newdict,ptdata = new_ptdata)
-
-    def radius(self):
-        ans = 0
-        for P,n in self:
-            ans = max(ans,point_radius(P))
-        return ans
 
     def _sub_(self,right):
         newdict = defaultdict(ZZ)
@@ -253,30 +240,44 @@ class DivisorsElement(ModuleElement):
                 z = PolynomialRing(self.parent()._field, names='z').gen()
             return prod(((1 - z/P)**n for P, n in self), z.parent()(1))
 
+    def as_list_of_differences(self):
+        if self.degree() != 0:
+            raise ValueError('The degree of the divisor should be zero')
+        ans = []
+        newdata = {P : n for P, n in self._data.items()}
+        while len(newdata) > 0 :
+            P = next(P for P, n in newdata.items() if n > 0)
+            Q = next(Q for Q, n in newdata.items() if n < 0)
+            newdata[P] -= 1
+            if newdata[P] == 0:
+                del newdata[P]
+            newdata[Q] += 1
+            if newdata[Q] == 0:
+                del newdata[Q]
+            ans.append((self._ptdict[P],self._ptdict[Q]))
+        return ans
+
 class Divisors(Parent, CachedRepresentation):
     Element = DivisorsElement
 
-    def __init__(self,field):
-        self._field = field
+    def __init__(self, base):
+        self._base = base
         Parent.__init__(self)
 
     def _an_element_(self):
-        return self.element_class(self,[(3,self._field._an_element_())])
+        return self.element_class(self,[(3,self._base._an_element_())])
 
     def _element_constructor_(self,data,ptdata = None):
         return self.element_class(self,data,ptdata)
 
     def _coerce_map_from_(self,S):
         if isinstance(S,self.__class__):
-            return S._field is self._field
+            return S._base is self._base
         else:
             return False
 
-    def base_field(self):
-        return self._field
-
-    def base_ring(self):
-        return self._field
+    def base(self):
+        return self._base
 
     def _repr_(self):
-        return 'Group of divisors over ' + self._field._repr_()
+        return 'Group of divisors over ' + repr(self._base)

@@ -393,7 +393,7 @@ class P1NFList(SageObject):
             sage: P.apply_J_epsilon(4, -1)
             2
             sage: P.apply_J_epsilon(4, u[0], u[1])
-            1
+            5
 
         ::
 

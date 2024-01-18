@@ -37,7 +37,7 @@ from copy import deepcopy
 from .divisors import Divisors
 
 class MeromorphicFunctionsElement(ModuleElement):
-    def __init__(self, parent, data, check=True):
+    def __init__(self, parent, data, parameter, check=True):
         # verbose(f'{check = }')
         ModuleElement.__init__(self,parent)
         if check:
@@ -45,7 +45,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             prec = parent._prec
             Ps = parent._Ps
             if isinstance(data.parent(), Divisors):
-                phi = self.parent()._divisors_to_pseries
+                phi = divisor_to_pseries(parameter, Ps.gen())
                 self._value = Ps(1)
                 for Q, n in data:
                     self._value *= phi(K(Q))**n
@@ -63,6 +63,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         else:
             self._value = deepcopy(data)
         self._moments = self._value
+        self._parameter = Matrix(parent.base_ring(),2,2,parameter)
 
     def power_series(self):
         return self.parent().power_series_ring()(self._value)
@@ -72,9 +73,9 @@ class MeromorphicFunctionsElement(ModuleElement):
 
     def evaluate(self, D): # meromorphic functions
         K = self.parent().base_ring()
-        phi = self.parent()._eval_pseries_map
+        phi = eval_pseries_map(self._parameter)
         poly = self._value.polynomial()
-        a, b, c, d = self.parent()._parameter.list()
+        a, b, c, d = self._parameter.list()
         try:
             pt = phi(self.normalize_point)
             pole = -d / c
@@ -100,19 +101,23 @@ class MeromorphicFunctionsElement(ModuleElement):
 
     def _add_(self, right): # multiplicative!
         ans = self._value * right._value
-        return self.__class__(self.parent(), ans, check=False)
+        if self._parameter != right._parameter:
+            raise RuntimeError('Trying to add incompatible series')
+        return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def _sub_(self, right): # multiplicative!
         ans = self._value / right._value
-        return self.__class__(self.parent(), ans, check=False)
+        if self._parameter != right._parameter:
+            raise RuntimeError('Trying to subtract incompatible series')
+        return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def _neg_(self): # multiplicative!
         ans = self._value**-1
-        return self.__class__(self.parent(), ans, check=False)
+        return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def scale_by(self, k): # multiplicative!
         ans = self._value**k
-        return self.__class__(self.parent(), ans, check=False)
+        return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def _repr_(self):
         return repr(self._value)
@@ -131,15 +136,23 @@ class MeromorphicFunctionsElement(ModuleElement):
         p = self.parent()._p
         # Below we code the action which is compatible with the usual action
         # P |-> (aP+b)/(cP+D)
-        radius = tuple((ky, val) for ky, val in self.parent().radius.items())
-        zz_ps_vec, new_param = self.parent().get_action_data(g, param=param)
+        # radius = tuple((ky, val) for ky, val in self.parent().radius.items())
+        zz_ps_vec, new_param = self.parent().get_action_data(g, self._parameter, param=param)
         if param is None:
             param = new_param
         poly = self._value.polynomial()
         ans = sum(a * zz_ps_vec[e] for a, e in zip(poly.coefficients(), poly.exponents()))
         ans /= ans[0] # always normalize
         ans = ans.add_bigoh(prec)
-        return MeromorphicFunctions(K, param, p=p, prec=prec, radius=radius)(ans)
+        return MeromorphicFunctions(K, p=p, prec=prec)(ans, param)
+
+def eval_pseries_map(parameter):
+    a, b, c, d = parameter.list()
+    return lambda Q : (Q.parent()(a) * Q + Q.parent()(b)) / (Q.parent()(c) * Q + Q.parent()(d))
+
+def divisor_to_pseries(parameter, t):
+    a, b, c, d = parameter.list()
+    return lambda Q : 1 - (Q.parent()(c) * Q + Q.parent()(d)) * t / (Q.parent()(a) * Q + Q.parent()(b))
 
 class MeromorphicFunctions(Parent, UniqueRepresentation):
     r'''
@@ -149,17 +162,11 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
     Element = MeromorphicFunctionsElement
 
     @staticmethod
-    def __classcall__(cls, K, parameter, **kwargs):
-        p = kwargs.pop('p', None)
-        prec = kwargs.pop('prec', None)
-        radius = kwargs.pop('radius', None)
-        try:
-            parameter = parameter.change_ring(QQ)
-        except AttributeError: pass
-        parameter.set_immutable()
-        return super().__classcall__(cls, K, parameter, radius, p, prec)
+    def __classcall__(cls, K, p, prec, **kwargs):
+        # radius = kwargs.pop('radius', None)
+        return super().__classcall__(cls, K, p, prec)
 
-    def __init__(self, K, parameter, radius, p, prec):
+    def __init__(self, K, p, prec):
         Parent.__init__(self)
         if prec is None:
             self._prec = K.precision_cap()
@@ -168,26 +175,15 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
 
         self._p = p
         self._prec = prec
-        self.radius = dict(radius)
         self._base_ring = K
         psprec = self._prec
         self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec=psprec)
 
-        self._parameter = Matrix(K,2,2,parameter)
-        a, b, c, d = self._parameter.list()
-        self._eval_pseries_map = lambda Q : (Q.parent()(a) * Q + Q.parent()(b)) / (Q.parent()(c) * Q + Q.parent()(d))
-        # Maps Q to 1 - t / ((a*Q+b)/(c*Q+d))
-        self._divisors_to_pseries = lambda Q : 1 - (Q.parent()(c) * Q + Q.parent()(d)) * self._Ps.gen() / (Q.parent()(a) * Q + Q.parent()(b))
-
-
     def prime(self):
         return self._p
 
-    def parameter(self):
-        return self._parameter
-
     @cached_method
-    def get_action_data(self, g, K = None, prec = None, param=None):
+    def get_action_data(self, g, oldparam, K = None, prec = None, param=None):
         verb_level = get_verbose()
         set_verbose(0)
         g.set_immutable()
@@ -196,6 +192,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         if K is None:
             K = self.base_ring()
         if param is None:
+            raise NotImplementedError
             try:
                 r = self.radius[g]
             except (TypeError, KeyError):
@@ -204,7 +201,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
             tg = find_parameter(g,r).change_ring(K)
         else:
             tg = param.change_ring(K)
-        a, b, c, d = (self._parameter * (tg * g).adjugate()).list()
+        a, b, c, d = (oldparam * (tg * g).adjugate()).list()
         zz = (self._Ps([b,a]) / self._Ps([d,c])).truncate(prec)
         Ps = self._Ps
         ans = [Ps(1), zz]
@@ -220,8 +217,8 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
     def power_series_ring(self):
         return self._Ps
 
-    def _element_constructor_(self, data, check=True):
-        return self.element_class(self, data, check=check)
+    def _element_constructor_(self, data, param, check=True):
+        return self.element_class(self, data, param, check=check)
 
     def _repr_(self):
         return "Meromorphic Multiplicative Functions over %s with parameter %s, p = %s and prec = %s"%(self._base_ring, self._parameter, self._p, self._prec)

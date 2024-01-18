@@ -201,9 +201,7 @@ class ThetaOC(SageObject):
             gD = sum(g * val for ky,val in D1dict.items() if ky[0] != -wd[0]) # DEBUG - only works when wd is a 1-tuple!
             tau = self.parameters[wd]
 
-            self.Fn0[wd] = MeromorphicFunctions(self.K, tau, p=self.p, \
-                                                prec=self.prec, \
-                                                radius=self.radius)(gD)
+            self.Fn0[wd] = MeromorphicFunctions(self.K, self.p,self.prec)(gD, tau)
         self.Fn = deepcopy(self.Fn0)
 
     def improve(self, m):
@@ -220,6 +218,7 @@ class ThetaOC(SageObject):
                         # print(f'.adding to term {new_ky}')
                         tau = self.parameters[new_ky]
                         newterm = Fw.left_act_by_matrix(gi, param=tau)
+                        # newterm = gi * Fw # DEBUG -- try to ignore param tau
                         newFn[new_ky] += newterm
             self.Fn = newFn
             self.m += 1
@@ -653,6 +652,28 @@ class SchottkyGroup(SchottkyGroup_abstract):
         return ans
 
     def theta(self, prec, a=ZZ(0), b=ZZ(1), **kwargs):
+        r'''
+
+        EXAMPLES ::
+
+        sage: from darmonpoints.schottky import *
+        sage: p = 3
+        sage: prec = 20
+        sage: working_prec = 200
+        sage: K = Qp(p,working_prec)
+        sage: g1 = matrix(K, 2, 2, [-5,32,-8,35])
+        sage: g2 = matrix(K, 2, 2, [-13,80,-8,43])
+        sage: G = SchottkyGroup(K, (g1, g2))
+        sage: a = 23
+        sage: b = 14
+        sage: z0 = K(8)
+        sage: m = 10
+        sage: Tg = G.theta_naive(z0, m, a=a,b=b)
+        sage: T = G.theta(prec, a, b).improve(m)
+        sage: (T(z0) / Tg - 1).valuation() > m
+        True
+
+        '''
         K = self.base_ring()
         DK = Divisors(K)
         gens = self.generators()
@@ -706,8 +727,9 @@ class SchottkyGroup(SchottkyGroup_abstract):
         z2 = kwargs.pop('z2', None)
         if z2 is None:
             z2 = self.find_point(g2, eps = self.pi+1)
+        g2_z2 = act(g2, z2)
         T = self.u_gamma_i(prec, i, a=z1, **kwargs).improve(prec)
-        return T(z2) / T(act(g2, z2))
+        return T(z2) / T(g2_z2)
 
     def period_naive(self, prec, i, j, **kwargs):
         g1 = self.generators()[i]
@@ -724,7 +746,6 @@ class SchottkyGroup(SchottkyGroup_abstract):
 
 class Ball(Element):
     def __init__(self, parent, center, radius, is_open=True, is_complement=False):
-
         self.radius = radius
         self.center = parent.K(center).add_bigoh(self.radius + 1)
         self.is_complement = is_complement

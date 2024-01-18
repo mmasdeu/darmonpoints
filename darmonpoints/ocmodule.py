@@ -464,7 +464,7 @@ class AddMeromorphicFunctionsElement(ModuleElement):
             prec = parent._prec
             p = K.prime()
             Ps = parent._Ps
-            phi = parent._divisors_to_pseries
+            phi = parent._divisor_to_pseries
             if data == 0:
                 self._value = parent._V(0)
             elif isinstance(data.parent(), OCVn):
@@ -641,7 +641,7 @@ class AddMeromorphicFunctions(Parent, CachedRepresentation):
             self._twisting_matrix = twisting_matrix
         a, b, c, d = self._twisting_matrix.list()
         # Maps Q to 1 - t / ((a*Q+b)/(c*Q+d))
-        self._divisors_to_pseries = lambda Q : 1 - (Q.parent()(c) * Q + Q.parent()(d)) * t / (Q.parent()(a) * Q + Q.parent()(b))
+        self._divisor_to_pseries = lambda Q : 1 - (Q.parent()(c) * Q + Q.parent()(d)) * t / (Q.parent()(a) * Q + Q.parent()(b))
         a, b, c, d = (self._twisting_matrix**-1).list()
         self._eval_pseries_map = lambda Q : (Q.parent()(a) * Q + Q.parent()(b)) / (Q.parent()(c) * Q + Q.parent()(d))
         self._unset_coercions_used()

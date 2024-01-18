@@ -248,7 +248,7 @@ class OneChainsElement(TensorElement):
         assert len(gwordlist) == len(oldvals)
         newdict = defaultdict(V)
         for gword, v in zip(gwordlist,oldvals):
-            newv = V(x_ord * v)
+            newv = V(v)
             for i,a in tietze_to_syllables(gword):
                 oldv = V(newv)
                 g = G.gen(i)
