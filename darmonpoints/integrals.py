@@ -200,11 +200,12 @@ Note that it is a multiplicative integral.
 '''
 def integrate_H1(G,cycle,cocycle,depth = 1,prec = None,twist=False,progress_bar = False,multiplicative = True, return_valuation = True):
     if not cycle.is_degree_zero_valued():
-        raise ValueError('Cycle should take values in divisors of degree 0')
+        pass # DEBUG
+        # raise ValueError('Cycle should take values in divisors of degree 0')
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
-    Cp = cycle.parent().coefficient_module().base_field()
+    Cp = cycle.parent().coefficient_module().base()
     R = PolynomialRing(Cp, names = 't')
     t = R.gen()
     total_integrals = cycle.size_of_support()
@@ -240,7 +241,7 @@ def integrate_H1_riemann(G,cycle,cocycle,depth,prec = None,twist=False,progress_
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     verbose('precision = %s'%prec)
-    Cp = cycle.parent().coefficient_module().base_field()
+    Cp = cycle.parent().coefficient_module().base()
     R = PolynomialRing(Cp, names = 't')
     t = R.gen()
     total_integrals = cycle.size_of_support()

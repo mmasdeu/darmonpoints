@@ -49,8 +49,8 @@ def lattice_homology_cycle(p, G, wp, xlist, prec, tau = None, outfile = None, sm
         wpinv_mat = (G.embed(wp,prec)**-1).change_ring(Cp)
     Div = Divisors(Cp)
     H1 = OneChains(G,Div)
-    xi1 = H1(0)
-    xi2 = H1(0)
+    xi1 = H1({})
+    xi2 = H1({})
     for x, a in xlist:
         xi1 += H1({G(x.quaternion_rep) : Div(tau)}).mult_by(a)
         xi2 += H1({G(wp**-1 * x.quaternion_rep * wp) :  wpinv_mat * Div(tau)}).mult_by(a)
@@ -248,7 +248,7 @@ class OneChainsElement(TensorElement):
         assert len(gwordlist) == len(oldvals)
         newdict = defaultdict(V)
         for gword, v in zip(gwordlist,oldvals):
-            newv = V(v)
+            newv = V(x_ord * v)
             for i,a in tietze_to_syllables(gword):
                 oldv = V(newv)
                 g = G.gen(i)
