@@ -304,10 +304,9 @@ def darmon_vonk_point(p, DB, D1, D2, prec, working_prec = None, magma = None, ex
             elif parity == 'odd':
                 J = Jodd
             elif parity == '+':
-                J = Jeven / Jodd
+                J = Jeven - Jodd
             elif parity == '-':
-                J = Jeven * Jodd
-            J = J.log(0)
+                J = Jeven + Jodd
             if parity != 'odd':
                 J += J0
             print(f'factor = {factor}, scaling = {scaling}')

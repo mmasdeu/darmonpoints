@@ -87,7 +87,10 @@ class DivisorsElement(ModuleElement):
             self._data.update(data)
             self._ptdict.update(ptdata)
         else:
-            P = data
+            if data != Infinity:
+                P = self.parent().base()(data)
+            else:
+                P = data
             hP = _hash(P)
             self._data[hP] = 1
             self._ptdict[hP] = P
