@@ -82,7 +82,7 @@ def act_H3(g,w):
     HH = w.parent()
     RR = HH.base_ring()
     gw =  (A*w+B) * (C*w+D)**-1
-    sqrnormgw = sum((o**2 for o in gw.coefficient_tuple()))
+    sqrnormgw = sum(o**2 for o in gw.coefficient_tuple())
     assert not sqrnormgw < 0,'g = %s, w = %s\ngw = %s, sqrnorm = %s'%(g,w,gw,sqrnormgw)
     if sqrnormgw >= 1:
         gw = gw / sqrnormgw.sqrt()
@@ -251,9 +251,9 @@ def is_in_Gamma0loc(A,det_condition = True,p = None):
     if det_condition == True and A.determinant() != 1:
         return False
     if p is not None:
-        return all((o.valuation(p) >= 0 for o in A.list())) and A[1,0].valuation(p) > 0
+        return all(o.valuation(p) >= 0 for o in A.list()) and A[1,0].valuation(p) > 0
     else:
-        return all((o.valuation() >= 0 for o in A.list())) and A[1,0].valuation() > 0
+        return all(o.valuation() >= 0 for o in A.list()) and A[1,0].valuation() > 0
 
 
 def set_immutable(x):
@@ -532,8 +532,8 @@ def lift_padic_splitting(a,b,II0,JJ0,p,prec):
         y1,y2,y3,_ = oldJJ.list()
         n = min(o.valuation() for o in [x1**2+x2*x3-a,y1**2+y2*y3-b,2*x1*y1+x2*y3+x3*y2])
         verbose('current_prec = %s'%n)
-        x1,x2,x3,_ = [o.lift() for o in oldII.list()]
-        y1,y2,y3,_ = [o.lift() for o in oldJJ.list()]
+        x1,x2,x3,_ = (o.lift() for o in oldII.list())
+        y1,y2,y3,_ = (o.lift() for o in oldJJ.list())
         B = matrix(R,3,6,[2*x1,x3,x2,0,0,0,0,0,0,2*y1,y3,y2,2*y1,y3,y2,2*x1,x3,x2])
         pn = p**n
         A = -matrix(R,3,1,[ZZ((x1**2+x2*x3-a)/pn),ZZ((y1**2+y2*y3-b)/pn),ZZ((2*x1*y1+x2*y3+x3*y2)/pn)])
@@ -607,7 +607,7 @@ def affine_transformation(x1p, x2p, x3p):
     return lambda x: (x-x2p)*(x3p-x1p)/((x-x1p)*(x3p-x2p))
 
 def height_polynomial(x,base = 10):
-    return sum(((RR(o).abs()+1).log(base) for o in x.coefficients()))
+    return sum((RR(o).abs()+1).log(base) for o in x.coefficients())
 
 def recognize_DV_algdep(J, degree, height_threshold=None, prime_bound=None, roots_of_unity=None, outfile=None):
     K = J.parent()
@@ -1119,8 +1119,7 @@ def cantor_diagonal(iter1,iter2):
     v1 = [next(iter1)]
     v2 = [next(iter2)]
     while True:
-        for a,b in zip(v1,v2):
-            yield a,b
+        yield from zip(v1,v2)
         v1.append(next(iter1))
         v2.insert(0,next(iter2))
 

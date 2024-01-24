@@ -266,7 +266,7 @@ class SchottkyGroup_abstract(SageObject):
         self.K = K
         self.pi = K.uniformizer()
         self._generators = tuple([o.change_ring(K) for o in generators])
-        self._inverse_generators = tuple((~v for v in self._generators))
+        self._inverse_generators = tuple(~v for v in self._generators)
         self._G = Groups().free(len(generators))
 
     def base_ring(self):
@@ -447,7 +447,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
         for i, (e0, e1, word) in enumerate(pairing):
             w = self._G.one()
             for l in word:
-                w = w * (self._G.gen((l//2))**((-1)**l))
+                w = w * (self._G.gen(l//2)**((-1)**l))
             good_generators.append(w)
             B0 = find_midpoint(self.K, verts[e0[0]], verts[e0[1]])
             B1 = find_midpoint(self.K, verts[e1[0]], verts[e1[1]])

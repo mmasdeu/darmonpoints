@@ -251,7 +251,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
                 gamma = self(g)
                 a,b,c,d = gamma.quaternion_rep.list()
                 rt_list = our_sqrt((d-a)**2 + 4*b*c,Cp,return_all=True)
-                tau1, tau2 = [(Cp(a-d) + rt)/Cp(2*c) for rt in rt_list]
+                tau1, tau2 = ((Cp(a-d) + rt)/Cp(2*c) for rt in rt_list)
                 assert (Cp(c)*tau1**2 + Cp(d-a)*tau1-Cp(b)) == 0
                 assert (Cp(c)*tau2**2 + Cp(d-a)*tau2-Cp(b)) == 0
                 r,s = uk.coordinates_in_terms_of_powers()(K.gen())
