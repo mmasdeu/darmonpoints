@@ -14,13 +14,19 @@ jobs:
       matrix:
         include:
           - optionals: "sage"
-            sagelib: "9.8"
-            environment: "environment.yml"
-          - optionals: "sage"
             sagelib: "9.7"
             environment: "environment.yml"
           - optionals: "sage"
-            sagelib: "9.6"
+            sagelib: "9.8"
+            environment: "environment.yml"
+          - optionals: "sage"
+            sagelib: "10.0"
+            environment: "environment.yml"
+          - optionals: "sage"
+            sagelib: "10.1"
+            environment: "environment.yml"
+          - optionals: "sage"
+            sagelib: "10.2"
             environment: "environment.yml"
     steps:
       - uses: actions/checkout@v2
