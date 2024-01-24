@@ -809,7 +809,7 @@ class Ball(Element):
             g = g.matrix()
         a, b, c, d = g.list()
         x = self.center
-        x = x.lift_to_precision(x.parent().precision_cap())
+        x = x.lift_to_precision()
         try:
             if (-d / c - x).valuation() > self.radius:
                 inf_in_image = True
