@@ -764,7 +764,7 @@ class Ball(Element):
 
     def intersects(self, other):
         # We use the fact that two balls intersect iff they are concentric.
-        return (self.center in other) or (other.centeer in self)
+        return (self.center in other) or (other.center in self)
 
     def __contains__(self, b):
         if self.is_complement:
