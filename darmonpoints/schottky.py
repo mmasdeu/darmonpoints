@@ -762,6 +762,10 @@ class Ball(Element):
         except AttributeError: pass
         return f'{comp}B({self.center},|π|^{self.radius}){opn}'
 
+    def intersects(self, other):
+        # We use the fact that two balls intersect iff they are concentric.
+        return (self.center in other) or (other.centeer in self)
+
     def __contains__(self, b):
         if self.is_complement:
             return b not in self.complement()
@@ -1075,6 +1079,14 @@ def test_fundamental_domain(gens, balls):
         [(-(i+1), g**-1) for i, g in enumerate(gens)]
     fails = []
     for i, g in all_gens:
+        for j, _ in all_gens:
+            if i == j:
+                continue
+            if balls[i].intersects(balls[j]):
+                fails.append((i,j))
+                verbose(f'Test *failed* for balls {i = } and {j = }')
+            else:
+                verbose(f'Test passed for balls {i = } and {j = }')
         if not (g * balls[-i].complement()).is_equal(balls[i].closure()):
             fails.append(i)
             verbose(f'Test *failed* for {i = }')
