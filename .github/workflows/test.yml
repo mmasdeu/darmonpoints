@@ -14,15 +14,6 @@ jobs:
       matrix:
         include:
           - optionals: "sage"
-            sagelib: "9.7"
-            environment: "environment.yml"
-          - optionals: "sage"
-            sagelib: "9.8"
-            environment: "environment.yml"
-          - optionals: "sage"
-            sagelib: "10.0"
-            environment: "environment.yml"
-          - optionals: "sage"
             sagelib: "10.1"
             environment: "environment.yml"
           - optionals: "sage"
@@ -48,7 +39,7 @@ jobs:
       - name: Install darmonpoints
         shell: bash -l {0}
         run: |
-          pip install --verbose --no-index .
+          pip install --verbose --no-index . --break-system-packages
       - name: Run SageMath doctests
         shell: bash -l {0}
         run: |
