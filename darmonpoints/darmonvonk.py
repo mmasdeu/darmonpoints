@@ -174,7 +174,10 @@ def darmon_vonk_point(p, DB, D1, D2, prec, working_prec = None, magma = None, ex
     EXAMPLES ::
 
     sage: from darmonpoints.darmonvonk import darmon_vonk_point
-    sage: darmon_vonk_point(5, 1, 3, 13, 60, recognize_point='lindep')
+    sage: J = darmon_vonk_point(5, 1, 3, 13, 60, parity='+', recognize_point='algdep',magma=magma)
+    #### Starting computation of the Darmon-Vonk point ####
+    ...
+    f = 7*x^2 + 11*x + 7
     '''
     if magma is None:
         from sage.interfaces.magma import Magma
