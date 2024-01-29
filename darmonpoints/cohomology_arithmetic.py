@@ -78,7 +78,7 @@ def get_overconvergent_class_matrices(p,E,prec, sign_at_infinity,use_ps_dists = 
         try:
             Phi = db(fname)
             return Phi
-        except IOError: pass
+        except OSError: pass
     phi0 = E.pollack_stevens_modular_symbol()
     if sign_at_infinity == 1:
         phi0 = phi0.plus_part()
@@ -120,7 +120,7 @@ def get_overconvergent_class_quaternionic(P,phiE,G,prec,sign_at_infinity,sign_ap
             VOC = CohOC.coefficient_module()
             Phi = CohOC([VOC(o) for o in Phivals])
             return Phi
-        except IOError: pass
+        except OSError: pass
     verbose('Computing moments...')
     CohOC = ArithCohOverconvergent(G,base = base_ring,use_ps_dists = use_ps_dists)
     CohOC.P_gen = G.ideal_p
@@ -158,7 +158,7 @@ def get_overconvergent_class_bianchi(P,phiE,G,prec, aP, aPbar, sign_at_infinity=
     verbose('Computing moments...')
     CohOC = ArithCohBianchi(G,base = base_ring)
     Phi0 = CohOC(phiE)
-    pi, pi_bar = [o.gens_reduced()[0] for o, _ in G.F.ideal(G.prime()).factor()]
+    pi, pi_bar = (o.gens_reduced()[0] for o, _ in G.F.ideal(G.prime()).factor())
     if F.ideal(pi) != G.ideal_p:
         pi, pi_bar = pi_bar, pi
     assert F.ideal(pi) == G.ideal_p
@@ -196,7 +196,7 @@ class ArithCohElement(CohomologyElement):
         ## dictionary of coefficients of the p-adic L-series
         self._Lseries_coefficients = {}
         self._attribute_dict = {}
-        super(ArithCohElement,self).__init__(parent, data)
+        super().__init__(parent, data)
 
     def __getitem__(self, ky):
         return self._attribute_dict[ky]
@@ -214,7 +214,7 @@ class ArithCohElement(CohomologyElement):
         element in the Coinduced module, via Shapiro's isomorphism.
         '''
         if he is None:
-            return super(ArithCohElement, self).evaluate(g, at_identity=at_identity)
+            return super().evaluate(g, at_identity=at_identity)
         G = self.parent().S_arithgroup()
         try:
             g = g.quaternion_rep
@@ -229,9 +229,9 @@ class ArithCohElement(CohomologyElement):
             if check:
                 hp = hp.conjugate_by(G.wp())
         if check:
-            return G.Gpn(hp) * super(ArithCohElement, self).evaluate(newg, at_identity=at_identity)
+            return G.Gpn(hp) * super().evaluate(newg, at_identity=at_identity)
         else:
-            return super(ArithCohElement, self).evaluate(newg, at_identity=at_identity)
+            return super().evaluate(newg, at_identity=at_identity)
 
     def Tq_eigenvalue(self, ell, check = True):
         r"""
@@ -473,9 +473,9 @@ class ArithCoh(CohomologyGroup, UniqueRepresentation):
         self._use_ps_dists = kwargs.get('use_ps_dists', False)
         self._use_shapiro = G._use_shapiro
         if self._use_shapiro:
-            super(ArithCoh, self).__init__(G.large_group(), CoIndModule(G,V), **kwargs)
+            super().__init__(G.large_group(), CoIndModule(G,V), **kwargs)
         else:
-            super(ArithCoh, self).__init__(G.small_group(), V, **kwargs)
+            super().__init__(G.small_group(), V, **kwargs)
 
     def use_shapiro(self):
         return self._use_shapiro
@@ -754,7 +754,7 @@ class ArithCohOverconvergent(ArithCoh):
                 verbose('Applied Up %s times (val = %s)'%(ii+2,current_val))
         Phi._val = h2._val
         if progress_bar and current_val < 1:
-            update_progress(float(1.0),'f|Up')
+            update_progress(1.0,'f|Up')
         return h2
 
     def get_Lseries_term(self, phi, n, cov = None):
@@ -1069,7 +1069,7 @@ class ArithCohBianchi(ArithCoh):
             verbose('Applied Up %s times (val = %s)'%(ii+1,current_val))
         Phi._val = h2._val
         if progress_bar and current_val < 1:
-            update_progress(float(1.0),'f|Up')
+            update_progress(1.0,'f|Up')
         return h2
 
     def get_Lseries_term(self, phi, n, cov = None):

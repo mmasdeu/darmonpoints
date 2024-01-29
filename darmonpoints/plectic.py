@@ -451,11 +451,11 @@ def compute_large_system_sparse_parallel(G, phi, ff, hh, depth):
             star_v0 = BT0.entering_edges(v)
             star_v1 = BT1.entering_edges(v)
         # Equation at (v,e) - involves h
-        big_system.append({(e0, e) : int(1) for e0 in star_v0})
+        big_system.append({(e0, e) : 1 for e0 in star_v0})
         for e0 in star_v0:
             edge_to_eqs[e0, e].append(int(i))
         i += 1
-        big_system.append({(e, e1) : int(1) for e1 in star_v1})
+        big_system.append({(e, e1) : 1 for e1 in star_v1})
         for e1 in star_v1:
             edge_to_eqs[e, e1].append(int(i))
         i += 1
@@ -487,7 +487,7 @@ def compute_indeps_parallel(G, phi, ff, hh, depth, njobs=1, max_cpus=1):
     print('Now computing independent term...')
 
     nrows = i
-    indeps = [int(0) for _ in range(nrows)]
+    indeps = [0 for _ in range(nrows)]
 
     @parallel(ncpus=max_cpus)
     def get_coeffs_aux(ff, hh, W, progress_bar=False):
@@ -526,10 +526,10 @@ def sample_point(h, r0, r1, prec = 20):
 def do_twist(G, gamma, tau0, tau1):
     Kp = tau0.parent()
     wp = G.GG[0].wp() * G.GG[1].wp()
-    a, b, c, d = [Kp(o) for o in G.GG[0].embed(wp, 10).list()]
+    a, b, c, d = (Kp(o) for o in G.GG[0].embed(wp, 10).list())
     tau0 = (a * tau0 + b)/(c * tau0 +d)
     Kp = tau1.parent()
-    a, b, c, d = [Kp(o) for o in G.GG[1].embed(wp, 10).list()]
+    a, b, c, d = (Kp(o) for o in G.GG[1].embed(wp, 10).list())
     tau1 = (a * tau1 + b)/(c * tau1 +d)
     gamma = wp * gamma * wp**-1
     return gamma, tau0, tau1
@@ -698,7 +698,7 @@ def additive_integral(mu, phi):
                             f.map_coefficients(lambda o : o._polynomial_list(pad=True)[1], new_base_ring=base))
 
     c = [phi(0) for phi in phi_rat]
-    pol0, pol1 = [projection(R(c0.log()) + R(phi / c0).log()) for c0, phi in zip(c, phi_rat)]
+    pol0, pol1 = (projection(R(c0.log()) + R(phi / c0).log()) for c0, phi in zip(c, phi_rat))
     ans = Matrix(base, 2, 2, 0)
     S = mu.parent().analytic_functions()
     S0 = S.base_ring()

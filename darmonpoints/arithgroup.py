@@ -226,8 +226,8 @@ def angle_sign(left, right):  # UHP
     Return the angle between any two given completed geodesics if
     they intersect.
     """
-    (p1, p2) = [k.coordinates() for k in sorted_ideal_endpoints(left)]
-    (q1, q2) = [k.coordinates() for k in sorted_ideal_endpoints(right)]
+    (p1, p2) = (k.coordinates() for k in sorted_ideal_endpoints(left))
+    (q1, q2) = (k.coordinates() for k in sorted_ideal_endpoints(right))
     if p1 != Infinity and  p2 != Infinity:  # geodesic not a straight line
         # So we send it to the geodesic with endpoints [0, oo]
         T = HyperbolicGeodesicUHP._crossratio_matrix(p1, (p1 + p2) / 2, p2)
@@ -241,7 +241,7 @@ def angle_sign(left, right):  # UHP
     # b1 and b2 are the endpoints of the image of right
     if T.determinant().sign() < 0:
         q1, q2 = q2, q1
-    b1, b2 = [moebius_transform(T,k) for k in [q1, q2]]
+    b1, b2 = (moebius_transform(T,k) for k in [q1, q2])
     # If right is now a straight line...
     if (b1 == Infinity or b2 == Infinity):
         # then since they intersect, they are equal
@@ -634,7 +634,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         self.O = self.B.quaternion_order([self.B([QQ(self._O_magma.ZBasis()[n+1].Vector()[m+1]) for m in range(4)]) for n in range(4)])
         if self._compute_presentation:
             self._init_geometric_data(**kwargs)
-        super(ArithGroup_rationalquaternion,self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
     def _repr_(self):
@@ -656,7 +656,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                 verbose("Initialized fundamental domain data from file %s"%filename)
                 print("Initialized fundamental domain data from file %s"%filename)
                 return
-            except IOError:
+            except OSError:
                 verbose("Will save fundamental domain data to file %s"%filename)
                 print("Initialized fundamental domain data from file %s"%filename)
                 pass
@@ -750,7 +750,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             self._Omax_magma = info_magma._Omax_magma
             if O_magma is None:
                 if self.level != ZZ(1):
-                    self._O_magma = info_magma._O_magma.pMaximalOrder('%s*%s'%(ZZ((info_magma.level // self.level)),ZZ_magma.name()))
+                    self._O_magma = info_magma._O_magma.pMaximalOrder('%s*%s'%(ZZ(info_magma.level // self.level),ZZ_magma.name()))
                 else:
                     self._O_magma = self._Omax_magma
             else:
@@ -982,7 +982,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
                 sign = prod((self._gens[g].quaternion_rep**a for g,a in newrel), z = self.B.one())
                 assert sign == self.B.one()
                 self._relation_words.append(syllables_to_tietze(newrel))
-        super(ArithGroup_rationalmatrix,self).__init__(**kwargs)
+        super().__init__(**kwargs)
         ArithGroup_generic.__init__(self, **kwargs)
 
     def _repr_(self):
@@ -1347,7 +1347,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             self._init_geometric_data(**kwargs)
         else:
             self._init_kwargs = kwargs
-        super(ArithGroup_nf_generic,self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def _repr_(self):
         a, b = self.B.invariants()
@@ -1738,7 +1738,7 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
                 verbose("Initialized fundamental domain data from file %s"%filename)
                 print("Initialized fundamental domain data from file %s"%filename)
                 return
-            except IOError:
+            except OSError:
                 print("Will save fundamental domain data to file %s"%filename)
                 verbose("Will save fundamental domain data to file %s"%filename)
                 pass
@@ -1867,11 +1867,11 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
         K = gamma.parent().base_ring()
         CC = ComplexField(self._RR.precision())
         vC = self._vC
-        aa,bb = [vC(o) for o in B.invariants()]
+        aa,bb = (vC(o) for o in B.invariants())
         sa = aa.sqrt()
         bsa = bb * sa
         P, Pinv = self._Pmat, self._Pmatinv
-        x1,x2,x3,x4 = [vC(o) for o in gamma.coefficient_tuple()]
+        x1,x2,x3,x4 = (vC(o) for o in gamma.coefficient_tuple())
         hi = self._HH.gen(0)
         hj = self._HH.gen(1)
         phi = lambda x:self._HH(x.real()) + hi * x.imag()
@@ -1911,7 +1911,7 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
                 d = R(1)
                 i0 = None
                 for i,(center, radius, mat) in enumerate(boundary):
-                    d1 = sum((o**2 for o in (gammaz - center).coefficient_tuple())) / radius**2
+                    d1 = sum(o**2 for o in (gammaz - center).coefficient_tuple()) / radius**2
                     if d >= (1+eps)*d1:
                         d = d1
                         i0 = i
@@ -1921,11 +1921,11 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
                 gammaz = act_H3(boundary[i0][2],gammaz)
                 deltaword.append(i0+1)
                 lengthw += 1
-            correct = ( -(sum((o**2 for o in gammaz.coefficient_tuple()))).log(10) > 5.0)
+            correct = ( -(sum(o**2 for o in gammaz.coefficient_tuple())).log(10) > 5.0)
             if not correct:
                 verbose('Error in word problem:')
                 verbose('gamma = %s'%gamma)
-                verbose('err = %s'%-(sum((o**2 for o in gammaz.coefficient_tuple()))))
+                verbose('err = %s'%-(sum(o**2 for o in gammaz.coefficient_tuple())))
                 raise RuntimeError('Error in word problem from Aurel 1')
         deltaword.reverse()
         try:

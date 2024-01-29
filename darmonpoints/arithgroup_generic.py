@@ -43,7 +43,7 @@ from .my_p1list_nf import lift_to_sl2_Ok, P1NFList
 class ArithGroup_generic(AlgebraicGroup):
     Element = ArithGroupElement
     def __init__(self, **kwargs):
-        super(ArithGroup_generic,self).__init__()
+        super().__init__()
 
     def base_field(self):
         return self.F
@@ -175,7 +175,7 @@ class ArithGroup_generic(AlgebraicGroup):
         return lcm([ZZ(o.denominator()) for o in self._quaternion_to_list(x)])
 
     def _denominator_valuation(self,x,l):
-        return max((o.denominator().valuation(l) for o in self._quaternion_to_list(x)))
+        return max(o.denominator().valuation(l) for o in self._quaternion_to_list(x))
 
     @cached_method
     def _compute_padic_splitting(self, P, prec): # arithgroup_generic
@@ -276,7 +276,7 @@ class ArithGroup_generic(AlgebraicGroup):
                 if progress and n_iters % 100 == 0:
                     update_progress(float(len(reps))/float(num_reps),'Getting Hecke representatives (%s iterations)'%(n_iters))
             if progress:
-                update_progress(float(1.0),'Getting Hecke representatives (%s iterations)'%(n_iters))
+                update_progress(1.0,'Getting Hecke representatives (%s iterations)'%(n_iters))
         return tuple([set_immutable(o) for o in reps])
 
     @cached_method(key=lambda self, ell, hecke_reps, use_magma, g0: ell)
@@ -373,7 +373,7 @@ class ArithGroup_generic(AlgebraicGroup):
                         ans.append((ZZ(lam),[-j for j in reversed(relation)]))
                 else:
                     if lam < 0:
-                        ans += ZZ((-lam))*relation
+                        ans += ZZ(-lam)*relation
                     else: #lam > 0
                         ans += ZZ(lam)*[-j for j in reversed(relation)]
         return ans

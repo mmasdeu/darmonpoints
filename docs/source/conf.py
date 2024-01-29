@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # sample documentation build configuration file,
 # inspried by slabbe configuration file created sphinx-quickstart
@@ -13,11 +12,11 @@
 # serve to show the default.
 
 # General information about the project.
-project = u"Darmon Points"
-copyright = u'2017, Marc Masdeu'
+project = "Darmon Points"
+copyright = '2017, Marc Masdeu'
 package_name = 'darmonpoints'
 package_folder = "../../darmonpoints"
-authors = u"Marc Masdeu"
+authors = "Marc Masdeu"
 
 import sys
 import os
@@ -233,7 +232,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', package_name + '.tex', u'Documentation of ' + str(package_name),
+  ('index', package_name + '.tex', 'Documentation of ' + str(package_name),
    authors, 'manual'),
 ]
 
@@ -263,7 +262,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', package_name, str(package_name) + u" documentation",
+    ('index', package_name, str(package_name) + " documentation",
      [authors], 1)
 ]
 
@@ -277,7 +276,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', package_name, str(package_name) + u" documentation",
+  ('index', package_name, str(package_name) + " documentation",
    authors, package_name, project,
    'Miscellaneous'),
 ]
@@ -332,7 +331,7 @@ from pygments.formatters.latex import LatexFormatter
 
 class CustomLatexFormatter(LatexFormatter):
     def __init__(self, **options):
-        super(CustomLatexFormatter, self).__init__(**options)
+        super().__init__(**options)
         self.verboptions = r"formatcom=\footnotesize"
 
 PygmentsBridge.latex_formatter = CustomLatexFormatter

@@ -175,7 +175,7 @@ def lift_to_locally_analytic(G, divisor, prec=None, depth=1):
         for parity, (rev, h), wt in edgelist:
             ii += 1
             assert not rev # TODO: allow for reversed edges as well
-            a,b,c,d = [K(o) for o in G.embed(h,prec).list()]
+            a,b,c,d = (K(o) for o in G.embed(h,prec).list())
             try:
                 c0unit = K.one()
                 c0val = 0
@@ -299,7 +299,7 @@ def get_basic_integral(G,cocycle,gamma, center, j, prec=None):
     edgelist = G.get_covering(1)[1:]
     for rev, h in edgelist:
         mu_e = cycle.evaluate(gamma, h, twist=rev, at_identity=G.use_shapiro())
-        a,b,c,d = [Cp(o) for o in G.embed(h,prec).list()]
+        a,b,c,d = (Cp(o) for o in G.embed(h,prec).list())
         pol = ((PS(d * z + b) / PS(c * z + a) - Cp.teichmuller(center))**j).polynomial()
         resadd += sum(a * mu_e.moment(i) for a,i in zip(pol.coefficients(),pol.exponents()) if i < len(mu_e.moments()))
     return resadd

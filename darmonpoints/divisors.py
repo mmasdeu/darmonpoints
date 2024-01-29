@@ -127,7 +127,7 @@ class DivisorsElement(ModuleElement):
         return self._data == self.parent()(right)._data
 
     def is_zero(self):
-        return all((n == 0 for n in self._data.values()))
+        return all(n == 0 for n in self._data.values())
 
     def gcd(self):
         return GCD([n for n in self._data.values()])
