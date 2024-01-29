@@ -1082,7 +1082,7 @@ def test_fundamental_domain(gens, balls):
         for j, _ in all_gens:
             if i == j:
                 continue
-            if balls[i].intersects(balls[j]):
+            if (balls[i].closure()).intersects(balls[j].closure()):
                 fails.append((i,j))
                 verbose(f'Test *failed* for balls {i = } and {j = }')
             else:

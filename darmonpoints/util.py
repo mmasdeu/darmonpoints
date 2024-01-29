@@ -1710,7 +1710,8 @@ def recognize_J(E,J,K,local_embedding = None,known_multiple = 1,twopowlist = Non
         power = QQ(twopow * known_multiple)**-1
         pnum = E.torsion_order() * power.numerator()
         pden = E.torsion_order() * power.denominator()
-        for J1 in our_nroot(J**pnum, pden, return_all = True):
+        J1list = sum((our_nroot(J**pnum * qE**i, pden, return_all = True) for i in range(pden)),[])
+        for J1 in J1list:
             if J1 == Cp(1):
                 candidate = E.change_ring(HCF)(0)
                 verbose('Recognized the point, it is zero!')

@@ -3,9 +3,7 @@ from sage.modules.fg_pid.fgp_module import FGP_Module,FGP_Module_class
 from sage.matrix.constructor import matrix,Matrix,block_diagonal_matrix,block_matrix
 from sage.misc.persist import db
 from sage.rings.padics.precision_error import PrecisionError
-from sage.misc.misc import alarm, cancel_alarm
 from sage.rings.integer_ring import ZZ
-
 from itertools import product,chain,groupby,islice,tee,starmap
 import os, datetime, configparser
 

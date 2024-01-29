@@ -1359,13 +1359,13 @@ def get_twodim_cocycle(Coh, sign = 1, use_magma = True,bound = 5, hecke_data = N
         q = q.next_prime()
         verbose('q = %s'%q)
         fact = F.ideal(q).factor()
-        dfact = F.ideal(disc.gens_reduced()[0]).factor()
+        dfact = F.ideal(disc).factor()
         for qq,e in fact:
             verbose('Trying qq = %s'%qq)
             if qq in [o for o,_ in dfact]:
                 verbose('Skipping because qq divides D...')
                 continue
-            if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc.gens_reduced()[0])):
+            if  ZZ(qq.norm()).is_prime() and not qq.divides(F.ideal(disc)):
                 try:
                     Aq = Coh.hecke_matrix(qq.gens_reduced()[0],g0 = g0,use_magma = use_magma).transpose().change_ring(QQ)
                 except (RuntimeError,TypeError) as e:
