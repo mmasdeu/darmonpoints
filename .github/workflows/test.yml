@@ -39,7 +39,7 @@ jobs:
       - name: Install darmonpoints
         shell: bash -l {0}
         run: |
-          pip install --verbose --no-index . --break-system-packages
+          sage -pip install --verbose --no-index . --break-system-packages
       - name: Run SageMath doctests
         shell: bash -l {0}
         run: |
