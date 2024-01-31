@@ -6,6 +6,7 @@ channels:
   - conda-forge
 dependencies:
   - black>=23,<24
+  - cysignals
   - docutils
   - furo
   - alabaster
