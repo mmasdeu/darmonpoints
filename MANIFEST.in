@@ -1,1 +1,3 @@
 include darmonpoints/*.pyx
+include darmonpoints/Fdoms/*
+include darmonpoints/KleinianGroups-1.0/*
