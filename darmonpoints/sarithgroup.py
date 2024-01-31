@@ -105,7 +105,7 @@ def BigArithGroup(p, quat_data, level, base = None, grouptype = None, seed = Non
     if use_sage_db:
         try:
             newobj = db(fname)
-        except IOError:
+        except OSError:
             verbose('Group not found in database. Computing from scratch.')
             newobj = BigArithGroup_class(base,p,discriminant,level,seed,grouptype = grouptype,magma = magma, **kwargs)
             newobj.save_to_db()
@@ -514,7 +514,7 @@ class BigArithGroup_class(AlgebraicGroup):
         ans = 0
         if not is_in_Gamma0loc(self.embed(wp,20) * epsinv, det_condition = False):
             ans += 1
-        if not all((self.Gpn._is_in_order(wp**-1 * g * wp) for g in self.Gpn._get_O_basis())):
+        if not all(self.Gpn._is_in_order(wp**-1 * g * wp) for g in self.Gpn._get_O_basis()):
             ans += 2
         if not self.Gpn._is_in_order(wp):
             ans += 4

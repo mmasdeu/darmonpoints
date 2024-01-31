@@ -145,16 +145,16 @@ def Theta(p1, p2, p3, version, prec=None):
         term = lambda i,j: (-1)**(i+j)
     elif version == '2m3p':
         condition = lambda i,j: b*(i**2+i) + a*j**2 + c*((i-j)**2+(i-j))
-        term = lambda i,j: p2**(i)*p3**((i-j))*(-1)**j
+        term = lambda i,j: p2**(i)*p3**(i-j)*(-1)**j
     elif version == '2p3m':
         condition = lambda i,j: b*(i**2+i) + a*j**2 + c*((i-j)**2+(i-j))
-        term = lambda i,j: p2**(i)*p3**((i-j))
+        term = lambda i,j: p2**(i)*p3**(i-j)
     elif version == '3m1p':
         condition = lambda i,j: b*i**2 + a*(j**2+j) + c*((i-j)**2+(j-i))
-        term = lambda i,j: p1**(j)*p3**((j-i))*(-1)**i
+        term = lambda i,j: p1**(j)*p3**(j-i)*(-1)**i
     elif version == '3p1m':
         condition = lambda i,j:  b*i**2 + a*(j**2+j) + c*((i-j)**2+(j-i))
-        term = lambda i,j: p1**(j)*p3**((j-i))
+        term = lambda i,j: p1**(j)*p3**(j-i)
     else:
         raise ValueError("Wrong version? version = %s"%version)
     res = 0
@@ -322,7 +322,7 @@ def qlogs_from_Lp_and_ords(a,b,Tmatrix,q1ord, q2ord, q3ord):
 
 def all_possible_qords(Tmatrix,N,initial = None):
     # Find linear equation from matrix
-    x, y, z, t = [ZZ(o) for o in Tmatrix.list()]
+    x, y, z, t = (ZZ(o) for o in Tmatrix.list())
     r = x+y-z-t
     ans = set([])
     # Note: since we assume that the minimal polynomial is irreducible,

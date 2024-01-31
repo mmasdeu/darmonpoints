@@ -373,12 +373,12 @@ def _find_limits_prefactoring(tau,gtau,level,v0):
         lmb,uu = find_lambda(vv,p,n_results = 1)[0]
         decomp.extend(decompose(vv,lmb,uu))
     assert prod(decomp) == gtau
-    if not all((is_in_Gamma_1(mat,level,p,determinant_condition = False) for mat in decomp)):
+    if not all(is_in_Gamma_1(mat,level,p,determinant_condition = False) for mat in decomp):
         for mat in decomp:
             if not is_in_Gamma_1(mat,level,p,determinant_condition = False):
                 print(mat.list())
                 raise RuntimeError
-    if any((get_limits_from_decomp(tau,[mat],v0)[1] > p*(p+1) for mat in decomp)):
+    if any(get_limits_from_decomp(tau,[mat],v0)[1] > p*(p+1) for mat in decomp):
         raise RuntimeError
     V, n_evals = get_limits_from_decomp(tau,decomp,v0)
     return V

@@ -26,7 +26,7 @@ import sys
 #plt.gcf().gca().add_artist(circle1)
 #.gcf means get current figure, .gca means get current axis. Can also directly call plt.gca().
 
-class animated_geodesic(object):
+class animated_geodesic:
 	def __init__(self, geod, op_man):#Init
 		self.geod=geod
 		self.colour=geod.colour
@@ -111,7 +111,7 @@ class animated_geodesic(object):
 		return patches.Polygon(np.array([[startx, starty], [endx, endy]]), edgecolor=self.colour, facecolor='none', linewidth=self.linewidth, closed=False)
 
 #Store funddom as [side pairing], then lines of xcentre, ycentre, radius, startangle, endangle	
-class funddom(object):
+class funddom:
 	def __init__(self, ax, file, unitcirc):
 		self.ax=ax #Storing axis
 		self.linewidth=1
@@ -175,7 +175,7 @@ class funddom(object):
 			self.ax.figure.canvas.draw()
 
 #geodesic stores an entire geodesic, i.e. a set of arcs.
-class geodesic(object):
+class geodesic:
 	def __init__(self, ax, file, colour):#Init
 		self.ax=ax #Storing axis
 		self.colour=colour #Storing colour
@@ -203,7 +203,7 @@ class geodesic(object):
 				start=[data[1], data[2]]
 				end=[data[3], data[4]]
 				self.sides.append(patches.Polygon(np.array([start, end]), closed=False))
-				self.directions.append(int(0))
+				self.directions.append(0)
 				self.theta1s.append(start)
 				self.theta2s.append(end)
 				self.radii.append(False)
@@ -315,7 +315,7 @@ class geodesic(object):
 			self.ax.figure.canvas.draw()
 
 #Handles the user input
-class operations_manager(object):
+class operations_manager:
 	def __init__(self, ax, fdom, geodesics, unitcirc):#Storing them for now
 		self.ax=ax
 		self.fdom=fdom
