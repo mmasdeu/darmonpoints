@@ -1,0 +1,663 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+
+    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
+        <title>darmonpoints.representations - darmonpoints 6.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  --color-brand-primary: #0f0fff;
+  --color-brand-content: #0f0fff;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">darmonpoints 6.0.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../../_static/logo.svg" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">darmonpoints 6.0.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html">Arithmetic group elements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cohomology.html">Abstract cohomology class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cohomology.html#module-darmonpoints.cohomology_arithmetic">Arithmetic cohomology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cohomology.html#module-darmonpoints.homology_abstract">Abstract homology class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cohomology.html#module-darmonpoints.homology">Homology class</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../integration.html">Integrals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../integration.html#module-darmonpoints.limits">Limits</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../distributions.html">Overconvergent module of distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../distributions.html#module-darmonpoints.representations">Representations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html">Mixed extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html#module-darmonpoints.util">Utility package</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <h1>Source code for darmonpoints.representations</h1><div class="highlight"><pre>
+<span></span><span class="c1">######################</span>
+<span class="c1">##                  ##</span>
+<span class="c1">##  REPRESENTATIONS ##</span>
+<span class="c1">##                  ##</span>
+<span class="c1">##                  ##</span>
+<span class="c1">######################</span>
+<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span>
+<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
+<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span><span class="p">,</span> <span class="n">ModuleElement</span>
+<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
+<span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
+<span class="kn">from</span> <span class="nn">sage.categories.homset</span> <span class="kn">import</span> <span class="n">Hom</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.constructor</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
+<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_method</span>
+<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
+<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RealField</span><span class="p">,</span>
+    <span class="n">ComplexField</span><span class="p">,</span>
+    <span class="n">RR</span><span class="p">,</span>
+    <span class="n">QuadraticField</span><span class="p">,</span>
+    <span class="n">PolynomialRing</span><span class="p">,</span>
+    <span class="n">LaurentSeriesRing</span><span class="p">,</span>
+    <span class="n">Qp</span><span class="p">,</span>
+    <span class="n">Zp</span><span class="p">,</span>
+    <span class="n">Zmod</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">db_save</span>
+<span class="kn">from</span> <span class="nn">sage.parallel.decorate</span> <span class="kn">import</span> <span class="n">fork</span><span class="p">,</span> <span class="n">parallel</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.constructor</span> <span class="kn">import</span> <span class="n">block_matrix</span>
+<span class="kn">from</span> <span class="nn">sage.rings.number_field.number_field</span> <span class="kn">import</span> <span class="n">NumberField</span>
+<span class="kn">from</span> <span class="nn">sage.categories.action</span> <span class="kn">import</span> <span class="n">Action</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
+<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">vector</span>
+<span class="kn">from</span> <span class="nn">sage.modules.vector_integer_dense</span> <span class="kn">import</span> <span class="n">Vector_integer_dense</span>
+<span class="kn">from</span> <span class="nn">sage.modules.vector_rational_dense</span> <span class="kn">import</span> <span class="n">Vector_rational_dense</span>
+<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">FreeModuleElement_generic_dense</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">tee</span><span class="p">,</span> <span class="n">starmap</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">.cohomology_abstract</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="TrivialAction">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.TrivialAction">[docs]</a>
+<span class="k">class</span> <span class="nc">TrivialAction</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">M</span><span class="p">):</span>
+        <span class="n">Action</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">is_left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_act_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+
+<div class="viewcode-block" id="MatrixAction">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.MatrixAction">[docs]</a>
+<span class="k">class</span> <span class="nc">MatrixAction</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">M</span><span class="p">):</span>
+        <span class="n">Action</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">is_left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_act_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">v</span><span class="o">.</span><span class="n">left_act_by_matrix</span><span class="p">(</span><span class="n">g</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Scaling">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.Scaling">[docs]</a>
+<span class="k">class</span> <span class="nc">Scaling</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">M</span><span class="p">):</span>
+        <span class="n">Action</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">is_left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_act_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">v</span><span class="o">.</span><span class="n">scale_by</span><span class="p">(</span><span class="n">g</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CoIndAction">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndAction">[docs]</a>
+<span class="k">class</span> <span class="nc">CoIndAction</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">algebra</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">G</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_G</span> <span class="o">=</span> <span class="n">G</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="n">V</span>
+        <span class="n">Action</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">algebra</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">is_left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_act_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="c1"># Here v is an element of the coinduced module</span>
+        <span class="c1"># v = [v_1, ... , v_r], indexed by cosets</span>
+        <span class="c1"># To know (g*f)(x_i) = f(x_i g), we write</span>
+        <span class="c1"># x_i g = g&#39; x_j, and then f(x_i g) = g&#39; f(x_j).</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_G</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">quaternion_rep</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="n">action_data</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">get_action_data</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">([</span><span class="n">g1</span> <span class="o">*</span> <span class="n">v</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="n">ti</span><span class="p">]</span> <span class="k">for</span> <span class="n">g1</span><span class="p">,</span> <span class="n">ti</span> <span class="ow">in</span> <span class="n">action_data</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CoIndElement">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndElement">[docs]</a>
+<span class="k">class</span> <span class="nc">CoIndElement</span><span class="p">(</span><span class="n">ModuleElement</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Elements in a co-induced module are represented by lists [v_1,\ldots v_r]</span>
+<span class="sd">    indexed by the cosets of G(p) \ G(1).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span> <span class="ow">is</span> <span class="n">V</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">gens</span><span class="p">())</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">_G</span><span class="o">.</span><span class="n">coset_reps</span><span class="p">()),</span> <span class="n">dim</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">V</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">dim</span><span class="p">]))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">_val</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;lift&quot;</span><span class="p">):</span>
+                    <span class="n">prec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">precision_cap</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span><span class="n">M</span><span class="o">=</span><span class="n">prec</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Vector_integer_dense</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">,</span> <span class="n">Vector_rational_dense</span>
+            <span class="p">):</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">gens</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">_G</span><span class="o">.</span><span class="n">coset_reps</span><span class="p">()),</span> <span class="n">dim</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">V</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">dim</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">_G</span><span class="o">.</span><span class="n">coset_reps</span><span class="p">()]</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">_G</span><span class="o">.</span><span class="n">coset_reps</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">ModuleElement</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CoIndElement.evaluate_at_identity">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndElement.evaluate_at_identity">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_at_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CoIndElement.act_and_evaluate_at_identity">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndElement.act_and_evaluate_at_identity">[docs]</a>
+    <span class="k">def</span> <span class="nf">act_and_evaluate_at_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">quaternion_rep</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="n">g0</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">get_action_data</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">g</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">g0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CoIndElement.evaluate">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndElement.evaluate">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">())])</span></div>
+
+
+<div class="viewcode-block" id="CoIndElement.values">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndElement.values">[docs]</a>
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Element of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_add_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="p">[</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">,</span> <span class="n">right</span><span class="o">.</span><span class="n">_val</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_sub_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="p">[</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">,</span> <span class="n">right</span><span class="o">.</span><span class="n">_val</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_neg_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="p">[</span><span class="o">-</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="n">right</span><span class="p">)</span> <span class="o">*</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_richcmp_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">richcmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vector</span><span class="p">(),</span> <span class="n">right</span><span class="o">.</span><span class="n">_vector_</span><span class="p">(),</span> <span class="n">op</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CoIndElement.is_zero">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndElement.is_zero">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_zero</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vector_</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vector_</span><span class="p">()</span> <span class="o">==</span> <span class="n">right</span><span class="o">.</span><span class="n">_vector_</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vector_</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_vector_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">vector</span><span class="p">(</span><span class="nb">sum</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="n">vector</span><span class="p">(</span><span class="n">o</span><span class="p">))</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span> <span class="p">[]))</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span> <span class="p">[])</span><span class="o">.</span><span class="fm">__iter__</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="CoIndModule">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule">[docs]</a>
+<span class="k">class</span> <span class="nc">CoIndModule</span><span class="p">(</span><span class="n">Parent</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A co-induced module.</span>
+
+<span class="sd">    TESTS::</span>
+
+<span class="sd">        sage: from darmonpoints.homology import *</span>
+<span class="sd">        sage: from darmonpoints.cohomology_abstract import *</span>
+<span class="sd">        sage: from darmonpoints.sarithgroup import *</span>
+<span class="sd">        sage: G = BigArithGroup(5,6,1,outfile=&#39;/tmp/darmonpoints.tmp&#39;) #  optional - magma</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">Element</span> <span class="o">=</span> <span class="n">CoIndElement</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">V</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_G</span> <span class="o">=</span> <span class="n">G</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_V</span> <span class="o">=</span> <span class="n">V</span>
+        <span class="n">Parent</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_act</span> <span class="o">=</span> <span class="n">CoIndAction</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">large_group</span><span class="p">(),</span> <span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">)</span>
+        <span class="n">quat_act</span> <span class="o">=</span> <span class="n">CoIndAction</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">large_group</span><span class="p">()</span><span class="o">.</span><span class="n">B</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unset_coercions_used</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_action</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_act</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_action</span><span class="p">(</span><span class="n">quat_act</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_populate_coercion_lists_</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;coInd(G,V) where G is </span><span class="si">%s</span><span class="s2"> and V is </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_G</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_V</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CoIndModule.coefficient_module">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.coefficient_module">[docs]</a>
+    <span class="k">def</span> <span class="nf">coefficient_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_V</span></div>
+
+
+<div class="viewcode-block" id="CoIndModule.base_ring">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.base_ring">[docs]</a>
+    <span class="k">def</span> <span class="nf">base_ring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_V</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CoIndModule.base_field">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.base_field">[docs]</a>
+    <span class="k">def</span> <span class="nf">base_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_V</span><span class="o">.</span><span class="n">base_field</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CoIndModule.acting_matrix">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.acting_matrix">[docs]</a>
+    <span class="nd">@cached_method</span>
+    <span class="k">def</span> <span class="nf">acting_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basis</span><span class="p">())</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_V</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span> <span class="n">dim</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">basis</span><span class="p">():</span>
+            <span class="n">gv</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">v</span>
+            <span class="n">gvlist</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">gv</span><span class="o">.</span><span class="n">_val</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">wlist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                    <span class="n">wlist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">_moments</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">prec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">gvlist</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">wlist</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">gvlist</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">wlist</span><span class="p">[:</span><span class="n">prec</span><span class="p">])</span>
+            <span class="n">ans</span> <span class="o">=</span> <span class="n">ans</span><span class="o">.</span><span class="n">augment</span><span class="p">(</span><span class="n">Matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_V</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span> <span class="n">dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">gvlist</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ans</span></div>
+
+
+<div class="viewcode-block" id="CoIndModule.act_by_genpow">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.act_by_genpow">[docs]</a>
+    <span class="k">def</span> <span class="nf">act_by_genpow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_G</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">large_group</span><span class="p">()</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">**</span> <span class="n">a</span>
+        <span class="n">action_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_action_data</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">g1</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="n">ti</span><span class="p">]</span> <span class="k">for</span> <span class="n">g1</span><span class="p">,</span> <span class="n">ti</span> <span class="ow">in</span> <span class="n">action_data</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CoIndModule.get_action_data">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.get_action_data">[docs]</a>
+    <span class="nd">@cached_method</span>
+    <span class="k">def</span> <span class="nf">get_action_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_G</span>
+        <span class="n">Gpn</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">small_group</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ans</span> <span class="o">=</span> <span class="p">[</span><span class="n">G</span><span class="o">.</span><span class="n">get_coset_ti</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">xi</span> <span class="o">*</span> <span class="n">g</span><span class="p">))</span> <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">coset_reps</span><span class="p">()]</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="n">Gpn</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">ans</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ans</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">get_coset_ti</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">coset_reps</span><span class="p">()[</span><span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">g</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">Gpn</span><span class="p">(</span><span class="n">ans</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CoIndModule.group">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.group">[docs]</a>
+    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_G</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_element_constructor_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">check</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CoIndModule.gens">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.gens">[docs]</a>
+    <span class="nd">@cached_method</span>
+    <span class="k">def</span> <span class="nf">gens</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_V</span><span class="o">.</span><span class="n">gens</span><span class="p">())</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_G</span><span class="o">.</span><span class="n">coset_reps</span><span class="p">()))</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_V</span><span class="o">.</span><span class="n">basis</span><span class="p">())</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_G</span><span class="o">.</span><span class="n">coset_reps</span><span class="p">()))</span>
+                <span class="p">]</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CoIndModule.basis">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.basis">[docs]</a>
+    <span class="k">def</span> <span class="nf">basis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gens</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="CoIndModule.dimension">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.dimension">[docs]</a>
+    <span class="k">def</span> <span class="nf">dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gens</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="CoIndModule.gen">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.CoIndModule.gen">[docs]</a>
+    <span class="nd">@cached_method</span>
+    <span class="k">def</span> <span class="nf">gen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_V</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">gens</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">gens</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">gens</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">basis</span><span class="p">()</span>
+        <span class="n">i0</span> <span class="o">=</span> <span class="n">i</span> <span class="o">//</span> <span class="nb">len</span><span class="p">(</span><span class="n">gens</span><span class="p">)</span>
+        <span class="n">i1</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">gens</span><span class="p">)</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_G</span><span class="o">.</span><span class="n">coset_reps</span><span class="p">()]</span>
+        <span class="n">ans</span><span class="p">[</span><span class="n">i0</span><span class="p">]</span> <span class="o">=</span> <span class="n">gens</span><span class="p">[</span><span class="n">i1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="IndElement">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.IndElement">[docs]</a>
+<span class="k">class</span> <span class="nc">IndElement</span><span class="p">(</span><span class="n">CoIndElement</span><span class="p">):</span>
+<div class="viewcode-block" id="IndElement.evaluate_at_identity">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.IndElement.evaluate_at_identity">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_at_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="IndAction">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.IndAction">[docs]</a>
+<span class="k">class</span> <span class="nc">IndAction</span><span class="p">(</span><span class="n">CoIndAction</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="IndModule">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.representations.IndModule">[docs]</a>
+<span class="k">class</span> <span class="nc">IndModule</span><span class="p">(</span><span class="n">CoIndModule</span><span class="p">):</span>
+    <span class="n">Element</span> <span class="o">=</span> <span class="n">IndElement</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">V</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_G</span> <span class="o">=</span> <span class="n">G</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_V</span> <span class="o">=</span> <span class="n">V</span>
+        <span class="n">Parent</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_act</span> <span class="o">=</span> <span class="n">IndAction</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">large_group</span><span class="p">(),</span> <span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">)</span>
+        <span class="n">quat_act</span> <span class="o">=</span> <span class="n">IndAction</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">large_group</span><span class="p">()</span><span class="o">.</span><span class="n">B</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unset_coercions_used</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_action</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_act</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_action</span><span class="p">(</span><span class="n">quat_act</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_populate_coercion_lists_</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Ind(G,V) where G is </span><span class="si">%s</span><span class="s2"> and V is </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_G</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_V</span><span class="p">)</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2016-2024, Marc Masdeu
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=12958129"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=32e29ea5"></script>
+    </body>
+</html>

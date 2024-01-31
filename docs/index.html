@@ -1,0 +1,954 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Arithmetic group elements" href="arithmeticgroups.html" />
+
+    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
+        <title>darmonpoints 6.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  --color-brand-primary: #0f0fff;
+  --color-brand-content: #0f0fff;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="#"><div class="brand">darmonpoints 6.0.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="_static/logo.svg" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="_static/logo.svg" alt="Dark Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">darmonpoints 6.0.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html">Arithmetic group elements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html">Abstract cohomology class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html#module-darmonpoints.cohomology_arithmetic">Arithmetic cohomology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html#module-darmonpoints.homology_abstract">Abstract homology class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html#module-darmonpoints.homology">Homology class</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">Integrals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html#module-darmonpoints.limits">Limits</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html">Overconvergent module of distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html#module-darmonpoints.representations">Representations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Mixed extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html#module-darmonpoints.util">Utility package</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="darmon-points">
+<h1>Darmon Points<a class="headerlink" href="#darmon-points" title="Link to this heading">#</a></h1>
+<p>For installation and basic usage instructions please see the main Github repository (<a class="reference external" href="https://github.com/mmasdeu/darmonpoints">https://github.com/mmasdeu/darmonpoints</a>).</p>
+<p>The <strong>darmonpoints</strong> package can compute many different types of what is known as Darmon points. These are known as <em>Stark-Heegner</em> points in some literature, and originated in <a class="reference internal" href="#darmon" id="id1"><span>[Darmon]</span></a>. Subsequent generalizations were introduced by <a class="reference internal" href="#greenberg" id="id2"><span>[Greenberg]</span></a> and <a class="reference internal" href="#trifkovic" id="id3"><span>[Trifkovic]</span></a>. This has been generalized by <a class="reference internal" href="#gms1" id="id4"><span>[GMS1]</span></a> to elliptic curves defined over number fields of arbitrary signature. Darmon points are attached to triples <cite>(F,E,K)</cite>, where <cite>F</cite> is a number field, <cite>E/F</cite> is an elliptic curve defined over <cite>F</cite>, and <cite>K/F</cite> is a quadratic extension. These triples must satisfy certain conditions for Darmon points to be attached to them. The article <a class="reference internal" href="#gms1" id="id5"><span>[GMS1]</span></a> contains an overview of all of this. We include also a variation used in <a class="reference internal" href="#kp" id="id6"><span>[KP]</span></a>.</p>
+<p>The <strong>darmonpoints</strong> package can also compute equations for some elliptic curves <cite>E/F</cite> defined over number fields <cite>F</cite>, as long as certain conditions are satisfied. Namely:</p>
+<ol class="arabic simple">
+<li><p><cite>F</cite> has narrow class number <cite>1</cite>.</p></li>
+<li><p>if <cite>N</cite> is the conductor of the elliptic curve, it must admit a factorization of the form <cite>N = PDM</cite>, where:</p>
+<ol class="loweralpha simple">
+<li><p><cite>P</cite>, <cite>D</cite> and <cite>M</cite> are relative coprime.</p></li>
+<li><p><cite>P</cite> is a prime ideal of <cite>F</cite> of prime norm.</p></li>
+<li><p><cite>D</cite> is the discriminant of a quaternion algebra over <cite>F</cite> which is split at only one infinite place.</p></li>
+</ol>
+</li>
+</ol>
+<p>Finally, we include the module <em>padicperiods</em>, which allows for the computation of <cite>p</cite>-adic periods attached to two-dimensional components of the cohomology of the same arithmetic groups, and which has allowed us to find the corresponding abelian surfaces in some cases (see <a class="reference internal" href="#gm" id="id7"><span>[GM]</span></a>).</p>
+<div role="list" class="citation-list">
+<div class="citation" id="darmon" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Darmon</a><span class="fn-bracket">]</span></span>
+<p>H.Darmon. <em>Integration on Hp x H and arithmetic applications</em>. Annals of Math.</p>
+</div>
+<div class="citation" id="greenberg" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">Greenberg</a><span class="fn-bracket">]</span></span>
+<p>M.Greenberg. <em>Stark-Heegner points and the cohomology of quaternionic Shimura varieties</em>. Duke Math.</p>
+</div>
+<div class="citation" id="gm" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id7">GM</a><span class="fn-bracket">]</span></span>
+<p>X.Guitart, M.Masdeu. <em>Periods of modular GL2-type abelian varieties and p-adic integration</em>. Experimental Mathematics.</p>
+</div>
+<div class="citation" id="gms1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>GMS1<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id4">1</a>,<a role="doc-backlink" href="#id5">2</a>)</span>
+<p>X.Guitart, M.Masdeu, M.H.Sengun. <em>Darmon points on elliptic curves over number fields of arbitrary signature</em>. Proc. LMS.</p>
+</div>
+<div class="citation" id="gms2" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>GMS2<span class="fn-bracket">]</span></span>
+<p>X.Guitart, M.Masdeu, M.H.Sengun. <em>Uniformization of modular elliptic curves via p-adic methods</em>. Journal of Algebra.</p>
+</div>
+<div class="citation" id="kp" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id6">KP</a><span class="fn-bracket">]</span></span>
+<p>A.Pacetti, D.Kohen (with an appendix by M.Masdeu) <em>On Heegner points for primes of additive reduction ramifying in the base field</em>. Transactions of the AMS.</p>
+</div>
+<div class="citation" id="trifkovic" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">Trifkovic</a><span class="fn-bracket">]</span></span>
+<p>M.Trifkovic. <em>Stark-Heegner points on elliptic curves defined over imaginary quadratic fields</em>. Duke Math.</p>
+</div>
+</div>
+<p>This work is licensed under a <a class="reference external" href="https://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-Share Alike
+3.0 License</a>.</p>
+<div class="toctree-wrapper compound">
+</div>
+<section id="arithmetic-groups">
+<h2>Arithmetic Groups<a class="headerlink" href="#arithmetic-groups" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html">Arithmetic group elements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.acton"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.acton()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.check_consistency"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.check_consistency()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.conjugate_by"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.conjugate_by()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.embed"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.embed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.find_bounding_cycle"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.find_bounding_cycle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.is_one"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.is_one()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.is_scalar"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.is_scalar()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.is_trivial_in_abelianization"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.is_trivial_in_abelianization()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.matrix"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.quaternion_rep"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.quaternion_rep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.size"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.word_rep"><code class="docutils literal notranslate"><span class="pre">ArithGroupElement.word_rep()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nscartan</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.Element"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nscartan.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.element_of_norm"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nscartan.element_of_norm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.embed_order"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nscartan.embed_order()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.generate_wp_candidates"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nscartan.generate_wp_candidates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.get_word_rep"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nscartan.get_word_rep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.non_positive_unit"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nscartan.non_positive_unit()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.lift"><code class="docutils literal notranslate"><span class="pre">lift()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.draw_mat_list"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.draw_mat_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.find_fundom_rep"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.find_fundom_rep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.fundamental_domain"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.fundamental_domain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.fundamental_domain_data"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.fundamental_domain_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.fundamental_domain_interior_data"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.fundamental_domain_interior_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.get_archimedean_embedding"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.get_archimedean_embedding()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.get_embgquats_twisted"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.get_embgquats_twisted()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.get_word_rep"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.get_word_rep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.is_in_fundom"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.is_in_fundom()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.is_in_fundom_boundary"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.is_in_fundom_boundary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.is_in_fundom_exterior"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.is_in_fundom_exterior()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.is_in_fundom_interior"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.is_in_fundom_interior()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.magma_word_problem"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.magma_word_problem()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.mat_list"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.mat_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.plot_fundamental_domain"><code class="docutils literal notranslate"><span class="pre">ArithGroup_fuchsian_generic.plot_fundamental_domain()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_fuchsian"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_fuchsian</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_generic</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.compute_quadratic_embedding"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_generic.compute_quadratic_embedding()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.element_of_norm"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_generic.element_of_norm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.element_of_prime_norm"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_generic.element_of_prime_norm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.embed_order"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_generic.embed_order()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.non_positive_unit"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_generic.non_positive_unit()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_kleinian"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_kleinian</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_kleinian.fundamental_domain"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_kleinian.fundamental_domain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_kleinian.get_word_rep"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_kleinian.get_word_rep()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.element_of_norm"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix.element_of_norm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.generate_wp_candidates"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix.generate_wp_candidates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.matrix_basis"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix.matrix_basis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.matrix_to_quaternion"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix.matrix_to_quaternion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.non_positive_unit"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix.non_positive_unit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.quaternion_to_matrix"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix.quaternion_to_matrix()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix_new</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.get_word_rep"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix_new.get_word_rep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.level"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix_new.level</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.matrix_basis"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix_new.matrix_basis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.matrix_to_quaternion"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix_new.matrix_to_quaternion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.quaternion_to_matrix"><code class="docutils literal notranslate"><span class="pre">ArithGroup_nf_matrix_new.quaternion_to_matrix()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.element_of_norm"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.element_of_norm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.embed_order"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.embed_order()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.embed_order_legacy"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.embed_order_legacy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.find_fundom_rep"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.find_fundom_rep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.fundamental_domain"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.fundamental_domain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.fundamental_domain_data"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.fundamental_domain_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.generate_wp_candidates"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.generate_wp_candidates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.get_archimedean_embedding"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.get_archimedean_embedding()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.get_word_rep"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.get_word_rep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.is_in_fundom"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.is_in_fundom()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.mat_list"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.mat_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.non_positive_unit"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalmatrix.non_positive_unit()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalquaternion</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion.compute_quadratic_embedding"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalquaternion.compute_quadratic_embedding()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion.element_of_norm"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalquaternion.element_of_norm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion.embed_order"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalquaternion.embed_order()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion.non_positive_unit"><code class="docutils literal notranslate"><span class="pre">ArithGroup_rationalquaternion.non_positive_unit()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.angle_sign"><code class="docutils literal notranslate"><span class="pre">angle_sign()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.geodesic_circle"><code class="docutils literal notranslate"><span class="pre">geodesic_circle()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.hyperbolic_distance"><code class="docutils literal notranslate"><span class="pre">hyperbolic_distance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.intersect_geodesic_arcs"><code class="docutils literal notranslate"><span class="pre">intersect_geodesic_arcs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.is_in_open_interval"><code class="docutils literal notranslate"><span class="pre">is_in_open_interval()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.moebius_transform"><code class="docutils literal notranslate"><span class="pre">moebius_transform()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.perturb_point_on_arc"><code class="docutils literal notranslate"><span class="pre">perturb_point_on_arc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.arithgroup.sorted_ideal_endpoints"><code class="docutils literal notranslate"><span class="pre">sorted_ideal_endpoints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.ArithGroup"><code class="docutils literal notranslate"><span class="pre">ArithGroup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BTEdge"><code class="docutils literal notranslate"><span class="pre">BTEdge</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup"><code class="docutils literal notranslate"><span class="pre">BigArithGroup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.Gpn_Obasis"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.Gpn_Obasis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.Gpn_denominator"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.Gpn_denominator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.base_field"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.base_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.base_ring_local_embedding"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.base_ring_local_embedding()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.clear_cache"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.clear_cache()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.clear_local_splitting"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.clear_local_splitting()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.construct_edge_reps"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.construct_edge_reps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.coset_reps"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.coset_reps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.do_tilde"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.do_tilde()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.edge_from_quaternion"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.edge_from_quaternion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.edges_entering_odd_vertex"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.edges_entering_odd_vertex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.edges_leaving_even_vertex"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.edges_leaving_even_vertex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.embed"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.embed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.embed_wp"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.embed_wp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_BT_reps"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_BT_reps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_BT_reps_twisted"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_BT_reps_twisted()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_Up_reps"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_Up_reps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_Up_reps_bianchi"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_Up_reps_bianchi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_Zp_covering"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_Zp_covering()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_amalgam_reps"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_amalgam_reps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_coset_ti"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_coset_ti()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_covering"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_covering()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_edges_upto"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_edges_upto()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_embedding"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_embedding()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_gis"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_gis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_gis_local"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_gis_local()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_gitildes"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_gitildes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_gitildes_local"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.get_gitildes_local()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.is_in_Gpn_order"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.is_in_Gpn_order()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.large_group"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.large_group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.local_splitting"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.local_splitting()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.prime"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.prime()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.quaternion_algebra"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.quaternion_algebra()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.reduce_in_amalgam"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.reduce_in_amalgam()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.save_to_db"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.save_to_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.set_wp"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.set_wp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.small_group"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.small_group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.subdivide"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.subdivide()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.use_shapiro"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.use_shapiro()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.wp"><code class="docutils literal notranslate"><span class="pre">BigArithGroup_class.wp()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.MatrixArithGroup"><code class="docutils literal notranslate"><span class="pre">MatrixArithGroup()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.attach_kleinian_code"><code class="docutils literal notranslate"><span class="pre">attach_kleinian_code()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="arithmeticgroups.html#darmonpoints.sarithgroup.is_page_initialized"><code class="docutils literal notranslate"><span class="pre">is_page_initialized()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="cohomology-and-homology">
+<h2>Cohomology and Homology<a class="headerlink" href="#cohomology-and-homology" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html">Abstract cohomology class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement"><code class="docutils literal notranslate"><span class="pre">CohomologyElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.check_cocycle_property"><code class="docutils literal notranslate"><span class="pre">CohomologyElement.check_cocycle_property()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.evaluate"><code class="docutils literal notranslate"><span class="pre">CohomologyElement.evaluate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.is_zero"><code class="docutils literal notranslate"><span class="pre">CohomologyElement.is_zero()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.pair_with_cycle"><code class="docutils literal notranslate"><span class="pre">CohomologyElement.pair_with_cycle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.valuation"><code class="docutils literal notranslate"><span class="pre">CohomologyElement.valuation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.values"><code class="docutils literal notranslate"><span class="pre">CohomologyElement.values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.Element"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.GA_to_local"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.GA_to_local()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.coefficient_module"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.coefficient_module()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.dimension"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.dimension()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.eval_at_genpow"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.eval_at_genpow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.fox_gradient"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.fox_gradient()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.gen"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.gen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.generator_acting_matrix"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.generator_acting_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.gens"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.gens()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.get_fox_term"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.get_fox_term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.get_gen_pow"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.get_gen_pow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.group"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.hecke_matrix"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.hecke_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.space"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.space()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.zero"><code class="docutils literal notranslate"><span class="pre">CohomologyGroup.zero()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html#module-darmonpoints.cohomology_arithmetic">Arithmetic cohomology</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithAction"><code class="docutils literal notranslate"><span class="pre">ArithAction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh"><code class="docutils literal notranslate"><span class="pre">ArithCoh</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.Element"><code class="docutils literal notranslate"><span class="pre">ArithCoh.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.S_arithgroup"><code class="docutils literal notranslate"><span class="pre">ArithCoh.S_arithgroup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.Up_matrix"><code class="docutils literal notranslate"><span class="pre">ArithCoh.Up_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.apply_hecke_operator"><code class="docutils literal notranslate"><span class="pre">ArithCoh.apply_hecke_operator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.use_shapiro"><code class="docutils literal notranslate"><span class="pre">ArithCoh.use_shapiro()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi"><code class="docutils literal notranslate"><span class="pre">ArithCohBianchi</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.apply_Up"><code class="docutils literal notranslate"><span class="pre">ArithCohBianchi.apply_Up()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.apply_Up1"><code class="docutils literal notranslate"><span class="pre">ArithCohBianchi.apply_Up1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.apply_Up2"><code class="docutils literal notranslate"><span class="pre">ArithCohBianchi.apply_Up2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.get_Lseries_term"><code class="docutils literal notranslate"><span class="pre">ArithCohBianchi.get_Lseries_term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.get_Up_reps_local"><code class="docutils literal notranslate"><span class="pre">ArithCohBianchi.get_Up_reps_local()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.improve"><code class="docutils literal notranslate"><span class="pre">ArithCohBianchi.improve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement"><code class="docutils literal notranslate"><span class="pre">ArithCohElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.BI"><code class="docutils literal notranslate"><span class="pre">ArithCohElement.BI()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.Tq_eigenvalue"><code class="docutils literal notranslate"><span class="pre">ArithCohElement.Tq_eigenvalue()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.cusp_boundary_element"><code class="docutils literal notranslate"><span class="pre">ArithCohElement.cusp_boundary_element()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.evaluate"><code class="docutils literal notranslate"><span class="pre">ArithCohElement.evaluate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.evaluate_at_cusp_list"><code class="docutils literal notranslate"><span class="pre">ArithCohElement.evaluate_at_cusp_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.evaluate_cuspidal_modsym_at_cusp_list"><code class="docutils literal notranslate"><span class="pre">ArithCohElement.evaluate_cuspidal_modsym_at_cusp_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.get_Lseries_term"><code class="docutils literal notranslate"><span class="pre">ArithCohElement.get_Lseries_term()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent"><code class="docutils literal notranslate"><span class="pre">ArithCohOverconvergent</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent.apply_Up"><code class="docutils literal notranslate"><span class="pre">ArithCohOverconvergent.apply_Up()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent.get_Lseries_term"><code class="docutils literal notranslate"><span class="pre">ArithCohOverconvergent.get_Lseries_term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent.get_Up_reps_local"><code class="docutils literal notranslate"><span class="pre">ArithCohOverconvergent.get_Up_reps_local()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent.improve"><code class="docutils literal notranslate"><span class="pre">ArithCohOverconvergent.improve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.BianchiArithAction"><code class="docutils literal notranslate"><span class="pre">BianchiArithAction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.CohArbitrary"><code class="docutils literal notranslate"><span class="pre">CohArbitrary</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.CohArbitrary.Element"><code class="docutils literal notranslate"><span class="pre">CohArbitrary.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.CohArbitrary.act_by_poly_hecke"><code class="docutils literal notranslate"><span class="pre">CohArbitrary.act_by_poly_hecke()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.CohArbitrary.apply_hecke_operator"><code class="docutils literal notranslate"><span class="pre">CohArbitrary.apply_hecke_operator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.get_cocycle_from_elliptic_curve"><code class="docutils literal notranslate"><span class="pre">get_cocycle_from_elliptic_curve()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.get_dedekind_rademacher_cocycle"><code class="docutils literal notranslate"><span class="pre">get_dedekind_rademacher_cocycle()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.get_overconvergent_class_bianchi"><code class="docutils literal notranslate"><span class="pre">get_overconvergent_class_bianchi()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.get_overconvergent_class_matrices"><code class="docutils literal notranslate"><span class="pre">get_overconvergent_class_matrices()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.get_overconvergent_class_quaternionic"><code class="docutils literal notranslate"><span class="pre">get_overconvergent_class_quaternionic()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.get_rational_cocycle"><code class="docutils literal notranslate"><span class="pre">get_rational_cocycle()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.get_rational_cocycle_from_ap"><code class="docutils literal notranslate"><span class="pre">get_rational_cocycle_from_ap()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.cohomology_arithmetic.get_twodim_cocycle"><code class="docutils literal notranslate"><span class="pre">get_twodim_cocycle()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html#module-darmonpoints.homology_abstract">Abstract homology class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.Abelianization"><code class="docutils literal notranslate"><span class="pre">Abelianization</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.Abelianization.ab_to_G"><code class="docutils literal notranslate"><span class="pre">Abelianization.ab_to_G()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.Abelianization.abelian_group"><code class="docutils literal notranslate"><span class="pre">Abelianization.abelian_group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.Abelianization.abelian_invariants"><code class="docutils literal notranslate"><span class="pre">Abelianization.abelian_invariants()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.Abelianization.ambient"><code class="docutils literal notranslate"><span class="pre">Abelianization.ambient()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.ArithHomology"><code class="docutils literal notranslate"><span class="pre">ArithHomology</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.ArithHomology.Element"><code class="docutils literal notranslate"><span class="pre">ArithHomology.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.ArithHomology.apply_hecke_operator"><code class="docutils literal notranslate"><span class="pre">ArithHomology.apply_hecke_operator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.ArithHomology.hecke_matrix"><code class="docutils literal notranslate"><span class="pre">ArithHomology.hecke_matrix()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.ArithHomologyElement"><code class="docutils literal notranslate"><span class="pre">ArithHomologyElement</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyElement"><code class="docutils literal notranslate"><span class="pre">HomologyElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyElement.order"><code class="docutils literal notranslate"><span class="pre">HomologyElement.order()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyElement.valuation"><code class="docutils literal notranslate"><span class="pre">HomologyElement.valuation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyElement.values"><code class="docutils literal notranslate"><span class="pre">HomologyElement.values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup"><code class="docutils literal notranslate"><span class="pre">HomologyGroup</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.Element"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.coefficient_module"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.coefficient_module()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.free_gens"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.free_gens()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.gen"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.gen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.gens"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.gens()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.get_gen_pow"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.get_gen_pow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.get_twisted_fox_term"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.get_twisted_fox_term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.group"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.ngens"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.ngens()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.rank"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.rank()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.space"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.space()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.twisted_fox_gradient"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.twisted_fox_gradient()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.zero"><code class="docutils literal notranslate"><span class="pre">HomologyGroup.zero()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html#module-darmonpoints.homology">Homology class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology.ArithGroupAction"><code class="docutils literal notranslate"><span class="pre">ArithGroupAction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChains"><code class="docutils literal notranslate"><span class="pre">OneChains</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChains.Element"><code class="docutils literal notranslate"><span class="pre">OneChains.Element</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement"><code class="docutils literal notranslate"><span class="pre">OneChainsElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement.act_by_hecke"><code class="docutils literal notranslate"><span class="pre">OneChainsElement.act_by_hecke()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement.act_by_poly_hecke"><code class="docutils literal notranslate"><span class="pre">OneChainsElement.act_by_poly_hecke()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement.factor_into_generators"><code class="docutils literal notranslate"><span class="pre">OneChainsElement.factor_into_generators()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement.hecke_smoothen"><code class="docutils literal notranslate"><span class="pre">OneChainsElement.hecke_smoothen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement.is_cycle"><code class="docutils literal notranslate"><span class="pre">OneChainsElement.is_cycle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement.is_degree_zero_valued"><code class="docutils literal notranslate"><span class="pre">OneChainsElement.is_degree_zero_valued()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement.is_zero"><code class="docutils literal notranslate"><span class="pre">OneChainsElement.is_zero()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement.radius"><code class="docutils literal notranslate"><span class="pre">OneChainsElement.radius()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.OneChainsElement.zero_degree_equivalent"><code class="docutils literal notranslate"><span class="pre">OneChainsElement.zero_degree_equivalent()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology.TensorElement"><code class="docutils literal notranslate"><span class="pre">TensorElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.TensorElement.mult_by"><code class="docutils literal notranslate"><span class="pre">TensorElement.mult_by()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.TensorElement.short_rep"><code class="docutils literal notranslate"><span class="pre">TensorElement.short_rep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.TensorElement.size_of_support"><code class="docutils literal notranslate"><span class="pre">TensorElement.size_of_support()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology.TensorProduct"><code class="docutils literal notranslate"><span class="pre">TensorProduct</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.TensorProduct.Element"><code class="docutils literal notranslate"><span class="pre">TensorProduct.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.TensorProduct.coefficient_module"><code class="docutils literal notranslate"><span class="pre">TensorProduct.coefficient_module()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.TensorProduct.get_arith_action"><code class="docutils literal notranslate"><span class="pre">TensorProduct.get_arith_action()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cohomology.html#darmonpoints.homology.TensorProduct.group"><code class="docutils literal notranslate"><span class="pre">TensorProduct.group()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology.get_homology_kernel"><code class="docutils literal notranslate"><span class="pre">get_homology_kernel()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology.inverse_shapiro"><code class="docutils literal notranslate"><span class="pre">inverse_shapiro()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cohomology.html#darmonpoints.homology.lattice_homology_cycle"><code class="docutils literal notranslate"><span class="pre">lattice_homology_cycle()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="integration-pairing">
+<h2>Integration pairing<a class="headerlink" href="#integration-pairing" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">Integrals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.CoinducedElement"><code class="docutils literal notranslate"><span class="pre">CoinducedElement</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.ShapiroImage"><code class="docutils literal notranslate"><span class="pre">ShapiroImage</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.act_on_polynomial"><code class="docutils literal notranslate"><span class="pre">act_on_polynomial()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.double_integral"><code class="docutils literal notranslate"><span class="pre">double_integral()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.double_integral_zero_infty"><code class="docutils literal notranslate"><span class="pre">double_integral_zero_infty()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.get_basic_integral"><code class="docutils literal notranslate"><span class="pre">get_basic_integral()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.integrate_H1"><code class="docutils literal notranslate"><span class="pre">integrate_H1()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.integrate_H1_riemann"><code class="docutils literal notranslate"><span class="pre">integrate_H1_riemann()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.lift_to_locally_analytic"><code class="docutils literal notranslate"><span class="pre">lift_to_locally_analytic()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.log_pseries"><code class="docutils literal notranslate"><span class="pre">log_pseries()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.riemann_sum"><code class="docutils literal notranslate"><span class="pre">riemann_sum()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.integrals.sample_point"><code class="docutils literal notranslate"><span class="pre">sample_point()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html#module-darmonpoints.limits">Limits</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.compute_tau0"><code class="docutils literal notranslate"><span class="pre">compute_tau0()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.decompose"><code class="docutils literal notranslate"><span class="pre">decompose()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.factorize_matrix"><code class="docutils literal notranslate"><span class="pre">factorize_matrix()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.find_lambda"><code class="docutils literal notranslate"><span class="pre">find_lambda()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.find_limits"><code class="docutils literal notranslate"><span class="pre">find_limits()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.find_optimal_embeddings"><code class="docutils literal notranslate"><span class="pre">find_optimal_embeddings()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.find_tau0_and_gtau"><code class="docutils literal notranslate"><span class="pre">find_tau0_and_gtau()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.get_limits_from_decomp"><code class="docutils literal notranslate"><span class="pre">get_limits_from_decomp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.is_represented_by_unit"><code class="docutils literal notranslate"><span class="pre">is_represented_by_unit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.num_evals"><code class="docutils literal notranslate"><span class="pre">num_evals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#darmonpoints.limits.order_and_unit"><code class="docutils literal notranslate"><span class="pre">order_and_unit()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="overconvergent-distributions">
+<h2>Overconvergent distributions<a class="headerlink" href="#overconvergent-distributions" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html">Overconvergent module of distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctions</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.Element"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctions.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.acting_matrix"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctions.acting_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.base_ring"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctions.base_ring()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.get_action_data"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctions.get_action_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.is_additive"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctions.is_additive()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.power_series_ring"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctions.power_series_ring()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.twisting_matrix"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctions.twisting_matrix()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctionsElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.evaluate_additive"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctionsElement.evaluate_additive()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.evaluate_multiplicative"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctionsElement.evaluate_multiplicative()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.left_act_by_matrix"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctionsElement.left_act_by_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.pair_with"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctionsElement.pair_with()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.power_series"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctionsElement.power_series()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.scale_by"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctionsElement.scale_by()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.valuation"><code class="docutils literal notranslate"><span class="pre">AddMeromorphicFunctionsElement.valuation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn"><code class="docutils literal notranslate"><span class="pre">OCVn</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.Element"><code class="docutils literal notranslate"><span class="pre">OCVn.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.Sigma0"><code class="docutils literal notranslate"><span class="pre">OCVn.Sigma0()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.acting_matrix"><code class="docutils literal notranslate"><span class="pre">OCVn.acting_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.approx_module"><code class="docutils literal notranslate"><span class="pre">OCVn.approx_module()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.base_ring"><code class="docutils literal notranslate"><span class="pre">OCVn.base_ring()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.basis"><code class="docutils literal notranslate"><span class="pre">OCVn.basis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.clear_cache"><code class="docutils literal notranslate"><span class="pre">OCVn.clear_cache()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.depth"><code class="docutils literal notranslate"><span class="pre">OCVn.depth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.dimension"><code class="docutils literal notranslate"><span class="pre">OCVn.dimension()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.is_exact"><code class="docutils literal notranslate"><span class="pre">OCVn.is_exact()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.is_overconvergent"><code class="docutils literal notranslate"><span class="pre">OCVn.is_overconvergent()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.precision_cap"><code class="docutils literal notranslate"><span class="pre">OCVn.precision_cap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVn.prime"><code class="docutils literal notranslate"><span class="pre">OCVn.prime()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement"><code class="docutils literal notranslate"><span class="pre">OCVnElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.element"><code class="docutils literal notranslate"><span class="pre">OCVnElement.element()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.evaluate_at_poly"><code class="docutils literal notranslate"><span class="pre">OCVnElement.evaluate_at_poly()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.lift"><code class="docutils literal notranslate"><span class="pre">OCVnElement.lift()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.list"><code class="docutils literal notranslate"><span class="pre">OCVnElement.list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.matrix_rep"><code class="docutils literal notranslate"><span class="pre">OCVnElement.matrix_rep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.moment"><code class="docutils literal notranslate"><span class="pre">OCVnElement.moment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.moments"><code class="docutils literal notranslate"><span class="pre">OCVnElement.moments()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.r_act_by"><code class="docutils literal notranslate"><span class="pre">OCVnElement.r_act_by()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.reduce_mod"><code class="docutils literal notranslate"><span class="pre">OCVnElement.reduce_mod()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.valuation"><code class="docutils literal notranslate"><span class="pre">OCVnElement.valuation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.OCVnElement.valuation_list"><code class="docutils literal notranslate"><span class="pre">OCVnElement.valuation_list()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.Sigma0Action"><code class="docutils literal notranslate"><span class="pre">Sigma0Action</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.our_adjuster"><code class="docutils literal notranslate"><span class="pre">our_adjuster</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.ocmodule.ps_adjuster"><code class="docutils literal notranslate"><span class="pre">ps_adjuster</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html#module-darmonpoints.representations">Representations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndAction"><code class="docutils literal notranslate"><span class="pre">CoIndAction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndElement"><code class="docutils literal notranslate"><span class="pre">CoIndElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndElement.act_and_evaluate_at_identity"><code class="docutils literal notranslate"><span class="pre">CoIndElement.act_and_evaluate_at_identity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndElement.evaluate"><code class="docutils literal notranslate"><span class="pre">CoIndElement.evaluate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndElement.evaluate_at_identity"><code class="docutils literal notranslate"><span class="pre">CoIndElement.evaluate_at_identity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndElement.is_zero"><code class="docutils literal notranslate"><span class="pre">CoIndElement.is_zero()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndElement.values"><code class="docutils literal notranslate"><span class="pre">CoIndElement.values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule"><code class="docutils literal notranslate"><span class="pre">CoIndModule</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.Element"><code class="docutils literal notranslate"><span class="pre">CoIndModule.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.act_by_genpow"><code class="docutils literal notranslate"><span class="pre">CoIndModule.act_by_genpow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.acting_matrix"><code class="docutils literal notranslate"><span class="pre">CoIndModule.acting_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.base_field"><code class="docutils literal notranslate"><span class="pre">CoIndModule.base_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.base_ring"><code class="docutils literal notranslate"><span class="pre">CoIndModule.base_ring()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.basis"><code class="docutils literal notranslate"><span class="pre">CoIndModule.basis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.coefficient_module"><code class="docutils literal notranslate"><span class="pre">CoIndModule.coefficient_module()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.dimension"><code class="docutils literal notranslate"><span class="pre">CoIndModule.dimension()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.gen"><code class="docutils literal notranslate"><span class="pre">CoIndModule.gen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.gens"><code class="docutils literal notranslate"><span class="pre">CoIndModule.gens()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.get_action_data"><code class="docutils literal notranslate"><span class="pre">CoIndModule.get_action_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.CoIndModule.group"><code class="docutils literal notranslate"><span class="pre">CoIndModule.group()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.representations.IndAction"><code class="docutils literal notranslate"><span class="pre">IndAction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.representations.IndElement"><code class="docutils literal notranslate"><span class="pre">IndElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.IndElement.evaluate_at_identity"><code class="docutils literal notranslate"><span class="pre">IndElement.evaluate_at_identity()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.representations.IndModule"><code class="docutils literal notranslate"><span class="pre">IndModule</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="distributions.html#darmonpoints.representations.IndModule.Element"><code class="docutils literal notranslate"><span class="pre">IndModule.Element</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.representations.MatrixAction"><code class="docutils literal notranslate"><span class="pre">MatrixAction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.representations.Scaling"><code class="docutils literal notranslate"><span class="pre">Scaling</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html#darmonpoints.representations.TrivialAction"><code class="docutils literal notranslate"><span class="pre">TrivialAction</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="internals">
+<h2>Internals<a class="headerlink" href="#internals" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Mixed extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt"><code class="docutils literal notranslate"><span class="pre">QuadExt</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.Element"><code class="docutils literal notranslate"><span class="pre">QuadExt.Element</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.absolute_degree"><code class="docutils literal notranslate"><span class="pre">QuadExt.absolute_degree()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.base_ring"><code class="docutils literal notranslate"><span class="pre">QuadExt.base_ring()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.characteristic"><code class="docutils literal notranslate"><span class="pre">QuadExt.characteristic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.gen"><code class="docutils literal notranslate"><span class="pre">QuadExt.gen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.is_finite"><code class="docutils literal notranslate"><span class="pre">QuadExt.is_finite()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.polynomial"><code class="docutils literal notranslate"><span class="pre">QuadExt.polynomial()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.precision_cap"><code class="docutils literal notranslate"><span class="pre">QuadExt.precision_cap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.prime"><code class="docutils literal notranslate"><span class="pre">QuadExt.prime()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.ramification_index"><code class="docutils literal notranslate"><span class="pre">QuadExt.ramification_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.random_element"><code class="docutils literal notranslate"><span class="pre">QuadExt.random_element()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.relative_degree"><code class="docutils literal notranslate"><span class="pre">QuadExt.relative_degree()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.residue_class_degree"><code class="docutils literal notranslate"><span class="pre">QuadExt.residue_class_degree()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.some_elements"><code class="docutils literal notranslate"><span class="pre">QuadExt.some_elements()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.uniformizer"><code class="docutils literal notranslate"><span class="pre">QuadExt.uniformizer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExt.unramified_generator"><code class="docutils literal notranslate"><span class="pre">QuadExt.unramified_generator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExtElement"><code class="docutils literal notranslate"><span class="pre">QuadExtElement</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExtElement.list"><code class="docutils literal notranslate"><span class="pre">QuadExtElement.list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExtElement.norm_relative"><code class="docutils literal notranslate"><span class="pre">QuadExtElement.norm_relative()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExtElement.ordp"><code class="docutils literal notranslate"><span class="pre">QuadExtElement.ordp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExtElement.sqrt"><code class="docutils literal notranslate"><span class="pre">QuadExtElement.sqrt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExtElement.trace_absolute"><code class="docutils literal notranslate"><span class="pre">QuadExtElement.trace_absolute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExtElement.trace_relative"><code class="docutils literal notranslate"><span class="pre">QuadExtElement.trace_relative()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.QuadExtElement.valuation"><code class="docutils literal notranslate"><span class="pre">QuadExtElement.valuation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.mixed_extension.get_word_rep_fast"><code class="docutils literal notranslate"><span class="pre">get_word_rep_fast()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html#module-darmonpoints.util">Utility package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.Bunch"><code class="docutils literal notranslate"><span class="pre">Bunch</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.util.Bunch.get"><code class="docutils literal notranslate"><span class="pre">Bunch.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#darmonpoints.util.Bunch.update"><code class="docutils literal notranslate"><span class="pre">Bunch.update()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.FGP_V"><code class="docutils literal notranslate"><span class="pre">FGP_V()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.FGP_W"><code class="docutils literal notranslate"><span class="pre">FGP_W()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.JtoP"><code class="docutils literal notranslate"><span class="pre">JtoP()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.M2Z"><code class="docutils literal notranslate"><span class="pre">M2Z()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.act_H3"><code class="docutils literal notranslate"><span class="pre">act_H3()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.act_flt"><code class="docutils literal notranslate"><span class="pre">act_flt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.act_flt_in_disc"><code class="docutils literal notranslate"><span class="pre">act_flt_in_disc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.affine_transformation"><code class="docutils literal notranslate"><span class="pre">affine_transformation()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.cantor_diagonal"><code class="docutils literal notranslate"><span class="pre">cantor_diagonal()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.config_section_map"><code class="docutils literal notranslate"><span class="pre">config_section_map()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.conjugate_quaternion_over_base"><code class="docutils literal notranslate"><span class="pre">conjugate_quaternion_over_base()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.covolume"><code class="docutils literal notranslate"><span class="pre">covolume()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.direct_sum_of_maps"><code class="docutils literal notranslate"><span class="pre">direct_sum_of_maps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.direct_sum_of_modules"><code class="docutils literal notranslate"><span class="pre">direct_sum_of_modules()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.discover_equation"><code class="docutils literal notranslate"><span class="pre">discover_equation()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.enumerate_words"><code class="docutils literal notranslate"><span class="pre">enumerate_words()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.field_element_pari_to_sage"><code class="docutils literal notranslate"><span class="pre">field_element_pari_to_sage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.find_center"><code class="docutils literal notranslate"><span class="pre">find_center()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.find_containing_affinoid"><code class="docutils literal notranslate"><span class="pre">find_containing_affinoid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.find_the_unit_of"><code class="docutils literal notranslate"><span class="pre">find_the_unit_of()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.fwrite"><code class="docutils literal notranslate"><span class="pre">fwrite()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.get_C_and_C2"><code class="docutils literal notranslate"><span class="pre">get_C_and_C2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.get_c4_and_c6"><code class="docutils literal notranslate"><span class="pre">get_c4_and_c6()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.get_heegner_params"><code class="docutils literal notranslate"><span class="pre">get_heegner_params()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.get_j_invariant"><code class="docutils literal notranslate"><span class="pre">get_j_invariant()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.getcoords"><code class="docutils literal notranslate"><span class="pre">getcoords()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.height_polynomial"><code class="docutils literal notranslate"><span class="pre">height_polynomial()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.hensel_lift"><code class="docutils literal notranslate"><span class="pre">hensel_lift()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.imag_part"><code class="docutils literal notranslate"><span class="pre">imag_part()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.is_in_Gamma0loc"><code class="docutils literal notranslate"><span class="pre">is_in_Gamma0loc()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.is_in_Gamma_1"><code class="docutils literal notranslate"><span class="pre">is_in_Gamma_1()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.is_in_principal_affinoid"><code class="docutils literal notranslate"><span class="pre">is_in_principal_affinoid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.is_infinity"><code class="docutils literal notranslate"><span class="pre">is_infinity()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.is_smooth"><code class="docutils literal notranslate"><span class="pre">is_smooth()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.lift_padic_splitting"><code class="docutils literal notranslate"><span class="pre">lift_padic_splitting()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.magma_F_elt_to_sage"><code class="docutils literal notranslate"><span class="pre">magma_F_elt_to_sage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.magma_F_ideal_to_sage"><code class="docutils literal notranslate"><span class="pre">magma_F_ideal_to_sage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.magma_integral_quaternion_to_sage"><code class="docutils literal notranslate"><span class="pre">magma_integral_quaternion_to_sage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.magma_quaternion_to_sage"><code class="docutils literal notranslate"><span class="pre">magma_quaternion_to_sage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.module_generators"><code class="docutils literal notranslate"><span class="pre">module_generators()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.module_generators_new"><code class="docutils literal notranslate"><span class="pre">module_generators_new()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.multiply_out"><code class="docutils literal notranslate"><span class="pre">multiply_out()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.our_algdep"><code class="docutils literal notranslate"><span class="pre">our_algdep()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.our_cuberoot"><code class="docutils literal notranslate"><span class="pre">our_cuberoot()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.our_lindep"><code class="docutils literal notranslate"><span class="pre">our_lindep()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.our_nroot"><code class="docutils literal notranslate"><span class="pre">our_nroot()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.our_sqrt"><code class="docutils literal notranslate"><span class="pre">our_sqrt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.pari_ordmax_basis_to_sage"><code class="docutils literal notranslate"><span class="pre">pari_ordmax_basis_to_sage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.period_from_coords"><code class="docutils literal notranslate"><span class="pre">period_from_coords()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.point_radius"><code class="docutils literal notranslate"><span class="pre">point_radius()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.polynomial_roots"><code class="docutils literal notranslate"><span class="pre">polynomial_roots()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.polynomial_roots_old"><code class="docutils literal notranslate"><span class="pre">polynomial_roots_old()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.print_padic"><code class="docutils literal notranslate"><span class="pre">print_padic()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.print_table_latex"><code class="docutils literal notranslate"><span class="pre">print_table_latex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.quaternion_algebra_invariants_from_ramification"><code class="docutils literal notranslate"><span class="pre">quaternion_algebra_invariants_from_ramification()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.quaternion_to_magma_quaternion"><code class="docutils literal notranslate"><span class="pre">quaternion_to_magma_quaternion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.real_part"><code class="docutils literal notranslate"><span class="pre">real_part()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.recognize_DV_algdep"><code class="docutils literal notranslate"><span class="pre">recognize_DV_algdep()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.recognize_DV_lindep"><code class="docutils literal notranslate"><span class="pre">recognize_DV_lindep()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.recognize_J"><code class="docutils literal notranslate"><span class="pre">recognize_J()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.recognize_point"><code class="docutils literal notranslate"><span class="pre">recognize_point()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.reduce_word"><code class="docutils literal notranslate"><span class="pre">reduce_word()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.reduce_word_tietze"><code class="docutils literal notranslate"><span class="pre">reduce_word_tietze()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.relativize_ATR"><code class="docutils literal notranslate"><span class="pre">relativize_ATR()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.sage_F_elt_to_magma"><code class="docutils literal notranslate"><span class="pre">sage_F_elt_to_magma()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.sage_F_ideal_to_magma"><code class="docutils literal notranslate"><span class="pre">sage_F_ideal_to_magma()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.sage_order_basis_to_pari"><code class="docutils literal notranslate"><span class="pre">sage_order_basis_to_pari()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.sage_quaternion_to_magma"><code class="docutils literal notranslate"><span class="pre">sage_quaternion_to_magma()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.selmer_group_iterator"><code class="docutils literal notranslate"><span class="pre">selmer_group_iterator()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.set_immutable"><code class="docutils literal notranslate"><span class="pre">set_immutable()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.simplification_isomorphism"><code class="docutils literal notranslate"><span class="pre">simplification_isomorphism()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.solve_quadratic"><code class="docutils literal notranslate"><span class="pre">solve_quadratic()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.syllables_to_tietze"><code class="docutils literal notranslate"><span class="pre">syllables_to_tietze()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.tate_parameter"><code class="docutils literal notranslate"><span class="pre">tate_parameter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.tietze_to_syllables"><code class="docutils literal notranslate"><span class="pre">tietze_to_syllables()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.translate_into_twosided_list"><code class="docutils literal notranslate"><span class="pre">translate_into_twosided_list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.update_progress"><code class="docutils literal notranslate"><span class="pre">update_progress()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#darmonpoints.util.weak_approximation"><code class="docutils literal notranslate"><span class="pre">weak_approximation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="indices-and-tables">
+<h3>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="arithmeticgroups.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Arithmetic group elements</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2016-2024, Marc Masdeu
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Darmon Points</a><ul>
+<li><a class="reference internal" href="#arithmetic-groups">Arithmetic Groups</a></li>
+<li><a class="reference internal" href="#cohomology-and-homology">Cohomology and Homology</a></li>
+<li><a class="reference internal" href="#integration-pairing">Integration pairing</a></li>
+<li><a class="reference internal" href="#overconvergent-distributions">Overconvergent distributions</a></li>
+<li><a class="reference internal" href="#internals">Internals</a><ul>
+<li><a class="reference internal" href="#indices-and-tables">Indices and Tables</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=12958129"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
+    </body>
+</html>

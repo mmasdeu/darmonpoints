@@ -1,0 +1,1620 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="#" /><link rel="search" title="Search" href="search.html" />
+
+    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 --><title>Index - darmonpoints 6.0.0 documentation</title>
+<link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  --color-brand-primary: #0f0fff;
+  --color-brand-content: #0f0fff;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">darmonpoints 6.0.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="_static/logo.svg" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="_static/logo.svg" alt="Dark Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">darmonpoints 6.0.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html">Arithmetic group elements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html">Abstract cohomology class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html#module-darmonpoints.cohomology_arithmetic">Arithmetic cohomology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html#module-darmonpoints.homology_abstract">Abstract homology class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cohomology.html#module-darmonpoints.homology">Homology class</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">Integrals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html#module-darmonpoints.limits">Limits</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html">Overconvergent module of distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html#module-darmonpoints.representations">Representations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Mixed extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html#module-darmonpoints.util">Utility package</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          
+<section class="genindex-section">
+  <h1 id="index">Index</h1>
+  <div class="genindex-jumpbox"><a href="#A"><strong>A</strong></a> | <a href="#B"><strong>B</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#G"><strong>G</strong></a> | <a href="#H"><strong>H</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#J"><strong>J</strong></a> | <a href="#L"><strong>L</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#N"><strong>N</strong></a> | <a href="#O"><strong>O</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#Q"><strong>Q</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a> | <a href="#T"><strong>T</strong></a> | <a href="#U"><strong>U</strong></a> | <a href="#V"><strong>V</strong></a> | <a href="#W"><strong>W</strong></a> | <a href="#Z"><strong>Z</strong></a></div>
+</section>
+<section id="A" class="genindex-section">
+  <h2>A</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.Abelianization.ab_to_G">ab_to_G() (darmonpoints.homology_abstract.Abelianization method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.Abelianization.abelian_group">abelian_group() (darmonpoints.homology_abstract.Abelianization method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.Abelianization.abelian_invariants">abelian_invariants() (darmonpoints.homology_abstract.Abelianization method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.Abelianization">Abelianization (class in darmonpoints.homology_abstract)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.absolute_degree">absolute_degree() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.representations.CoIndElement.act_and_evaluate_at_identity">act_and_evaluate_at_identity() (darmonpoints.representations.CoIndElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.representations.CoIndModule.act_by_genpow">act_by_genpow() (darmonpoints.representations.CoIndModule method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement.act_by_hecke">act_by_hecke() (darmonpoints.homology.OneChainsElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.CohArbitrary.act_by_poly_hecke">act_by_poly_hecke() (darmonpoints.cohomology_arithmetic.CohArbitrary method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement.act_by_poly_hecke">(darmonpoints.homology.OneChainsElement method)</a>
+</li>
+        </ul></li>
+        <li><a href="internals.html#darmonpoints.util.act_flt">act_flt() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.act_flt_in_disc">act_flt_in_disc() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.act_H3">act_H3() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.act_on_polynomial">act_on_polynomial() (in module darmonpoints.integrals)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.acting_matrix">acting_matrix() (darmonpoints.ocmodule.AddMeromorphicFunctions method)</a>
+
+        <ul>
+          <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.acting_matrix">(darmonpoints.ocmodule.OCVn method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.acting_matrix">(darmonpoints.representations.CoIndModule method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.acton">acton() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions">AddMeromorphicFunctions (class in darmonpoints.ocmodule)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement">AddMeromorphicFunctionsElement (class in darmonpoints.ocmodule)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.affine_transformation">affine_transformation() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.Abelianization.ambient">ambient() (darmonpoints.homology_abstract.Abelianization method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.angle_sign">angle_sign() (in module darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.apply_hecke_operator">apply_hecke_operator() (darmonpoints.cohomology_arithmetic.ArithCoh method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.CohArbitrary.apply_hecke_operator">(darmonpoints.cohomology_arithmetic.CohArbitrary method)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.ArithHomology.apply_hecke_operator">(darmonpoints.homology_abstract.ArithHomology method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.apply_Up">apply_Up() (darmonpoints.cohomology_arithmetic.ArithCohBianchi method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent.apply_Up">(darmonpoints.cohomology_arithmetic.ArithCohOverconvergent method)</a>
+</li>
+        </ul></li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.apply_Up1">apply_Up1() (darmonpoints.cohomology_arithmetic.ArithCohBianchi method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.apply_Up2">apply_Up2() (darmonpoints.cohomology_arithmetic.ArithCohBianchi method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.approx_module">approx_module() (darmonpoints.ocmodule.OCVn method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithAction">ArithAction (class in darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh">ArithCoh (class in darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi">ArithCohBianchi (class in darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement">ArithCohElement (class in darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent">ArithCohOverconvergent (class in darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.ArithGroup">ArithGroup() (in module darmonpoints.sarithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic">ArithGroup_fuchsian_generic (class in darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_fuchsian">ArithGroup_nf_fuchsian (class in darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic">ArithGroup_nf_generic (class in darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_kleinian">ArithGroup_nf_kleinian (class in darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix">ArithGroup_nf_matrix (class in darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new">ArithGroup_nf_matrix_new (class in darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan">ArithGroup_nscartan (class in darmonpoints.arithgroup_nscartan)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix">ArithGroup_rationalmatrix (class in darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion">ArithGroup_rationalquaternion (class in darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.ArithGroupAction">ArithGroupAction (class in darmonpoints.homology)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement">ArithGroupElement (class in darmonpoints.arithgroup_element)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.ArithHomology">ArithHomology (class in darmonpoints.homology_abstract)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.ArithHomologyElement">ArithHomologyElement (class in darmonpoints.homology_abstract)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.attach_kleinian_code">attach_kleinian_code() (in module darmonpoints.sarithgroup)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="B" class="genindex-section">
+  <h2>B</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="distributions.html#darmonpoints.representations.CoIndModule.base_field">base_field() (darmonpoints.representations.CoIndModule method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.base_field">(darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        </ul></li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.base_ring">base_ring() (darmonpoints.mixed_extension.QuadExt method)</a>
+
+        <ul>
+          <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.base_ring">(darmonpoints.ocmodule.AddMeromorphicFunctions method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.base_ring">(darmonpoints.ocmodule.OCVn method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.base_ring">(darmonpoints.representations.CoIndModule method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.base_ring_local_embedding">base_ring_local_embedding() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.basis">basis() (darmonpoints.ocmodule.OCVn method)</a>
+
+        <ul>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.basis">(darmonpoints.representations.CoIndModule method)</a>
+</li>
+        </ul></li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.BI">BI() (darmonpoints.cohomology_arithmetic.ArithCohElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.BianchiArithAction">BianchiArithAction (class in darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup">BigArithGroup() (in module darmonpoints.sarithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class">BigArithGroup_class (class in darmonpoints.sarithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BTEdge">BTEdge (class in darmonpoints.sarithgroup)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.Bunch">Bunch (class in darmonpoints.util)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="C" class="genindex-section">
+  <h2>C</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.cantor_diagonal">cantor_diagonal() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.characteristic">characteristic() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.check_cocycle_property">check_cocycle_property() (darmonpoints.cohomology_abstract.CohomologyElement method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.check_consistency">check_consistency() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.clear_cache">clear_cache() (darmonpoints.ocmodule.OCVn method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.clear_cache">(darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.clear_local_splitting">clear_local_splitting() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.coefficient_module">coefficient_module() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology.TensorProduct.coefficient_module">(darmonpoints.homology.TensorProduct method)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.coefficient_module">(darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.coefficient_module">(darmonpoints.representations.CoIndModule method)</a>
+</li>
+        </ul></li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.CohArbitrary">CohArbitrary (class in darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement">CohomologyElement (class in darmonpoints.cohomology_abstract)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup">CohomologyGroup (class in darmonpoints.cohomology_abstract)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="distributions.html#darmonpoints.representations.CoIndAction">CoIndAction (class in darmonpoints.representations)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.representations.CoIndElement">CoIndElement (class in darmonpoints.representations)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.representations.CoIndModule">CoIndModule (class in darmonpoints.representations)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.CoinducedElement">CoinducedElement (class in darmonpoints.integrals)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.compute_quadratic_embedding">compute_quadratic_embedding() (darmonpoints.arithgroup.ArithGroup_nf_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion.compute_quadratic_embedding">(darmonpoints.arithgroup.ArithGroup_rationalquaternion method)</a>
+</li>
+        </ul></li>
+        <li><a href="integration.html#darmonpoints.limits.compute_tau0">compute_tau0() (in module darmonpoints.limits)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.config_section_map">config_section_map() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.conjugate_by">conjugate_by() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.conjugate_quaternion_over_base">conjugate_quaternion_over_base() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.construct_edge_reps">construct_edge_reps() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.coset_reps">coset_reps() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.covolume">covolume() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.cusp_boundary_element">cusp_boundary_element() (darmonpoints.cohomology_arithmetic.ArithCohElement method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="D" class="genindex-section">
+  <h2>D</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    darmonpoints.arithgroup
+
+        <ul>
+          <li><a href="arithmeticgroups.html#module-darmonpoints.arithgroup">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.arithgroup_element
+
+        <ul>
+          <li><a href="arithmeticgroups.html#module-darmonpoints.arithgroup_element">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.arithgroup_nscartan
+
+        <ul>
+          <li><a href="arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.cohomology_abstract
+
+        <ul>
+          <li><a href="cohomology.html#module-darmonpoints.cohomology_abstract">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.cohomology_arithmetic
+
+        <ul>
+          <li><a href="cohomology.html#module-darmonpoints.cohomology_arithmetic">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.homology
+
+        <ul>
+          <li><a href="cohomology.html#module-darmonpoints.homology">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.homology_abstract
+
+        <ul>
+          <li><a href="cohomology.html#module-darmonpoints.homology_abstract">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.integrals
+
+        <ul>
+          <li><a href="integration.html#module-darmonpoints.integrals">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.limits
+
+        <ul>
+          <li><a href="integration.html#module-darmonpoints.limits">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.mixed_extension
+
+        <ul>
+          <li><a href="internals.html#module-darmonpoints.mixed_extension">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    darmonpoints.ocmodule
+
+        <ul>
+          <li><a href="distributions.html#module-darmonpoints.ocmodule">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.representations
+
+        <ul>
+          <li><a href="distributions.html#module-darmonpoints.representations">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.sarithgroup
+
+        <ul>
+          <li><a href="arithmeticgroups.html#module-darmonpoints.sarithgroup">module</a>
+</li>
+        </ul></li>
+        <li>
+    darmonpoints.util
+
+        <ul>
+          <li><a href="internals.html#module-darmonpoints.util">module</a>
+</li>
+        </ul></li>
+        <li><a href="integration.html#darmonpoints.limits.decompose">decompose() (in module darmonpoints.limits)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.depth">depth() (darmonpoints.ocmodule.OCVn method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.dimension">dimension() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+
+        <ul>
+          <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.dimension">(darmonpoints.ocmodule.OCVn method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.dimension">(darmonpoints.representations.CoIndModule method)</a>
+</li>
+        </ul></li>
+        <li><a href="internals.html#darmonpoints.util.direct_sum_of_maps">direct_sum_of_maps() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.direct_sum_of_modules">direct_sum_of_modules() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.discover_equation">discover_equation() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.do_tilde">do_tilde() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.double_integral">double_integral() (in module darmonpoints.integrals)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.double_integral_zero_infty">double_integral_zero_infty() (in module darmonpoints.integrals)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.draw_mat_list">draw_mat_list() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="E" class="genindex-section">
+  <h2>E</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.edge_from_quaternion">edge_from_quaternion() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.edges_entering_odd_vertex">edges_entering_odd_vertex() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.edges_leaving_even_vertex">edges_leaving_even_vertex() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.Element">Element (darmonpoints.arithgroup_nscartan.ArithGroup_nscartan attribute)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.Element">(darmonpoints.cohomology_abstract.CohomologyGroup attribute)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.Element">(darmonpoints.cohomology_arithmetic.ArithCoh attribute)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.CohArbitrary.Element">(darmonpoints.cohomology_arithmetic.CohArbitrary attribute)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.homology.OneChains.Element">(darmonpoints.homology.OneChains attribute)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.homology.TensorProduct.Element">(darmonpoints.homology.TensorProduct attribute)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.ArithHomology.Element">(darmonpoints.homology_abstract.ArithHomology attribute)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.Element">(darmonpoints.homology_abstract.HomologyGroup attribute)</a>
+</li>
+          <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.Element">(darmonpoints.mixed_extension.QuadExt attribute)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.Element">(darmonpoints.ocmodule.AddMeromorphicFunctions attribute)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.Element">(darmonpoints.ocmodule.OCVn attribute)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.Element">(darmonpoints.representations.CoIndModule attribute)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.IndModule.Element">(darmonpoints.representations.IndModule attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.element">element() (darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.element_of_norm">element_of_norm() (darmonpoints.arithgroup.ArithGroup_nf_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.element_of_norm">(darmonpoints.arithgroup.ArithGroup_nf_matrix method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.element_of_norm">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion.element_of_norm">(darmonpoints.arithgroup.ArithGroup_rationalquaternion method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.element_of_norm">(darmonpoints.arithgroup_nscartan.ArithGroup_nscartan method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.element_of_prime_norm">element_of_prime_norm() (darmonpoints.arithgroup.ArithGroup_nf_generic method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.embed">embed() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.embed">(darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.embed_order">embed_order() (darmonpoints.arithgroup.ArithGroup_nf_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.embed_order">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion.embed_order">(darmonpoints.arithgroup.ArithGroup_rationalquaternion method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.embed_order">(darmonpoints.arithgroup_nscartan.ArithGroup_nscartan method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.embed_order_legacy">embed_order_legacy() (darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.embed_wp">embed_wp() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.enumerate_words">enumerate_words() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.eval_at_genpow">eval_at_genpow() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.evaluate">evaluate() (darmonpoints.cohomology_abstract.CohomologyElement method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.evaluate">(darmonpoints.cohomology_arithmetic.ArithCohElement method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndElement.evaluate">(darmonpoints.representations.CoIndElement method)</a>
+</li>
+        </ul></li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.evaluate_additive">evaluate_additive() (darmonpoints.ocmodule.AddMeromorphicFunctionsElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.evaluate_at_cusp_list">evaluate_at_cusp_list() (darmonpoints.cohomology_arithmetic.ArithCohElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.representations.CoIndElement.evaluate_at_identity">evaluate_at_identity() (darmonpoints.representations.CoIndElement method)</a>
+
+        <ul>
+          <li><a href="distributions.html#darmonpoints.representations.IndElement.evaluate_at_identity">(darmonpoints.representations.IndElement method)</a>
+</li>
+        </ul></li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.evaluate_at_poly">evaluate_at_poly() (darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.evaluate_cuspidal_modsym_at_cusp_list">evaluate_cuspidal_modsym_at_cusp_list() (darmonpoints.cohomology_arithmetic.ArithCohElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.evaluate_multiplicative">evaluate_multiplicative() (darmonpoints.ocmodule.AddMeromorphicFunctionsElement method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="F" class="genindex-section">
+  <h2>F</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement.factor_into_generators">factor_into_generators() (darmonpoints.homology.OneChainsElement method)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.limits.factorize_matrix">factorize_matrix() (in module darmonpoints.limits)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.FGP_V">FGP_V() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.FGP_W">FGP_W() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.field_element_pari_to_sage">field_element_pari_to_sage() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.find_bounding_cycle">find_bounding_cycle() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.find_center">find_center() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.find_containing_affinoid">find_containing_affinoid() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.find_fundom_rep">find_fundom_rep() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.find_fundom_rep">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+        </ul></li>
+        <li><a href="integration.html#darmonpoints.limits.find_lambda">find_lambda() (in module darmonpoints.limits)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.limits.find_limits">find_limits() (in module darmonpoints.limits)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="integration.html#darmonpoints.limits.find_optimal_embeddings">find_optimal_embeddings() (in module darmonpoints.limits)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.limits.find_tau0_and_gtau">find_tau0_and_gtau() (in module darmonpoints.limits)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.find_the_unit_of">find_the_unit_of() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.fox_gradient">fox_gradient() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.free_gens">free_gens() (darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.fundamental_domain">fundamental_domain() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_kleinian.fundamental_domain">(darmonpoints.arithgroup.ArithGroup_nf_kleinian method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.fundamental_domain">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.fundamental_domain_data">fundamental_domain_data() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.fundamental_domain_data">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.fundamental_domain_interior_data">fundamental_domain_interior_data() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.fwrite">fwrite() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="G" class="genindex-section">
+  <h2>G</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.GA_to_local">GA_to_local() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.gen">gen() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.gen">(darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+          <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.gen">(darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.gen">(darmonpoints.representations.CoIndModule method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.generate_wp_candidates">generate_wp_candidates() (darmonpoints.arithgroup.ArithGroup_nf_matrix method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.generate_wp_candidates">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.generate_wp_candidates">(darmonpoints.arithgroup_nscartan.ArithGroup_nscartan method)</a>
+</li>
+        </ul></li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.generator_acting_matrix">generator_acting_matrix() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.gens">gens() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.gens">(darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.gens">(darmonpoints.representations.CoIndModule method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.geodesic_circle">geodesic_circle() (in module darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.Bunch.get">get() (darmonpoints.util.Bunch method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.get_action_data">get_action_data() (darmonpoints.ocmodule.AddMeromorphicFunctions method)</a>
+
+        <ul>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.get_action_data">(darmonpoints.representations.CoIndModule method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_amalgam_reps">get_amalgam_reps() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.get_archimedean_embedding">get_archimedean_embedding() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.get_archimedean_embedding">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+        </ul></li>
+        <li><a href="cohomology.html#darmonpoints.homology.TensorProduct.get_arith_action">get_arith_action() (darmonpoints.homology.TensorProduct method)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.get_basic_integral">get_basic_integral() (in module darmonpoints.integrals)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_BT_reps">get_BT_reps() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_BT_reps_twisted">get_BT_reps_twisted() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.get_c4_and_c6">get_c4_and_c6() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.get_C_and_C2">get_C_and_C2() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.get_cocycle_from_elliptic_curve">get_cocycle_from_elliptic_curve() (in module darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_coset_ti">get_coset_ti() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_covering">get_covering() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.get_dedekind_rademacher_cocycle">get_dedekind_rademacher_cocycle() (in module darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_edges_upto">get_edges_upto() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_embedding">get_embedding() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.get_embgquats_twisted">get_embgquats_twisted() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.get_fox_term">get_fox_term() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.get_gen_pow">get_gen_pow() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.get_gen_pow">(darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_gis">get_gis() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_gis_local">get_gis_local() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_gitildes">get_gitildes() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_gitildes_local">get_gitildes_local() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.get_heegner_params">get_heegner_params() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.get_homology_kernel">get_homology_kernel() (in module darmonpoints.homology)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.get_j_invariant">get_j_invariant() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.limits.get_limits_from_decomp">get_limits_from_decomp() (in module darmonpoints.limits)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.get_Lseries_term">get_Lseries_term() (darmonpoints.cohomology_arithmetic.ArithCohBianchi method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.get_Lseries_term">(darmonpoints.cohomology_arithmetic.ArithCohElement method)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent.get_Lseries_term">(darmonpoints.cohomology_arithmetic.ArithCohOverconvergent method)</a>
+</li>
+        </ul></li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.get_overconvergent_class_bianchi">get_overconvergent_class_bianchi() (in module darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.get_overconvergent_class_matrices">get_overconvergent_class_matrices() (in module darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.get_overconvergent_class_quaternionic">get_overconvergent_class_quaternionic() (in module darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.get_rational_cocycle">get_rational_cocycle() (in module darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.get_rational_cocycle_from_ap">get_rational_cocycle_from_ap() (in module darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.get_twisted_fox_term">get_twisted_fox_term() (darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.get_twodim_cocycle">get_twodim_cocycle() (in module darmonpoints.cohomology_arithmetic)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_Up_reps">get_Up_reps() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_Up_reps_bianchi">get_Up_reps_bianchi() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.get_Up_reps_local">get_Up_reps_local() (darmonpoints.cohomology_arithmetic.ArithCohBianchi method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent.get_Up_reps_local">(darmonpoints.cohomology_arithmetic.ArithCohOverconvergent method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.get_word_rep">get_word_rep() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_kleinian.get_word_rep">(darmonpoints.arithgroup.ArithGroup_nf_kleinian method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.get_word_rep">(darmonpoints.arithgroup.ArithGroup_nf_matrix_new method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.get_word_rep">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.get_word_rep">(darmonpoints.arithgroup_nscartan.ArithGroup_nscartan method)</a>
+</li>
+        </ul></li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.get_word_rep_fast">get_word_rep_fast() (in module darmonpoints.mixed_extension)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.get_Zp_covering">get_Zp_covering() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.getcoords">getcoords() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.Gpn_denominator">Gpn_denominator() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.Gpn_Obasis">Gpn_Obasis() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.group">group() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology.TensorProduct.group">(darmonpoints.homology.TensorProduct method)</a>
+</li>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.group">(darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndModule.group">(darmonpoints.representations.CoIndModule method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="H" class="genindex-section">
+  <h2>H</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.hecke_matrix">hecke_matrix() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.ArithHomology.hecke_matrix">(darmonpoints.homology_abstract.ArithHomology method)</a>
+</li>
+        </ul></li>
+        <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement.hecke_smoothen">hecke_smoothen() (darmonpoints.homology.OneChainsElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.height_polynomial">height_polynomial() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.hensel_lift">hensel_lift() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyElement">HomologyElement (class in darmonpoints.homology_abstract)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup">HomologyGroup (class in darmonpoints.homology_abstract)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.hyperbolic_distance">hyperbolic_distance() (in module darmonpoints.arithgroup)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="I" class="genindex-section">
+  <h2>I</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.imag_part">imag_part() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohBianchi.improve">improve() (darmonpoints.cohomology_arithmetic.ArithCohBianchi method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohOverconvergent.improve">(darmonpoints.cohomology_arithmetic.ArithCohOverconvergent method)</a>
+</li>
+        </ul></li>
+        <li><a href="distributions.html#darmonpoints.representations.IndAction">IndAction (class in darmonpoints.representations)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.representations.IndElement">IndElement (class in darmonpoints.representations)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.representations.IndModule">IndModule (class in darmonpoints.representations)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.integrate_H1">integrate_H1() (in module darmonpoints.integrals)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.integrate_H1_riemann">integrate_H1_riemann() (in module darmonpoints.integrals)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.intersect_geodesic_arcs">intersect_geodesic_arcs() (in module darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.inverse_shapiro">inverse_shapiro() (in module darmonpoints.homology)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.is_additive">is_additive() (darmonpoints.ocmodule.AddMeromorphicFunctions method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement.is_cycle">is_cycle() (darmonpoints.homology.OneChainsElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement.is_degree_zero_valued">is_degree_zero_valued() (darmonpoints.homology.OneChainsElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.is_exact">is_exact() (darmonpoints.ocmodule.OCVn method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.is_finite">is_finite() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.is_in_fundom">is_in_fundom() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.is_in_fundom">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.is_in_fundom_boundary">is_in_fundom_boundary() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.is_in_fundom_exterior">is_in_fundom_exterior() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.is_in_fundom_interior">is_in_fundom_interior() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.is_in_Gamma0loc">is_in_Gamma0loc() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.is_in_Gamma_1">is_in_Gamma_1() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.is_in_Gpn_order">is_in_Gpn_order() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.is_in_open_interval">is_in_open_interval() (in module darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.is_in_principal_affinoid">is_in_principal_affinoid() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.is_infinity">is_infinity() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.is_one">is_one() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.is_overconvergent">is_overconvergent() (darmonpoints.ocmodule.OCVn method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.is_page_initialized">is_page_initialized() (in module darmonpoints.sarithgroup)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.limits.is_represented_by_unit">is_represented_by_unit() (in module darmonpoints.limits)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.is_scalar">is_scalar() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.is_smooth">is_smooth() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.is_trivial_in_abelianization">is_trivial_in_abelianization() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.is_zero">is_zero() (darmonpoints.cohomology_abstract.CohomologyElement method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement.is_zero">(darmonpoints.homology.OneChainsElement method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndElement.is_zero">(darmonpoints.representations.CoIndElement method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="J" class="genindex-section">
+  <h2>J</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.JtoP">JtoP() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="L" class="genindex-section">
+  <h2>L</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.large_group">large_group() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.lattice_homology_cycle">lattice_homology_cycle() (in module darmonpoints.homology)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.left_act_by_matrix">left_act_by_matrix() (darmonpoints.ocmodule.AddMeromorphicFunctionsElement method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.level">level (darmonpoints.arithgroup.ArithGroup_nf_matrix_new attribute)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.lift">lift() (darmonpoints.ocmodule.OCVnElement method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.lift">(in module darmonpoints.arithgroup_nscartan)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.lift_padic_splitting">lift_padic_splitting() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.lift_to_locally_analytic">lift_to_locally_analytic() (in module darmonpoints.integrals)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExtElement.list">list() (darmonpoints.mixed_extension.QuadExtElement method)</a>
+
+        <ul>
+          <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.list">(darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.local_splitting">local_splitting() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.log_pseries">log_pseries() (in module darmonpoints.integrals)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="M" class="genindex-section">
+  <h2>M</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.M2Z">M2Z() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.magma_F_elt_to_sage">magma_F_elt_to_sage() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.magma_F_ideal_to_sage">magma_F_ideal_to_sage() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.magma_integral_quaternion_to_sage">magma_integral_quaternion_to_sage() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.magma_quaternion_to_sage">magma_quaternion_to_sage() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.magma_word_problem">magma_word_problem() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.mat_list">mat_list() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.mat_list">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+        </ul></li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.matrix">matrix() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.matrix_basis">matrix_basis() (darmonpoints.arithgroup.ArithGroup_nf_matrix method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.matrix_basis">(darmonpoints.arithgroup.ArithGroup_nf_matrix_new method)</a>
+</li>
+        </ul></li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.matrix_rep">matrix_rep() (darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.matrix_to_quaternion">matrix_to_quaternion() (darmonpoints.arithgroup.ArithGroup_nf_matrix method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.matrix_to_quaternion">(darmonpoints.arithgroup.ArithGroup_nf_matrix_new method)</a>
+</li>
+        </ul></li>
+        <li><a href="distributions.html#darmonpoints.representations.MatrixAction">MatrixAction (class in darmonpoints.representations)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.MatrixArithGroup">MatrixArithGroup() (in module darmonpoints.sarithgroup)</a>
+</li>
+        <li>
+    module
+
+        <ul>
+          <li><a href="arithmeticgroups.html#module-darmonpoints.arithgroup">darmonpoints.arithgroup</a>
+</li>
+          <li><a href="arithmeticgroups.html#module-darmonpoints.arithgroup_element">darmonpoints.arithgroup_element</a>
+</li>
+          <li><a href="arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">darmonpoints.arithgroup_nscartan</a>
+</li>
+          <li><a href="cohomology.html#module-darmonpoints.cohomology_abstract">darmonpoints.cohomology_abstract</a>
+</li>
+          <li><a href="cohomology.html#module-darmonpoints.cohomology_arithmetic">darmonpoints.cohomology_arithmetic</a>
+</li>
+          <li><a href="cohomology.html#module-darmonpoints.homology">darmonpoints.homology</a>
+</li>
+          <li><a href="cohomology.html#module-darmonpoints.homology_abstract">darmonpoints.homology_abstract</a>
+</li>
+          <li><a href="integration.html#module-darmonpoints.integrals">darmonpoints.integrals</a>
+</li>
+          <li><a href="integration.html#module-darmonpoints.limits">darmonpoints.limits</a>
+</li>
+          <li><a href="internals.html#module-darmonpoints.mixed_extension">darmonpoints.mixed_extension</a>
+</li>
+          <li><a href="distributions.html#module-darmonpoints.ocmodule">darmonpoints.ocmodule</a>
+</li>
+          <li><a href="distributions.html#module-darmonpoints.representations">darmonpoints.representations</a>
+</li>
+          <li><a href="arithmeticgroups.html#module-darmonpoints.sarithgroup">darmonpoints.sarithgroup</a>
+</li>
+          <li><a href="internals.html#module-darmonpoints.util">darmonpoints.util</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.module_generators">module_generators() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.module_generators_new">module_generators_new() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.moebius_transform">moebius_transform() (in module darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.moment">moment() (darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.moments">moments() (darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.TensorElement.mult_by">mult_by() (darmonpoints.homology.TensorElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.multiply_out">multiply_out() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="N" class="genindex-section">
+  <h2>N</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.ngens">ngens() (darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_generic.non_positive_unit">non_positive_unit() (darmonpoints.arithgroup.ArithGroup_nf_generic method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.non_positive_unit">(darmonpoints.arithgroup.ArithGroup_nf_matrix method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.non_positive_unit">(darmonpoints.arithgroup.ArithGroup_rationalmatrix method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalquaternion.non_positive_unit">(darmonpoints.arithgroup.ArithGroup_rationalquaternion method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_nscartan.ArithGroup_nscartan.non_positive_unit">(darmonpoints.arithgroup_nscartan.ArithGroup_nscartan method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExtElement.norm_relative">norm_relative() (darmonpoints.mixed_extension.QuadExtElement method)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.limits.num_evals">num_evals() (in module darmonpoints.limits)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="O" class="genindex-section">
+  <h2>O</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVn">OCVn (class in darmonpoints.ocmodule)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement">OCVnElement (class in darmonpoints.ocmodule)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.OneChains">OneChains (class in darmonpoints.homology)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement">OneChainsElement (class in darmonpoints.homology)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyElement.order">order() (darmonpoints.homology_abstract.HomologyElement method)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.limits.order_and_unit">order_and_unit() (in module darmonpoints.limits)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExtElement.ordp">ordp() (darmonpoints.mixed_extension.QuadExtElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.our_adjuster">our_adjuster (class in darmonpoints.ocmodule)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.our_algdep">our_algdep() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.our_cuberoot">our_cuberoot() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.our_lindep">our_lindep() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.our_nroot">our_nroot() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.our_sqrt">our_sqrt() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="P" class="genindex-section">
+  <h2>P</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.pair_with">pair_with() (darmonpoints.ocmodule.AddMeromorphicFunctionsElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.pair_with_cycle">pair_with_cycle() (darmonpoints.cohomology_abstract.CohomologyElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.pari_ordmax_basis_to_sage">pari_ordmax_basis_to_sage() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.period_from_coords">period_from_coords() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.perturb_point_on_arc">perturb_point_on_arc() (in module darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_fuchsian_generic.plot_fundamental_domain">plot_fundamental_domain() (darmonpoints.arithgroup.ArithGroup_fuchsian_generic method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.point_radius">point_radius() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.polynomial">polynomial() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.polynomial_roots">polynomial_roots() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.polynomial_roots_old">polynomial_roots_old() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.power_series">power_series() (darmonpoints.ocmodule.AddMeromorphicFunctionsElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.power_series_ring">power_series_ring() (darmonpoints.ocmodule.AddMeromorphicFunctions method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.precision_cap">precision_cap() (darmonpoints.mixed_extension.QuadExt method)</a>
+
+        <ul>
+          <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.precision_cap">(darmonpoints.ocmodule.OCVn method)</a>
+</li>
+        </ul></li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.prime">prime() (darmonpoints.mixed_extension.QuadExt method)</a>
+
+        <ul>
+          <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.prime">(darmonpoints.ocmodule.OCVn method)</a>
+</li>
+          <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.prime">(darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        </ul></li>
+        <li><a href="internals.html#darmonpoints.util.print_padic">print_padic() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.print_table_latex">print_table_latex() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.ps_adjuster">ps_adjuster (class in darmonpoints.ocmodule)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="Q" class="genindex-section">
+  <h2>Q</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt">QuadExt (class in darmonpoints.mixed_extension)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExtElement">QuadExtElement (class in darmonpoints.mixed_extension)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.quaternion_algebra">quaternion_algebra() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.quaternion_algebra_invariants_from_ramification">quaternion_algebra_invariants_from_ramification() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.quaternion_rep">quaternion_rep() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.quaternion_to_magma_quaternion">quaternion_to_magma_quaternion() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix.quaternion_to_matrix">quaternion_to_matrix() (darmonpoints.arithgroup.ArithGroup_nf_matrix method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_nf_matrix_new.quaternion_to_matrix">(darmonpoints.arithgroup.ArithGroup_nf_matrix_new method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="R" class="genindex-section">
+  <h2>R</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.r_act_by">r_act_by() (darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement.radius">radius() (darmonpoints.homology.OneChainsElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.ramification_index">ramification_index() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.random_element">random_element() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.rank">rank() (darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.real_part">real_part() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.recognize_DV_algdep">recognize_DV_algdep() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.recognize_DV_lindep">recognize_DV_lindep() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.recognize_J">recognize_J() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.recognize_point">recognize_point() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.reduce_in_amalgam">reduce_in_amalgam() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.reduce_mod">reduce_mod() (darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.reduce_word">reduce_word() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.reduce_word_tietze">reduce_word_tietze() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.relative_degree">relative_degree() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.relativize_ATR">relativize_ATR() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.residue_class_degree">residue_class_degree() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.riemann_sum">riemann_sum() (in module darmonpoints.integrals)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="S" class="genindex-section">
+  <h2>S</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.S_arithgroup">S_arithgroup() (darmonpoints.cohomology_arithmetic.ArithCoh method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.sage_F_elt_to_magma">sage_F_elt_to_magma() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.sage_F_ideal_to_magma">sage_F_ideal_to_magma() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.sage_order_basis_to_pari">sage_order_basis_to_pari() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.sage_quaternion_to_magma">sage_quaternion_to_magma() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.sample_point">sample_point() (in module darmonpoints.integrals)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.save_to_db">save_to_db() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.scale_by">scale_by() (darmonpoints.ocmodule.AddMeromorphicFunctionsElement method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.representations.Scaling">Scaling (class in darmonpoints.representations)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.selmer_group_iterator">selmer_group_iterator() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.set_immutable">set_immutable() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.set_wp">set_wp() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="integration.html#darmonpoints.integrals.ShapiroImage">ShapiroImage (class in darmonpoints.integrals)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.TensorElement.short_rep">short_rep() (darmonpoints.homology.TensorElement method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVn.Sigma0">Sigma0() (darmonpoints.ocmodule.OCVn method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.Sigma0Action">Sigma0Action (class in darmonpoints.ocmodule)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.simplification_isomorphism">simplification_isomorphism() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.size">size() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.TensorElement.size_of_support">size_of_support() (darmonpoints.homology.TensorElement method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.small_group">small_group() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.solve_quadratic">solve_quadratic() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.some_elements">some_elements() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup.sorted_ideal_endpoints">sorted_ideal_endpoints() (in module darmonpoints.arithgroup)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.space">space() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.space">(darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+        </ul></li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExtElement.sqrt">sqrt() (darmonpoints.mixed_extension.QuadExtElement method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.subdivide">subdivide() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.syllables_to_tietze">syllables_to_tietze() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="T" class="genindex-section">
+  <h2>T</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.tate_parameter">tate_parameter() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.TensorElement">TensorElement (class in darmonpoints.homology)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology.TensorProduct">TensorProduct (class in darmonpoints.homology)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.tietze_to_syllables">tietze_to_syllables() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCohElement.Tq_eigenvalue">Tq_eigenvalue() (darmonpoints.cohomology_arithmetic.ArithCohElement method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExtElement.trace_absolute">trace_absolute() (darmonpoints.mixed_extension.QuadExtElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExtElement.trace_relative">trace_relative() (darmonpoints.mixed_extension.QuadExtElement method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.translate_into_twosided_list">translate_into_twosided_list() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.representations.TrivialAction">TrivialAction (class in darmonpoints.representations)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.twisted_fox_gradient">twisted_fox_gradient() (darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+        <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctions.twisting_matrix">twisting_matrix() (darmonpoints.ocmodule.AddMeromorphicFunctions method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="U" class="genindex-section">
+  <h2>U</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.uniformizer">uniformizer() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.mixed_extension.QuadExt.unramified_generator">unramified_generator() (darmonpoints.mixed_extension.QuadExt method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.Up_matrix">Up_matrix() (darmonpoints.cohomology_arithmetic.ArithCoh method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.Bunch.update">update() (darmonpoints.util.Bunch method)</a>
+</li>
+        <li><a href="internals.html#darmonpoints.util.update_progress">update_progress() (in module darmonpoints.util)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_arithmetic.ArithCoh.use_shapiro">use_shapiro() (darmonpoints.cohomology_arithmetic.ArithCoh method)</a>
+
+        <ul>
+          <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.use_shapiro">(darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="V" class="genindex-section">
+  <h2>V</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.valuation">valuation() (darmonpoints.cohomology_abstract.CohomologyElement method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyElement.valuation">(darmonpoints.homology_abstract.HomologyElement method)</a>
+</li>
+          <li><a href="internals.html#darmonpoints.mixed_extension.QuadExtElement.valuation">(darmonpoints.mixed_extension.QuadExtElement method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.ocmodule.AddMeromorphicFunctionsElement.valuation">(darmonpoints.ocmodule.AddMeromorphicFunctionsElement method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.valuation">(darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="distributions.html#darmonpoints.ocmodule.OCVnElement.valuation_list">valuation_list() (darmonpoints.ocmodule.OCVnElement method)</a>
+</li>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.values">values() (darmonpoints.cohomology_abstract.CohomologyElement method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyElement.values">(darmonpoints.homology_abstract.HomologyElement method)</a>
+</li>
+          <li><a href="distributions.html#darmonpoints.representations.CoIndElement.values">(darmonpoints.representations.CoIndElement method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="W" class="genindex-section">
+  <h2>W</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="internals.html#darmonpoints.util.weak_approximation">weak_approximation() (in module darmonpoints.util)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.word_rep">word_rep() (darmonpoints.arithgroup_element.ArithGroupElement method)</a>
+</li>
+        <li><a href="arithmeticgroups.html#darmonpoints.sarithgroup.BigArithGroup_class.wp">wp() (darmonpoints.sarithgroup.BigArithGroup_class method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="Z" class="genindex-section">
+  <h2>Z</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.zero">zero() (darmonpoints.cohomology_abstract.CohomologyGroup method)</a>
+
+        <ul>
+          <li><a href="cohomology.html#darmonpoints.homology_abstract.HomologyGroup.zero">(darmonpoints.homology_abstract.HomologyGroup method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="cohomology.html#darmonpoints.homology.OneChainsElement.zero_degree_equivalent">zero_degree_equivalent() (darmonpoints.homology.OneChainsElement method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2016-2024, Marc Masdeu
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=12958129"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
+    </body>
+</html>

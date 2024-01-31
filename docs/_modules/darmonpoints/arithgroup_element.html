@@ -1,0 +1,610 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+
+    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
+        <title>darmonpoints.arithgroup_element - darmonpoints 6.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  --color-brand-primary: #0f0fff;
+  --color-brand-content: #0f0fff;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">darmonpoints 6.0.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../../_static/logo.svg" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">darmonpoints 6.0.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html">Arithmetic group elements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cohomology.html">Abstract cohomology class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cohomology.html#module-darmonpoints.cohomology_arithmetic">Arithmetic cohomology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cohomology.html#module-darmonpoints.homology_abstract">Abstract homology class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cohomology.html#module-darmonpoints.homology">Homology class</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../integration.html">Integrals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../integration.html#module-darmonpoints.limits">Limits</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../distributions.html">Overconvergent module of distributions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../distributions.html#module-darmonpoints.representations">Representations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html">Mixed extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html#module-darmonpoints.util">Utility package</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <h1>Source code for darmonpoints.arithgroup_element</h1><div class="highlight"><pre>
+<span></span><span class="c1">######################</span>
+<span class="c1">##                  ##</span>
+<span class="c1">##    ARITHMETIC    ##</span>
+<span class="c1">##    GROUP         ##</span>
+<span class="c1">##    ELEMENT       ##</span>
+<span class="c1">##                  ##</span>
+<span class="c1">######################</span>
+
+<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span>
+<span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
+<span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cached_method</span><span class="p">,</span> <span class="n">lazy_attribute</span><span class="p">,</span> <span class="n">walltime</span>
+<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
+<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
+<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
+<span class="kn">from</span> <span class="nn">sage.algebras.quatalg.all</span> <span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">Matrix</span>
+<span class="kn">from</span> <span class="nn">sage.modules.all</span> <span class="kn">import</span> <span class="n">vector</span>
+<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RealField</span><span class="p">,</span>
+    <span class="n">ComplexField</span><span class="p">,</span>
+    <span class="n">RR</span><span class="p">,</span>
+    <span class="n">QuadraticField</span><span class="p">,</span>
+    <span class="n">PolynomialRing</span><span class="p">,</span>
+    <span class="n">NumberField</span><span class="p">,</span>
+    <span class="n">QQ</span><span class="p">,</span>
+    <span class="n">ZZ</span><span class="p">,</span>
+    <span class="n">Qp</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sage.functions.trig</span> <span class="kn">import</span> <span class="n">arctan</span>
+<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">save</span><span class="p">,</span> <span class="n">load</span>
+<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule_generic</span>
+<span class="kn">from</span> <span class="nn">sage.functions.generalized</span> <span class="kn">import</span> <span class="n">sgn</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">tee</span><span class="p">,</span> <span class="n">starmap</span>
+
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="ArithGroupElement">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement">[docs]</a>
+<span class="k">class</span> <span class="nc">ArithGroupElement</span><span class="p">(</span><span class="n">MultiplicativeGroupElement</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">word_rep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">quaternion_rep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        INPUT:</span>
+
+<span class="sd">        - a list of the form [(g1,a1),(g2,a2),...,(gn,an)] where the gi are indices</span>
+<span class="sd">          refering to fixed generators, and the ai are integers, or</span>
+<span class="sd">          an element of the quaternion algebra ``self.parent().quaternion_algebra()``.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">MultiplicativeGroupElement</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="n">init_data</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_word_rep</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_quaternion_rep</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">word_rep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span> <span class="o">=</span> <span class="n">word_rep</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_word_rep</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">init_data</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">quaternion_rep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">parent</span><span class="o">.</span><span class="n">_is_in_order</span><span class="p">(</span><span class="n">quaternion_rep</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;Quaternion (= </span><span class="si">%s</span><span class="s2">) must be in order&quot;</span> <span class="o">%</span> <span class="n">quaternion_rep</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">base_field</span><span class="p">()</span> <span class="o">==</span> <span class="n">QQ</span><span class="p">:</span>
+                    <span class="n">rednrm</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">quaternion_rep</span><span class="o">.</span><span class="n">reduced_norm</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">discriminant</span> <span class="o">!=</span> <span class="mi">1</span>
+                        <span class="k">else</span> <span class="n">quaternion_rep</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">rednrm</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Quaternion must be of norm 1&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">rednrm</span> <span class="o">=</span> <span class="n">quaternion_rep</span><span class="o">.</span><span class="n">reduced_norm</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">rednrm</span><span class="o">.</span><span class="n">is_integral</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">rednrm</span><span class="p">)</span><span class="o">.</span><span class="n">is_integral</span><span class="p">():</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Quaternion must be of unit norm&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_word_rep</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">check_consistency</span><span class="p">(</span><span class="n">quaternion_rep</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">=</span> <span class="n">quaternion_rep</span>
+            <span class="n">set_immutable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_quaternion_rep</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">init_data</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">init_data</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must pass either quaternion_rep or word_rep&quot;</span><span class="p">)</span>
+        <span class="c1"># self._reduce_word()</span>
+
+<div class="viewcode-block" id="ArithGroupElement.size">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.size">[docs]</a>
+    <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()),</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="o">.</span><span class="n">coefficient_tuple</span><span class="p">()))</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()),</span> <span class="nb">hash</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="o">.</span><span class="n">list</span><span class="p">()))))</span>
+
+    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ArithGroupElement.is_scalar">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.is_scalar">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_scalar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_field</span><span class="p">()(</span><span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_mul_</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="n">word_rep</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">quaternion_rep</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">left</span><span class="o">.</span><span class="n">has_quaternion_rep</span> <span class="ow">and</span> <span class="n">right</span><span class="o">.</span><span class="n">has_quaternion_rep</span><span class="p">)</span> <span class="ow">or</span> <span class="n">word_rep</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">quaternion_rep</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">*</span> <span class="n">right</span><span class="o">.</span><span class="n">quaternion_rep</span>
+        <span class="k">return</span> <span class="n">left</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
+            <span class="n">left</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">word_rep</span><span class="o">=</span><span class="n">word_rep</span><span class="p">,</span> <span class="n">quaternion_rep</span><span class="o">=</span><span class="n">quaternion_rep</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ArithGroupElement.is_one">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.is_one">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_one</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__invert__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">word_rep</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">quaternion_rep</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_word_rep</span><span class="p">:</span>
+            <span class="n">word_rep</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_quaternion_rep</span><span class="p">:</span>
+            <span class="n">quaternion_rep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">word_rep</span><span class="o">=</span><span class="n">word_rep</span><span class="p">,</span> <span class="n">quaternion_rep</span><span class="o">=</span><span class="n">quaternion_rep</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_eq_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="n">selfquatrep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span>
+        <span class="n">rightquatrep</span> <span class="o">=</span> <span class="n">right</span><span class="o">.</span><span class="n">quaternion_rep</span>
+        <span class="k">if</span> <span class="s2">&quot;P&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_grouptype</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">selfquatrep</span> <span class="o">==</span> <span class="n">rightquatrep</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">selfquatrep</span> <span class="o">/</span> <span class="n">rightquatrep</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">F</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tmp</span><span class="o">.</span><span class="n">is_integral</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">is_integral</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;P&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_grouptype</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">&lt;</span> <span class="n">right</span><span class="o">.</span><span class="n">quaternion_rep</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_reduce_word</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_word_rep</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span> <span class="o">=</span> <span class="n">reduce_word_tietze</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ArithGroupElement.word_rep">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.word_rep">[docs]</a>
+    <span class="nd">@lazy_attribute</span>
+    <span class="k">def</span> <span class="nf">word_rep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a word in the generators of `\Gamma` representing the given quaternion `x`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">get_word_rep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_word_rep</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">tmp</span></div>
+
+
+<div class="viewcode-block" id="ArithGroupElement.quaternion_rep">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.quaternion_rep">[docs]</a>
+    <span class="nd">@lazy_attribute</span>
+    <span class="k">def</span> <span class="nf">quaternion_rep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the quaternion representation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_quaternion_rep</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">=</span> <span class="n">prod</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">Gamma</span><span class="o">.</span><span class="n">Ugens</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">**</span> <span class="n">a</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tietze_to_syllables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span><span class="p">)],</span>
+            <span class="n">z</span><span class="o">=</span><span class="n">Gamma</span><span class="o">.</span><span class="n">B</span><span class="o">.</span><span class="n">one</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">set_immutable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span></div>
+
+
+<div class="viewcode-block" id="ArithGroupElement.check_consistency">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.check_consistency">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_consistency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">txt</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">wd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_quaternion_rep</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_word_rep</span><span class="p">:</span>
+                <span class="k">return</span>
+        <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span>
+        <span class="k">if</span> <span class="n">wd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">wd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span>
+        <span class="n">Gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">base_field</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">q1</span> <span class="o">=</span> <span class="n">prod</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">Gamma</span><span class="o">.</span><span class="n">Ugens</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">**</span> <span class="n">a</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tietze_to_syllables</span><span class="p">(</span><span class="n">wd</span><span class="p">)],</span> <span class="n">z</span><span class="o">=</span><span class="n">ZZ</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">quo</span> <span class="o">=</span> <span class="n">F</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">q1</span><span class="o">**-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Inconsistency: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">q1</span><span class="o">**-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Word and quaternion are inconsistent! (</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="n">txt</span><span class="p">)</span>
+        <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="ArithGroupElement.embed">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.embed">[docs]</a>
+    <span class="nd">@cached_method</span>
+    <span class="k">def</span> <span class="nf">embed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_quaternion_rep</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span><span class="o">.</span><span class="fm">__iter__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ArithGroupElement.matrix">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.matrix">[docs]</a>
+    <span class="k">def</span> <span class="nf">matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prec</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ArithGroupElement.acton">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.acton">[docs]</a>
+    <span class="k">def</span> <span class="nf">acton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">act_flt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">(),</span> <span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ArithGroupElement.conjugate_by">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.conjugate_by">[docs]</a>
+    <span class="k">def</span> <span class="nf">conjugate_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+        <span class="n">word_rep</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">quat_rep</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_word_rep</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span>
+                        <span class="n">w</span><span class="o">**-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">*</span> <span class="n">w</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span>
+                            <span class="n">w</span><span class="o">**-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="o">-</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">*</span> <span class="n">w</span>
+                        <span class="p">)</span>
+                        <span class="o">**</span> <span class="o">-</span><span class="mi">1</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">word_rep</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_rep</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">word_rep</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">conjugate_by</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">word_rep</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">word_rep</span> <span class="o">+=</span> <span class="p">(</span>
+                            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="o">-</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">conjugate_by</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">word_rep</span>
+                        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_quaternion_rep</span><span class="p">:</span>
+            <span class="n">quat_rep</span> <span class="o">=</span> <span class="n">w</span><span class="o">**-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">*</span> <span class="n">w</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">word_rep</span><span class="o">=</span><span class="n">word_rep</span><span class="p">,</span> <span class="n">quaternion_rep</span><span class="o">=</span><span class="n">quat_rep</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ArithGroupElement.is_trivial_in_abelianization">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.is_trivial_in_abelianization">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_trivial_in_abelianization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">abelianization</span><span class="p">()(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="ArithGroupElement.find_bounding_cycle">
+<a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup_element.ArithGroupElement.find_bounding_cycle">[docs]</a>
+    <span class="k">def</span> <span class="nf">find_bounding_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">npow</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use recursively that:</span>
+<span class="sd">        - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))</span>
+<span class="sd">        - x^(-a) g = -a x + g + del(1|1) + del(x^(a)|(x^-a)) - del(x^(-a)|g) + del(x|(x + x^2 + ... + x^(a-1)))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">Gn</span><span class="o">.</span><span class="n">B</span>
+        <span class="n">gprimeq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span>
+        <span class="n">gprime</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">Gn</span><span class="p">(</span><span class="n">gprimeq</span><span class="p">)</span>
+        <span class="n">gword</span> <span class="o">=</span> <span class="n">tietze_to_syllables</span><span class="p">(</span><span class="n">gprime</span><span class="o">.</span><span class="n">word_rep</span><span class="p">)</span>
+        <span class="n">rels</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">Gn</span><span class="o">.</span><span class="n">_calculate_relation</span><span class="p">(</span>
+            <span class="n">G</span><span class="o">.</span><span class="n">Gn</span><span class="o">.</span><span class="n">get_weight_vector</span><span class="p">(</span><span class="n">gprime</span><span class="o">**</span><span class="n">npow</span><span class="p">),</span> <span class="n">separated</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="c1"># If npow &gt; 1 then add the boundary relating self^npow with npow*self</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">gprimeq</span><span class="o">**</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">npow</span><span class="p">)],</span> <span class="n">gprime</span><span class="p">)]</span> <span class="k">if</span> <span class="n">npow</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">[]</span>
+
+        <span class="n">num_terms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gword</span><span class="p">)</span>
+        <span class="n">jj</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">gword</span><span class="p">:</span>
+            <span class="n">jj</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="c1"># Decompose gword as g^a*gprime, where g is a generator</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">Gn</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">gq</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">quaternion_rep</span>
+            <span class="n">gaq</span> <span class="o">=</span> <span class="n">gq</span><span class="o">**</span><span class="n">a</span>
+            <span class="n">ga</span> <span class="o">=</span> <span class="n">g</span><span class="o">**</span><span class="n">a</span>
+            <span class="c1"># Add the boundary relating g^a*gprime with g^a + gprime (unless we are in the last step)</span>
+            <span class="n">ans</span><span class="o">.</span><span class="n">extend</span><span class="p">([(</span><span class="o">-</span><span class="n">npow</span><span class="p">,</span> <span class="p">[</span><span class="n">gaq</span><span class="p">],</span> <span class="n">G</span><span class="o">.</span><span class="n">Gn</span><span class="p">(</span><span class="n">gword</span><span class="p">[</span><span class="n">jj</span><span class="p">:]))]</span> <span class="k">if</span> <span class="n">jj</span> <span class="o">&lt;</span> <span class="n">num_terms</span> <span class="k">else</span> <span class="p">[])</span>
+            <span class="c1"># If a &lt; 0 use the relation g^a = -g^(-a) + del(g^a|g^(-a))</span>
+            <span class="n">ans</span><span class="o">.</span><span class="n">extend</span><span class="p">([(</span><span class="n">npow</span><span class="p">,</span> <span class="p">[</span><span class="n">gaq</span><span class="o">**-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ga</span><span class="p">)]</span> <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[])</span>
+            <span class="c1"># By the above line we have to deal with g^a with -g^abs(a) if a &lt;0</span>
+            <span class="c1"># We add the corresponding boundaries, which we will substract if a &gt; 0 and add if a &lt; 0</span>
+            <span class="n">ans</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">[(</span><span class="o">-</span><span class="n">sgn</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">npow</span><span class="p">,</span> <span class="p">[</span><span class="n">gq</span><span class="o">**</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">a</span><span class="p">))],</span> <span class="n">g</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                <span class="k">else</span> <span class="p">[]</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">rels</span><span class="p">:</span>
+            <span class="c1"># we deal with the relation rel^m</span>
+            <span class="c1"># it is equivalent to deal with m*rel, because these two differ by a boundary that integrates to 1</span>
+            <span class="k">assert</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="n">num_terms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span>
+            <span class="n">jj</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">rel</span><span class="p">:</span>
+                <span class="n">jj</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="c1"># we deal with a part of the relation of the form g*g&#39;</span>
+                <span class="n">g</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">Gn</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">gq</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">quaternion_rep</span>
+                <span class="n">ga</span> <span class="o">=</span> <span class="n">g</span><span class="o">**</span><span class="n">a</span>
+                <span class="n">gaq</span> <span class="o">=</span> <span class="n">gq</span><span class="o">**</span><span class="n">a</span>
+                <span class="c1"># add the boundary relating g and g&#39;</span>
+                <span class="n">ans</span><span class="o">.</span><span class="n">extend</span><span class="p">([(</span><span class="o">-</span><span class="n">m</span><span class="p">,</span> <span class="p">[</span><span class="n">gaq</span><span class="p">],</span> <span class="n">G</span><span class="o">.</span><span class="n">Gn</span><span class="p">(</span><span class="n">rel</span><span class="p">[</span><span class="n">jj</span><span class="p">:]))]</span> <span class="k">if</span> <span class="n">jj</span> <span class="o">&lt;</span> <span class="n">num_terms</span> <span class="k">else</span> <span class="p">[])</span>
+                <span class="c1"># If a &lt; 0 use the relation g^a = -g^(-a) + del(g^a|g^(-a))</span>
+                <span class="n">ans</span><span class="o">.</span><span class="n">extend</span><span class="p">([(</span><span class="n">m</span><span class="p">,</span> <span class="p">[</span><span class="n">gaq</span><span class="o">**-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ga</span><span class="p">)]</span> <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[])</span>
+                <span class="c1"># add the boundaries of g^abs(a)</span>
+                <span class="n">ans</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="p">[(</span><span class="o">-</span><span class="n">sgn</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">m</span><span class="p">,</span> <span class="p">[</span><span class="n">gq</span><span class="o">**</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">a</span><span class="p">))],</span> <span class="n">g</span><span class="p">)]</span>
+                    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                    <span class="k">else</span> <span class="p">[]</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ans</span></div>
+</div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2016-2024, Marc Masdeu
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=12958129"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=32e29ea5"></script>
+    </body>
+</html>
