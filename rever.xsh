@@ -31,8 +31,9 @@ except KeyboardInterrupt:
 
 from rever.activities.command import command
 
+tarball_name = 'dist/darmonpoints-' + $VERSION + '.tar.gz'
 command('build', 'python -m build --sdist')
-command('twine', 'twine upload dist/*')
+command('twine', ''.join(['twine upload ', tarball_name]))
 
 $PROJECT = 'darmonpoints'
 
@@ -59,4 +60,4 @@ $PUSH_TAG_REMOTE = 'git@github.com:mmasdeu/darmonpoints.git'
 $GITHUB_ORG = 'mmasdeu'
 $GITHUB_REPO = 'darmonpoints'
 
-$GHRELEASE_ASSETS = ['dist/darmonpoints-' + $VERSION + '.tar.gz']
+$GHRELEASE_ASSETS = [tarball_name]
