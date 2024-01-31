@@ -5,13 +5,14 @@ name: darmonpoints-dev
 channels:
   - conda-forge
 dependencies:
+  - alabaster
   - black>=23,<24
   - cysignals
   - docutils
   - fplll
   - fpylll
   - furo
-  - alabaster
+  - gap-defaults
   - isort
   - ipywidgets
   - jupyter-sphinx
