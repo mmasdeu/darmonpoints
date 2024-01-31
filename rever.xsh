@@ -31,7 +31,7 @@ except KeyboardInterrupt:
 
 from rever.activities.command import command
 
-command('build', 'python -m build')
+command('build', 'python -m build --sdist')
 command('twine', 'twine upload dist/*')
 
 $PROJECT = 'darmonpoints'
