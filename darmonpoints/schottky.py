@@ -241,17 +241,21 @@ class ThetaOC(SageObject):
             pass
         return f"\\Theta(z;{latex(a)},{latex(b)})_{{{latex(self.m)}}}"
 
-    def __call__(self, z):
+    def __call__(self, z, recursive=True):
+        return self.evaluate(z, recursive=recursive)
+
+    def evaluate(self, z, recursive=True):
         if isinstance(z, DivisorsElement):
-            return prod(self(P) ** n for P, n in z)
+            return prod(self(P, recursive=recursive) ** n for P, n in z)
         G = self.G
-        z0, wd = G.to_fundamental_domain(z)
-        wdab = [[g, 0] for g in G.generators()]
-        for i in wd:
-            wdab[abs(i) - 1] += sgn(i)
         ans = self.val(z)
         ans *= prod(F(z) for ky, F in self.Fn.items())
-        ans *= prod(G.u_function(g, self.prec)(self.D) ** i for g, i in wdab)
+        if recursive:
+            z0, wd = G.to_fundamental_domain(z)
+            wdab = [[g, 0] for g in G.generators()]
+            for i in wd:
+                wdab[abs(i) - 1] += sgn(i)
+            ans *= prod(G.u_function(g, self.prec).evaluate(self.D, recursive=False) ** i for g, i in wdab)
         return ans
 
     def eval_derivative(self, z):
@@ -763,8 +767,8 @@ class SchottkyGroup(SchottkyGroup_abstract):
             z2 = self.find_point(g2, eps=1 + self.pi)
         g2_z2 = act(g2, z2)
         T = self.u_function(g1, prec, a=z1, **kwargs)
-        num = T(z2)
-        den = T(g2_z2)
+        num = T(z2, recursive=False)
+        den = T(g2_z2, recursive=False)
         verbose(f"{num = }")
         verbose(f"{den = }")
         return num / den
