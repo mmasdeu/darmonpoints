@@ -1,46 +1,67 @@
+<p align="center">
+    <img alt="logo" src="https://github.com/mmasdeu/darmonpoints/raw/master/doc/static/logo.svg?sanitize=true">
+</p>
+
 # A package to compute Darmon points
 
-## (or just p-adically construct elliptic curves, or p-adic Darmon-Vonk points,\...)
+## (or just p-adically construct elliptic curves, or p-adic Darmon-Vonk points,...)
 
 (for the full documentation, please see
 <http://mmasdeu.github.io/darmonpoints/doc/html/>)
+
+
+![doc](https://github.com/mmasdeu/darmonpoints/actions/workflows/doc.yml/badge.svg)
+
+![test](https://github.com/mmasdeu/darmonpoints/actions/workflows/test.yml/badge.svg)
+
+![lint](https://github.com/mmasdeu/darmonpoints/actions/workflows/lint.yml/badge.svg)
+
 
 ### What is this?
 
 The **darmonpoints** package can compute many different types of what is
 known as Darmon points. These are known as *Stark-Heegner* points in
-some literature, and originated in [\[Darmon\]](#Darmon){.citation}.
-Subsequent generalizations were introduced by
-[\[Greenberg\]](#Greenberg){.citation} and
-[\[Trifkovic\]](#Trifkovic){.citation}. This has been generalized by
-[\[GMS1\]](#GMS1){.citation} to elliptic curves defined over number
-fields of arbitrary signature. Darmon points are attached to triples
-[(F,E,K)]{.title-ref}, where [F]{.title-ref} is a number field,
-[E/F]{.title-ref} is an elliptic curve defined over [F]{.title-ref}, and
-[K/F]{.title-ref} is a quadratic extension. These triples must satisfy
-certain conditions for Darmon points to be attached to them. The article
-[\[GMS1\]](#GMS1){.citation} contains an overview of all of this. We
-include also a variation used in [\[KP\]](#KP){.citation}.
+some literature, and originated in
+<a href="#Darmon" class="citation">[Darmon]</a>. Subsequent
+generalizations were introduced by
+<a href="#Greenberg" class="citation">[Greenberg]</a> and
+<a href="#Trifkovic" class="citation">[Trifkovic]</a>. This has been
+generalized by <a href="#GMS1" class="citation">[GMS1]</a> to elliptic
+curves defined over number fields of arbitrary signature. Darmon points
+are attached to triples <span class="title-ref">(F,E,K)</span>, where
+<span class="title-ref">F</span> is a number field,
+<span class="title-ref">E/F</span> is an elliptic curve defined over
+<span class="title-ref">F</span>, and <span class="title-ref">K/F</span>
+is a quadratic extension. These triples must satisfy certain conditions
+for Darmon points to be attached to them. The article
+<a href="#GMS1" class="citation">[GMS1]</a> contains an overview of all
+of this. We include also a variation used in
+<a href="#KP" class="citation">[KP]</a>.
 
 The **darmonpoints** package can also compute equations for some
-elliptic curves [E/F]{.title-ref} defined over number fields
-[F]{.title-ref}, as long as certain conditions are satisfied. Namely:
+elliptic curves <span class="title-ref">E/F</span> defined over number
+fields <span class="title-ref">F</span>, as long as certain conditions
+are satisfied. Namely:
 
-1)  [F]{.title-ref} has narrow class number [1]{.title-ref}.
-2)  if [N]{.title-ref} is the conductor of the elliptic curve, it must
-    admit a factorization of the form [N = PDM]{.title-ref}, where:
-    a)  [P]{.title-ref}, [D]{.title-ref} and [M]{.title-ref} are
-        relative coprime.
-    b)  [P]{.title-ref} is a prime ideal of [F]{.title-ref} of prime
-        norm.
-    c)  [D]{.title-ref} is the discriminant of a quaternion algebra over
-        [F]{.title-ref} which is split at only one infinite place.
+1)  <span class="title-ref">F</span> has narrow class number
+    <span class="title-ref">1</span>.
+2)  if <span class="title-ref">N</span> is the conductor of the elliptic
+    curve, it must admit a factorization of the form
+    <span class="title-ref">N = PDM</span>, where:
+    1)  <span class="title-ref">P</span>,
+        <span class="title-ref">D</span> and
+        <span class="title-ref">M</span> are relative coprime.
+    2)  <span class="title-ref">P</span> is a prime ideal of
+        <span class="title-ref">F</span> of prime norm.
+    3)  <span class="title-ref">D</span> is the discriminant of a
+        quaternion algebra over <span class="title-ref">F</span> which
+        is split at only one infinite place.
 
 Finally, we include the module *padicperiods*, which allows for the
-computation of [p]{.title-ref}-adic periods attached to two-dimensional
-components of the cohomology of the same arithmetic groups, and which
-has allowed us to find the corresponding abelian surfaces in some cases
-(see [\[GM\]](#GM){.citation}).
+computation of <span class="title-ref">p</span>-adic periods attached to
+two-dimensional components of the cohomology of the same arithmetic
+groups, and which has allowed us to find the corresponding abelian
+surfaces in some cases (see <a href="#GM" class="citation">[GM]</a>).
 
 The full documentation can be found at
 <http://mmasdeu.github.io/darmonpoints/doc/html/>
@@ -48,7 +69,7 @@ The full documentation can be found at
 ### Installation
 
 Installation of the *darmonpoints* package has been greatly simplified,
-thanks to Matthias Köppe \"Sample Sage\"
+thanks to Matthias Köppe "Sample Sage"
 (<https://github.com/mkoeppe/sage_sample>). For most operations one
 *does need* to have **Magma** (<https://magma.maths.usyd.edu.au/magma/>)
 installed, although we do hope that in the future Sage will include the
@@ -78,9 +99,10 @@ adventurous. Here are some sample calculations that one can try:
     sage: from darmonpoints.darmonpoints import darmon_point
 
 1)  A classical Darmon (a.k.a. Stark-Heegner) point. The following will
-    perform a [7]{.title-ref}-adic calculation to precision
-    [7\^20]{.title-ref}, to find a point over the real quadratic field
-    of discriminant [41]{.title-ref} for the elliptic curve `35a1`:
+    perform a <span class="title-ref">7</span>-adic calculation to
+    precision <span class="title-ref">7^20</span>, to find a point over
+    the real quadratic field of discriminant
+    <span class="title-ref">41</span> for the elliptic curve `35a1`:
 
         sage: darmon_point(7,EllipticCurve('35a1'),41,20)
 
@@ -100,10 +122,10 @@ adventurous. Here are some sample calculations that one can try:
 We can also *discover* equations of curves!
 
 1)  We first find a curve over the rationals. The following command will
-    find a curve of conductor [30]{.title-ref}, using a
-    [5]{.title-ref}-adic calculation with precision of
-    [5\^20]{.title-ref}, and the quaternion algebra of discriminant
-    \`6\`:
+    find a curve of conductor <span class="title-ref">30</span>, using a
+    <span class="title-ref">5</span>-adic calculation with precision of
+    <span class="title-ref">5^20</span>, and the quaternion algebra of
+    discriminant \`6\`:
 
         sage: from darmonpoints.findcurve import find_curve
         sage: find_curve(5,6,30,20)
@@ -150,51 +172,43 @@ a couple of examples.
         sage: from darmonpoints.darmonvonk import darmon_vonk_point
         sage: darmon_vonk_point(5, 6, 53, 92, 120, scaling=12, recognize_point='algdep')
 
-::: {#citations}
+<div id="citations">
 
-[Darmon]{#Darmon .citation-label}
+<span id="Darmon" class="citation-label">Darmon</span>  
+H.Darmon. *Integration on Hp x H and arithmetic applications*. Annals of
+Math.
 
-:   H.Darmon. *Integration on Hp x H and arithmetic applications*.
-    Annals of Math.
+<span id="DarmonVonk" class="citation-label">DarmonVonk</span>  
+H.Darmon, J.Vonk. *Singular moduli for real quadratic fields: a rigid
+analytic approach*. Duke Math.
 
-[DarmonVonk]{#DarmonVonk .citation-label}
+<span id="GM" class="citation-label">GM</span>  
+X.Guitart, M.Masdeu. *Periods of modular GL2-type abelian varieties and
+p-adic integration*. Experimental Mathematics.
 
-:   H.Darmon, J.Vonk. *Singular moduli for real quadratic fields: a
-    rigid analytic approach*. Duke Math.
+<span id="GMS1" class="citation-label">GMS1</span>  
+X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves over
+number fields of arbitrary signature*. Proc. LMS.
 
-[GM]{#GM .citation-label}
+<span id="GMS2" class="citation-label">GMS2</span>  
+X.Guitart, M.Masdeu, M.H.Sengun. *Uniformization of modular elliptic
+curves via p-adic methods*. Journal of Algebra.
 
-:   X.Guitart, M.Masdeu. *Periods of modular GL2-type abelian varieties
-    and p-adic integration*. Experimental Mathematics.
+<span id="GMX" class="citation-label">GMX</span>  
+X.Guitart, M.Masdeu, X.Xarles *A quaternionic construction of p-adic
+singular moduli*. Res. Math. Sci.
 
-[GMS1]{#GMS1 .citation-label}
+<span id="Greenberg" class="citation-label">Greenberg</span>  
+M.Greenberg. *Stark-Heegner points and the cohomology of quaternionic
+Shimura varieties*. Duke Math.
 
-:   X.Guitart, M.Masdeu, M.H.Sengun. *Darmon points on elliptic curves
-    over number fields of arbitrary signature*. Proc. LMS.
+<span id="KP" class="citation-label">KP</span>  
+A.Pacetti, D.Kohen (with an appendix by M.Masdeu) *On Heegner points for
+primes of additive reduction ramifying in the base field*. Transactions
+of the AMS.
 
-[GMS2]{#GMS2 .citation-label}
+<span id="Trifkovic" class="citation-label">Trifkovic</span>  
+M.Trifkovic. *Stark-Heegner points on elliptic curves defined over
+imaginary quadratic fields*. Duke Math.
 
-:   X.Guitart, M.Masdeu, M.H.Sengun. *Uniformization of modular elliptic
-    curves via p-adic methods*. Journal of Algebra.
-
-[GMX]{#GMX .citation-label}
-
-:   X.Guitart, M.Masdeu, X.Xarles *A quaternionic construction of p-adic
-    singular moduli*. Res. Math. Sci.
-
-[Greenberg]{#Greenberg .citation-label}
-
-:   M.Greenberg. *Stark-Heegner points and the cohomology of
-    quaternionic Shimura varieties*. Duke Math.
-
-[KP]{#KP .citation-label}
-
-:   A.Pacetti, D.Kohen (with an appendix by M.Masdeu) *On Heegner points
-    for primes of additive reduction ramifying in the base field*.
-    Transactions of the AMS.
-
-[Trifkovic]{#Trifkovic .citation-label}
-
-:   M.Trifkovic. *Stark-Heegner points on elliptic curves defined over
-    imaginary quadratic fields*. Duke Math.
-:::
+</div>
