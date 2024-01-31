@@ -225,49 +225,29 @@
 <span class="c1">##    GROUP         ##</span>
 <span class="c1">##                  ##</span>
 <span class="c1">######################</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span>
-<span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cached_method</span><span class="p">,</span> <span class="n">lazy_attribute</span><span class="p">,</span> <span class="n">walltime</span>
-<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
-<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
-<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
-<span class="kn">from</span> <span class="nn">sage.algebras.quatalg.all</span> <span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">Matrix</span>
-<span class="kn">from</span> <span class="nn">sage.modules.all</span> <span class="kn">import</span> <span class="n">vector</span>
-<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">RealField</span><span class="p">,</span>
-    <span class="n">ComplexField</span><span class="p">,</span>
-    <span class="n">RR</span><span class="p">,</span>
-    <span class="n">QuadraticField</span><span class="p">,</span>
-    <span class="n">PolynomialRing</span><span class="p">,</span>
-    <span class="n">NumberField</span><span class="p">,</span>
-    <span class="n">QQ</span><span class="p">,</span>
-    <span class="n">ZZ</span><span class="p">,</span>
-    <span class="n">Qp</span><span class="p">,</span>
-    <span class="n">Qq</span><span class="p">,</span>
-    <span class="n">Zmod</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sage.functions.trig</span> <span class="kn">import</span> <span class="n">arctan</span>
-<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
-<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">save</span><span class="p">,</span> <span class="n">load</span>
-<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule_generic</span>
-<span class="kn">from</span> <span class="nn">sage.modular.arithgroup.congroup_gamma0</span> <span class="kn">import</span> <span class="n">Gamma0_constructor</span> <span class="k">as</span> <span class="n">Gamma0</span>
-<span class="kn">from</span> <span class="nn">sage.modular.cusps</span> <span class="kn">import</span> <span class="n">Cusp</span>
-<span class="kn">from</span> <span class="nn">sage.modular.btquotients.btquotient</span> <span class="kn">import</span> <span class="n">BruhatTitsTree</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
 <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">dirname</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">tee</span><span class="p">,</span> <span class="n">starmap</span>
+<span class="kn">from</span> <span class="nn">sage.algebras.quatalg.all</span> <span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
+<span class="kn">from</span> <span class="nn">sage.functions.trig</span> <span class="kn">import</span> <span class="n">arctan</span>
+<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
+<span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cached_method</span><span class="p">,</span> <span class="n">lazy_attribute</span><span class="p">,</span> <span class="n">walltime</span>
+<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
+<span class="kn">from</span> <span class="nn">sage.modular.arithgroup.congroup_gamma0</span> <span class="kn">import</span> <span class="n">Gamma0_constructor</span> <span class="k">as</span> <span class="n">Gamma0</span>
+<span class="kn">from</span> <span class="nn">sage.modular.btquotients.btquotient</span> <span class="kn">import</span> <span class="n">BruhatTitsTree</span>
+<span class="kn">from</span> <span class="nn">sage.modular.cusps</span> <span class="kn">import</span> <span class="n">Cusp</span>
+<span class="kn">from</span> <span class="nn">sage.modules.all</span> <span class="kn">import</span> <span class="n">vector</span>
+<span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule_generic</span>
+<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">RR</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="n">ComplexField</span><span class="p">,</span> <span class="n">NumberField</span><span class="p">,</span> <span class="n">PolynomialRing</span><span class="p">,</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">Qq</span><span class="p">,</span> <span class="n">QuadraticField</span><span class="p">,</span> <span class="n">RealField</span><span class="p">,</span> <span class="n">Zmod</span>
+<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
+<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
+<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
 
-<span class="kn">from</span> <span class="nn">.arithgroup</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ArithGroup_nf_fuchsian</span><span class="p">,</span>
-    <span class="n">ArithGroup_nf_kleinian</span><span class="p">,</span>
-    <span class="n">ArithGroup_rationalquaternion</span><span class="p">,</span>
-    <span class="n">ArithGroup_rationalmatrix</span><span class="p">,</span>
-    <span class="n">ArithGroup_nf_matrix</span><span class="p">,</span>
-    <span class="n">ArithGroup_nf_matrix_new</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.arithgroup</span> <span class="kn">import</span> <span class="n">ArithGroup_nf_fuchsian</span><span class="p">,</span> <span class="n">ArithGroup_nf_kleinian</span><span class="p">,</span> <span class="n">ArithGroup_nf_matrix</span><span class="p">,</span> <span class="n">ArithGroup_nf_matrix_new</span><span class="p">,</span> <span class="n">ArithGroup_rationalmatrix</span><span class="p">,</span> <span class="n">ArithGroup_rationalquaternion</span>
 <span class="kn">from</span> <span class="nn">.homology_abstract</span> <span class="kn">import</span> <span class="n">ArithHomology</span><span class="p">,</span> <span class="n">HomologyGroup</span>
 <span class="kn">from</span> <span class="nn">.representations</span> <span class="kn">import</span> <span class="n">TrivialAction</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>

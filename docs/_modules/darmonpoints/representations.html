@@ -224,42 +224,29 @@
 <span class="c1">##                  ##</span>
 <span class="c1">##                  ##</span>
 <span class="c1">######################</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span>
-<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
-<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span><span class="p">,</span> <span class="n">ModuleElement</span>
-<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
-<span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
-<span class="kn">from</span> <span class="nn">sage.categories.homset</span> <span class="kn">import</span> <span class="n">Hom</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.constructor</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
-<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_method</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
-<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
-<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">RealField</span><span class="p">,</span>
-    <span class="n">ComplexField</span><span class="p">,</span>
-    <span class="n">RR</span><span class="p">,</span>
-    <span class="n">QuadraticField</span><span class="p">,</span>
-    <span class="n">PolynomialRing</span><span class="p">,</span>
-    <span class="n">LaurentSeriesRing</span><span class="p">,</span>
-    <span class="n">Qp</span><span class="p">,</span>
-    <span class="n">Zp</span><span class="p">,</span>
-    <span class="n">Zmod</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">db_save</span>
-<span class="kn">from</span> <span class="nn">sage.parallel.decorate</span> <span class="kn">import</span> <span class="n">fork</span><span class="p">,</span> <span class="n">parallel</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.constructor</span> <span class="kn">import</span> <span class="n">block_matrix</span>
-<span class="kn">from</span> <span class="nn">sage.rings.number_field.number_field</span> <span class="kn">import</span> <span class="n">NumberField</span>
-<span class="kn">from</span> <span class="nn">sage.categories.action</span> <span class="kn">import</span> <span class="n">Action</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">vector</span>
-<span class="kn">from</span> <span class="nn">sage.modules.vector_integer_dense</span> <span class="kn">import</span> <span class="n">Vector_integer_dense</span>
-<span class="kn">from</span> <span class="nn">sage.modules.vector_rational_dense</span> <span class="kn">import</span> <span class="n">Vector_rational_dense</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">FreeModuleElement_generic_dense</span>
-
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">tee</span><span class="p">,</span> <span class="n">starmap</span>
 <span class="kn">import</span> <span class="nn">operator</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
+
+<span class="kn">from</span> <span class="nn">sage.categories.action</span> <span class="kn">import</span> <span class="n">Action</span>
+<span class="kn">from</span> <span class="nn">sage.categories.homset</span> <span class="kn">import</span> <span class="n">Hom</span>
+<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.constructor</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">block_matrix</span><span class="p">,</span> <span class="n">matrix</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
+<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_method</span>
+<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">db_save</span>
+<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">FreeModuleElement_generic_dense</span><span class="p">,</span> <span class="n">vector</span>
+<span class="kn">from</span> <span class="nn">sage.modules.vector_integer_dense</span> <span class="kn">import</span> <span class="n">Vector_integer_dense</span>
+<span class="kn">from</span> <span class="nn">sage.modules.vector_rational_dense</span> <span class="kn">import</span> <span class="n">Vector_rational_dense</span>
+<span class="kn">from</span> <span class="nn">sage.parallel.decorate</span> <span class="kn">import</span> <span class="n">fork</span><span class="p">,</span> <span class="n">parallel</span>
+<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="n">RR</span><span class="p">,</span> <span class="n">ComplexField</span><span class="p">,</span> <span class="n">LaurentSeriesRing</span><span class="p">,</span> <span class="n">PolynomialRing</span><span class="p">,</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">QuadraticField</span><span class="p">,</span> <span class="n">RealField</span><span class="p">,</span> <span class="n">Zmod</span><span class="p">,</span> <span class="n">Zp</span>
+<span class="kn">from</span> <span class="nn">sage.rings.number_field.number_field</span> <span class="kn">import</span> <span class="n">NumberField</span>
+<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">ModuleElement</span><span class="p">,</span> <span class="n">MultiplicativeGroupElement</span>
+<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
+<span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
+<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
 
 <span class="kn">from</span> <span class="nn">.cohomology_abstract</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>

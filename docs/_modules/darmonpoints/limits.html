@@ -218,22 +218,15 @@
         </div>
         <article role="main">
           <h1>Source code for darmonpoints.limits</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">Matrix</span>
-<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">RealField</span><span class="p">,</span>
-    <span class="n">ComplexField</span><span class="p">,</span>
-    <span class="n">RR</span><span class="p">,</span>
-    <span class="n">QuadraticField</span><span class="p">,</span>
-    <span class="n">PolynomialRing</span><span class="p">,</span>
-    <span class="n">Zmod</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sage.groups.generic</span> <span class="kn">import</span> <span class="n">discrete_log</span>
-<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
-<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
+<span></span><span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span><span class="p">,</span> <span class="n">mul</span>
 
 <span class="kn">from</span> <span class="nn">sage.functions.other</span> <span class="kn">import</span> <span class="n">floor</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">chain</span>
-<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">mul</span><span class="p">,</span> <span class="n">itemgetter</span>
+<span class="kn">from</span> <span class="nn">sage.groups.generic</span> <span class="kn">import</span> <span class="n">discrete_log</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
+<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
+<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="n">RR</span><span class="p">,</span> <span class="n">ComplexField</span><span class="p">,</span> <span class="n">PolynomialRing</span><span class="p">,</span> <span class="n">QuadraticField</span><span class="p">,</span> <span class="n">RealField</span><span class="p">,</span> <span class="n">Zmod</span>
 
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>
 

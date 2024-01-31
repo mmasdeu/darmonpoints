@@ -223,38 +223,34 @@
 <span class="c1">##     HOMOLOGY     ##</span>
 <span class="c1">##                  ##</span>
 <span class="c1">######################</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span>
-<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_method</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">Matrix</span>
-<span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
-<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
-<span class="kn">from</span> <span class="nn">sage.categories.action</span> <span class="kn">import</span> <span class="n">Action</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.factory</span> <span class="kn">import</span> <span class="n">Qq</span>
-<span class="kn">from</span> <span class="nn">sage.rings.integer_ring</span> <span class="kn">import</span> <span class="n">ZZ</span>
-<span class="kn">from</span> <span class="nn">sage.rings.power_series_ring</span> <span class="kn">import</span> <span class="n">PowerSeriesRing</span>
-<span class="kn">from</span> <span class="nn">sage.sets.set</span> <span class="kn">import</span> <span class="n">Set</span>
-<span class="kn">from</span> <span class="nn">sage.arith.all</span> <span class="kn">import</span> <span class="n">GCD</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.precision_error</span> <span class="kn">import</span> <span class="n">PrecisionError</span>
-<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span><span class="p">,</span> <span class="n">ModuleElement</span>
-<span class="kn">from</span> <span class="nn">sage.modules.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">free_module_element</span>
-<span class="kn">from</span> <span class="nn">sage.structure.unique_representation</span> <span class="kn">import</span> <span class="n">CachedRepresentation</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.factory</span> <span class="kn">import</span> <span class="n">ZpCA</span>
-<span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
-<span class="kn">from</span> <span class="nn">sage.structure.unique_representation</span> <span class="kn">import</span> <span class="n">UniqueRepresentation</span>
-<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
-
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">operator</span>
-
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">tee</span><span class="p">,</span> <span class="n">starmap</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
 
-<span class="kn">from</span> <span class="nn">.homology_abstract</span> <span class="kn">import</span> <span class="n">ArithHomology</span><span class="p">,</span> <span class="n">HomologyGroup</span>
+<span class="kn">from</span> <span class="nn">sage.arith.all</span> <span class="kn">import</span> <span class="n">GCD</span>
+<span class="kn">from</span> <span class="nn">sage.categories.action</span> <span class="kn">import</span> <span class="n">Action</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
+<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_method</span>
+<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
+<span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule</span>
+<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">free_module_element</span>
+<span class="kn">from</span> <span class="nn">sage.modules.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">sage.rings.integer_ring</span> <span class="kn">import</span> <span class="n">ZZ</span>
+<span class="kn">from</span> <span class="nn">sage.rings.padics.factory</span> <span class="kn">import</span> <span class="n">Qq</span><span class="p">,</span> <span class="n">ZpCA</span>
+<span class="kn">from</span> <span class="nn">sage.rings.padics.precision_error</span> <span class="kn">import</span> <span class="n">PrecisionError</span>
+<span class="kn">from</span> <span class="nn">sage.rings.power_series_ring</span> <span class="kn">import</span> <span class="n">PowerSeriesRing</span>
+<span class="kn">from</span> <span class="nn">sage.sets.set</span> <span class="kn">import</span> <span class="n">Set</span>
+<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">ModuleElement</span><span class="p">,</span> <span class="n">MultiplicativeGroupElement</span>
+<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
+<span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
+<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span>
+<span class="kn">from</span> <span class="nn">sage.structure.unique_representation</span> <span class="kn">import</span> <span class="n">CachedRepresentation</span><span class="p">,</span> <span class="n">UniqueRepresentation</span>
+
 <span class="kn">from</span> <span class="nn">.divisors</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.homology_abstract</span> <span class="kn">import</span> <span class="n">ArithHomology</span><span class="p">,</span> <span class="n">HomologyGroup</span>
 <span class="kn">from</span> <span class="nn">.representations</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>
 

@@ -218,43 +218,42 @@
         </div>
         <article role="main">
           <h1>Source code for darmonpoints.util</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="n">ZZ</span><span class="p">,</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">RR</span><span class="p">,</span> <span class="n">CC</span><span class="p">,</span> <span class="n">RealField</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">Matrix</span>
+<span></span><span class="kn">import</span> <span class="nn">configparser</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
+
 <span class="kn">from</span> <span class="nn">sage.algebras.quatalg.quaternion_algebra</span> <span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
-<span class="kn">from</span> <span class="nn">sage.modular.modform.constructor</span> <span class="kn">import</span> <span class="n">EisensteinForms</span><span class="p">,</span> <span class="n">CuspForms</span>
-<span class="kn">from</span> <span class="nn">sage.schemes.elliptic_curves.constructor</span> <span class="kn">import</span> <span class="n">EllipticCurve</span>
-<span class="kn">from</span> <span class="nn">sage.libs.pari.all</span> <span class="kn">import</span> <span class="n">PariError</span><span class="p">,</span> <span class="n">pari</span>
-<span class="kn">from</span> <span class="nn">sage.misc.sage_eval</span> <span class="kn">import</span> <span class="n">sage_eval</span>
-<span class="kn">from</span> <span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span> <span class="kn">import</span> <span class="n">PolynomialRing</span>
-<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">get_verbose</span><span class="p">,</span> <span class="n">set_verbose</span>
-<span class="kn">from</span> <span class="nn">sage.calculus.var</span> <span class="kn">import</span> <span class="n">var</span>
 <span class="kn">from</span> <span class="nn">sage.arith.all</span> <span class="kn">import</span> <span class="n">divisors</span><span class="p">,</span> <span class="n">kronecker_symbol</span><span class="p">,</span> <span class="n">next_prime</span>
-<span class="kn">from</span> <span class="nn">sage.interfaces.gp</span> <span class="kn">import</span> <span class="n">gp</span>
-<span class="kn">from</span> <span class="nn">sage.rings.infinity</span> <span class="kn">import</span> <span class="n">Infinity</span>
-<span class="kn">from</span> <span class="nn">sage.sets.primes</span> <span class="kn">import</span> <span class="n">Primes</span>
-<span class="kn">from</span> <span class="nn">sage.rings.finite_rings.integer_mod_ring</span> <span class="kn">import</span> <span class="n">IntegerModRing</span><span class="p">,</span> <span class="n">Zmod</span>
-<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_function</span>
-<span class="kn">from</span> <span class="nn">sage.rings.big_oh</span> <span class="kn">import</span> <span class="n">O</span>
-<span class="kn">from</span> <span class="nn">sage.schemes.elliptic_curves.constructor</span> <span class="kn">import</span> <span class="n">EllipticCurve_from_c4c6</span>
-<span class="kn">from</span> <span class="nn">sage.misc.functional</span> <span class="kn">import</span> <span class="n">cyclotomic_polynomial</span>
-<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
-<span class="kn">from</span> <span class="nn">sage.functions.generalized</span> <span class="kn">import</span> <span class="n">sgn</span>
-<span class="kn">from</span> <span class="nn">sage.misc.functional</span> <span class="kn">import</span> <span class="n">cyclotomic_polynomial</span>
-<span class="kn">from</span> <span class="nn">sage.modules.fg_pid.fgp_module</span> <span class="kn">import</span> <span class="n">FGP_Module</span><span class="p">,</span> <span class="n">FGP_Module_class</span>
+<span class="kn">from</span> <span class="nn">sage.arith.functions</span> <span class="kn">import</span> <span class="n">lcm</span>
 <span class="kn">from</span> <span class="nn">sage.arith.misc</span> <span class="kn">import</span> <span class="n">valuation</span>
-<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span> <span class="nn">sage.calculus.var</span> <span class="kn">import</span> <span class="n">var</span>
+<span class="kn">from</span> <span class="nn">sage.functions.generalized</span> <span class="kn">import</span> <span class="n">sgn</span>
 <span class="kn">from</span> <span class="nn">sage.functions.transcendental</span> <span class="kn">import</span> <span class="n">Function_zeta</span>
 <span class="kn">from</span> <span class="nn">sage.groups.finitely_presented</span> <span class="kn">import</span> <span class="n">wrap_FpGroup</span>
-<span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cartesian_product_iterator</span><span class="p">,</span> <span class="n">cached_method</span>
-<span class="kn">from</span> <span class="nn">sage.misc.latex</span> <span class="kn">import</span> <span class="n">latex</span><span class="p">,</span> <span class="n">LatexExpr</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.padic_generic</span> <span class="kn">import</span> <span class="n">local_print_mode</span>
+<span class="kn">from</span> <span class="nn">sage.interfaces.gp</span> <span class="kn">import</span> <span class="n">gp</span>
+<span class="kn">from</span> <span class="nn">sage.libs.pari.all</span> <span class="kn">import</span> <span class="n">PariError</span><span class="p">,</span> <span class="n">pari</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
+<span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cached_method</span><span class="p">,</span> <span class="n">cartesian_product_iterator</span>
+<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_function</span>
+<span class="kn">from</span> <span class="nn">sage.misc.functional</span> <span class="kn">import</span> <span class="n">cyclotomic_polynomial</span>
+<span class="kn">from</span> <span class="nn">sage.misc.latex</span> <span class="kn">import</span> <span class="n">LatexExpr</span><span class="p">,</span> <span class="n">latex</span>
+<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span> <span class="nn">sage.misc.sage_eval</span> <span class="kn">import</span> <span class="n">sage_eval</span>
+<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">get_verbose</span><span class="p">,</span> <span class="n">set_verbose</span><span class="p">,</span> <span class="n">verbose</span>
+<span class="kn">from</span> <span class="nn">sage.modular.modform.constructor</span> <span class="kn">import</span> <span class="n">CuspForms</span><span class="p">,</span> <span class="n">EisensteinForms</span>
+<span class="kn">from</span> <span class="nn">sage.modules.fg_pid.fgp_module</span> <span class="kn">import</span> <span class="n">FGP_Module</span><span class="p">,</span> <span class="n">FGP_Module_class</span>
+<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="n">CC</span><span class="p">,</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">RR</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">RealField</span>
+<span class="kn">from</span> <span class="nn">sage.rings.big_oh</span> <span class="kn">import</span> <span class="n">O</span>
 <span class="kn">from</span> <span class="nn">sage.rings.fast_arith</span> <span class="kn">import</span> <span class="n">prime_range</span>
-<span class="kn">from</span> <span class="nn">sage.arith.functions</span> <span class="kn">import</span> <span class="n">lcm</span>
+<span class="kn">from</span> <span class="nn">sage.rings.finite_rings.integer_mod_ring</span> <span class="kn">import</span> <span class="n">IntegerModRing</span><span class="p">,</span> <span class="n">Zmod</span>
+<span class="kn">from</span> <span class="nn">sage.rings.infinity</span> <span class="kn">import</span> <span class="n">Infinity</span>
+<span class="kn">from</span> <span class="nn">sage.rings.padics.padic_generic</span> <span class="kn">import</span> <span class="n">local_print_mode</span>
+<span class="kn">from</span> <span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span> <span class="kn">import</span> <span class="n">PolynomialRing</span>
+<span class="kn">from</span> <span class="nn">sage.schemes.elliptic_curves.constructor</span> <span class="kn">import</span> <span class="n">EllipticCurve</span><span class="p">,</span> <span class="n">EllipticCurve_from_c4c6</span>
+<span class="kn">from</span> <span class="nn">sage.sets.primes</span> <span class="kn">import</span> <span class="n">Primes</span>
 <span class="kn">from</span> <span class="nn">sage.structure.factorization</span> <span class="kn">import</span> <span class="n">Factorization</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">tee</span><span class="p">,</span> <span class="n">starmap</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
-<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">configparser</span>
-<span class="kn">import</span> <span class="nn">types</span>
 
 
 <div class="viewcode-block" id="is_smooth">

@@ -225,60 +225,46 @@
 <span class="c1">##    GROUP         ##</span>
 <span class="c1">##                  ##</span>
 <span class="c1">######################</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span>
-<span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cached_method</span><span class="p">,</span> <span class="n">walltime</span>
-<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
-<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
-<span class="kn">from</span> <span class="nn">sage.algebras.quatalg.all</span> <span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">Matrix</span>
-<span class="kn">from</span> <span class="nn">sage.modules.all</span> <span class="kn">import</span> <span class="n">vector</span>
-<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">RealField</span><span class="p">,</span>
-    <span class="n">ComplexField</span><span class="p">,</span>
-    <span class="n">RR</span><span class="p">,</span>
-    <span class="n">QuadraticField</span><span class="p">,</span>
-    <span class="n">PolynomialRing</span><span class="p">,</span>
-    <span class="n">NumberField</span><span class="p">,</span>
-    <span class="n">QQ</span><span class="p">,</span>
-    <span class="n">ZZ</span><span class="p">,</span>
-    <span class="n">Qp</span><span class="p">,</span>
-    <span class="n">AA</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sage.arith.all</span> <span class="kn">import</span> <span class="n">lcm</span>
-<span class="kn">from</span> <span class="nn">sage.functions.trig</span> <span class="kn">import</span> <span class="n">arctan</span>
-<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">save</span><span class="p">,</span> <span class="n">load</span>
-<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule_generic</span>
-<span class="kn">from</span> <span class="nn">sage.functions.generalized</span> <span class="kn">import</span> <span class="n">sgn</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
-<span class="kn">from</span> <span class="nn">sage.misc.sage_eval</span> <span class="kn">import</span> <span class="n">sage_eval</span>
-<span class="kn">from</span> <span class="nn">sage.modules.fg_pid.fgp_module</span> <span class="kn">import</span> <span class="n">FGP_Module</span>
-<span class="kn">from</span> <span class="nn">sage.modular.arithgroup.congroup_sl2z</span> <span class="kn">import</span> <span class="n">SL2Z</span>
-<span class="kn">from</span> <span class="nn">sage.geometry.hyperbolic_space.hyperbolic_geodesic</span> <span class="kn">import</span> <span class="n">HyperbolicGeodesicUHP</span>
-<span class="kn">from</span> <span class="nn">sage.rings.infinity</span> <span class="kn">import</span> <span class="n">Infinity</span>
-<span class="kn">from</span> <span class="nn">sage.plot.hyperbolic_polygon</span> <span class="kn">import</span> <span class="n">hyperbolic_polygon</span>
-<span class="kn">from</span> <span class="nn">sage.repl.rich_output.pretty_print</span> <span class="kn">import</span> <span class="n">show</span>
-<span class="kn">from</span> <span class="nn">sage.plot.plot</span> <span class="kn">import</span> <span class="n">plot</span>
-<span class="kn">from</span> <span class="nn">sage.plot.hyperbolic_arc</span> <span class="kn">import</span> <span class="n">hyperbolic_arc</span>
-<span class="kn">from</span> <span class="nn">sage.plot.hyperbolic_polygon</span> <span class="kn">import</span> <span class="n">hyperbolic_polygon</span><span class="p">,</span> <span class="n">hyperbolic_triangle</span>
-<span class="kn">from</span> <span class="nn">sage.plot.point</span> <span class="kn">import</span> <span class="n">point2d</span>
-<span class="kn">from</span> <span class="nn">sage.geometry.hyperbolic_space.hyperbolic_interface</span> <span class="kn">import</span> <span class="n">HyperbolicPlane</span>
-<span class="kn">from</span> <span class="nn">sage.groups.free_group</span> <span class="kn">import</span> <span class="n">FreeGroup</span>
-<span class="kn">from</span> <span class="nn">sage.functions.hyperbolic</span> <span class="kn">import</span> <span class="n">acosh</span>
-<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
-
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">tee</span><span class="p">,</span> <span class="n">starmap</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">currentframe</span><span class="p">,</span> <span class="n">getfile</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">dirname</span>
 <span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
 
-<span class="kn">from</span> <span class="nn">.arithgroup_generic</span> <span class="kn">import</span> <span class="n">ArithGroup_generic</span><span class="p">,</span> <span class="n">ArithGroup_matrix_generic</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.mixed_extension</span> <span class="kn">import</span> <span class="n">get_word_rep_fast</span>
+<span class="kn">from</span> <span class="nn">sage.algebras.quatalg.all</span> <span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
+<span class="kn">from</span> <span class="nn">sage.arith.all</span> <span class="kn">import</span> <span class="n">lcm</span>
+<span class="kn">from</span> <span class="nn">sage.functions.generalized</span> <span class="kn">import</span> <span class="n">sgn</span>
+<span class="kn">from</span> <span class="nn">sage.functions.hyperbolic</span> <span class="kn">import</span> <span class="n">acosh</span>
+<span class="kn">from</span> <span class="nn">sage.functions.trig</span> <span class="kn">import</span> <span class="n">arctan</span>
+<span class="kn">from</span> <span class="nn">sage.geometry.hyperbolic_space.hyperbolic_geodesic</span> <span class="kn">import</span> <span class="n">HyperbolicGeodesicUHP</span>
+<span class="kn">from</span> <span class="nn">sage.geometry.hyperbolic_space.hyperbolic_interface</span> <span class="kn">import</span> <span class="n">HyperbolicPlane</span>
+<span class="kn">from</span> <span class="nn">sage.groups.free_group</span> <span class="kn">import</span> <span class="n">FreeGroup</span>
+<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
+<span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cached_method</span><span class="p">,</span> <span class="n">walltime</span>
+<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">sage.misc.sage_eval</span> <span class="kn">import</span> <span class="n">sage_eval</span>
+<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
+<span class="kn">from</span> <span class="nn">sage.modular.arithgroup.congroup_sl2z</span> <span class="kn">import</span> <span class="n">SL2Z</span>
+<span class="kn">from</span> <span class="nn">sage.modules.all</span> <span class="kn">import</span> <span class="n">vector</span>
+<span class="kn">from</span> <span class="nn">sage.modules.fg_pid.fgp_module</span> <span class="kn">import</span> <span class="n">FGP_Module</span>
+<span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule_generic</span>
+<span class="kn">from</span> <span class="nn">sage.plot.hyperbolic_arc</span> <span class="kn">import</span> <span class="n">hyperbolic_arc</span>
+<span class="kn">from</span> <span class="nn">sage.plot.hyperbolic_polygon</span> <span class="kn">import</span> <span class="n">hyperbolic_polygon</span><span class="p">,</span> <span class="n">hyperbolic_triangle</span>
+<span class="kn">from</span> <span class="nn">sage.plot.plot</span> <span class="kn">import</span> <span class="n">plot</span>
+<span class="kn">from</span> <span class="nn">sage.plot.point</span> <span class="kn">import</span> <span class="n">point2d</span>
+<span class="kn">from</span> <span class="nn">sage.repl.rich_output.pretty_print</span> <span class="kn">import</span> <span class="n">show</span>
+<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="n">AA</span><span class="p">,</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">RR</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="n">ComplexField</span><span class="p">,</span> <span class="n">NumberField</span><span class="p">,</span> <span class="n">PolynomialRing</span><span class="p">,</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">QuadraticField</span><span class="p">,</span> <span class="n">RealField</span>
+<span class="kn">from</span> <span class="nn">sage.rings.infinity</span> <span class="kn">import</span> <span class="n">Infinity</span>
+<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
+<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
 
-<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">getfile</span><span class="p">,</span> <span class="n">currentframe</span>
-<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">abspath</span>
+<span class="kn">from</span> <span class="nn">.arithgroup_generic</span> <span class="kn">import</span> <span class="n">ArithGroup_generic</span><span class="p">,</span> <span class="n">ArithGroup_matrix_generic</span>
+<span class="kn">from</span> <span class="nn">.mixed_extension</span> <span class="kn">import</span> <span class="n">get_word_rep_fast</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>
 
 
 <div class="viewcode-block" id="hyperbolic_distance">
@@ -1741,11 +1727,7 @@
         <span class="n">extra_conductor</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">.limits</span> <span class="kn">import</span> <span class="p">(</span>
-            <span class="n">_find_initial_embedding_list</span><span class="p">,</span>
-            <span class="n">find_optimal_embeddings</span><span class="p">,</span>
-            <span class="n">order_and_unit</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">.limits</span> <span class="kn">import</span> <span class="n">_find_initial_embedding_list</span><span class="p">,</span> <span class="n">find_optimal_embeddings</span><span class="p">,</span> <span class="n">order_and_unit</span>
 
         <span class="n">M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">level</span>
         <span class="n">extra_conductor</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">extra_conductor</span><span class="p">)</span>
@@ -1804,12 +1786,7 @@
 <a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.embed_order_legacy">[docs]</a>
     <span class="k">def</span> <span class="nf">embed_order_legacy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_all</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">.limits</span> <span class="kn">import</span> <span class="p">(</span>
-            <span class="n">_find_initial_embedding_list</span><span class="p">,</span>
-            <span class="n">find_optimal_embeddings</span><span class="p">,</span>
-            <span class="n">order_and_unit</span><span class="p">,</span>
-            <span class="n">find_the_unit_of</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">.limits</span> <span class="kn">import</span> <span class="n">_find_initial_embedding_list</span><span class="p">,</span> <span class="n">find_optimal_embeddings</span><span class="p">,</span> <span class="n">find_the_unit_of</span><span class="p">,</span> <span class="n">order_and_unit</span>
 
         <span class="n">F</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="n">t</span> <span class="o">=</span> <span class="n">PolynomialRing</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">&quot;t&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">gen</span><span class="p">()</span>
