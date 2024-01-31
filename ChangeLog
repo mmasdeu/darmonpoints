@@ -4,6 +4,15 @@ darmonpoints Change Log
 
 .. current developments
 
+v7.0.1
+====================
+
+**Added:**
+
+* The Theta function can now be evaluated at arbitrary points or divisors.
+
+
+
 v7.0.0
 ====================
 
