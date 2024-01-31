@@ -55,8 +55,6 @@ def find_parameter(g, r, pi=None, ball=None):
     return ans
 
 
-
-
 def act(g, z):
     r"""
     Compute the action of a 2 by 2 matrix g on an element z
@@ -245,14 +243,14 @@ class ThetaOC(SageObject):
 
     def __call__(self, z):
         if isinstance(z, Divisors):
-            return prod(self(P)**n for P, n in z)
+            return prod(self(P) ** n for P, n in z)
         G = self.G
         z0, wd = G.to_fundamental_domain(z)
-        wdab = [[g,0] for g in G.generators()]
+        wdab = [[g, 0] for g in G.generators()]
         for i in wd:
             wdab[abs(i) - 1] += sgn(i)
         ans = prod((F(z) for ky, F in self.Fn.items()), self.val(z))
-        return prod((G.u_function(g, self.prec)(self.D)**i for g, i in wdab), ans)
+        return prod((G.u_function(g, self.prec)(self.D) ** i for g, i in wdab), ans)
 
     def eval_derivative(self, z):
         v0 = self.val(z)
