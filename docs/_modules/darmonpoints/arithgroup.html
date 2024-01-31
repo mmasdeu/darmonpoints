@@ -257,7 +257,18 @@
 <span class="kn">from</span> <span class="nn">sage.plot.plot</span> <span class="kn">import</span> <span class="n">plot</span>
 <span class="kn">from</span> <span class="nn">sage.plot.point</span> <span class="kn">import</span> <span class="n">point2d</span>
 <span class="kn">from</span> <span class="nn">sage.repl.rich_output.pretty_print</span> <span class="kn">import</span> <span class="n">show</span>
-<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="n">AA</span><span class="p">,</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">RR</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="n">ComplexField</span><span class="p">,</span> <span class="n">NumberField</span><span class="p">,</span> <span class="n">PolynomialRing</span><span class="p">,</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">QuadraticField</span><span class="p">,</span> <span class="n">RealField</span>
+<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AA</span><span class="p">,</span>
+    <span class="n">QQ</span><span class="p">,</span>
+    <span class="n">RR</span><span class="p">,</span>
+    <span class="n">ZZ</span><span class="p">,</span>
+    <span class="n">ComplexField</span><span class="p">,</span>
+    <span class="n">NumberField</span><span class="p">,</span>
+    <span class="n">PolynomialRing</span><span class="p">,</span>
+    <span class="n">Qp</span><span class="p">,</span>
+    <span class="n">QuadraticField</span><span class="p">,</span>
+    <span class="n">RealField</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sage.rings.infinity</span> <span class="kn">import</span> <span class="n">Infinity</span>
 <span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
 <span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
@@ -1727,7 +1738,11 @@
         <span class="n">extra_conductor</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">.limits</span> <span class="kn">import</span> <span class="n">_find_initial_embedding_list</span><span class="p">,</span> <span class="n">find_optimal_embeddings</span><span class="p">,</span> <span class="n">order_and_unit</span>
+        <span class="kn">from</span> <span class="nn">.limits</span> <span class="kn">import</span> <span class="p">(</span>
+            <span class="n">_find_initial_embedding_list</span><span class="p">,</span>
+            <span class="n">find_optimal_embeddings</span><span class="p">,</span>
+            <span class="n">order_and_unit</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">level</span>
         <span class="n">extra_conductor</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">extra_conductor</span><span class="p">)</span>
@@ -1786,7 +1801,12 @@
 <a class="viewcode-back" href="../../arithmeticgroups.html#darmonpoints.arithgroup.ArithGroup_rationalmatrix.embed_order_legacy">[docs]</a>
     <span class="k">def</span> <span class="nf">embed_order_legacy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_all</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">.limits</span> <span class="kn">import</span> <span class="n">_find_initial_embedding_list</span><span class="p">,</span> <span class="n">find_optimal_embeddings</span><span class="p">,</span> <span class="n">find_the_unit_of</span><span class="p">,</span> <span class="n">order_and_unit</span>
+        <span class="kn">from</span> <span class="nn">.limits</span> <span class="kn">import</span> <span class="p">(</span>
+            <span class="n">_find_initial_embedding_list</span><span class="p">,</span>
+            <span class="n">find_optimal_embeddings</span><span class="p">,</span>
+            <span class="n">find_the_unit_of</span><span class="p">,</span>
+            <span class="n">order_and_unit</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">F</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="n">t</span> <span class="o">=</span> <span class="n">PolynomialRing</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">&quot;t&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">gen</span><span class="p">()</span>

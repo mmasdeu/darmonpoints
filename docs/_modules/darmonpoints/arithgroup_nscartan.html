@@ -233,7 +233,11 @@
 <span class="kn">from</span> <span class="nn">sage.functions.trig</span> <span class="kn">import</span> <span class="n">arctan</span>
 <span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
 <span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.constructor</span> <span class="kn">import</span> <span class="n">block_diagonal_matrix</span><span class="p">,</span> <span class="n">diagonal_matrix</span><span class="p">,</span> <span class="n">identity_matrix</span>
+<span class="kn">from</span> <span class="nn">sage.matrix.constructor</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">block_diagonal_matrix</span><span class="p">,</span>
+    <span class="n">diagonal_matrix</span><span class="p">,</span>
+    <span class="n">identity_matrix</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
 <span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cached_method</span><span class="p">,</span> <span class="n">walltime</span>
 <span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
@@ -245,7 +249,18 @@
 <span class="kn">from</span> <span class="nn">sage.modules.all</span> <span class="kn">import</span> <span class="n">vector</span>
 <span class="kn">from</span> <span class="nn">sage.modules.fg_pid.fgp_module</span> <span class="kn">import</span> <span class="n">FGP_Module</span>
 <span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule_generic</span>
-<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">RR</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="n">ComplexField</span><span class="p">,</span> <span class="n">NumberField</span><span class="p">,</span> <span class="n">PolynomialRing</span><span class="p">,</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">QuadraticField</span><span class="p">,</span> <span class="n">RealField</span><span class="p">,</span> <span class="n">Zmod</span>
+<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">QQ</span><span class="p">,</span>
+    <span class="n">RR</span><span class="p">,</span>
+    <span class="n">ZZ</span><span class="p">,</span>
+    <span class="n">ComplexField</span><span class="p">,</span>
+    <span class="n">NumberField</span><span class="p">,</span>
+    <span class="n">PolynomialRing</span><span class="p">,</span>
+    <span class="n">Qp</span><span class="p">,</span>
+    <span class="n">QuadraticField</span><span class="p">,</span>
+    <span class="n">RealField</span><span class="p">,</span>
+    <span class="n">Zmod</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sage.rings.finite_rings.finite_field_constructor</span> <span class="kn">import</span> <span class="n">FiniteField</span>
 <span class="kn">from</span> <span class="nn">sage.rings.infinity</span> <span class="kn">import</span> <span class="n">Infinity</span> <span class="k">as</span> <span class="n">oo</span>
 <span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
