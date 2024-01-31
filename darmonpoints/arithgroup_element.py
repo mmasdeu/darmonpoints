@@ -19,7 +19,17 @@ from sage.misc.misc_c import prod
 from sage.misc.persist import db
 from sage.modules.all import vector
 from sage.modules.free_module import FreeModule_generic
-from sage.rings.all import QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, QuadraticField, RealField
+from sage.rings.all import (
+    QQ,
+    RR,
+    ZZ,
+    ComplexField,
+    NumberField,
+    PolynomialRing,
+    Qp,
+    QuadraticField,
+    RealField,
+)
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp

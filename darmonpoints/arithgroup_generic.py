@@ -26,7 +26,18 @@ from sage.modular.modsym.p1list import P1List, lift_to_sl2z
 from sage.modules.all import vector
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modules.free_module import FreeModule_generic
-from sage.rings.all import AA, QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, QuadraticField, RealField
+from sage.rings.all import (
+    AA,
+    QQ,
+    RR,
+    ZZ,
+    ComplexField,
+    NumberField,
+    PolynomialRing,
+    Qp,
+    QuadraticField,
+    RealField,
+)
 from sage.rings.infinity import Infinity
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.sage_object import SageObject, load, save
@@ -34,6 +45,7 @@ from sage.structure.unique_representation import UniqueRepresentation
 
 from .arithgroup_element import ArithGroupElement
 from .homology_abstract import Abelianization
+
 # from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok, P1NFList
 from .my_p1list_nf import P1NFList, lift_to_sl2_Ok
 from .util import *

@@ -24,7 +24,14 @@ from .homology import *
 from .integrals import double_integral_zero_infty, integrate_H1
 from .limits import find_optimal_embeddings, find_tau0_and_gtau, num_evals
 from .sarithgroup import BigArithGroup
-from .util import Bunch, config_section_map, fwrite, get_heegner_params, quaternion_algebra_invariants_from_ramification, recognize_J
+from .util import (
+    Bunch,
+    config_section_map,
+    fwrite,
+    get_heegner_params,
+    quaternion_algebra_invariants_from_ramification,
+    recognize_J,
+)
 
 r"""
     TESTS:

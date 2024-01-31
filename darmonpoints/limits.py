@@ -6,7 +6,14 @@ from sage.groups.generic import discrete_log
 from sage.matrix.all import Matrix, matrix
 from sage.misc.misc_c import prod
 from sage.misc.verbose import verbose
-from sage.rings.all import RR, ComplexField, PolynomialRing, QuadraticField, RealField, Zmod
+from sage.rings.all import (
+    RR,
+    ComplexField,
+    PolynomialRing,
+    QuadraticField,
+    RealField,
+    Zmod,
+)
 
 from .util import *
 

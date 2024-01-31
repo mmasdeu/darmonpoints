@@ -22,12 +22,31 @@ from sage.modular.btquotients.btquotient import BruhatTitsTree
 from sage.modular.cusps import Cusp
 from sage.modules.all import vector
 from sage.modules.free_module import FreeModule_generic
-from sage.rings.all import QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, Qq, QuadraticField, RealField, Zmod
+from sage.rings.all import (
+    QQ,
+    RR,
+    ZZ,
+    ComplexField,
+    NumberField,
+    PolynomialRing,
+    Qp,
+    Qq,
+    QuadraticField,
+    RealField,
+    Zmod,
+)
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.parent import Parent
 from sage.structure.sage_object import SageObject, load, save
 
-from .arithgroup import ArithGroup_nf_fuchsian, ArithGroup_nf_kleinian, ArithGroup_nf_matrix, ArithGroup_nf_matrix_new, ArithGroup_rationalmatrix, ArithGroup_rationalquaternion
+from .arithgroup import (
+    ArithGroup_nf_fuchsian,
+    ArithGroup_nf_kleinian,
+    ArithGroup_nf_matrix,
+    ArithGroup_nf_matrix_new,
+    ArithGroup_rationalmatrix,
+    ArithGroup_rationalquaternion,
+)
 from .homology_abstract import ArithHomology, HomologyGroup
 from .representations import TrivialAction
 from .util import *

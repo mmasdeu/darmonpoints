@@ -31,7 +31,10 @@ from sage.rings.finite_rings.integer_mod_ring import IntegerModRing, Zmod
 from sage.rings.infinity import Infinity
 from sage.rings.padics.padic_generic import local_print_mode
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.schemes.elliptic_curves.constructor import EllipticCurve, EllipticCurve_from_c4c6
+from sage.schemes.elliptic_curves.constructor import (
+    EllipticCurve,
+    EllipticCurve_from_c4c6,
+)
 from sage.sets.primes import Primes
 from sage.structure.factorization import Factorization
 

@@ -17,7 +17,19 @@ from sage.modular.cusps import Cusp
 from sage.modules.all import vector
 from sage.modules.free_module import FreeModule_generic
 from sage.parallel.decorate import parallel
-from sage.rings.all import QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, Qq, QuadraticField, RealField, Zmod
+from sage.rings.all import (
+    QQ,
+    RR,
+    ZZ,
+    ComplexField,
+    NumberField,
+    PolynomialRing,
+    Qp,
+    Qq,
+    QuadraticField,
+    RealField,
+    Zmod,
+)
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.parent import Parent
 from sage.structure.sage_object import SageObject, load, save

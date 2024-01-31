@@ -14,7 +14,14 @@ from .cohomology_arithmetic import *
 from .homology import get_homology_kernel, inverse_shapiro, lattice_homology_cycle
 from .integrals import double_integral_zero_infty, integrate_H1
 from .sarithgroup import BigArithGroup
-from .util import Bunch, config_section_map, direct_sum_of_maps, discover_equation, fwrite, quaternion_algebra_invariants_from_ramification
+from .util import (
+    Bunch,
+    config_section_map,
+    direct_sum_of_maps,
+    discover_equation,
+    fwrite,
+    quaternion_algebra_invariants_from_ramification,
+)
 
 
 def find_curve(

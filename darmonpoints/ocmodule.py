@@ -32,7 +32,10 @@ from sage.structure.element import ModuleElement
 from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import load, save
-from sage.structure.unique_representation import CachedRepresentation, UniqueRepresentation
+from sage.structure.unique_representation import (
+    CachedRepresentation,
+    UniqueRepresentation,
+)
 
 from .homology import Divisors
 from .rationalfunctions import RationalFunctions

@@ -21,7 +21,17 @@ from sage.modules.free_module_element import FreeModuleElement_generic_dense, ve
 from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.modules.vector_rational_dense import Vector_rational_dense
 from sage.parallel.decorate import fork, parallel
-from sage.rings.all import RR, ComplexField, LaurentSeriesRing, PolynomialRing, Qp, QuadraticField, RealField, Zmod, Zp
+from sage.rings.all import (
+    RR,
+    ComplexField,
+    LaurentSeriesRing,
+    PolynomialRing,
+    Qp,
+    QuadraticField,
+    RealField,
+    Zmod,
+    Zp,
+)
 from sage.rings.number_field.number_field import NumberField
 from sage.structure.element import ModuleElement, MultiplicativeGroupElement
 from sage.structure.parent import Parent

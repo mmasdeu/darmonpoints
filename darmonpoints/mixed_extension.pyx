@@ -18,7 +18,18 @@ from bisect import bisect_left as bisect
 from math import atan as atan
 
 from sage.matrix.constructor import Matrix
-from sage.rings.all import AA, QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, QuadraticField, RealField
+from sage.rings.all import (
+    AA,
+    QQ,
+    RR,
+    ZZ,
+    ComplexField,
+    NumberField,
+    PolynomialRing,
+    Qp,
+    QuadraticField,
+    RealField,
+)
 
 
 def get_word_rep_fast(self, delta, Pold=None):

@@ -13,7 +13,11 @@ from sage.functions.generalized import sgn
 from sage.functions.trig import arctan
 from sage.groups.group import AlgebraicGroup
 from sage.matrix.all import Matrix, matrix
-from sage.matrix.constructor import block_diagonal_matrix, diagonal_matrix, identity_matrix
+from sage.matrix.constructor import (
+    block_diagonal_matrix,
+    diagonal_matrix,
+    identity_matrix,
+)
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.all import cached_method, walltime
 from sage.misc.misc_c import prod
@@ -25,7 +29,18 @@ from sage.modular.modsym.p1list import lift_to_sl2z
 from sage.modules.all import vector
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modules.free_module import FreeModule_generic
-from sage.rings.all import QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, QuadraticField, RealField, Zmod
+from sage.rings.all import (
+    QQ,
+    RR,
+    ZZ,
+    ComplexField,
+    NumberField,
+    PolynomialRing,
+    Qp,
+    QuadraticField,
+    RealField,
+    Zmod,
+)
 from sage.rings.finite_rings.finite_field_constructor import FiniteField
 from sage.rings.infinity import Infinity as oo
 from sage.structure.element import MultiplicativeGroupElement

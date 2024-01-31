@@ -46,7 +46,19 @@ from sage.modular.pollack_stevens.distributions import OverconvergentDistributio
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
 from sage.modules.free_module_element import free_module_element, vector
 from sage.parallel.decorate import fork, parallel
-from sage.rings.all import RR, ComplexField, FiniteField, LaurentSeriesRing, PolynomialRing, Qp, QuadraticField, RealField, Zmod, Zp, polygen
+from sage.rings.all import (
+    RR,
+    ComplexField,
+    FiniteField,
+    LaurentSeriesRing,
+    PolynomialRing,
+    Qp,
+    QuadraticField,
+    RealField,
+    Zmod,
+    Zp,
+    polygen,
+)
 from sage.rings.infinity import Infinity as oo
 from sage.rings.number_field.number_field import NumberField
 from sage.structure.element import ModuleElement, MultiplicativeGroupElement

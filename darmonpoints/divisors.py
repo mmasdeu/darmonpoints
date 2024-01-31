@@ -24,7 +24,10 @@ from sage.structure.element import ModuleElement, MultiplicativeGroupElement
 from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import SageObject
-from sage.structure.unique_representation import CachedRepresentation, UniqueRepresentation
+from sage.structure.unique_representation import (
+    CachedRepresentation,
+    UniqueRepresentation,
+)
 
 
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)

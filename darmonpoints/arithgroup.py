@@ -37,7 +37,18 @@ from sage.plot.hyperbolic_polygon import hyperbolic_polygon, hyperbolic_triangle
 from sage.plot.plot import plot
 from sage.plot.point import point2d
 from sage.repl.rich_output.pretty_print import show
-from sage.rings.all import AA, QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, QuadraticField, RealField
+from sage.rings.all import (
+    AA,
+    QQ,
+    RR,
+    ZZ,
+    ComplexField,
+    NumberField,
+    PolynomialRing,
+    Qp,
+    QuadraticField,
+    RealField,
+)
 from sage.rings.infinity import Infinity
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.sage_object import SageObject, load, save
@@ -1395,7 +1406,11 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         extra_conductor=1,
         **kwargs,
     ):
-        from .limits import _find_initial_embedding_list, find_optimal_embeddings, order_and_unit
+        from .limits import (
+            _find_initial_embedding_list,
+            find_optimal_embeddings,
+            order_and_unit,
+        )
 
         M = self.level
         extra_conductor = ZZ(extra_conductor)
@@ -1451,7 +1466,12 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
 
     def embed_order_legacy(self, p, D, prec, outfile=None, return_all=False):
         r""" """
-        from .limits import _find_initial_embedding_list, find_optimal_embeddings, find_the_unit_of, order_and_unit
+        from .limits import (
+            _find_initial_embedding_list,
+            find_optimal_embeddings,
+            find_the_unit_of,
+            order_and_unit,
+        )
 
         F = self.base_ring()
         t = PolynomialRing(F, names="t").gen()

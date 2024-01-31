@@ -12,7 +12,17 @@ from sage.arith.misc import algdep
 from sage.misc.misc import cputime
 from sage.misc.verbose import verbose
 from sage.parallel.decorate import fork, parallel
-from sage.rings.all import RR, ComplexField, Infinity, LaurentSeriesRing, PolynomialRing, PowerSeriesRing, QuadraticField, RealField, Zmod
+from sage.rings.all import (
+    RR,
+    ComplexField,
+    Infinity,
+    LaurentSeriesRing,
+    PolynomialRing,
+    PowerSeriesRing,
+    QuadraticField,
+    RealField,
+    Zmod,
+)
 from sage.structure.sage_object import SageObject
 
 from .limits import find_center, num_evals

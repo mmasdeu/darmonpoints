@@ -14,7 +14,11 @@ from sage.categories.pushout import pushout
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.verbose import get_verbose, set_verbose, verbose
-from sage.modular.pollack_stevens.sigma0 import Sigma0, Sigma0ActionAdjuster, _default_adjuster
+from sage.modular.pollack_stevens.sigma0 import (
+    Sigma0,
+    Sigma0ActionAdjuster,
+    _default_adjuster,
+)
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.module import Module
