@@ -1,19 +1,15 @@
-name: Test
+name: Lint
 on:
   push: { branches: [ "master" ] }
   pull_request: { branches: [ "master" ] }
 
 concurrency:
-  group: test-${{ github.ref }}
+  group: lint-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        python: ["3.9", "3.10", "3.11", "3.12"]
-        os: ["ubuntu-latest", "macos-latest"]
+  python-linter:
+    runs-on: ubuntu-20.04
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -32,7 +28,11 @@ jobs:
         shell: bash -l {0}
         run: |
           pip install --no-dependencies .
-      - name: doctest
+      - name: black
         shell: bash -l {0}
         run: |
-          sage -t darmonpoints
+          black --check --diff darmonpoints
+      - name: isort
+        shell: bash -l {0}
+        run: |
+          isort --check --diff darmonpoints --line-length 256

@@ -1,20 +1,28 @@
-# This file lists the dependencies needed to build and test all of
-# darmonpoints. Create a conda environment with these dependencies
-# preinstalled with:
+# This file lists the dependencies needed to build and test all of the package.
+# Create a conda environment with these dependencies preinstalled with:
 # conda env create -f environment.yml
-name: sage-darmonpoints-build
+name: darmonpoints-dev
 channels:
   - conda-forge
-  - defaults
 dependencies:
-  - codespell >=2.2.2,<3
-  - gap-defaults
+  - black>=23,<24
+  - docutils
+  - furo
+  - alabaster
+  - isort
   - ipywidgets
+  - jupyter-sphinx
+  - jupytext
   - matplotlib-base
+  - myst-parser
+  - myst-nb
   - pip
-  - pytest
-  - pytest-xdist
-  - sagelib>=9.3
-  - pycodestyle >=2.9.1,<3
-
+  - pygments
+  - pylint>=3,<3.1
+  - python
+  - rever
+  - sagelib
+  - sphinx
+  - twine
+  - wheel
 

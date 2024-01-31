@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.2","Cython", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "darmonpoints"
+version = "6.0.0"
+classifiers = ["License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)"]
+description = "Compute non-archimedean Darmon points"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.setuptools]
+packages = [
+    "darmonpoints",
+]
