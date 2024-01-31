@@ -6,6 +6,13 @@ A package to compute Darmon points
 --------------------------------------------------------------------------------
 (for the full documentation, please see http://mmasdeu.github.io/darmonpoints/doc/html/)
 
+.. |doc| image:: https://github.com/mmasdeu/darmonpoints/actions/workflows/doc.yml/badge.svg
+       :target: https://github.com/mmasdeu/darmonpoints/actions/workflows/doc.yml/badge.svg
+.. |test| image:: https://github.com/mmasdeu/darmonpoints/actions/workflows/test.yml/badge.svg
+       :target: https://github.com/mmasdeu/darmonpoints/actions/workflows/test.yml/badge.svg
+.. |lint| image:: https://github.com/mmasdeu/darmonpoints/actions/workflows/lint.yml/badge.svg
+       :target: https://github.com/mmasdeu/darmonpoints/actions/workflows/lint.yml/badge.svg
+
 What is this?
 ~~~~~~~~~~~~~
 The **darmonpoints** package can compute many different types of what is known as Darmon points. These are known as *Stark-Heegner* points in some literature, and originated in [Darmon]_. Subsequent generalizations were introduced by [Greenberg]_ and [Trifkovic]_. This has been generalized by [GMS1]_ to elliptic curves defined over number fields of arbitrary signature. Darmon points are attached to triples `(F,E,K)`, where `F` is a number field, `E/F` is an elliptic curve defined over `F`, and `K/F` is a quadratic extension. These triples must satisfy certain conditions for Darmon points to be attached to them. The article [GMS1]_ contains an overview of all of this. We include also a variation used in [KP]_.
