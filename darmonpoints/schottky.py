@@ -170,6 +170,7 @@ class ThetaOC(SageObject):
         #     raise ValueError("Divisor should be supported on fundamental domain.")
         self.a = a
         self.b = b
+        self.D = D
         self.m = 1
         PP = PolynomialRing(K, names="z")
         self.z = PP.gen()
@@ -242,9 +243,16 @@ class ThetaOC(SageObject):
             pass
         return f"\\Theta(z;{latex(a)},{latex(b)})_{{{latex(self.m)}}}"
 
-    def __call__(self, z, i0=0):
-        v0 = self.val(z)
-        return v0 * prod(F(z) for ky, F in self.Fn.items())
+    def __call__(self, z):
+        if isinstance(z, Divisors):
+            return prod(self(P)**n for P, n in z)
+        G = self.G
+        z0, wd = G.to_fundamental_domain(z)
+        wdab = [[g,0] for g in G.generators()]
+        for i in wd:
+            wdab[abs(i) - 1] += sgn(i)
+        ans = prod((F(z) for ky, F in self.Fn.items()), self.val(z))
+        return prod((G.u_function(g, self.prec)(self.D)**i for g, i in wdab), ans)
 
     def eval_derivative(self, z):
         v0 = self.val(z)
@@ -706,6 +714,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
         D = self.find_equivalent_divisor(D0)
         return ThetaOC(self, a=D, b=None, prec=prec, **kwargs).improve(prec)
 
+    @cached_method
     def u_function(self, gamma, prec, a=None, **kwargs):
         K = self.base_ring()
         DK = Divisors(K)
