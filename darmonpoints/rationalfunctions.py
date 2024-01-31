@@ -10,7 +10,7 @@ from sage.modules.module import Module
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.rings.finite_rings.integer_mod_ring import Zmod
-from sage.rings.all import Integer,Zp
+from sage.rings.all import Integer, Zp
 from sage.rings.padics.factory import ZpCA
 from sage.rings.power_series_ring import PowerSeriesRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
@@ -21,7 +21,7 @@ from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.categories.pushout import pushout
 from sage.rings.infinity import Infinity
 from sage.structure.richcmp import richcmp
-from sage.structure.sage_object import load,save
+from sage.structure.sage_object import load, save
 from sage.structure.unique_representation import CachedRepresentation
 from sage.structure.parent import Parent
 from sage.modules.vector_integer_dense import Vector_integer_dense
@@ -36,6 +36,7 @@ from sage.rings.padics.precision_error import PrecisionError
 from copy import deepcopy
 from .divisors import Divisors
 
+
 class RationalFunctionsElement(ModuleElement):
     def __init__(self, parent, data, check=True):
         if check:
@@ -47,12 +48,12 @@ class RationalFunctionsElement(ModuleElement):
             elif isinstance(data.parent(), Divisors):
                 self._value = FF(1)
                 for Q, n in data:
-                    self._value *= (1 - z / K(Q))**n
+                    self._value *= (1 - z / K(Q)) ** n
             elif data.parent() == FF:
                 self._value = FF(data)
         else:
             self._value = data
-        ModuleElement.__init__(self,parent)
+        ModuleElement.__init__(self, parent)
 
     def numerator(self):
         return self._value.numerator()
@@ -60,15 +61,15 @@ class RationalFunctionsElement(ModuleElement):
     def denominator(self):
         return self._value.denominator()
 
-    def power_series(self, names = None):
+    def power_series(self, names=None):
         if names is None:
-            names = 't'
+            names = "t"
         K = self.parent().base_ring()
         try:
             prec = K.precision_cap()
         except AttributeError:
-            prec = 20 # DEBUG
-        Ps = PowerSeriesRing(K,names,default_prec=prec)
+            prec = 20  # DEBUG
+        Ps = PowerSeriesRing(K, names, default_prec=prec)
         ans = Ps(self._value)
         return ans
 
@@ -80,7 +81,7 @@ class RationalFunctionsElement(ModuleElement):
 
     def evaluate(self, D):
         if isinstance(D.parent(), Divisors):
-            return prod(self._value(P)**ZZ(n) for P, n in D)
+            return prod(self._value(P) ** ZZ(n) for P, n in D)
         else:
             return self._value(D)
 
@@ -119,7 +120,7 @@ class RationalFunctionsElement(ModuleElement):
         else:
             return self.left_act_by_matrix(g)
 
-    def left_act_by_matrix(self, g): # rational functions
+    def left_act_by_matrix(self, g):  # rational functions
         Ps = self._value.parent()
         K = Ps.base_ring()
         # Below we code the action which is compatible with the usual action
@@ -129,28 +130,34 @@ class RationalFunctionsElement(ModuleElement):
         num, den = self._value.numerator(), self._value.denominator()
         assert num.degree() == den.degree()
         deg = num.degree()
-        new_num = sum(ai * (d*z-b)**i * (-c*z+a)**(deg-i) for ai, i in zip(num.coefficients(), num.exponents()))
+        new_num = sum(
+            ai * (d * z - b) ** i * (-c * z + a) ** (deg - i)
+            for ai, i in zip(num.coefficients(), num.exponents())
+        )
         new_num /= new_num(0)
-        new_den = sum(ai * (d*z-b)**i * (-c*z+a)**(deg-i) for ai, i in zip(den.coefficients(), den.exponents()))
+        new_den = sum(
+            ai * (d * z - b) ** i * (-c * z + a) ** (deg - i)
+            for ai, i in zip(den.coefficients(), den.exponents())
+        )
         new_den /= new_den(0)
         try:
             ans = new_num / new_den
         except ZeroDivisionError:
-            print(f'{den = }')
-            print(f'{a = }, {b = }, {c = }, {d = }')
+            print(f"{den = }")
+            print(f"{a = }, {b = }, {c = }, {d = }")
             print(new_den)
             assert 0
-        return self.__class__(self.parent(),ans,check=False)
+        return self.__class__(self.parent(), ans, check=False)
+
 
 class RationalFunctions(Parent, CachedRepresentation):
-    r'''
-
-    '''
+    r""" """
     Element = RationalFunctionsElement
+
     def __init__(self, K):
         Parent.__init__(self)
         self._base_ring = K
-        self._V = PolynomialRing(K, names = 'z')
+        self._V = PolynomialRing(K, names="z")
 
     def base_ring(self):
         return self._base_ring
@@ -159,4 +166,4 @@ class RationalFunctions(Parent, CachedRepresentation):
         return self.element_class(self, data)
 
     def _repr_(self):
-        return "Field of Rational Functions over %s"%(self._base_ring)
+        return "Field of Rational Functions over %s" % (self._base_ring)

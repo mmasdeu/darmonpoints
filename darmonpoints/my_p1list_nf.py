@@ -29,7 +29,8 @@ from sage.structure.richcmp import richcmp_method, richcmp
 from sage.structure.sage_object import SageObject
 from sage.misc.search import search
 
-_level_cache = {} # The info stored here is used in the normalization.
+_level_cache = {}  # The info stored here is used in the normalization.
+
 
 def P1NFList_clear_level_cache():
     """
@@ -39,9 +40,10 @@ def P1NFList_clear_level_cache():
     _level_cache = {}
 
 
-#**************************************************************************
-#*       P1NFList class                                                   *
-#**************************************************************************
+# **************************************************************************
+# *       P1NFList class                                                   *
+# **************************************************************************
+
 
 class MyMSymbol(SageObject):
     """
@@ -51,15 +53,16 @@ class MyMSymbol(SageObject):
     However, still wanted MSymbol.tuple() to work for compatibility with our
     other code.
     """
-    def __init__(self,c,d):
+
+    def __init__(self, c, d):
         self._c = c
         self._d = d
 
     def __repr__(self):
-        return '{}'.format(self.tuple())
+        return "{}".format(self.tuple())
 
     def tuple(self):
-        return (self._c,self._d)
+        return (self._c, self._d)
 
 
 @richcmp_method
@@ -83,6 +86,7 @@ class P1NFList(SageObject):
         sage: P = P1NFList(N); P
         The projective line over the ring of integers modulo the Fractional ideal (5, a + 1)
     """
+
     def __init__(self, N):
         """
         The constructor for the class P1NFList. See ``P1NFList`` for full
@@ -97,7 +101,7 @@ class P1NFList(SageObject):
         """
         self.__N = N
         self.__list = my_p1NFlist(N)
-        #self.__list.sort()
+        # self.__list.sort()
 
     def __richcmp__(self, other, op):
         """
@@ -166,7 +170,7 @@ class P1NFList(SageObject):
             The projective line over the ring of integers modulo the Fractional ideal (5, a + 1)
 
         """
-        return "The projective line over the ring of integers modulo the %s"%self.__N
+        return "The projective line over the ring of integers modulo the %s" % self.__N
 
     def list(self):
         """
@@ -184,8 +188,7 @@ class P1NFList(SageObject):
         """
         return self.__list
 
-
-    def normalize(self, c,d, with_scalar=False):
+    def normalize(self, c, d, with_scalar=False):
         r"""
         [We have gutted this function from its orginal state!]
         [Note: there is now no check!]
@@ -207,7 +210,7 @@ class P1NFList(SageObject):
         -  a normalized tuple (c', d') equivalent to ``self`` in P^1(R/N).
 
         """
-        return normalize_tuple(self.__N,(c,d),with_scalar)
+        return normalize_tuple(self.__N, (c, d), with_scalar)
 
     def N(self):
         """
@@ -222,7 +225,6 @@ class P1NFList(SageObject):
             Fractional ideal (5, 1/2*a + 3/2)
         """
         return self.__N
-
 
     def lift_to_sl2_Ok(self, i):
         """
@@ -359,7 +361,7 @@ class P1NFList(SageObject):
             True
         """
         c, d = self.__list[i].tuple()
-        t, j = search(self.__list, self.normalize(c, alpha*c + d))
+        t, j = search(self.__list, self.normalize(c, alpha * c + d))
         return j
 
     def apply_J_epsilon(self, i, e1, e2=1):
@@ -407,19 +409,18 @@ class P1NFList(SageObject):
             True
         """
         c, d = self.__list[i].tuple()
-        t, j = search(self.__list, self.normalize(c*e1, d*e2))
+        t, j = search(self.__list, self.normalize(c * e1, d * e2))
         return j
 
 
-
-
-#**************************************************************************
+# **************************************************************************
 #  Global functions:
 #    - p1NFList --compute list of M-symbols
 #    - lift_to_sl2_Ok
 #    - make_coprime -- need it for ``lift_to_sl2_Ok``
 #    - psi -- useful to check cardinality of the M-symbols list
-#**************************************************************************
+# **************************************************************************
+
 
 def my_p1NFlist(N):
     """
@@ -447,28 +448,30 @@ def my_p1NFlist(N):
     """
     k = N.number_field()
 
-    L = [MyMSymbol(0,1)]
-    #N.residues() = iterator through the residues mod N
-    L = L+[MyMSymbol(k(1), r) for r in N.residues()]
+    L = [MyMSymbol(0, 1)]
+    # N.residues() = iterator through the residues mod N
+    L = L + [MyMSymbol(k(1), r) for r in N.residues()]
 
     from sage.arith.all import divisors
+
     for D in divisors(N):
-        if not D.is_trivial() and D!=N:
-            #we find Dp ideal coprime to N, in inverse class to D
+        if not D.is_trivial() and D != N:
+            # we find Dp ideal coprime to N, in inverse class to D
 
             Dp = k.ideal(1)
             c = D.gens_reduced()[0]
 
-            #now we find all the (c,d)'s which have associated divisor D
-            J = N/D
+            # now we find all the (c,d)'s which have associated divisor D
+            J = N / D
             I = D + J
             for d in J.residues():
-                if new_is_coprime(I,k.ideal(d)):
+                if new_is_coprime(I, k.ideal(d)):
                     M = D.prime_to_idealM_part(J)
-                    u = (Dp*M).element_1_mod(J)
-                    d1 = u*d + (1-u)
-                    L.append(normalize_tuple(N,(c,d1)))
+                    u = (Dp * M).element_1_mod(J)
+                    d1 = u * d + (1 - u)
+                    L.append(normalize_tuple(N, (c, d1)))
     return L
+
 
 def lift_to_sl2_Ok(N, c, d):
     """
@@ -545,40 +548,41 @@ def lift_to_sl2_Ok(N, c, d):
         c = k(c)
     if type(d) is int:
         d = k(d)
-        
-    #check the input
+
+    # check the input
     if c == 0 and d == 0:
-        raise ValueError("Cannot lift (%s, %s) to an element of Sl2(Ok)."%(c, d))
-    if not new_is_coprime(N,k.ideal(c, d)):
-        raise ValueError("<%s> + <%s> and the %s are not coprime."%(c, d, N))
-    #a few special cases
+        raise ValueError("Cannot lift (%s, %s) to an element of Sl2(Ok)." % (c, d))
+    if not new_is_coprime(N, k.ideal(c, d)):
+        raise ValueError("<%s> + <%s> and the %s are not coprime." % (c, d, N))
+    # a few special cases
     if (c - 1).mod(N) == 0:
         return [k(0), k(-1), 1, d]
     if (d - 1).mod(N) == 0:
         return [k(1), k(0), c, 1]
-    if c == 0: # and d!=1, so won't happen for normalized M-symbols (c: d)
+    if c == 0:  # and d!=1, so won't happen for normalized M-symbols (c: d)
         it = k.primes_of_degree_one_iter()
         q = k.ideal(1)
-        while not (new_is_coprime(q,d) and (q*N).is_principal()):
+        while not (new_is_coprime(q, d) and (q * N).is_principal()):
             q = next(it)
-        m = (q*N).gens_reduced()[0]
+        m = (q * N).gens_reduced()[0]
         B = k.ideal(m).element_1_mod(k.ideal(d))
-        return [(1-B)/d, -B/m, m, d]
-    if d == 0: # and c!=1, so won't happen for normalized M-symbols (c: d)
+        return [(1 - B) / d, -B / m, m, d]
+    if d == 0:  # and c!=1, so won't happen for normalized M-symbols (c: d)
         it = k.primes_of_degree_one_iter()
         q = k.ideal(1)
-        while not (new_is_coprime(q,c) and (q*N).is_principal()):
+        while not (new_is_coprime(q, c) and (q * N).is_principal()):
             q = next(it)
-        m = (q*N).gens_reduced()[0]
+        m = (q * N).gens_reduced()[0]
         B = k.ideal(c).element_1_mod(k.ideal(m))
-        return [(1-B)/m, -B/c, c, m]
+        return [(1 - B) / m, -B / c, c, m]
 
     c, d = make_coprime(N, c, d)
 
     B = k.ideal(c).element_1_mod(k.ideal(d))
-    b = -B/c
-    a = (1-B)/d
+    b = -B / c
+    a = (1 - B) / d
     return [a, b, c, d]
+
 
 def make_coprime(N, c, d):
     """
@@ -614,16 +618,16 @@ def make_coprime(N, c, d):
         True
     """
     k = N.number_field()
-    if new_is_coprime(k.ideal(c),k.ideal(d)):
+    if new_is_coprime(k.ideal(c), k.ideal(d)):
         return c, d
     else:
         q = k.ideal(c).prime_to_idealM_part(d)
         it = k.primes_of_degree_one_iter()
         r = k.ideal(1)
-        qN = q*N
-        while not (new_is_coprime(r,c) and (r*qN).is_principal()):
+        qN = q * N
+        while not (new_is_coprime(r, c) and (r * qN).is_principal()):
             r = next(it)
-        m = (r*qN).gens_reduced()[0]
+        m = (r * qN).gens_reduced()[0]
         d1 = d + m
         return c, d1
 
@@ -653,89 +657,94 @@ def psi(N):
         raise ValueError("psi only defined for integral ideals")
 
     from sage.misc.all import prod
-    return prod([(np+1)*np**(e-1) \
-                     for np,e in [(p.absolute_norm(),e) \
-                                  for p,e in N.factor()]])
+
+    return prod(
+        [
+            (np + 1) * np ** (e - 1)
+            for np, e in [(p.absolute_norm(), e) for p, e in N.factor()]
+        ]
+    )
 
 
 def normalize_tuple(N, elt, with_scalar=False):
-        r"""
-        Hacked function to replace MSymbol.normalize.
-            - removed all check
-            - now work with fake MSymbol class that doesn't really do anything
-            - sped up some ideal functions (is_coprime) with global hacks
+    r"""
+    Hacked function to replace MSymbol.normalize.
+        - removed all check
+        - now work with fake MSymbol class that doesn't really do anything
+        - sped up some ideal functions (is_coprime) with global hacks
 
-        Previous documentation:
+    Previous documentation:
 
-        Return a normalized  element of (a canonical representative of an element
-        of `\mathbb{P}^1(R/N)` ) equivalent to ``elt``.
+    Return a normalized  element of (a canonical representative of an element
+    of `\mathbb{P}^1(R/N)` ) equivalent to ``elt``.
 
-        INPUT:
+    INPUT:
 
-        - ``elt`` -- a tuple (c,d) that we wish to normalize
-        - ``with_scalar`` -- bool (default False)
+    - ``elt`` -- a tuple (c,d) that we wish to normalize
+    - ``with_scalar`` -- bool (default False)
 
-        OUTPUT:
+    OUTPUT:
 
-        - (only if ``with_scalar=True``) a transforming scalar `u`, such that
-          `(u*c', u*d')` is congruent to `(c: d)` (mod `N`), where `(c: d)`
-          are the coefficients of ``self`` and `N` is the level.
+    - (only if ``with_scalar=True``) a transforming scalar `u`, such that
+      `(u*c', u*d')` is congruent to `(c: d)` (mod `N`), where `(c: d)`
+      are the coefficients of ``self`` and `N` is the level.
 
-        -  a normalized tuple (c', d') equivalent to ``self`` in P^1(R/N).
+    -  a normalized tuple (c', d') equivalent to ``self`` in P^1(R/N).
 
-        """
-        k = N.number_field()
-        R = k.ring_of_integers()
-        c,d = elt
+    """
+    k = N.number_field()
+    R = k.ring_of_integers()
+    c, d = elt
 
-        if c.mod(N) == 0:
-            if with_scalar:
-                return N.reduce(d), MyMSymbol(k(0),k(1))
-            else:
-                return MyMSymbol(k(0),k(1))
-        if d.mod(N) == 0:
-            if with_scalar:
-                return N.reduce(c), MyMSymbol(k(1),k(0))
-            else:
-                return MyMSymbol(k(1),k(0))
-        if new_is_coprime(N,c):
-            cinv = R(c).inverse_mod(N)
-            if with_scalar:
-                return N.reduce(c), MyMSymbol(1, N.reduce(d*cinv))
-            else:
-                return MyMSymbol(1, N.reduce(d*cinv))
-
-        if N in _level_cache:
-            Lfacs, Lxs = _level_cache[N]
-        else:
-            Lfacs = [p**e for p, e in N.factor()]
-            Lxs = [(N/p).element_1_mod(p) for p in Lfacs]
-            # Lfacs, Lxs only depend of the ideal: same lists every time we
-            # call normalize for a given level, so we store the lists.
-            _level_cache[N] = (Lfacs, Lxs)
-        u = 0  # normalizer factor
-        p_i = 0
-        for p in Lfacs:
-            if new_is_coprime(p,c):
-                inv = c.inverse_mod(p)
-            else:
-                inv = d.inverse_mod(p)
-            u = u + inv*Lxs[p_i]
-            p_i = p_i + 1
-        c, d = (N.reduce(u*c), N.reduce(u*d))
-        if (c - 1).mod(N) == 0:
-            c = R(1)
+    if c.mod(N) == 0:
         if with_scalar:
-            return u.inverse_mod(N), MyMSymbol(c, d)
+            return N.reduce(d), MyMSymbol(k(0), k(1))
         else:
-            return MyMSymbol(c, d)
+            return MyMSymbol(k(0), k(1))
+    if d.mod(N) == 0:
+        if with_scalar:
+            return N.reduce(c), MyMSymbol(k(1), k(0))
+        else:
+            return MyMSymbol(k(1), k(0))
+    if new_is_coprime(N, c):
+        cinv = R(c).inverse_mod(N)
+        if with_scalar:
+            return N.reduce(c), MyMSymbol(1, N.reduce(d * cinv))
+        else:
+            return MyMSymbol(1, N.reduce(d * cinv))
+
+    if N in _level_cache:
+        Lfacs, Lxs = _level_cache[N]
+    else:
+        Lfacs = [p**e for p, e in N.factor()]
+        Lxs = [(N / p).element_1_mod(p) for p in Lfacs]
+        # Lfacs, Lxs only depend of the ideal: same lists every time we
+        # call normalize for a given level, so we store the lists.
+        _level_cache[N] = (Lfacs, Lxs)
+    u = 0  # normalizer factor
+    p_i = 0
+    for p in Lfacs:
+        if new_is_coprime(p, c):
+            inv = c.inverse_mod(p)
+        else:
+            inv = d.inverse_mod(p)
+        u = u + inv * Lxs[p_i]
+        p_i = p_i + 1
+    c, d = (N.reduce(u * c), N.reduce(u * d))
+    if (c - 1).mod(N) == 0:
+        c = R(1)
+    if with_scalar:
+        return u.inverse_mod(N), MyMSymbol(c, d)
+    else:
+        return MyMSymbol(c, d)
 
 
-def new_is_coprime(I,J):
+def new_is_coprime(I, J):
     """
     New coprime function
     """
-    return (I+J).gens_reduced()[0] == 1
+    return (I + J).gens_reduced()[0] == 1
+
 
 def new_is_zero(I):
     """

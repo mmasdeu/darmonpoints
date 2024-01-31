@@ -6,17 +6,27 @@
 ######################
 from sage.structure.sage_object import SageObject
 from sage.groups.group import AlgebraicGroup
-from sage.structure.element import MultiplicativeGroupElement,ModuleElement
+from sage.structure.element import MultiplicativeGroupElement, ModuleElement
 from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.categories.homset import Hom
-from sage.matrix.constructor import Matrix,matrix
+from sage.matrix.constructor import Matrix, matrix
 from sage.misc.cachefunc import cached_method
-from sage.structure.sage_object import load,save
+from sage.structure.sage_object import load, save
 from sage.misc.misc_c import prod
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,LaurentSeriesRing, Qp,Zp,Zmod
-from sage.misc.persist import db,db_save
-from sage.parallel.decorate import fork,parallel
+from sage.rings.all import (
+    RealField,
+    ComplexField,
+    RR,
+    QuadraticField,
+    PolynomialRing,
+    LaurentSeriesRing,
+    Qp,
+    Zp,
+    Zmod,
+)
+from sage.misc.persist import db, db_save
+from sage.parallel.decorate import fork, parallel
 from sage.matrix.constructor import block_matrix
 from sage.rings.number_field.number_field import NumberField
 from sage.categories.action import Action
@@ -27,41 +37,45 @@ from sage.modules.vector_rational_dense import Vector_rational_dense
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
 
 from collections import defaultdict
-from itertools import product,chain,groupby,islice,tee,starmap
+from itertools import product, chain, groupby, islice, tee, starmap
 import operator
 import os
 
 from .cohomology_abstract import *
 from .util import *
 
-class TrivialAction(Action):
-    def __init__(self,G,M):
-        Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
-    def _act_(self,g,v):
+class TrivialAction(Action):
+    def __init__(self, G, M):
+        Action.__init__(self, G, M, is_left=True, op=operator.mul)
+
+    def _act_(self, g, v):
         return v
 
-class MatrixAction(Action):
-    def __init__(self,G,M):
-        Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
-    def _act_(self,g,v):
+class MatrixAction(Action):
+    def __init__(self, G, M):
+        Action.__init__(self, G, M, is_left=True, op=operator.mul)
+
+    def _act_(self, g, v):
         return v.left_act_by_matrix(g)
 
-class Scaling(Action):
-    def __init__(self,G,M):
-        Action.__init__(self,G,M,is_left = True,op = operator.mul)
 
-    def _act_(self,g,v):
+class Scaling(Action):
+    def __init__(self, G, M):
+        Action.__init__(self, G, M, is_left=True, op=operator.mul)
+
+    def _act_(self, g, v):
         return v.scale_by(g)
 
+
 class CoIndAction(Action):
-    def __init__(self, algebra , V, G):
+    def __init__(self, algebra, V, G):
         self._G = G
         self.V = V
-        Action.__init__(self,algebra,V,is_left = True,op = operator.mul)
+        Action.__init__(self, algebra, V, is_left=True, op=operator.mul)
 
-    def _act_(self,g,v):
+    def _act_(self, g, v):
         # Here v is an element of the coinduced module
         # v = [v_1, ... , v_r], indexed by cosets
         # To know (g*f)(x_i) = f(x_i g), we write
@@ -73,41 +87,45 @@ class CoIndAction(Action):
         except AttributeError:
             pass
         action_data = V.get_action_data(set_immutable(g))
-        return self.V([g1 * v._val[ti] for g1, ti in action_data], check = True)
+        return self.V([g1 * v._val[ti] for g1, ti in action_data], check=True)
+
 
 class CoIndElement(ModuleElement):
-    r'''
+    r"""
     Elements in a co-induced module are represented by lists [v_1,\ldots v_r]
     indexed by the cosets of G(p) \ G(1).
-    '''
-    def __init__(self, parent, data, check = True):
+    """
+
+    def __init__(self, parent, data, check=True):
         V = parent.coefficient_module()
         if check:
-            if isinstance(data,list):
+            if isinstance(data, list):
                 if data[0].parent() is V:
                     self._val = [V(o) for o in data]
                 else:
                     dim = len(V.gens())
                     self._val = []
-                    for i in range(0,dim * len(parent._G.coset_reps()),dim):
-                        self._val.append(V(data[i:i+dim]))
+                    for i in range(0, dim * len(parent._G.coset_reps()), dim):
+                        self._val.append(V(data[i : i + dim]))
             elif isinstance(data, self.__class__):
                 self._val = [V(o) for o in data._val]
-                if hasattr(self._val[0],'lift'):
+                if hasattr(self._val[0], "lift"):
                     prec = self._val[0].parent().precision_cap()
-                    self._val = [o.lift(M = prec) for o in self._val]
-            elif isinstance(data, Vector_integer_dense) or isinstance(data, Vector_rational_dense):
+                    self._val = [o.lift(M=prec) for o in self._val]
+            elif isinstance(data, Vector_integer_dense) or isinstance(
+                data, Vector_rational_dense
+            ):
                 data = list(data)
                 dim = len(V.gens())
                 self._val = []
-                for i in range(0,dim * len(parent._G.coset_reps()),dim):
-                    self._val.append(V(data[i:i+dim]))
+                for i in range(0, dim * len(parent._G.coset_reps()), dim):
+                    self._val.append(V(data[i : i + dim]))
             else:
                 self._val = [V(data) for o in parent._G.coset_reps()]
             assert len(self._val) == len(parent._G.coset_reps())
         else:
             self._val = data
-        ModuleElement.__init__(self,parent)
+        ModuleElement.__init__(self, parent)
 
     def evaluate_at_identity(self):
         return self._val[0]
@@ -130,19 +148,23 @@ class CoIndElement(ModuleElement):
         return self._val[idx]
 
     def _repr_(self):
-        return 'Element of %s'%self.parent()
+        return "Element of %s" % self.parent()
 
-    def _add_(self,right):
-        return self.__class__(self.parent(),[ a + b for a,b in zip(self._val,right._val)])
+    def _add_(self, right):
+        return self.__class__(
+            self.parent(), [a + b for a, b in zip(self._val, right._val)]
+        )
 
-    def _sub_(self,right):
-        return self.__class__(self.parent(),[ a - b for a,b in zip(self._val,right._val)])
+    def _sub_(self, right):
+        return self.__class__(
+            self.parent(), [a - b for a, b in zip(self._val, right._val)]
+        )
 
     def _neg_(self):
-        return self.__class__(self.parent(),[ -a for a in self._val])
+        return self.__class__(self.parent(), [-a for a in self._val])
 
-    def __rmul__(self,right):
-        return self.__class__(self.parent(),[ ZZ(right) * a for a in self._val])
+    def __rmul__(self, right):
+        return self.__class__(self.parent(), [ZZ(right) * a for a in self._val])
 
     def _richcmp_(self, right, op):
         return richcmp(self._vector(), right._vector_(), op)
@@ -156,14 +178,15 @@ class CoIndElement(ModuleElement):
     def __nonzero__(self):
         return not (self._vector_() == 0)
 
-    def _vector_(self, R = None):
-        return vector(sum([list(vector(o)) for o in self.values()],[]))
+    def _vector_(self, R=None):
+        return vector(sum([list(vector(o)) for o in self.values()], []))
 
     def __iter__(self):
-        return sum([list(o) for o in self.values()],[]).__iter__()
+        return sum([list(o) for o in self.values()], []).__iter__()
+
 
 class CoIndModule(Parent):
-    r'''
+    r"""
     A co-induced module.
 
     TESTS::
@@ -172,8 +195,9 @@ class CoIndModule(Parent):
         sage: from darmonpoints.cohomology_abstract import *
         sage: from darmonpoints.sarithgroup import *
         sage: G = BigArithGroup(5,6,1,outfile='/tmp/darmonpoints.tmp') #  optional - magma
-    '''
+    """
     Element = CoIndElement
+
     def __init__(self, G, V):
         self._G = G
         self._V = V
@@ -186,7 +210,7 @@ class CoIndModule(Parent):
         self._populate_coercion_lists_()
 
     def _repr_(self):
-        return 'coInd(G,V) where G is %s and V is %s'%(self._G,self._V)
+        return "coInd(G,V) where G is %s and V is %s" % (self._G, self._V)
 
     def coefficient_module(self):
         return self._V
@@ -198,9 +222,9 @@ class CoIndModule(Parent):
         return self._V.base_field()
 
     @cached_method
-    def acting_matrix(self, g, prec = None):
+    def acting_matrix(self, g, prec=None):
         dim = len(self.basis())
-        ans = Matrix(self._V.base_ring(),dim, 0)
+        ans = Matrix(self._V.base_ring(), dim, 0)
         for v in self.basis():
             gv = g * v
             gvlist = []
@@ -213,22 +237,22 @@ class CoIndModule(Parent):
                     gvlist.extend(wlist)
                 else:
                     gvlist.extend(wlist[:prec])
-            ans = ans.augment(Matrix(self._V.base_ring(),dim,1,gvlist))
+            ans = ans.augment(Matrix(self._V.base_ring(), dim, 1, gvlist))
         return ans
 
     def act_by_genpow(self, i, a, v):
         G = self._G
-        g = G.large_group().gen(i).quaternion_rep**a
+        g = G.large_group().gen(i).quaternion_rep ** a
         action_data = self.get_action_data(set_immutable(g))
         return [g1 * v[ti] for g1, ti in action_data]
 
     @cached_method
-    def get_action_data(self, g, idx = None):
+    def get_action_data(self, g, idx=None):
         G = self._G
         Gpn = G.small_group()
         if idx is None:
             ans = [G.get_coset_ti(set_immutable(xi * g)) for xi in G.coset_reps()]
-            return [(Gpn(a),b) for a,b in ans]
+            return [(Gpn(a), b) for a, b in ans]
         else:
             ans = G.get_coset_ti(set_immutable(G.coset_reps()[idx] * g))
             return Gpn(ans[0]), ans[1]
@@ -236,15 +260,25 @@ class CoIndModule(Parent):
     def group(self):
         return self._G
 
-    def _element_constructor_(self, x, check = True):
+    def _element_constructor_(self, x, check=True):
         return self.element_class(self, x, check)
 
     @cached_method
     def gens(self):
         try:
-            return tuple([self.gen(i) for i in range(len(self._V.gens()) * len(self._G.coset_reps()))])
+            return tuple(
+                [
+                    self.gen(i)
+                    for i in range(len(self._V.gens()) * len(self._G.coset_reps()))
+                ]
+            )
         except AttributeError:
-            return tuple([self.gen(i) for i in range(len(self._V.basis()) * len(self._G.coset_reps()))])
+            return tuple(
+                [
+                    self.gen(i)
+                    for i in range(len(self._V.basis()) * len(self._G.coset_reps()))
+                ]
+            )
 
     def basis(self):
         return self.gens()
@@ -265,15 +299,19 @@ class CoIndModule(Parent):
         ans[i0] = gens[i1]
         return self(ans)
 
+
 class IndElement(CoIndElement):
     def evaluate_at_identity(self):
         raise NotImplementedError
 
+
 class IndAction(CoIndAction):
     pass
 
+
 class IndModule(CoIndModule):
     Element = IndElement
+
     def __init__(self, G, V):
         self._G = G
         self._V = V
@@ -286,5 +324,4 @@ class IndModule(CoIndModule):
         self._populate_coercion_lists_()
 
     def _repr_(self):
-        return 'Ind(G,V) where G is %s and V is %s'%(self._G,self._V)
-
+        return "Ind(G,V) where G is %s and V is %s" % (self._G, self._V)

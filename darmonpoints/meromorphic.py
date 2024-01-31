@@ -10,7 +10,7 @@ from sage.modules.module import Module
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.rings.finite_rings.integer_mod_ring import Zmod
-from sage.rings.all import Integer,Zp
+from sage.rings.all import Integer, Zp
 from sage.rings.padics.factory import ZpCA
 from sage.rings.power_series_ring import PowerSeriesRing
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
@@ -21,7 +21,7 @@ from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.categories.pushout import pushout
 from sage.rings.infinity import Infinity
 from sage.structure.richcmp import richcmp
-from sage.structure.sage_object import load,save
+from sage.structure.sage_object import load, save
 from sage.structure.unique_representation import CachedRepresentation
 from sage.structure.parent import Parent
 from sage.modules.vector_integer_dense import Vector_integer_dense
@@ -36,10 +36,11 @@ from sage.rings.padics.precision_error import PrecisionError
 from copy import deepcopy
 from .divisors import Divisors
 
+
 class MeromorphicFunctionsElement(ModuleElement):
     def __init__(self, parent, data, parameter, check=True):
         # verbose(f'{check = }')
-        ModuleElement.__init__(self,parent)
+        ModuleElement.__init__(self, parent)
         if check:
             K = parent.base_ring()
             prec = parent._prec
@@ -48,12 +49,12 @@ class MeromorphicFunctionsElement(ModuleElement):
                 phi = divisor_to_pseries(parameter, Ps.gen())
                 self._value = Ps(1)
                 for Q, n in data:
-                    self._value *= phi(K(Q))**n
+                    self._value *= phi(K(Q)) ** n
                 self._value /= self._value[0]
                 if len(data.support()) == 1:
-                    self.normalize_point = Q + 1 # DEBUG
+                    self.normalize_point = Q + 1  # DEBUG
             elif data == 0:
-                self._value = Ps(1) # multiplicative!
+                self._value = Ps(1)  # multiplicative!
             elif data.parent() == parent:
                 self._value = deepcopy(data._value)
             else:
@@ -63,7 +64,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         else:
             self._value = deepcopy(data)
         self._moments = self._value
-        self._parameter = Matrix(parent.base_ring(),2,2,parameter)
+        self._parameter = Matrix(parent.base_ring(), 2, 2, parameter)
 
     def power_series(self):
         return self.parent().power_series_ring()(self._value)
@@ -71,7 +72,7 @@ class MeromorphicFunctionsElement(ModuleElement):
     def __call__(self, D):
         return self.evaluate(D)
 
-    def evaluate(self, D): # meromorphic functions
+    def evaluate(self, D):  # meromorphic functions
         K = self.parent().base_ring()
         phi = eval_pseries_map(self._parameter)
         poly = self._value.polynomial()
@@ -85,9 +86,12 @@ class MeromorphicFunctionsElement(ModuleElement):
             pole = None
             valinf = poly(pt)
         if isinstance(D.parent(), Divisors):
-            return prod((poly(phi(P))/valinf * ((P - pole) if pole is not None else 1) )**n for P, n in D)
+            return prod(
+                (poly(phi(P)) / valinf * ((P - pole) if pole is not None else 1)) ** n
+                for P, n in D
+            )
         else:
-            return (poly(phi(D)) / valinf * ((D - pole) if pole is not None else 1))
+            return poly(phi(D)) / valinf * ((D - pole) if pole is not None else 1)
 
     def _cmp_(self, right):
         return (self._value > right._value) - (self._value < right._value)
@@ -97,25 +101,27 @@ class MeromorphicFunctionsElement(ModuleElement):
 
     def valuation(self, p=None):
         K = self.parent().base_ring()
-        return min([Infinity] + [o.valuation(p) for o in (self._value-1).coefficients()])
+        return min(
+            [Infinity] + [o.valuation(p) for o in (self._value - 1).coefficients()]
+        )
 
-    def _add_(self, right): # multiplicative!
+    def _add_(self, right):  # multiplicative!
         ans = self._value * right._value
         if self._parameter != right._parameter:
-            raise RuntimeError('Trying to add incompatible series')
+            raise RuntimeError("Trying to add incompatible series")
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
-    def _sub_(self, right): # multiplicative!
+    def _sub_(self, right):  # multiplicative!
         ans = self._value / right._value
         if self._parameter != right._parameter:
-            raise RuntimeError('Trying to subtract incompatible series')
+            raise RuntimeError("Trying to subtract incompatible series")
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
-    def _neg_(self): # multiplicative!
+    def _neg_(self):  # multiplicative!
         ans = self._value**-1
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
-    def scale_by(self, k): # multiplicative!
+    def scale_by(self, k):  # multiplicative!
         ans = self._value**k
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
@@ -129,7 +135,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         else:
             return self.left_act_by_matrix(g)
 
-    def left_act_by_matrix(self, g, param=None): # meromorphic functions
+    def left_act_by_matrix(self, g, param=None):  # meromorphic functions
         Ps = self._value.parent()
         K = self.parent().base_ring()
         prec = self.parent()._prec
@@ -139,24 +145,33 @@ class MeromorphicFunctionsElement(ModuleElement):
         # radius = tuple((ky, val) for ky, val in self.parent().radius.items())
         zz_ps_vec = self.parent().get_action_data(g, self._parameter, param)
         poly = self._value.polynomial()
-        ans = sum(a * zz_ps_vec[e] for a, e in zip(poly.coefficients(), poly.exponents()))
-        ans /= ans[0] # always normalize
+        ans = sum(
+            a * zz_ps_vec[e] for a, e in zip(poly.coefficients(), poly.exponents())
+        )
+        ans /= ans[0]  # always normalize
         ans = ans.add_bigoh(prec)
         return MeromorphicFunctions(K, p=p, prec=prec)(ans, param)
 
+
 def eval_pseries_map(parameter):
     a, b, c, d = parameter.list()
-    return lambda Q : (Q.parent()(a) * Q + Q.parent()(b)) / (Q.parent()(c) * Q + Q.parent()(d))
+    return lambda Q: (Q.parent()(a) * Q + Q.parent()(b)) / (
+        Q.parent()(c) * Q + Q.parent()(d)
+    )
+
 
 def divisor_to_pseries(parameter, t):
     a, b, c, d = parameter.list()
-    return lambda Q : 1 - (Q.parent()(c) * Q + Q.parent()(d)) * t / (Q.parent()(a) * Q + Q.parent()(b))
+    return lambda Q: 1 - (Q.parent()(c) * Q + Q.parent()(d)) * t / (
+        Q.parent()(a) * Q + Q.parent()(b)
+    )
+
 
 class MeromorphicFunctions(Parent, UniqueRepresentation):
-    r'''
+    r"""
     TESTS:
 
-    '''
+    """
     Element = MeromorphicFunctionsElement
 
     @staticmethod
@@ -175,13 +190,13 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         self._prec = prec
         self._base_ring = K
         psprec = self._prec
-        self._Ps = PowerSeriesRing(self._base_ring, names='t', default_prec=psprec)
+        self._Ps = PowerSeriesRing(self._base_ring, names="t", default_prec=psprec)
 
     def prime(self):
         return self._p
 
     @cached_method
-    def get_action_data(self, g, oldparam, param, prec = None):
+    def get_action_data(self, g, oldparam, param, prec=None):
         verb_level = get_verbose()
         set_verbose(0)
         g.set_immutable()
@@ -191,11 +206,11 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         assert param is not None
         tg = param.change_ring(K)
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
-        zz = (self._Ps([b,a]) / self._Ps([d,c])).truncate(prec)
+        zz = (self._Ps([b, a]) / self._Ps([d, c])).truncate(prec)
         Ps = self._Ps
         ans = [Ps(1), zz]
         for _ in range(prec - 1):
-            zz_ps = (zz * ans[-1]).truncate(prec+1)
+            zz_ps = (zz * ans[-1]).truncate(prec + 1)
             ans.append(zz_ps)
         set_verbose(verb_level)
         return ans
@@ -210,4 +225,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         return self.element_class(self, data, param, check=check)
 
     def _repr_(self):
-        return "Meromorphic Multiplicative Functions over %s with parameter %s, p = %s and prec = %s"%(self._base_ring, self._parameter, self._p, self._prec)
+        return (
+            "Meromorphic Multiplicative Functions over %s with parameter %s, p = %s and prec = %s"
+            % (self._base_ring, self._parameter, self._p, self._prec)
+        )

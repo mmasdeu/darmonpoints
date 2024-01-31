@@ -10,11 +10,30 @@ import sys, os, datetime, configparser
 from .sarithgroup import BigArithGroup
 from .homology import lattice_homology_cycle, get_homology_kernel, inverse_shapiro
 from .cohomology_arithmetic import *
-from .integrals import integrate_H1,double_integral_zero_infty
-from .util import discover_equation,fwrite,quaternion_algebra_invariants_from_ramification, direct_sum_of_maps, config_section_map, Bunch
+from .integrals import integrate_H1, double_integral_zero_infty
+from .util import (
+    discover_equation,
+    fwrite,
+    quaternion_algebra_invariants_from_ramification,
+    direct_sum_of_maps,
+    config_section_map,
+    Bunch,
+)
 
-def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False, initial_data = None, ramification_at_infinity = None, **kwargs):
-    r'''
+
+def find_curve(
+    P,
+    DB,
+    NE,
+    prec,
+    sign_ap=None,
+    magma=None,
+    return_all=False,
+    initial_data=None,
+    ramification_at_infinity=None,
+    **kwargs,
+):
+    r"""
     EXAMPLES:
 
     First example::
@@ -43,42 +62,43 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     sage: find_curve(P,D,P*D,30) # long time # optional - magma
     ...
 
-    '''
+    """
     config = configparser.ConfigParser()
-    config.read('config.ini')
-    param_dict = config_section_map(config, 'General')
-    param_dict.update(config_section_map(config, 'FindCurve'))
+    config.read("config.ini")
+    param_dict = config_section_map(config, "General")
+    param_dict.update(config_section_map(config, "FindCurve"))
     param_dict.update(kwargs)
     param = Bunch(**param_dict)
 
     # Get general parameters
-    outfile = param.get('outfile')
-    use_ps_dists = param.get('use_ps_dists',False)
-    use_shapiro = param.get('use_shapiro',False)
-    use_sage_db = param.get('use_sage_db',False)
-    magma_seed = param.get('magma_seed',1515316)
-    use_magma = param.get('use_magma',True)
-    progress_bar = param.get('progress_bar',True)
-    sign_at_infinity = param.get('sign_at_infinity',ZZ(1))
+    outfile = param.get("outfile")
+    use_ps_dists = param.get("use_ps_dists", False)
+    use_shapiro = param.get("use_shapiro", False)
+    use_sage_db = param.get("use_sage_db", False)
+    magma_seed = param.get("magma_seed", 1515316)
+    use_magma = param.get("use_magma", True)
+    progress_bar = param.get("progress_bar", True)
+    sign_at_infinity = param.get("sign_at_infinity", ZZ(1))
 
     # Get find_curve specific parameters
-    grouptype = param.get('grouptype')
-    hecke_bound = param.get('hecke_bound',3)
-    timeout = param.get('timeout',0)
-    check_conductor = param.get('check_conductor',True)
+    grouptype = param.get("grouptype")
+    hecke_bound = param.get("hecke_bound", 3)
+    timeout = param.get("timeout", 0)
+    check_conductor = param.get("check_conductor", True)
 
     if initial_data is None:
-        page_path = os.path.dirname(__file__) + '/KleinianGroups-1.0/klngpspec'
+        page_path = os.path.dirname(__file__) + "/KleinianGroups-1.0/klngpspec"
         if magma is None:
             from sage.interfaces.magma import Magma
+
             quit_when_done = True
             magma = Magma()
         else:
             quit_when_done = False
         if magma_seed is not None:
-            magma.eval('SetSeed(%s)'%magma_seed)
+            magma.eval("SetSeed(%s)" % magma_seed)
         magma.attach_spec(page_path)
-        magma.eval('Page_initialized := true')
+        magma.eval("Page_initialized := true")
     else:
         quit_when_done = False
 
@@ -87,8 +107,8 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
     try:
         F = P.ring()
         Fdisc = F.discriminant()
-        if not (P*DB).divides(NE):
-            raise ValueError('Conductor (NE) should be divisible by P*DB')
+        if not (P * DB).divides(NE):
+            raise ValueError("Conductor (NE) should be divisible by P*DB")
         p = ZZ(P.norm()).abs()
 
     except AttributeError:
@@ -96,170 +116,236 @@ def find_curve(P, DB, NE, prec, sign_ap = None, magma = None, return_all = False
         P = ZZ(P)
         p = ZZ(P)
         Fdisc = ZZ(1)
-        if NE % (P*DB) != 0:
-            raise ValueError('Conductor (NE) should be divisible by P*DB')
+        if NE % (P * DB) != 0:
+            raise ValueError("Conductor (NE) should be divisible by P*DB")
 
-    Ncartan = kwargs.get('Ncartan',None)
-    param_dict['nscartan'] = Ncartan
+    Ncartan = kwargs.get("Ncartan", None)
+    param_dict["nscartan"] = Ncartan
     Np = NE / (P * DB)
     if Ncartan is not None:
         Np = Np / Ncartan**2
     if use_ps_dists is None:
-        use_ps_dists = False # More efficient our own implementation
+        use_ps_dists = False  # More efficient our own implementation
 
     if not p.is_prime():
-        raise ValueError('P (= %s) should be a prime, of inertia degree 1'%P)
+        raise ValueError("P (= %s) should be a prime, of inertia degree 1" % P)
 
     working_prec = max([2 * prec + 10, 100])
 
-    sgninfty = 'plus' if sign_at_infinity == 1 else 'minus'
-    fname = 'moments_%s_%s_%s_%s_%s_%s.sobj'%(Fdisc,p,DB,NE,sgninfty,prec)
+    sgninfty = "plus" if sign_at_infinity == 1 else "minus"
+    fname = "moments_%s_%s_%s_%s_%s_%s.sobj" % (Fdisc, p, DB, NE, sgninfty, prec)
 
-    if outfile == 'log':
-        outfile = '%s_%s_%s_%s_%s.log'%(P,NE,sgninfty,prec,datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-        outfile = outfile.replace('/','div')
-        outfile = '/tmp/findcurve_' + outfile
+    if outfile == "log":
+        outfile = "%s_%s_%s_%s_%s.log" % (
+            P,
+            NE,
+            sgninfty,
+            prec,
+            datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+        )
+        outfile = outfile.replace("/", "div")
+        outfile = "/tmp/findcurve_" + outfile
 
     if F != QQ and ramification_at_infinity is None:
         if F.signature()[0] > 1:
             if F.signature()[1] == 1:
-                ramification_at_infinity = F.real_places(prec = Infinity) # Totally 'definite'
+                ramification_at_infinity = F.real_places(
+                    prec=Infinity
+                )  # Totally 'definite'
             else:
-                raise ValueError('Please specify the ramification at infinity')
+                raise ValueError("Please specify the ramification at infinity")
         elif F.signature()[0] == 1:
             if len(F.ideal(DB).factor()) % 2 == 0:
-                ramification_at_infinity = [] # Split at infinity
+                ramification_at_infinity = []  # Split at infinity
             else:
-                ramification_at_infinity = F.real_places(prec = Infinity) # Ramified at infinity
+                ramification_at_infinity = F.real_places(
+                    prec=Infinity
+                )  # Ramified at infinity
         else:
             ramification_at_infinity = None
 
     if outfile is not None:
-        print("Partial results will be saved in %s"%outfile)
+        print("Partial results will be saved in %s" % outfile)
 
     if initial_data is not None:
-        G,phiE = initial_data
+        G, phiE = initial_data
     else:
         # Define the S-arithmetic group
         try:
             if F == QQ:
                 abtuple = QuaternionAlgebra(DB).invariants()
             else:
-                abtuple = quaternion_algebra_invariants_from_ramification(F,DB,ramification_at_infinity, magma=magma)
-            G = BigArithGroup(P, abtuple, Np, magma = magma, seed = magma_seed, outfile = outfile, **param_dict)
+                abtuple = quaternion_algebra_invariants_from_ramification(
+                    F, DB, ramification_at_infinity, magma=magma
+                )
+            G = BigArithGroup(
+                P,
+                abtuple,
+                Np,
+                magma=magma,
+                seed=magma_seed,
+                outfile=outfile,
+                **param_dict,
+            )
         except RuntimeError as e:
             if quit_when_done:
                 magma.quit()
             mystr = str(e)
             if len(mystr) > 30:
-                mystr = mystr[:14] + ' ... ' + mystr[-14:]
+                mystr = mystr[:14] + " ... " + mystr[-14:]
             if return_all:
-                return ['Error when computing G: ' + mystr]
+                return ["Error when computing G: " + mystr]
             else:
-                return 'Error when computing G: ' + mystr
+                return "Error when computing G: " + mystr
 
         # Define phiE, the cohomology class associated to the system of eigenvalues.
         Coh = ArithCoh(G)
         try:
-            phiE = get_rational_cocycle(Coh, sign = sign_at_infinity,bound = hecke_bound,return_all = return_all,use_magma = True)
+            phiE = get_rational_cocycle(
+                Coh,
+                sign=sign_at_infinity,
+                bound=hecke_bound,
+                return_all=return_all,
+                use_magma=True,
+            )
         except Exception as e:
             if quit_when_done:
                 magma.quit()
             if return_all:
-                return ['Error when finding cohomology class: ' + str(e)]
+                return ["Error when finding cohomology class: " + str(e)]
             else:
-                return 'Error when finding cohomology class: ' + str(e)
+                return "Error when finding cohomology class: " + str(e)
         if use_sage_db:
             G.save_to_db()
-        fwrite('Cohomology class found', outfile)
+        fwrite("Cohomology class found", outfile)
     try:
-        ker = [inverse_shapiro(G, o) for o in get_homology_kernel(G, hecke_data=kwargs.get('hecke_data',None))]
+        ker = [
+            inverse_shapiro(G, o)
+            for o in get_homology_kernel(G, hecke_data=kwargs.get("hecke_data", None))
+        ]
     except Exception as e:
         if quit_when_done:
             magma.quit()
         if return_all:
-            return ['Problem calculating homology kernel: ' + str(e)]
+            return ["Problem calculating homology kernel: " + str(e)]
         else:
-            return 'Problem calculating homology kernel: ' + str(e)
+            return "Problem calculating homology kernel: " + str(e)
 
     if not return_all:
         phiE = [phiE]
     ret_vals = []
     for phi in phiE:
         try:
-            Phi = get_overconvergent_class_quaternionic(P,phi,G,prec,sign_at_infinity,sign_ap,use_ps_dists, progress_bar = progress_bar)
+            Phi = get_overconvergent_class_quaternionic(
+                P,
+                phi,
+                G,
+                prec,
+                sign_at_infinity,
+                sign_ap,
+                use_ps_dists,
+                progress_bar=progress_bar,
+            )
         except ValueError as e:
-            ret_vals.append('Problem when getting overconvergent class: ' + str(e))
+            ret_vals.append("Problem when getting overconvergent class: " + str(e))
             continue
-        fwrite('Done overconvergent lift', outfile)
+        fwrite("Done overconvergent lift", outfile)
         # Find an element x of Gpn for not in the kernel of phi,
         # and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.
         try:
             found = False
             for xgenlist in ker:
-                phi_o = sum( [phi.evaluate(t**a) for t, a in xgenlist], 0 )
+                phi_o = sum([phi.evaluate(t**a) for t, a in xgenlist], 0)
                 if use_shapiro:
                     phi_o = phi_o.evaluate_at_identity()
                 if phi_o != 0:
                     found = True
                     break
             if not found:
-                raise RuntimeError('Cocycle evaluates always to zero')
+                raise RuntimeError("Cocycle evaluates always to zero")
         except Exception as e:
-            ret_vals.append('Problem when choosing element in kernel: ' + str(e))
+            ret_vals.append("Problem when choosing element in kernel: " + str(e))
             continue
         found = False
-        xi1, xi2 = lattice_homology_cycle(p, G.Gn, G.wp(), xgenlist,working_prec,outfile = outfile) # DEBUG
+        xi1, xi2 = lattice_homology_cycle(
+            p, G.Gn, G.wp(), xgenlist, working_prec, outfile=outfile
+        )  # DEBUG
         while not found:
             try:
-                xi1, xi2 = lattice_homology_cycle(p, G.Gn, G.wp(), xgenlist,working_prec,outfile = outfile)
+                xi1, xi2 = lattice_homology_cycle(
+                    p, G.Gn, G.wp(), xgenlist, working_prec, outfile=outfile
+                )
                 found = True
             except PrecisionError:
-                working_prec  = 2 * working_prec
-                verbose('Setting working_prec to %s'%working_prec)
+                working_prec = 2 * working_prec
+                verbose("Setting working_prec to %s" % working_prec)
             except Exception as e:
-                ret_vals.append('Problem when computing homology cycle: ' + str(e))
-                verbose('Exception occurred: ' + str(e))
+                ret_vals.append("Problem when computing homology cycle: " + str(e))
+                verbose("Exception occurred: " + str(e))
                 break
         if not found:
             continue
         try:
-            qE1 = integrate_H1(G,xi1,Phi,1,prec = working_prec, twist = False,progress_bar = progress_bar)
-            qE2 = integrate_H1(G,xi2,Phi,1,prec = working_prec, twist = True,progress_bar = progress_bar)
+            qE1 = integrate_H1(
+                G,
+                xi1,
+                Phi,
+                1,
+                prec=working_prec,
+                twist=False,
+                progress_bar=progress_bar,
+            )
+            qE2 = integrate_H1(
+                G, xi2, Phi, 1, prec=working_prec, twist=True, progress_bar=progress_bar
+            )
         except Exception as e:
-            ret_vals.append('Problem with integration: %s'%str(e))
+            ret_vals.append("Problem with integration: %s" % str(e))
             continue
 
-        qE = qE1/qE2
+        qE = qE1 / qE2
         qE = qE.add_bigoh(prec + qE.valuation())
-        Linv = qE.log(p_branch = 0)/qE.valuation()
+        Linv = qE.log(p_branch=0) / qE.valuation()
 
-        fwrite('Integral done. Now trying to recognize the curve', outfile)
-        fwrite('F.<r> = NumberField(%s)'%(F.gen(0).minpoly()),outfile)
-        fwrite('N_E = %s = %s'%(NE,factor(NE)),outfile)
-        fwrite('D_B = %s = %s'%(DB,factor(DB)),outfile)
-        fwrite('Np = %s = %s'%(Np,factor(Np)),outfile)
+        fwrite("Integral done. Now trying to recognize the curve", outfile)
+        fwrite("F.<r> = NumberField(%s)" % (F.gen(0).minpoly()), outfile)
+        fwrite("N_E = %s = %s" % (NE, factor(NE)), outfile)
+        fwrite("D_B = %s = %s" % (DB, factor(DB)), outfile)
+        fwrite("Np = %s = %s" % (Np, factor(Np)), outfile)
         if Ncartan is not None:
-            fwrite('Ncartan = %s'%(Ncartan),outfile)
-        fwrite('Calculation with p = %s and prec = %s+%s'%(P,prec,working_prec-prec),outfile)
-        fwrite('qE = %s'%qE,outfile)
-        fwrite('Linv = %s'%Linv,outfile)
+            fwrite("Ncartan = %s" % (Ncartan), outfile)
+        fwrite(
+            "Calculation with p = %s and prec = %s+%s" % (P, prec, working_prec - prec),
+            outfile,
+        )
+        fwrite("qE = %s" % qE, outfile)
+        fwrite("Linv = %s" % Linv, outfile)
         Cp = qE.parent()
         if Cp.defining_polynomial().degree() > 1:
-            fwrite('# (where {g} satisfies: {defpoly})'.format(g = Cp._names[0],defpoly=Cp.defining_polynomial(exact=True)), outfile)
+            fwrite(
+                "# (where {g} satisfies: {defpoly})".format(
+                    g=Cp._names[0], defpoly=Cp.defining_polynomial(exact=True)
+                ),
+                outfile,
+            )
 
-        curve = discover_equation(qE,G.base_ring_local_embedding(working_prec),NE,prec,check_conductor = check_conductor)
+        curve = discover_equation(
+            qE,
+            G.base_ring_local_embedding(working_prec),
+            NE,
+            prec,
+            check_conductor=check_conductor,
+        )
         if curve is None:
             if quit_when_done:
                 magma.quit()
-            ret_vals.append('None')
+            ret_vals.append("None")
         else:
             try:
                 curve = curve.global_minimal_model()
-            except (AttributeError,NotImplementedError):
+            except (AttributeError, NotImplementedError):
                 pass
-            fwrite('EllipticCurve(F, %s )'%(list(curve.a_invariants())), outfile)
-            fwrite('=' * 60, outfile)
+            fwrite("EllipticCurve(F, %s )" % (list(curve.a_invariants())), outfile)
+            fwrite("=" * 60, outfile)
             ret_vals.append(str(curve.a_invariants()))
     if quit_when_done:
         magma.quit()
