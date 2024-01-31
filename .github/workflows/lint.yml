@@ -35,4 +35,4 @@ jobs:
       - name: isort
         shell: bash -l {0}
         run: |
-          isort --check --diff darmonpoints --line-length 256
+          isort --check --diff darmonpoints --profile black
