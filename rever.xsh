@@ -54,9 +54,9 @@ $VERSION_BUMP_PATTERNS = [
 $CHANGELOG_FILENAME = 'ChangeLog'
 $CHANGELOG_TEMPLATE = 'TEMPLATE.rst'
 $CHANGELOG_NEWS = 'doc/news'
-$PUSH_TAG_REMOTE = 'git@github.com:mmasdeu/sage_sample_new.git'
+$PUSH_TAG_REMOTE = 'git@github.com:mmasdeu/darmonpoints.git'
 
 $GITHUB_ORG = 'mmasdeu'
-$GITHUB_REPO = 'sage_sample_new'
+$GITHUB_REPO = 'darmonpoints'
 
 $GHRELEASE_ASSETS = ['dist/darmonpoints-' + $VERSION + '.tar.gz']
