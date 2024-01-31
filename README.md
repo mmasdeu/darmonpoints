@@ -1,5 +1,5 @@
 <p align="center">
-    <img alt="logo" src="https://github.com/mmasdeu/darmonpoints/raw/master/doc/static/logo.svg?sanitize=true">
+    <img alt="logo" src="https://github.com/mmasdeu/darmonpoints/raw/main/doc/static/logo.svg?sanitize=true">
 </p>
 
 # A package to compute Darmon points

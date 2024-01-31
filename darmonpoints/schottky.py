@@ -242,15 +242,15 @@ class ThetaOC(SageObject):
         return f"\\Theta(z;{latex(a)},{latex(b)})_{{{latex(self.m)}}}"
 
     def __call__(self, z):
-        if isinstance(z, Divisors):
-            return prod(self(P) ** n for P, n in z)
-        G = self.G
-        z0, wd = G.to_fundamental_domain(z)
-        wdab = [[g, 0] for g in G.generators()]
-        for i in wd:
-            wdab[abs(i) - 1] += sgn(i)
-        ans = prod((F(z) for ky, F in self.Fn.items()), self.val(z))
-        return prod((G.u_function(g, self.prec)(self.D) ** i for g, i in wdab), ans)
+        # if isinstance(z, Divisors):
+        #     return prod(self(P) ** n for P, n in z)
+        # G = self.G
+        # z0, wd = G.to_fundamental_domain(z)
+        # wdab = [[g, 0] for g in G.generators()]
+        # for i in wd:
+        #     wdab[abs(i) - 1] += sgn(i)
+        return prod((F(z) for ky, F in self.Fn.items()), self.val(z))
+        # return prod((G.u_function(g, self.prec)(self.D) ** i for g, i in wdab), ans)
 
     def eval_derivative(self, z):
         v0 = self.val(z)
