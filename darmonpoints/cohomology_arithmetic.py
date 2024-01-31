@@ -330,8 +330,7 @@ class ArithCohElement(CohomologyElement):
         Then computes the stabiliser of this cusp inside the group G=Gamma. We assume that
         self is in the kernel of restriction to this cusp, which will be the case
         for any lift of a cuspidal class to overconvergent coefficients. Then we
-        set up a linear algebra problem to compute an element v in V such that
-            self(gamma) = v|gamma^-1 - v
+        set up a linear algebra problem to compute an element v in V such that self(gamma) = v|gamma^-1 - v
         for all gamma in Stab_G(a/c).
 
         Returns this v.
@@ -341,7 +340,7 @@ class ArithCohElement(CohomologyElement):
         K = V.base_ring() ## p-adic ring
         prec = K.precision_cap()
         G = H.group() ## Gamma
-        a, c = cusp 
+        a, c = cusp
 
         ## Find element of SL2 representing this cusp
         try: ## if we're working over QQ
@@ -374,12 +373,12 @@ class ArithCohElement(CohomologyElement):
 
     def evaluate_at_cusp_list(self, cusp_list):
         """
-        Our cohomology class, in H^1(G,V), is the image of a modular symbol Phi in Symb_G(V)under the natural 
-        connecting map in cohomology. This function computes the value Phi(D), where D is a divisor. 
+        Our cohomology class, in H^1(G,V), is the image of a modular symbol Phi in Symb_G(V)under the natural
+        connecting map in cohomology. This function computes the value Phi(D), where D is a divisor.
 
         D is represented by input cusp_list, which is a list of pairs (n,cusp), where n is the coefficient
-        (an integer) and cusp is a tuple (a,c) representing a/c; e.g. [(1,(3,4)),(-2,(1,0))] gives 
-            D = [3/4] - 2[inf].
+        (an integer) and cusp is a tuple (a,c) representing a/c; e.g. [(1,(3,4)),(-2,(1,0))] gives
+        D = [3/4] - 2[inf].
 
         Returns the value Phi(D) as an element of V.
         """
