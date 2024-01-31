@@ -23,7 +23,10 @@ dependencies:
   - python
   - rever
   - sagelib
+  - sagemath-db-conway-polynomials
+  - sagemath-db-elliptic-curves
   - sphinx
   - twine
   - wheel
+  - zn_poly
 
