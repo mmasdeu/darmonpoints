@@ -255,7 +255,10 @@ class ThetaOC(SageObject):
             wdab = [[g, 0] for g in G.generators()]
             for i in wd:
                 wdab[abs(i) - 1] += sgn(i)
-            ans *= prod(G.u_function(g, self.prec).evaluate(self.D, recursive=False) ** i for g, i in wdab)
+            ans *= prod(
+                G.u_function(g, self.prec).evaluate(self.D, recursive=False) ** i
+                for g, i in wdab
+            )
         return ans
 
     def eval_derivative(self, z):
