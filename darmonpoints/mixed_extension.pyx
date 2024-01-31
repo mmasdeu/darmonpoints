@@ -8,7 +8,6 @@ from sage.rings.ring import Field
 from sage.rings.integer_ring import Z as ZZ
 from sage.rings.all import QQ
 from .util import our_sqrt
-from cysignals.signals cimport sig_check
 cimport cython
 from cpython.list cimport *
 from cpython.number cimport *
