@@ -67,7 +67,7 @@ class DivisorsElement(ModuleElement):
         self._data = defaultdict(ZZ)
         self._ptdict = {}
         ModuleElement.__init__(self,parent)
-        if data == 0:
+        if data is 0:
             return
         if isinstance(data,DivisorsElement):
             self._data.update(data._data)

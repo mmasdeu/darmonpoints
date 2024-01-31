@@ -137,9 +137,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         # Below we code the action which is compatible with the usual action
         # P |-> (aP+b)/(cP+D)
         # radius = tuple((ky, val) for ky, val in self.parent().radius.items())
-        zz_ps_vec, new_param = self.parent().get_action_data(g, self._parameter, param=param)
-        if param is None:
-            param = new_param
+        zz_ps_vec = self.parent().get_action_data(g, self._parameter, param)
         poly = self._value.polynomial()
         ans = sum(a * zz_ps_vec[e] for a, e in zip(poly.coefficients(), poly.exponents()))
         ans /= ans[0] # always normalize
@@ -183,24 +181,15 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         return self._p
 
     @cached_method
-    def get_action_data(self, g, oldparam, K = None, prec = None, param=None):
+    def get_action_data(self, g, oldparam, param, prec = None):
         verb_level = get_verbose()
         set_verbose(0)
         g.set_immutable()
+        K = self.base_ring()
         if prec is None:
             prec = self._prec
-        if K is None:
-            K = self.base_ring()
-        if param is None:
-            raise NotImplementedError
-            try:
-                r = self.radius[g]
-            except (TypeError, KeyError):
-                r = 1 # DEBUG
-                print('WARNING: could not find radius...')
-            tg = find_parameter(g,r).change_ring(K)
-        else:
-            tg = param.change_ring(K)
+        assert param is not None
+        tg = param.change_ring(K)
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
         zz = (self._Ps([b,a]) / self._Ps([d,c])).truncate(prec)
         Ps = self._Ps
@@ -209,7 +198,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
             zz_ps = (zz * ans[-1]).truncate(prec+1)
             ans.append(zz_ps)
         set_verbose(verb_level)
-        return ans, tg
+        return ans
 
     def base_ring(self):
         return self._base_ring

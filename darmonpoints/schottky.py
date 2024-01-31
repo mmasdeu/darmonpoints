@@ -1,11 +1,11 @@
 from itertools import chain
+from copy import copy, deepcopy
 from sage.structure.element import Element, ModuleElement
 from sage.structure.parent import Parent
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.modules.module import Module
 from sage.rings.all import IntegerRing, ZZ
 from sage.rings.semirings.non_negative_integer_semiring import NN
-from sage.structure.coerce_actions import ActedUponAction
 from sage.matrix.matrix_space import MatrixSpace
 from sage.groups.matrix_gps.linear import GL
 from sage.rings.infinity import Infinity
@@ -22,19 +22,6 @@ from .divisors import Divisors
 
 infinity = Infinity
 
-
-
-@cached_function
-def change_variable(g0,g1,n,K=None):
-    r'''
-    Expresses g0.z as power series in t = g1.z
-    to precision n
-    '''
-    if K is None:
-        K = g0.parent().base_ring()
-    a, b, c, d = (g0*g1.adjugate()).list()
-    return K[['t']]([b,a]) / K[['t']]([d,c])
-
 @cached_function
 def find_eigenvector_matrix(g): #, pi=None):
     vaps = sorted([o for o,_ in g.charpoly().roots()],key = lambda o : o.valuation())
@@ -50,24 +37,19 @@ def find_parameter(g, r, pi=None, ball=None):
         pi = g.parent().base_ring().uniformizer()
     if ball is not None:
         assert r == ball.radius
-    S = find_eigenvector_matrix(g)
-    ans = S.adjugate()
+    ans = copy(find_eigenvector_matrix(g).adjugate())
     # column 0 means that the boundary of B_g (the ball attached to g)
     # gets sent to the circle of radius 1.
     # Concretely, if B_g = B(a, p^-r), we send a+p^r |-> 1.
     # As a consequence, P^1-B_g gets sent to the closed ball B(0,1).
-    a, b = S.column(0)
-    z0 = a / b
-    z0 += pi**ZZ(r)
+    z0 = ball.center.lift_to_precision()+pi**ZZ(ball.radius)
+    assert z0 in ball.closure() and z0 not in ball
     lam = (ans[0,0] * z0 + ans[0,1])/(ans[1,0] * z0 + ans[1,1])
     ans.rescale_row(0, 1/lam)
+    ans.set_immutable()
+    assert act(ans, z0) == 1
+    assert ans * ball.complement() == ball.parent()(0,0).closure()
     return ans
-
-def list_index(v, ky):
-    try:
-        return v.index(ky)
-    except ValueError:
-        return None
 
 """
 compute the action of a 2 by 2 matrix g on an element z
@@ -77,16 +59,6 @@ def act(g,z):
         return (g[0][0]*z+g[0][1])/g[1][1]
     else:
         return g[0][0]/g[1][0]+(g[0][1]-g[0][0]*g[1][1]/g[1][0])/(g[1][0]*z+g[1][1])
-
-def is_prefix(v,w):
-    if len(v) > len(w):
-        return False
-    return all(vi == wi for vi, wi in zip(v,w))
-
-def is_suffix(v,w):
-    if len(v) > len(w):
-        return False
-    return all(vi == wi for vi, wi in zip(reversed(v),reversed(w)))
 
 def find_midpoint(K, v0,v1):
     t = K(v0.a-v1.a).valuation()
@@ -170,8 +142,9 @@ class ThetaOC(SageObject):
             if D.degree() != 0:
                 raise ValueError('Must specify a degree-0 divisor, or parameters a and b')
         else:
-            D = self.Div(a) - self.Div(b)
-        # assert all(G.in_fundamental_domain(P) for P, n in D),"Divisor should be supported on fundamental domain."
+            D = self.Div(K(a)) - self.Div(K(b))
+        # if not all(G.in_fundamental_domain(P, closure=True) for P, n in D):
+        #     raise ValueError("Divisor should be supported on fundamental domain.")
         self.a = a
         self.b = b
         self.m = 1
@@ -189,6 +162,7 @@ class ThetaOC(SageObject):
         for wd in Fdom:
             g0 = G.element_to_matrix((wd[-1],))
             g1 = G.element_to_matrix(tuple(wd[:-1]))
+            assert g1 == 1
             g = g1 * g0
             g.set_immutable()
             r = (g1 * balls[wd[-1]]).radius
@@ -200,7 +174,6 @@ class ThetaOC(SageObject):
         for wd, (g, r) in zip(Fdom, self.radius):
             gD = sum(g * val for ky,val in D1dict.items() if ky[0] != -wd[0]) # DEBUG - only works when wd is a 1-tuple!
             tau = self.parameters[wd]
-
             self.Fn0[wd] = MeromorphicFunctions(self.K, self.p,self.prec)(gD, tau)
         self.Fn = deepcopy(self.Fn0)
 
@@ -210,16 +183,10 @@ class ThetaOC(SageObject):
                 return self
             newFn = deepcopy(self.Fn0)
             for i, gi, _ in self.gens:
+                tau = self.parameters[(i,)]
                 for w, Fw in self.Fn.items():
                     if i != -w[0]:
-                        # print(f'Updating from term {w}')
-                        new_ky0 = (i, *w)
-                        new_ky = next(t for t in newFn if is_prefix(t, new_ky0))
-                        # print(f'.adding to term {new_ky}')
-                        tau = self.parameters[new_ky]
-                        newterm = Fw.left_act_by_matrix(gi, param=tau)
-                        # newterm = gi * Fw # DEBUG -- try to ignore param tau
-                        newFn[new_ky] += newterm
+                        newFn[(i,)] += Fw.left_act_by_matrix(gi, tau)
             self.Fn = newFn
             self.m += 1
         return self
@@ -382,7 +349,10 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
                         hv = h * v
                         idx = VT.get(hash_vertex(hv))
                         if idx is None:
-                            idx = list_index(self.NJtree.vertices(), hv)
+                            try:
+                                idx = self.NJtree.vertices().index(hv)
+                            except ValueError:
+                                idx = None
                         new_list.append(idx)
                     self._action_table.append(new_list)
         return self._action_table
@@ -587,12 +557,12 @@ class SchottkyGroup(SchottkyGroup_abstract):
         gens = [(i+1, o) for i, o in enumerate(self.generators())]
         gens.extend([(-i, o.determinant()**-1 * o.adjugate()) for i, o in gens])
         balls = self.balls
-        B, r = next((balls[i], balls[i].radius) for i, g in gens if g == gamma)
-        return act(find_parameter(gamma, r, self.pi, ball=B).adjugate(), 0) + eps * self.pi**ZZ(r)
+        B = next(balls[-i] for i, g in gens if g == gamma)
+        return B.center.lift_to_precision() + eps * self.pi**ZZ(B.radius)
 
     def to_fundamental_domain(self, x):
         r'''
-        Returns a point z in the fundamental domain
+        Returns a point z in the closure of the fundamental domain
         and a word w = [i1,...,ik] (in Tietze notation)
         such that gi1 * ... * gik * z = x
         '''
@@ -610,8 +580,14 @@ class SchottkyGroup(SchottkyGroup_abstract):
             i = self.in_which_ball(x)
         return x, word
 
-    def in_fundamental_domain(self, x):
-        return len(self.to_fundamental_domain(x)[1]) == 0
+    def in_fundamental_domain(self, x, closure=False):
+        y, wd = self.to_fundamental_domain(x)
+        if len(wd) > 0:
+            return False
+        if closure:
+            return True
+        else:
+            return (self.in_which_ball(y) is None)
 
     def word_problem(self, gamma):
         z0 = self.a_point()
@@ -624,8 +600,11 @@ class SchottkyGroup(SchottkyGroup_abstract):
     def matrix_to_element(self, g):
         return self._G(self.word_problem(g))
 
-    def in_which_ball(self, x):
-        return next((i for i, B in self.balls.items() if x in B), None)
+    def in_which_ball(self, x, closure=False):
+        if closure:
+            return next((i for i, B in self.balls.items() if x in B.closure()), None)
+        else:
+            return next((i for i, B in self.balls.items() if x in B), None)
 
     def find_equivalent_divisor(self, D):
         # Compute an equivalent divisor to D with proper support
@@ -645,7 +624,6 @@ class SchottkyGroup(SchottkyGroup_abstract):
         for i, (g, e) in enumerate(zip(gens, wd)):
             if e == 0:
                 continue
-            r = balls[i+1].radius
             gamma = gens[i]
             zz = self.find_point(gamma)
             ans -= e * (Div(zz) - Div(act(gamma, zz)))
@@ -679,18 +657,17 @@ class SchottkyGroup(SchottkyGroup_abstract):
         gens = self.generators()
         D0 = DK(a) - DK(b)
         D = self.find_equivalent_divisor(D0)
-        return ThetaOC(self, a=D, b=None, prec=prec, **kwargs)
+        return ThetaOC(self, a=D, b=None, prec=prec, **kwargs).improve(prec)
 
-    def u_function(self, prec, gamma, a=None, **kwargs):
+    def u_function(self, gamma, prec, a=None, **kwargs):
         K = self.base_ring()
         DK = Divisors(K)
         if a is None:
             a = self.find_point(gamma)
-        D = DK(a) - DK(act(gamma, a))
-        return ThetaOC(self, a=D, b=None, prec=prec, **kwargs)
-
-    def u_gamma_i(self, prec, i, a=None, **kwargs):
-        return self.u_function(prec, self.generators()[i], a=a, **kwargs)
+            assert self.in_fundamental_domain(a,closure=True)
+            assert self.in_fundamental_domain(act(gamma,a),closure=True)
+        D = DK(K(a)) - DK(K(act(gamma, a)))
+        return ThetaOC(self, a=D, b=None, prec=prec, **kwargs).improve(prec)
 
     def period(self, i, j, prec, **kwargs):
         r'''
@@ -726,10 +703,14 @@ class SchottkyGroup(SchottkyGroup_abstract):
             z1 = self.a_point()
         z2 = kwargs.pop('z2', None)
         if z2 is None:
-            z2 = self.find_point(g2, eps = self.pi+1)
+            z2 = self.find_point(g2, eps = 1+self.pi)
         g2_z2 = act(g2, z2)
-        T = self.u_gamma_i(prec, i, a=z1, **kwargs).improve(prec)
-        return T(z2) / T(g2_z2)
+        T = self.u_function(g1, prec, a=z1, **kwargs)
+        num = T(z2)
+        den = T(g2_z2)
+        verbose(f'{num = }')
+        verbose(f'{den = }')
+        return num / den
 
     def period_naive(self, prec, i, j, **kwargs):
         g1 = self.generators()[i]
@@ -742,6 +723,8 @@ class SchottkyGroup(SchottkyGroup_abstract):
             z2 = self.find_point(g2)
         num = self.theta_naive(z2, prec, a=z1, gamma = g1, **kwargs)
         den = self.theta_naive(act(g2,z2), prec, a=z1, gamma = g1, **kwargs)
+        verbose(f'{num = }')
+        verbose(f'{den = }')
         return num / den
 
 class Ball(Element):
@@ -756,10 +739,6 @@ class Ball(Element):
         p = self.parent().K.prime()
         comp = 'P^1 - ' if self.is_complement else ''
         opn = '' if self.is_open else '+'
-        center = self.center
-        try:
-            center.lift()
-        except AttributeError: pass
         return f'{comp}B({self.center},|π|^{self.radius}){opn}'
 
     def intersects(self, other):
@@ -793,13 +772,16 @@ class Ball(Element):
         is_open = not bool(self.is_complement)
         return C(self.parent(), self.center, self.radius, is_open, self.is_complement)
 
-    def is_equal(self, other):
+    def __eq__(self, other):
         if not (self.radius == other.radius and self.is_open == other.is_open and self.is_complement == other.is_complement):
             return False
         if self.is_complement:
-            return self.complement().is_equal(other.complement())
+            return self.complement() == other.complement()
         else:
             return self.center in other and other.center in self
+
+    def __ne__(self, other):
+        return not self == other
 
     def _acted_upon_(self, g, on_left):
         # If oo \notin g(B(x,r)), then g(B(x,r)) = B(gx, r.|g'(x)|)
@@ -1087,7 +1069,7 @@ def test_fundamental_domain(gens, balls):
                 verbose(f'Test *failed* for balls {i = } and {j = }')
             else:
                 verbose(f'Test passed for balls {i = } and {j = }')
-        if not (g * balls[-i].complement()).is_equal(balls[i].closure()):
+        if g * balls[-i].complement() != balls[i].closure():
             fails.append(i)
             verbose(f'Test *failed* for {i = }')
         else:
