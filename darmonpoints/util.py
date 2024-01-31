@@ -1,40 +1,39 @@
-from sage.rings.all import ZZ, QQ, Qp, RR, CC, RealField
-from sage.matrix.all import matrix, Matrix
+import configparser
+import sys
+import types
+from functools import reduce
+from itertools import chain, groupby, islice, product, starmap, tee
+
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
-from sage.modular.modform.constructor import EisensteinForms, CuspForms
-from sage.schemes.elliptic_curves.constructor import EllipticCurve
-from sage.libs.pari.all import PariError, pari
-from sage.misc.sage_eval import sage_eval
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.misc.verbose import verbose, get_verbose, set_verbose
-from sage.calculus.var import var
 from sage.arith.all import divisors, kronecker_symbol, next_prime
-from sage.interfaces.gp import gp
-from sage.rings.infinity import Infinity
-from sage.sets.primes import Primes
-from sage.rings.finite_rings.integer_mod_ring import IntegerModRing, Zmod
-from sage.misc.cachefunc import cached_function
-from sage.rings.big_oh import O
-from sage.schemes.elliptic_curves.constructor import EllipticCurve_from_c4c6
-from sage.misc.functional import cyclotomic_polynomial
-from sage.misc.misc_c import prod
-from sage.functions.generalized import sgn
-from sage.misc.functional import cyclotomic_polynomial
-from sage.modules.fg_pid.fgp_module import FGP_Module, FGP_Module_class
+from sage.arith.functions import lcm
 from sage.arith.misc import valuation
-from sage.misc.misc_c import prod
+from sage.calculus.var import var
+from sage.functions.generalized import sgn
 from sage.functions.transcendental import Function_zeta
 from sage.groups.finitely_presented import wrap_FpGroup
-from sage.misc.all import cartesian_product_iterator, cached_method
-from sage.misc.latex import latex, LatexExpr
-from sage.rings.padics.padic_generic import local_print_mode
+from sage.interfaces.gp import gp
+from sage.libs.pari.all import PariError, pari
+from sage.matrix.all import Matrix, matrix
+from sage.misc.all import cached_method, cartesian_product_iterator
+from sage.misc.cachefunc import cached_function
+from sage.misc.functional import cyclotomic_polynomial
+from sage.misc.latex import LatexExpr, latex
+from sage.misc.misc_c import prod
+from sage.misc.sage_eval import sage_eval
+from sage.misc.verbose import get_verbose, set_verbose, verbose
+from sage.modular.modform.constructor import CuspForms, EisensteinForms
+from sage.modules.fg_pid.fgp_module import FGP_Module, FGP_Module_class
+from sage.rings.all import CC, QQ, RR, ZZ, Qp, RealField
+from sage.rings.big_oh import O
 from sage.rings.fast_arith import prime_range
-from sage.arith.functions import lcm
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing, Zmod
+from sage.rings.infinity import Infinity
+from sage.rings.padics.padic_generic import local_print_mode
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.schemes.elliptic_curves.constructor import EllipticCurve, EllipticCurve_from_c4c6
+from sage.sets.primes import Primes
 from sage.structure.factorization import Factorization
-from itertools import product, chain, groupby, islice, tee, starmap
-from functools import reduce
-import sys, configparser
-import types
 
 
 def is_smooth(x, B):

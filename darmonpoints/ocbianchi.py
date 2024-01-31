@@ -6,37 +6,33 @@
 #                  http://www.gnu.org/licenses/
 #########################################################################
 
-from sage.structure.element import ModuleElement
-from sage.modules.module import Module
+import operator
+
+from sage.categories.action import Action
+from sage.categories.monoids import Monoids
+from sage.categories.pushout import pushout
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
-from sage.rings.finite_rings.integer_mod_ring import Zmod
-from sage.rings.all import Integer, Zp
-from sage.rings.padics.factory import ZpCA
-from sage.rings.power_series_ring import PowerSeriesRing
-from sage.structure.unique_representation import UniqueRepresentation
-from sage.rings.rational_field import QQ
-from sage.rings.integer_ring import ZZ
-from sage.rings.padics.padic_generic import pAdicGeneric
-from sage.categories.pushout import pushout
-from sage.rings.infinity import Infinity
-from sage.structure.sage_object import load, save
-from sage.categories.monoids import Monoids
-from sage.structure.richcmp import richcmp
-from sage.structure.element import MonoidElement
-from sage.structure.factory import UniqueFactory
-from sage.categories.action import Action
-from sage.modular.pollack_stevens.sigma0 import Sigma0, Sigma0ActionAdjuster
-from sage.modular.pollack_stevens.sigma0 import _default_adjuster
-from sage.modules.vector_integer_dense import Vector_integer_dense
+from sage.misc.verbose import get_verbose, set_verbose, verbose
+from sage.modular.pollack_stevens.sigma0 import Sigma0, Sigma0ActionAdjuster, _default_adjuster
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
-from sage.structure.parent import Parent
-from sage.structure.element import Element
 from sage.modules.free_module_element import free_module_element as vector
-from sage.misc.verbose import verbose, get_verbose, set_verbose
-
-
-import operator
+from sage.modules.module import Module
+from sage.modules.vector_integer_dense import Vector_integer_dense
+from sage.rings.all import Integer, Zp
+from sage.rings.finite_rings.integer_mod_ring import Zmod
+from sage.rings.infinity import Infinity
+from sage.rings.integer_ring import ZZ
+from sage.rings.padics.factory import ZpCA
+from sage.rings.padics.padic_generic import pAdicGeneric
+from sage.rings.power_series_ring import PowerSeriesRing
+from sage.rings.rational_field import QQ
+from sage.structure.element import Element, ModuleElement, MonoidElement
+from sage.structure.factory import UniqueFactory
+from sage.structure.parent import Parent
+from sage.structure.richcmp import richcmp
+from sage.structure.sage_object import load, save
+from sage.structure.unique_representation import UniqueRepresentation
 
 ##===========================================================================================
 

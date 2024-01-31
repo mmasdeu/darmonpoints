@@ -26,56 +26,40 @@ sage: ell = F.ideal(1/2*r + 5/2) #  optional - magma
 sage: H.hecke_matrix(ell).charpoly() #  optional - magma
 x^2 - 4
 """
-from sage.structure.sage_object import SageObject
-from sage.groups.group import AlgebraicGroup
-from sage.structure.element import MultiplicativeGroupElement, ModuleElement
-from sage.structure.parent import Parent
-from sage.structure.unique_representation import UniqueRepresentation
-from sage.categories.homset import Hom
-from sage.matrix.constructor import Matrix, matrix
-from sage.misc.cachefunc import cached_method
-from sage.structure.sage_object import load, save
-from sage.misc.misc_c import prod
-from sage.rings.all import (
-    RealField,
-    ComplexField,
-    RR,
-    QuadraticField,
-    PolynomialRing,
-    LaurentSeriesRing,
-    Qp,
-    Zp,
-    Zmod,
-    FiniteField,
-    polygen,
-)
-from sage.rings.infinity import Infinity as oo
-from sage.arith.all import gcd, lcm, xgcd, dedekind_sum
-from sage.misc.persist import db, db_save
-from sage.parallel.decorate import fork, parallel
-from sage.matrix.constructor import block_matrix
-from sage.rings.number_field.number_field import NumberField
-from sage.categories.action import Action
-from sage.matrix.matrix_space import MatrixSpace
-from sage.modules.free_module_element import free_module_element, vector
-from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
-from sage.modular.pollack_stevens.distributions import OverconvergentDistributions
-from sage.misc.verbose import verbose
-
-import os
 import operator
-
-from time import sleep
+import os
 from collections import defaultdict
-from itertools import product, chain, groupby, islice, tee, starmap
+from itertools import chain, groupby, islice, product, starmap, tee
+from time import sleep
 
-from .util import *
-from .ocmodule import OCVn
+from sage.arith.all import dedekind_sum, gcd, lcm, xgcd
+from sage.categories.action import Action
+from sage.categories.homset import Hom
+from sage.groups.group import AlgebraicGroup
+from sage.matrix.constructor import Matrix, block_matrix, matrix
+from sage.matrix.matrix_space import MatrixSpace
+from sage.misc.cachefunc import cached_method
+from sage.misc.misc_c import prod
+from sage.misc.persist import db, db_save
+from sage.misc.verbose import verbose
+from sage.modular.pollack_stevens.distributions import OverconvergentDistributions
+from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
+from sage.modules.free_module_element import free_module_element, vector
+from sage.parallel.decorate import fork, parallel
+from sage.rings.all import RR, ComplexField, FiniteField, LaurentSeriesRing, PolynomialRing, Qp, QuadraticField, RealField, Zmod, Zp, polygen
+from sage.rings.infinity import Infinity as oo
+from sage.rings.number_field.number_field import NumberField
+from sage.structure.element import ModuleElement, MultiplicativeGroupElement
+from sage.structure.parent import Parent
+from sage.structure.sage_object import SageObject, load, save
+from sage.structure.unique_representation import UniqueRepresentation
+
 from .cohomology_abstract import *
-from .representations import *
-from .ocmodule import our_adjuster, ps_adjuster
 from .ocbianchi import BianchiDistributions, left_ps_adjuster
+from .ocmodule import OCVn, our_adjuster, ps_adjuster
+from .representations import *
 from .representations import TrivialAction
+from .util import *
 
 
 def get_overconvergent_class_matrices(

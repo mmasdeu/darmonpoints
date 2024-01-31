@@ -3,44 +3,31 @@
 ##    COHOMOLOGY    ##
 ##                  ##
 ######################
-from sage.structure.sage_object import SageObject
-from sage.groups.group import AlgebraicGroup
-from sage.structure.element import MultiplicativeGroupElement, ModuleElement
-from sage.modules.module import Module
-from sage.structure.parent import Parent
-from sage.categories.homset import Hom
-from sage.matrix.constructor import Matrix, matrix
-from sage.misc.cachefunc import cached_method
-from sage.structure.sage_object import load, save
-from sage.misc.misc_c import prod
-from sage.rings.all import (
-    RealField,
-    ComplexField,
-    RR,
-    QuadraticField,
-    PolynomialRing,
-    LaurentSeriesRing,
-    Qp,
-    Zp,
-    Zmod,
-)
-from sage.misc.persist import db, db_save
-from sage.parallel.decorate import fork, parallel
-from sage.matrix.constructor import block_matrix
-from sage.rings.number_field.number_field import NumberField
-from sage.categories.action import Action
-from sage.matrix.constructor import column_matrix
-from sage.misc.lazy_attribute import lazy_attribute
-from sage.matrix.matrix_space import MatrixSpace
-from sage.algebras.group_algebra import GroupAlgebra
-from sage.rings.padics.precision_error import PrecisionError
-from sage.modules.free_module_element import free_module_element, vector
-from sage.misc.verbose import verbose
-
-from collections import defaultdict
-from itertools import product, chain, groupby, islice, tee, starmap
-import os
 import operator
+import os
+from collections import defaultdict
+from itertools import chain, groupby, islice, product, starmap, tee
+
+from sage.algebras.group_algebra import GroupAlgebra
+from sage.categories.action import Action
+from sage.categories.homset import Hom
+from sage.groups.group import AlgebraicGroup
+from sage.matrix.constructor import Matrix, block_matrix, column_matrix, matrix
+from sage.matrix.matrix_space import MatrixSpace
+from sage.misc.cachefunc import cached_method
+from sage.misc.lazy_attribute import lazy_attribute
+from sage.misc.misc_c import prod
+from sage.misc.persist import db, db_save
+from sage.misc.verbose import verbose
+from sage.modules.free_module_element import free_module_element, vector
+from sage.modules.module import Module
+from sage.parallel.decorate import fork, parallel
+from sage.rings.all import RR, ComplexField, LaurentSeriesRing, PolynomialRing, Qp, QuadraticField, RealField, Zmod, Zp
+from sage.rings.number_field.number_field import NumberField
+from sage.rings.padics.precision_error import PrecisionError
+from sage.structure.element import ModuleElement, MultiplicativeGroupElement
+from sage.structure.parent import Parent
+from sage.structure.sage_object import SageObject, load, save
 
 from .util import *
 

@@ -5,51 +5,38 @@
 ##    GROUP         ##
 ##                  ##
 ######################
-from sage.structure.sage_object import SageObject
-from sage.structure.unique_representation import UniqueRepresentation
-from sage.misc.all import cached_method, walltime
-from sage.misc.verbose import verbose, get_verbose, set_verbose
-from sage.groups.group import AlgebraicGroup
-from sage.structure.element import MultiplicativeGroupElement
-from sage.algebras.quatalg.all import QuaternionAlgebra
-from sage.matrix.all import matrix, Matrix
-from sage.modules.all import vector
-from sage.rings.all import (
-    RealField,
-    ComplexField,
-    RR,
-    QuadraticField,
-    PolynomialRing,
-    NumberField,
-    QQ,
-    ZZ,
-    Qp,
-    AA,
-)
-from sage.arith.all import lcm
-from sage.functions.trig import arctan
-from sage.misc.misc_c import prod
-from sage.structure.sage_object import save, load
-from sage.misc.persist import db
-from sage.modules.free_module import FreeModule_generic
-from sage.functions.generalized import sgn
-from sage.matrix.matrix_space import MatrixSpace
-from sage.misc.sage_eval import sage_eval
-from sage.modules.fg_pid.fgp_module import FGP_Module
-from sage.modular.arithgroup.congroup_sl2z import SL2Z
-from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
-from sage.rings.infinity import Infinity
-from sage.modular.modsym.p1list import lift_to_sl2z, P1List
-
 from collections import defaultdict
-from itertools import product, chain, groupby, islice, tee, starmap
+from itertools import chain, groupby, islice, product, starmap, tee
 
-from .util import *
+from sage.algebras.quatalg.all import QuaternionAlgebra
+from sage.arith.all import lcm
+from sage.functions.generalized import sgn
+from sage.functions.trig import arctan
+from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
+from sage.groups.group import AlgebraicGroup
+from sage.matrix.all import Matrix, matrix
+from sage.matrix.matrix_space import MatrixSpace
+from sage.misc.all import cached_method, walltime
+from sage.misc.misc_c import prod
+from sage.misc.persist import db
+from sage.misc.sage_eval import sage_eval
+from sage.misc.verbose import get_verbose, set_verbose, verbose
+from sage.modular.arithgroup.congroup_sl2z import SL2Z
+from sage.modular.modsym.p1list import P1List, lift_to_sl2z
+from sage.modules.all import vector
+from sage.modules.fg_pid.fgp_module import FGP_Module
+from sage.modules.free_module import FreeModule_generic
+from sage.rings.all import AA, QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, QuadraticField, RealField
+from sage.rings.infinity import Infinity
+from sage.structure.element import MultiplicativeGroupElement
+from sage.structure.sage_object import SageObject, load, save
+from sage.structure.unique_representation import UniqueRepresentation
+
 from .arithgroup_element import ArithGroupElement
 from .homology_abstract import Abelianization
-
 # from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok, P1NFList
-from .my_p1list_nf import lift_to_sl2_Ok, P1NFList
+from .my_p1list_nf import P1NFList, lift_to_sl2_Ok
+from .util import *
 
 
 class ArithGroup_generic(AlgebraicGroup):

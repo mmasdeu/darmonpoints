@@ -5,37 +5,38 @@
 #
 #                  http://www.gnu.org/licenses/
 #########################################################################
-from sage.structure.element import ModuleElement
-from sage.modules.module import Module
+import operator
+
+from sage.categories.action import Action
+from sage.categories.pushout import pushout
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
-from sage.rings.finite_rings.integer_mod_ring import Zmod
+from sage.misc.all import cputime
+from sage.misc.cachefunc import cached_method
+from sage.misc.misc_c import prod
+from sage.misc.verbose import get_verbose, set_verbose, verbose
+from sage.modular.pollack_stevens.sigma0 import Sigma0, Sigma0ActionAdjuster
+from sage.modules.free_module_element import FreeModuleElement_generic_dense
+from sage.modules.module import Module
+from sage.modules.vector_integer_dense import Vector_integer_dense
 from sage.rings.all import Integer, Zp
-from sage.rings.padics.factory import ZpCA, Qp
-from sage.rings.power_series_ring import PowerSeriesRing
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.structure.unique_representation import UniqueRepresentation
-from sage.rings.rational_field import QQ
-from sage.rings.integer_ring import ZZ
-from sage.rings.padics.padic_generic import pAdicGeneric
-from sage.categories.pushout import pushout
+from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.infinity import Infinity
+from sage.rings.integer_ring import ZZ
+from sage.rings.padics.factory import Qp, ZpCA
+from sage.rings.padics.padic_generic import pAdicGeneric
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.power_series_ring import PowerSeriesRing
+from sage.rings.rational_field import QQ
+from sage.structure.element import ModuleElement
+from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import load, save
-from sage.structure.unique_representation import CachedRepresentation
-from sage.categories.action import Action
-from sage.structure.parent import Parent
-from sage.modular.pollack_stevens.sigma0 import Sigma0, Sigma0ActionAdjuster
-from sage.modules.vector_integer_dense import Vector_integer_dense
-from sage.modules.free_module_element import FreeModuleElement_generic_dense
-from sage.misc.cachefunc import cached_method
-from sage.misc.all import cputime
-from sage.misc.verbose import verbose, get_verbose, set_verbose
-from sage.misc.misc_c import prod
+from sage.structure.unique_representation import CachedRepresentation, UniqueRepresentation
+
 from .homology import Divisors
 from .rationalfunctions import RationalFunctions
 from .representations import MatrixAction, Scaling
-import operator
 
 
 class our_adjuster(Sigma0ActionAdjuster):

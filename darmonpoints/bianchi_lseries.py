@@ -1,13 +1,11 @@
+from itertools import product
+
+from sage.matrix.constructor import Matrix, matrix
 from sage.modular.pollack_stevens.manin_map import unimod_matrices_to_infty
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
-from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
 from sage.modular.pollack_stevens.sigma0 import Sigma0
-from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
-from sage.matrix.constructor import Matrix, matrix
-
-from itertools import product
 
 
 def fundamental_integral(self, alpha, i, j):

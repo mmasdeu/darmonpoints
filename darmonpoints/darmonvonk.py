@@ -1,13 +1,15 @@
-from darmonpoints.util import *
-from sage.modular.pollack_stevens.manin_map import *
+from itertools import product
+
+from sage.arith.misc import fundamental_discriminant
 from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
+from sage.modular.pollack_stevens.manin_map import *
+
+from darmonpoints.arithgroup import angle_sign, intersect_geodesic_arcs
+from darmonpoints.cohomology_arithmetic import ArithAction, CohArbitrary
 from darmonpoints.homology import *
 from darmonpoints.ocmodule import AddMeromorphicFunctions
-from darmonpoints.cohomology_arithmetic import ArithAction, CohArbitrary
-from darmonpoints.arithgroup import intersect_geodesic_arcs, angle_sign
 from darmonpoints.sarithgroup import *
-from sage.arith.misc import fundamental_discriminant
-from itertools import product
+from darmonpoints.util import *
 
 distinguished_open = "OCp"  # Needed if we want to compare with Darmon points!
 # distinguished_open = 'Uinf'

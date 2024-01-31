@@ -3,31 +3,21 @@
 ##  INTEGRATION     ##
 ##                  ##
 ######################
-from sage.rings.all import (
-    RealField,
-    ComplexField,
-    RR,
-    QuadraticField,
-    PolynomialRing,
-    LaurentSeriesRing,
-    PowerSeriesRing,
-    Infinity,
-    Zmod,
-)
+from collections import defaultdict
+from itertools import chain, groupby, islice, product, starmap, tee
+from operator import mul
+
 from sage.all import prod
-from sage.parallel.decorate import fork, parallel
-from sage.structure.sage_object import SageObject
 from sage.arith.misc import algdep
 from sage.misc.misc import cputime
 from sage.misc.verbose import verbose
+from sage.parallel.decorate import fork, parallel
+from sage.rings.all import RR, ComplexField, Infinity, LaurentSeriesRing, PolynomialRing, PowerSeriesRing, QuadraticField, RealField, Zmod
+from sage.structure.sage_object import SageObject
 
-from collections import defaultdict
-from itertools import product, chain, groupby, islice, tee, starmap
-from operator import mul
-
-from .util import *
+from .limits import find_center, num_evals
 from .sarithgroup import BTEdge
-from .limits import num_evals, find_center
+from .util import *
 
 
 def act_on_polynomial(P, num, den, N=None):

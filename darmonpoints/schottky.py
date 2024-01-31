@@ -1,24 +1,25 @@
-from itertools import chain
 from copy import copy, deepcopy
+from itertools import chain
+
+from sage.categories.groups import Groups
+from sage.functions.generalized import sgn
+from sage.groups.matrix_gps.linear import GL
+from sage.matrix.matrix_space import MatrixSpace
+from sage.misc.cachefunc import cached_method
+from sage.misc.verbose import verbose
+from sage.modules.module import Module
+from sage.rings.all import ZZ, IntegerRing
+from sage.rings.infinity import Infinity
+from sage.rings.semirings.non_negative_integer_semiring import NN
+from sage.sets.set import Set
 from sage.structure.element import Element, ModuleElement
 from sage.structure.parent import Parent
-from sage.structure.unique_representation import UniqueRepresentation
-from sage.modules.module import Module
-from sage.rings.all import IntegerRing, ZZ
-from sage.rings.semirings.non_negative_integer_semiring import NN
-from sage.matrix.matrix_space import MatrixSpace
-from sage.groups.matrix_gps.linear import GL
-from sage.rings.infinity import Infinity
-from sage.misc.cachefunc import cached_method
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import SageObject
-from sage.categories.groups import Groups
-from sage.misc.verbose import verbose
-from sage.functions.generalized import sgn
-from sage.sets.set import Set
+from sage.structure.unique_representation import UniqueRepresentation
 
-from .meromorphic import *
 from .divisors import Divisors
+from .meromorphic import *
 
 infinity = Infinity
 

@@ -4,42 +4,29 @@
 ##                  ##
 ##                  ##
 ######################
-from sage.structure.sage_object import SageObject
-from sage.groups.group import AlgebraicGroup
-from sage.structure.element import MultiplicativeGroupElement, ModuleElement
-from sage.structure.parent import Parent
-from sage.structure.richcmp import richcmp
-from sage.categories.homset import Hom
-from sage.matrix.constructor import Matrix, matrix
-from sage.misc.cachefunc import cached_method
-from sage.structure.sage_object import load, save
-from sage.misc.misc_c import prod
-from sage.rings.all import (
-    RealField,
-    ComplexField,
-    RR,
-    QuadraticField,
-    PolynomialRing,
-    LaurentSeriesRing,
-    Qp,
-    Zp,
-    Zmod,
-)
-from sage.misc.persist import db, db_save
-from sage.parallel.decorate import fork, parallel
-from sage.matrix.constructor import block_matrix
-from sage.rings.number_field.number_field import NumberField
-from sage.categories.action import Action
-from sage.matrix.matrix_space import MatrixSpace
-from sage.modules.free_module_element import vector
-from sage.modules.vector_integer_dense import Vector_integer_dense
-from sage.modules.vector_rational_dense import Vector_rational_dense
-from sage.modules.free_module_element import FreeModuleElement_generic_dense
-
-from collections import defaultdict
-from itertools import product, chain, groupby, islice, tee, starmap
 import operator
 import os
+from collections import defaultdict
+from itertools import chain, groupby, islice, product, starmap, tee
+
+from sage.categories.action import Action
+from sage.categories.homset import Hom
+from sage.groups.group import AlgebraicGroup
+from sage.matrix.constructor import Matrix, block_matrix, matrix
+from sage.matrix.matrix_space import MatrixSpace
+from sage.misc.cachefunc import cached_method
+from sage.misc.misc_c import prod
+from sage.misc.persist import db, db_save
+from sage.modules.free_module_element import FreeModuleElement_generic_dense, vector
+from sage.modules.vector_integer_dense import Vector_integer_dense
+from sage.modules.vector_rational_dense import Vector_rational_dense
+from sage.parallel.decorate import fork, parallel
+from sage.rings.all import RR, ComplexField, LaurentSeriesRing, PolynomialRing, Qp, QuadraticField, RealField, Zmod, Zp
+from sage.rings.number_field.number_field import NumberField
+from sage.structure.element import ModuleElement, MultiplicativeGroupElement
+from sage.structure.parent import Parent
+from sage.structure.richcmp import richcmp
+from sage.structure.sage_object import SageObject, load, save
 
 from .cohomology_abstract import *
 from .util import *

@@ -1,24 +1,20 @@
 ######################################
 #####     Curve finding           ####
 ######################################
+import configparser
+import datetime
+import os
+import sys
+
+from sage.all import QQ, ZZ, Infinity, Qp, QuaternionAlgebra, factor
+from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.rings.padics.precision_error import PrecisionError
-from sage.all import QQ, ZZ, Qp, QuaternionAlgebra, factor, Infinity
-from sage.misc.verbose import verbose, get_verbose, set_verbose
 
-import sys, os, datetime, configparser
-
-from .sarithgroup import BigArithGroup
-from .homology import lattice_homology_cycle, get_homology_kernel, inverse_shapiro
 from .cohomology_arithmetic import *
-from .integrals import integrate_H1, double_integral_zero_infty
-from .util import (
-    discover_equation,
-    fwrite,
-    quaternion_algebra_invariants_from_ramification,
-    direct_sum_of_maps,
-    config_section_map,
-    Bunch,
-)
+from .homology import get_homology_kernel, inverse_shapiro, lattice_homology_cycle
+from .integrals import double_integral_zero_infty, integrate_H1
+from .sarithgroup import BigArithGroup
+from .util import Bunch, config_section_map, direct_sum_of_maps, discover_equation, fwrite, quaternion_algebra_invariants_from_ramification
 
 
 def find_curve(

@@ -5,60 +5,46 @@
 ##    GROUP         ##
 ##                  ##
 ######################
-from sage.structure.sage_object import SageObject
-from sage.misc.all import cached_method, walltime
-from sage.groups.group import AlgebraicGroup
-from sage.structure.element import MultiplicativeGroupElement
-from sage.algebras.quatalg.all import QuaternionAlgebra
-from sage.matrix.all import matrix, Matrix
-from sage.modules.all import vector
-from sage.rings.all import (
-    RealField,
-    ComplexField,
-    RR,
-    QuadraticField,
-    PolynomialRing,
-    NumberField,
-    QQ,
-    ZZ,
-    Qp,
-    AA,
-)
-from sage.arith.all import lcm
-from sage.functions.trig import arctan
-from sage.misc.misc_c import prod
-from sage.structure.sage_object import save, load
-from sage.misc.persist import db
-from sage.modules.free_module import FreeModule_generic
-from sage.functions.generalized import sgn
-from sage.matrix.matrix_space import MatrixSpace
-from sage.misc.sage_eval import sage_eval
-from sage.modules.fg_pid.fgp_module import FGP_Module
-from sage.modular.arithgroup.congroup_sl2z import SL2Z
-from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
-from sage.rings.infinity import Infinity
-from sage.plot.hyperbolic_polygon import hyperbolic_polygon
-from sage.repl.rich_output.pretty_print import show
-from sage.plot.plot import plot
-from sage.plot.hyperbolic_arc import hyperbolic_arc
-from sage.plot.hyperbolic_polygon import hyperbolic_polygon, hyperbolic_triangle
-from sage.plot.point import point2d
-from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
-from sage.groups.free_group import FreeGroup
-from sage.functions.hyperbolic import acosh
-from sage.misc.verbose import verbose
-
-from copy import copy
 from collections import defaultdict
-from itertools import product, chain, groupby, islice, tee, starmap
+from copy import copy
+from inspect import currentframe, getfile
+from itertools import chain, groupby, islice, product, starmap, tee
+from os.path import abspath, dirname
 from time import sleep
 
-from .arithgroup_generic import ArithGroup_generic, ArithGroup_matrix_generic
-from .util import *
-from .mixed_extension import get_word_rep_fast
+from sage.algebras.quatalg.all import QuaternionAlgebra
+from sage.arith.all import lcm
+from sage.functions.generalized import sgn
+from sage.functions.hyperbolic import acosh
+from sage.functions.trig import arctan
+from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
+from sage.geometry.hyperbolic_space.hyperbolic_interface import HyperbolicPlane
+from sage.groups.free_group import FreeGroup
+from sage.groups.group import AlgebraicGroup
+from sage.matrix.all import Matrix, matrix
+from sage.matrix.matrix_space import MatrixSpace
+from sage.misc.all import cached_method, walltime
+from sage.misc.misc_c import prod
+from sage.misc.persist import db
+from sage.misc.sage_eval import sage_eval
+from sage.misc.verbose import verbose
+from sage.modular.arithgroup.congroup_sl2z import SL2Z
+from sage.modules.all import vector
+from sage.modules.fg_pid.fgp_module import FGP_Module
+from sage.modules.free_module import FreeModule_generic
+from sage.plot.hyperbolic_arc import hyperbolic_arc
+from sage.plot.hyperbolic_polygon import hyperbolic_polygon, hyperbolic_triangle
+from sage.plot.plot import plot
+from sage.plot.point import point2d
+from sage.repl.rich_output.pretty_print import show
+from sage.rings.all import AA, QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, QuadraticField, RealField
+from sage.rings.infinity import Infinity
+from sage.structure.element import MultiplicativeGroupElement
+from sage.structure.sage_object import SageObject, load, save
 
-from inspect import getfile, currentframe
-from os.path import dirname, abspath
+from .arithgroup_generic import ArithGroup_generic, ArithGroup_matrix_generic
+from .mixed_extension import get_word_rep_fast
+from .util import *
 
 
 def hyperbolic_distance(alpha, beta):
@@ -1409,11 +1395,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         extra_conductor=1,
         **kwargs,
     ):
-        from .limits import (
-            _find_initial_embedding_list,
-            find_optimal_embeddings,
-            order_and_unit,
-        )
+        from .limits import _find_initial_embedding_list, find_optimal_embeddings, order_and_unit
 
         M = self.level
         extra_conductor = ZZ(extra_conductor)
@@ -1469,12 +1451,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
 
     def embed_order_legacy(self, p, D, prec, outfile=None, return_all=False):
         r""" """
-        from .limits import (
-            _find_initial_embedding_list,
-            find_optimal_embeddings,
-            order_and_unit,
-            find_the_unit_of,
-        )
+        from .limits import _find_initial_embedding_list, find_optimal_embeddings, find_the_unit_of, order_and_unit
 
         F = self.base_ring()
         t = PolynomialRing(F, names="t").gen()

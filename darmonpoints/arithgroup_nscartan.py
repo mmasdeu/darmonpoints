@@ -5,48 +5,32 @@
 ##    GROUP         ##
 ##                  ##
 ######################
-from sage.structure.sage_object import SageObject
-from sage.misc.all import cached_method, walltime
-from sage.groups.group import AlgebraicGroup
-from sage.structure.element import MultiplicativeGroupElement
-from sage.structure.parent import Parent
+from collections import defaultdict
+from itertools import chain, groupby, islice, product, starmap, tee
+
 from sage.algebras.quatalg.all import QuaternionAlgebra
-from sage.matrix.all import matrix, Matrix
-from sage.modules.all import vector
-from sage.rings.all import (
-    RealField,
-    ComplexField,
-    RR,
-    QuadraticField,
-    PolynomialRing,
-    NumberField,
-    QQ,
-    ZZ,
-    Qp,
-    Zmod,
-)
-from sage.functions.trig import arctan
-from sage.misc.misc_c import prod
-from sage.structure.sage_object import save, load
-from sage.misc.persist import db
-from sage.modules.free_module import FreeModule_generic
 from sage.functions.generalized import sgn
+from sage.functions.trig import arctan
+from sage.groups.group import AlgebraicGroup
+from sage.matrix.all import Matrix, matrix
+from sage.matrix.constructor import block_diagonal_matrix, diagonal_matrix, identity_matrix
 from sage.matrix.matrix_space import MatrixSpace
+from sage.misc.all import cached_method, walltime
+from sage.misc.misc_c import prod
+from sage.misc.persist import db
 from sage.misc.sage_eval import sage_eval
-from sage.modules.fg_pid.fgp_module import FGP_Module
+from sage.misc.verbose import verbose
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
+from sage.modular.modsym.p1list import lift_to_sl2z
+from sage.modules.all import vector
+from sage.modules.fg_pid.fgp_module import FGP_Module
+from sage.modules.free_module import FreeModule_generic
+from sage.rings.all import QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, QuadraticField, RealField, Zmod
 from sage.rings.finite_rings.finite_field_constructor import FiniteField
 from sage.rings.infinity import Infinity as oo
-from sage.modular.modsym.p1list import lift_to_sl2z
-from sage.matrix.constructor import (
-    diagonal_matrix,
-    identity_matrix,
-    block_diagonal_matrix,
-)
-from sage.misc.verbose import verbose
-
-from collections import defaultdict
-from itertools import product, chain, groupby, islice, tee, starmap
+from sage.structure.element import MultiplicativeGroupElement
+from sage.structure.parent import Parent
+from sage.structure.sage_object import SageObject, load, save
 
 from .arithgroup import ArithGroup_generic
 from .arithgroup_element import ArithGroupElement

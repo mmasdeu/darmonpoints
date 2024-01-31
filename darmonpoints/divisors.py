@@ -1,34 +1,30 @@
-from sage.structure.sage_object import SageObject
-from sage.misc.cachefunc import cached_method
-from sage.matrix.all import matrix, Matrix
-from sage.structure.richcmp import richcmp
-from sage.structure.parent import Parent
-from sage.categories.action import Action
-from sage.rings.padics.factory import Qq
-from sage.rings.integer_ring import ZZ
-from sage.rings.integer import Integer
-from sage.rings.power_series_ring import PowerSeriesRing
-from sage.sets.set import Set
+import operator
+import os
+from collections import defaultdict
+from itertools import chain, groupby, islice, product, starmap, tee
+
 from sage.arith.all import GCD
-from sage.rings.padics.precision_error import PrecisionError
-from sage.structure.element import MultiplicativeGroupElement, ModuleElement
-from sage.modules.module import Module
+from sage.categories.action import Action
+from sage.matrix.all import Matrix, matrix
 from sage.matrix.matrix_space import MatrixSpace
+from sage.misc.cachefunc import cached_method
+from sage.misc.misc_c import prod
+from sage.misc.verbose import verbose
 from sage.modules.free_module import FreeModule
 from sage.modules.free_module_element import free_module_element
-from sage.structure.unique_representation import CachedRepresentation
-from sage.rings.padics.factory import ZpCA
-from sage.structure.richcmp import richcmp
-from sage.structure.unique_representation import UniqueRepresentation
-from sage.misc.verbose import verbose
-from sage.misc.misc_c import prod
+from sage.modules.module import Module
 from sage.rings.infinity import Infinity
-
-import os
-import operator
-
-from itertools import product, chain, groupby, islice, tee, starmap
-from collections import defaultdict
+from sage.rings.integer import Integer
+from sage.rings.integer_ring import ZZ
+from sage.rings.padics.factory import Qq, ZpCA
+from sage.rings.padics.precision_error import PrecisionError
+from sage.rings.power_series_ring import PowerSeriesRing
+from sage.sets.set import Set
+from sage.structure.element import ModuleElement, MultiplicativeGroupElement
+from sage.structure.parent import Parent
+from sage.structure.richcmp import richcmp
+from sage.structure.sage_object import SageObject
+from sage.structure.unique_representation import CachedRepresentation, UniqueRepresentation
 
 
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)

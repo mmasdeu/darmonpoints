@@ -1,34 +1,30 @@
 ##########################################################################
 ### Darmon (Stark-Heegner) points for quaternion algebras                #
 ##########################################################################
-from sage.rings.number_field.number_field import is_fundamental_discriminant
-from sage.arith.misc import fundamental_discriminant, factor
-from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
-from sage.rings.padics.precision_error import PrecisionError
-from sage.rings.all import ZZ, RR, QQ, Qp, Zmod
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.rings.infinity import Infinity
-from sage.schemes.curves.constructor import Curve
-from sage.misc.all import walltime
-from sage.misc.verbose import verbose, get_verbose, set_verbose
-from sage.misc.misc_c import prod
+import configparser
+import datetime
+import os
+import sys
+from itertools import product
 
-from .sarithgroup import BigArithGroup
-from .homology import *
+from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
+from sage.arith.misc import factor, fundamental_discriminant
+from sage.misc.all import walltime
+from sage.misc.misc_c import prod
+from sage.misc.verbose import get_verbose, set_verbose, verbose
+from sage.rings.all import QQ, RR, ZZ, Qp, Zmod
+from sage.rings.infinity import Infinity
+from sage.rings.number_field.number_field import is_fundamental_discriminant
+from sage.rings.padics.precision_error import PrecisionError
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.schemes.curves.constructor import Curve
+
 from .cohomology_arithmetic import *
+from .homology import *
 from .integrals import double_integral_zero_infty, integrate_H1
 from .limits import find_optimal_embeddings, find_tau0_and_gtau, num_evals
-from .util import (
-    get_heegner_params,
-    fwrite,
-    quaternion_algebra_invariants_from_ramification,
-    recognize_J,
-    config_section_map,
-    Bunch,
-)
-
-import os, datetime, configparser, sys
-from itertools import product
+from .sarithgroup import BigArithGroup
+from .util import Bunch, config_section_map, fwrite, get_heegner_params, quaternion_algebra_invariants_from_ramification, recognize_J
 
 r"""
     TESTS:

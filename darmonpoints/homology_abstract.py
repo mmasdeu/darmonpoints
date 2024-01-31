@@ -4,23 +4,22 @@
 ##     HOMOLOGY     ##
 ##                  ##
 ######################
-from sage.structure.sage_object import SageObject
-from sage.misc.cachefunc import cached_method
-from sage.matrix.all import matrix, Matrix
-from sage.structure.parent import Parent
+import operator
+import os
+from collections import defaultdict
+from itertools import chain, groupby, islice, product, starmap, tee
+
 from sage.categories.action import Action
-from sage.rings.padics.factory import Qq
-from sage.sets.set import Set
+from sage.matrix.all import Matrix, matrix
+from sage.misc.cachefunc import cached_method
+from sage.misc.verbose import verbose
 from sage.modules.free_module_element import vector
 from sage.modules.module import Module
+from sage.rings.padics.factory import Qq
+from sage.sets.set import Set
+from sage.structure.parent import Parent
+from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
-from sage.misc.verbose import verbose
-
-import os
-import operator
-
-from collections import defaultdict
-from itertools import product, chain, groupby, islice, tee, starmap
 
 from .representations import *
 from .util import *

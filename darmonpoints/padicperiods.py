@@ -1,19 +1,21 @@
-from sage.rings.padics.precision_error import PrecisionError
-from sage.modules.fg_pid.fgp_module import FGP_Module, FGP_Module_class
-from sage.matrix.constructor import matrix, Matrix, block_diagonal_matrix, block_matrix
-from sage.misc.persist import db
-from sage.rings.padics.precision_error import PrecisionError
-from sage.rings.integer_ring import ZZ
-from itertools import product, chain, groupby, islice, tee, starmap
-import os, datetime, configparser
+import configparser
+import datetime
+import os
+from itertools import chain, groupby, islice, product, starmap, tee
 
-from .integrals import integrate_H1
-from .util import *
-from .cohomology_arithmetic import *
-from .sarithgroup import BigArithGroup
-from .homology import lattice_homology_cycle, get_homology_kernel, inverse_shapiro
-from sage.misc.banner import version as sage_version
 import pyximport
+from sage.matrix.constructor import Matrix, block_diagonal_matrix, block_matrix, matrix
+from sage.misc.banner import version as sage_version
+from sage.misc.persist import db
+from sage.modules.fg_pid.fgp_module import FGP_Module, FGP_Module_class
+from sage.rings.integer_ring import ZZ
+from sage.rings.padics.precision_error import PrecisionError
+
+from .cohomology_arithmetic import *
+from .homology import get_homology_kernel, inverse_shapiro, lattice_homology_cycle
+from .integrals import integrate_H1
+from .sarithgroup import BigArithGroup
+from .util import *
 
 pyximport.install()
 from .mixed_extension import QuadExt

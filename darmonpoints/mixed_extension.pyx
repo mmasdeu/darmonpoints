@@ -1,21 +1,25 @@
-from sage.rings.padics.padic_generic import pAdicGeneric
-from sage.structure.element import Element
 from sage.categories.fields import Fields
+from sage.rings.all import QQ
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.padics.padic_generic import pAdicGeneric
+from sage.rings.ring import Field
+from sage.structure.element import Element, FieldElement
 from sage.structure.richcmp import richcmp
 from sage.structure.unique_representation import UniqueRepresentation
-from sage.structure.element import FieldElement
-from sage.rings.ring import Field
-from sage.rings.integer_ring import Z as ZZ
-from sage.rings.all import QQ
+
 from .util import our_sqrt
+
 cimport cython
 from cpython.list cimport *
 from cpython.number cimport *
 from cpython.ref cimport *
-from sage.matrix.constructor import Matrix
-from sage.rings.all import RealField,ComplexField,RR,QuadraticField,PolynomialRing,NumberField,QQ,ZZ,Qp, AA
+
 from bisect import bisect_left as bisect
 from math import atan as atan
+
+from sage.matrix.constructor import Matrix
+from sage.rings.all import AA, QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, QuadraticField, RealField
+
 
 def get_word_rep_fast(self, delta, Pold=None):
     cdef int realprec = 800

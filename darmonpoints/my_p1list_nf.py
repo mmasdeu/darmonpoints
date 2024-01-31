@@ -25,9 +25,9 @@ Replacements over Maite's code:
 
 """
 
-from sage.structure.richcmp import richcmp_method, richcmp
-from sage.structure.sage_object import SageObject
 from sage.misc.search import search
+from sage.structure.richcmp import richcmp, richcmp_method
+from sage.structure.sage_object import SageObject
 
 _level_cache = {}  # The info stored here is used in the normalization.
 

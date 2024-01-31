@@ -5,49 +5,29 @@
 ##    GROUP         ##
 ##                  ##
 ######################
-from sage.structure.sage_object import SageObject
-from sage.misc.all import cached_method, lazy_attribute, walltime
-from sage.groups.group import AlgebraicGroup
-from sage.structure.element import MultiplicativeGroupElement
-from sage.structure.parent import Parent
-from sage.algebras.quatalg.all import QuaternionAlgebra
-from sage.matrix.all import matrix, Matrix
-from sage.modules.all import vector
-from sage.rings.all import (
-    RealField,
-    ComplexField,
-    RR,
-    QuadraticField,
-    PolynomialRing,
-    NumberField,
-    QQ,
-    ZZ,
-    Qp,
-    Qq,
-    Zmod,
-)
-from sage.functions.trig import arctan
-from sage.misc.misc_c import prod
-from sage.misc.verbose import verbose
-from sage.structure.sage_object import save, load
-from sage.misc.persist import db
-from sage.modules.free_module import FreeModule_generic
-from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor as Gamma0
-from sage.modular.cusps import Cusp
-from sage.modular.btquotients.btquotient import BruhatTitsTree
+from collections import defaultdict
+from itertools import chain, groupby, islice, product, starmap, tee
 from os.path import dirname
 
-from collections import defaultdict
-from itertools import product, chain, groupby, islice, tee, starmap
+from sage.algebras.quatalg.all import QuaternionAlgebra
+from sage.functions.trig import arctan
+from sage.groups.group import AlgebraicGroup
+from sage.matrix.all import Matrix, matrix
+from sage.misc.all import cached_method, lazy_attribute, walltime
+from sage.misc.misc_c import prod
+from sage.misc.persist import db
+from sage.misc.verbose import verbose
+from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor as Gamma0
+from sage.modular.btquotients.btquotient import BruhatTitsTree
+from sage.modular.cusps import Cusp
+from sage.modules.all import vector
+from sage.modules.free_module import FreeModule_generic
+from sage.rings.all import QQ, RR, ZZ, ComplexField, NumberField, PolynomialRing, Qp, Qq, QuadraticField, RealField, Zmod
+from sage.structure.element import MultiplicativeGroupElement
+from sage.structure.parent import Parent
+from sage.structure.sage_object import SageObject, load, save
 
-from .arithgroup import (
-    ArithGroup_nf_fuchsian,
-    ArithGroup_nf_kleinian,
-    ArithGroup_rationalquaternion,
-    ArithGroup_rationalmatrix,
-    ArithGroup_nf_matrix,
-    ArithGroup_nf_matrix_new,
-)
+from .arithgroup import ArithGroup_nf_fuchsian, ArithGroup_nf_kleinian, ArithGroup_nf_matrix, ArithGroup_nf_matrix_new, ArithGroup_rationalmatrix, ArithGroup_rationalquaternion
 from .homology_abstract import ArithHomology, HomologyGroup
 from .representations import TrivialAction
 from .util import *

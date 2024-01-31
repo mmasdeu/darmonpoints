@@ -1,5 +1,7 @@
 from darmonpoints.util import update_progress
+
 cimport cython
+
 
 def compute_lift_sparse_cy(list big_system, list indeps, edge_to_eqs):
     cdef dict pivots = {}
