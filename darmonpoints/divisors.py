@@ -70,7 +70,7 @@ class DivisorsElement(ModuleElement):
         self._data = defaultdict(ZZ)
         self._ptdict = {}
         ModuleElement.__init__(self, parent)
-        if data is 0:
+        if data == 0 and (not hasattr(data,'parent') or data.parent() != parent.base()):
             return
         if isinstance(data, DivisorsElement):
             self._data.update(data._data)

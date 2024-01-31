@@ -25,7 +25,7 @@ infinity = Infinity
 
 
 @cached_function
-def find_eigenvector_matrix(g):  # , pi=None):
+def find_eigenvector_matrix(g):
     vaps = sorted([o for o, _ in g.charpoly().roots()], key=lambda o: o.valuation())
     verb_level = get_verbose()
     set_verbose(0)
@@ -55,12 +55,12 @@ def find_parameter(g, r, pi=None, ball=None):
     return ans
 
 
-"""
-compute the action of a 2 by 2 matrix g on an element z
-"""
 
 
 def act(g, z):
+    r"""
+    Compute the action of a 2 by 2 matrix g on an element z
+    """
     if g[1][0] == 0:
         return (g[0][0] * z + g[0][1]) / g[1][1]
     else:
@@ -716,6 +716,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
         D = DK(K(a)) - DK(K(act(gamma, a)))
         return ThetaOC(self, a=D, b=None, prec=prec, **kwargs).improve(prec)
 
+    @cached_method
     def period(self, i, j, prec, **kwargs):
         r"""
         Computes the (i,j)-entry of the period matrix.
