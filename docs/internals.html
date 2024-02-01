@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="Overconvergent module of distributions" href="distributions.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
-        <title>Mixed extensions - darmonpoints 7.0.1 documentation</title>
+        <title>Divisors - darmonpoints 7.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
@@ -163,6 +163,14 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html">Darmon points</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#module-darmonpoints.darmonvonk">Darmon-Vonk points</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#module-darmonpoints.findcurve">Curve finding</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#module-darmonpoints.padicperiods">p-adic periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#module-darmonpoints.plectic">Plectic points</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#schottky-groups">Schottky groups</a></li>
+</ul>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html">Arithmetic group elements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
@@ -181,9 +189,12 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="distributions.html">Overconvergent module of distributions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="distributions.html#module-darmonpoints.representations">Representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html#module-darmonpoints.meromorphic">Meromorphic functions</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Mixed extensions</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Divisors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-darmonpoints.mixed_extension">Mixed extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-darmonpoints.sparse">Sparse matrix calculations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-darmonpoints.util">Utility package</a></li>
 </ul>
 
@@ -219,7 +230,131 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-darmonpoints.mixed_extension">
+          <section id="module-darmonpoints.divisors">
+<span id="divisors"></span><h1>Divisors<a class="headerlink" href="#module-darmonpoints.divisors" title="Link to this heading">#</a></h1>
+<p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="darmonpoints.divisors.Divisors">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.divisors.</span></span><span class="sig-name descname"><span class="pre">Divisors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#Divisors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.Divisors" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Parent</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CachedRepresentation</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="darmonpoints.divisors.Divisors.Element">
+<span class="sig-name descname"><span class="pre">Element</span></span><a class="headerlink" href="#darmonpoints.divisors.Divisors.Element" title="Link to this definition">#</a></dt>
+<dd><p>alias of <a class="reference internal" href="#darmonpoints.divisors.DivisorsElement" title="darmonpoints.divisors.DivisorsElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">DivisorsElement</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.Divisors.base">
+<span class="sig-name descname"><span class="pre">base</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#Divisors.base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.Divisors.base" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.divisors.</span></span><span class="sig-name descname"><span class="pre">DivisorsElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ptdata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleElement</span></code></p>
+<p>A Divisor is given by a list of pairs (P,nP), where P is a point, and nP is an integer.</p>
+<p>TESTS:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">darmonpoints.divisors</span> <span class="kn">import</span> <span class="n">Divisors</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Cp</span><span class="o">.&lt;</span><span class="n">g</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">Qq</span><span class="p">(</span><span class="mi">5</span><span class="o">^</span><span class="mi">3</span><span class="p">,</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">Div</span> <span class="o">=</span> <span class="n">Divisors</span><span class="p">(</span><span class="n">Cp</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">D1</span> <span class="o">=</span> <span class="n">Div</span><span class="p">(</span><span class="n">g</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">D2</span> <span class="o">=</span> <span class="n">Div</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">g</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">D</span> <span class="o">=</span> <span class="n">D1</span> <span class="o">+</span> <span class="n">D2</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="o">-</span><span class="n">D</span><span class="p">)</span>
+<span class="n">Divisor</span> <span class="n">of</span> <span class="n">degree</span> <span class="o">-</span><span class="mi">2</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">D1</span> <span class="o">+</span> <span class="mi">5</span><span class="o">*</span><span class="n">D2</span><span class="p">)</span>
+<span class="n">Divisor</span> <span class="n">of</span> <span class="n">degree</span> <span class="mi">7</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.apply_map">
+<span class="sig-name descname"><span class="pre">apply_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.apply_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.apply_map" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.as_list_of_differences">
+<span class="sig-name descname"><span class="pre">as_list_of_differences</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.as_list_of_differences"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.as_list_of_differences" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.degree">
+<span class="sig-name descname"><span class="pre">degree</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.degree"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.degree" title="Link to this definition">#</a></dt>
+<dd><p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
+<span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="kc">None</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="p">()</span>
+<span class="mi">4</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
+<span class="mi">4</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.gcd">
+<span class="sig-name descname"><span class="pre">gcd</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.gcd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.gcd" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.is_zero">
+<span class="sig-name descname"><span class="pre">is_zero</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.is_zero"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.is_zero" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.left_act_by_matrix">
+<span class="sig-name descname"><span class="pre">left_act_by_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.left_act_by_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.left_act_by_matrix" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.pair_with">
+<span class="sig-name descname"><span class="pre">pair_with</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.pair_with"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.pair_with" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.rational_function">
+<span class="sig-name descname"><span class="pre">rational_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">as_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.rational_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.rational_function" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.restrict">
+<span class="sig-name descname"><span class="pre">restrict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.restrict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.restrict" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.scale_by">
+<span class="sig-name descname"><span class="pre">scale_by</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.scale_by"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.scale_by" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.size">
+<span class="sig-name descname"><span class="pre">size</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.size" title="Link to this definition">#</a></dt>
+<dd><p>Returns the size of self, defined as the sum of the absolute
+values of the coefficients.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.support">
+<span class="sig-name descname"><span class="pre">support</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.support" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.divisors.DivisorsElement.value">
+<span class="sig-name descname"><span class="pre">value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/divisors.html#DivisorsElement.value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.divisors.DivisorsElement.value" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-darmonpoints.mixed_extension">
 <span id="mixed-extensions"></span><h1>Mixed extensions<a class="headerlink" href="#module-darmonpoints.mixed_extension" title="Link to this heading">#</a></h1>
 <p>Initialize self.  See help(type(self)) for accurate signature.</p>
 <dl class="py class">
@@ -388,6 +523,15 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="darmonpoints.mixed_extension.get_word_rep_fast">
 <span class="sig-prename descclassname"><span class="pre">darmonpoints.mixed_extension.</span></span><span class="sig-name descname"><span class="pre">get_word_rep_fast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Pold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#darmonpoints.mixed_extension.get_word_rep_fast" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-darmonpoints.sparse">
+<span id="sparse-matrix-calculations"></span><h1>Sparse matrix calculations<a class="headerlink" href="#module-darmonpoints.sparse" title="Link to this heading">#</a></h1>
+<p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="darmonpoints.sparse.compute_lift_sparse_cy">
+<span class="sig-prename descclassname"><span class="pre">darmonpoints.sparse.</span></span><span class="sig-name descname"><span class="pre">compute_lift_sparse_cy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">big_system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indeps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_to_eqs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#darmonpoints.sparse.compute_lift_sparse_cy" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -1222,7 +1366,31 @@ narrow class number 1.</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Mixed extensions</a><ul>
+<li><a class="reference internal" href="#">Divisors</a><ul>
+<li><a class="reference internal" href="#darmonpoints.divisors.Divisors"><code class="docutils literal notranslate"><span class="pre">Divisors</span></code></a><ul>
+<li><a class="reference internal" href="#darmonpoints.divisors.Divisors.Element"><code class="docutils literal notranslate"><span class="pre">Divisors.Element</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.Divisors.base"><code class="docutils literal notranslate"><span class="pre">Divisors.base()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement"><code class="docutils literal notranslate"><span class="pre">DivisorsElement</span></code></a><ul>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.apply_map"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.apply_map()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.as_list_of_differences"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.as_list_of_differences()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.degree"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.degree()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.gcd"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.gcd()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.is_zero"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.is_zero()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.left_act_by_matrix"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.left_act_by_matrix()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.pair_with"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.pair_with()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.rational_function"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.rational_function()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.restrict"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.restrict()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.scale_by"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.scale_by()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.size"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.size()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.support"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.support()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.divisors.DivisorsElement.value"><code class="docutils literal notranslate"><span class="pre">DivisorsElement.value()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-darmonpoints.mixed_extension">Mixed extensions</a><ul>
 <li><a class="reference internal" href="#darmonpoints.mixed_extension.QuadExt"><code class="docutils literal notranslate"><span class="pre">QuadExt</span></code></a><ul>
 <li><a class="reference internal" href="#darmonpoints.mixed_extension.QuadExt.Element"><code class="docutils literal notranslate"><span class="pre">QuadExt.Element</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.mixed_extension.QuadExt.absolute_degree"><code class="docutils literal notranslate"><span class="pre">QuadExt.absolute_degree()</span></code></a></li>
@@ -1253,6 +1421,10 @@ narrow class number 1.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#darmonpoints.mixed_extension.get_word_rep_fast"><code class="docutils literal notranslate"><span class="pre">get_word_rep_fast()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-darmonpoints.sparse">Sparse matrix calculations</a><ul>
+<li><a class="reference internal" href="#darmonpoints.sparse.compute_lift_sparse_cy"><code class="docutils literal notranslate"><span class="pre">compute_lift_sparse_cy()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-darmonpoints.util">Utility package</a><ul>

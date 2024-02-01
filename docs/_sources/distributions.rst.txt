@@ -15,3 +15,12 @@ Representations
    :members:
    :undoc-members:
    :show-inheritance:
+
+Meromorphic functions
+======================
+
+.. automodule:: darmonpoints.meromorphic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+

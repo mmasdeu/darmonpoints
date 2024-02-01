@@ -33,6 +33,13 @@ __ https://creativecommons.org/licenses/by-sa/3.0/
 .. toctree::
    :maxdepth: 2
 
+High level functionality
+------------------------
+
+.. toctree::
+
+   highlevel
+
 Arithmetic Groups
 ------------------
 

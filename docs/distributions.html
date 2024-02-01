@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Mixed extensions" href="internals.html" /><link rel="prev" title="Integrals" href="integration.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Divisors" href="internals.html" /><link rel="prev" title="Integrals" href="integration.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
         <title>Overconvergent module of distributions - darmonpoints 7.0.1 documentation</title>
@@ -163,6 +163,14 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html">Darmon points</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#module-darmonpoints.darmonvonk">Darmon-Vonk points</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#module-darmonpoints.findcurve">Curve finding</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#module-darmonpoints.padicperiods">p-adic periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#module-darmonpoints.plectic">Plectic points</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel.html#schottky-groups">Schottky groups</a></li>
+</ul>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html">Arithmetic group elements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
@@ -181,9 +189,12 @@
 <ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Overconvergent module of distributions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-darmonpoints.representations">Representations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-darmonpoints.meromorphic">Meromorphic functions</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="internals.html">Mixed extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Divisors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html#module-darmonpoints.mixed_extension">Mixed extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html#module-darmonpoints.sparse">Sparse matrix calculations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="internals.html#module-darmonpoints.util">Utility package</a></li>
 </ul>
 
@@ -785,6 +796,100 @@ indexed by the cosets of G(p) G(1).</p>
 </dd></dl>
 
 </section>
+<section id="module-darmonpoints.meromorphic">
+<span id="meromorphic-functions"></span><h1>Meromorphic functions<a class="headerlink" href="#module-darmonpoints.meromorphic" title="Link to this heading">#</a></h1>
+<p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctions">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">MeromorphicFunctions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Parent</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UniqueRepresentation</span></code></p>
+<p>TESTS:</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctions.Element">
+<span class="sig-name descname"><span class="pre">Element</span></span><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions.Element" title="Link to this definition">#</a></dt>
+<dd><p>alias of <a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement" title="darmonpoints.meromorphic.MeromorphicFunctionsElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctions.base_ring">
+<span class="sig-name descname"><span class="pre">base_ring</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctions.base_ring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions.base_ring" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctions.get_action_data">
+<span class="sig-name descname"><span class="pre">get_action_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oldparam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctions.get_action_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions.get_action_data" title="Link to this definition">#</a></dt>
+<dd><p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
+<span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
+<span class="p">{}</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="p">()</span>
+<span class="mi">4</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
+<span class="p">{((),</span> <span class="p">()):</span> <span class="mi">4</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctions.power_series_ring">
+<span class="sig-name descname"><span class="pre">power_series_ring</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctions.power_series_ring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions.power_series_ring" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctions.prime">
+<span class="sig-name descname"><span class="pre">prime</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctions.prime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions.prime" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">MeromorphicFunctionsElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleElement</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.evaluate" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement.left_act_by_matrix">
+<span class="sig-name descname"><span class="pre">left_act_by_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.left_act_by_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.left_act_by_matrix" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement.power_series">
+<span class="sig-name descname"><span class="pre">power_series</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.power_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.power_series" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement.scale_by">
+<span class="sig-name descname"><span class="pre">scale_by</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.scale_by"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.scale_by" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement.valuation">
+<span class="sig-name descname"><span class="pre">valuation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.valuation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.valuation" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.divisor_to_pseries">
+<span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">divisor_to_pseries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#divisor_to_pseries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.divisor_to_pseries" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.eval_pseries_map">
+<span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">eval_pseries_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#eval_pseries_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.eval_pseries_map" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</section>
 
         </article>
       </div>
@@ -796,7 +901,7 @@ indexed by the cosets of G(p) G(1).</p>
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Mixed extensions</div>
+                <div class="title">Divisors</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -934,6 +1039,27 @@ indexed by the cosets of G(p) G(1).</p>
 <li><a class="reference internal" href="#darmonpoints.representations.MatrixAction"><code class="docutils literal notranslate"><span class="pre">MatrixAction</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.representations.Scaling"><code class="docutils literal notranslate"><span class="pre">Scaling</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.representations.TrivialAction"><code class="docutils literal notranslate"><span class="pre">TrivialAction</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-darmonpoints.meromorphic">Meromorphic functions</a><ul>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions</span></code></a><ul>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.Element"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.Element</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.base_ring"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.base_ring()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.get_action_data"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.get_action_data()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.power_series_ring"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.power_series_ring()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.prime"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.prime()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement</span></code></a><ul>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.evaluate"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.evaluate()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.left_act_by_matrix"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.left_act_by_matrix()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.power_series"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.power_series()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.scale_by"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.scale_by()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.valuation"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.valuation()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.divisor_to_pseries"><code class="docutils literal notranslate"><span class="pre">divisor_to_pseries()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.eval_pseries_map"><code class="docutils literal notranslate"><span class="pre">eval_pseries_map()</span></code></a></li>
 </ul>
 </li>
 </ul>
