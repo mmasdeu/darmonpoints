@@ -7,7 +7,7 @@
 ## (or just p-adically construct elliptic curves, or p-adic Darmon-Vonk points,...)
 
 (for the full documentation, please see
-<http://mmasdeu.github.io/darmonpoints/doc/html/>)
+<http://mmasdeu.github.io/darmonpoints/>)
 
 
 ![doc](https://github.com/mmasdeu/darmonpoints/actions/workflows/doc.yml/badge.svg)
@@ -64,7 +64,7 @@ groups, and which has allowed us to find the corresponding abelian
 surfaces in some cases (see <a href="#GM" class="citation">[GM]</a>).
 
 The full documentation can be found at
-<http://mmasdeu.github.io/darmonpoints/doc/html/>
+<http://mmasdeu.github.io/darmonpoints/>
 
 ### Installation
 
