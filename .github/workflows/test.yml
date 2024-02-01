@@ -2,7 +2,8 @@ name: Test
 on:
   push: { branches: [ "main" ] }
   pull_request: { branches: [ "main" ] }
-
+  schedule:
+    - cron: '23 5 1-7 * 3'
 concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
