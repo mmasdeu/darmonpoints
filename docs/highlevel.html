@@ -1234,7 +1234,7 @@ T is the new hecke operator.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.period">
 <span class="sig-name descname"><span class="pre">period</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.period"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.period" title="Link to this definition">#</a></dt>
-<dd><p>Computes the (i,j)-entry of the period matrix.</p>
+<dd><p>Compute the (i,j)-entry of the period matrix.</p>
 <p>EXAMPLES</p>
 <p>sage: from darmonpoints.schottky import *
 sage: p = 3
@@ -1244,9 +1244,9 @@ sage: K = Qp(p,working_prec)
 sage: h1 = matrix(K, 2, 2, [-5,32,-8,35])
 sage: h2 = matrix(K, 2, 2, [-13,80,-8,43])
 sage: G = SchottkyGroup(K, (h1,h2))
-sage: q00g = G.period_naive(prec, 0, 0)
-sage: q01g = G.period_naive(prec, 0, 1)
-sage: q11g = G.period_naive(prec, 1, 1)
+sage: q00g = G.period_naive(0, 0, prec)
+sage: q01g = G.period_naive(0, 1, prec)
+sage: q11g = G.period_naive(1, 1, prec)
 sage: q00 = G.period(0,0, prec)
 sage: q01 = G.period(0,1, prec)
 sage: q11 = G.period(1,1, prec)
@@ -1260,13 +1260,14 @@ True</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.period_naive">
-<span class="sig-name descname"><span class="pre">period_naive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.period_naive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.period_naive" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">period_naive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.period_naive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.period_naive" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.theta">
 <span class="sig-name descname"><span class="pre">theta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.theta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.theta" title="Link to this definition">#</a></dt>
-<dd><p>EXAMPLES</p>
+<dd><p>Compute the Theta function</p>
+<p>EXAMPLES</p>
 <p>sage: from darmonpoints.schottky import *
 sage: p = 3
 sage: prec = 20
@@ -1296,22 +1297,7 @@ such that gi1 * … * gik * z = x</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.u_function">
 <span class="sig-name descname"><span class="pre">u_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.u_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.u_function" title="Link to this definition">#</a></dt>
-<dd><p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-<span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
-<span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-<span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
-<span class="p">{}</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="p">()</span>
-<span class="mi">4</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
-<span class="p">{((),</span> <span class="p">()):</span> <span class="mi">4</span><span class="p">}</span>
-</pre></div>
-</div>
+<dd><p>Compute u_gamma</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1393,7 +1379,7 @@ such that gi1 * … * gik * z = x</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SageObject</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.schottky.ThetaOC.eval_derivative">
-<span class="sig-name descname"><span class="pre">eval_derivative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#ThetaOC.eval_derivative"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.ThetaOC.eval_derivative" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">eval_derivative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recursive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#ThetaOC.eval_derivative"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.ThetaOC.eval_derivative" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
