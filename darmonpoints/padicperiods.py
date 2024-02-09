@@ -35,14 +35,14 @@ def precompute_powers(p, q, N):
         pdict[2 * i] = q * pdict[2 * i - 2]
     for i in range(1, N + 2):
         idx = i**2 - i
-        if not pdict.has_key(idx):
+        if idx not in pdict.keys():
             pdict[idx] = pdict[2 * i - 2] * pdict[idx - 2 * i + 2]
     return pdict
 
 
 # Theta functions of (25) in Teitelbaum's
 # and also the other theta functions that we need to compute the lambda's according to the formulas (23)
-# We sum terms until we get the result to the accuracy prec. When deciding the set of indicies over which we sum, we have made several simplifications that probably cause that we sum more terms than strictly needed for that accuracy, but this probably won't be an issue...
+# We sum terms until we get the result to the accuracy prec. When deciding the set of indices over which we sum, we have made several simplifications that probably cause that we sum more terms than strictly needed for that accuracy, but this probably won't be an issue...
 def Thetas(p1, p2, p3, q1, q2, q3, prec=None):
     if prec is None:
         prec = 2 * p1.parent().precision_cap()
@@ -921,7 +921,7 @@ def find_igusa_invariants_from_AB(A, B, T, scaling, prec, **kwargs):
     phi = kwargs.get("phi", lambda x: Qp(p, prec)(x))
     mat_coeffs_range = kwargs.get("mat_coeffs_range", 3)
     base = kwargs.setdefault("base", QQ)
-    if kwargs.has_key("list_I10"):
+    if "list_I10" in kwargs.keys():
         list_I10 = kwargs["list_I10"]
         kwargs["list_I10_padic"] = [phi(o) for o in list_I10]
     # matlists = kwargs.get('matlists',generate_matlists(Lambdalist,mat_coeffs_range))
@@ -1057,9 +1057,9 @@ def find_igusa_invariants(
 
 
 def check_generic(xvec, prec, data, **kwargs):
-    if kwargs.has_key("cheatjs"):
+    if "cheatjs" in kwargs.keys():
         return check_cheatjs(xvec, prec, data, **kwargs)
-    elif kwargs.has_key("list_I10"):
+    elif "list_I10" in kwargs.keys():
         return check_absoluteinvs(xvec, prec, data, **kwargs) + check_listI10(
             xvec, prec, data, **kwargs
         )
@@ -1499,7 +1499,7 @@ def guess_equation(
             K0 = Qq(Pnrm**2, prec, names="s")
             A = K0(take_to_Qp(Pnrm**Aval * Alog.exp() * Amul))
             B = K0(take_to_Qp(Pnrm**Bval * Blog.exp() * Bmul))
-            if not param_dict.has_key("list_I10"):
+            if "list_I10" not in param_dict.keys():
                 param_dict["list_I10"] = generate_listI10(
                     G.F, G.ideal_p * G.discriminant * G.level
                 )

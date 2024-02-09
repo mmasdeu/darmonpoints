@@ -17,7 +17,7 @@ from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
-
+from sage.misc.latex import latex
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import *
 
@@ -220,23 +220,37 @@ class ThetaOC(SageObject):
 
     def _repr_(self):
         a, b = self.a, self.b
+        if b is None:
+            try:
+                lst = a.as_list_of_differences()
+                if len(lst) == 1:
+                    a, b = lst[0]
+            except AttributeError:
+                pass
         try:
-            a = self.a.lift()
-            b = self.b.lift()
+            a = a.lift()
+            b = b.lift()
         except AttributeError:
             pass
         return f"Θ(z;{a},{b})_{{{self.m}}}"
 
     def _latex_(self):
         a, b = self.a, self.b
+        if b is None:
+            try:
+                lst = a.as_list_of_differences()
+                if len(lst) == 1:
+                    a, b = lst[0]
+            except AttributeError:
+                pass
         try:
-            a = self.a.rational_reconstruction()
-            b = self.b.rational_reconstruction()
+            a = a.lift()
+            b = b.lift()
         except AttributeError:
             pass
         try:
-            a = self.a.lift()
-            b = self.b.lift()
+            a = a.rational_reconstruction()
+            b = b.rational_reconstruction()
         except AttributeError:
             pass
         return f"\\Theta(z;{latex(a)},{latex(b)})_{{{latex(self.m)}}}"
@@ -261,7 +275,11 @@ class ThetaOC(SageObject):
             )
         return ans
 
-    def eval_derivative(self, z):
+    def eval_derivative(self, z, recursive=True):
+        if recursive and not G.in_fundamental_domain(z, closure=True):
+            raise NotImplementedError("Recursivity not implemented for derivative")
+        if isinstance(z, DivisorsElement):
+            return prod(self.eval_derivative(P, recursive=recursive) ** n for P, n in z)
         v0 = self.val(z)
         Fnz = {}
         for ky, F in self.Fn.items():
@@ -308,6 +326,9 @@ class SchottkyGroup_abstract(SageObject):
 
     def inverse_generators(self):
         return self._inverse_generators
+
+    def _repr_(self):
+        return "Schottky group with %s generators"%len(self.generators())
 
     def enumerate_group_elements(self, length):
         return enumerate_group_elements(
@@ -693,6 +714,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
 
     def theta(self, prec, a=ZZ(0), b=ZZ(1), **kwargs):
         r"""
+        Compute the Theta function
 
         EXAMPLES ::
 
@@ -718,11 +740,21 @@ class SchottkyGroup(SchottkyGroup_abstract):
         DK = Divisors(K)
         gens = self.generators()
         D0 = DK(a) - DK(b)
+        s = kwargs.pop("s", None)
+        if s is not None:
+            D0 += s * D0
         D = self.find_equivalent_divisor(D0)
-        return ThetaOC(self, a=D, b=None, prec=prec, **kwargs).improve(prec)
+        ans = ThetaOC(self, a=D, b=None, prec=prec, **kwargs)
+        improve = kwargs.pop("improve", True)
+        if improve:
+            ans = ans.improve(prec)
+        return ans
 
     @cached_method
     def u_function(self, gamma, prec, a=None, **kwargs):
+        r"""
+        Compute u_gamma
+        """
         K = self.base_ring()
         DK = Divisors(K)
         if a is None:
@@ -735,7 +767,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
     @cached_method
     def period(self, i, j, prec, **kwargs):
         r"""
-        Computes the (i,j)-entry of the period matrix.
+        Compute the (i,j)-entry of the period matrix.
 
         EXAMPLES ::
 
@@ -747,9 +779,9 @@ class SchottkyGroup(SchottkyGroup_abstract):
         sage: h1 = matrix(K, 2, 2, [-5,32,-8,35])
         sage: h2 = matrix(K, 2, 2, [-13,80,-8,43])
         sage: G = SchottkyGroup(K, (h1,h2))
-        sage: q00g = G.period_naive(prec, 0, 0)
-        sage: q01g = G.period_naive(prec, 0, 1)
-        sage: q11g = G.period_naive(prec, 1, 1)
+        sage: q00g = G.period_naive(0, 0, prec)
+        sage: q01g = G.period_naive(0, 1, prec)
+        sage: q11g = G.period_naive(1, 1, prec)
         sage: q00 = G.period(0,0, prec)
         sage: q01 = G.period(0,1, prec)
         sage: q11 = G.period(1,1, prec)
@@ -776,7 +808,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
         verbose(f"{den = }")
         return num / den
 
-    def period_naive(self, prec, i, j, **kwargs):
+    def period_naive(self, i, j, prec, **kwargs):
         g1 = self.generators()[i]
         g2 = self.generators()[j]
         z1 = self.find_point(g1)
