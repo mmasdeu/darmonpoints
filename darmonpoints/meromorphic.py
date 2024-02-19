@@ -39,6 +39,15 @@ from sage.structure.unique_representation import (
 
 from .divisors import Divisors
 
+def evalpoly(poly, x):
+    # Initialize result
+    result = poly[-1]
+    # Evaluate value of polynomial
+    # using Horner's method
+    for a in reversed(poly):
+        result *= x
+        result += a
+    return result
 
 class MeromorphicFunctionsElement(ModuleElement):
     def __init__(self, parent, data, parameter, check=True):
@@ -54,18 +63,19 @@ class MeromorphicFunctionsElement(ModuleElement):
                 for Q, n in data:
                     self._value *= phi(K(Q)) ** n
                 self._value /= self._value[0]
+                self._value = self._value.list()
                 if len(data.support()) == 1:
                     self.normalize_point = Q + 1  # DEBUG
             elif data == 0:
-                self._value = Ps(1)  # multiplicative!
+                self._value = Ps(1).list()  # multiplicative!
             elif data.parent() == parent:
-                self._value = deepcopy(data._value)
+                self._value = data._value #deepcopy(data._value)
             else:
                 val = Ps(data)
                 val /= val[0]
-                self._value = val.add_bigoh(prec)
+                self._value = val.add_bigoh(prec).list()
         else:
-            self._value = deepcopy(data)
+            self._value = data # deepcopy(data)
         self._moments = self._value
         self._parameter = Matrix(parent.base_ring(), 2, 2, parameter)
 
@@ -78,58 +88,85 @@ class MeromorphicFunctionsElement(ModuleElement):
     def evaluate(self, D):  # meromorphic functions
         K = self.parent().base_ring()
         phi = eval_pseries_map(self._parameter)
-        poly = self._value.polynomial()
         a, b, c, d = self._parameter.list()
         try:
             pt = phi(self.normalize_point)
             pole = -d / c
-            valinf = poly(pt) * (self.normalize_point - pole)
+            valinf = evalpoly(self._value,pt) * (self.normalize_point - pole)
         except AttributeError:
             pt = a / c
             pole = None
-            valinf = poly(pt)
+            valinf = evalpoly(self._value,pt)
         if isinstance(D.parent(), Divisors):
             return prod(
-                (poly(phi(P)) / valinf * ((P - pole) if pole is not None else 1)) ** n
+                (evalpoly(self._value,phi(P)) / valinf * ((P - pole) if pole is not None else 1)) ** n
                 for P, n in D
             )
         else:
-            return poly(phi(D)) / valinf * ((D - pole) if pole is not None else 1)
+            return evalpoly(self._value,phi(D)) / valinf * ((D - pole) if pole is not None else 1)
+
+    def eval_derivative(self, D):
+        if isinstance(D.parent(), Divisors):
+            raise NotImplementedError
+        K = self.parent().base_ring()
+        phi = eval_pseries_map(self._parameter)
+        a, b, c, d = self._parameter.list()
+        valder = self.power_series().derivative().list()
+        try:
+            pt = phi(self.normalize_point)
+            pole = -d / c
+            valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
+        except AttributeError:
+            pt = a / c
+            pole = None
+            valinf = evalpoly(self._value, pt)
+        chainrule = (a*d-b*c) / (c*D+d)
+        return evalpoly(valder,phi(D)) * chainrule / valinf * ((D - pole) if pole is not None else 1)
 
     def _cmp_(self, right):
-        return (self._value > right._value) - (self._value < right._value)
+        a = self.parent().power_series_ring()(self._value)
+        b = self.parent().power_series_ring()(right._value)
+        return (a > b) - (a < b)
 
     def __nonzero__(self):
-        return self._value != 1
+        return not (self._value[0] == 1 and all(o == 0 for o in self._value[1:]))
 
     def valuation(self, p=None):
         K = self.parent().base_ring()
-        return min(
-            [Infinity] + [o.valuation(p) for o in (self._value - 1).coefficients()]
-        )
+        a = (self._value[0]-1).valuation(p)
+        b = min([o.valuation(p) for o in self._value[1:]])
+        return min(a,b)
 
     def _add_(self, right):  # multiplicative!
-        ans = self._value * right._value
         if self._parameter != right._parameter:
             raise RuntimeError("Trying to add incompatible series")
+        ps = self.parent().power_series_ring()
+        prec = self.parent()._prec
+        ans = (ps(self._value) * ps(right._value)).list()[:prec+1]
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def _sub_(self, right):  # multiplicative!
-        ans = self._value / right._value
         if self._parameter != right._parameter:
             raise RuntimeError("Trying to subtract incompatible series")
+        ps = self.parent().power_series_ring()
+        prec = self.parent()._prec
+        ans = (ps(self._value) / ps(right._value)).list()[:prec+1]
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def _neg_(self):  # multiplicative!
-        ans = self._value**-1
+        ps = self.parent().power_series_ring()
+        prec = self.parent()._prec
+        ans = (ps(self._value)**-1).list()[:prec+1]
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def scale_by(self, k):  # multiplicative!
-        ans = self._value**k
+        ps = self.parent().power_series_ring()
+        ans = (ps(self._value)**k).list()[:prec+1]
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def _repr_(self):
-        return repr(self._value)
+        ps = self.parent().power_series_ring()
+        return repr(ps(self._value))
 
     def _acted_upon_(self, g, on_left):
         assert not on_left
@@ -139,7 +176,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             return self.left_act_by_matrix(g)
 
     def left_act_by_matrix(self, g, param=None):  # meromorphic functions
-        Ps = self._value.parent()
+        Ps = self.parent().power_series_ring()
         K = self.parent().base_ring()
         prec = self.parent()._prec
         p = self.parent()._p
@@ -147,13 +184,18 @@ class MeromorphicFunctionsElement(ModuleElement):
         # P |-> (aP+b)/(cP+D)
         # radius = tuple((ky, val) for ky, val in self.parent().radius.items())
         zz_ps_vec = self.parent().get_action_data(g, self._parameter, param)
-        poly = self._value.polynomial()
-        ans = sum(
-            a * zz_ps_vec[e] for a, e in zip(poly.coefficients(), poly.exponents())
-        )
-        ans /= ans[0]  # always normalize
-        ans = ans.add_bigoh(prec)
-        return MeromorphicFunctions(K, p=p, prec=prec)(ans, param)
+        poly = Ps(self._value).polynomial()
+        # print([type(zz_ps_vec[e]) for e in poly.exponents()])
+        # ans = sum(
+        #     a * Ps(zz_ps_vec[i]) for i, a in enumerate(self._value[:prec+1])
+        # ).list()
+        # print(f'{prec = }')
+        # print(len(self._value))
+        # print([len(o) for o in zz_ps_vec])
+        ans = [sum(a * zz_ps_vec[i][j] for i, a in enumerate(self._value[:prec+1]) if j < len(zz_ps_vec[i])) for j in range(prec+1)]
+        r = ans[0]
+        ans = [o / r for o in ans[:prec+1]] # normalize
+        return MeromorphicFunctions(K, p=p, prec=prec)(ans, param, check=False)
 
 
 def eval_pseries_map(parameter):
@@ -211,12 +253,12 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
         zz = (self._Ps([b, a]) / self._Ps([d, c])).truncate(prec)
         Ps = self._Ps
-        ans = [Ps(1), zz]
+        ans = [zz.parent()(1), zz]
         for _ in range(prec - 1):
             zz_ps = (zz * ans[-1]).truncate(prec + 1)
             ans.append(zz_ps)
         set_verbose(verb_level)
-        return ans
+        return [o.list() for o in ans]
 
     def base_ring(self):
         return self._base_ring

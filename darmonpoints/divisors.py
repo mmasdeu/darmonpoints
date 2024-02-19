@@ -210,7 +210,7 @@ class DivisorsElement(ModuleElement):
             if P == Infinity:
                 try:
                     new_pt = K(a) / K(c)
-                except ZeroDivisionError:
+                except (PrecisionError,ZeroDivisionError):
                     new_pt = Infinity
             else:
                 new_pt = (K(a) * P + K(b)) / (K(c) * P + K(d))
