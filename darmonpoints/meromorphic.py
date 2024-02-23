@@ -58,24 +58,20 @@ class MeromorphicFunctionsElement(ModuleElement):
             prec = parent._prec
             Ps = parent._Ps
             if isinstance(data.parent(), Divisors):
-                phi = divisor_to_pseries(parameter, Ps.gen())
-                self._value = Ps(1)
-                for Q, n in data:
-                    self._value *= phi(K(Q)) ** n
-                self._value /= self._value[0]
+                self._value = divisor_to_pseries(parameter, Ps, data, prec)
                 self._value = self._value.list()
                 if len(data.support()) == 1:
                     self.normalize_point = Q + 1  # DEBUG
             elif data == 0:
                 self._value = Ps(1).list()  # multiplicative!
             elif data.parent() == parent:
-                self._value = data._value #deepcopy(data._value)
+                self._value = data._value
             else:
                 val = Ps(data)
                 val /= val[0]
                 self._value = val.add_bigoh(prec).list()
         else:
-            self._value = data # deepcopy(data)
+            self._value = data
         self._moments = self._value
         self._parameter = Matrix(parent.base_ring(), 2, 2, parameter)
 
@@ -97,6 +93,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             pt = a / c
             pole = None
             valinf = evalpoly(self._value,pt)
+        assert pole is None
         if isinstance(D.parent(), Divisors):
             return prod(
                 (evalpoly(self._value,phi(P)) / valinf * ((P - pole) if pole is not None else 1)) ** n
@@ -120,7 +117,8 @@ class MeromorphicFunctionsElement(ModuleElement):
             pt = a / c
             pole = None
             valinf = evalpoly(self._value, pt)
-        chainrule = (a*d-b*c) / (c*D+d)
+        assert pole is None
+        chainrule = (a*d-b*c) / (c*D+d)**2
         return evalpoly(valder,phi(D)) * chainrule / valinf * ((D - pole) if pole is not None else 1)
 
     def _cmp_(self, right):
@@ -184,17 +182,10 @@ class MeromorphicFunctionsElement(ModuleElement):
         # P |-> (aP+b)/(cP+D)
         # radius = tuple((ky, val) for ky, val in self.parent().radius.items())
         zz_ps_vec = self.parent().get_action_data(g, self._parameter, param)
-        poly = Ps(self._value).polynomial()
-        # print([type(zz_ps_vec[e]) for e in poly.exponents()])
-        # ans = sum(
-        #     a * Ps(zz_ps_vec[i]) for i, a in enumerate(self._value[:prec+1])
-        # ).list()
-        # print(f'{prec = }')
-        # print(len(self._value))
-        # print([len(o) for o in zz_ps_vec])
+        poly = self._value
         ans = [sum(a * zz_ps_vec[i][j] for i, a in enumerate(self._value[:prec+1]) if j < len(zz_ps_vec[i])) for j in range(prec+1)]
         r = ans[0]
-        ans = [o / r for o in ans[:prec+1]] # normalize
+        ans = [(o / r).add_bigoh(prec) for o in ans[:prec+1]] # normalize
         return MeromorphicFunctions(K, p=p, prec=prec)(ans, param, check=False)
 
 
@@ -205,11 +196,19 @@ def eval_pseries_map(parameter):
     )
 
 
-def divisor_to_pseries(parameter, t):
+def divisor_to_pseries(parameter, Ps, data, prec):
+    t = Ps.gen()
     a, b, c, d = parameter.list()
-    return lambda Q: 1 - (Q.parent()(c) * Q + Q.parent()(d)) * t / (
-        Q.parent()(a) * Q + Q.parent()(b)
-    )
+    num = Ps(1).truncate(prec)
+    den = Ps(1).truncate(prec)
+    for Q, n in data:
+        K = Q.parent()
+        if n > 0:
+            num *= (1 - K(((c*Q+d)/(a*Q+b)))*t)**ZZ(n)
+        else:
+            den *= (1 - K(((c*Q+d)/(a*Q+b)))*t)**ZZ(-n)
+    ans = Ps(num).add_bigoh(prec) * ~(Ps(den).add_bigoh(prec))
+    return ans
 
 
 class MeromorphicFunctions(Parent, UniqueRepresentation):
@@ -251,11 +250,10 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         assert param is not None
         tg = param.change_ring(K)
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
-        zz = (self._Ps([b, a]) / self._Ps([d, c])).truncate(prec)
-        Ps = self._Ps
+        zz = (self._Ps([b, a]) / self._Ps([d, c])).map_coefficients(lambda x : x.add_bigoh(prec)).truncate(prec)
         ans = [zz.parent()(1), zz]
         for _ in range(prec - 1):
-            zz_ps = (zz * ans[-1]).truncate(prec + 1)
+            zz_ps = (zz * ans[-1]).map_coefficients(lambda x : x.add_bigoh(prec)).truncate(prec + 1)
             ans.append(zz_ps)
         set_verbose(verb_level)
         return [o.list() for o in ans]

@@ -18,7 +18,7 @@ from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
-
+from sage.misc.lazy_attribute import lazy_attribute
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import *
 from .theta import *
@@ -89,12 +89,49 @@ def uniq(lst):
             ans.append(o)
     return ans
 
+@cached_function
+def find_eigenvector_matrix(g):
+    t = g.trace()
+    n = g.determinant()
+    delta = (t*t - 4*n).sqrt()
+    vaps = sorted([(t+delta)/2, (t-delta)/2], key=lambda o: o.valuation())
+    verb_level = get_verbose()
+    set_verbose(0)
+    veps = sum(((g - l).right_kernel().basis() for l in vaps), [])
+    set_verbose(verb_level)
+    return g.matrix_space()(veps).transpose()
+
+
+@cached_function
+def find_parameter(g, ball, pi=None, check=True):
+    if pi is None:
+        pi = g.parent().base_ring().uniformizer()
+    g = g.apply_map(lambda o:o.lift_to_precision())
+    ans = copy(find_eigenvector_matrix(g).adjugate())
+    r = ball.radius
+    # column 0 means that the boundary of B_g (the ball attached to g)
+    # gets sent to the circle of radius 1.
+    # Concretely, if B_g = B(a, p^-r), we send a+p^r |-> 1.
+    # As a consequence, P^1-B_g gets sent to the closed ball B(0,1).
+    z0 = ball.center.lift_to_precision() + pi ** ZZ(r)
+    if check:
+        assert z0 in ball.closure() and z0 not in ball
+    lam = (ans[0, 0] * z0 + ans[0, 1]) / (ans[1, 0] * z0 + ans[1, 1])
+    ans.rescale_row(0, 1 / lam)
+    ans.set_immutable()
+    if check:
+        if act(ans, z0) != 1:
+            raise RuntimeError
+        if ans * ball.complement() != ball.parent()(0, 0).closure():
+            raise RuntimeError
+    return ans
+
+
 class SchottkyGroup_abstract(SageObject):
     def __init__(self, K, generators):
         self.K = K
         self.pi = K.uniformizer()
         self._generators = tuple([o.change_ring(K) for o in generators])
-        self._inverse_generators = tuple(~v for v in self._generators)
         self._G = Groups().free(len(generators))
 
     def base_ring(self):
@@ -121,20 +158,20 @@ class SchottkyGroup_abstract(SageObject):
         return self._generators
 
     def inverse_generators(self):
-        return self._inverse_generators
+        return tuple(~v for v in self._generators)
 
     def _repr_(self):
         return "Schottky group with %s generators" % len(self.generators())
 
     def enumerate_group_elements(self, length):
         return enumerate_group_elements(
-            self._generators, self._inverse_generators, length
+            self.generators(), self.inverse_generators(), length
         )
 
     def all_elements_up_to_length(self, N):
         return chain(
             *[
-                enumerate_group_elements(self._generators, self._inverse_generators, i)
+                enumerate_group_elements(self.generators(), self.inverse_generators(), i)
                 for i in range(N + 1)
             ]
         )
@@ -154,7 +191,7 @@ class SchottkyGroup_abstract(SageObject):
         for i in NN:
             new_num = K(1)
             new_den = K(1)
-            if max_length == -1:
+            if i > 1 and max_length == -1:
                 can_stop = True
             for _, g in self.enumerate_group_elements(i):
                 ga = act(g, a)
@@ -172,13 +209,34 @@ class SchottkyGroup_abstract(SageObject):
                 break
         return num / den
 
-    def theta_derivative_naive(self, m, a, b, z=None, max_length=-1, base_field=None, s=None):
+    def theta_derivative_naive(
+        self, m, a, b, z=None, max_length=-1, base_field=None, s=None
+    ):
         if s is not None:
-            A = self.theta_naive(m,a,b,z=z,max_length=max_length,base_field=base_field)
-            B = self.theta_naive(m,act(s,a),act(s,b),z=z,max_length=max_length,base_field=base_field)
-            Ap = self.theta_derivative_naive(m,a,b,z=z,max_length=max_length,base_field=base_field,s=None)
-            Bp = self.theta_derivative_naive(m,act(s,a),act(s,b),z=z,max_length=max_length,base_field=base_field,s=None)
-            return Ap*B + A * Bp
+            A = self.theta_naive(
+                m, a, b, z=z, max_length=max_length, base_field=base_field
+            )
+            B = self.theta_naive(
+                m,
+                act(s, a),
+                act(s, b),
+                z=z,
+                max_length=max_length,
+                base_field=base_field,
+            )
+            Ap = self.theta_derivative_naive(
+                m, a, b, z=z, max_length=max_length, base_field=base_field, s=None
+            )
+            Bp = self.theta_derivative_naive(
+                m,
+                act(s, a),
+                act(s, b),
+                z=z,
+                max_length=max_length,
+                base_field=base_field,
+                s=None,
+            )
+            return Ap * B + A * Bp
 
         num = 1
         den = 1
@@ -187,7 +245,7 @@ class SchottkyGroup_abstract(SageObject):
         old_ans = 1
         val = 0
         for i in NN:
-            verbose(f'{i = }')
+            verbose(f"{i = }")
             for _, g in self.enumerate_group_elements(i):
                 ga = act(g, a)
                 gb = act(g, b)
@@ -198,11 +256,14 @@ class SchottkyGroup_abstract(SageObject):
                 new_second_term = (ga - gb) / (new_num * new_den)
                 second_term += new_second_term
             new_ans = (num / den) * second_term
-            if i == max_length or (i > 0 and val >= (new_ans / old_ans -1).valuation()):
+            if i == max_length or (
+                i > 0 and val >= (new_ans / old_ans - 1).valuation()
+            ):
                 break
             old_ans = new_ans
-            val = (new_ans / old_ans -1).valuation()
-        return new_ans.add_bigoh(val+new_ans.valuation())
+            val = (new_ans / old_ans - 1).valuation()
+        return new_ans.add_bigoh(val + new_ans.valuation())
+
 
 class PreSchottkyGroup(SchottkyGroup_abstract):
     def __init__(self, K, generators):
@@ -394,33 +455,92 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
 
 
 class SchottkyGroup(SchottkyGroup_abstract):
-    def __init__(self, K, generators, balls=None,  transformation=None, keep_generators=True, check=False):
-        if balls is None:
-            G = PreSchottkyGroup(K, generators)
-            gp = G.group()
-            good_gens, good_balls, _ = G.fundamental_domain()
-            if all(len(o.Tietze()) == 1 for o in good_gens):
-                self.balls = {}
-                for j0, gg in enumerate(good_gens):
-                    i = gg.Tietze()[0]
-                    idx = sgn(i) * (j0 + 1)
-                    self.balls[i] = good_balls[idx]
-                    self.balls[-i] = good_balls[-idx]
-                    self._transformation = [w for w in gp.gens()]
-            else:
-                if keep_generators:
-                    raise ValueError("Generators are not in good position")
-                else:
-                    # print(good_gens)
-                    generators = [G.element_to_matrix(g) for g in good_gens]
-                    self.balls = good_balls
-                    self._transformation = good_gens
-        else:
+    def __init__(
+        self,
+        K,
+        generators,
+        balls=None,
+        transformation=None,
+        parameters=None,
+        keep_generators=True,
+        check=False,
+    ):
+        if balls is not None:
             self.balls = balls
+        if transformation is not None:
             self._transformation = transformation
+        if parameters is not None:
+            self.parameters = parameters
+        self._keep_generators = keep_generators
+        # if balls is None:
+        #     G = PreSchottkyGroup(K, generators)
+        #     gp = G.group()
+        #     good_gens, good_balls, _ = G.fundamental_domain()
+        #     if all(len(o.Tietze()) == 1 for o in good_gens):
+        #         self.balls = {}
+        #         for j0, gg in enumerate(good_gens):
+        #             i = gg.Tietze()[0]
+        #             idx = sgn(i) * (j0 + 1)
+        #             self.balls[i] = good_balls[idx]
+        #             self.balls[-i] = good_balls[-idx]
+        #             self._transformation = [w for w in gp.gens()]
+        #     else:
+        #         if keep_generators:
+        #             raise ValueError("Generators are not in good position")
+        #         else:
+        #             # print(good_gens)
+        #             generators = [G.element_to_matrix(g) for g in good_gens]
+        #             self.balls = good_balls
+        #             self._transformation = good_gens
+        # else:
+        #     self.balls = balls
+        #     self._transformation = transformation
+        #     if parameters is not None:
+        #         self.parameters = parameters
         if check:
             test_fundamental_domain(generators, self.balls)
         super().__init__(K, generators)
+
+    @lazy_attribute
+    def balls(self):
+        K = self.base_ring()
+        generators = self.generators()
+        G = PreSchottkyGroup(K, generators)
+        gp = G.group()
+        good_gens, good_balls, _ = G.fundamental_domain()
+        if all(len(o.Tietze()) == 1 for o in good_gens):
+            balls = {}
+            for j0, gg in enumerate(good_gens):
+                i = gg.Tietze()[0]
+                idx = sgn(i) * (j0 + 1)
+                balls[i] = good_balls[idx]
+                balls[-i] = good_balls[-idx]
+                self._transformation = [w for w in gp.gens()]
+        else:
+            if self._keep_generators:
+                raise ValueError("Generators are not in good position")
+            else:
+                # print(good_gens)
+                self._generators = [G.element_to_matrix(g) for g in good_gens]
+                balls = good_balls
+                self._transformation = good_gens
+        return balls
+
+    @cached_method
+    def gens_extended(self):
+        gens = [(i + 1, o) for i, o in enumerate(self.generators())]
+        gens.extend([(-i, o.determinant() ** -1 * o.adjugate()) for i, o in gens])
+        for i, o in gens:
+            o.set_immutable()
+        return gens
+
+    @lazy_attribute
+    def parameters(self):
+        balls = self.balls
+        ans = [find_parameter(o, balls[i], self.pi) for i, o in self.gens_extended()]
+        for t in ans:
+            t.set_immutable()
+        return ans
 
     @cached_method
     def a_point(self, in_interior=True):
@@ -444,14 +564,27 @@ class SchottkyGroup(SchottkyGroup_abstract):
         if idx is not None:
             B = balls[-idx]
             if idx > 0:
-                assert self.generators()[idx-1] == gamma
+                assert self.generators()[idx - 1] == gamma
             else:
-                assert self.generators()[-idx-1]**-1 == gamma
+                assert self.generators()[-idx - 1] ** -1 == gamma
         else:
-            gens = [(i + 1, o) for i, o in enumerate(self.generators())]
-            gens.extend([(-i, o.determinant() ** -1 * o.adjugate()) for i, o in gens])
+            gens = self.gens_extended()
             B = next(balls[-i] for i, g in gens if g == gamma)
-        return B.center.lift_to_precision() + eps * self.pi ** ZZ(B.radius)
+        ans = B.center.lift_to_precision() + eps * self.pi ** ZZ(B.radius)
+        test = lambda x : self.in_fundamental_domain(x,strict=False)
+
+        try:
+            if not test(ans):
+                raise RuntimeError(f'{ans = } should be in fundamental domain, but it is not.')
+            ga = act(gamma,ans)
+            if not test(ga):
+                raise RuntimeError(f'gamma * ans = {ga} should be in fundamental domain, but it is not.')
+        except RuntimeError:
+            new_idx = -idx if idx is not None else None
+            ginv = gamma**-1
+            ans = self.find_point(ginv, eps, new_idx)
+            return act(ginv, ans)
+        return ans
 
     def to_fundamental_domain(self, x):
         r"""
@@ -482,7 +615,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
         z0 = self.a_point()
         z1 = act(gamma, z0)
         z2, word = self.to_fundamental_domain(z1)
-        if not z0.is_equal_to(z2, 10): # DEBUG
+        if not z0.is_equal_to(z2, 10):  # DEBUG
             gens = [(i + 1, o) for i, o in enumerate(self.generators())]
             gens.extend([(-i, o.determinant() ** -1 * o.adjugate()) for i, o in gens])
             found = False
@@ -519,13 +652,12 @@ class SchottkyGroup(SchottkyGroup_abstract):
             P0, new_wd = self.to_fundamental_domain(P)
             for i in new_wd:
                 wd[abs(i) - 1] += n * sgn(i)
-            ans += n * Div([(1,P0)])
-        for i, (g, e) in enumerate(zip(gens, wd)):
+            ans += n * Div([(1, P0)])
+        for g, e in zip(gens, wd):
             if e == 0:
                 continue
-            gamma = gens[i]
-            zz = self.find_point(gamma)
-            ans -= e * Div([(1,zz), (-1, act(gamma,zz))])
+            zz = self.find_point(g)
+            ans -= e * Div([(1, zz), (-1, act(g, zz))])
         return ans
 
     def theta(self, prec, a, b=None, **kwargs):
@@ -552,23 +684,22 @@ class SchottkyGroup(SchottkyGroup_abstract):
         True
 
         """
-        gens = self.generators()
         if b is not None:
             try:
                 K = a.parent()
             except AttributeError:
                 K = self.base_ring()
-            if K.is_exact(): # DEBUG, set to avoid 0 and 1...
+            if K.is_exact():  # DEBUG, set to avoid 0 and 1...
                 K = self.base_ring()
             DK = Divisors(K)
-            D0 = DK([(1,a),(-1,b)])
+            D0 = DK([(1, a), (-1, b)])
         else:
             D0 = a
             try:
                 K = a.parent().base_ring()
             except AttributeError:
                 K = self.base_ring()
-            if K.is_exact(): # DEBUG, set to avoid 0 and 1...
+            if K.is_exact():  # DEBUG, set to avoid 0 and 1...
                 K = self.base_ring()
 
         s = kwargs.pop("s", None)
@@ -576,7 +707,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
             D0 += s * D0
         D = self.find_equivalent_divisor(D0)
         ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K, **kwargs)
-        z = kwargs.pop('z', None)
+        z = kwargs.pop("z", None)
         improve = kwargs.pop("improve", True)
         if improve or z is not None:
             ans = ans.improve(prec)
@@ -590,28 +721,31 @@ class SchottkyGroup(SchottkyGroup_abstract):
         wd = self.word_problem(gamma)
         gens = self.generators()
         if len(wd) > 1:
-            if kwargs.get('z', None) is None:
-                raise NotImplementedError('Need to specify a point at which we will evaluate')
-            return prod(self.u_function(gens[abs(i)-1], prec, a=a, **kwargs)**sgn(i) for i in wd)
+            if kwargs.get("z", None) is None:
+                raise NotImplementedError(
+                    "Need to specify a point at which we will evaluate"
+                )
+            return prod(
+                self.u_function(gens[abs(i) - 1], prec, a=a, **kwargs) ** sgn(i)
+                for i in wd
+            )
 
         if a is None:
-            a = self.find_point(gamma) # Should pass idx=wd[0] DEBUG ??
-            assert self.in_fundamental_domain(a, strict=False)
-            assert self.in_fundamental_domain(act(gamma, a), strict=False)
+            a = self.find_point(gamma)  # Should pass idx=wd[0] DEBUG ??
         K = a.parent()
         DK = Divisors(K)
-        D = DK([(1,a), (-1, act(gamma, a))])
+        D = DK([(1, a), (-1, act(gamma, a))])
         ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K, **kwargs)
         improve = kwargs.pop("improve", True)
         if improve:
             ans = ans.improve(prec)
-        z = kwargs.pop('z', None)
+        z = kwargs.pop("z", None)
         return ans if z is None else ans(z)
 
     @cached_method
     def period_matrix(self, prec, **kwargs):
         g = len(self.generators())
-        M = MatrixSpace(self.base_ring(),g,g)(0)
+        M = MatrixSpace(self.base_ring(), g, g)(0)
         z1 = kwargs.get("z1", None)
         if z1 is None:
             z1 = self.a_point()
@@ -626,8 +760,8 @@ class SchottkyGroup(SchottkyGroup_abstract):
                 g2_z2 = act(g2, z2)
                 num = T(z2, recursive=False)
                 den = T(g2_z2, recursive=False)
-                M[i,j] = num / den
-                M[j,i] = num / den
+                M[i, j] = num / den
+                M[j, i] = num / den
         return M
 
     @cached_method
@@ -674,7 +808,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
             z1 = self.a_point()
         z2 = kwargs.pop("z2", None)
         if z2 is None:
-            z2 = self.find_point(g2, eps=1 + self.pi)
+            z2 = self.find_point(g2, eps=1 + self.pi, idx=j)
         g2_z2 = act(g2, z2)
         T = self.u_function(g1, prec, a=z1, **kwargs).improve(prec)
         num = T(z2, recursive=False)
@@ -686,12 +820,12 @@ class SchottkyGroup(SchottkyGroup_abstract):
     def period_naive(self, i, j, prec, **kwargs):
         g1 = self.generators()[i]
         g2 = self.generators()[j]
-        z1 = self.find_point(g1)
+        z1 = self.find_point(g1, idx=i)
         if i == j:
             z1 = act(g1.adjugate(), z1)
-            z2 = self.find_point(g2, eps=self.pi + 1)
+            z2 = self.find_point(g2, eps=self.pi + 1, idx=j)
         else:
-            z2 = self.find_point(g2)
+            z2 = self.find_point(g2, idx=j)
         num = self.theta_naive(prec, z=z2, a=z1, gamma=g1, **kwargs)
         den = self.theta_naive(prec, z=act(g2, z2), a=z1, gamma=g1, **kwargs)
         verbose(f"{num = }")
@@ -708,7 +842,6 @@ class Ball(Element):
         Element.__init__(self, parent)
 
     def _repr_(self):
-        p = self.parent().K.prime()
         comp = "P^1 - " if self.is_complement else ""
         opn = "" if self.is_open else "+"
         return f"{comp}B({self.center},|π|^{self.radius}){opn}"
@@ -769,8 +902,6 @@ class Ball(Element):
         # (here, g'(x) = (det(g)) / (cx+d)^2)
         # If oo \in g(B(x,r)), then g(B(x,r)) = P1 - B(g(oo), 1/r . |g'(x)|)
         # (here, g'(x) = det(g) / c^2
-        # We do have to check these formulas, especially the x that appears
-        # in P1 - B(g(oo), 1/r . |g'(x)|)
         C = self.__class__
         if hasattr(g, "matrix"):
             g = g.matrix()
@@ -778,7 +909,7 @@ class Ball(Element):
         x = self.center
         x = x.lift_to_precision()
         try:
-            if (-d / c - x).valuation() > self.radius:
+            if (x + d / c).valuation() > self.radius:
                 inf_in_image = True
             else:
                 inf_in_image = False
