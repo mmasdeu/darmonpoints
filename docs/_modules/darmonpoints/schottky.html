@@ -249,7 +249,7 @@
 <span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
 <span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span>
 <span class="kn">from</span> <span class="nn">sage.structure.unique_representation</span> <span class="kn">import</span> <span class="n">UniqueRepresentation</span>
-
+<span class="kn">from</span> <span class="nn">sage.misc.lazy_attribute</span> <span class="kn">import</span> <span class="n">lazy_attribute</span>
 <span class="kn">from</span> <span class="nn">.divisors</span> <span class="kn">import</span> <span class="n">Divisors</span><span class="p">,</span> <span class="n">DivisorsElement</span>
 <span class="kn">from</span> <span class="nn">.meromorphic</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.theta</span> <span class="kn">import</span> <span class="o">*</span>
@@ -341,6 +341,50 @@
     <span class="k">return</span> <span class="n">ans</span></div>
 
 
+<div class="viewcode-block" id="find_eigenvector_matrix">
+<a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.find_eigenvector_matrix">[docs]</a>
+<span class="nd">@cached_function</span>
+<span class="k">def</span> <span class="nf">find_eigenvector_matrix</span><span class="p">(</span><span class="n">g</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">trace</span><span class="p">()</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span><span class="o">*</span><span class="n">t</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+    <span class="n">vaps</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([(</span><span class="n">t</span><span class="o">+</span><span class="n">delta</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">t</span><span class="o">-</span><span class="n">delta</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="n">o</span><span class="o">.</span><span class="n">valuation</span><span class="p">())</span>
+    <span class="n">verb_level</span> <span class="o">=</span> <span class="n">get_verbose</span><span class="p">()</span>
+    <span class="n">set_verbose</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">veps</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(((</span><span class="n">g</span> <span class="o">-</span> <span class="n">l</span><span class="p">)</span><span class="o">.</span><span class="n">right_kernel</span><span class="p">()</span><span class="o">.</span><span class="n">basis</span><span class="p">()</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">vaps</span><span class="p">),</span> <span class="p">[])</span>
+    <span class="n">set_verbose</span><span class="p">(</span><span class="n">verb_level</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">matrix_space</span><span class="p">()(</span><span class="n">veps</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="find_parameter">
+<a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.find_parameter">[docs]</a>
+<span class="nd">@cached_function</span>
+<span class="k">def</span> <span class="nf">find_parameter</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">ball</span><span class="p">,</span> <span class="n">pi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">pi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pi</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span><span class="o">.</span><span class="n">uniformizer</span><span class="p">()</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">apply_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span><span class="n">o</span><span class="o">.</span><span class="n">lift_to_precision</span><span class="p">())</span>
+    <span class="n">ans</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">find_eigenvector_matrix</span><span class="p">(</span><span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">adjugate</span><span class="p">())</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span>
+    <span class="c1"># column 0 means that the boundary of B_g (the ball attached to g)</span>
+    <span class="c1"># gets sent to the circle of radius 1.</span>
+    <span class="c1"># Concretely, if B_g = B(a, p^-r), we send a+p^r |-&gt; 1.</span>
+    <span class="c1"># As a consequence, P^1-B_g gets sent to the closed ball B(0,1).</span>
+    <span class="n">z0</span> <span class="o">=</span> <span class="n">ball</span><span class="o">.</span><span class="n">center</span><span class="o">.</span><span class="n">lift_to_precision</span><span class="p">()</span> <span class="o">+</span> <span class="n">pi</span> <span class="o">**</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">z0</span> <span class="ow">in</span> <span class="n">ball</span><span class="o">.</span><span class="n">closure</span><span class="p">()</span> <span class="ow">and</span> <span class="n">z0</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ball</span>
+    <span class="n">lam</span> <span class="o">=</span> <span class="p">(</span><span class="n">ans</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">z0</span> <span class="o">+</span> <span class="n">ans</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">z0</span> <span class="o">+</span> <span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">rescale_row</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">lam</span><span class="p">)</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">set_immutable</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">act</span><span class="p">(</span><span class="n">ans</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span>
+        <span class="k">if</span> <span class="n">ans</span> <span class="o">*</span> <span class="n">ball</span><span class="o">.</span><span class="n">complement</span><span class="p">()</span> <span class="o">!=</span> <span class="n">ball</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">closure</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span>
+    <span class="k">return</span> <span class="n">ans</span></div>
+
+
+
 <div class="viewcode-block" id="SchottkyGroup_abstract">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.SchottkyGroup_abstract">[docs]</a>
 <span class="k">class</span> <span class="nc">SchottkyGroup_abstract</span><span class="p">(</span><span class="n">SageObject</span><span class="p">):</span>
@@ -348,7 +392,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pi</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">uniformizer</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_generators</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">o</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">K</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">generators</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_inverse_generators</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="o">~</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generators</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_G</span> <span class="o">=</span> <span class="n">Groups</span><span class="p">()</span><span class="o">.</span><span class="n">free</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">generators</span><span class="p">))</span>
 
 <div class="viewcode-block" id="SchottkyGroup_abstract.base_ring">
@@ -398,7 +441,7 @@
 <div class="viewcode-block" id="SchottkyGroup_abstract.inverse_generators">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.SchottkyGroup_abstract.inverse_generators">[docs]</a>
     <span class="k">def</span> <span class="nf">inverse_generators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inverse_generators</span></div>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="o">~</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generators</span><span class="p">)</span></div>
 
 
     <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -408,7 +451,7 @@
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.SchottkyGroup_abstract.enumerate_group_elements">[docs]</a>
     <span class="k">def</span> <span class="nf">enumerate_group_elements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">enumerate_group_elements</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_generators</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inverse_generators</span><span class="p">,</span> <span class="n">length</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_generators</span><span class="p">(),</span> <span class="n">length</span>
         <span class="p">)</span></div>
 
 
@@ -417,7 +460,7 @@
     <span class="k">def</span> <span class="nf">all_elements_up_to_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">chain</span><span class="p">(</span>
             <span class="o">*</span><span class="p">[</span>
-                <span class="n">enumerate_group_elements</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_generators</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inverse_generators</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="n">enumerate_group_elements</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse_generators</span><span class="p">(),</span> <span class="n">i</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span></div>
@@ -440,7 +483,7 @@
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">NN</span><span class="p">:</span>
             <span class="n">new_num</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">new_den</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">max_length</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">max_length</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
                 <span class="n">can_stop</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">enumerate_group_elements</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
                 <span class="n">ga</span> <span class="o">=</span> <span class="n">act</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
@@ -461,13 +504,34 @@
 
 <div class="viewcode-block" id="SchottkyGroup_abstract.theta_derivative_naive">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.SchottkyGroup_abstract.theta_derivative_naive">[docs]</a>
-    <span class="k">def</span> <span class="nf">theta_derivative_naive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">base_field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">theta_derivative_naive</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">base_field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
         <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_naive</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span><span class="n">max_length</span><span class="o">=</span><span class="n">max_length</span><span class="p">,</span><span class="n">base_field</span><span class="o">=</span><span class="n">base_field</span><span class="p">)</span>
-            <span class="n">B</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_naive</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">act</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">a</span><span class="p">),</span><span class="n">act</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">b</span><span class="p">),</span><span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span><span class="n">max_length</span><span class="o">=</span><span class="n">max_length</span><span class="p">,</span><span class="n">base_field</span><span class="o">=</span><span class="n">base_field</span><span class="p">)</span>
-            <span class="n">Ap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_derivative_naive</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span><span class="n">max_length</span><span class="o">=</span><span class="n">max_length</span><span class="p">,</span><span class="n">base_field</span><span class="o">=</span><span class="n">base_field</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-            <span class="n">Bp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_derivative_naive</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">act</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">a</span><span class="p">),</span><span class="n">act</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">b</span><span class="p">),</span><span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span><span class="n">max_length</span><span class="o">=</span><span class="n">max_length</span><span class="p">,</span><span class="n">base_field</span><span class="o">=</span><span class="n">base_field</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">Ap</span><span class="o">*</span><span class="n">B</span> <span class="o">+</span> <span class="n">A</span> <span class="o">*</span> <span class="n">Bp</span>
+            <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_naive</span><span class="p">(</span>
+                <span class="n">m</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="n">max_length</span><span class="p">,</span> <span class="n">base_field</span><span class="o">=</span><span class="n">base_field</span>
+            <span class="p">)</span>
+            <span class="n">B</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_naive</span><span class="p">(</span>
+                <span class="n">m</span><span class="p">,</span>
+                <span class="n">act</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span>
+                <span class="n">act</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+                <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span>
+                <span class="n">max_length</span><span class="o">=</span><span class="n">max_length</span><span class="p">,</span>
+                <span class="n">base_field</span><span class="o">=</span><span class="n">base_field</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">Ap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_derivative_naive</span><span class="p">(</span>
+                <span class="n">m</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="n">max_length</span><span class="p">,</span> <span class="n">base_field</span><span class="o">=</span><span class="n">base_field</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">)</span>
+            <span class="n">Bp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_derivative_naive</span><span class="p">(</span>
+                <span class="n">m</span><span class="p">,</span>
+                <span class="n">act</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span>
+                <span class="n">act</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+                <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span>
+                <span class="n">max_length</span><span class="o">=</span><span class="n">max_length</span><span class="p">,</span>
+                <span class="n">base_field</span><span class="o">=</span><span class="n">base_field</span><span class="p">,</span>
+                <span class="n">s</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">Ap</span> <span class="o">*</span> <span class="n">B</span> <span class="o">+</span> <span class="n">A</span> <span class="o">*</span> <span class="n">Bp</span>
 
         <span class="n">num</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">den</span> <span class="o">=</span> <span class="mi">1</span>
@@ -476,7 +540,7 @@
         <span class="n">old_ans</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">val</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">NN</span><span class="p">:</span>
-            <span class="n">verbose</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="si">= }</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">verbose</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="si">= }</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">enumerate_group_elements</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
                 <span class="n">ga</span> <span class="o">=</span> <span class="n">act</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
                 <span class="n">gb</span> <span class="o">=</span> <span class="n">act</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
@@ -487,12 +551,15 @@
                 <span class="n">new_second_term</span> <span class="o">=</span> <span class="p">(</span><span class="n">ga</span> <span class="o">-</span> <span class="n">gb</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">new_num</span> <span class="o">*</span> <span class="n">new_den</span><span class="p">)</span>
                 <span class="n">second_term</span> <span class="o">+=</span> <span class="n">new_second_term</span>
             <span class="n">new_ans</span> <span class="o">=</span> <span class="p">(</span><span class="n">num</span> <span class="o">/</span> <span class="n">den</span><span class="p">)</span> <span class="o">*</span> <span class="n">second_term</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">max_length</span> <span class="ow">or</span> <span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">val</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">new_ans</span> <span class="o">/</span> <span class="n">old_ans</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">max_length</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">val</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">new_ans</span> <span class="o">/</span> <span class="n">old_ans</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span>
+            <span class="p">):</span>
                 <span class="k">break</span>
             <span class="n">old_ans</span> <span class="o">=</span> <span class="n">new_ans</span>
-            <span class="n">val</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_ans</span> <span class="o">/</span> <span class="n">old_ans</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">new_ans</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">val</span><span class="o">+</span><span class="n">new_ans</span><span class="o">.</span><span class="n">valuation</span><span class="p">())</span></div>
+            <span class="n">val</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_ans</span> <span class="o">/</span> <span class="n">old_ans</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">new_ans</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">val</span> <span class="o">+</span> <span class="n">new_ans</span><span class="o">.</span><span class="n">valuation</span><span class="p">())</span></div>
 </div>
+
 
 
 <div class="viewcode-block" id="PreSchottkyGroup">
@@ -711,33 +778,101 @@
 <div class="viewcode-block" id="SchottkyGroup">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.SchottkyGroup">[docs]</a>
 <span class="k">class</span> <span class="nc">SchottkyGroup</span><span class="p">(</span><span class="n">SchottkyGroup_abstract</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">generators</span><span class="p">,</span> <span class="n">balls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="n">transformation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keep_generators</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">balls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">G</span> <span class="o">=</span> <span class="n">PreSchottkyGroup</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">generators</span><span class="p">)</span>
-            <span class="n">gp</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
-            <span class="n">good_gens</span><span class="p">,</span> <span class="n">good_balls</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">fundamental_domain</span><span class="p">()</span>
-            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">Tietze</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">good_gens</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">balls</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">for</span> <span class="n">j0</span><span class="p">,</span> <span class="n">gg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">good_gens</span><span class="p">):</span>
-                    <span class="n">i</span> <span class="o">=</span> <span class="n">gg</span><span class="o">.</span><span class="n">Tietze</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="n">idx</span> <span class="o">=</span> <span class="n">sgn</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j0</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">balls</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">good_balls</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">balls</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">good_balls</span><span class="p">[</span><span class="o">-</span><span class="n">idx</span><span class="p">]</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">gp</span><span class="o">.</span><span class="n">gens</span><span class="p">()]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">keep_generators</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Generators are not in good position&quot;</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># print(good_gens)</span>
-                    <span class="n">generators</span> <span class="o">=</span> <span class="p">[</span><span class="n">G</span><span class="o">.</span><span class="n">element_to_matrix</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">good_gens</span><span class="p">]</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">balls</span> <span class="o">=</span> <span class="n">good_balls</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span> <span class="o">=</span> <span class="n">good_gens</span>
-        <span class="k">else</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">K</span><span class="p">,</span>
+        <span class="n">generators</span><span class="p">,</span>
+        <span class="n">balls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">transformation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">keep_generators</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">balls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">balls</span> <span class="o">=</span> <span class="n">balls</span>
+        <span class="k">if</span> <span class="n">transformation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span> <span class="o">=</span> <span class="n">transformation</span>
+        <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_keep_generators</span> <span class="o">=</span> <span class="n">keep_generators</span>
+        <span class="c1"># if balls is None:</span>
+        <span class="c1">#     G = PreSchottkyGroup(K, generators)</span>
+        <span class="c1">#     gp = G.group()</span>
+        <span class="c1">#     good_gens, good_balls, _ = G.fundamental_domain()</span>
+        <span class="c1">#     if all(len(o.Tietze()) == 1 for o in good_gens):</span>
+        <span class="c1">#         self.balls = {}</span>
+        <span class="c1">#         for j0, gg in enumerate(good_gens):</span>
+        <span class="c1">#             i = gg.Tietze()[0]</span>
+        <span class="c1">#             idx = sgn(i) * (j0 + 1)</span>
+        <span class="c1">#             self.balls[i] = good_balls[idx]</span>
+        <span class="c1">#             self.balls[-i] = good_balls[-idx]</span>
+        <span class="c1">#             self._transformation = [w for w in gp.gens()]</span>
+        <span class="c1">#     else:</span>
+        <span class="c1">#         if keep_generators:</span>
+        <span class="c1">#             raise ValueError(&quot;Generators are not in good position&quot;)</span>
+        <span class="c1">#         else:</span>
+        <span class="c1">#             # print(good_gens)</span>
+        <span class="c1">#             generators = [G.element_to_matrix(g) for g in good_gens]</span>
+        <span class="c1">#             self.balls = good_balls</span>
+        <span class="c1">#             self._transformation = good_gens</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     self.balls = balls</span>
+        <span class="c1">#     self._transformation = transformation</span>
+        <span class="c1">#     if parameters is not None:</span>
+        <span class="c1">#         self.parameters = parameters</span>
         <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
             <span class="n">test_fundamental_domain</span><span class="p">(</span><span class="n">generators</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">balls</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">generators</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SchottkyGroup.balls">
+<a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.SchottkyGroup.balls">[docs]</a>
+    <span class="nd">@lazy_attribute</span>
+    <span class="k">def</span> <span class="nf">balls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
+        <span class="n">generators</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">()</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">PreSchottkyGroup</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">generators</span><span class="p">)</span>
+        <span class="n">gp</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+        <span class="n">good_gens</span><span class="p">,</span> <span class="n">good_balls</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">fundamental_domain</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">Tietze</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">good_gens</span><span class="p">):</span>
+            <span class="n">balls</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">j0</span><span class="p">,</span> <span class="n">gg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">good_gens</span><span class="p">):</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">gg</span><span class="o">.</span><span class="n">Tietze</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">sgn</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">j0</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">balls</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">good_balls</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">balls</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">good_balls</span><span class="p">[</span><span class="o">-</span><span class="n">idx</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">gp</span><span class="o">.</span><span class="n">gens</span><span class="p">()]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keep_generators</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Generators are not in good position&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># print(good_gens)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_generators</span> <span class="o">=</span> <span class="p">[</span><span class="n">G</span><span class="o">.</span><span class="n">element_to_matrix</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">good_gens</span><span class="p">]</span>
+                <span class="n">balls</span> <span class="o">=</span> <span class="n">good_balls</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span> <span class="o">=</span> <span class="n">good_gens</span>
+        <span class="k">return</span> <span class="n">balls</span></div>
+
+
+<div class="viewcode-block" id="SchottkyGroup.gens_extended">
+<a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.SchottkyGroup.gens_extended">[docs]</a>
+    <span class="nd">@cached_method</span>
+    <span class="k">def</span> <span class="nf">gens_extended</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">gens</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">())]</span>
+        <span class="n">gens</span><span class="o">.</span><span class="n">extend</span><span class="p">([(</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">o</span><span class="o">.</span><span class="n">adjugate</span><span class="p">())</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">gens</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">gens</span><span class="p">:</span>
+            <span class="n">o</span><span class="o">.</span><span class="n">set_immutable</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">gens</span></div>
+
+
+<div class="viewcode-block" id="SchottkyGroup.parameters">
+<a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.SchottkyGroup.parameters">[docs]</a>
+    <span class="nd">@lazy_attribute</span>
+    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">balls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">balls</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="p">[</span><span class="n">find_parameter</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">balls</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gens_extended</span><span class="p">()]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ans</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">set_immutable</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">ans</span></div>
+
 
 <div class="viewcode-block" id="SchottkyGroup.a_point">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.schottky.SchottkyGroup.a_point">[docs]</a>
@@ -766,14 +901,27 @@
         <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">B</span> <span class="o">=</span> <span class="n">balls</span><span class="p">[</span><span class="o">-</span><span class="n">idx</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">()[</span><span class="n">idx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">gamma</span>
+                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">()[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">gamma</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">()[</span><span class="o">-</span><span class="n">idx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">**-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">gamma</span>
+                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">()[</span><span class="o">-</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">gamma</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">gens</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">())]</span>
-            <span class="n">gens</span><span class="o">.</span><span class="n">extend</span><span class="p">([(</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">o</span><span class="o">.</span><span class="n">adjugate</span><span class="p">())</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">gens</span><span class="p">])</span>
+            <span class="n">gens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gens_extended</span><span class="p">()</span>
             <span class="n">B</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">balls</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gens</span> <span class="k">if</span> <span class="n">g</span> <span class="o">==</span> <span class="n">gamma</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">B</span><span class="o">.</span><span class="n">center</span><span class="o">.</span><span class="n">lift_to_precision</span><span class="p">()</span> <span class="o">+</span> <span class="n">eps</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pi</span> <span class="o">**</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span></div>
+        <span class="n">ans</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">center</span><span class="o">.</span><span class="n">lift_to_precision</span><span class="p">()</span> <span class="o">+</span> <span class="n">eps</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pi</span> <span class="o">**</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_fundamental_domain</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">test</span><span class="p">(</span><span class="n">ans</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ans</span><span class="w"> </span><span class="si">= }</span><span class="s1"> should be in fundamental domain, but it is not.&#39;</span><span class="p">)</span>
+            <span class="n">ga</span> <span class="o">=</span> <span class="n">act</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span><span class="n">ans</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">test</span><span class="p">(</span><span class="n">ga</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;gamma * ans = </span><span class="si">{</span><span class="n">ga</span><span class="si">}</span><span class="s1"> should be in fundamental domain, but it is not.&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="n">new_idx</span> <span class="o">=</span> <span class="o">-</span><span class="n">idx</span> <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">ginv</span> <span class="o">=</span> <span class="n">gamma</span><span class="o">**-</span><span class="mi">1</span>
+            <span class="n">ans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">ginv</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">new_idx</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">act</span><span class="p">(</span><span class="n">ginv</span><span class="p">,</span> <span class="n">ans</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ans</span></div>
 
 
 <div class="viewcode-block" id="SchottkyGroup.to_fundamental_domain">
@@ -813,7 +961,7 @@
         <span class="n">z0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a_point</span><span class="p">()</span>
         <span class="n">z1</span> <span class="o">=</span> <span class="n">act</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">z0</span><span class="p">)</span>
         <span class="n">z2</span><span class="p">,</span> <span class="n">word</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_fundamental_domain</span><span class="p">(</span><span class="n">z1</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">z0</span><span class="o">.</span><span class="n">is_equal_to</span><span class="p">(</span><span class="n">z2</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span> <span class="c1"># DEBUG</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">z0</span><span class="o">.</span><span class="n">is_equal_to</span><span class="p">(</span><span class="n">z2</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>  <span class="c1"># DEBUG</span>
             <span class="n">gens</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">())]</span>
             <span class="n">gens</span><span class="o">.</span><span class="n">extend</span><span class="p">([(</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">o</span><span class="o">.</span><span class="n">adjugate</span><span class="p">())</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">gens</span><span class="p">])</span>
             <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
@@ -859,13 +1007,12 @@
             <span class="n">P0</span><span class="p">,</span> <span class="n">new_wd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_fundamental_domain</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">new_wd</span><span class="p">:</span>
                 <span class="n">wd</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">n</span> <span class="o">*</span> <span class="n">sgn</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-            <span class="n">ans</span> <span class="o">+=</span> <span class="n">n</span> <span class="o">*</span> <span class="n">Div</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span><span class="n">P0</span><span class="p">)])</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">gens</span><span class="p">,</span> <span class="n">wd</span><span class="p">)):</span>
+            <span class="n">ans</span> <span class="o">+=</span> <span class="n">n</span> <span class="o">*</span> <span class="n">Div</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="n">P0</span><span class="p">)])</span>
+        <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gens</span><span class="p">,</span> <span class="n">wd</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="n">gamma</span> <span class="o">=</span> <span class="n">gens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="n">zz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
-            <span class="n">ans</span> <span class="o">-=</span> <span class="n">e</span> <span class="o">*</span> <span class="n">Div</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span><span class="n">zz</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">act</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span><span class="n">zz</span><span class="p">))])</span>
+            <span class="n">zz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+            <span class="n">ans</span> <span class="o">-=</span> <span class="n">e</span> <span class="o">*</span> <span class="n">Div</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="n">zz</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">act</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">zz</span><span class="p">))])</span>
         <span class="k">return</span> <span class="n">ans</span></div>
 
 
@@ -895,23 +1042,22 @@
 <span class="sd">        True</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">gens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">K</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
             <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
                 <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">K</span><span class="o">.</span><span class="n">is_exact</span><span class="p">():</span> <span class="c1"># DEBUG, set to avoid 0 and 1...</span>
+            <span class="k">if</span> <span class="n">K</span><span class="o">.</span><span class="n">is_exact</span><span class="p">():</span>  <span class="c1"># DEBUG, set to avoid 0 and 1...</span>
                 <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
             <span class="n">DK</span> <span class="o">=</span> <span class="n">Divisors</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
-            <span class="n">D0</span> <span class="o">=</span> <span class="n">DK</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span><span class="n">a</span><span class="p">),(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">b</span><span class="p">)])</span>
+            <span class="n">D0</span> <span class="o">=</span> <span class="n">DK</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">D0</span> <span class="o">=</span> <span class="n">a</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">K</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
             <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
                 <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">K</span><span class="o">.</span><span class="n">is_exact</span><span class="p">():</span> <span class="c1"># DEBUG, set to avoid 0 and 1...</span>
+            <span class="k">if</span> <span class="n">K</span><span class="o">.</span><span class="n">is_exact</span><span class="p">():</span>  <span class="c1"># DEBUG, set to avoid 0 and 1...</span>
                 <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
 
         <span class="n">s</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -919,7 +1065,7 @@
             <span class="n">D0</span> <span class="o">+=</span> <span class="n">s</span> <span class="o">*</span> <span class="n">D0</span>
         <span class="n">D</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_equivalent_divisor</span><span class="p">(</span><span class="n">D0</span><span class="p">)</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">ThetaOC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">D</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="n">prec</span><span class="p">,</span> <span class="n">base_ring</span><span class="o">=</span><span class="n">K</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">improve</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;improve&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">improve</span> <span class="ow">or</span> <span class="n">z</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ans</span> <span class="o">=</span> <span class="n">ans</span><span class="o">.</span><span class="n">improve</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
@@ -936,22 +1082,25 @@
         <span class="n">wd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_problem</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
         <span class="n">gens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Need to specify a point at which we will evaluate&#39;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u_function</span><span class="p">(</span><span class="n">gens</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">prec</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">**</span><span class="n">sgn</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">wd</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="s2">&quot;Need to specify a point at which we will evaluate&quot;</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">prod</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">u_function</span><span class="p">(</span><span class="n">gens</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">prec</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">**</span> <span class="n">sgn</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">wd</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span> <span class="c1"># Should pass idx=wd[0] DEBUG ??</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_fundamental_domain</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_fundamental_domain</span><span class="p">(</span><span class="n">act</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>  <span class="c1"># Should pass idx=wd[0] DEBUG ??</span>
         <span class="n">K</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
         <span class="n">DK</span> <span class="o">=</span> <span class="n">Divisors</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
-        <span class="n">D</span> <span class="o">=</span> <span class="n">DK</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span><span class="n">a</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">act</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">a</span><span class="p">))])</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">DK</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">act</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">a</span><span class="p">))])</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">ThetaOC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">D</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="n">prec</span><span class="p">,</span> <span class="n">base_ring</span><span class="o">=</span><span class="n">K</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">improve</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;improve&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">improve</span><span class="p">:</span>
             <span class="n">ans</span> <span class="o">=</span> <span class="n">ans</span><span class="o">.</span><span class="n">improve</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ans</span> <span class="k">if</span> <span class="n">z</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ans</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></div>
 
 
@@ -960,7 +1109,7 @@
     <span class="nd">@cached_method</span>
     <span class="k">def</span> <span class="nf">period_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">g</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">())</span>
-        <span class="n">M</span> <span class="o">=</span> <span class="n">MatrixSpace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span><span class="n">g</span><span class="p">,</span><span class="n">g</span><span class="p">)(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">MatrixSpace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span> <span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="p">)(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">z1</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;z1&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">z1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">z1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a_point</span><span class="p">()</span>
@@ -975,8 +1124,8 @@
                 <span class="n">g2_z2</span> <span class="o">=</span> <span class="n">act</span><span class="p">(</span><span class="n">g2</span><span class="p">,</span> <span class="n">z2</span><span class="p">)</span>
                 <span class="n">num</span> <span class="o">=</span> <span class="n">T</span><span class="p">(</span><span class="n">z2</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
                 <span class="n">den</span> <span class="o">=</span> <span class="n">T</span><span class="p">(</span><span class="n">g2_z2</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-                <span class="n">M</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span>
-                <span class="n">M</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span>
+                <span class="n">M</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span>
+                <span class="n">M</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span>
         <span class="k">return</span> <span class="n">M</span></div>
 
 
@@ -1026,7 +1175,7 @@
             <span class="n">z1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a_point</span><span class="p">()</span>
         <span class="n">z2</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;z2&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">z2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">z2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">g2</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+            <span class="n">z2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">g2</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="n">j</span><span class="p">)</span>
         <span class="n">g2_z2</span> <span class="o">=</span> <span class="n">act</span><span class="p">(</span><span class="n">g2</span><span class="p">,</span> <span class="n">z2</span><span class="p">)</span>
         <span class="n">T</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">u_function</span><span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">z1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">improve</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
         <span class="n">num</span> <span class="o">=</span> <span class="n">T</span><span class="p">(</span><span class="n">z2</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1041,12 +1190,12 @@
     <span class="k">def</span> <span class="nf">period_naive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">g1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">()[</span><span class="n">i</span><span class="p">]</span>
         <span class="n">g2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generators</span><span class="p">()[</span><span class="n">j</span><span class="p">]</span>
-        <span class="n">z1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">g1</span><span class="p">)</span>
+        <span class="n">z1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span><span class="p">:</span>
             <span class="n">z1</span> <span class="o">=</span> <span class="n">act</span><span class="p">(</span><span class="n">g1</span><span class="o">.</span><span class="n">adjugate</span><span class="p">(),</span> <span class="n">z1</span><span class="p">)</span>
-            <span class="n">z2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">g2</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">z2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">g2</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="n">j</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">z2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">g2</span><span class="p">)</span>
+            <span class="n">z2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_point</span><span class="p">(</span><span class="n">g2</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="n">j</span><span class="p">)</span>
         <span class="n">num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_naive</span><span class="p">(</span><span class="n">prec</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z2</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">z1</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">g1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">den</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_naive</span><span class="p">(</span><span class="n">prec</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">act</span><span class="p">(</span><span class="n">g2</span><span class="p">,</span> <span class="n">z2</span><span class="p">),</span> <span class="n">a</span><span class="o">=</span><span class="n">z1</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">g1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">verbose</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">num</span><span class="w"> </span><span class="si">= }</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1067,7 +1216,6 @@
         <span class="n">Element</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">K</span><span class="o">.</span><span class="n">prime</span><span class="p">()</span>
         <span class="n">comp</span> <span class="o">=</span> <span class="s2">&quot;P^1 - &quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_complement</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="n">opn</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_open</span> <span class="k">else</span> <span class="s2">&quot;+&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">comp</span><span class="si">}</span><span class="s2">B(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="si">}</span><span class="s2">,|π|^</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="si">}</span><span class="s2">)</span><span class="si">{</span><span class="n">opn</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -1140,8 +1288,6 @@
         <span class="c1"># (here, g&#39;(x) = (det(g)) / (cx+d)^2)</span>
         <span class="c1"># If oo \in g(B(x,r)), then g(B(x,r)) = P1 - B(g(oo), 1/r . |g&#39;(x)|)</span>
         <span class="c1"># (here, g&#39;(x) = det(g) / c^2</span>
-        <span class="c1"># We do have to check these formulas, especially the x that appears</span>
-        <span class="c1"># in P1 - B(g(oo), 1/r . |g&#39;(x)|)</span>
         <span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">&quot;matrix&quot;</span><span class="p">):</span>
             <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">matrix</span><span class="p">()</span>
@@ -1149,7 +1295,7 @@
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">lift_to_precision</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="o">-</span><span class="n">d</span> <span class="o">/</span> <span class="n">c</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
                 <span class="n">inf_in_image</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">inf_in_image</span> <span class="o">=</span> <span class="kc">False</span>

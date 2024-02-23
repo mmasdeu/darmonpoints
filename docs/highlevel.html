@@ -1183,7 +1183,7 @@ T is the new hecke operator.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.schottky.</span></span><span class="sig-name descname"><span class="pre">SchottkyGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_generators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.schottky.</span></span><span class="sig-name descname"><span class="pre">SchottkyGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_generators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup_abstract" title="darmonpoints.schottky.SchottkyGroup_abstract"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchottkyGroup_abstract</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.a_point">
@@ -1207,6 +1207,27 @@ T is the new hecke operator.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.balls">
+<span class="sig-name descname"><span class="pre">balls</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.balls"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.balls" title="Link to this definition">#</a></dt>
+<dd><p>Initialize <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>     <span class="s2">&quot;doc of f&quot;</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">return</span> <span class="mi">1</span>
+<span class="o">....</span><span class="p">:</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">x</span> <span class="o">=</span> <span class="n">lazy_attribute</span><span class="p">(</span><span class="n">f</span><span class="p">);</span> <span class="n">x</span>
+<span class="o">&lt;</span><span class="n">sage</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">lazy_attribute</span><span class="o">.</span><span class="n">lazy_attribute</span> <span class="nb">object</span> <span class="n">at</span> <span class="o">...&gt;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="vm">__doc__</span>
+<span class="s1">&#39;doc of f&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="s1">&#39;f&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span>
+<span class="s1">&#39;__main__&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.find_equivalent_divisor">
 <span class="sig-name descname"><span class="pre">find_equivalent_divisor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.find_equivalent_divisor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.find_equivalent_divisor" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
@@ -1215,6 +1236,27 @@ T is the new hecke operator.</p>
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.find_point">
 <span class="sig-name descname"><span class="pre">find_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.find_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.find_point" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.gens_extended">
+<span class="sig-name descname"><span class="pre">gens_extended</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.gens_extended"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.gens_extended" title="Link to this definition">#</a></dt>
+<dd><p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
+<span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="kc">None</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="p">()</span>
+<span class="mi">4</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
+<span class="mi">4</span>
+</pre></div>
+</div>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.in_fundamental_domain">
@@ -1230,6 +1272,27 @@ T is the new hecke operator.</p>
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.matrix_to_element">
 <span class="sig-name descname"><span class="pre">matrix_to_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.matrix_to_element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.matrix_to_element" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#SchottkyGroup.parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.SchottkyGroup.parameters" title="Link to this definition">#</a></dt>
+<dd><p>Initialize <code class="docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>     <span class="s2">&quot;doc of f&quot;</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">return</span> <span class="mi">1</span>
+<span class="o">....</span><span class="p">:</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">x</span> <span class="o">=</span> <span class="n">lazy_attribute</span><span class="p">(</span><span class="n">f</span><span class="p">);</span> <span class="n">x</span>
+<span class="o">&lt;</span><span class="n">sage</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">lazy_attribute</span><span class="o">.</span><span class="n">lazy_attribute</span> <span class="nb">object</span> <span class="n">at</span> <span class="o">...&gt;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="vm">__doc__</span>
+<span class="s1">&#39;doc of f&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="s1">&#39;f&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span>
+<span class="s1">&#39;__main__&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.schottky.SchottkyGroup.period">
@@ -1410,9 +1473,149 @@ such that gi1 * … * gik * z = x</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="darmonpoints.schottky.find_eigenvector_matrix">
+<span class="sig-prename descclassname"><span class="pre">darmonpoints.schottky.</span></span><span class="sig-name descname"><span class="pre">find_eigenvector_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#find_eigenvector_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.find_eigenvector_matrix" title="Link to this definition">#</a></dt>
+<dd><p>Create a cached version of a function, which only recomputes
+values it hasn’t already computed. A custom name can be
+provided by an optional argument “name”.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">f</span></code> is a function, do either <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">=</span> <span class="pre">CachedFunction(f)</span></code>
+to make a cached version of <code class="docutils literal notranslate"><span class="pre">f</span></code>, or put <code class="docutils literal notranslate"><span class="pre">&#64;CachedFunction</span></code>
+right before the definition of <code class="docutils literal notranslate"><span class="pre">f</span></code> (i.e., use Python decorators):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@CachedFunction</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+    <span class="o">....</span>
+</pre></div>
+</div>
+<p>The inputs to the function must be hashable or they must define
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">sage.structure.sage_object.SageObject._cache_key()</span></code>.</p>
+<p>TESTS:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="c1"># needs sage.combinat</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">g</span> <span class="o">=</span> <span class="n">CachedFunction</span><span class="p">(</span><span class="n">number_of_partitions</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="s1">&#39;number_of_partitions&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="s1">&#39;partitions&#39;</span> <span class="ow">in</span> <span class="n">sage</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">sageinspect</span><span class="o">.</span><span class="n">sage_getdoc</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">g</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>                                                                  <span class="c1"># needs sage.libs.flint</span>
+<span class="mi">7</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">cache</span>                                                               <span class="c1"># needs sage.libs.flint</span>
+<span class="p">{((</span><span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">),</span> <span class="p">()):</span> <span class="mi">7</span><span class="p">}</span>
+
+<span class="n">sage</span><span class="p">:</span> <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span> <span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">h</span> <span class="o">=</span> <span class="n">CachedFunction</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">w</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">h</span><span class="p">();</span> <span class="n">h</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="n">h</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="mi">1</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">walltime</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+<p>By default, the contents of the cache are not pickled:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="nd">@cached_function</span>
+<span class="o">....</span><span class="p">:</span> <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">n</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
+<span class="n">sage</span><span class="p">:</span> <span class="kn">import</span> <span class="nn">__main__</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">__main__</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+<span class="n">sage</span><span class="p">:</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span> <span class="n">f</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="mi">100</span>
+
+<span class="n">sage</span><span class="p">:</span> <span class="n">s</span> <span class="o">=</span> <span class="n">dumps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="mi">0</span>
+</pre></div>
+</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">do_pickle</span></code> is set, then the cache is pickled:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="nd">@cached_function</span><span class="p">(</span><span class="n">do_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="o">....</span><span class="p">:</span> <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">n</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">__main__</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+<span class="n">sage</span><span class="p">:</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span> <span class="n">f</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="mi">100</span>
+
+<span class="n">sage</span><span class="p">:</span> <span class="n">s</span> <span class="o">=</span> <span class="n">dumps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="mi">100</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="darmonpoints.schottky.find_midpoint">
 <span class="sig-prename descclassname"><span class="pre">darmonpoints.schottky.</span></span><span class="sig-name descname"><span class="pre">find_midpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#find_midpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.find_midpoint" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="darmonpoints.schottky.find_parameter">
+<span class="sig-prename descclassname"><span class="pre">darmonpoints.schottky.</span></span><span class="sig-name descname"><span class="pre">find_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ball</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/schottky.html#find_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.schottky.find_parameter" title="Link to this definition">#</a></dt>
+<dd><p>Create a cached version of a function, which only recomputes
+values it hasn’t already computed. A custom name can be
+provided by an optional argument “name”.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">f</span></code> is a function, do either <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">=</span> <span class="pre">CachedFunction(f)</span></code>
+to make a cached version of <code class="docutils literal notranslate"><span class="pre">f</span></code>, or put <code class="docutils literal notranslate"><span class="pre">&#64;CachedFunction</span></code>
+right before the definition of <code class="docutils literal notranslate"><span class="pre">f</span></code> (i.e., use Python decorators):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@CachedFunction</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+    <span class="o">....</span>
+</pre></div>
+</div>
+<p>The inputs to the function must be hashable or they must define
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">sage.structure.sage_object.SageObject._cache_key()</span></code>.</p>
+<p>TESTS:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="c1"># needs sage.combinat</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">g</span> <span class="o">=</span> <span class="n">CachedFunction</span><span class="p">(</span><span class="n">number_of_partitions</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="s1">&#39;number_of_partitions&#39;</span>
+<span class="n">sage</span><span class="p">:</span> <span class="s1">&#39;partitions&#39;</span> <span class="ow">in</span> <span class="n">sage</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">sageinspect</span><span class="o">.</span><span class="n">sage_getdoc</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+<span class="kc">True</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">g</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>                                                                  <span class="c1"># needs sage.libs.flint</span>
+<span class="mi">7</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">cache</span>                                                               <span class="c1"># needs sage.libs.flint</span>
+<span class="p">{((</span><span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">),</span> <span class="p">()):</span> <span class="mi">7</span><span class="p">}</span>
+
+<span class="n">sage</span><span class="p">:</span> <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span> <span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">h</span> <span class="o">=</span> <span class="n">CachedFunction</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">w</span> <span class="o">=</span> <span class="n">walltime</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">h</span><span class="p">();</span> <span class="n">h</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="n">h</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="mi">1</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">walltime</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span>
+<span class="kc">True</span>
+</pre></div>
+</div>
+<p>By default, the contents of the cache are not pickled:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="nd">@cached_function</span>
+<span class="o">....</span><span class="p">:</span> <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">n</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
+<span class="n">sage</span><span class="p">:</span> <span class="kn">import</span> <span class="nn">__main__</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">__main__</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+<span class="n">sage</span><span class="p">:</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span> <span class="n">f</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="mi">100</span>
+
+<span class="n">sage</span><span class="p">:</span> <span class="n">s</span> <span class="o">=</span> <span class="n">dumps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="mi">0</span>
+</pre></div>
+</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">do_pickle</span></code> is set, then the cache is pickled:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="nd">@cached_function</span><span class="p">(</span><span class="n">do_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="o">....</span><span class="p">:</span> <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">n</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">__main__</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+<span class="n">sage</span><span class="p">:</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span> <span class="n">f</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="mi">100</span>
+
+<span class="n">sage</span><span class="p">:</span> <span class="n">s</span> <span class="o">=</span> <span class="n">dumps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+<span class="mi">100</span>
+</pre></div>
+</div>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="darmonpoints.schottky.four_point_configuration">
@@ -1689,11 +1892,14 @@ such that gi1 * … * gik * z = x</p>
 </li>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup</span></code></a><ul>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.a_point"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.a_point()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.balls"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.balls()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.find_equivalent_divisor"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.find_equivalent_divisor()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.find_point"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.find_point()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.gens_extended"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.gens_extended()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.in_fundamental_domain"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.in_fundamental_domain()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.in_which_ball"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.in_which_ball()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.matrix_to_element"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.matrix_to_element()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.parameters"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.parameters()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.period"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.period()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.period_matrix"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.period_matrix()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.SchottkyGroup.period_naive"><code class="docutils literal notranslate"><span class="pre">SchottkyGroup.period_naive()</span></code></a></li>
@@ -1721,7 +1927,9 @@ such that gi1 * … * gik * z = x</p>
 <li><a class="reference internal" href="#darmonpoints.schottky.all_elements_up_to_length"><code class="docutils literal notranslate"><span class="pre">all_elements_up_to_length()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.choose_leaf"><code class="docutils literal notranslate"><span class="pre">choose_leaf()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.enumerate_group_elements"><code class="docutils literal notranslate"><span class="pre">enumerate_group_elements()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.schottky.find_eigenvector_matrix"><code class="docutils literal notranslate"><span class="pre">find_eigenvector_matrix()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.find_midpoint"><code class="docutils literal notranslate"><span class="pre">find_midpoint()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.schottky.find_parameter"><code class="docutils literal notranslate"><span class="pre">find_parameter()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.four_point_configuration"><code class="docutils literal notranslate"><span class="pre">four_point_configuration()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.hash_vertex"><code class="docutils literal notranslate"><span class="pre">hash_vertex()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.schottky.invert_word"><code class="docutils literal notranslate"><span class="pre">invert_word()</span></code></a></li>

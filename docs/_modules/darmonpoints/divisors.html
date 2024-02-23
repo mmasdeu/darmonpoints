@@ -463,7 +463,7 @@
             <span class="k">if</span> <span class="n">P</span> <span class="o">==</span> <span class="n">Infinity</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">new_pt</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">/</span> <span class="n">K</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-                <span class="k">except</span> <span class="p">(</span><span class="n">PrecisionError</span><span class="p">,</span><span class="ne">ZeroDivisionError</span><span class="p">):</span>
+                <span class="k">except</span> <span class="p">(</span><span class="n">PrecisionError</span><span class="p">,</span> <span class="ne">ZeroDivisionError</span><span class="p">):</span>
                     <span class="n">new_pt</span> <span class="o">=</span> <span class="n">Infinity</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_pt</span> <span class="o">=</span> <span class="p">(</span><span class="n">K</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">P</span> <span class="o">+</span> <span class="n">K</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">K</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="n">P</span> <span class="o">+</span> <span class="n">K</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
