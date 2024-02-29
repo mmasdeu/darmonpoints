@@ -689,12 +689,13 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
 
         Takes as input the object representing P^1(O_F/N), where F is a number field
         (that is possibly Q), and N is some ideal in the field.  Runs the following algorithm:
-                - take a remaining element C = (c:d) of P^1(O_F/N);
-                - add this to the set of cusps, declaring it to be our chosen rep;
-                - run through every translate C' = (c':d') of C under the stabiliser of infinity, and
-                        remove this translate from the set of remaining elements;
-                - store the matrix T in the stabiliser such that C' * T = C (as elements in P^1)
-                        in the dictionary, with key C'.
+
+        - take a remaining element C = (c:d) of P^1(O_F/N);
+        - add this to the set of cusps, declaring it to be our chosen rep;
+        - run through every translate C' = (c':d') of C under the stabiliser of infinity, and
+          remove this translate from the set of remaining elements;
+        - store the matrix T in the stabiliser such that C' * T = C (as elements in P^1)
+          in the dictionary, with key C'.
         """
         P = self.get_P1List()
         if hasattr(P.N(), "number_field"):

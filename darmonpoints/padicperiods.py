@@ -1772,13 +1772,16 @@ def find_kadziela_matrices(M, T):
     """
     The matrix M describes the relation between periods (A,B,D)^t
     and the periods (A0,B0)^t, where (A,B,D) are the periods of
-    the Teitelbaum periods, and (A0,B0) are the Darmon ones.
+    the Teitelbaum periods, and (A0,B0) are the Darmon ones. ::
+
            (A,B,D)^t = M * (A0,B0)^t
+
     The matrix T describes the action of Hecke on homology.
     That is, the first column of T describes the image of T
     on the first basis vector.
 
-    The output are matrices X and Y such that
+    The output are matrices X and Y such that::
+
          X * matrix(2,2,[A,B,B,D]) = matrix(2,2,[A0,B0,C0,D0]) * Y
 
     """
