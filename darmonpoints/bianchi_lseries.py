@@ -370,10 +370,8 @@ def get_Lseries_term(self, m, n):
         dmn = 0
 
         ## Compute representatives for (O_F/p)*
-        residues = []
-        for alpha in F.ideal(p).residues():
-            if alpha.mod(P) != 0 and alpha.mod(Pbar) != 0:
-                residues.append(alpha)
+        residues = [alpha for alpha in F.ideal(p).residues()
+                    if alpha.mod(P) != 0 and alpha.mod(Pbar) != 0]
 
         ## Compute the coefficients c_j^(m)
         if m == 0:
