@@ -468,18 +468,19 @@ class ArithCohElement(CohomologyElement):
         Input a 2x2 matrix h in SL2(OK) (which embeds as an element of Sigma_0(p)), and a value j.
 
         Options for j:
-            - classical case: specify a non-negative integer j. Then returns the value
-                    BI_{h,j} := Int_{h.Zp} z^j . d Phi{0 --> infty},
-                that is, the value of the distribution Phi{0 --> infty} at the function z^j x
-                the indicator function of the open set h.Zp.
 
-            - Bianchi case: specify a tuple (k,l). Then returns the value
-                    BI_{h,j} := Int_{h.(Zp x Zp)} x^k y^l . d Phi{0 --> infty},
-                that is, the value of the distribution Phi{0 --> infty} at the function x^k y^l x
-                the indicator function of the open set h.(Zp x Zp).
+        - classical case: specify a non-negative integer j. Then returns the value
+                BI_{h,j} := Int_{h.Zp} z^j . d Phi{0 --> infty},
+            that is, the value of the distribution Phi{0 --> infty} at the function z^j x
+            the indicator function of the open set h.Zp.
 
-            - do not specify j. Then returns the the distribution mu whose moments are
-                BI_{h,j}.
+        - Bianchi case: specify a tuple (k,l). Then returns the value
+                BI_{h,j} := Int_{h.(Zp x Zp)} x^k y^l . d Phi{0 --> infty},
+            that is, the value of the distribution Phi{0 --> infty} at the function x^k y^l x
+            the indicator function of the open set h.(Zp x Zp).
+
+        - do not specify j. Then returns the the distribution mu whose moments are
+            BI_{h,j}.
 
         """
         V = self.parent().coefficient_module()  ## Module V in H^1(G,V)

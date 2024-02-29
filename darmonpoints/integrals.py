@@ -436,11 +436,11 @@ def riemann_sum(G, phi, hc, depth=1, mult=False, progress_bar=False, K=None):
         if hce == 0:
             continue
         # verbose('hc = %s'%hce)
-        te = sample_point(G, e, prec)
-        if te == Infinity:
+        t_e = sample_point(G, e, prec)
+        if t_e == Infinity:
             continue
         if mult:
-            res *= phi(K(te)) ** hce
+            res *= phi(K(t_e)) ** hce
         else:
-            res += phi(K(te)) * hce
+            res += phi(K(t_e)) * hce
     return res

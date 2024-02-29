@@ -666,23 +666,22 @@ class SchottkyGroup(SchottkyGroup_abstract):
 
         EXAMPLES ::
 
-        sage: from darmonpoints.schottky import *
-        sage: p = 3
-        sage: prec = 20
-        sage: working_prec = 200
-        sage: K = Qp(p,working_prec)
-        sage: g1 = matrix(K, 2, 2, [-5,32,-8,35])
-        sage: g2 = matrix(K, 2, 2, [-13,80,-8,43])
-        sage: G = SchottkyGroup(K, (g1, g2))
-        sage: a = 23
-        sage: b = 14
-        sage: z0 = K(8)
-        sage: m = 10
-        sage: Tg = G.theta_naive(m, z=z0, a=a,b=b)
-        sage: T = G.theta(prec, a, b).improve(m)
-        sage: (T(z0) / Tg - 1).valuation() > m
-        True
-
+            sage: from darmonpoints.schottky import *
+            sage: p = 3
+            sage: prec = 20
+            sage: working_prec = 200
+            sage: K = Qp(p,working_prec)
+            sage: g1 = matrix(K, 2, 2, [-5,32,-8,35])
+            sage: g2 = matrix(K, 2, 2, [-13,80,-8,43])
+            sage: G = SchottkyGroup(K, (g1, g2))
+            sage: a = 23
+            sage: b = 14
+            sage: z0 = K(8)
+            sage: m = 10
+            sage: Tg = G.theta_naive(m, z=z0, a=a,b=b)
+            sage: T = G.theta(prec, a, b).improve(m)
+            sage: (T(z0) / Tg - 1).valuation() > m
+            True
         """
         if b is not None:
             try:
@@ -771,26 +770,26 @@ class SchottkyGroup(SchottkyGroup_abstract):
 
         EXAMPLES ::
 
-        sage: from darmonpoints.schottky import *
-        sage: p = 3
-        sage: prec = 10
-        sage: working_prec = 200
-        sage: K = Qp(p,working_prec)
-        sage: h1 = matrix(K, 2, 2, [-5,32,-8,35])
-        sage: h2 = matrix(K, 2, 2, [-13,80,-8,43])
-        sage: G = SchottkyGroup(K, (h1,h2))
-        sage: q00g = G.period_naive(0, 0, prec)
-        sage: q01g = G.period_naive(0, 1, prec)
-        sage: q11g = G.period_naive(1, 1, prec)
-        sage: q00 = G.period(0,0, prec)
-        sage: q01 = G.period(0,1, prec)
-        sage: q11 = G.period(1,1, prec)
-        sage: (q00g/q00-1).valuation() > prec
-        True
-        sage: (q01g/q01-1).valuation() > prec
-        True
-        sage: (q11g/q11-1).valuation() > prec
-        True
+            sage: from darmonpoints.schottky import *
+            sage: p = 3
+            sage: prec = 10
+            sage: working_prec = 200
+            sage: K = Qp(p,working_prec)
+            sage: h1 = matrix(K, 2, 2, [-5,32,-8,35])
+            sage: h2 = matrix(K, 2, 2, [-13,80,-8,43])
+            sage: G = SchottkyGroup(K, (h1,h2))
+            sage: q00g = G.period_naive(0, 0, prec)
+            sage: q01g = G.period_naive(0, 1, prec)
+            sage: q11g = G.period_naive(1, 1, prec)
+            sage: q00 = G.period(0,0, prec)
+            sage: q01 = G.period(0,1, prec)
+            sage: q11 = G.period(1,1, prec)
+            sage: (q00g/q00-1).valuation() > prec
+            True
+            sage: (q01g/q01-1).valuation() > prec
+            True
+            sage: (q11g/q11-1).valuation() > prec
+            True
         """
         g = len(self.generators())
         if i in ZZ:
