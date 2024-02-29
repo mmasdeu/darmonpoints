@@ -2710,7 +2710,7 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
         iteration = 0
         for g in g0gens + [~g for g in g0gens]:
             ## Loop over all coset reps
-            for key, p in self._coset_reps.items():
+            for p in self._coset_reps.values():
                 ## compute p*g, represent as h * p_prime for h in subgroup
                 h, p_prime = self._represent_in_coset(p * g)
                 ## check h is not 1 and not repeating gens or their inverses
