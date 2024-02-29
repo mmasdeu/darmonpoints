@@ -973,7 +973,7 @@ def find_igusa_invariants(
     parallelize=True,
 ):
     fwrite("# Trying to recognize invariants...", outfile)
-    Pring = embedding.domain()
+    P_ring = embedding.domain()
     if prec is None:
         prec = a.parent().precision_cap()
     Tlist = []
@@ -993,7 +993,7 @@ def find_igusa_invariants(
         fwrite("# Doing matrix %s / %s ( = %s)" % (ii, len(Tlist), tt.list()), outfile)
         Lp = a + b * tt
         inp_vec = [
-            (Lp, ordmat, prec, Pring, cheatjs, embedding, 3, list_I10, Pgen, outfile)
+            (Lp, ordmat, prec, P_ring, cheatjs, embedding, 3, list_I10, Pgen, outfile)
             for ordmat in all_possible_ordmats(Lp, 20)
         ]
 
@@ -1271,7 +1271,7 @@ def guess_equation(
         F = QQ
         P = Pgen
         Pnrm = Pgen
-        Pring = QQ
+        P_ring = QQ
         D = Dgen
         Np = Npgen
         Sinv_places = []
@@ -1287,7 +1287,7 @@ def guess_equation(
         r = F.gen()
         P = F.ideal(Pgen)
         Pnrm = P.norm()
-        Pring = P.ring()
+        P_ring = P.ring()
         D = F.ideal(Dgen)
         Np = F.ideal(Npgen)
         if Sinf is None:

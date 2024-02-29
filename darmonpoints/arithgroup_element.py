@@ -46,7 +46,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         INPUT:
 
         - a list of the form [(g1,a1),(g2,a2),...,(gn,an)] where the gi are indices
-          refering to fixed generators, and the ai are integers, or
+          referring to fixed generators, and the ai are integers, or
           an element of the quaternion algebra ``self.parent().quaternion_algebra()``.
 
         """
@@ -281,7 +281,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
             # If a < 0 use the relation g^a = -g^(-a) + del(g^a|g^(-a))
             ans.extend([(npow, [gaq**-1], ga)] if a < 0 else [])
             # By the above line we have to deal with g^a with -g^abs(a) if a <0
-            # We add the corresponding boundaries, which we will substract if a > 0 and add if a < 0
+            # We add the corresponding boundaries, which we will subtract if a > 0 and add if a < 0
             ans.extend(
                 [(-sgn(a) * npow, [gq**j for j in range(1, abs(a))], g)]
                 if abs(a) > 1

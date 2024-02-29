@@ -1810,7 +1810,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         try:
             _, iota = self.magma.Embed(OK_magma, O_magma, nvals=2)
         except RuntimeError:
-            print("An error ocurred!")
+            print("An error occurred!")
             print("OK_magma = %s" % OK_magma)
             print("O_magma =" % O_magma)
             raise RuntimeError("Error while computing quadratic embedding")
@@ -2538,7 +2538,7 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
         }
         verbose("Done computing coset reps.")
         ## compute the generators of H
-        verbose("Computing the auxiliar data...")
+        verbose("Computing the auxiliary data...")
         (
             self._gens_dict_auxiliary,
             self._gens_matrices_auxiliary,

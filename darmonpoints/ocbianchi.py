@@ -94,7 +94,7 @@ class Sigma0Squared(Parent, UniqueRepresentation):
 
     def _element_constructor_(self, first, second):
         r"""
-        Element constructor. Takes as input tuple (g,h) of elments
+        Element constructor. Takes as input tuple (g,h) of elements
         of Sigma_0(p) and represents the element (g,h) in the product.
         """
         return Sigma0SquaredElement(self, (self._Sigma0(first), self._Sigma0(second)))
@@ -528,7 +528,7 @@ class BianchiDistributionElement(ModuleElement):
         ## For each monomial x^iy^j in the polynomial, multip] ly the coefficient of X^iY^j (in mu) by the
         ## coefficient of x^iy^j (in f) and take the sum. This is our final value
         ##          --> P.coefficients is a dictionary which has monomials as keys; we generate monomials using exponents.
-        ##         --> self._moments takes as input an index and spits out the cofficient. So generate the index from the exponent.
+        ##         --> self._moments takes as input an index and spits out the coefficient. So generate the index from the exponent.
         coefficient_list = []
         for polx in P.padded_list(self._depth):
             coefficient_list.extend(polx.padded_list(self._depth))
@@ -624,7 +624,7 @@ class BianchiDistributions(Module, UniqueRepresentation):
 
     def __init__(self, p, depth, act_on_left=False, adjuster=None):
         self._dimension = (
-            0  ## Hack!! Dimension was being called before it was intialised
+            0  ## Hack!! Dimension was being called before it was initialised
         )
         self._Rmod = ZpCA(p, depth - 1)  ## create Zp
         Module.__init__(self, base=self._Rmod)
