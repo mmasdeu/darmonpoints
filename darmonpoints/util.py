@@ -37,7 +37,17 @@ from sage.schemes.elliptic_curves.constructor import (
 )
 from sage.sets.primes import Primes
 from sage.structure.factorization import Factorization
+import functools
 
+def muted(func):
+    @functools.wraps(func)
+    def ff(*args, **kwargs):
+        verb_level = get_verbose()
+        set_verbose(0)
+        ans = func(*args, **kwargs)
+        set_verbose(verb_level)
+        return ans
+    return ff
 
 def is_smooth(x, B):
     for p in B:
