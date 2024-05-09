@@ -2467,7 +2467,10 @@
         <span class="n">pnum</span> <span class="o">=</span> <span class="n">E</span><span class="o">.</span><span class="n">torsion_order</span><span class="p">()</span> <span class="o">*</span> <span class="n">power</span><span class="o">.</span><span class="n">numerator</span><span class="p">()</span>
         <span class="n">pden</span> <span class="o">=</span> <span class="n">E</span><span class="o">.</span><span class="n">torsion_order</span><span class="p">()</span> <span class="o">*</span> <span class="n">power</span><span class="o">.</span><span class="n">denominator</span><span class="p">()</span>
         <span class="n">J1list</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">our_nroot</span><span class="p">(</span><span class="n">J</span><span class="o">**</span><span class="n">pnum</span> <span class="o">*</span> <span class="n">qE</span><span class="o">**</span><span class="n">i</span><span class="p">,</span> <span class="n">pden</span><span class="p">,</span> <span class="n">return_all</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pden</span><span class="p">)),</span>
+            <span class="p">(</span>
+                <span class="n">our_nroot</span><span class="p">(</span><span class="n">J</span><span class="o">**</span><span class="n">pnum</span> <span class="o">*</span> <span class="n">qE</span><span class="o">**</span><span class="n">i</span><span class="p">,</span> <span class="n">pden</span><span class="p">,</span> <span class="n">return_all</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pden</span><span class="p">)</span>
+            <span class="p">),</span>
             <span class="p">[],</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">J1</span> <span class="ow">in</span> <span class="n">J1list</span><span class="p">:</span>
