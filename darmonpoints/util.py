@@ -1978,7 +1978,10 @@ def recognize_J(
         pnum = E.torsion_order() * power.numerator()
         pden = E.torsion_order() * power.denominator()
         J1list = sum(
-            (our_nroot(J**pnum * qE**i, pden, return_all=True) for i in range(pden)),
+            (
+                our_nroot(J**pnum * qE**i, pden, return_all=True)
+                for i in range(pden)
+            ),
             [],
         )
         for J1 in J1list:

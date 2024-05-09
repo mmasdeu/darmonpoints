@@ -55,7 +55,9 @@ def lattice_homology_cycle(
     xi2 = H1({})
     for x, a in xlist:
         xi1 += H1({G(x.quaternion_rep): Div(tau)}).mult_by(a)
-        xi2 += H1({G(wp**-1 * x.quaternion_rep * wp): wpinv_mat * Div(tau)}).mult_by(a)
+        xi2 += H1({G(wp**-1 * x.quaternion_rep * wp): wpinv_mat * Div(tau)}).mult_by(
+            a
+        )
     xi10 = xi1
     xi20 = xi2
     while True:

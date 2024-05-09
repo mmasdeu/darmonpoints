@@ -760,10 +760,9 @@ class SchottkyGroup(SchottkyGroup_abstract):
         z = kwargs.get("z", None)
         if len(wd) > 1 or wd[0] < 0:
             if z is None:
-                kwargs.pop('z', None)
+                kwargs.pop("z", None)
                 return lambda z: prod(
-                    self._u_function(gens[abs(i) - 1], prec, a=a)(z)
-                    ** ZZ(sgn(i))
+                    self._u_function(gens[abs(i) - 1], prec, a=a)(z) ** ZZ(sgn(i))
                     for i in wd
                 )
             return prod(
@@ -771,10 +770,9 @@ class SchottkyGroup(SchottkyGroup_abstract):
                 for i in wd
             )
         if z is None:
-            return lambda z : self._u_function(gens[wd[0] - 1], prec, a=a)(z)
+            return lambda z: self._u_function(gens[wd[0] - 1], prec, a=a)(z)
         else:
             return self._u_function(gens[wd[0] - 1], prec, a=a)(z)
-
 
     @cached_method
     def _u_function(self, gamma, prec, a):
