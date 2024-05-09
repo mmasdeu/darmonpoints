@@ -24,6 +24,7 @@ from .meromorphic import *
 
 infinity = Infinity
 
+
 def eval_rat(D, z):
     if z == Infinity:
         return 1
@@ -40,6 +41,7 @@ def eval_rat(D, z):
     # assert fails == 0 # DEBUG !
     return ans
 
+
 def eval_rat_derivative(D, z):
     ans = 0
     fails = 0
@@ -53,6 +55,7 @@ def eval_rat_derivative(D, z):
             ans += n * zP**-1
     # assert fails == 0 # DEBUG !
     return ans * eval_rat(D, z)
+
 
 def act(mtrx, z):
     """
@@ -68,6 +71,7 @@ def act(mtrx, z):
         return (a * z + b) / (c * z + d)
     except PrecisionError:
         return Infinity
+
 
 def element_to_matrix(wd, generators):
     ans = wd(generators)
@@ -139,22 +143,26 @@ class ThetaOC(SageObject):
         for (i, gi), tau in zip(gens_ext, params):
             for j, Fj in self.Fnlist[-1].items():
                 if i != -j:
-                    action_data[i,j] = (self.MM.get_action_data(gi, Fj._parameter, tau), tau)
+                    action_data[i, j] = (
+                        self.MM.get_action_data(gi, Fj._parameter, tau),
+                        tau,
+                    )
         for it in range(m):
             if self.m >= self.prec:
+                self.Fnlist = [{ky : sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky]) for ky in self.Fnlist[0]}]
                 return self
             tmp = {}
             for (i, gi), tau in zip(gens_ext, params):
                 for j, Fj in self.Fnlist[-1].items():
                     if i != -j:
-                        vl = Fj.fast_act(action_data[i,j])
-                        # vl = Fj.left_act_by_matrix(gi, tau)
+                        vl = Fj.fast_act(action_data[i, j])
                         try:
                             tmp[i] += vl
                         except KeyError:
                             tmp[i] = vl
             self.Fnlist.append(tmp)
             self.m += 1
+        self.Fnlist = [{ky : sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky]) for ky in self.Fnlist[0]}]
         return self
 
     def improve_one(self):
@@ -220,13 +228,12 @@ class ThetaOC(SageObject):
         ans *= prod(F(z0) for FF in self.Fnlist for ky, F in FF.items())
         return ans
 
-    def eval_derivative(self, z, recursive=False):
+    def eval_derivative(self, z, recursive=False, return_value=False):
         if recursive and not G.in_fundamental_domain(z, strict=False):
             raise NotImplementedError("Recursivity not implemented for derivative")
         if isinstance(z, DivisorsElement):
             return prod(self.eval_derivative(P, recursive=recursive) ** n for P, n in z)
         vz = eval_rat(self.val, z)
-        v0 = vz
         Fnz = {}
         for FF in self.Fnlist:
             for ky, F in FF.items():
@@ -244,4 +251,8 @@ class ThetaOC(SageObject):
         tmp = sum(
             f.eval_derivative(z) / f(z) for FF in self.Fnlist for f in FF.values()
         )
-        return valder * Fnzall + tmp * v0
+        ans = valder * Fnzall + tmp * v0
+        if return_value:
+            return ans, v0
+        else:
+            return ans

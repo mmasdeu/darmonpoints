@@ -2,8 +2,11 @@ from copy import copy, deepcopy
 from itertools import chain
 
 from sage.categories.groups import Groups
+from sage.combinat.rooted_tree import LabelledRootedTree as LTR
 from sage.functions.generalized import sgn
+from sage.graphs.graph import Graph
 from sage.groups.matrix_gps.linear import GL
+from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.cachefunc import cached_method
 from sage.misc.latex import latex
@@ -19,8 +22,6 @@ from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
-from sage.combinat.rooted_tree import LabelledRootedTree as LTR
-from sage.graphs.graph import Graph
 
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import *
@@ -28,7 +29,6 @@ from .theta import *
 from .util import muted
 
 infinity = Infinity
-
 
 
 def reduce_word(w):
@@ -120,6 +120,20 @@ def find_parameter(g, ball, pi=None, check=True):
         #     raise RuntimeError
     return ans
 
+@cached_function
+def find_parameter_new(g, ball, pi=None, check=True):
+    K = g.parent().base_ring()
+    if pi is None:
+        pi = K.uniformizer()
+    g = g.apply_map(lambda o: o.lift_to_precision())
+    r = ball.radius
+    z0 = ball.center.lift_to_precision()
+    if ball.is_complement:
+        ans = Matrix(K, 2, 2, [0, 1, 1, -z0])
+    else:
+        ans = Matrix(K, 2, 2, [1, -z0, 0, 1])
+    return ans
+
 
 class SchottkyGroup_abstract(SageObject):
     def __init__(self, K, generators):
@@ -170,9 +184,7 @@ class SchottkyGroup_abstract(SageObject):
     def all_elements_up_to_length(self, N):
         return chain(
             *[
-                enumerate_group_elements(
-                    self._generators, self._inverse_generators, i
-                )
+                enumerate_group_elements(self._generators, self._inverse_generators, i)
                 for i in range(N + 1)
             ]
         )
@@ -305,11 +317,12 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
                 return b0 / b1
             except (ZeroDivisionError, NotImplementedError):
                 pass
-        raise RuntimeError('Base not found')
+        raise RuntimeError("Base not found")
 
     def construct_tree(self, level):
         T = NeighborJoiningTree(
-            self.K, [act(g, self.base) for wd, g in self.all_elements_up_to_length(level)]
+            self.K,
+            [act(g, self.base) for wd, g in self.all_elements_up_to_length(level)],
         )
         if level == 1:
             pp = [choose_leaf(tt) for tt in T.tree[1][:2]]
@@ -368,8 +381,8 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
         balls = {}
         T = self.NJtree
         verts = T.vertices()
-        mid = lambda x, y : T.BT.find_midpoint(x,y)
-        for i, ((v00, v01), (v10,v11), word) in enumerate(pairing):
+        mid = lambda x, y: T.BT.find_midpoint(x, y)
+        for i, ((v00, v01), (v10, v11), word) in enumerate(pairing):
             w = self._G.one()
             for l in word:
                 w = w * (self._G.gen(l // 2) ** ((-1) ** l))
@@ -377,8 +390,14 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
             g = self.element_to_matrix(w)
             B0 = mid(verts[v00], verts[v01])
             B1 = mid(verts[v10], verts[v11])
-            if verts[v00].radius == verts[v01].radius or verts[v10].radius == verts[v11].radius:
-                assert g * B0.complement() != B1.closure() or g.adjugate() * B1.complement() != B0.closure()
+            if (
+                verts[v00].radius == verts[v01].radius
+                or verts[v10].radius == verts[v11].radius
+            ):
+                assert (
+                    g * B0.complement() != B1.closure()
+                    or g.adjugate() * B1.complement() != B0.closure()
+                )
                 B0 = mid(verts[v00], B0)
                 B1 = (g * B0.closure()).complement()
             balls[i + 1] = B1
@@ -454,7 +473,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
             action_table = self.action_table()
         adj = self.NJtree.adjacency_list()
         n_vertices = len(adj)
-        edges = set(((i,j) for i in range(n_vertices) for j in adj[i]))
+        edges = set(((i, j) for i in range(n_vertices) for j in adj[i]))
         r = dict()
         visited = set()
         for i in edges:
@@ -509,7 +528,8 @@ class SchottkyGroup(SchottkyGroup_abstract):
     def balls(self):
         try:
             return self._balls
-        except AttributeError: pass
+        except AttributeError:
+            pass
         K = self.base_ring()
         generators = self._generators
         G = PreSchottkyGroup(K, generators)
@@ -529,7 +549,9 @@ class SchottkyGroup(SchottkyGroup_abstract):
             else:
                 # print(good_gens)
                 self._generators = [G.element_to_matrix(g) for g in good_gens]
-                self._inverse_generators = tuple([o.adjugate() for o in self._generators])
+                self._inverse_generators = tuple(
+                    [o.adjugate() for o in self._generators]
+                )
                 balls = good_balls
                 self._transformation = good_gens
         self._balls = balls
@@ -638,9 +660,11 @@ class SchottkyGroup(SchottkyGroup_abstract):
             if z0 == z2:
                 found = True
                 break
-            else: # DEBUG: why is this needed?
+            else:  # DEBUG: why is this needed?
                 gens = [(i + 1, o) for i, o in enumerate(self._generators)]
-                gens.extend([(-i, o.determinant() ** -1 * o.adjugate()) for i, o in gens])
+                gens.extend(
+                    [(-i, o.determinant() ** -1 * o.adjugate()) for i, o in gens]
+                )
                 for i, g in gens:
                     gz2 = act(g, z2)
                     if z0 == gz2:
@@ -679,7 +703,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
         for i, (g, e) in enumerate(zip(gens, wd)):
             if e == 0:
                 continue
-            zz = self.find_point(g, idx=i+1)
+            zz = self.find_point(g, idx=i + 1)
             ans -= e * Div([(1, zz), (-1, act(g, zz))])
         return ans
 
@@ -716,7 +740,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
         s = kwargs.pop("s", None)
         if s is not None:
             D0 += s * D0
-        recursive = kwargs.get('recursive', True)
+        recursive = kwargs.get("recursive", True)
         if recursive:
             D0 = self.find_equivalent_divisor(D0)
         ans = ThetaOC(self, a=D0, b=None, prec=prec, base_ring=K, **kwargs)
@@ -733,17 +757,18 @@ class SchottkyGroup(SchottkyGroup_abstract):
         wd = self.word_problem(gamma)
         gens = self._generators
         if len(wd) > 1 or wd[0] < 0:
-            if kwargs.get('z', None) is None:
-                kwargs.pop('z', None)
-                return lambda z : prod(
-                self._u_function(gens[abs(i) - 1], prec, a=a, z=z, **kwargs) ** ZZ(sgn(i))
-                for i in wd
+            if kwargs.get("z", None) is None:
+                kwargs.pop("z", None)
+                return lambda z: prod(
+                    self._u_function(gens[abs(i) - 1], prec, a=a, z=z, **kwargs)
+                    ** ZZ(sgn(i))
+                    for i in wd
                 )
             return prod(
                 self._u_function(gens[abs(i) - 1], prec, a=a, **kwargs) ** ZZ(sgn(i))
                 for i in wd
-                )
-        return self._u_function(gens[wd[0]-1], prec, a=a, **kwargs)
+            )
+        return self._u_function(gens[wd[0] - 1], prec, a=a, **kwargs)
 
     @cached_method
     def _u_function(self, gamma, prec, a=None, **kwargs):
@@ -829,7 +854,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
                 i0, isgn = abs(i) - 1, sgn(i)
                 for j in jlist:
                     j0, jsgn = abs(j) - 1, sgn(j)
-                    ans *= m[i0,j0]**ZZ(isgn*jsgn)
+                    ans *= m[i0, j0] ** ZZ(isgn * jsgn)
             return ans
 
         z1 = kwargs.pop("z1", None)
@@ -837,7 +862,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
             z1 = self.a_point()
         z2 = kwargs.pop("z2", None)
         if z2 is None:
-            z2 = self.find_point(g2, eps=1 + self.pi, idx=j+1)
+            z2 = self.find_point(g2, eps=1 + self.pi, idx=j + 1)
         g2_z2 = act(g2, z2)
         T = self.u_function(g1, prec, a=z1, **kwargs).improve(prec)
         num = T(z2, recursive=False)
@@ -849,12 +874,12 @@ class SchottkyGroup(SchottkyGroup_abstract):
     def period_naive(self, i, j, prec, **kwargs):
         g1 = self._generators[i]
         g2 = self._generators[j]
-        z1 = self.find_point(g1, idx=i+1)
+        z1 = self.find_point(g1, idx=i + 1)
         if i == j:
             z1 = act(g1.adjugate(), z1)
-            z2 = self.find_point(g2, eps=self.pi + 1, idx=j+1)
+            z2 = self.find_point(g2, eps=self.pi + 1, idx=j + 1)
         else:
-            z2 = self.find_point(g2, idx=j+1)
+            z2 = self.find_point(g2, idx=j + 1)
         num = self.theta_naive(prec, z=z2, a=z1, gamma=g1, **kwargs)
         den = self.theta_naive(prec, z=act(g2, z2), a=z1, gamma=g1, **kwargs)
         verbose(f"{num = }")
@@ -876,10 +901,7 @@ class Ball(Element):
     @cached_method
     def get_key(self):
         r = self.radius
-        return (
-            r if self.center.is_zero(r)
-            else (self.center.add_bigoh(r), r)
-        )
+        return r if self.center.is_zero(r) else (self.center.add_bigoh(r), r)
 
     def _repr_(self):
         comp = "P^1 - " if self.is_complement else ""
@@ -1005,7 +1027,10 @@ class Balls(UniqueRepresentation, Parent):
             else:
                 return left.center in right and right.center in left
         else:
-            return left.radius == right.radius and (left.center - right.center).valuation() >= left.radius
+            return (
+                left.radius == right.radius
+                and (left.center - right.center).valuation() >= left.radius
+            )
 
     def find_midpoint(self, v0, v1):
         K = self.base_ring()
@@ -1033,28 +1058,31 @@ class Balls(UniqueRepresentation, Parent):
             d23 = (ps[1] - ps[2]).valuation()
             d13 = (ps[0] - ps[2]).valuation()
             maxval = max([d12, d23, d13])
-            center = ps[0].add_bigoh(maxval) if d12 == maxval or d13 == maxval else ps[1]
+            center = (
+                ps[0].add_bigoh(maxval) if d12 == maxval or d13 == maxval else ps[1]
+            )
             return self.element_class(self, center, maxval)
 
 
 def cross_ratio(points):
-    [p1,p2,p3,p4] = points
+    [p1, p2, p3, p4] = points
     if p1 is Infinity:
-        return (p3-p2)/(p4-p2)
+        return (p3 - p2) / (p4 - p2)
     elif p2 is Infinity:
-        return (p3-p1)/(p4-p1)
+        return (p3 - p1) / (p4 - p1)
     elif p3 is Infinity:
-        return (p4-p2)/(p4-p1)
+        return (p4 - p2) / (p4 - p1)
     elif p4 is Infinity:
-        return (p3-p1)/(p3-p2)
+        return (p3 - p1) / (p3 - p2)
     else:
-        return (p3-p1)*(p4-p2)/((p4-p1)*(p3-p2))
+        return (p3 - p1) * (p4 - p2) / ((p4 - p1) * (p3 - p2))
+
 
 def four_point_configuration(K, pts):
-    p1,p2,p3,p4 = pts
-    v1 = abs(K(cross_ratio([p1,p2,p3,p4])).valuation())
-    v2 = abs(K(cross_ratio([p1,p3,p2,p4])).valuation())
-    v3 = abs(K(cross_ratio([p1,p4,p2,p3])).valuation())
+    p1, p2, p3, p4 = pts
+    v1 = abs(K(cross_ratio([p1, p2, p3, p4])).valuation())
+    v2 = abs(K(cross_ratio([p1, p3, p2, p4])).valuation())
+    v3 = abs(K(cross_ratio([p1, p4, p2, p3])).valuation())
     if v2 > 0 and v3 > 0:
         return p3, v2
     elif v1 > 0 and v3 > 0:
@@ -1063,6 +1091,7 @@ def four_point_configuration(K, pts):
         return p1, v1
     else:
         return None, 0
+
 
 def four_point_configuration_works(K, pts):
     V = [[K(pi - pj).valuation() for pj in pts] for pi in pts]
@@ -1229,7 +1258,12 @@ def test_fundamental_domain(gens, balls):
             if i == j:
                 continue
             if (balls[i].closure()).intersects(balls[j].closure()):
-                fails.append((i, j, ))
+                fails.append(
+                    (
+                        i,
+                        j,
+                    )
+                )
             #     verbose(f"Test *failed* for balls {i = } and {j = }")
             # else:
             #     verbose(f"Test passed for balls {i = } and {j = }")

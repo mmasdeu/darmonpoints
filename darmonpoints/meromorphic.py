@@ -39,6 +39,7 @@ from sage.structure.unique_representation import (
 
 from .divisors import Divisors
 
+
 def evalpoly(poly, x):
     # Initialize result
     try:
@@ -97,22 +98,26 @@ class MeromorphicFunctionsElement(ModuleElement):
         if type(D) in (int, Integer):
             D = K(D)
         a, b, c, d = self._parameter.list()
-        phi = lambda Q : a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         try:
             pt = phi(self.normalize_point)
             pole = -d / c
             valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
         except AttributeError:
-            pt = a / c
             pole = None
-            valinf = evalpoly(self._value, pt)
+            if c == 0:
+                valinf = 1
+            else:
+                valinf = evalpoly(self._value, a / c)
         assert pole is None
+
         def ev(P):
-            fac = ((P - pole) if pole is not None else 1)
+            fac = (P - pole) if pole is not None else 1
             phiP = phi(P)
             return fac * evalpoly(self._value, phiP) / valinf
             # except PrecisionError:
             #     return fac
+
         if isinstance(D.parent(), Divisors):
             return prod(ev(P) ** n for P, n in D)
         else:
@@ -126,16 +131,18 @@ class MeromorphicFunctionsElement(ModuleElement):
             raise NotImplementedError
         K = self.parent().base_ring()
         a, b, c, d = self._parameter.list()
-        phi = lambda Q : a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         valder = self.power_series().derivative().list()
         try:
             pt = phi(self.normalize_point)
             pole = -d / c
             valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
         except AttributeError:
-            pt = a / c
             pole = None
-            valinf = evalpoly(self._value, pt)
+            if c == 0:
+                valinf = 1
+            else:
+                valinf = evalpoly(self._value, a / c)
         assert pole is None
         chainrule = (a * d - b * c) / (c * D + d) ** 2
         return (
@@ -163,23 +170,23 @@ class MeromorphicFunctionsElement(ModuleElement):
         if self._parameter != right._parameter:
             raise RuntimeError("Trying to add incompatible series")
         prec = self.parent()._prec
-        ans = (self.power_series() * right.power_series()).list()[: prec]
+        ans = (self.power_series() * right.power_series()).list()[:prec]
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def _sub_(self, right):  # multiplicative!
         if self._parameter != right._parameter:
             raise RuntimeError("Trying to subtract incompatible series")
         prec = self.parent()._prec
-        ans = (self.power_series() / right.power_series()).list()[: prec]
+        ans = (self.power_series() / right.power_series()).list()[:prec]
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def _neg_(self):  # multiplicative!
         prec = self.parent()._prec
-        ans = (~self.power_series()).list()[: prec]
+        ans = (~self.power_series()).list()[:prec]
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def scale_by(self, k):  # multiplicative!
-        ans = (self.power_series() ** k).list()[: prec]
+        ans = (self.power_series() ** k).list()[:prec]
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def _repr_(self):
@@ -194,7 +201,9 @@ class MeromorphicFunctionsElement(ModuleElement):
 
     def fast_act(self, key):
         zz_ps_vec, param = key
-        return self.__class__(self.parent(), self._value * zz_ps_vec, param, check=False)
+        return self.__class__(
+            self.parent(), self._value * zz_ps_vec, param, check=False
+        )
 
     def left_act_by_matrix(self, g, param=None):  # meromorphic functions
         t = cputime()
@@ -207,6 +216,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         zz_ps_vec = parent.get_action_data(g, self._parameter, param)
         ans = self._value * zz_ps_vec
         return self.__class__(self.parent(), ans, param, check=False)
+
 
 def divisor_to_pseries(parameter, Ps, data, prec):
     t = Ps.gen()
@@ -228,6 +238,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
     TESTS:
 
     """
+
     Element = MeromorphicFunctionsElement
 
     @staticmethod
@@ -268,18 +279,18 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
             .truncate(prec)
         )
         ans = [zz.parent()(1), zz]
-        while len(ans) < prec: # DEBUG - was prec + 1
+        while len(ans) < prec:  # DEBUG - was prec + 1
             zz_ps = (
                 (zz * ans[-1])
                 .map_coefficients(lambda x: x.add_bigoh(prec))
-                .truncate(prec) # DEBUG - was prec + 1
+                .truncate(prec)  # DEBUG - was prec + 1
             )
             ans.append(zz_ps)
         set_verbose(verb_level)
         m = Matrix(K, prec, prec, 0)
         for i, zz_ps in enumerate(ans):
             for j, aij in enumerate(zz_ps):
-                m[i,j] = aij #i, j entry contains j-th term of zz^i
+                m[i, j] = aij  # i, j entry contains j-th term of zz^i
         return m
 
     def base_ring(self):

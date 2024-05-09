@@ -4,14 +4,15 @@ import os
 from itertools import chain, groupby, islice, product, starmap, tee
 
 import pyximport
+from sage.arith.srange import srange
 from sage.matrix.constructor import Matrix, block_diagonal_matrix, block_matrix, matrix
 from sage.misc.banner import version as sage_version
-from sage.misc.persist import save, load, db
-from sage.arith.srange import srange
+from sage.misc.persist import db, load, save
 from sage.modules.fg_pid.fgp_module import FGP_Module, FGP_Module_class
 from sage.rings.integer_ring import ZZ
 from sage.rings.padics.precision_error import PrecisionError
 from sage.rings.power_series_ring import PowerSeriesRing
+
 from .cohomology_arithmetic import *
 from .homology import get_homology_kernel, inverse_shapiro, lattice_homology_cycle
 from .integrals import integrate_H1
@@ -1553,11 +1554,21 @@ def jacobian_matrix(fvec):
 def compute_lvec_and_Mlist(prec):
     R0 = PolynomialRing(QQ, 3, names="p")
     R = R0.fraction_field()
-    PS = PowerSeriesRing(QQ,names='p',num_gens=3)
+    PS = PowerSeriesRing(QQ, names="p", num_gens=3)
     p1, p2, p3 = R0.gens()
     p1, p2, p3 = R(p1), R(p2), R(p3)
     # theta = Theta(p1, p2, p3, version=None, prec=prec)
-    lvec = matrix(PS, 3, 1, [PS(o.numerator()) / PS(o.denominator()) for o in lambdavec(p1, p2, p3, prec=prec, theta=None, prec_pseries=prec).list()])
+    lvec = matrix(
+        PS,
+        3,
+        1,
+        [
+            PS(o.numerator()) / PS(o.denominator())
+            for o in lambdavec(
+                p1, p2, p3, prec=prec, theta=None, prec_pseries=prec
+            ).list()
+        ],
+    )
     p1, p2, p3 = PS.gens()
     Mlist = compute_twisted_jacobian_data(lvec, p1, p2, p3, prec)
     save((lvec, Mlist), "lvec_and_Mlist_%s.sobj" % prec)
@@ -1573,7 +1584,7 @@ def load_lvec_and_Mlist(prec):
 
 
 def evaluate_twisted_jacobian_matrix(p1, p2, p3, Mlist):
-    mlist = [o.polynomial()(p1,p2,p3) for o in Mlist]
+    mlist = [o.polynomial()(p1, p2, p3) for o in Mlist]
     retvec = mlist[:6]
     h1 = mlist[6]
     h2 = mlist[7]
@@ -1586,7 +1597,7 @@ def evaluate_twisted_jacobian_matrix(p1, p2, p3, Mlist):
     return Matrix(3, 3, retvec)
 
 
-def compute_twisted_jacobian_data(fvec, x,y,z, prec):
+def compute_twisted_jacobian_data(fvec, x, y, z, prec):
     f1, f2, f3 = fvec.list()
     Mlist = [
         o.truncate(prec)
@@ -1600,7 +1611,7 @@ def compute_twisted_jacobian_data(fvec, x,y,z, prec):
             f3.derivative(x),
             f3.derivative(y),
             f3.derivative(z),
-            f3
+            f3,
         ]
     ]
     return Mlist
@@ -1609,7 +1620,11 @@ def compute_twisted_jacobian_data(fvec, x,y,z, prec):
 def find_initial_approx(L1, L2, L3, lvec):
     # Evaluates a matrix M with entries in Z[[x,y,z]] at points x0,y0,z0
     def ev(x0, y0, z0):
-        return lvec[0](x0, y0, z0), lvec[1](x0, y0, z0), ((1 - z0) / (1 + z0)) ** 2 * lvec[2](x0, y0, z0)
+        return (
+            lvec[0](x0, y0, z0),
+            lvec[1](x0, y0, z0),
+            ((1 - z0) / (1 + z0)) ** 2 * lvec[2](x0, y0, z0),
+        )
 
     K = L1.parent()
     n_tries = 0
@@ -1641,6 +1656,7 @@ def HalfPeriodsInTermsOfLambdas(
         lvec = [o.polynomial() for o in lvec.list()]
     except AttributeError:
         pass
+
     # Evaluates a matrix M with entries in Z[[x,y,z]] at points x0,y0,z0
     def ev(x0, y0, z0):
         return [
@@ -1659,8 +1675,9 @@ def HalfPeriodsInTermsOfLambdas(
         FPn = matrix(3, 1, ev(*Pn.list()))
         Pnn = Pn - Jinv * (FPn - L0)
         print(
-            "(%s)" % n_iters
-            #[(u - v).valuation() for u, v in zip(Pn.list(), Pnn.list())],
+            "(%s)"
+            % n_iters
+            # [(u - v).valuation() for u, v in zip(Pn.list(), Pnn.list())],
         )
         if all([u == v for u, v in zip(Pn.list(), Pnn.list())]):
             return Pn

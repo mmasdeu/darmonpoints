@@ -193,6 +193,7 @@ class CoIndModule(Parent):
         sage: from darmonpoints.sarithgroup import *
         sage: G = BigArithGroup(5,6,1,outfile='/tmp/darmonpoints.tmp') #  optional - magma
     """
+
     Element = CoIndElement
 
     def __init__(self, G, V):

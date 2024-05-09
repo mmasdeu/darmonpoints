@@ -260,7 +260,7 @@ class DivisorsElement(ModuleElement):
         else:
             if z is None:
                 K = self.parent()._field
-                z = K['z'].gen()
+                z = K["z"].gen()
             return prod(((1 - z / P) ** n for P, n in self), z.parent()(1))
 
     def as_list_of_differences(self):
