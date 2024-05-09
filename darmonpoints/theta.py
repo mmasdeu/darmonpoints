@@ -149,7 +149,12 @@ class ThetaOC(SageObject):
                     )
         for it in range(m):
             if self.m >= self.prec:
-                self.Fnlist = [{ky : sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky]) for ky in self.Fnlist[0]}]
+                self.Fnlist = [
+                    {
+                        ky: sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky])
+                        for ky in self.Fnlist[0]
+                    }
+                ]
                 return self
             tmp = {}
             for (i, gi), tau in zip(gens_ext, params):
@@ -162,7 +167,12 @@ class ThetaOC(SageObject):
                             tmp[i] = vl
             self.Fnlist.append(tmp)
             self.m += 1
-        self.Fnlist = [{ky : sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky]) for ky in self.Fnlist[0]}]
+        self.Fnlist = [
+            {
+                ky: sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky])
+                for ky in self.Fnlist[0]
+            }
+        ]
         return self
 
     def improve_one(self):

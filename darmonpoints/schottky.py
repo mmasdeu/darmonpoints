@@ -120,6 +120,7 @@ def find_parameter(g, ball, pi=None, check=True):
         #     raise RuntimeError
     return ans
 
+
 @cached_function
 def find_parameter_new(g, ball, pi=None, check=True):
     K = g.parent().base_ring()
@@ -756,22 +757,27 @@ class SchottkyGroup(SchottkyGroup_abstract):
         """
         wd = self.word_problem(gamma)
         gens = self._generators
+        z = kwargs.get("z", None)
         if len(wd) > 1 or wd[0] < 0:
-            if kwargs.get("z", None) is None:
-                kwargs.pop("z", None)
+            if z is None:
+                kwargs.pop('z', None)
                 return lambda z: prod(
-                    self._u_function(gens[abs(i) - 1], prec, a=a, z=z, **kwargs)
+                    self._u_function(gens[abs(i) - 1], prec, a=a)(z)
                     ** ZZ(sgn(i))
                     for i in wd
                 )
             return prod(
-                self._u_function(gens[abs(i) - 1], prec, a=a, **kwargs) ** ZZ(sgn(i))
+                self._u_function(gens[abs(i) - 1], prec, a=a)(z) ** ZZ(sgn(i))
                 for i in wd
             )
-        return self._u_function(gens[wd[0] - 1], prec, a=a, **kwargs)
+        if z is None:
+            return lambda z : self._u_function(gens[wd[0] - 1], prec, a=a)(z)
+        else:
+            return self._u_function(gens[wd[0] - 1], prec, a=a)(z)
+
 
     @cached_method
-    def _u_function(self, gamma, prec, a=None, **kwargs):
+    def _u_function(self, gamma, prec, a):
         r"""
         Compute u_gamma
         """
@@ -783,12 +789,9 @@ class SchottkyGroup(SchottkyGroup_abstract):
         K = a.parent()
         DK = Divisors(K)
         D = DK([(1, a), (-1, act(gamma, a))])
-        ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K, **kwargs)
-        improve = kwargs.pop("improve", True)
-        if improve:
-            ans = ans.improve(prec)
-        z = kwargs.get("z", None)
-        return ans if z is None else ans(z)
+        ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K)
+        ans = ans.improve(prec)
+        return ans
 
     @cached_method
     def period_matrix(self, prec, **kwargs):
@@ -799,15 +802,15 @@ class SchottkyGroup(SchottkyGroup_abstract):
             z1 = self.a_point()
         for i in range(g):
             g1 = self._generators[i]
-            T = self.u_function(g1, prec, a=z1, **kwargs).improve(prec)
+            T = self.u_function(g1, prec, a=z1, **kwargs)
             for j in range(i, g):
                 g2 = self._generators[j]
                 z2 = kwargs.get("z2", None)
                 if z2 is None:
                     z2 = self.find_point(g2, eps=1 + self.pi)
                 g2_z2 = act(g2, z2)
-                num = T(z2, recursive=False)
-                den = T(g2_z2, recursive=False)
+                num = T(z2)
+                den = T(g2_z2)
                 M[i, j] = num / den
                 M[j, i] = num / den
         return M
@@ -864,9 +867,9 @@ class SchottkyGroup(SchottkyGroup_abstract):
         if z2 is None:
             z2 = self.find_point(g2, eps=1 + self.pi, idx=j + 1)
         g2_z2 = act(g2, z2)
-        T = self.u_function(g1, prec, a=z1, **kwargs).improve(prec)
-        num = T(z2, recursive=False)
-        den = T(g2_z2, recursive=False)
+        T = self.u_function(g1, prec, a=z1, **kwargs)
+        num = T(z2)
+        den = T(g2_z2)
         verbose(f"{num = }")
         verbose(f"{den = }")
         return num / den
