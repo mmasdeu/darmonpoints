@@ -190,7 +190,7 @@ class P1NFList(SageObject):
 
     def normalize(self, c, d, with_scalar=False):
         r"""
-        [We have gutted this function from its orginal state!]
+        [We have gutted this function from its original state!]
         [Note: there is now no check!]
 
         Return a normalized  element of (a canonical representative of an element
