@@ -1031,8 +1031,7 @@ class ArithCohBianchi(ArithCoh):
             emb1 = lambda x, prec: self.group().embed(conj(x), prec)
 
         ans0 = [S0(emb0(g, prec), emb1(g, prec)) for g in Up_reps]
-        ans1 = [S0(emb0(gbar, prec), emb1(gbar, prec))
-                for gbar in Up_reps_bar]
+        ans1 = [S0(emb0(gbar, prec), emb1(gbar, prec)) for gbar in Up_reps_bar]
         return ans0, ans1
 
     def apply_Up1(self, c, group=None, scale=1, progress_bar=False):  # bianchi
