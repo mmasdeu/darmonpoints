@@ -4,12 +4,14 @@ import os
 from itertools import chain, groupby, islice, product, starmap, tee
 
 import pyximport
+from sage.arith.srange import srange
 from sage.matrix.constructor import Matrix, block_diagonal_matrix, block_matrix, matrix
 from sage.misc.banner import version as sage_version
-from sage.misc.persist import db
+from sage.misc.persist import db, load, save
 from sage.modules.fg_pid.fgp_module import FGP_Module, FGP_Module_class
 from sage.rings.integer_ring import ZZ
 from sage.rings.padics.precision_error import PrecisionError
+from sage.rings.power_series_ring import PowerSeriesRing
 
 from .cohomology_arithmetic import *
 from .homology import get_homology_kernel, inverse_shapiro, lattice_homology_cycle
@@ -54,22 +56,22 @@ def Thetas(p1, p2, p3, q1, q2, q3, prec=None):
     c = 0
     # Define the different conditions and term forms
     resdict = {}
-    resdict["1p1m"] = resdict["1p2m"] = 0
-    resdict["2p2m"] = resdict["1m2p"] = 0
-    resdict["3p3m"] = resdict["2m3p"] = 0
-    resdict["2p3m"] = resdict["3m1p"] = resdict["3p1m"] = 0
-    res = 0
+    resdict["1p1m"] = resdict["1p2m"] = QQ(0)
+    resdict["2p2m"] = resdict["1m2p"] = QQ(0)
+    resdict["3p3m"] = resdict["2m3p"] = QQ(0)
+    resdict["2p3m"] = resdict["3m1p"] = resdict["3p1m"] = QQ(0)
+    res = QQ(0)
     assert imax > 0
     jdict = {}
     p1dict = {}
     p3dict = {}
     p2dict = precompute_powers(p2, q2, imax)
-    for i in range(-imax, imax + 1):
+    for i in srange(-imax, imax + 1):
         newjmax = RR(2 * prec - 0.25 - i**2 + RR(i).abs())
         if newjmax >= 0:
             newjmax = (newjmax.sqrt() + 0.5).ceiling()
             jdict[i] = newjmax
-            jrange = range(-newjmax, newjmax + 1)
+            jrange = srange(-newjmax, newjmax + 1)
             jlist = list(
                 set([j**2 - j for j in jrange] + [j for j in jrange]).difference(
                     set(p1dict.keys())
@@ -83,17 +85,17 @@ def Thetas(p1, p2, p3, q1, q2, q3, prec=None):
                 ).difference(set(p3dict.keys()))
             )
             for j in jlist:
-                tmp = q1 ** QQ(j / 2).floor()
+                tmp = q1 ** ZZ(QQ(j / 2).floor())
                 if j % 2 == 1:
                     tmp *= p1
                 p1dict[j] = tmp
             for k in klist:
-                tmp = q3 ** QQ(k / 2).floor()
+                tmp = q3 ** ZZ(QQ(k / 2).floor())
                 if k % 2 == 1:
                     tmp *= p3
                 p3dict[k] = tmp
     for i, jmax in jdict.items():
-        for j in range(-jmax, jmax + 1):
+        for j in srange(-jmax, jmax + 1):
             P = p1dict[j**2 - j] * p2dict[i**2 - i] * p3dict[(i - j) ** 2 - (i - j)]
             p11 = p1dict[j]
             p22 = p2dict[i]
@@ -214,13 +216,13 @@ def Theta(p1, p2, p3, version, prec=None):
                 resdict["3p1m"] += p1lp3l_inv_term
             else:
                 res += newterm * term(i, j)
-    return res
+    return resdict if version is None else res
 
 
 def lambdavec(p1, p2, p3, prec=None, theta=None, prec_pseries=None):
     if theta is None:
         assert prec is not None
-        th = Thetas(p1, p2, p3, prec=prec)
+        th = Thetas(p1, p2, p3, p1**2, p2**2, p3**3, prec=prec)
     else:
         th = theta
 
@@ -285,8 +287,14 @@ def xvec_padic(p1, p2, p3, q1, q2, q3, prec=None):
 
 
 def igusa_clebsch_absolute_from_half_periods(
-    p1, p2, p3, q1, q2, q3, prec=None, padic=True
+    p1, p2, p3, q1=None, q2=None, q3=None, prec=None, padic=True
 ):
+    if q1 is None:
+        q1 = p1**2
+    if q2 is None:
+        q2 = p2**2
+    if q3 is None:
+        q3 = p3**2
     I2, I4, I6, I10 = igusa_clebsch_from_half_periods(
         p1, p2, p3, q1, q2, q3, prec=prec, padic=padic
     )
@@ -1545,12 +1553,25 @@ def jacobian_matrix(fvec):
 
 
 def compute_lvec_and_Mlist(prec):
-    R = PowerSeriesRing(QQ, names="p", num_gens=3, default_prec=prec)
-    p1, p2, p3 = R.gens()
-    theta = Theta(p1, p2, p3, version=None, prec=prec)
-    lvec = lambdavec(p1, p2, p3, theta=theta, prec_pseries=prec)
-    Mlist = compute_twisted_jacobian_data(lvec)
-    lvec = [o.polynomial() for o in lvec.list()]
+    R0 = PolynomialRing(QQ, 3, names="p")
+    R = R0.fraction_field()
+    PS = PowerSeriesRing(QQ, names="p", num_gens=3)
+    p1, p2, p3 = R0.gens()
+    p1, p2, p3 = R(p1), R(p2), R(p3)
+    # theta = Theta(p1, p2, p3, version=None, prec=prec)
+    lvec = matrix(
+        PS,
+        3,
+        1,
+        [
+            PS(o.numerator()) / PS(o.denominator())
+            for o in lambdavec(
+                p1, p2, p3, prec=prec, theta=None, prec_pseries=prec
+            ).list()
+        ],
+    )
+    p1, p2, p3 = PS.gens()
+    Mlist = compute_twisted_jacobian_data(lvec, p1, p2, p3, prec)
     save((lvec, Mlist), "lvec_and_Mlist_%s.sobj" % prec)
     return (lvec, Mlist)
 
@@ -1558,29 +1579,29 @@ def compute_lvec_and_Mlist(prec):
 def load_lvec_and_Mlist(prec):
     try:
         lvec, Mlist = load("lvec_and_Mlist_%s.sobj" % prec)
-    except OSError:
+    except FileNotFoundError:
         lvec, Mlist = compute_lvec_and_Mlist(prec)
     return (lvec, Mlist)
 
 
 def evaluate_twisted_jacobian_matrix(p1, p2, p3, Mlist):
-    retvec = [Mlist[i](p1, p2, p3) for i in range(6)]
-    h1 = Mlist[6](p1, p2, p3)
-    h2 = Mlist[7](p1, p2, p3)
-    h3 = Mlist[8](p1, p2, p3)
+    mlist = [o.polynomial()(p1, p2, p3) for o in Mlist]
+    retvec = mlist[:6]
+    h1 = mlist[6]
+    h2 = mlist[7]
+    h3 = mlist[8]
     ll = ((1 - p3) / (1 + p3)) ** 2
     h1 = ll * h1
     h2 = ll * h2
-    h3 = -4 * (1 - p3) / (1 + p3) ** 3 * Mlist[9](p1, p2, p3) + ll * h3
+    h3 = -4 * (1 - p3) / (1 + p3) ** 3 * mlist[9] + ll * h3
     retvec.extend([h1, h2, h3])
     return Matrix(3, 3, retvec)
 
 
-def compute_twisted_jacobian_data(fvec):
+def compute_twisted_jacobian_data(fvec, x, y, z, prec):
     f1, f2, f3 = fvec.list()
-    x, y, z = f1.variables()
     Mlist = [
-        o.polynomial()
+        o.truncate(prec)
         for o in [
             f1.derivative(x),
             f1.derivative(y),
@@ -1591,19 +1612,20 @@ def compute_twisted_jacobian_data(fvec):
             f3.derivative(x),
             f3.derivative(y),
             f3.derivative(z),
+            f3,
         ]
-    ] + [f3.polynomial()]
+    ]
     return Mlist
 
 
 def find_initial_approx(L1, L2, L3, lvec):
     # Evaluates a matrix M with entries in Z[[x,y,z]] at points x0,y0,z0
     def ev(x0, y0, z0):
-        return [
+        return (
             lvec[0](x0, y0, z0),
             lvec[1](x0, y0, z0),
             ((1 - z0) / (1 + z0)) ** 2 * lvec[2](x0, y0, z0),
-        ]
+        )
 
     K = L1.parent()
     n_tries = 0
@@ -1615,7 +1637,7 @@ def find_initial_approx(L1, L2, L3, lvec):
         FP = ev(*P)
         if min([(u - v).valuation() for u, v in zip(FP, [L1, L2, L3])]) > 1 / 2:
             good_P = P
-            print(P, [(u - v).valuation() for u, v in zip(FP, [L1, L2, L3])])
+            # print(P, [(u - v).valuation() for u, v in zip(FP, [L1, L2, L3])])
     return good_P
 
 
@@ -1631,6 +1653,11 @@ def HalfPeriodsInTermsOfLambdas(
     else:
         lvec, Mlist = lvec_and_Mlist
 
+    try:
+        lvec = [o.polynomial() for o in lvec.list()]
+    except AttributeError:
+        pass
+
     # Evaluates a matrix M with entries in Z[[x,y,z]] at points x0,y0,z0
     def ev(x0, y0, z0):
         return [
@@ -1643,14 +1670,15 @@ def HalfPeriodsInTermsOfLambdas(
         HP0 = [K(0), K(0), K(0)]
     Pn = Matrix(K, 3, 1, HP0)  # 0th approximation
     n_iters = 0
-    while n_iters < 20:
+    while n_iters < max_iters:
         n_iters += 1
         Jinv = evaluate_twisted_jacobian_matrix(*Pn.list(), Mlist=Mlist).inverse()
         FPn = matrix(3, 1, ev(*Pn.list()))
         Pnn = Pn - Jinv * (FPn - L0)
         print(
-            "(%s)" % n_iters,
-            [(u - v).valuation() for u, v in zip(Pn.list(), Pnn.list())],
+            "(%s)"
+            % n_iters
+            # [(u - v).valuation() for u, v in zip(Pn.list(), Pnn.list())],
         )
         if all([u == v for u, v in zip(Pn.list(), Pnn.list())]):
             return Pn

@@ -2,11 +2,15 @@ from copy import copy, deepcopy
 from itertools import chain
 
 from sage.categories.groups import Groups
+from sage.combinat.rooted_tree import LabelledRootedTree as LTR
 from sage.functions.generalized import sgn
+from sage.graphs.graph import Graph
 from sage.groups.matrix_gps.linear import GL
+from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.cachefunc import cached_method
 from sage.misc.latex import latex
+from sage.misc.lazy_attribute import lazy_attribute
 from sage.misc.verbose import verbose
 from sage.modules.module import Module
 from sage.rings.all import ZZ, IntegerRing
@@ -18,24 +22,13 @@ from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
-from sage.misc.lazy_attribute import lazy_attribute
+
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import *
 from .theta import *
+from .util import muted
 
 infinity = Infinity
-
-
-def find_midpoint(K, v0, v1):
-    t = K(v0.a - v1.a).valuation()
-    if t < v0.r_valuation and t < v1.r_valuation:
-        distance = (v0.r_valuation - t) + (v1.r_valuation - t)
-    else:
-        distance = abs(v0.r_valuation - v1.r_valuation)
-    v, comp = (v1, False) if v1.r_valuation > v0.r_valuation else (v0, True)
-    return Balls(K)(
-        v.a, v.r_valuation - QQ(distance) / 2, is_open=not comp, is_complement=comp
-    )
 
 
 def reduce_word(w):
@@ -89,16 +82,15 @@ def uniq(lst):
             ans.append(o)
     return ans
 
+
+@muted
 @cached_function
 def find_eigenvector_matrix(g):
     t = g.trace()
     n = g.determinant()
-    delta = (t*t - 4*n).sqrt()
-    vaps = sorted([(t+delta)/2, (t-delta)/2], key=lambda o: o.valuation())
-    verb_level = get_verbose()
-    set_verbose(0)
+    delta = (t * t - 4 * n).sqrt()
+    vaps = sorted([(t + delta) / 2, (t - delta) / 2], key=lambda o: o.valuation())
     veps = sum(((g - l).right_kernel().basis() for l in vaps), [])
-    set_verbose(verb_level)
     return g.matrix_space()(veps).transpose()
 
 
@@ -106,7 +98,7 @@ def find_eigenvector_matrix(g):
 def find_parameter(g, ball, pi=None, check=True):
     if pi is None:
         pi = g.parent().base_ring().uniformizer()
-    g = g.apply_map(lambda o:o.lift_to_precision())
+    g = g.apply_map(lambda o: o.lift_to_precision())
     ans = copy(find_eigenvector_matrix(g).adjugate())
     r = ball.radius
     # column 0 means that the boundary of B_g (the ball attached to g)
@@ -122,8 +114,25 @@ def find_parameter(g, ball, pi=None, check=True):
     if check:
         if act(ans, z0) != 1:
             raise RuntimeError
-        if ans * ball.complement() != ball.parent()(0, 0).closure():
-            raise RuntimeError
+        # if ans * ball.complement() != ball.parent()(0, 0).closure():
+        #     # print(ans * ball.complement())
+        #     # print(ball.parent()(0,0).closure())
+        #     raise RuntimeError
+    return ans
+
+
+@cached_function
+def find_parameter_new(g, ball, pi=None, check=True):
+    K = g.parent().base_ring()
+    if pi is None:
+        pi = K.uniformizer()
+    g = g.apply_map(lambda o: o.lift_to_precision())
+    r = ball.radius
+    z0 = ball.center.lift_to_precision()
+    if ball.is_complement:
+        ans = Matrix(K, 2, 2, [0, 1, 1, -z0])
+    else:
+        ans = Matrix(K, 2, 2, [1, -z0, 0, 1])
     return ans
 
 
@@ -132,6 +141,7 @@ class SchottkyGroup_abstract(SageObject):
         self.K = K
         self.pi = K.uniformizer()
         self._generators = tuple([o.change_ring(K) for o in generators])
+        self._inverse_generators = tuple(v.adjugate() for v in self._generators)
         self._G = Groups().free(len(generators))
 
     def base_ring(self):
@@ -143,9 +153,13 @@ class SchottkyGroup_abstract(SageObject):
     def uniformizer(self):
         return self.pi
 
+    @muted
     def element_to_matrix(self, gamma):
+        verb_level = get_verbose()
+        set_verbose(0)
         ans = self._G(gamma)(self._generators)
         ans.set_immutable()
+        set_verbose(verb_level)
         return ans
 
     def group(self):
@@ -158,32 +172,32 @@ class SchottkyGroup_abstract(SageObject):
         return self._generators
 
     def inverse_generators(self):
-        return tuple(~v for v in self._generators)
+        return self._inverse_generators
 
     def _repr_(self):
-        return "Schottky group with %s generators" % len(self.generators())
+        return "Schottky group with %s generators" % len(self._generators)
 
     def enumerate_group_elements(self, length):
         return enumerate_group_elements(
-            self.generators(), self.inverse_generators(), length
+            self._generators, self._inverse_generators, length
         )
 
     def all_elements_up_to_length(self, N):
         return chain(
             *[
-                enumerate_group_elements(self.generators(), self.inverse_generators(), i)
+                enumerate_group_elements(self._generators, self._inverse_generators, i)
                 for i in range(N + 1)
             ]
         )
 
     def theta_naive(self, m, a=ZZ(0), b=ZZ(1), z=None, gamma=None, **kwargs):
+        K = self.K
         if z is Infinity:
-            return 1
+            return K(1)
         if gamma is not None:
             if b != ZZ(1):
                 raise ValueError("If gamma is specified, then b should not")
             b = act(gamma, a)
-        K = z.parent()
         max_length = kwargs.pop("max_length", -1)
         num = K(1)
         den = K(1)
@@ -191,17 +205,22 @@ class SchottkyGroup_abstract(SageObject):
         for i in NN:
             new_num = K(1)
             new_den = K(1)
-            if i > 1 and max_length == -1:
+            if i > 2 and max_length == -1:
                 can_stop = True
             for _, g in self.enumerate_group_elements(i):
                 ga = act(g, a)
-                tmp1 = K(1) if ga is Infinity else z - K(ga)
+                tmp1 = K(1) if ga is Infinity else z - ga
                 gb = act(g, b)
-                tmp2 = K(1) if gb is Infinity else z - K(gb)
+                tmp2 = K(1) if gb is Infinity else z - gb
                 new_num *= tmp1
                 new_den *= tmp2
-                val = (tmp1 / tmp2 - K(1)).valuation()
-                if val < m - tmp1.valuation():
+                try:
+                    val = (tmp1 / tmp2 - 1).valuation()
+                    tmp1val = tmp1.valuation()
+                except TypeError:
+                    val = -Infinity
+                    tmp1val = 0
+                if val < m - tmp1val:
                     can_stop = False
             num *= new_num
             den *= new_den
@@ -277,7 +296,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
             self._action_table = []
             VT = self.NJtree.vertex_table
             for g in self._generators:
-                for h in [g, ~g]:
+                for h in [g, g.adjugate()]:
                     new_list = []
                     for v in self.NJtree.vertices():
                         hv = h * v
@@ -291,21 +310,30 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
                     self._action_table.append(new_list)
         return self._action_table
 
+    @lazy_attribute
+    def base(self):
+        for g in self._generators:
+            try:
+                b0, b1 = find_eigenvector_matrix(g).column(0)
+                return b0 / b1
+            except (ZeroDivisionError, NotImplementedError):
+                pass
+        raise RuntimeError("Base not found")
+
     def construct_tree(self, level):
-        g0 = self._generators[0]
-        b0, b1 = find_eigenvector_matrix(g0).column(0)
-        base = b0 / b1
         T = NeighborJoiningTree(
-            self.K, [act(g, base) for wd, g in self.all_elements_up_to_length(level)]
+            self.K,
+            [act(g, self.base) for wd, g in self.all_elements_up_to_length(level)],
         )
         if level == 1:
             pp = [choose_leaf(tt) for tt in T.tree[1][:2]]
-            self.root_vertex = T.BT([T.root, *pp])
+            self.root_vertex = T.BT.vertex_from_three_points([T.root, *pp])
         self.NJtree = T
         self._action_table = None
         return self.NJtree
 
     @cached_method
+    @muted
     def fundamental_domain(self, level=1, check=True):
         while True:
             level += 1
@@ -316,10 +344,11 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
             except ValueError as e:
                 verbose(str(e))
 
+    @muted
     def _fundamental_domain(self, i0=None, check=True):
         tree = self.NJtree
         if i0 is None:
-            i0 = tree.vertex_index(self.root_vertex)
+            i0 = tree.vertices().index(self.root_vertex)
         adj = tree.adjacency_list()
         edge_classes = self.edge_classes()
         open_edges = [(None, i0)]
@@ -351,16 +380,35 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
             raise ValueError("Not a correct fundamental domain")
         good_generators = []
         balls = {}
-        verts = self.NJtree.vertices()
-        for i, (e0, e1, word) in enumerate(pairing):
+        T = self.NJtree
+        verts = T.vertices()
+        mid = lambda x, y: T.BT.find_midpoint(x, y)
+        for i, ((v00, v01), (v10, v11), word) in enumerate(pairing):
             w = self._G.one()
             for l in word:
                 w = w * (self._G.gen(l // 2) ** ((-1) ** l))
             good_generators.append(w)
-            B0 = find_midpoint(self.K, verts[e0[0]], verts[e0[1]])
-            B1 = find_midpoint(self.K, verts[e1[0]], verts[e1[1]])
+            g = self.element_to_matrix(w)
+            B0 = mid(verts[v00], verts[v01])
+            B1 = mid(verts[v10], verts[v11])
+            if (
+                verts[v00].radius == verts[v01].radius
+                or verts[v10].radius == verts[v11].radius
+            ):
+                assert (
+                    g * B0.complement() != B1.closure()
+                    or g.adjugate() * B1.complement() != B0.closure()
+                )
+                B0 = mid(verts[v00], B0)
+                B1 = (g * B0.closure()).complement()
             balls[i + 1] = B1
             balls[-(i + 1)] = B0
+        if check:
+            try:
+                newgens = [self.element_to_matrix(o) for o in good_generators]
+                test_fundamental_domain(newgens, balls)
+            except RuntimeError:
+                raise ValueError("Not a correct fundamental domain (test)")
         return good_generators, balls, pairing
 
     def certify(self, pairing, i0):
@@ -426,10 +474,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
             action_table = self.action_table()
         adj = self.NJtree.adjacency_list()
         n_vertices = len(adj)
-        edges = set()
-        for i in range(n_vertices):
-            for j in adj[i]:
-                edges.add((i, j))
+        edges = set(((i, j) for i in range(n_vertices) for j in adj[i]))
         r = dict()
         visited = set()
         for i in edges:
@@ -463,48 +508,31 @@ class SchottkyGroup(SchottkyGroup_abstract):
         transformation=None,
         parameters=None,
         keep_generators=True,
-        check=False,
+        check=True,
     ):
         if balls is not None:
-            self.balls = balls
+            self._balls = balls
         if transformation is not None:
             self._transformation = transformation
         if parameters is not None:
             self.parameters = parameters
         self._keep_generators = keep_generators
-        # if balls is None:
-        #     G = PreSchottkyGroup(K, generators)
-        #     gp = G.group()
-        #     good_gens, good_balls, _ = G.fundamental_domain()
-        #     if all(len(o.Tietze()) == 1 for o in good_gens):
-        #         self.balls = {}
-        #         for j0, gg in enumerate(good_gens):
-        #             i = gg.Tietze()[0]
-        #             idx = sgn(i) * (j0 + 1)
-        #             self.balls[i] = good_balls[idx]
-        #             self.balls[-i] = good_balls[-idx]
-        #             self._transformation = [w for w in gp.gens()]
-        #     else:
-        #         if keep_generators:
-        #             raise ValueError("Generators are not in good position")
-        #         else:
-        #             # print(good_gens)
-        #             generators = [G.element_to_matrix(g) for g in good_gens]
-        #             self.balls = good_balls
-        #             self._transformation = good_gens
-        # else:
-        #     self.balls = balls
-        #     self._transformation = transformation
-        #     if parameters is not None:
-        #         self.parameters = parameters
-        if check:
-            test_fundamental_domain(generators, self.balls)
         super().__init__(K, generators)
+        if check:
+            self.test_fundamental_domain()
 
-    @lazy_attribute
+    def test_fundamental_domain(self):
+        balls = self.balls()
+        gens = self._generators
+        test_fundamental_domain(gens, balls)
+
     def balls(self):
+        try:
+            return self._balls
+        except AttributeError:
+            pass
         K = self.base_ring()
-        generators = self.generators()
+        generators = self._generators
         G = PreSchottkyGroup(K, generators)
         gp = G.group()
         good_gens, good_balls, _ = G.fundamental_domain()
@@ -522,13 +550,17 @@ class SchottkyGroup(SchottkyGroup_abstract):
             else:
                 # print(good_gens)
                 self._generators = [G.element_to_matrix(g) for g in good_gens]
+                self._inverse_generators = tuple(
+                    [o.adjugate() for o in self._generators]
+                )
                 balls = good_balls
                 self._transformation = good_gens
+        self._balls = balls
         return balls
 
     @cached_method
     def gens_extended(self):
-        gens = [(i + 1, o) for i, o in enumerate(self.generators())]
+        gens = [(i + 1, o) for i, o in enumerate(self._generators)]
         gens.extend([(-i, o.determinant() ** -1 * o.adjugate()) for i, o in gens])
         for i, o in gens:
             o.set_immutable()
@@ -536,49 +568,58 @@ class SchottkyGroup(SchottkyGroup_abstract):
 
     @lazy_attribute
     def parameters(self):
-        balls = self.balls
+        balls = self.balls()
         ans = [find_parameter(o, balls[i], self.pi) for i, o in self.gens_extended()]
         for t in ans:
             t.set_immutable()
         return ans
 
-    @cached_method
-    def a_point(self, in_interior=True):
+    def a_point(self):
         K = self.base_ring()
-        x = K.random_element()
         n_iters = 0
         while n_iters < 100:
             n_iters += 1
+            x = K.random_element()
             try:
                 x0 = self.to_fundamental_domain(x)[0]
-                if in_interior:
-                    if any(x0 in B.closure() for B in self.balls.values()):
-                        raise ValueError
-                return x0
             except ValueError:
-                x = K.random_element()
+                continue
+            if self.in_fundamental_domain(x0, strict=True):
+                return x0
         raise RuntimeError("Reached maximum iterations (100)")
 
     def find_point(self, gamma, eps=1, idx=None):
-        balls = self.balls
+        balls = self.balls()
+        gens = self.gens_extended()
         if idx is not None:
             B = balls[-idx]
             if idx > 0:
-                assert self.generators()[idx - 1] == gamma
+                if self._generators[idx - 1] != gamma:
+                    B1 = next(balls[-i] for i, g in gens if g == gamma)
+                    # print(f'!! {B = } but {B1 = }')
+                    # print(balls)
+                    B = B1
             else:
-                assert self.generators()[-idx - 1] ** -1 == gamma
+                if self._generators[-idx - 1] ** -1 != gamma:
+                    B1 = next(balls[-i] for i, g in gens if g == gamma)
+                    # print(f'!! {B = } but {B1 = }')
+                    # print(balls)
+                    B = B1
         else:
-            gens = self.gens_extended()
             B = next(balls[-i] for i, g in gens if g == gamma)
         ans = B.center.lift_to_precision() + eps * self.pi ** ZZ(B.radius)
-        test = lambda x : self.in_fundamental_domain(x,strict=False)
+        test = lambda x: self.in_fundamental_domain(x, strict=False)
 
         try:
             if not test(ans):
-                raise RuntimeError(f'{ans = } should be in fundamental domain, but it is not.')
-            ga = act(gamma,ans)
+                raise RuntimeError(
+                    f"{ans = } should be in fundamental domain, but it is not."
+                )
+            ga = act(gamma, ans)
             if not test(ga):
-                raise RuntimeError(f'gamma * ans = {ga} should be in fundamental domain, but it is not.')
+                raise RuntimeError(
+                    f"gamma * ans = {ga} should be in fundamental domain, but it is not."
+                )
         except RuntimeError:
             new_idx = -idx if idx is not None else None
             ginv = gamma**-1
@@ -592,8 +633,8 @@ class SchottkyGroup(SchottkyGroup_abstract):
         and a word w = [i1,...,ik] (in Tietze notation)
         such that gi1 * ... * gik * z = x
         """
-        gens = self.generators()
-        inv_gens = self.inverse_generators()
+        gens = self._generators
+        inv_gens = self._inverse_generators
         gens = [None] + list(gens) + list(reversed(inv_gens))
         word = []
         i = self.in_which_ball(x)
@@ -606,45 +647,52 @@ class SchottkyGroup(SchottkyGroup_abstract):
                 )
             x = x1
             i = self.in_which_ball(x)
-        return x, word
+        return x, tuple(word)
 
     def in_fundamental_domain(self, x, strict=False):
         return self.in_which_ball(x, closure=strict) is None
 
     def word_problem(self, gamma):
-        z0 = self.a_point()
-        z1 = act(gamma, z0)
-        z2, word = self.to_fundamental_domain(z1)
-        if not z0.is_equal_to(z2, 10):  # DEBUG
-            gens = [(i + 1, o) for i, o in enumerate(self.generators())]
-            gens.extend([(-i, o.determinant() ** -1 * o.adjugate()) for i, o in gens])
-            found = False
-            for i, g in gens:
-                gz2 = act(g, z2)
-                if z0.is_equal_to(gz2, 10):
-                    word.append(i)
-                    found = True
-                    break
-            if not found:
-                raise RuntimeError(f"Something went wrong! {z0 = }, {z2 = } {word = }")
+        found = False
+        while not found:
+            z0 = self.a_point()
+            z1 = act(gamma, z0)
+            z2, word = self.to_fundamental_domain(z1)
+            if z0 == z2:
+                found = True
+                break
+            else:  # DEBUG: why is this needed?
+                gens = [(i + 1, o) for i, o in enumerate(self._generators)]
+                gens.extend(
+                    [(-i, o.determinant() ** -1 * o.adjugate()) for i, o in gens]
+                )
+                for i, g in gens:
+                    gz2 = act(g, z2)
+                    if z0 == gz2:
+                        word.append(-i)
+                        found = True
+                        break
+                # if not found:
+                #     raise RuntimeError(f"Something went wrong! {z0 = }, {z2 = } {word = }")
         return tuple(word)
 
+    @muted
     def matrix_to_element(self, g):
         return self._G(self.word_problem(g))
 
     def in_which_ball(self, x, closure=False):
         if closure:
-            return next((i for i, B in self.balls.items() if x in B.closure()), None)
+            return next((i for i, B in self.balls().items() if x in B.closure()), None)
         else:
-            return next((i for i, B in self.balls.items() if x in B), None)
+            return next((i for i, B in self.balls().items() if x in B), None)
 
     def find_equivalent_divisor(self, D):
         # Compute an equivalent divisor to D with proper support
         # We replace (a) with (a0) - (g z) + (z) for a0 and z in
         # the closure of the fundamental domain.
         p = self.pi
-        gens = self.generators()
-        balls = self.balls
+        gens = self._generators
+        balls = self.balls()
         wd = [0 for _ in range(self.genus())]
         Div = D.parent()
         ans = Div([])
@@ -653,10 +701,10 @@ class SchottkyGroup(SchottkyGroup_abstract):
             for i in new_wd:
                 wd[abs(i) - 1] += n * sgn(i)
             ans += n * Div([(1, P0)])
-        for g, e in zip(gens, wd):
+        for i, (g, e) in enumerate(zip(gens, wd)):
             if e == 0:
                 continue
-            zz = self.find_point(g)
+            zz = self.find_point(g, idx=i + 1)
             ans -= e * Div([(1, zz), (-1, act(g, zz))])
         return ans
 
@@ -684,82 +732,83 @@ class SchottkyGroup(SchottkyGroup_abstract):
         True
 
         """
+        K = self.base_ring()
         if b is not None:
-            try:
-                K = a.parent()
-            except AttributeError:
-                K = self.base_ring()
-            if K.is_exact():  # DEBUG, set to avoid 0 and 1...
-                K = self.base_ring()
             DK = Divisors(K)
             D0 = DK([(1, a), (-1, b)])
         else:
             D0 = a
-            try:
-                K = a.parent().base_ring()
-            except AttributeError:
-                K = self.base_ring()
-            if K.is_exact():  # DEBUG, set to avoid 0 and 1...
-                K = self.base_ring()
-
         s = kwargs.pop("s", None)
         if s is not None:
             D0 += s * D0
-        D = self.find_equivalent_divisor(D0)
-        ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K, **kwargs)
+        recursive = kwargs.get("recursive", True)
+        if recursive:
+            D0 = self.find_equivalent_divisor(D0)
+        ans = ThetaOC(self, a=D0, b=None, prec=prec, base_ring=K, **kwargs)
         z = kwargs.pop("z", None)
         improve = kwargs.pop("improve", True)
         if improve or z is not None:
             ans = ans.improve(prec)
         return ans if z is None else ans(z)
 
-    @cached_method
     def u_function(self, gamma, prec, a=None, **kwargs):
         r"""
         Compute u_gamma
         """
         wd = self.word_problem(gamma)
-        gens = self.generators()
-        if len(wd) > 1:
-            if kwargs.get("z", None) is None:
-                raise NotImplementedError(
-                    "Need to specify a point at which we will evaluate"
+        gens = self._generators
+        z = kwargs.get("z", None)
+        if len(wd) > 1 or wd[0] < 0:
+            if z is None:
+                kwargs.pop("z", None)
+                return lambda z: prod(
+                    self._u_function(gens[abs(i) - 1], prec, a=a)(z) ** ZZ(sgn(i))
+                    for i in wd
                 )
             return prod(
-                self.u_function(gens[abs(i) - 1], prec, a=a, **kwargs) ** sgn(i)
+                self._u_function(gens[abs(i) - 1], prec, a=a)(z) ** ZZ(sgn(i))
                 for i in wd
             )
+        if z is None:
+            return lambda z: self._u_function(gens[wd[0] - 1], prec, a=a)(z)
+        else:
+            return self._u_function(gens[wd[0] - 1], prec, a=a)(z)
 
+    @cached_method
+    def _u_function(self, gamma, prec, a):
+        r"""
+        Compute u_gamma
+        """
+        wd = self.word_problem(gamma)
+        gens = self._generators
+        assert len(wd) == 1 and wd[0] > 0
         if a is None:
-            a = self.find_point(gamma)  # Should pass idx=wd[0] DEBUG ??
+            a = self.find_point(gamma, idx=wd[0])
         K = a.parent()
         DK = Divisors(K)
         D = DK([(1, a), (-1, act(gamma, a))])
-        ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K, **kwargs)
-        improve = kwargs.pop("improve", True)
-        if improve:
-            ans = ans.improve(prec)
-        z = kwargs.pop("z", None)
-        return ans if z is None else ans(z)
+        ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K)
+        ans = ans.improve(prec)
+        return ans
 
     @cached_method
     def period_matrix(self, prec, **kwargs):
-        g = len(self.generators())
+        g = len(self._generators)
         M = MatrixSpace(self.base_ring(), g, g)(0)
         z1 = kwargs.get("z1", None)
         if z1 is None:
             z1 = self.a_point()
         for i in range(g):
-            g1 = self.generators()[i]
-            T = self.u_function(g1, prec, a=z1, **kwargs).improve(prec)
+            g1 = self._generators[i]
+            T = self.u_function(g1, prec, a=z1, **kwargs)
             for j in range(i, g):
-                g2 = self.generators()[j]
+                g2 = self._generators[j]
                 z2 = kwargs.get("z2", None)
                 if z2 is None:
                     z2 = self.find_point(g2, eps=1 + self.pi)
                 g2_z2 = act(g2, z2)
-                num = T(z2, recursive=False)
-                den = T(g2_z2, recursive=False)
+                num = T(z2)
+                den = T(g2_z2)
                 M[i, j] = num / den
                 M[j, i] = num / den
         return M
@@ -792,40 +841,46 @@ class SchottkyGroup(SchottkyGroup_abstract):
         sage: (q11g/q11-1).valuation() > prec
         True
         """
-        g = len(self.generators())
+        g = len(self._generators)
         if i in ZZ:
             assert j in ZZ
-            g1 = self.generators()[i]
-            g2 = self.generators()[j]
+            g1 = self._generators[i]
+            g2 = self._generators[j]
         else:
-            a = word_to_abelian(i, g)
-            b = word_to_abelian(j, g)
+            ilist = i
+            jlist = j
             m = self.period_matrix(prec, **kwargs)
-            return a * m * b
+            ans = m.parent().base_ring()(1)
+            for i in ilist:
+                i0, isgn = abs(i) - 1, sgn(i)
+                for j in jlist:
+                    j0, jsgn = abs(j) - 1, sgn(j)
+                    ans *= m[i0, j0] ** ZZ(isgn * jsgn)
+            return ans
 
         z1 = kwargs.pop("z1", None)
         if z1 is None:
             z1 = self.a_point()
         z2 = kwargs.pop("z2", None)
         if z2 is None:
-            z2 = self.find_point(g2, eps=1 + self.pi, idx=j)
+            z2 = self.find_point(g2, eps=1 + self.pi, idx=j + 1)
         g2_z2 = act(g2, z2)
-        T = self.u_function(g1, prec, a=z1, **kwargs).improve(prec)
-        num = T(z2, recursive=False)
-        den = T(g2_z2, recursive=False)
+        T = self.u_function(g1, prec, a=z1, **kwargs)
+        num = T(z2)
+        den = T(g2_z2)
         verbose(f"{num = }")
         verbose(f"{den = }")
         return num / den
 
     def period_naive(self, i, j, prec, **kwargs):
-        g1 = self.generators()[i]
-        g2 = self.generators()[j]
-        z1 = self.find_point(g1, idx=i)
+        g1 = self._generators[i]
+        g2 = self._generators[j]
+        z1 = self.find_point(g1, idx=i + 1)
         if i == j:
             z1 = act(g1.adjugate(), z1)
-            z2 = self.find_point(g2, eps=self.pi + 1, idx=j)
+            z2 = self.find_point(g2, eps=self.pi + 1, idx=j + 1)
         else:
-            z2 = self.find_point(g2, idx=j)
+            z2 = self.find_point(g2, idx=j + 1)
         num = self.theta_naive(prec, z=z2, a=z1, gamma=g1, **kwargs)
         den = self.theta_naive(prec, z=act(g2, z2), a=z1, gamma=g1, **kwargs)
         verbose(f"{num = }")
@@ -835,11 +890,19 @@ class SchottkyGroup(SchottkyGroup_abstract):
 
 class Ball(Element):
     def __init__(self, parent, center, radius, is_open=True, is_complement=False):
-        self.radius = radius
-        self.center = parent.K(center).add_bigoh(self.radius + 1)
+        self.radius = QQ(radius)
+        self.center = parent.K(center).add_bigoh(ZZ(self.radius.ceil()) + 1)
         self.is_complement = is_complement
         self.is_open = is_open
         Element.__init__(self, parent)
+
+    def __hash__(self):
+        return hash(str(self.get_key()))
+
+    @cached_method
+    def get_key(self):
+        r = self.radius
+        return r if self.center.is_zero(r) else (self.center.add_bigoh(r), r)
 
     def _repr_(self):
         comp = "P^1 - " if self.is_complement else ""
@@ -883,16 +946,7 @@ class Ball(Element):
         return C(self.parent(), self.center, self.radius, is_open, self.is_complement)
 
     def __eq__(self, other):
-        if not (
-            self.radius == other.radius
-            and self.is_open == other.is_open
-            and self.is_complement == other.is_complement
-        ):
-            return False
-        if self.is_complement:
-            return self.complement() == other.complement()
-        else:
-            return self.center in other and other.center in self
+        return self.parent().are_equal(self, other)
 
     def __ne__(self, other):
         return not self == other
@@ -908,13 +962,22 @@ class Ball(Element):
         a, b, c, d = g.list()
         x = self.center
         x = x.lift_to_precision()
-        try:
-            if (x + d / c).valuation() > self.radius:
-                inf_in_image = True
-            else:
+        if self.is_open:
+            try:
+                if (x + d / c).valuation() > self.radius:
+                    inf_in_image = True
+                else:
+                    inf_in_image = False
+            except ZeroDivisionError:
                 inf_in_image = False
-        except ZeroDivisionError:
-            inf_in_image = False
+        else:
+            try:
+                if (x + d / c).valuation() >= self.radius:
+                    inf_in_image = True
+                else:
+                    inf_in_image = False
+            except ZeroDivisionError:
+                inf_in_image = False
 
         if inf_in_image:
             gpx = (g.determinant() / c**2).valuation()
@@ -935,121 +998,103 @@ class Ball(Element):
 class Balls(UniqueRepresentation, Parent):
     Element = Ball
 
-    def __init__(self, K):
+    def __init__(self, K, oriented=True):
         self.K = K
+        self._oriented = oriented
         Parent.__init__(self)
+
+    def base_ring(self):
+        return self.K
 
     def _repr_(self):
         return "Set of balls for P^1(K), with K = " + str(self.K)
 
     def _element_constructor_(self, center, radius, is_open=True, is_complement=False):
+        if not self._oriented:
+            is_open = False
+            is_complement = False
         return self.element_class(self, center, radius, is_open, is_complement)
 
-
-class BTVertex(ModuleElement):
-    def __init__(self, parent, a, r_valuation):
-        KK = parent.base_ring()
-        try:
-            ln = len(a)
-            ps = [KK(i) for i in a if i is not Infinity]
-            if len(ps) == 2:
-                self.r_valuation = (ps[0] - ps[1]).valuation()
-                self.a = ps[0].add_bigoh(self.r_valuation)
+    def are_equal(self, left, right):
+        if self._oriented:
+            if not (
+                left.radius == right.radius
+                and left.is_open == right.is_open
+                and left.is_complement == right.is_complement
+            ):
+                return False
+            if left.is_complement:
+                return left.complement() == right.complement()
             else:
-                d12 = (ps[0] - ps[1]).valuation()
-                d23 = (ps[1] - ps[2]).valuation()
-                d13 = (ps[0] - ps[2]).valuation()
-                maxval = max([d12, d23, d13])
-                self.r_valuation = maxval
-                self.a = (
-                    ps[0].add_bigoh(maxval) if d12 == maxval or d13 == maxval else ps[1]
-                )
-        except TypeError:
-            try:
-                self.r_valuation = ZZ(r_valuation)
-                self.a = KK(a).add_bigoh(r_valuation)
-            except TypeError:
-                self.r_valuation = Infinity
-                self.a = KK(a)
-        ModuleElement.__init__(self, parent)
-
-    def contained_in(self, other):
-        return (self.a - other.a).valuation() <= other.r_valuation
-
-    def __hash__(self):
-        return hash(self.get_key())
-
-    @cached_method
-    def is_zero(self):
-        return self.a.is_zero(self.r_valuation)
-
-    @cached_method
-    def get_key(self):
-        return (
-            self.r_valuation
-            if self.is_zero()
-            else (self.a.add_bigoh(self.r_valuation), self.r_valuation)
-        )
-
-    def _repr_(self):
-        return f"Ball({self.a},|π|^{self.r_valuation})"
-
-    def __eq__(self, other):
-        return self.get_key() == other.get_key()
-
-    def _add_(self, other):
-        C = self.__class__
-        return C(
-            self.parent(), self.a + other.a, min(self.r_valuation, other.r_valuation)
-        )
-
-    def _lmul_(self, b):
-        C = self.__class__
-        KK = self.parent().base_ring()
-        assert b != 0
-        return C(self.parent(), self.a * b, self.r_valuation + KK(b).valuation())
-
-    def inv(self):
-        C = self.__class__
-        if self.is_zero():
-            return C(self.parent(), 0, -self.r_valuation)
+                return left.center in right and right.center in left
         else:
-            return C(
-                self.parent(), 1 / self.a, self.r_valuation - 2 * self.a.valuation()
+            return (
+                left.radius == right.radius
+                and (left.center - right.center).valuation() >= left.radius
             )
 
-    def _acted_upon_(self, g, on_left):
-        if hasattr(g, "matrix"):
-            g = g.matrix()
-        if g[1, 0] == 0:
-            return 1 / g[1, 1] * (g[0, 0] * self + g[0, 1])
+    def find_midpoint(self, v0, v1):
+        K = self.base_ring()
+        t = K(v0.center - v1.center).valuation()
+        if t < v0.radius and t < v1.radius:
+            distance = (v0.radius - t) + (v1.radius - t)
         else:
-            t = (g[1, 0] * self + g[1, 1]).inv()
-            r = (g[0, 1] - g[0, 0] * g[1, 1] / g[1, 0]) * t + g[0, 0] / g[1, 0]
-            return r
+            distance = abs(v0.radius - v1.radius)
+        v, comp = (v1, False) if v1.radius > v0.radius else (v0, True)
+        BK = Balls(K)
+        return BK(
+            v.center, v.radius - QQ(distance) / 2, is_open=not comp, is_complement=comp
+        )
+
+    def vertex_from_three_points(self, a):
+        KK = self.base_ring()
+        ln = len(a)
+        ps = [KK(i) for i in a if i is not Infinity]
+        if len(ps) == 2:
+            val = (ps[0] - ps[1]).valuation()
+            return self.element_class(self, ps[0].add_bigoh(val), val)
+        else:
+            assert len(ps) == 3
+            d12 = (ps[0] - ps[1]).valuation()
+            d23 = (ps[1] - ps[2]).valuation()
+            d13 = (ps[0] - ps[2]).valuation()
+            maxval = max([d12, d23, d13])
+            center = (
+                ps[0].add_bigoh(maxval) if d12 == maxval or d13 == maxval else ps[1]
+            )
+            return self.element_class(self, center, maxval)
 
 
-class BTTree(UniqueRepresentation, Module):
-    Element = BTVertex
-
-    def __init__(self, K):
-        self.prec = K.precision_cap()
-        Module.__init__(self, base=K)
-
-    def _element_constructor_(self, a, rval=None):
-        if rval is None:
-            rval = Infinity
-        return self.element_class(self, a, rval)
-
-    def _an_element_(self):
-        return self.element_class(self, 1, 2)
-
-    def _coerce_map_from_(self, S):
-        if self.base().has_coerce_map_from(S):
-            return True
+def cross_ratio(points):
+    [p1, p2, p3, p4] = points
+    if p1 is Infinity:
+        return (p3 - p2) / (p4 - p2)
+    elif p2 is Infinity:
+        return (p3 - p1) / (p4 - p1)
+    elif p3 is Infinity:
+        return (p4 - p2) / (p4 - p1)
+    elif p4 is Infinity:
+        return (p3 - p1) / (p3 - p2)
+    else:
+        return (p3 - p1) * (p4 - p2) / ((p4 - p1) * (p3 - p2))
 
 
 def four_point_configuration(K, pts):
+    p1, p2, p3, p4 = pts
+    v1 = abs(K(cross_ratio([p1, p2, p3, p4])).valuation())
+    v2 = abs(K(cross_ratio([p1, p3, p2, p4])).valuation())
+    v3 = abs(K(cross_ratio([p1, p4, p2, p3])).valuation())
+    if v2 > 0 and v3 > 0:
+        return p3, v2
+    elif v1 > 0 and v3 > 0:
+        return p2, v1
+    elif v1 > 0 and v2 > 0:
+        return p1, v1
+    else:
+        return None, 0
+
+
+def four_point_configuration_works(K, pts):
     V = [[K(pi - pj).valuation() for pj in pts] for pi in pts]
     v2 = abs(V[0][1] + V[2][3] - V[1][2] - V[0][3])
     v3 = abs(V[0][1] + V[2][3] - V[1][3] - V[0][2])
@@ -1076,7 +1121,7 @@ def choose_leaf(tree):
 class NeighborJoiningTree(SageObject):
     def __init__(self, K, leaves):
         self.K = K
-        self.BT = BTTree(self.K)
+        self.BT = Balls(self.K, oriented=False)
         leaves = uniq(leaves)
         self.root = leaves[0]
         self.tree = [Infinity, [[None, leaves[1]], [None, leaves[2]]]]
@@ -1085,6 +1130,28 @@ class NeighborJoiningTree(SageObject):
         for leaf in leaves[3:]:
             self.add_leaf(leaf)
         self.update_vertex_table()
+
+    def to_graph(self):
+        tree = self.tree
+        G = Graph(weighted=True)
+        G.add_vertex(0)
+        V = [(0, tt) for tt in tree[1]]
+        W = []
+        newlabel = 0
+        Gdict = {}
+        while len(V) > 0:
+            for label, T in V:
+                newlabel += 1
+                G.add_vertex(newlabel)
+                if leaf(T):
+                    G.add_edge(label, newlabel, label=str(T[1].add_bigoh(3)))
+                    Gdict[newlabel] = T[1]
+                else:
+                    G.add_edge(label, newlabel, label=str(T[0]))
+                    W.extend([(newlabel, tt) for tt in T[1]])
+            V = W
+            W = []
+        return G, Gdict
 
     def to_string(self, subtree):
         s = "--(" + str(subtree[0]) + ")--"
@@ -1143,17 +1210,15 @@ class NeighborJoiningTree(SageObject):
     def vertices(self, subtree=None):
         if subtree is None:
             subtree = self.tree
-        if not leaf(subtree):
-            p1 = choose_leaf(subtree[1][0])
-            p2 = choose_leaf(subtree[1][1])
-            return sum(
-                (self.vertices(tt) for tt in subtree[1]), [self.BT([self.root, p1, p2])]
-            )
-        else:
+        if leaf(subtree):
             return []
-
-    def vertex_index(self, v0, subtree=None):
-        return next((i for i, v in enumerate(self.vertices(subtree)) if v == v0))
+        children = subtree[1]
+        p0 = choose_leaf(children[0])
+        p1 = choose_leaf(children[1])
+        V = [self.BT.vertex_from_three_points([self.root, p0, p1])]
+        for tt in children:
+            V.extend(self.vertices(tt))
+        return V
 
     def update_vertex_table(self):
         self.vertex_table = {hash_vertex(v): i for i, v in enumerate(self.vertices())}
@@ -1163,14 +1228,8 @@ class NeighborJoiningTree(SageObject):
             return self._adjacency_list
         r = tuple([] for _ in self.vertices())
         for v1, v2 in self.adjacency():
-            try:
-                i1 = self.vertex_table[hash_vertex(v1)]
-            except KeyError:
-                i1 = self.vertices().index(v1)
-            try:
-                i2 = self.vertex_table[hash_vertex(v2)]
-            except KeyError:
-                i2 = self.vertices().index(v2)
+            i1 = self.vertex_table[hash_vertex(v1)]
+            i2 = self.vertex_table[hash_vertex(v2)]
             r[i1].append(i2)
             r[i2].append(i1)
         self._adjacency_list = r
@@ -1183,7 +1242,7 @@ class NeighborJoiningTree(SageObject):
         if not leaf(subtree):
             p1 = choose_leaf(subtree[1][0])
             p2 = choose_leaf(subtree[1][1])
-            v = self.BT([self.root, p1, p2])
+            v = self.BT.vertex_from_three_points([self.root, p1, p2])
             result = [[root, v]] if root is not None and not leaf(subtree) else []
             return sum((self.adjacency(tt, v) for tt in subtree[1]), result)
         else:
@@ -1192,7 +1251,7 @@ class NeighborJoiningTree(SageObject):
 
 def test_fundamental_domain(gens, balls):
     all_gens = [(i + 1, g) for i, g in enumerate(gens)] + [
-        (-(i + 1), g**-1) for i, g in enumerate(gens)
+        (-(i + 1), g.adjugate()) for i, g in enumerate(gens)
     ]
     fails = []
     for i, g in all_gens:
@@ -1200,14 +1259,21 @@ def test_fundamental_domain(gens, balls):
             if i == j:
                 continue
             if (balls[i].closure()).intersects(balls[j].closure()):
-                fails.append((i, j))
-                verbose(f"Test *failed* for balls {i = } and {j = }")
-            else:
-                verbose(f"Test passed for balls {i = } and {j = }")
-        if g * balls[-i].complement() != balls[i].closure():
+                fails.append(
+                    (
+                        i,
+                        j,
+                    )
+                )
+            #     verbose(f"Test *failed* for balls {i = } and {j = }")
+            # else:
+            #     verbose(f"Test passed for balls {i = } and {j = }")
+        B0 = g * balls[-i].complement()
+        B1 = balls[i].closure()
+        if B0 != B1:
             fails.append(i)
-            verbose(f"Test *failed* for {i = }")
-        else:
-            verbose(f"Test passed for {i = }")
+        #     verbose(f"Test *failed* for {i = }. {B0 = }, {B1 = }")
+        # else:
+        #     verbose(f"Test passed for {i = }")
     if len(fails) > 0:
         raise RuntimeError(f"Some tests failed. ({fails})")

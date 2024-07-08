@@ -155,6 +155,7 @@ class RationalFunctionsElement(ModuleElement):
 
 class RationalFunctions(Parent, CachedRepresentation):
     r""" """
+
     Element = RationalFunctionsElement
 
     def __init__(self, K):

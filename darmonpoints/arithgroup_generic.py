@@ -704,8 +704,8 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
 
         ## Define new function on the fly to pick which of Q/more general field we work in
         ## lift_to_matrix takes parameters c,d, then lifts (c:d) to a 2X2 matrix over the NF representing it
-        lift_to_matrix = (
-            lambda c, d: lift_to_sl2z(c, d, P.N())
+        lift_to_matrix = lambda c, d: (
+            lift_to_sl2z(c, d, P.N())
             if K.degree() == 1
             else lift_to_sl2_Ok(P.N(), c, d)
         )

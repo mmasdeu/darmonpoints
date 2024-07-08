@@ -112,6 +112,9 @@ class DivisorsElement(ModuleElement):
             ]
         )
 
+    def intersects(self, right):
+        return any(hP in right._data for hP in self._data)
+
     def __iter__(self):
         return iter(((self._ptdict[hP], n) for hP, n in self._data.items()))
 
@@ -203,17 +206,19 @@ class DivisorsElement(ModuleElement):
     def left_act_by_matrix(self, g):
         a, b, c, d = g.list()
         gp = self.parent()
-        K = self.parent().base_ring()
         newdict = defaultdict(ZZ)
         new_ptdata = {}
         for P, n in self:
             if P == Infinity:
                 try:
-                    new_pt = K(a) / K(c)
+                    new_pt = a / c
                 except (PrecisionError, ZeroDivisionError):
                     new_pt = Infinity
             else:
-                new_pt = (K(a) * P + K(b)) / (K(c) * P + K(d))
+                try:
+                    new_pt = (a * P + b) / (c * P + d)
+                except (PrecisionError, ZeroDivisionError):
+                    new_pt = Infinity
             hnew_pt = _hash(new_pt)
             newdict[hnew_pt] += n
             new_ptdata[hnew_pt] = new_pt
@@ -254,7 +259,8 @@ class DivisorsElement(ModuleElement):
             return lambda z: prod(((1 - z / P) ** n for P, n in self), z.parent()(1))
         else:
             if z is None:
-                z = PolynomialRing(self.parent()._field, names="z").gen()
+                K = self.parent()._field
+                z = K["z"].gen()
             return prod(((1 - z / P) ** n for P, n in self), z.parent()(1))
 
     def as_list_of_differences(self):
