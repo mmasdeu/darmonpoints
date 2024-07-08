@@ -1790,7 +1790,9 @@ def generate_listI10(F, N):
     for ell in F.primes_of_bounded_norm(5):
         factor_list.append(ell.gens_reduced()[0])
         exp_ranges.append(range_smallprimes)
-    return [prod([o**i for o, i in zip(factor_list, v)]) for v in product(*exp_ranges)]
+    return [
+        prod([o**i for o, i in zip(factor_list, v)]) for v in product(*exp_ranges)
+    ]
 
 
 def find_kadziela_matrices(M, T):
