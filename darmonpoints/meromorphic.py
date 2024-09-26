@@ -304,6 +304,6 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
 
     def _repr_(self):
         return (
-            "Meromorphic Multiplicative Functions over %s with parameter %s, p = %s and prec = %s"
-            % (self._base_ring, self._parameter, self._p, self._prec)
+            "Meromorphic Multiplicative Functions over %s with p = %s and prec = %s"
+            % (self._base_ring, self._p, self._prec)
         )

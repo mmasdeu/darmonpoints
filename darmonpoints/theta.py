@@ -228,7 +228,7 @@ class ThetaOC(SageObject):
             z0, wd = G.to_fundamental_domain(z)
             wdab = word_to_abelian(wd, len(G.generators()))
             ans *= prod(
-                G.u_function(g, self.prec).evaluate(self.D, recursive=False) ** i
+                G._u_function(g, self.prec, None).evaluate(self.D, recursive=False) ** i
                 for g, i in zip(G.generators(), wdab)
                 if i != 0
             )
