@@ -30,21 +30,23 @@ from .util import muted
 
 infinity = Infinity
 
-def matrix_from_balls(Bp,Bm):
+
+def matrix_from_balls(Bp, Bm):
     K = Bp.parent().base_ring()
     pi = K.uniformizer()
     a = K(Bp.center).lift_to_precision()
     b = K(Bm.center).lift_to_precision()
     r1 = Bp.radius
     r2 = Bm.radius
-    delta = Matrix(K,2,2,[1, -a, 1, -b])
-    r = ZZ((delta*Bp).radius - (delta*Bm).radius)
-    gamma0 = Matrix(K,2,2,[pi**-r,0,0,1])
-    gamma = delta.adjugate()*gamma0*delta
+    delta = Matrix(K, 2, 2, [1, -a, 1, -b])
+    r = ZZ((delta * Bp).radius - (delta * Bm).radius)
+    gamma0 = Matrix(K, 2, 2, [pi**-r, 0, 0, 1])
+    gamma = delta.adjugate() * gamma0 * delta
     detval = gamma.determinant().valuation()
-    gamma = pi**ZZ((-detval/2).round()) * gamma
+    gamma = pi ** ZZ((-detval / 2).round()) * gamma
     assert gamma0 * delta * Bp.complement() == delta * Bm.closure()
     return gamma
+
 
 def reduce_word(w):
     r = []
@@ -622,7 +624,11 @@ class SchottkyGroup(SchottkyGroup_abstract):
                     B = B1
         else:
             B = next(balls[-i] for i, g in gens if g == gamma)
-        ans = B.center.lift_to_precision() + eps * self.pi ** ZZ(B.radius)
+        try:
+            ans = B.center.lift_to_precision() + eps * self.pi ** ZZ(B.radius)
+        except TypeError:
+            raise RuntimeError('Fundamental domain has balls with fractional radius. \
+            Try with a quadratic (ramified) extension.')
         test = lambda x: self.in_fundamental_domain(x, strict=False)
 
         try:
