@@ -721,12 +721,12 @@ class SchottkyGroup(SchottkyGroup_abstract):
             P0, new_wd = self.to_fundamental_domain(P)
             for i in new_wd:
                 wd[abs(i) - 1] += n * sgn(i)
-            ans += n * Div([(1, P0)])
+            ans += Div([(n, P0)])
         for i, (g, e) in enumerate(zip(gens, wd)):
             if e == 0:
                 continue
             zz = self.find_point(g, idx=i + 1)
-            ans -= e * Div([(1, zz), (-1, act(g, zz))])
+            ans -= Div([(e, zz), (-e, act(g, zz))])
         return ans
 
     def theta(self, prec, a, b=None, **kwargs):
@@ -800,38 +800,38 @@ class SchottkyGroup(SchottkyGroup_abstract):
         r"""
         Compute u_gamma
         """
-        wd = self.word_problem(gamma)
-        gens = self._generators
-        assert len(wd) == 1 and wd[0] > 0
+        (i,) = self.word_problem(gamma)
+        assert i > 0
+        # assert len(wd) == 1 and wd[0] > 0
         if a is None:
-            a = self.find_point(gamma, idx=wd[0])
+            a = self.a_point() #self.find_point(gamma, idx=g)
+        a = self.base_ring()(1) * a
         K = a.parent()
-        DK = Divisors(K)
-        D = DK([(1, a), (-1, act(gamma, a))])
+        D = Divisors(K)([(1, a), (-1, act(gamma, a))])
+        D = self.find_equivalent_divisor(D)
         ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K)
         ans = ans.improve(prec)
         return ans
 
     @cached_method
     def period_matrix(self, prec, **kwargs):
-        g = len(self._generators)
-        M = MatrixSpace(self.base_ring(), g, g)(0)
+        genus = len(self._generators)
+        M = MatrixSpace(self.base_ring(), genus, genus)(0)
         z1 = kwargs.get("z1", None)
         if z1 is None:
             z1 = self.a_point()
-        for i in range(g):
+        z1 = self.base_ring()(1) * z1
+        K = z1.parent()
+        DK = Divisors(K)
+        divs = [self.find_equivalent_divisor(DK([(1, z1), (-1, act(gamma, z1))])) for gamma in self._generators]
+
+        for i in range(genus):
             g1 = self._generators[i]
             T = self.u_function(g1, prec, a=z1, **kwargs)
-            for j in range(i, g):
-                g2 = self._generators[j]
-                z2 = kwargs.get("z2", None)
-                if z2 is None:
-                    z2 = self.find_point(g2, eps=1 + self.pi)
-                g2_z2 = act(g2, z2)
-                num = T(z2)
-                den = T(g2_z2)
-                M[i, j] = num / den
-                M[j, i] = num / den
+            for j in range(i, genus):
+                ans = T(divs[j])
+                M[i, j] = ans
+                M[j, i] = ans
         return M
 
     @cached_method
@@ -862,7 +862,6 @@ class SchottkyGroup(SchottkyGroup_abstract):
         sage: (q11g-q11).valuation() >= prec
         True
         """
-        g = len(self._generators)
         if i in ZZ:
             assert j in ZZ
             g1 = self._generators[i]
@@ -882,16 +881,10 @@ class SchottkyGroup(SchottkyGroup_abstract):
         z1 = kwargs.pop("z1", None)
         if z1 is None:
             z1 = self.a_point()
-        z2 = kwargs.pop("z2", None)
-        if z2 is None:
-            z2 = self.find_point(g2, eps=1 + self.pi, idx=j + 1)
-        g2_z2 = act(g2, z2)
-        T = self.u_function(g1, prec, a=z1, **kwargs)
-        num = T(z2)
-        den = T(g2_z2)
-        verbose(f"{num = }")
-        verbose(f"{den = }")
-        return num / den
+        z1 = self.base_ring()(1) * z1
+        K = z1.parent()
+        div = Divisors(K)([(1, z1), (-1, act(g2, z1))])
+        return self.u_function(g1, prec, a = z1, z=div, **kwargs)
 
     def period_naive(self, i, j, prec, **kwargs):
         g1 = self._generators[i]

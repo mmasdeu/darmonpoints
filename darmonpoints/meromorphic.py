@@ -65,7 +65,7 @@ class MeromorphicFunctionsElement(ModuleElement):
                 self._value = divisor_to_pseries(parameter, Ps, data, prec)
                 self._value = self._value.list()
                 if len(data.support()) == 1:
-                    self.normalize_point = Q + 1  # DEBUG
+                    self.normalize_point = data.support()[0] + 1  # DEBUG
             elif data == 0:
                 self._value = Ps(1).list()  # multiplicative!
             elif data.parent() == parent:
@@ -113,10 +113,7 @@ class MeromorphicFunctionsElement(ModuleElement):
 
         def ev(P):
             fac = (P - pole) if pole is not None else 1
-            phiP = phi(P)
-            return fac * evalpoly(self._value, phiP) / valinf
-            # except PrecisionError:
-            #     return fac
+            return fac * evalpoly(self._value, phi(P)) / valinf
 
         if isinstance(D.parent(), Divisors):
             return prod(ev(P) ** n for P, n in D)
@@ -186,6 +183,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 
     def scale_by(self, k):  # multiplicative!
+        prec = self.parent()._prec
         ans = (self.power_series() ** k).list()[:prec]
         return self.__class__(self.parent(), ans, self._parameter, check=False)
 

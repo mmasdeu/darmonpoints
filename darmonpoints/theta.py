@@ -219,10 +219,12 @@ class ThetaOC(SageObject):
         return self.evaluate(z, **kwargs)
 
     def evaluate(self, z, **kwargs):
-        if isinstance(z, DivisorsElement):
-            return prod(self(P, **kwargs) ** n for P, n in z)
         G = self.G
         recursive = kwargs.get("recursive", True)
+        if isinstance(z, DivisorsElement):
+            if recursive:
+                z = G.find_equivalent_divisor(z)
+            return prod(self(P, **kwargs) ** n for P, n in z)
         ans = 1
         if recursive:
             z0, wd = G.to_fundamental_domain(z)
@@ -234,12 +236,17 @@ class ThetaOC(SageObject):
             )
         else:
             z0 = z
-        ans *= eval_rat(self.val, z0)
-        ans *= prod(F(z0) for FF in self.Fnlist for ky, F in FF.items())
+        # print(ans)
+        newans = eval_rat(self.val, z0)
+        # print(newans)
+        ans *= newans
+        newans = prod(F(z0) for FF in self.Fnlist for ky, F in FF.items())
+        # print(newans)
+        ans *= newans
         return ans
 
     def eval_derivative(self, z, recursive=False, return_value=False):
-        if recursive and not G.in_fundamental_domain(z, strict=False):
+        if recursive and not self.G.in_fundamental_domain(z, strict=False):
             raise NotImplementedError("Recursivity not implemented for derivative")
         if isinstance(z, DivisorsElement):
             return prod(self.eval_derivative(P, recursive=recursive) ** n for P, n in z)
