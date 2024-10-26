@@ -25,6 +25,38 @@ from .meromorphic import *
 infinity = Infinity
 
 
+def eval_rat(D, z):
+    if z == Infinity:
+        return 1
+    ans = 1
+    fails = 0
+    for P, n in D:
+        if P == Infinity:
+            continue
+        zP = z - P
+        if zP == 0:
+            fails += n
+        else:
+            ans *= zP**n
+    # assert fails == 0 # DEBUG !
+    return ans
+
+
+def eval_rat_derivative(D, z):
+    ans = 0
+    fails = 0
+    for P, n in D:
+        if P == Infinity:
+            continue
+        zP = z - P
+        if zP == 0:
+            fails += n
+        else:
+            ans += n * zP**-1
+    # assert fails == 0 # DEBUG !
+    return ans * eval_rat(D, z)
+
+
 def act(mtrx, z):
     """
     Compute the action of a 2x2 matrix on an element.
@@ -36,16 +68,10 @@ def act(mtrx, z):
     if z is Infinity:
         return Infinity if c == 0 else a / c
     try:
-        return (a * z + b) / (c * z + d) #a / c + (b - a * d / c) / (c * z + d)
+        return (a * z + b) / (c * z + d)
     except PrecisionError:
         return Infinity
-    except TypeError:
-        emb = z.parent().embedding_from_subfield
-        a, b, c, d = emb(a), emb(b), emb(c), emb(d)
-        try:
-            return (a * z + b) / (c * z + d)
-        except PrecisionError:
-            return Infinity
+
 
 def element_to_matrix(wd, generators):
     ans = wd(generators)
@@ -73,7 +99,7 @@ class ThetaOC(SageObject):
         self.G = G
         self.p = G.pi
         generators = G.generators()
-        balls = G.balls
+        balls = G.balls()
         if prec is None:
             try:
                 self.prec = K.precision_cap()
@@ -89,45 +115,64 @@ class ThetaOC(SageObject):
                     "Must specify a degree-0 divisor, or parameters a and b"
                 )
         else:
-            D = self.Div([(1, a), (-1, b)])
+            D = self.Div([(1, K(a)), (-1, K(b))])
         self.a = a
         self.b = b
         self.D = D
         self.m = 1
-        self.z = K['z'].gen()
+        self.z = K["z"].gen()
 
         params = G.parameters
         gens_ext = G.gens_extended()
-
         # self.val will contain the 0 and 1 terms
         D1 = sum((g * D for (i, g), tau in zip(gens_ext, params)), self.Div([]))
-        self.val = self.z.parent()(1)
-        self.val *= prod((self.z - P) ** n for P, n in (D + D1))
+        self.val = D + D1
+        # self.val = self.z.parent()(1)
+        # self.val *= prod((self.z - P) ** n for P, n in (D + D1) if P != Infinity)
+        self.MM = MeromorphicFunctions(self.K, self.p, self.prec)
         self.Fnlist = [{}]
-        D1dict = {i : g * D for (i, g), tau in zip(gens_ext,params)}
-        for (i, g), tau in zip(gens_ext,params):
-            gD = sum(
-                g * val for j, val in D1dict.items() if j != -i
-            )
-            self.Fnlist[0][i] = MeromorphicFunctions(self.K, self.p, self.prec)(gD, tau)
+        D1dict = {i: g * D for (i, g), tau in zip(gens_ext, params)}
+        for (i, g), tau in zip(gens_ext, params):
+            gD = sum(g * val for j, val in D1dict.items() if j != -i)
+            self.Fnlist[0][i] = self.MM(gD, tau)
 
     def improve(self, m):
         gens_ext = self.G.gens_extended()
         params = self.G.parameters
+        action_data = {}
+        for (i, gi), tau in zip(gens_ext, params):
+            for j, Fj in self.Fnlist[-1].items():
+                if i != -j:
+                    action_data[i, j] = (
+                        self.MM.get_action_data(gi, Fj._parameter, tau),
+                        tau,
+                    )
         for it in range(m):
             if self.m >= self.prec:
+                self.Fnlist = [
+                    {
+                        ky: sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky])
+                        for ky in self.Fnlist[0]
+                    }
+                ]
                 return self
             tmp = {}
             for (i, gi), tau in zip(gens_ext, params):
                 for j, Fj in self.Fnlist[-1].items():
                     if i != -j:
-                        vl = Fj.left_act_by_matrix(gi, tau)
+                        vl = Fj.fast_act(action_data[i, j])
                         try:
                             tmp[i] += vl
                         except KeyError:
                             tmp[i] = vl
             self.Fnlist.append(tmp)
             self.m += 1
+        self.Fnlist = [
+            {
+                ky: sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky])
+                for ky in self.Fnlist[0]
+            }
+        ]
         return self
 
     def improve_one(self):
@@ -174,32 +219,38 @@ class ThetaOC(SageObject):
         return self.evaluate(z, **kwargs)
 
     def evaluate(self, z, **kwargs):
-        if isinstance(z, DivisorsElement):
-            return prod(self(P, **kwargs) ** n for P, n in z)
         G = self.G
-        recursive = kwargs.get("recursive", False)
+        recursive = kwargs.get("recursive", True)
+        if isinstance(z, DivisorsElement):
+            if recursive:
+                z = G.find_equivalent_divisor(z)
+            return prod(self(P, **kwargs) ** n for P, n in z)
         ans = 1
         if recursive:
             z0, wd = G.to_fundamental_domain(z)
             wdab = word_to_abelian(wd, len(G.generators()))
             ans *= prod(
-                G.u_function(g, self.prec).evaluate(self.D, recursive=False) ** i
+                G._u_function(g, self.prec, None).evaluate(self.D, recursive=False) ** i
                 for g, i in zip(G.generators(), wdab)
                 if i != 0
             )
         else:
             z0 = z
-        ans *= self.val(z0)
-        ans *= prod(F(z0) for FF in self.Fnlist for ky, F in FF.items())
+        # print(ans)
+        newans = eval_rat(self.val, z0)
+        # print(newans)
+        ans *= newans
+        newans = prod(F(z0) for FF in self.Fnlist for ky, F in FF.items())
+        # print(newans)
+        ans *= newans
         return ans
 
-    def eval_derivative(self, z, recursive=False):
-        if recursive and not G.in_fundamental_domain(z, strict=False):
+    def eval_derivative(self, z, recursive=False, return_value=False):
+        if recursive and not self.G.in_fundamental_domain(z, strict=False):
             raise NotImplementedError("Recursivity not implemented for derivative")
         if isinstance(z, DivisorsElement):
             return prod(self.eval_derivative(P, recursive=recursive) ** n for P, n in z)
-
-        v0 = self.val(z)
+        vz = eval_rat(self.val, z)
         Fnz = {}
         for FF in self.Fnlist:
             for ky, F in FF.items():
@@ -210,9 +261,15 @@ class ThetaOC(SageObject):
                     Fnz[ky] = Fz
         # val' * Fn(z)
         Fnzall = prod((o for o in Fnz.values()))
-        valder = self.val.derivative()(z)
+        valder = eval_rat_derivative(self.val, z)
 
-        v0 = self.val(z) * Fnzall
+        v0 = vz * Fnzall
         # need to add the terms of val * Fn'
-        tmp = sum(f.eval_derivative(z) / f(z) for FF in self.Fnlist for f in FF.values())
-        return valder * Fnzall + tmp * v0
+        tmp = sum(
+            f.eval_derivative(z) / f(z) for FF in self.Fnlist for f in FF.values()
+        )
+        ans = valder * Fnzall + tmp * v0
+        if return_value:
+            return ans, v0
+        else:
+            return ans

@@ -528,6 +528,7 @@ class ArithCoh(CohomologyGroup, UniqueRepresentation):
     Initialised by inputting an arithmetic group G, and the
     coefficient module.
     """
+
     Element = ArithCohElement
 
     def __init__(self, G, V=None, **kwargs):

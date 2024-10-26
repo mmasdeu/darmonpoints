@@ -690,6 +690,7 @@ class AddMeromorphicFunctions(Parent, CachedRepresentation):
     sage: A == B
     True
     """
+
     Element = AddMeromorphicFunctionsElement
 
     def __init__(self, K, twisting_matrix=None):

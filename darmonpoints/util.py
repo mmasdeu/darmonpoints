@@ -1,4 +1,5 @@
 import configparser
+import functools
 import sys
 import types
 from functools import reduce
@@ -37,6 +38,18 @@ from sage.schemes.elliptic_curves.constructor import (
 )
 from sage.sets.primes import Primes
 from sage.structure.factorization import Factorization
+
+
+def muted(func):
+    @functools.wraps(func)
+    def ff(*args, **kwargs):
+        verb_level = get_verbose()
+        set_verbose(0)
+        ans = func(*args, **kwargs)
+        set_verbose(verb_level)
+        return ans
+
+    return ff
 
 
 def is_smooth(x, B):
@@ -1958,16 +1971,14 @@ def recognize_J(
 
     CEloc, _ = get_C_and_C2(Eloc, qEpows, Cp, precp)
     EH = E.change_ring(HCF)
+    success = False
     for twopow in twopowlist:
         success = False
         power = QQ(twopow * known_multiple) ** -1
         pnum = E.torsion_order() * power.numerator()
         pden = E.torsion_order() * power.denominator()
         J1list = sum(
-            (
-                our_nroot(J**pnum * qE**i, pden, return_all=True)
-                for i in range(pden)
-            ),
+            (our_nroot(J**pnum * qE**i, pden, return_all=True) for i in range(pden)),
             [],
         )
         for J1 in J1list:
@@ -2281,18 +2292,22 @@ def print_table_latex(self, header_string=None):
     s += "}" + frame_str + "\n"
     # first row
     s += " & ".join(
-        LatexExpr(x)
-        if isinstance(x, (str, LatexExpr))
-        else "$" + latex(x).strip() + "$"
+        (
+            LatexExpr(x)
+            if isinstance(x, (str, LatexExpr))
+            else "$" + latex(x).strip() + "$"
+        )
         for x in rows[0]
     )
     s += " \\\\" + frame_str + head_row_str + "\n"
     # other rows
     for row in rows[1:]:
         s += " & ".join(
-            LatexExpr(x)
-            if isinstance(x, (str, LatexExpr))
-            else "$" + latex(x).strip() + "$"
+            (
+                LatexExpr(x)
+                if isinstance(x, (str, LatexExpr))
+                else "$" + latex(x).strip() + "$"
+            )
             for x in row
         )
         s += " \\\\" + frame_str + "\n"
