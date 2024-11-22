@@ -36,8 +36,6 @@ def matrix_from_balls(Bp, Bm):
     pi = K.uniformizer()
     a = K(Bp.center).lift_to_precision()
     b = K(Bm.center).lift_to_precision()
-    r1 = Bp.radius
-    r2 = Bm.radius
     delta = Matrix(K, 2, 2, [1, -a, 1, -b])
     r = ZZ((delta * Bp).radius - (delta * Bm).radius)
     gamma0 = Matrix(K, 2, 2, [pi**-r, 0, 0, 1])
@@ -627,8 +625,10 @@ class SchottkyGroup(SchottkyGroup_abstract):
         try:
             ans = B.center.lift_to_precision() + eps * self.pi ** ZZ(B.radius)
         except TypeError:
-            raise RuntimeError('Fundamental domain has balls with fractional radius. \
-            Try with a quadratic (ramified) extension.')
+            raise RuntimeError(
+                "Fundamental domain has balls with fractional radius. \
+            Try with a quadratic (ramified) extension."
+            )
         test = lambda x: self.in_fundamental_domain(x, strict=False)
 
         try:
@@ -802,13 +802,11 @@ class SchottkyGroup(SchottkyGroup_abstract):
         """
         (i,) = self.word_problem(gamma)
         assert i > 0
-        # assert len(wd) == 1 and wd[0] > 0
         if a is None:
-            a = self.a_point() #self.find_point(gamma, idx=g)
+            a = self.a_point()  # self.find_point(gamma, idx=g)
         a = self.base_ring()(1) * a
         K = a.parent()
-        D = Divisors(K)([(1, a), (-1, act(gamma, a))])
-        D = self.find_equivalent_divisor(D)
+        D = self.find_equivalent_divisor(Divisors(K)([(1, a), (-1, act(gamma, a))]))
         ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K)
         ans = ans.improve(prec)
         return ans
@@ -823,7 +821,10 @@ class SchottkyGroup(SchottkyGroup_abstract):
         z1 = self.base_ring()(1) * z1
         K = z1.parent()
         DK = Divisors(K)
-        divs = [self.find_equivalent_divisor(DK([(1, z1), (-1, act(gamma, z1))])) for gamma in self._generators]
+        divs = [
+            self.find_equivalent_divisor(DK([(1, z1), (-1, act(gamma, z1))]))
+            for gamma in self._generators
+        ]
 
         for i in range(genus):
             g1 = self._generators[i]
@@ -882,9 +883,8 @@ class SchottkyGroup(SchottkyGroup_abstract):
         if z1 is None:
             z1 = self.a_point()
         z1 = self.base_ring()(1) * z1
-        K = z1.parent()
-        div = Divisors(K)([(1, z1), (-1, act(g2, z1))])
-        return self.u_function(g1, prec, a = z1, z=div, **kwargs)
+        div = Divisors(z1.parent())([(1, z1), (-1, act(g2, z1))])
+        return self.u_function(g1, prec, a=z1, z=div, **kwargs)
 
     def period_naive(self, i, j, prec, **kwargs):
         g1 = self._generators[i]

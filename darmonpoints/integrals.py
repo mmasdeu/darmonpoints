@@ -364,7 +364,7 @@ def get_basic_integral(G, cocycle, gamma, center, j, prec=None):
     resadd = ZZ(0)
     edgelist = G.get_covering(1)[1:]
     for rev, h in edgelist:
-        mu_e = cycle.evaluate(gamma, h, twist=rev, at_identity=G.use_shapiro())
+        mu_e = cocycle.evaluate(gamma, h, twist=rev, at_identity=G.use_shapiro())
         a, b, c, d = (Cp(o) for o in G.embed(h, prec).list())
         pol = (
             (PS(d * z + b) / PS(c * z + a) - Cp.teichmuller(center)) ** j

@@ -499,20 +499,23 @@ def find_limits(tau, gtau=None, level=1, v0=None, method=1):
             return _find_limits_prefactoring(tau, gtau, level, v0)
 
 
-def decompose(gtau, lmb, uu):
+def decompose(gtau, lmb, uu, base_field=None):
+    if base_field is None:
+        F = QQ
+    else:
+        F = base_field
     if uu == 0:
         return [gtau]
-    E_lambda = Matrix(QQ, 2, 2, [1, lmb, 0, 1])
+    E_lambda = Matrix(F, 2, 2, [1, lmb, 0, 1])
     # we know that E_lambda*gtau is a matrix [a,b,c,d] such that c=uu+ta for some unit uu; now we find uu and t
-    MM = (E_lambda * gtau).change_ring(QQ)
+    MM = (E_lambda * gtau).change_ring(F)
     a, b, c, d = MM.list()
-    t = QQ(c - uu) / QQ(a)
-    E1i = Matrix(QQ, 2, 2, [1, 0, uu * (1 - a), 1])
-    E2i = Matrix(QQ, 2, 2, [1, -1 / uu, 0, 1])
-    E34i = Matrix(QQ, 2, 2, [1, 0, c + t * (1 - a), 1])
-    E_x = (E34i * E2i * E1i) ** (-1) * MM
-    return [E_lambda ** (-1), E34i, E2i, E1i, E_x]
-
+    t = F(c - uu) / F(a)
+    E1i = Matrix(F, 2, 2, [1, 0, uu * (1 - a), 1])
+    E2i = Matrix(F, 2, 2, [1, -1 / uu, 0, 1])
+    E34i = Matrix(F, 2, 2, [1, 0, c + t * (1 - a), 1])
+    E_x = ~(E34i * E2i * E1i) * MM
+    return [~E_lambda, E34i, E2i, E1i, E_x]
 
 def get_limits_from_decomp(tau, decomp, v0):
     oldTau = tau

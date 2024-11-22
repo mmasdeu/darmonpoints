@@ -27,8 +27,10 @@ infinity = Infinity
 
 def eval_rat(D, z):
     if z == Infinity:
-        return 1
-    ans = 1
+        return D.parent().base_ring()(1)
+    if not hasattr(z, 'parent'):
+        z = ZZ(z)
+    ans = z.parent()(1) * D.parent().base_ring()(1)
     fails = 0
     for P, n in D:
         if P == Infinity:
@@ -91,7 +93,7 @@ def word_to_abelian(wd, g):
 
 
 class ThetaOC(SageObject):
-    def __init__(self, G, a=0, b=None, prec=None, **kwargs):
+    def __init__(self, G, a=None, b=None, prec=None, **kwargs):
         K = kwargs.get("base_ring", None)
         if K is None:
             K = G.K
@@ -116,16 +118,16 @@ class ThetaOC(SageObject):
                 )
         else:
             D = self.Div([(1, K(a)), (-1, K(b))])
+        D = G.find_equivalent_divisor(D)
         self.a = a
         self.b = b
-        self.D = D
         self.m = 1
         self.z = K["z"].gen()
 
         params = G.parameters
         gens_ext = G.gens_extended()
         # self.val will contain the 0 and 1 terms
-        D1 = sum((g * D for (i, g), tau in zip(gens_ext, params)), self.Div([]))
+        D1 = sum((g * D for (_, g), _ in zip(gens_ext, params)), self.Div([]))
         self.val = D + D1
         # self.val = self.z.parent()(1)
         # self.val *= prod((self.z - P) ** n for P, n in (D + D1) if P != Infinity)
@@ -219,56 +221,44 @@ class ThetaOC(SageObject):
         return self.evaluate(z, **kwargs)
 
     def evaluate(self, z, **kwargs):
-        G = self.G
-        recursive = kwargs.get("recursive", True)
-        if isinstance(z, DivisorsElement):
-            if recursive:
-                z = G.find_equivalent_divisor(z)
-            return prod(self(P, **kwargs) ** n for P, n in z)
-        ans = 1
-        if recursive:
-            z0, wd = G.to_fundamental_domain(z)
-            wdab = word_to_abelian(wd, len(G.generators()))
-            ans *= prod(
-                G._u_function(g, self.prec, None).evaluate(self.D, recursive=False) ** i
-                for g, i in zip(G.generators(), wdab)
-                if i != 0
-            )
-        else:
-            z0 = z
-        # print(ans)
-        newans = eval_rat(self.val, z0)
-        # print(newans)
-        ans *= newans
-        newans = prod(F(z0) for FF in self.Fnlist for ky, F in FF.items())
-        # print(newans)
+        # recursive = kwargs.get("recursive", True)
+        if not isinstance(z, DivisorsElement):
+            z = self.Div([(1,z)])
+        if z.degree() != 0:
+            # inf, wd = self.G.to_fundamental_domain(Infinity)
+            z -= self.Div([(z.degree(),Infinity)])
+        z = self.G.find_equivalent_divisor(z)
+        ans = prod(eval_rat(self.val, P)**n for P, n in z)
+        newans = prod(F(P)**n for FF in self.Fnlist for ky, F in FF.items() for P, n in z)
         ans *= newans
         return ans
 
-    def eval_derivative(self, z, recursive=False, return_value=False):
-        if recursive and not self.G.in_fundamental_domain(z, strict=False):
-            raise NotImplementedError("Recursivity not implemented for derivative")
-        if isinstance(z, DivisorsElement):
-            return prod(self.eval_derivative(P, recursive=recursive) ** n for P, n in z)
+    def eval_derivative(self, z, return_value=False):
+        assert not isinstance(z, DivisorsElement)
+        # z = self.Div([(1,z)])
+        z0, wd = self.G.to_fundamental_domain(z)
+        gens = [None] + self.G.generators() + [o.adjugate() for o in reversed(self.G.generators())]
+        g = prod((gens[i] for i in wd), gens[1].parent()(1)).adjugate()
+        assert act(g, z) == z0
+        a, b,c,d = g.list()
+        ans = (a*d-b*c) * (c*z+d)**-2
+        z = z0
         vz = eval_rat(self.val, z)
         Fnz = {}
         for FF in self.Fnlist:
             for ky, F in FF.items():
-                Fz = F(z)
+                FP = F(z)
                 try:
-                    Fnz[ky] *= Fz
+                    Fnz[ky] *= FP
                 except KeyError:
-                    Fnz[ky] = Fz
-        # val' * Fn(z)
+                    Fnz[ky] = FP
         Fnzall = prod((o for o in Fnz.values()))
         valder = eval_rat_derivative(self.val, z)
 
         v0 = vz * Fnzall
         # need to add the terms of val * Fn'
-        tmp = sum(
-            f.eval_derivative(z) / f(z) for FF in self.Fnlist for f in FF.values()
-        )
-        ans = valder * Fnzall + tmp * v0
+        tmp = sum(f.eval_derivative(z) / f(z) for FF in self.Fnlist for f in FF.values())
+        ans *= valder * Fnzall + tmp * v0
         if return_value:
             return ans, v0
         else:
