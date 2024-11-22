@@ -517,6 +517,7 @@ def decompose(gtau, lmb, uu, base_field=None):
     E_x = ~(E34i * E2i * E1i) * MM
     return [~E_lambda, E34i, E2i, E1i, E_x]
 
+
 def get_limits_from_decomp(tau, decomp, v0):
     oldTau = tau
     V = []
