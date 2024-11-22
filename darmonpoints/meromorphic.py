@@ -40,8 +40,10 @@ from sage.structure.unique_representation import (
 from .divisors import Divisors
 
 
-def evalpoly(poly, x):
+def evalpoly(poly, x, check=True):
     # Initialize result
+    if check:
+        assert x.valuation() >= 0
     try:
         result = poly[-1]
     except IndexError:
@@ -98,7 +100,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         if type(D) in (int, Integer):
             D = K(D)
         a, b, c, d = self._parameter.list()
-        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+        phi = lambda Q: K(a) / c if Q == Infinity else K(a * Q + b) / K(c * Q + d)
         try:
             pt = phi(self.normalize_point)
             pole = -d / c
@@ -108,7 +110,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             if c == 0:
                 valinf = 1
             else:
-                valinf = evalpoly(self._value, a / c)
+                valinf = evalpoly(self._value, K(a) / c)
         assert pole is None
 
         def ev(P):
@@ -128,7 +130,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             raise NotImplementedError
         K = self.parent().base_ring()
         a, b, c, d = self._parameter.list()
-        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+        phi = lambda Q: K(a) / c if Q == Infinity else K(a * Q + b) / K(c * Q + d)
         valder = self.power_series().derivative().list()
         try:
             pt = phi(self.normalize_point)
@@ -139,7 +141,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             if c == 0:
                 valinf = 1
             else:
-                valinf = evalpoly(self._value, a / c)
+                valinf = evalpoly(self._value, K(a) / c)
         assert pole is None
         chainrule = (a * d - b * c) / (c * D + d) ** 2
         return (
