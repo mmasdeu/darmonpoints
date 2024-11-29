@@ -274,7 +274,7 @@ class SchottkyGroup_abstract(SageObject):
         for i in NN:
             verbose(f"{i = }")
             if i > 2 and max_length == -1:
-                can_stop = True            
+                can_stop = True
             for _, g in self.enumerate_group_elements(i):
                 ga = act(g, a)
                 gb = act(g, b)
@@ -295,7 +295,7 @@ class SchottkyGroup_abstract(SageObject):
             new_ans = (num / den) * second_term
             old_ans = new_ans
             val = (new_ans / old_ans - 1).valuation()
-            if can_stop:
+            if can_stop or i == max_length:
                 break
         new_ans.add_bigoh(val + new_ans.valuation())
         if return_value:
