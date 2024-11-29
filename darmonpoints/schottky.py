@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 from itertools import chain
+from math import e
 
 from sage.categories.groups import Groups
 from sage.combinat.rooted_tree import LabelledRootedTree as LTR
@@ -244,42 +245,36 @@ class SchottkyGroup_abstract(SageObject):
         return num / den
 
     def theta_derivative_naive(
-        self, m, a, b, z=None, max_length=-1, base_field=None, s=None
+        self, m, a, b, z=None, max_length=-1, base_field=None, s=None, return_value=False
     ):
         if s is not None:
-            A = self.theta_naive(
-                m, a, b, z=z, max_length=max_length, base_field=base_field
+            Ap, A = self.theta_derivative_naive(
+                m, a, b, z=z, max_length=max_length, base_field=base_field, s=None, return_value=True
             )
-            B = self.theta_naive(
+            Bp, B = self.theta_derivative_naive(
                 m,
                 act(s, a),
                 act(s, b),
                 z=z,
                 max_length=max_length,
                 base_field=base_field,
+                s=None, return_value=True
             )
-            Ap = self.theta_derivative_naive(
-                m, a, b, z=z, max_length=max_length, base_field=base_field, s=None
-            )
-            Bp = self.theta_derivative_naive(
-                m,
-                act(s, a),
-                act(s, b),
-                z=z,
-                max_length=max_length,
-                base_field=base_field,
-                s=None,
-            )
-            return Ap * B + A * Bp
+            if return_value:
+                return Ap * B + A * Bp, A * B
+            else:
+                return Ap * B + A * Bp
 
         num = 1
         den = 1
-
         second_term = 0
         old_ans = 1
         val = 0
+        can_stop = False
         for i in NN:
             verbose(f"{i = }")
+            if i > 2 and max_length == -1:
+                can_stop = True            
             for _, g in self.enumerate_group_elements(i):
                 ga = act(g, a)
                 gb = act(g, b)
@@ -289,14 +284,24 @@ class SchottkyGroup_abstract(SageObject):
                 den *= new_den
                 new_second_term = (ga - gb) / (new_num * new_den)
                 second_term += new_second_term
+                try:
+                    tmp1 = (new_num / new_den - 1).valuation()
+                    tmp1val = tmp1.valuation()
+                except TypeError:
+                    val = -Infinity
+                    tmp1val = 0
+                if val < m - tmp1val:
+                    can_stop = False
             new_ans = (num / den) * second_term
-            if i == max_length or (
-                i > 0 and val >= (new_ans / old_ans - 1).valuation()
-            ):
-                break
             old_ans = new_ans
             val = (new_ans / old_ans - 1).valuation()
-        return new_ans.add_bigoh(val + new_ans.valuation())
+            if can_stop:
+                break
+        new_ans.add_bigoh(val + new_ans.valuation())
+        if return_value:
+            return new_ans, num / den
+        else:
+            return new_ans
 
 
 class PreSchottkyGroup(SchottkyGroup_abstract):
