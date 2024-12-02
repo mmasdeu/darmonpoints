@@ -178,28 +178,28 @@ def darmon_point(
 
     We first need to import the module::
 
-    sage: from darmonpoints.darmonpoints import darmon_point
+        sage: from darmonpoints.darmonpoints import darmon_point
 
     A first example (Stark--Heegner point)::
 
-    sage: from darmonpoints.darmonpoints import darmon_point
-    sage: darmon_point(7,EllipticCurve('35a1'),41,20, cohomological=False, use_magma=False, use_ps_dists = True)[0]
-    Starting computation of the Darmon point
-    ...
-    -70*alpha + 449
+        sage: from darmonpoints.darmonpoints import darmon_point
+        sage: darmon_point(7,EllipticCurve('35a1'),41,20, cohomological=False, use_magma=False, use_ps_dists = True)[0]
+        Starting computation of the Darmon point
+        ...
+        -70*alpha + 449
 
     A quaternionic (Greenberg) point::
 
-    sage: darmon_point(13,EllipticCurve('78a1'),5,20) # long time # optional - magma
+        sage: darmon_point(13,EllipticCurve('78a1'),5,20) # long time # optional - magma
 
     A Darmon point over a cubic (1,1) field::
 
-    sage: F.<r> = NumberField(x^3 - x^2 - x + 2)
-    sage: E = EllipticCurve([-r -1, -r, -r - 1,-r - 1, 0])
-    sage: N = E.conductor()
-    sage: P = F.ideal(r^2 - 2*r - 1)
-    sage: beta = -3*r^2 + 9*r - 6
-    sage: darmon_point(P,E,beta,20) # long time # optional - magma
+        sage: F.<r> = NumberField(x^3 - x^2 - x + 2)
+        sage: E = EllipticCurve([-r -1, -r, -r - 1,-r - 1, 0])
+        sage: N = E.conductor()
+        sage: P = F.ideal(r^2 - 2*r - 1)
+        sage: beta = -3*r^2 + 9*r - 6
+        sage: darmon_point(P,E,beta,20) # long time # optional - magma
 
     """
     # global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
