@@ -802,7 +802,7 @@ Try with a quadratic (ramified) extension."
         """
         gamma = self._generators[i]
         if a is None:
-            a = self.find_point(gamma, idx=i) # self.a_point()
+            a = self.find_point(gamma, idx=i+1) # self.a_point()
             K = a.parent()
         else:
             a = self.base_ring()(1) * a
