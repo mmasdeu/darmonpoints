@@ -100,8 +100,8 @@ class ThetaOC(SageObject):
         self.K = K
         self.G = G
         self.p = G.pi
-        generators = G.generators()
-        balls = G.balls()
+        _ = G.generators()
+        _ = G.balls()
         if prec is None:
             try:
                 self.prec = K.precision_cap()
@@ -123,20 +123,21 @@ class ThetaOC(SageObject):
         self.b = b
         self.m = 1
         self.z = K["z"].gen()
-
+        self.MM = MeromorphicFunctions(self.K, self.p, self.prec)
         params = G.parameters
         gens_ext = G.gens_extended()
-        # self.val will contain the 0 and 1 terms
-        D1 = sum((g * D for (_, g), _ in zip(gens_ext, params)), self.Div([]))
-        self.val = D + D1
-        # self.val = self.z.parent()(1)
-        # self.val *= prod((self.z - P) ** n for P, n in (D + D1) if P != Infinity)
-        self.MM = MeromorphicFunctions(self.K, self.p, self.prec)
-        self.Fnlist = [{}]
-        D1dict = {i: g * D for (i, g), tau in zip(gens_ext, params)}
-        for (i, g), tau in zip(gens_ext, params):
-            gD = sum(g * val for j, val in D1dict.items() if j != -i)
-            self.Fnlist[0][i] = self.MM(gD, tau)
+        
+        # Corresponding to words of length exactly 1
+        D1dict = {i : g * D for i, g in gens_ext}
+
+        # Corresponding to words of length exactly 2
+        # D2dict = {i : sum(g * val) for j, val in D1dict.items() if j != i for i, g in gens_ext }
+        
+        # self.val will contain the 0, 1 and 2 terms
+        self.val = sum(D1dict.values(), D)
+        self.Fnlist = [{ i :
+            self.MM(sum(g * val for j, val in D1dict.items() if j != -i), tau)
+                for (i, g), tau in zip(gens_ext, params)}]
 
     def improve(self, m):
         gens_ext = self.G.gens_extended()
@@ -151,12 +152,13 @@ class ThetaOC(SageObject):
                     )
         for it in range(m):
             if self.m >= self.prec:
-                self.Fnlist = [
+                if len(self.Fnlist) > 0:
+                    self.Fnlist = [
                     {
                         ky: sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky])
                         for ky in self.Fnlist[0]
                     }
-                ]
+                    ]
                 return self
             tmp = {}
             for (i, gi), tau in zip(gens_ext, params):
@@ -176,9 +178,6 @@ class ThetaOC(SageObject):
             }
         ]
         return self
-
-    def improve_one(self):
-        return self.improve(1)
 
     def _repr_(self):
         a, b = self.a, self.b
@@ -221,23 +220,18 @@ class ThetaOC(SageObject):
         return self.evaluate(z, **kwargs)
 
     def evaluate(self, z, **kwargs):
-        # recursive = kwargs.get("recursive", True)
         if not isinstance(z, DivisorsElement):
             z = self.Div([(1, z)])
         if z.degree() != 0:
-            # inf, wd = self.G.to_fundamental_domain(Infinity)
             z -= self.Div([(z.degree(), Infinity)])
         z = self.G.find_equivalent_divisor(z)
-        ans = prod(eval_rat(self.val, P) ** n for P, n in z)
-        newans = prod(
-            F(P) ** n for FF in self.Fnlist for ky, F in FF.items() for P, n in z
-        )
-        ans *= newans
-        return ans
+        ans0 = prod(eval_rat(self.val, P) ** n for P, n in z)
+        ans1 = prod(F(z) for FF in self.Fnlist for F in FF.values())        
+        return ans0 * ans1
 
     def eval_derivative(self, z, return_value=False):
-        assert not isinstance(z, DivisorsElement)
-        # z = self.Div([(1,z)])
+        if isinstance(z, DivisorsElement):
+            raise NotImplementedError
         z0, wd = self.G.to_fundamental_domain(z)
         gens = (
             [None]

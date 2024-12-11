@@ -27,7 +27,7 @@ from sage.structure.unique_representation import UniqueRepresentation
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import *
 from .theta import *
-from .util import muted
+from .util import muted, our_sqrt
 
 infinity = Infinity
 
@@ -100,17 +100,20 @@ def uniq(lst):
 
 
 @muted
-@cached_function
 def find_eigenvector_matrix(g):
+    K = g.parent().base_ring()
     t = g.trace()
     n = g.determinant()
-    delta = (t * t - 4 * n).sqrt()
-    vaps = sorted([(t + delta) / 2, (t - delta) / 2], key=lambda o: o.valuation())
-    veps = sum(((g - l).right_kernel().basis() for l in vaps), [])
+    delta = (t * t - K(4) * n).sqrt()
+    vaps = sorted([(t + delta) / K(2), (t - delta) / K(2)], key=lambda o: o.valuation())
+    assert len(vaps) == 2
+    veps = []
+    for l in vaps:
+        B = g - l
+        veps.append((B[0,1], -B[0,0])) # The right kernel of a rank-1 2x2 matrix
     return g.matrix_space()(veps).transpose()
 
 
-@cached_function
 def find_parameter(g, ball, pi=None, check=True):
     if pi is None:
         pi = g.parent().base_ring().uniformizer()
@@ -210,6 +213,8 @@ class SchottkyGroup_abstract(SageObject):
         K = self.K
         if z is Infinity:
             return K(1)
+        if isinstance(z, Divisors): # z is a divisor!
+            return prod(self.theta_naive(m, a, b, P, gamma, **kwargs)**n for P, n in z)
         if gamma is not None:
             if b != ZZ(1):
                 raise ValueError("If gamma is specified, then b should not")
@@ -225,9 +230,9 @@ class SchottkyGroup_abstract(SageObject):
                 can_stop = True
             for _, g in self.enumerate_group_elements(i):
                 ga = act(g, a)
-                tmp1 = K(1) if ga is Infinity else z - ga
+                tmp1 = K(1) if ga is Infinity or z == ga else z - ga
                 gb = act(g, b)
-                tmp2 = K(1) if gb is Infinity else z - gb
+                tmp2 = K(1) if gb is Infinity or z == gb else z - gb
                 new_num *= tmp1
                 new_den *= tmp2
                 try:
@@ -353,7 +358,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
         return self.NJtree
 
     @cached_method
-    @muted
+    # @muted # DEBUG
     def fundamental_domain(self, level=1, check=True):
         while True:
             level += 1
@@ -364,7 +369,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
             except ValueError as e:
                 verbose(str(e))
 
-    @muted
+    # @muted # DEBUG
     def _fundamental_domain(self, i0=None, check=True):
         tree = self.NJtree
         if i0 is None:
@@ -546,13 +551,14 @@ class SchottkyGroup(SchottkyGroup_abstract):
         gens = self._generators
         test_fundamental_domain(gens, balls)
 
-    def balls(self):
+    def balls(self, generators=None):
         try:
             return self._balls
         except AttributeError:
             pass
         K = self.base_ring()
-        generators = self._generators
+        if generators is None:
+            generators = self._generators
         G = PreSchottkyGroup(K, generators)
         gp = G.group()
         good_gens, good_balls, _ = G.fundamental_domain()
@@ -608,7 +614,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
                 return x0
         raise RuntimeError("Reached maximum iterations (100)")
 
-    def find_point(self, gamma, eps=1, idx=None):
+    def find_point(self, gamma, eps=1, idx=None, check=True):
         balls = self.balls()
         gens = self.gens_extended()
         if idx is not None:
@@ -616,14 +622,10 @@ class SchottkyGroup(SchottkyGroup_abstract):
             if idx > 0:
                 if self._generators[idx - 1] != gamma:
                     B1 = next(balls[-i] for i, g in gens if g == gamma)
-                    # print(f'!! {B = } but {B1 = }')
-                    # print(balls)
                     B = B1
             else:
                 if self._generators[-idx - 1] ** -1 != gamma:
                     B1 = next(balls[-i] for i, g in gens if g == gamma)
-                    # print(f'!! {B = } but {B1 = }')
-                    # print(balls)
                     B = B1
         else:
             B = next(balls[-i] for i, g in gens if g == gamma)
@@ -632,11 +634,10 @@ class SchottkyGroup(SchottkyGroup_abstract):
         except TypeError:
             raise RuntimeError(
                 "Fundamental domain has balls with fractional radius. \
-            Try with a quadratic (ramified) extension."
+Try with a quadratic (ramified) extension."
             )
-        test = lambda x: self.in_fundamental_domain(x, strict=False)
-
-        try:
+        if check:
+            test = lambda x: self.in_fundamental_domain(x, strict=False)
             if not test(ans):
                 raise RuntimeError(
                     f"{ans = } should be in fundamental domain, but it is not."
@@ -646,11 +647,6 @@ class SchottkyGroup(SchottkyGroup_abstract):
                 raise RuntimeError(
                     f"gamma * ans = {ga} should be in fundamental domain, but it is not."
                 )
-        except RuntimeError:
-            new_idx = -idx if idx is not None else None
-            ginv = gamma**-1
-            ans = self.find_point(ginv, eps, new_idx)
-            return act(ginv, ans)
         return ans
 
     def to_fundamental_domain(self, x):
@@ -731,7 +727,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
             if e == 0:
                 continue
             zz = self.find_point(g, idx=i + 1)
-            ans -= Div([(e, zz), (-e, act(g, zz))])
+            ans += Div([(-e, zz), (e, act(g, zz))])
         return ans
 
     def theta(self, prec, a, b=None, **kwargs):
@@ -767,9 +763,7 @@ class SchottkyGroup(SchottkyGroup_abstract):
         s = kwargs.pop("s", None)
         if s is not None:
             D0 += s * D0
-        recursive = kwargs.get("recursive", True)
-        if recursive:
-            D0 = self.find_equivalent_divisor(D0)
+        D0 = self.find_equivalent_divisor(D0)
         ans = ThetaOC(self, a=D0, b=None, prec=prec, base_ring=K, **kwargs)
         z = kwargs.pop("z", None)
         improve = kwargs.pop("improve", True)
@@ -788,32 +782,37 @@ class SchottkyGroup(SchottkyGroup_abstract):
             if z is None:
                 kwargs.pop("z", None)
                 return lambda z: prod(
-                    self._u_function(gens[abs(i) - 1], prec, a=a)(z) ** ZZ(sgn(i))
+                    self._u_function(abs(i) - 1, prec, a=a)(z) ** ZZ(sgn(i))
                     for i in wd
                 )
             return prod(
-                self._u_function(gens[abs(i) - 1], prec, a=a)(z) ** ZZ(sgn(i))
+                self._u_function(abs(i) - 1, prec, a=a)(z) ** ZZ(sgn(i))
                 for i in wd
             )
+        naive = kwargs.get('naive', None)
         if z is None:
-            return lambda z: self._u_function(gens[wd[0] - 1], prec, a=a)(z)
+            return lambda z: self._u_function(wd[0] - 1, prec, a=a, naive=naive)(z)
         else:
-            return self._u_function(gens[wd[0] - 1], prec, a=a)(z)
+            return self._u_function(wd[0] - 1, prec, a=a, naive=naive)(z)
 
     @cached_method
-    def _u_function(self, gamma, prec, a):
+    def _u_function(self, i, prec, a, naive=False):
         r"""
         Compute u_gamma
         """
-        (i,) = self.word_problem(gamma)
-        assert i > 0
+        gamma = self._generators[i]
         if a is None:
-            a = self.a_point()  # self.find_point(gamma, idx=g)
-        a = self.base_ring()(1) * a
-        K = a.parent()
+            a = self.find_point(gamma, idx=i) # self.a_point()
+            K = a.parent()
+        else:
+            a = self.base_ring()(1) * a
+            K = a.parent()            
         D = self.find_equivalent_divisor(Divisors(K)([(1, a), (-1, act(gamma, a))]))
-        ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K)
-        ans = ans.improve(prec)
+        if naive:
+            return lambda z : self.theta_naive(prec, z=z, a=a, gamma=gamma)
+        else:
+            ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K)
+            ans = ans.improve(prec)
         return ans
 
     @cached_method
