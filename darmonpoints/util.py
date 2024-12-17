@@ -12,7 +12,6 @@ from sage.arith.misc import valuation
 from sage.calculus.var import var
 from sage.functions.generalized import sgn
 from sage.functions.transcendental import Function_zeta
-from sage.groups.finitely_presented import wrap_FpGroup
 from sage.interfaces.gp import gp
 from sage.libs.pari.all import PariError, pari
 from sage.matrix.all import Matrix, matrix
@@ -2170,11 +2169,18 @@ def simplification_isomorphism(G, return_inverse=False):
 
     Uses GAP.
     """
+
     I = G.gap().IsomorphismSimplifiedFpGroup()
     domain = G
-    codomain = wrap_FpGroup(I.Range())
-    phi = lambda x: codomain(I.ImageElm(x.gap()))
-    ans = G.hom(phi, codomain)
+    try: # Sagemath >= 10.5
+        codomain = I.Range().sage()
+        phi = lambda x: codomain(I.ImageElm(x))
+        ans = G.hom(im_gens=[phi(x) for x in G.gap().GeneratorsOfGroup], codomain=codomain, check=False)
+    except NotImplementedError: # Sagemath < 10.5
+        from sage.groups.finitely_presented import wrap_FpGroup
+        codomain = wrap_FpGroup(I.Range())
+        phi = lambda x: codomain(I.ImageElm(x.gap()))
+        ans = G.hom(phi, codomain)
     if return_inverse:
         Iinv = I.InverseGeneralMapping()
         phi_inv = lambda x: domain(Iinv.ImageElm(x.gap()))
