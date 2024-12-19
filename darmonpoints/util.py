@@ -683,7 +683,7 @@ def polynomial_roots_old(f, K):
             rt = hensel_lift(f, r)
             if f(rt).valuation() < K.precision_cap() // 2:  # DEBUG!!
                 raise RuntimeError(
-                    "Couln't reach target valuation (%s), got only %s"
+                    "Could not reach target valuation (%s), got only %s"
                     % (K.precision_cap(), f(rt).valuation())
                 )
             ans.append(rt)
@@ -2165,7 +2165,7 @@ def simplification_isomorphism(G, return_inverse=False):
           To:   Finitely presented group <  |  >
           Defn: x |--> 1
 
-    ALGORITM:
+    ALGORITHM:
 
     Uses GAP.
     """

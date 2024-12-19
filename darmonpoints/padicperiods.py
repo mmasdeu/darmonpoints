@@ -981,7 +981,7 @@ def find_igusa_invariants(
     parallelize=True,
 ):
     fwrite("# Trying to recognize invariants...", outfile)
-    Pring = embedding.domain()
+    P_ring = embedding.domain()
     if prec is None:
         prec = a.parent().precision_cap()
     Tlist = []
@@ -1001,7 +1001,7 @@ def find_igusa_invariants(
         fwrite("# Doing matrix %s / %s ( = %s)" % (ii, len(Tlist), tt.list()), outfile)
         Lp = a + b * tt
         inp_vec = [
-            (Lp, ordmat, prec, Pring, cheatjs, embedding, 3, list_I10, Pgen, outfile)
+            (Lp, ordmat, prec, P_ring, cheatjs, embedding, 3, list_I10, Pgen, outfile)
             for ordmat in all_possible_ordmats(Lp, 20)
         ]
 
@@ -1279,7 +1279,7 @@ def guess_equation(
         F = QQ
         P = Pgen
         Pnrm = Pgen
-        Pring = QQ
+        P_ring = QQ
         D = Dgen
         Np = Npgen
         Sinv_places = []
@@ -1295,7 +1295,7 @@ def guess_equation(
         r = F.gen()
         P = F.ideal(Pgen)
         Pnrm = P.norm()
-        Pring = P.ring()
+        P_ring = P.ring()
         D = F.ideal(Dgen)
         Np = F.ideal(Npgen)
         if Sinf is None:
@@ -1798,13 +1798,16 @@ def find_kadziela_matrices(M, T):
     """
     The matrix M describes the relation between periods (A,B,D)^t
     and the periods (A0,B0)^t, where (A,B,D) are the periods of
-    the Teitelbaum periods, and (A0,B0) are the Darmon ones.
+    the Teitelbaum periods, and (A0,B0) are the Darmon ones. ::
+
            (A,B,D)^t = M * (A0,B0)^t
+
     The matrix T describes the action of Hecke on homology.
     That is, the first column of T describes the image of T
     on the first basis vector.
 
-    The output are matrices X and Y such that
+    The output are matrices X and Y such that::
+
          X * matrix(2,2,[A,B,B,D]) = matrix(2,2,[A0,B0,C0,D0]) * Y
 
     """

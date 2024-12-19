@@ -19,7 +19,7 @@ from .util import *
 
 
 ##########################################################################################
-# now the new functions that we need...they follow pretty close the article we're writting
+# now the new functions that we need...they follow pretty close the article we're writing
 ##########################################################################################
 def factorize_matrix(m, M):
     # assert is_in_Gamma_1(m,M,determinant_condition = False)

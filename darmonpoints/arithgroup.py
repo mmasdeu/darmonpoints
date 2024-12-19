@@ -121,15 +121,15 @@ def intersect_geodesic_arcs(x1, x2, y1, y2):
     r"""
     TESTS::
 
-    sage: from darmonpoints.arithgroup import intersect_geodesic_arcs
-    sage: intersect_geodesic_arcs(1,3,2,4)
-    1/2*I*sqrt(3) + 5/2
-    sage: print(intersect_geodesic_arcs(-1, 1, 0, AA(-1).sqrt()))
-    None
-    sage: intersect_geodesic_arcs(-1, 1, 0, 2*AA(-1).sqrt())
-    I
-    sage: intersect_geodesic_arcs(-3, 3, 2*AA(-1).sqrt(), Infinity)
-    3*I
+        sage: from darmonpoints.arithgroup import intersect_geodesic_arcs
+        sage: intersect_geodesic_arcs(1,3,2,4)
+        1/2*I*sqrt(3) + 5/2
+        sage: print(intersect_geodesic_arcs(-1, 1, 0, AA(-1).sqrt()))
+        None
+        sage: intersect_geodesic_arcs(-1, 1, 0, 2*AA(-1).sqrt())
+        I
+        sage: intersect_geodesic_arcs(-3, 3, 2*AA(-1).sqrt(), Infinity)
+        3*I
     """
     # verbose('Entering intersect_geodesic_arcs')
     e1 = geodesic_circle(x1, x2)
@@ -1810,7 +1810,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         try:
             _, iota = self.magma.Embed(OK_magma, O_magma, nvals=2)
         except RuntimeError:
-            print("An error ocurred!")
+            print("An error occurred!")
             print("OK_magma = %s" % OK_magma)
             print("O_magma =" % O_magma)
             raise RuntimeError("Error while computing quadratic embedding")
@@ -2538,7 +2538,7 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
         }
         verbose("Done computing coset reps.")
         ## compute the generators of H
-        verbose("Computing the auxiliar data...")
+        verbose("Computing the auxiliary data...")
         (
             self._gens_dict_auxiliary,
             self._gens_matrices_auxiliary,
@@ -2744,14 +2744,14 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
 
         Firstly, we write this as h = 1.h. Then we write h = gh', where g in Gens(G) (so we must be
         able to solve the word problem for G). Then write 1.g = zp', so that
-            h = z * p' * h'. Now iterate. We will end up with z_1 z_2 ... z_t p_0, where p_0 = id rep.
+        h = z * p' * h'. Now iterate. We will end up with z_1 z_2 ... z_t p_0, where p_0 = id rep.
 
         OUTPUT:
 
         - a list of integers in {-t,-t+1,...,t-1,t}, where the output of _generators_auxiliary is
           [a_1,...,a_t].
 
-        For example,
+        For example::
 
            h = abc in H, a,b,c in Gens(G)
            h = 1.abc
