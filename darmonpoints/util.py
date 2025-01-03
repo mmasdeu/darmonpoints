@@ -293,7 +293,7 @@ def is_in_Gamma0loc(A, det_condition=True, p=None):
     r"""
     Whether the matrix A has all entries Zp-integral, and is upper-triangular mod p.
     """
-    if det_condition == True and A.determinant() != 1:
+    if det_condition is True and A.determinant() != 1:
         return False
     if p is not None:
         return all(o.valuation(p) >= 0 for o in A.list()) and A[1, 0].valuation(p) > 0
@@ -1068,7 +1068,7 @@ def our_sqrt(xx, K=None, return_all=False):
             if (y0**2 - x).valuation() >= minval:
                 found = True
                 break
-        if found == False:
+        if found is False:
             if return_all:
                 return []
             else:
@@ -1086,7 +1086,7 @@ def our_sqrt(xx, K=None, return_all=False):
             if (y0**2 - y0 + (1 - x) / 4).valuation() >= minval:
                 found = True
                 break
-        if found == False:
+        if found is False:
             if return_all:
                 return []
             else:
@@ -1144,7 +1144,7 @@ def our_cuberoot(xx, K=None, return_all=False):
             if (y0**3 - x).valuation() >= minval:
                 found = True
                 break
-    if found == False:
+    if found is False:
         raise ValueError("Not a cube")
     y1 = y0
     y = K(0)

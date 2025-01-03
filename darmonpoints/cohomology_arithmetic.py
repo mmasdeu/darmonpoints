@@ -85,13 +85,13 @@ def get_overconvergent_class_matrices(
 ):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
-    if use_ps_dists == False:
+    if use_ps_dists is False:
         raise NotImplementedError(
             "Must use distributions from Pollack-Stevens code in the split case"
         )
 
     sgninfty = "plus" if sign_at_infinity == 1 else "minus"
-    dist_type = "ps" if use_ps_dists == True else "fm"
+    dist_type = "ps" if use_ps_dists is True else "fm"
     fname = "moments_%s_%s_%s_%s_%s.sobj" % (
         p,
         E.cremona_label(),
@@ -148,7 +148,7 @@ def get_overconvergent_class_quaternionic(
     base_ring = Zp(p, prec)
 
     sgninfty = "plus" if sign_at_infinity == 1 else "minus"
-    dist_type = "ps" if use_ps_dists == True else "fm"
+    dist_type = "ps" if use_ps_dists is True else "fm"
     fname = "moments_%s_%s_%s_%s_%s.sobj" % (p, Ename, sgninfty, prec, dist_type)
     if use_sage_db:
         try:

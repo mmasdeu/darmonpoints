@@ -65,7 +65,7 @@ class BTEdge(SageObject):
         set_immutable(self.gamma)
 
     def _repr_(self):
-        return "(%s)^%s" % (self.gamma, "+" if self.reverse == False else "-")
+        return "(%s)^%s" % (self.gamma, "+" if self.reverse is False else "-")
 
     def __iter__(self):
         return iter([self.reverse, self.gamma])
