@@ -671,7 +671,7 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
             gen = T_conj
 
             ## Now take successive powers until the result is in Gamma_0(N)
-            while not gen[1][0] in N_ideal:
+            while gen[1][0] not in N_ideal:
                 gen *= T_conj
 
             ## We've found an element in Stab_Gamma(cusp): add to our list of generators

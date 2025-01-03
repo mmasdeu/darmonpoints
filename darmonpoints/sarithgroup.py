@@ -65,7 +65,7 @@ class BTEdge(SageObject):
         set_immutable(self.gamma)
 
     def _repr_(self):
-        return "(%s)^%s" % (self.gamma, "+" if self.reverse == False else "-")
+        return "(%s)^%s" % (self.gamma, "+" if self.reverse is False else "-")
 
     def __iter__(self):
         return iter([self.reverse, self.gamma])
@@ -763,8 +763,7 @@ class BigArithGroup_class(AlgebraicGroup):
                     q = q.list()
                 return sum(v(a) * b for a, b in zip(q, mats))
 
-        if prec > self._prec:  # DEBUG
-            self._prec = prec
+        self._prec = max(prec, self._prec)
         return iota
 
     def embed(self, q, prec):

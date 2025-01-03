@@ -1045,7 +1045,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         self, N, use_magma=True, return_all=False, radius=-1, max_elements=-1
     ):  # in rationalquaternion
         N = ZZ(N)
-        force_sign = not "P" in self._grouptype
+        force_sign = "P" not in self._grouptype
         if use_magma:
             # assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(N * self._F_magma.Integers())
@@ -1978,7 +1978,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             N = N.gens_reduced()[0]
         except AttributeError:
             pass
-        force_sign = not "P" in self._grouptype
+        force_sign = "P" not in self._grouptype
         if return_all and radius < 0 and max_elements < 0:
             raise ValueError("Radius must be positive")
 
@@ -2724,8 +2724,8 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
                 )
                 if (
                     not h == 1
-                    and not h in small_gens_matrices_dict
-                    and not hinv in small_gens_matrices_dict
+                    and h not in small_gens_matrices_dict
+                    and hinv not in small_gens_matrices_dict
                 ):
                     ## This is new. Add h to the dictionary and add one to the index for next time
                     small_gens_matrices_dict[h] = current_index
