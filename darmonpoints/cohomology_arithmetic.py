@@ -1451,7 +1451,7 @@ def get_cocycle_from_elliptic_curve(Coh, E, sign=1, use_magma=True, **kwargs):
         return get_cocycle_from_elliptic_curve(
             Coh, E, 1, use_magma, **kwargs
         ) + get_cocycle_from_elliptic_curve(Coh, E, -1, use_magma, **kwargs)
-    if not sign in [1, -1]:
+    if sign not in [1, -1]:
         raise NotImplementedError
     F = E.base_ring()
     if F == QQ:
