@@ -10,7 +10,8 @@ from collections import defaultdict
 from itertools import chain, groupby, islice, product, starmap, tee
 
 from sage.categories.action import Action
-from sage.matrix.all import Matrix, matrix
+from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix as matrix
 from sage.misc.cachefunc import cached_method
 from sage.misc.verbose import verbose
 from sage.modules.free_module_element import vector

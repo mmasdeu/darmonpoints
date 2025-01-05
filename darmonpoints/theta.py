@@ -9,7 +9,8 @@ from sage.misc.cachefunc import cached_method
 from sage.misc.latex import latex
 from sage.misc.verbose import verbose
 from sage.modules.module import Module
-from sage.rings.all import ZZ, IntegerRing
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.integer_ring import IntegerRing
 from sage.rings.infinity import Infinity
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.sets.set import Set
