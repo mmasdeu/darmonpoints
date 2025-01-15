@@ -195,8 +195,8 @@ class DivisorsElement(ModuleElement):
             newdict[P] = a * n
         return self.__class__(self.parent(), newdict, ptdata=new_ptdata)
 
-    def _acted_upon_(self, g, on_left):
-        assert not on_left
+    def _acted_upon_(self, g, self_on_left):
+        # assert not self_on_left
         if isinstance(g, Integer) or isinstance(g, int):
             return self.scale_by(g)
         else:
