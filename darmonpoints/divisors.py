@@ -251,6 +251,7 @@ class DivisorsElement(ModuleElement):
         self._ptdict[P] = val
 
     def pair_with(self, D):
+        assert D.degree() == 0
         rat = self.rational_function(as_map=True)
         return prod((rat(P) ** n for P, n in D), self.parent().base_ring()(1)).log(0)
 
@@ -259,9 +260,12 @@ class DivisorsElement(ModuleElement):
             return lambda z: prod(((1 - z / P) ** n for P, n in self), z.parent()(1))
         else:
             if z is None:
-                K = self.parent()._field
+                K = self.parent().base()
+                if hasattr(K, 'base_field'):
+                    K = K.base_field()
                 z = K["z"].gen()
-            return prod(((1 - z / P) ** n for P, n in self), z.parent()(1))
+            # return prod(((1 - z / P) ** n for P, n in self), z.parent()(1))
+            return prod(((z - P) ** n for P, n in self), z.parent()(1))
 
     def as_list_of_differences(self):
         if self.degree() != 0:
