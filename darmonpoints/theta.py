@@ -219,6 +219,11 @@ class ThetaOC(SageObject):
     def __call__(self, z, **kwargs):
         return self.evaluate(z, **kwargs)
 
+    def rational_function_approximation(self, z, m):
+        ans0 = self.val.rational_function(as_map=False, z=z)
+        ans1 = prod(F.polynomial_approximation(z,m) for FF in self.Fnlist for F in FF.values())
+        return ans0 * ans1
+        
     def evaluate(self, z, **kwargs):
         if not isinstance(z, DivisorsElement):
             z = self.Div([(1, z)])
@@ -262,6 +267,7 @@ class ThetaOC(SageObject):
         )
         ans *= valder * Fnzall + tmp * v0
         if return_value:
-            return ans, v0
+            value = self.evaluate(z0) # DEBUG: should be the same as v0
+            return ans, value
         else:
             return ans

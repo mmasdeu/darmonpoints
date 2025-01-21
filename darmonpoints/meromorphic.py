@@ -95,6 +95,27 @@ class MeromorphicFunctionsElement(ModuleElement):
     def __call__(self, D):
         return self.evaluate(D)
 
+    def polynomial_approximation(self, z, m):
+        K = self.parent().base_ring()
+        a, b, c, d = self._parameter.list()
+        phi = lambda Q: K(a) / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+        try:
+            pt = phi(self.normalize_point)
+            pole = -d / c
+            # valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
+        except AttributeError:
+            pole = None
+            # if c == 0:
+            #     valinf = 1
+            # else:
+            #     valinf = evalpoly(self._value, K(a) / c)
+        valinf = 1
+        assert pole is None
+        fac = (z - pole) if pole is not None else 1
+        phiz = phi(z)
+        ans = fac * (sum(a*phiz**n for n, a in enumerate(self._value[:m]))) / valinf
+        return ans
+
     def evaluate(self, D):  # meromorphic functions
         K = self.parent().base_ring()
         if type(D) in (int, Integer):
@@ -104,13 +125,14 @@ class MeromorphicFunctionsElement(ModuleElement):
         try:
             pt = phi(self.normalize_point)
             pole = -d / c
-            valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
+            # valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
         except AttributeError:
             pole = None
-            if c == 0:
-                valinf = 1
-            else:
-                valinf = evalpoly(self._value, K(a) / c)
+            # if c == 0:
+            #     valinf = 1
+            # else:
+            #     valinf = evalpoly(self._value, K(a) / c)
+        valinf = 1
         assert pole is None
 
         def ev(P):
@@ -135,13 +157,14 @@ class MeromorphicFunctionsElement(ModuleElement):
         try:
             pt = phi(self.normalize_point)
             pole = -d / c
-            valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
+            # valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
         except AttributeError:
             pole = None
-            if c == 0:
-                valinf = 1
-            else:
-                valinf = evalpoly(self._value, K(a) / c)
+            # if c == 0:
+            #     valinf = 1
+            # else:
+            #     valinf = evalpoly(self._value, K(a) / c)
+        valinf = 1
         assert pole is None
         chainrule = (a * d - b * c) / (c * D + d) ** 2
         return (
