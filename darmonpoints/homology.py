@@ -377,7 +377,7 @@ class OneChainsElement(TensorElement):
             ans = True
         else:
             ans = False
-        return ans if return_residue == False else (ans, res)
+        return ans if return_residue is False else (ans, res)
 
     def hecke_smoothen(self, r, prec=None):
         if prec is None:
