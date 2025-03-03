@@ -10,7 +10,7 @@ from copy import deepcopy
 from sage.categories.pushout import pushout
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
-from sage.misc.all import cputime
+from sage.misc.timing import cputime
 from sage.misc.cachefunc import cached_function, cached_method
 from sage.misc.misc_c import prod
 from sage.misc.verbose import get_verbose, set_verbose, verbose
@@ -18,11 +18,11 @@ from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.module import Module
 from sage.modules.vector_integer_dense import Vector_integer_dense
-from sage.rings.all import Integer, Zp
+from sage.rings.integer import Integer
 from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.infinity import Infinity
 from sage.rings.integer_ring import ZZ
-from sage.rings.padics.factory import ZpCA
+from sage.rings.padics.factory import Zp, ZpCA
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.rings.padics.precision_error import PrecisionError
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing

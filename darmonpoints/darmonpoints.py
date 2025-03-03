@@ -9,10 +9,14 @@ from itertools import product
 
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.arith.misc import factor, fundamental_discriminant
-from sage.misc.all import walltime
+from sage.misc.timing import walltime
 from sage.misc.misc_c import prod
 from sage.misc.verbose import get_verbose, set_verbose, verbose
-from sage.rings.all import QQ, RR, ZZ, Qp, Zmod
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
+from sage.rings.padics.factory import Qp
 from sage.rings.infinity import Infinity
 from sage.rings.number_field.number_field import is_fundamental_discriminant
 from sage.rings.padics.precision_error import PrecisionError

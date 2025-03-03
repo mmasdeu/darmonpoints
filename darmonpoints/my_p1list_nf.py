@@ -452,7 +452,7 @@ def my_p1NFlist(N):
     # N.residues() = iterator through the residues mod N
     L = L + [MyMSymbol(k(1), r) for r in N.residues()]
 
-    from sage.arith.all import divisors
+    from sage.arith.misc import divisors
 
     for D in divisors(N):
         if not D.is_trivial() and D != N:
@@ -656,7 +656,7 @@ def psi(N):
     if not N.is_integral():
         raise ValueError("psi only defined for integral ideals")
 
-    from sage.misc.all import prod
+    from sage.misc.misc_c import prod
 
     return prod(
         [

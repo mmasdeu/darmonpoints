@@ -9,9 +9,10 @@ from collections import defaultdict
 from copy import deepcopy
 from itertools import chain, groupby, islice, product, starmap, tee
 
-from sage.arith.all import GCD
+from sage.arith.misc import GCD
 from sage.categories.action import Action
-from sage.matrix.all import Matrix, matrix
+from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix as matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.cachefunc import cached_method
 from sage.misc.verbose import verbose
