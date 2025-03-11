@@ -85,7 +85,7 @@ def geodesic_circle(alpha, beta, return_equation=True):
     assert C.imag().abs() < 10**-10, C
     try:
         r2 = (alpha - C).norm()
-    except AttributError:
+    except AttributeError:
         r2 = (alpha - C) ** 2
     x, y = PolynomialRing(C.parent(), 2, names="x,y").gens()
     return (
@@ -284,11 +284,11 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         if P is None:
             CC = ComplexField(800)
             P = CC(90) / CC(100) * CC.gen()
-        embgquats = self.embgquats
         Pconj = P.conjugate()
         m = Matrix([[Pconj, -P], [1, -1]])
         madj = m.adjugate()
         return [None] + [tuple((madj * o * m).list()) for o in self.embgquats[1:]]
+
 
     def get_word_rep(self, delta, P=None):  # fuchsian generic
         while True:
@@ -390,7 +390,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
     def draw_mat_list(self, x0, g1, mlist, color="blue"):
         phi = self.get_archimedean_embedding(1000)
         P = hyperbolic_arc(x0, act_flt(phi(g1.quaternion_rep), x0), color="red")
-        vlist = G._fundamental_domain
+        vlist = self.fundamental_domain()
         for g in mlist:
             new_polygon = [act_flt(phi(g), v) for v in vlist]
             P += hyperbolic_polygon(new_polygon, color=color)
@@ -401,19 +401,18 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         Returns a list S of matrices such that the geodesic (x1, x2) is contained in the union
         of the translates s*D (with s in S) of the standard fundamental domain D.
         """
+        CC = x1.parent()
+        emb = self.get_archimedean_embedding(CC.precision())
         verbose("Calling mat_list with x1 = %s and x2 = %s" % (x1, x2))
-        x1_orig = x1
-        x2_orig = x2
         n = 0
         g = 1
         if check_fundom and not self.is_in_fundom(x1):
             t0, g = self.find_fundom_rep(x1)
-            x1, x2 = t0, self(g**-1) * x2
+            x1, x2 = t0, act_flt(emb(self(g**-1).quaternion_rep), x2)
 
         # Here we can assume that x1 is in the fundamental domain
         ans = [self(g)]
         while not self.is_in_fundom(x2):
-            found = False
             intersection_candidates = []
             for i, (v1, v2) in enumerate(self.fundamental_domain_data()):
                 z = intersect_geodesic_arcs(v1, v2, x1, x2)
@@ -423,29 +422,22 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
                     z1, z2 = perturb_point_on_arc(x1, x2, z, eps)
                     if not self.is_in_fundom(z1):
                         z1, z2 = z2, z1
-                    try:
-                        assert self.is_in_fundom(
-                            z1
-                        ), "z1 and z2 are both outside of fundom!"
-                        assert not self.is_in_fundom(
-                            z2
-                        ), "z1 and z2 are both inside of fundom!"
+                    if self.is_in_fundom(z1) and not self.is_in_fundom(z2):
                         intersection_candidates.append(((z1, z2), i, (v1, v2)))
-                    except AssertionError:
-                        pass
             assert len(intersection_candidates) > 0, "No intersection candidates!!"
             if len(intersection_candidates) > 1:
                 verbose(intersection_candidates)
             z1, z2 = intersection_candidates[
                 ZZ.random_element(len(intersection_candidates))
             ][0]
+            found = False
             for g in self.gquats[1:]:
-                t0 = self(g) ** -1 * z2
+                t0 = act_flt(emb((self(g) ** -1).quaternion_rep), z2)
                 if self.is_in_fundom(t0):
                     assert not found, "Found more than one!"
                     found = True
                     x1 = t0
-                    x2 = self(g) ** -1 * x2
+                    x2 = act_flt(emb((self(g) ** -1).quaternion_rep), x2)
                     verbose("x1 = %s, x2 = %s" % (x1, x2))
                     ans.append(ans[-1] * self(g))
                     break  # DEBUG
@@ -472,7 +464,7 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         return x
 
     def find_fundom_rep(
-        self, z0_H, v0=None, return_alternative=False, max_iters=100
+        self, z0_H, v0 =None, return_alternative=False, max_iters=100
     ):  # generic -- Take z0 to the fundamental domain
         r"""
         Returns t0 and g such that g * t0 = z0_H, and t0 is in the fundamental domain
@@ -541,8 +533,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             oldji, oldgg = ji, gg
             wd.append(gg)
             verbose("New g = %s\t delta = %s\t z0=%s" % (gg, delta, z0))
-            t0 = self(delta) * z0_H
-            t1 = self(wd[-1] ** -1 * delta) * z0_H
+            t0 = act_flt(emb(self(delta).quaternion_rep),z0_H)
+            t1 = act_flt(emb(self(wd[-1] ** -1 * delta).quaternion_rep),z0_H)
         delta_inv = delta**-1
         if return_alternative:
             return (t0, delta_inv), (t1, delta_inv * wd[-1])
@@ -1288,17 +1280,17 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         of the translates s*D (with s in S) of the standard fundamental domain D.
         """
         CC = x1.parent()
-        x1 += CC.random_element(10**-1) * x1.imag() ** 2
-        x2 += CC.random_element(10**-1) * x2.imag() ** 2
+        x1 += CC.random_element(0.1) * x1.imag() ** 2
+        x2 += CC.random_element(0.1) * x2.imag() ** 2
         if debug:
             from sage.repl.rich_output.pretty_print import show
 
             self._debug_plot = hyperbolic_polygon(
                 [
-                    CC(-0.5, 10 ^ 2),
+                    CC(-0.5, 10 ** 2),
                     self.fundamental_domain()[1],
                     self.fundamental_domain()[2],
-                    CC(0.5, 10 ^ 2),
+                    CC(0.5, 10 ** 2),
                 ]
             )
         if v0 is None:

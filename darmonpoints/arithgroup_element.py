@@ -11,29 +11,17 @@ from itertools import chain, groupby, islice, product, starmap, tee
 
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.functions.generalized import sgn
-from sage.functions.trig import arctan
-from sage.groups.group import AlgebraicGroup
-from sage.matrix.all import Matrix, matrix
-from sage.misc.all import cached_method, lazy_attribute, walltime
+from sage.misc.all import cached_method, lazy_attribute
 from sage.misc.misc_c import prod
-from sage.misc.persist import db
-from sage.modules.all import vector
-from sage.modules.free_module import FreeModule_generic
 from sage.rings.all import (
     QQ,
-    RR,
     ZZ,
-    ComplexField,
     NumberField,
     PolynomialRing,
     Qp,
     QuadraticField,
-    RealField,
 )
 from sage.structure.element import MultiplicativeGroupElement
-from sage.structure.parent import Parent
-from sage.structure.richcmp import richcmp
-from sage.structure.sage_object import SageObject, load, save
 
 from .util import *
 
@@ -211,7 +199,8 @@ class ArithGroupElement(MultiplicativeGroupElement):
     def matrix(self, prec=-1):
         return self.embed(prec)
 
-    def acton(self, x):
+    def _act_on_(self, x, on_left):
+        assert on_left == True
         return act_flt(self.matrix(), x)
 
     def conjugate_by(self, w):

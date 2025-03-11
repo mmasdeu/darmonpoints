@@ -98,7 +98,7 @@ class MeromorphicFunctionsElement(ModuleElement):
     def polynomial_approximation(self, z, m):
         K = self.parent().base_ring()
         a, b, c, d = self._parameter.list()
-        phi = lambda Q: K(a) / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         try:
             pt = phi(self.normalize_point)
             pole = -d / c
@@ -121,7 +121,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         if type(D) in (int, Integer):
             D = K(D)
         a, b, c, d = self._parameter.list()
-        phi = lambda Q: K(a) / c if Q == Infinity else K(a * Q + b) / K(c * Q + d)
+        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         try:
             pt = phi(self.normalize_point)
             pole = -d / c
@@ -152,7 +152,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             raise NotImplementedError
         K = self.parent().base_ring()
         a, b, c, d = self._parameter.list()
-        phi = lambda Q: K(a) / c if Q == Infinity else K(a * Q + b) / K(c * Q + d)
+        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         valder = self.power_series().derivative().list()
         try:
             pt = phi(self.normalize_point)
@@ -249,9 +249,9 @@ def divisor_to_pseries(parameter, Ps, data, prec):
     for Q, n in data:
         K = Q.parent()
         if n > 0:
-            num *= (1 - K(((c * Q + d) / (a * Q + b))) * t) ** ZZ(n)
+            num *= (1 - ((c * Q + d) / (a * Q + b)) * t) ** ZZ(n)
         else:
-            den *= (1 - K(((c * Q + d) / (a * Q + b))) * t) ** ZZ(-n)
+            den *= (1 - ((c * Q + d) / (a * Q + b)) * t) ** ZZ(-n)
     ans = Ps(num).add_bigoh(prec) * ~(Ps(den).add_bigoh(prec))
     return ans
 
