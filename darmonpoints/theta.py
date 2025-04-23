@@ -240,7 +240,7 @@ class ThetaOC(SageObject):
         z0, wd = self.G.to_fundamental_domain(z)
         gens = (
             [None]
-            + self.G.generators()
+            + list(self.G.generators())
             + [o.adjugate() for o in reversed(self.G.generators())]
         )
         g = prod((gens[i] for i in wd), gens[1].parent()(1)).adjugate()
