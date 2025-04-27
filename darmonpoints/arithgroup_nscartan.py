@@ -362,7 +362,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
         delta0 = delta
         q = self.q
         i = 0
-        while not delta0 in self._Gamma:
+        while delta0 not in self._Gamma:
             i += 1
             delta0 *= self.extra_matrix_inverse
         w = self._get_word_rep_initial(self.B(delta0))
