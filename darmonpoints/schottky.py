@@ -79,11 +79,6 @@ def enumerate_group_elements(gens, invgens, length):
                 if wd[-1] != i + 1:
                     yield wd + [-i - 1], g * vinv
 
-
-def all_elements_up_to_length(gens, invgens, N):
-    return chain(*[enumerate_group_elements(gens, invgens, i) for i in range(N + 1)])
-
-
 def hash_vertex(v):
     try:
         return hash(v)
@@ -113,7 +108,7 @@ def find_eigenvector_matrix(g):
         veps.append((B[0,1], -B[0,0])) # The right kernel of a rank-1 2x2 matrix
     return g.matrix_space()(veps).transpose()
 
-
+@cached_function
 def find_parameter(g, ball, pi=None, check=True):
     if pi is None:
         pi = g.parent().base_ring().uniformizer()
@@ -133,27 +128,9 @@ def find_parameter(g, ball, pi=None, check=True):
     if check:
         if act(ans, z0) != 1:
             raise RuntimeError
-        # if ans * ball.complement() != ball.parent()(0, 0).closure():
-        #     # print(ans * ball.complement())
-        #     # print(ball.parent()(0,0).closure())
-        #     raise RuntimeError
+        if ans * ball.complement() != ball.parent()(0, 0).closure():
+            raise RuntimeError
     return ans
-
-
-@cached_function
-def find_parameter_new(g, ball, pi=None, check=True):
-    K = g.parent().base_ring()
-    if pi is None:
-        pi = K.uniformizer()
-    g = g.apply_map(lambda o: o.lift_to_precision())
-    r = ball.radius
-    z0 = ball.center.lift_to_precision()
-    if ball.is_complement:
-        ans = Matrix(K, 2, 2, [0, 1, 1, -z0])
-    else:
-        ans = Matrix(K, 2, 2, [1, -z0, 0, 1])
-    return ans
-
 
 class SchottkyGroup_abstract(SageObject):
     def __init__(self, K, generators):
@@ -712,9 +689,7 @@ Try with a quadratic (ramified) extension."
         # Compute an equivalent divisor to D with proper support
         # We replace (a) with (a0) - (g z) + (z) for a0 and z in
         # the closure of the fundamental domain.
-        p = self.pi
         gens = self._generators
-        balls = self.balls()
         wd = [0 for _ in range(self.genus())]
         Div = D.parent()
         ans = Div([])
@@ -775,7 +750,6 @@ Try with a quadratic (ramified) extension."
         Compute u_gamma
         """
         wd = self.word_problem(gamma)
-        gens = self._generators
         z = kwargs.get("z", None)
         if len(wd) > 1 or wd[0] < 0:
             if z is None:
@@ -806,10 +780,10 @@ Try with a quadratic (ramified) extension."
         else:
             a = self.base_ring()(1) * a
             K = a.parent()            
-        D = self.find_equivalent_divisor(Divisors(K)([(1, a), (-1, act(gamma, a))]))
         if naive:
             return lambda z : self.theta_naive(prec, z=z, a=a, gamma=gamma)
         else:
+            D = self.find_equivalent_divisor(Divisors(K)([(1, a), (-1, act(gamma, a))]))
             ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K)
             ans = ans.improve(prec)
         return ans
@@ -1110,30 +1084,12 @@ def four_point_configuration(K, pts):
     else:
         return None, 0
 
-
-def four_point_configuration_works(K, pts):
-    V = [[K(pi - pj).valuation() for pj in pts] for pi in pts]
-    v2 = abs(V[0][1] + V[2][3] - V[1][2] - V[0][3])
-    v3 = abs(V[0][1] + V[2][3] - V[1][3] - V[0][2])
-    if v2 > 0 and v3 > 0:
-        return pts[2], v2
-    v1 = abs(V[0][2] + V[1][3] - V[1][2] - V[0][3])
-    if v1 > 0 and v3 > 0:
-        return pts[1], v1
-    elif v1 > 0 and v2 > 0:
-        return pts[0], v1
-    else:
-        return None, 0
-
-
 leaf = lambda t: t[0] is None
-
 
 def choose_leaf(tree):
     while not leaf(tree):
         tree = tree[1][0]
     return tree[1]
-
 
 class NeighborJoiningTree(SageObject):
     def __init__(self, K, leaves):
@@ -1282,15 +1238,9 @@ def test_fundamental_domain(gens, balls):
                         j,
                     )
                 )
-            #     verbose(f"Test *failed* for balls {i = } and {j = }")
-            # else:
-            #     verbose(f"Test passed for balls {i = } and {j = }")
         B0 = g * balls[-i].complement()
         B1 = balls[i].closure()
         if B0 != B1:
             fails.append(i)
-        #     verbose(f"Test *failed* for {i = }. {B0 = }, {B1 = }")
-        # else:
-        #     verbose(f"Test passed for {i = }")
     if len(fails) > 0:
         raise RuntimeError(f"Some tests failed. ({fails})")

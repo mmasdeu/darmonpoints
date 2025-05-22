@@ -25,6 +25,8 @@ from .meromorphic import *
 infinity = Infinity
 
 
+# Evaluate the rational function phi_D at z,
+# where phi_D has divisor D and is normalized so that phi_D(oo) = 1
 def eval_rat(D, z):
     if z == Infinity:
         return D.parent().base_ring()(1)
@@ -40,7 +42,7 @@ def eval_rat(D, z):
             fails += n
         else:
             ans *= zP**n
-    # assert fails == 0 # DEBUG !
+    assert fails == 0 # DEBUG !
     return ans
 
 
@@ -55,7 +57,7 @@ def eval_rat_derivative(D, z):
             fails += n
         else:
             ans += n * zP**-1
-    # assert fails == 0 # DEBUG !
+    assert fails == 0 # DEBUG !
     return ans * eval_rat(D, z)
 
 
@@ -133,7 +135,7 @@ class ThetaOC(SageObject):
         # Corresponding to words of length exactly 2
         # D2dict = {i : sum(g * val) for j, val in D1dict.items() if j != i for i, g in gens_ext }
         
-        # self.val will contain the 0, 1 and 2 terms
+        # self.val will contain the 0, 1 terms
         self.val = sum(D1dict.values(), D)
         self.Fnlist = [{ i :
             self.MM(sum(g * val for j, val in D1dict.items() if j != -i), tau)
@@ -142,6 +144,7 @@ class ThetaOC(SageObject):
     def improve(self, m):
         gens_ext = self.G.gens_extended()
         params = self.G.parameters
+        # Initialize action_data
         action_data = {}
         for (i, gi), tau in zip(gens_ext, params):
             for j, Fj in self.Fnlist[-1].items():
@@ -151,15 +154,10 @@ class ThetaOC(SageObject):
                         tau,
                     )
         for it in range(m):
+            # Stop if we reach the maximum precision
             if self.m >= self.prec:
-                if len(self.Fnlist) > 0:
-                    self.Fnlist = [
-                    {
-                        ky: sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky])
-                        for ky in self.Fnlist[0]
-                    }
-                    ]
-                return self
+                break
+            # Compute the next term from the last on in Fnlist
             tmp = {}
             for (i, gi), tau in zip(gens_ext, params):
                 for j, Fj in self.Fnlist[-1].items():
@@ -169,14 +167,18 @@ class ThetaOC(SageObject):
                             tmp[i] += vl
                         except KeyError:
                             tmp[i] = vl
+            # Append the new term
             self.Fnlist.append(tmp)
             self.m += 1
-        self.Fnlist = [
-            {
-                ky: sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky])
-                for ky in self.Fnlist[0]
-            }
-        ]
+        
+        # Collapse the list to one term and return
+        if len(self.Fnlist) > 0:
+            self.Fnlist = [
+                {
+                    ky: sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky])
+                    for ky in self.Fnlist[0]
+                }
+            ]
         return self
 
     def _repr_(self):
@@ -219,11 +221,6 @@ class ThetaOC(SageObject):
     def __call__(self, z, **kwargs):
         return self.evaluate(z, **kwargs)
 
-    def rational_function_approximation(self, z, m):
-        ans0 = self.val.rational_function(as_map=False, z=z)
-        ans1 = prod(F.polynomial_approximation(z,m) for FF in self.Fnlist for F in FF.values())
-        return ans0 * ans1
-        
     def evaluate(self, z, **kwargs):
         if not isinstance(z, DivisorsElement):
             z = self.Div([(1, z)])
@@ -231,7 +228,7 @@ class ThetaOC(SageObject):
             z -= self.Div([(z.degree(), Infinity)])
         z = self.G.find_equivalent_divisor(z)
         ans0 = prod(eval_rat(self.val, P) ** n for P, n in z)
-        ans1 = prod(F(z) for FF in self.Fnlist for F in FF.values())        
+        ans1 = prod(F(z) for FF in self.Fnlist for F in FF.values())
         return ans0 * ans1
 
     def eval_derivative(self, z, return_value=False):

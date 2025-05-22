@@ -64,10 +64,8 @@ class MeromorphicFunctionsElement(ModuleElement):
             K = parent.base_ring()
             Ps = parent._Ps
             if isinstance(data.parent(), Divisors):
-                self._value = divisor_to_pseries(parameter, Ps, data, prec)
-                self._value = self._value.list()
-                if len(data.support()) == 1:
-                    self.normalize_point = data.support()[0] + 1  # DEBUG
+                self._value = divisor_to_pseries(parameter, Ps, data, prec).list()
+                assert len(data.support()) > 1
             elif data == 0:
                 self._value = Ps(1).list()  # multiplicative!
             elif data.parent() == parent:
@@ -95,26 +93,21 @@ class MeromorphicFunctionsElement(ModuleElement):
     def __call__(self, D):
         return self.evaluate(D)
 
-    def polynomial_approximation(self, z, m):
-        K = self.parent().base_ring()
-        a, b, c, d = self._parameter.list()
-        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
-        try:
-            pt = phi(self.normalize_point)
-            pole = -d / c
-            # valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
-        except AttributeError:
-            pole = None
-            # if c == 0:
-            #     valinf = 1
-            # else:
-            #     valinf = evalpoly(self._value, K(a) / c)
-        valinf = 1
-        assert pole is None
-        fac = (z - pole) if pole is not None else 1
-        phiz = phi(z)
-        ans = fac * (sum(a*phiz**n for n, a in enumerate(self._value[:m]))) / valinf
-        return ans
+    # def polynomial_approximation(self, z, m):
+    #     K = self.parent().base_ring()
+    #     a, b, c, d = self._parameter.list()
+    #     phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+    #     try:
+    #         _ = phi(self.normalize_point)
+    #         pole = -d / c
+    #     except AttributeError:
+    #         pole = None
+    #     valinf = 1
+    #     assert pole is None
+    #     fac = (z - pole) if pole is not None else 1
+    #     phiz = phi(z)
+    #     ans = fac * (sum(a*phiz**n for n, a in enumerate(self._value[:m]))) / valinf
+    #     return ans
 
     def evaluate(self, D):  # meromorphic functions
         K = self.parent().base_ring()
@@ -123,15 +116,10 @@ class MeromorphicFunctionsElement(ModuleElement):
         a, b, c, d = self._parameter.list()
         phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         try:
-            pt = phi(self.normalize_point)
+            _ = phi(self.normalize_point)
             pole = -d / c
-            # valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
         except AttributeError:
             pole = None
-            # if c == 0:
-            #     valinf = 1
-            # else:
-            #     valinf = evalpoly(self._value, K(a) / c)
         valinf = 1
         assert pole is None
 
@@ -155,15 +143,10 @@ class MeromorphicFunctionsElement(ModuleElement):
         phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         valder = self.power_series().derivative().list()
         try:
-            pt = phi(self.normalize_point)
+            _ = phi(self.normalize_point)
             pole = -d / c
-            # valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
         except AttributeError:
             pole = None
-            # if c == 0:
-            #     valinf = 1
-            # else:
-            #     valinf = evalpoly(self._value, K(a) / c)
         valinf = 1
         assert pole is None
         chainrule = (a * d - b * c) / (c * D + d) ** 2
