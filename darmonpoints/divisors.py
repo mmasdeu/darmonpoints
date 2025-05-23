@@ -257,7 +257,7 @@ class DivisorsElement(ModuleElement):
 
     def rational_function(self, as_map=False, z=None):
         if as_map:
-            return lambda z: prod(((1 - z / P) ** n for P, n in self), z.parent()(1))
+            return lambda z: prod(((z - P) ** n for P, n in self), z.parent()(1))
         else:
             if z is None:
                 K = self.parent().base()
