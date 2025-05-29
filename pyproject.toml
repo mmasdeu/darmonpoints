@@ -13,7 +13,9 @@ dependencies = []
 
 [project.optional-dependencies]
 passagemath = [
+    "passagemath-eclib",
     "passagemath-flint",
+    "passagemath-graphs",
     "passagemath-groups",
     "passagemath-modules",
     "passagemath-pari",
