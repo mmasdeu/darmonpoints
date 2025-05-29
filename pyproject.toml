@@ -17,6 +17,7 @@ passagemath = [
     "passagemath-groups",
     "passagemath-modules",
     "passagemath-pari",
+    "passagemath-plot",
     "passagemath-repl",
     "passagemath-schemes",
     "passagemath-symbolics",
