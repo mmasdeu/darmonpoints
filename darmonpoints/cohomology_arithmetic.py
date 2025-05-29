@@ -32,7 +32,10 @@ from collections import defaultdict
 from itertools import chain, groupby, islice, product, starmap, tee
 from time import sleep
 
-from sage.arith.all import dedekind_sum, gcd, lcm, xgcd
+from sage.arith.misc import dedekind_sum
+from sage.arith.misc import GCD as gcd
+from sage.arith.functions import lcm
+from sage.arith.misc import XGCD as xgcd
 from sage.categories.action import Action
 from sage.categories.homset import Hom
 from sage.groups.group import AlgebraicGroup
@@ -46,21 +49,18 @@ from sage.modular.pollack_stevens.distributions import OverconvergentDistributio
 from sage.modular.pollack_stevens.padic_lseries import log_gamma_binomial
 from sage.modules.free_module_element import free_module_element, vector
 from sage.parallel.decorate import fork, parallel
-from sage.rings.all import (
-    RR,
-    ComplexField,
-    FiniteField,
-    LaurentSeriesRing,
-    PolynomialRing,
-    Qp,
-    QuadraticField,
-    RealField,
-    Zmod,
-    Zp,
-    polygen,
-)
+from sage.rings.real_mpfr import RR
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.finite_rings.finite_field_constructor import FiniteField
+from sage.rings.laurent_series_ring import LaurentSeriesRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.number_field.number_field import QuadraticField
+from sage.rings.real_mpfr import RealField
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
+from sage.rings.polynomial.polynomial_ring import polygen
 from sage.rings.infinity import Infinity as oo
 from sage.rings.number_field.number_field import NumberField
+from sage.rings.padics.factory import Qp, Zp
 from sage.structure.element import ModuleElement, MultiplicativeGroupElement
 from sage.structure.parent import Parent
 from sage.structure.sage_object import SageObject, load, save
