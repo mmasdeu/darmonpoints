@@ -6,7 +6,12 @@ import datetime
 import os
 import sys
 
-from sage.all import QQ, ZZ, Infinity, Qp, QuaternionAlgebra, factor
+from sage.rings.rational_field import Q as QQ
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.infinity import Infinity
+from sage.rings.padics.factory import Qp
+from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
+from sage.arith.misc import factor
 from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.rings.padics.precision_error import PrecisionError
 

@@ -11,7 +11,7 @@ from sage.categories.action import Action
 from sage.categories.pushout import pushout
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
-from sage.misc.all import cputime
+from sage.misc.timing import cputime
 from sage.misc.cachefunc import cached_method
 from sage.misc.misc_c import prod
 from sage.misc.verbose import get_verbose, set_verbose, verbose
@@ -19,11 +19,11 @@ from sage.modular.pollack_stevens.sigma0 import Sigma0, Sigma0ActionAdjuster
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.modules.module import Module
 from sage.modules.vector_integer_dense import Vector_integer_dense
-from sage.rings.all import Integer, Zp
+from sage.rings.integer import Integer
 from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.infinity import Infinity
 from sage.rings.integer_ring import ZZ
-from sage.rings.padics.factory import Qp, ZpCA
+from sage.rings.padics.factory import Qp, Zp, ZpCA
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.power_series_ring import PowerSeriesRing

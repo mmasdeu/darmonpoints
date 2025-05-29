@@ -23,11 +23,11 @@ from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.module import Module
 from sage.modules.vector_integer_dense import Vector_integer_dense
-from sage.rings.all import Integer, Zp
+from sage.rings.integer import Integer
 from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.infinity import Infinity
 from sage.rings.integer_ring import ZZ
-from sage.rings.padics.factory import ZpCA
+from sage.rings.padics.factory import Zp, ZpCA
 from sage.rings.padics.padic_generic import pAdicGeneric
 from sage.rings.power_series_ring import PowerSeriesRing
 from sage.rings.rational_field import QQ

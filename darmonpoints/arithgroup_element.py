@@ -11,16 +11,26 @@ from itertools import chain, groupby, islice, product, starmap, tee
 
 from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.functions.generalized import sgn
-from sage.misc.all import cached_method, lazy_attribute
+from sage.functions.trig import arctan
+from sage.groups.group import AlgebraicGroup
+from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix as matrix
+from sage.misc.cachefunc import cached_method
+from sage.misc.lazy_attribute import lazy_attribute
+from sage.misc.timing import walltime
 from sage.misc.misc_c import prod
-from sage.rings.all import (
-    QQ,
-    ZZ,
-    NumberField,
-    PolynomialRing,
-    Qp,
-    QuadraticField,
-)
+from sage.misc.persist import db
+from sage.modules.free_module_element import free_module_element as vector
+from sage.modules.free_module import FreeModule_generic
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.number_field.number_field import NumberField
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.number_field.number_field import QuadraticField
+from sage.rings.real_mpfr import RealField
+from sage.rings.padics.factory import Qp
 from sage.structure.element import MultiplicativeGroupElement
 
 from .util import *

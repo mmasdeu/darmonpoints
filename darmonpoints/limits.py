@@ -3,17 +3,16 @@ from operator import itemgetter, mul
 
 from sage.functions.other import floor
 from sage.groups.generic import discrete_log
-from sage.matrix.all import Matrix, matrix
+from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix as matrix
 from sage.misc.misc_c import prod
 from sage.misc.verbose import verbose
-from sage.rings.all import (
-    RR,
-    ComplexField,
-    PolynomialRing,
-    QuadraticField,
-    RealField,
-    Zmod,
-)
+from sage.rings.real_mpfr import RR
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.number_field.number_field import QuadraticField
+from sage.rings.real_mpfr import RealField
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
 
 from .util import *
 
