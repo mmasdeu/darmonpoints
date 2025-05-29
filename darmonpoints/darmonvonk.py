@@ -804,7 +804,6 @@ class DVCocycle(SageObject):
 
         self._tau = tau_p
         tau = self._tau
-        tau_bar = tau.trace() - tau
         self._gamma_tau = gamma_tau
 
         action_map = lambda g, x: act_flt(vinf(g.quaternion_rep), x)
@@ -835,14 +834,13 @@ class DVCocycle(SageObject):
         Div = Divisors(self._tau.parent())
         if gamma.quaternion_rep == 1 or gamma.quaternion_rep == -1:
             return Div(0)
-        wlist = set([])
         x0 = self._x0
         gamma_of_x0 = gamma * x0
         tau = x0.parent()(self._tau_inf)
         tau_bar = x0.parent()(self._tau_inf_bar)
         ans = Div(0)
+        c1 = HH.get_geodesic(x0, gamma_of_x0)        
         for g in self.all_matrix_candidates(gamma):
-            c1 = HH.get_geodesic(x0, gamma_of_x0)
             gtau = g * tau
             gtau_bar = g * tau_bar
             c2 = HH.get_geodesic(gtau, gtau_bar)

@@ -414,9 +414,7 @@ class CohomologyGroup(Module):
         vi = list(vi)
         V = self.coefficient_module()
         Vdim = V.dimension()
-        data = []
-        for i in range(0, len(vi), Vdim):
-            data.append(V(vi[i : i + Vdim]))
+        data = [V(vi[i : i + Vdim]) for i in range(0, len(vi), Vdim)]
         return self.element_class(self, data)
 
     def gens(self):

@@ -151,10 +151,10 @@ class HomologyGroup(Module, UniqueRepresentation):
         boundaries = []
         for r in G.get_relation_words():
             grad = self.twisted_fox_gradient(G(r).word_rep)
-            for v in V.gens():
-                boundaries.append(
-                    cycles(ambient(sum([list(a * vector(v)) for a in grad], [])))
-                )
+            boundaries.extend(
+                cycles(ambient(sum([list(a * vector(v)) for a in grad], [])))
+                for v in V.gens()
+            )
         boundaries = cycles.submodule(boundaries)
         ans = cycles.quotient(boundaries)
         set_verbose(verb)
@@ -201,16 +201,11 @@ class HomologyGroup(Module, UniqueRepresentation):
             vi = list(vi)
             V = self.coefficient_module()
             Vdim = V.dimension()
-            data = []
-            for i in range(0, len(vi), Vdim):
-                data.append(V(vi[i : i + Vdim]))
+            data = [V(vi[i : i + Vdim]) for i in range(0, len(vi), Vdim)]
             return self.element_class(self, data)
 
     def _coerce_map_from_(self, S):
-        if isinstance(S, HomologyGroup):
-            return True
-        else:
-            return False
+        return isinstance(S, HomologyGroup)
 
     @cached_method
     def gen(self, i):
@@ -226,9 +221,7 @@ class HomologyGroup(Module, UniqueRepresentation):
         vi = list(vi)
         V = self.coefficient_module()
         Vdim = V.dimension()
-        data = []
-        for i in range(0, len(vi), Vdim):
-            data.append(V(vi[i : i + Vdim]))
+        data = [V(vi[i : i + Vdim]) for i in range(0, len(vi), Vdim)]
         return self.element_class(self, data)
 
     @cached_method

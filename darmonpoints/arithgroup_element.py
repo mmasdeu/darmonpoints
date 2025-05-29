@@ -32,9 +32,6 @@ from sage.rings.number_field.number_field import QuadraticField
 from sage.rings.real_mpfr import RealField
 from sage.rings.padics.factory import Qp
 from sage.structure.element import MultiplicativeGroupElement
-from sage.structure.parent import Parent
-from sage.structure.richcmp import richcmp
-from sage.structure.sage_object import SageObject, load, save
 
 from .util import *
 
@@ -212,7 +209,8 @@ class ArithGroupElement(MultiplicativeGroupElement):
     def matrix(self, prec=-1):
         return self.embed(prec)
 
-    def acton(self, x):
+    def _act_on_(self, x, on_left):
+        assert on_left == True
         return act_flt(self.matrix(), x)
 
     def conjugate_by(self, w):

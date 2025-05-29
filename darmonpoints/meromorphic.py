@@ -38,7 +38,7 @@ from sage.structure.unique_representation import (
 )
 
 from .divisors import Divisors
-
+from .util import muted
 
 def evalpoly(poly, x, check=True):
     # Initialize result
@@ -64,10 +64,8 @@ class MeromorphicFunctionsElement(ModuleElement):
             K = parent.base_ring()
             Ps = parent._Ps
             if isinstance(data.parent(), Divisors):
-                self._value = divisor_to_pseries(parameter, Ps, data, prec)
-                self._value = self._value.list()
-                if len(data.support()) == 1:
-                    self.normalize_point = data.support()[0] + 1  # DEBUG
+                self._value = divisor_to_pseries(parameter, Ps, data, prec).list()
+                assert len(data.support()) > 1
             elif data == 0:
                 self._value = Ps(1).list()  # multiplicative!
             elif data.parent() == parent:
@@ -95,22 +93,34 @@ class MeromorphicFunctionsElement(ModuleElement):
     def __call__(self, D):
         return self.evaluate(D)
 
+    # def polynomial_approximation(self, z, m):
+    #     K = self.parent().base_ring()
+    #     a, b, c, d = self._parameter.list()
+    #     phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+    #     try:
+    #         _ = phi(self.normalize_point)
+    #         pole = -d / c
+    #     except AttributeError:
+    #         pole = None
+    #     valinf = 1
+    #     assert pole is None
+    #     fac = (z - pole) if pole is not None else 1
+    #     phiz = phi(z)
+    #     ans = fac * (sum(a*phiz**n for n, a in enumerate(self._value[:m]))) / valinf
+    #     return ans
+
     def evaluate(self, D):  # meromorphic functions
         K = self.parent().base_ring()
         if type(D) in (int, Integer):
             D = K(D)
         a, b, c, d = self._parameter.list()
-        phi = lambda Q: K(a) / c if Q == Infinity else K(a * Q + b) / K(c * Q + d)
+        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         try:
-            pt = phi(self.normalize_point)
+            _ = phi(self.normalize_point)
             pole = -d / c
-            valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
         except AttributeError:
             pole = None
-            if c == 0:
-                valinf = 1
-            else:
-                valinf = evalpoly(self._value, K(a) / c)
+        valinf = 1
         assert pole is None
 
         def ev(P):
@@ -130,18 +140,14 @@ class MeromorphicFunctionsElement(ModuleElement):
             raise NotImplementedError
         K = self.parent().base_ring()
         a, b, c, d = self._parameter.list()
-        phi = lambda Q: K(a) / c if Q == Infinity else K(a * Q + b) / K(c * Q + d)
+        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         valder = self.power_series().derivative().list()
         try:
-            pt = phi(self.normalize_point)
+            _ = phi(self.normalize_point)
             pole = -d / c
-            valinf = evalpoly(self._value, pt) * (self.normalize_point - pole)
         except AttributeError:
             pole = None
-            if c == 0:
-                valinf = 1
-            else:
-                valinf = evalpoly(self._value, K(a) / c)
+        valinf = 1
         assert pole is None
         chainrule = (a * d - b * c) / (c * D + d) ** 2
         return (
@@ -206,16 +212,12 @@ class MeromorphicFunctionsElement(ModuleElement):
         )
 
     def left_act_by_matrix(self, g, param=None):  # meromorphic functions
-        t = cputime()
         parent = self.parent()
-        K = parent.base_ring()
-        prec = parent._prec
-        p = parent._p
         # Below we code the action which is compatible with the usual action
         # P |-> (aP+b)/(cP+D)
         zz_ps_vec = parent.get_action_data(g, self._parameter, param)
         ans = self._value * zz_ps_vec
-        return self.__class__(self.parent(), ans, param, check=False)
+        return self.__class__(parent, ans, param, check=False)
 
 
 def divisor_to_pseries(parameter, Ps, data, prec):
@@ -226,9 +228,9 @@ def divisor_to_pseries(parameter, Ps, data, prec):
     for Q, n in data:
         K = Q.parent()
         if n > 0:
-            num *= (1 - K(((c * Q + d) / (a * Q + b))) * t) ** ZZ(n)
+            num *= (1 - ((c * Q + d) / (a * Q + b)) * t) ** ZZ(n)
         else:
-            den *= (1 - K(((c * Q + d) / (a * Q + b))) * t) ** ZZ(-n)
+            den *= (1 - ((c * Q + d) / (a * Q + b)) * t) ** ZZ(-n)
     ans = Ps(num).add_bigoh(prec) * ~(Ps(den).add_bigoh(prec))
     return ans
 
@@ -263,21 +265,28 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         return self._p
 
     @cached_method
+    @muted
     def get_action_data(self, g, oldparam, param, prec=None):
-        verb_level = get_verbose()
-        set_verbose(0)
+        r'''
+        Act on the power series by matrix g, given the old and new parameters.
+        The action is given by the formula:
+        (g * phi)(t) = phi(tau_0 g^-1 * tau_1^-1 t)
+        which amounts to acting on the left by
+        tau_1 g tau_0^-1
+        '''
         g.set_immutable()
         K = self.base_ring()
         if prec is None:
             prec = self._prec
         assert param is not None
         tg = param.change_ring(K)
+        # abcd = tau_0 g^-1 * tau_1^-1
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
         zz = (
             (self._Ps([b, a]) / self._Ps([d, c]))
             .map_coefficients(lambda x: x.add_bigoh(prec))
             .truncate(prec)
-        )
+        ) # zz = (at + b)/(ct + d)
         ans = [zz.parent()(1), zz]
         while len(ans) < prec:  # DEBUG - was prec + 1
             zz_ps = (
@@ -286,7 +295,6 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
                 .truncate(prec)  # DEBUG - was prec + 1
             )
             ans.append(zz_ps)
-        set_verbose(verb_level)
         m = Matrix(K, prec, prec, 0)
         for i, zz_ps in enumerate(ans):
             for j, aij in enumerate(zz_ps):

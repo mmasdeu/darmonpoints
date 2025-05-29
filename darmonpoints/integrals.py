@@ -332,7 +332,7 @@ def sample_point(G, e, prec=20):
     rev, h = e
     hemb = G.embed(set_immutable(h**-1), prec)
     wploc = G.embed(G.wp(), prec)
-    if rev == True:
+    if rev is True:
         hemb = hemb * wploc
     a, b, c, d = hemb.list()
     if d == 0:
@@ -399,7 +399,7 @@ class CoinducedElement(SageObject):
             ans = self.cocycle.evaluate_and_identity(a)
         else:
             ans = self.cocycle.evaluate(a)
-        if rev == False:
+        if rev is False:
             return ans
         else:
             return -ans

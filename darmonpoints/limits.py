@@ -171,7 +171,7 @@ def compute_tau0(v0, gamma, wD, return_exact=False):
     if c * tau0 + d != v0(wD):
         tau0 = v0(tau0_vec[1][0])
         idx = 1
-    return tau0_vec[idx][0] if return_exact == True else tau0
+    return tau0_vec[idx][0] if return_exact is True else tau0
 
 
 def order_and_unit(F, conductor):
@@ -382,7 +382,7 @@ def find_optimal_embeddings(F, use_magma=False, extra_conductor=1, magma=None):
     w = F.maximal_order().ring_generators()[0]
     D = F.discriminant()
     ## this matrix gives an optimal embedding of conductor 1
-    if use_magma == True or extra_conductor != 1:
+    if use_magma is True or extra_conductor != 1:
         if magma is None:
             from sage.interfaces.magma import magma
         tmp = magma.ReducedForms(str(D * extra_conductor**2), nvals=1)
