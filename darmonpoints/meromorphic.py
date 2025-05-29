@@ -38,7 +38,7 @@ from sage.structure.unique_representation import (
 )
 
 from .divisors import Divisors
-
+from .util import muted
 
 def evalpoly(poly, x, check=True):
     # Initialize result
@@ -212,16 +212,12 @@ class MeromorphicFunctionsElement(ModuleElement):
         )
 
     def left_act_by_matrix(self, g, param=None):  # meromorphic functions
-        t = cputime()
         parent = self.parent()
-        K = parent.base_ring()
-        prec = parent._prec
-        p = parent._p
         # Below we code the action which is compatible with the usual action
         # P |-> (aP+b)/(cP+D)
         zz_ps_vec = parent.get_action_data(g, self._parameter, param)
         ans = self._value * zz_ps_vec
-        return self.__class__(self.parent(), ans, param, check=False)
+        return self.__class__(parent, ans, param, check=False)
 
 
 def divisor_to_pseries(parameter, Ps, data, prec):
@@ -269,21 +265,28 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         return self._p
 
     @cached_method
+    @muted
     def get_action_data(self, g, oldparam, param, prec=None):
-        verb_level = get_verbose()
-        set_verbose(0)
+        r'''
+        Act on the power series by matrix g, given the old and new parameters.
+        The action is given by the formula:
+        (g * phi)(t) = phi(tau_0 g^-1 * tau_1^-1 t)
+        which amounts to acting on the left by
+        tau_1 g tau_0^-1
+        '''
         g.set_immutable()
         K = self.base_ring()
         if prec is None:
             prec = self._prec
         assert param is not None
         tg = param.change_ring(K)
+        # abcd = tau_0 g^-1 * tau_1^-1
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
         zz = (
             (self._Ps([b, a]) / self._Ps([d, c]))
             .map_coefficients(lambda x: x.add_bigoh(prec))
             .truncate(prec)
-        )
+        ) # zz = (at + b)/(ct + d)
         ans = [zz.parent()(1), zz]
         while len(ans) < prec:  # DEBUG - was prec + 1
             zz_ps = (
@@ -292,7 +295,6 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
                 .truncate(prec)  # DEBUG - was prec + 1
             )
             ans.append(zz_ps)
-        set_verbose(verb_level)
         m = Matrix(K, prec, prec, 0)
         for i, zz_ps in enumerate(ans):
             for j, aij in enumerate(zz_ps):
