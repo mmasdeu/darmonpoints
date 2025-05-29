@@ -85,13 +85,13 @@ def get_overconvergent_class_matrices(
 ):
     # If the moments are pre-calculated, will load them. Otherwise, calculate and
     # save them to disk.
-    if use_ps_dists == False:
+    if use_ps_dists is False:
         raise NotImplementedError(
             "Must use distributions from Pollack-Stevens code in the split case"
         )
 
     sgninfty = "plus" if sign_at_infinity == 1 else "minus"
-    dist_type = "ps" if use_ps_dists == True else "fm"
+    dist_type = "ps" if use_ps_dists is True else "fm"
     fname = "moments_%s_%s_%s_%s_%s.sobj" % (
         p,
         E.cremona_label(),
@@ -148,7 +148,7 @@ def get_overconvergent_class_quaternionic(
     base_ring = Zp(p, prec)
 
     sgninfty = "plus" if sign_at_infinity == 1 else "minus"
-    dist_type = "ps" if use_ps_dists == True else "fm"
+    dist_type = "ps" if use_ps_dists is True else "fm"
     fname = "moments_%s_%s_%s_%s_%s.sobj" % (p, Ename, sgninfty, prec, dist_type)
     if use_sage_db:
         try:
@@ -1024,8 +1024,6 @@ class ArithCohBianchi(ArithCoh):
         except AttributeError:
             pass
         S0 = V.Sigma0Squared()
-        ans0 = []
-        ans1 = []
         try:
             emb0, emb1 = self.S_arithgroup().embeddings()
         except AttributeError:
@@ -1033,10 +1031,8 @@ class ArithCohBianchi(ArithCoh):
             emb0 = lambda x, prec: self.group().embed(x, prec)
             emb1 = lambda x, prec: self.group().embed(conj(x), prec)
 
-        for g in Up_reps:
-            ans0.append(S0(emb0(g, prec), emb1(g, prec)))
-        for gbar in Up_reps_bar:
-            ans1.append(S0(emb0(gbar, prec), emb1(gbar, prec)))
+        ans0 = [S0(emb0(g, prec), emb1(g, prec)) for g in Up_reps]
+        ans1 = [S0(emb0(gbar, prec), emb1(gbar, prec)) for gbar in Up_reps_bar]
         return ans0, ans1
 
     def apply_Up1(self, c, group=None, scale=1, progress_bar=False):  # bianchi
@@ -1451,7 +1447,7 @@ def get_cocycle_from_elliptic_curve(Coh, E, sign=1, use_magma=True, **kwargs):
         return get_cocycle_from_elliptic_curve(
             Coh, E, 1, use_magma, **kwargs
         ) + get_cocycle_from_elliptic_curve(Coh, E, -1, use_magma, **kwargs)
-    if not sign in [1, -1]:
+    if sign not in [1, -1]:
         raise NotImplementedError
     F = E.base_ring()
     if F == QQ:

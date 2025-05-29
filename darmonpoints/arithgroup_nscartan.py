@@ -12,37 +12,37 @@ from sage.algebras.quatalg.all import QuaternionAlgebra
 from sage.functions.generalized import sgn
 from sage.functions.trig import arctan
 from sage.groups.group import AlgebraicGroup
-from sage.matrix.all import Matrix, matrix
+from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix as matrix
 from sage.matrix.constructor import (
     block_diagonal_matrix,
     diagonal_matrix,
     identity_matrix,
 )
 from sage.matrix.matrix_space import MatrixSpace
-from sage.misc.all import cached_method, walltime
+from sage.misc.cachefunc import cached_method
+from sage.misc.timing import walltime
 from sage.misc.misc_c import prod
 from sage.misc.persist import db
 from sage.misc.sage_eval import sage_eval
 from sage.misc.verbose import verbose
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.modular.modsym.p1list import lift_to_sl2z
-from sage.modules.all import vector
+from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modules.free_module import FreeModule_generic
-from sage.rings.all import (
-    QQ,
-    RR,
-    ZZ,
-    ComplexField,
-    NumberField,
-    PolynomialRing,
-    Qp,
-    QuadraticField,
-    RealField,
-    Zmod,
-)
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.number_field.number_field import NumberField
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.number_field.number_field import QuadraticField
+from sage.rings.real_mpfr import RealField
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
 from sage.rings.finite_rings.finite_field_constructor import FiniteField
 from sage.rings.infinity import Infinity as oo
+from sage.rings.padics.factory import Qp
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.parent import Parent
 from sage.structure.sage_object import SageObject, load, save
@@ -362,7 +362,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
         delta0 = delta
         q = self.q
         i = 0
-        while not delta0 in self._Gamma:
+        while delta0 not in self._Gamma:
             i += 1
             delta0 *= self.extra_matrix_inverse
         w = self._get_word_rep_initial(self.B(delta0))

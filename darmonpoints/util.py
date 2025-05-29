@@ -6,7 +6,9 @@ from functools import reduce
 from itertools import chain, groupby, islice, product, starmap, tee
 
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
-from sage.arith.all import divisors, kronecker_symbol, next_prime
+from sage.arith.misc import divisors
+from sage.arith.misc import kronecker as kronecker_symbol
+from sage.arith.misc import next_prime
 from sage.arith.functions import lcm
 from sage.arith.misc import valuation
 from sage.calculus.var import var
@@ -14,8 +16,10 @@ from sage.functions.generalized import sgn
 from sage.functions.transcendental import Function_zeta
 from sage.interfaces.gp import gp
 from sage.libs.pari.all import PariError, pari
-from sage.matrix.all import Matrix, matrix
-from sage.misc.all import cached_method, cartesian_product_iterator
+from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix as matrix
+from sage.misc.cachefunc import cached_method
+from sage.misc.mrange import cartesian_product_iterator
 from sage.misc.cachefunc import cached_function
 from sage.misc.functional import cyclotomic_polynomial
 from sage.misc.latex import LatexExpr, latex
@@ -24,11 +28,16 @@ from sage.misc.sage_eval import sage_eval
 from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.modular.modform.constructor import CuspForms, EisensteinForms
 from sage.modules.fg_pid.fgp_module import FGP_Module, FGP_Module_class
-from sage.rings.all import CC, QQ, RR, ZZ, Qp, RealField
+from sage.rings.cc import CC
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.real_mpfr import RealField
 from sage.rings.big_oh import O
 from sage.rings.fast_arith import prime_range
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing, Zmod
 from sage.rings.infinity import Infinity
+from sage.rings.padics.factory import Qp
 from sage.rings.padics.padic_generic import local_print_mode
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.schemes.elliptic_curves.constructor import (
@@ -293,7 +302,7 @@ def is_in_Gamma0loc(A, det_condition=True, p=None):
     r"""
     Whether the matrix A has all entries Zp-integral, and is upper-triangular mod p.
     """
-    if det_condition == True and A.determinant() != 1:
+    if det_condition is True and A.determinant() != 1:
         return False
     if p is not None:
         return all(o.valuation(p) >= 0 for o in A.list()) and A[1, 0].valuation(p) > 0
@@ -1068,7 +1077,7 @@ def our_sqrt(xx, K=None, return_all=False):
             if (y0**2 - x).valuation() >= minval:
                 found = True
                 break
-        if found == False:
+        if found is False:
             if return_all:
                 return []
             else:
@@ -1086,7 +1095,7 @@ def our_sqrt(xx, K=None, return_all=False):
             if (y0**2 - y0 + (1 - x) / 4).valuation() >= minval:
                 found = True
                 break
-        if found == False:
+        if found is False:
             if return_all:
                 return []
             else:
@@ -1144,7 +1153,7 @@ def our_cuberoot(xx, K=None, return_all=False):
             if (y0**3 - x).valuation() >= minval:
                 found = True
                 break
-    if found == False:
+    if found is False:
         raise ValueError("Not a cube")
     y1 = y0
     y = K(0)

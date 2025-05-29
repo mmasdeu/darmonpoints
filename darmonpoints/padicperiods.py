@@ -916,8 +916,10 @@ def build_Lambdalist_from_AB(A, B, T, scaling):
     for A0, B0 in product(
         our_nroot(A, scaling, return_all=True), our_nroot(B, scaling, return_all=True)
     ):
-        for B1 in our_nroot(B0, d, return_all=True):
-            ans.append(Matrix(K, 2, 2, [A0, B0, B1**alpha, A0 * B1**beta]))
+        ans.extend(
+            Matrix(K, 2, 2, [A0, B0, B1**alpha, A0 * B1**beta])
+            for B1 in our_nroot(B0, d, return_all=True)
+        )
     return ans
 
 
@@ -1788,10 +1790,9 @@ def generate_listI10(F, N):
     for ell in F.primes_of_bounded_norm(5):
         factor_list.append(ell.gens_reduced()[0])
         exp_ranges.append(range_smallprimes)
-    ans = []
-    for v in product(*exp_ranges):
-        ans.append(prod([o**i for o, i in zip(factor_list, v)]))
-    return ans
+    return [
+        prod([o**i for o, i in zip(factor_list, v)]) for v in product(*exp_ranges)
+    ]
 
 
 def find_kadziela_matrices(M, T):

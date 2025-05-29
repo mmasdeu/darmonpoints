@@ -9,36 +9,36 @@ from collections import defaultdict
 from itertools import chain, groupby, islice, product, starmap, tee
 
 from sage.algebras.quatalg.all import QuaternionAlgebra
-from sage.arith.all import lcm
+from sage.arith.functions import lcm
 from sage.functions.generalized import sgn
 from sage.functions.trig import arctan
 from sage.geometry.hyperbolic_space.hyperbolic_geodesic import HyperbolicGeodesicUHP
 from sage.groups.group import AlgebraicGroup
-from sage.matrix.all import Matrix, matrix
+from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix as matrix
 from sage.matrix.matrix_space import MatrixSpace
-from sage.misc.all import cached_method, walltime
+from sage.misc.cachefunc import cached_method
+from sage.misc.timing import walltime
 from sage.misc.misc_c import prod
 from sage.misc.persist import db
 from sage.misc.sage_eval import sage_eval
 from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.modular.modsym.p1list import P1List, lift_to_sl2z
-from sage.modules.all import vector
+from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modules.free_module import FreeModule_generic
-from sage.rings.all import (
-    AA,
-    QQ,
-    RR,
-    ZZ,
-    ComplexField,
-    NumberField,
-    PolynomialRing,
-    Qp,
-    QuadraticField,
-    RealField,
-)
+from sage.rings.qqbar import AA
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.number_field.number_field import NumberField
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.number_field.number_field import QuadraticField
+from sage.rings.real_mpfr import RealField
 from sage.rings.infinity import Infinity
+from sage.rings.padics.factory import Qp
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.sage_object import SageObject, load, save
 from sage.structure.unique_representation import UniqueRepresentation
@@ -671,7 +671,7 @@ class ArithGroup_matrix_generic(ArithGroup_generic):
             gen = T_conj
 
             ## Now take successive powers until the result is in Gamma_0(N)
-            while not gen[1][0] in N_ideal:
+            while gen[1][0] not in N_ideal:
                 gen *= T_conj
 
             ## We've found an element in Stab_Gamma(cusp): add to our list of generators

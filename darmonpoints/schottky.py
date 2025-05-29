@@ -14,7 +14,8 @@ from sage.misc.latex import latex
 from sage.misc.lazy_attribute import lazy_attribute
 from sage.misc.verbose import verbose
 from sage.modules.module import Module
-from sage.rings.all import ZZ, IntegerRing
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.integer_ring import IntegerRing
 from sage.rings.infinity import Infinity
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.sets.set import Set
@@ -456,7 +457,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
         r = dict()
         visited = set()
         for i in range(len(action_table[0])):
-            if not i in visited:
+            if i not in visited:
                 visited.add(i)
                 open_list = [(i, ())]
                 r[i] = (i, ())
@@ -464,7 +465,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
                     current, current_word = open_list.pop()
                     for j, actj in enumerate(action_table):
                         nxt = actj[current]
-                        if nxt is not None and not (nxt in visited):
+                        if nxt is not None and nxt not in visited:
                             next_word = reduce_word((j,) + current_word)
                             visited.add(nxt)
                             open_list.append((nxt, next_word))
@@ -480,7 +481,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
         r = dict()
         visited = set()
         for i in edges:
-            if not i in visited:
+            if i not in visited:
                 visited.add(i)
                 open_list = [(i, ())]
                 r[i] = (i, ())
@@ -489,7 +490,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
                     open_list = open_list[1:]
                     for j, actj in enumerate(action_table):
                         nxt = (actj[current[0]], actj[current[1]])
-                        if (nxt in edges) and not (nxt in visited):
+                        if (nxt in edges) and nxt not in visited:
                             next_word = reduce_word((j,) + current_word)
                             visited.add(nxt)
                             open_list.append((nxt, next_word))
@@ -1148,7 +1149,7 @@ class NeighborJoiningTree(SageObject):
         while len(open_list) > 0:
             current = open_list.pop()
             for i in adj[current]:
-                if not i in visited:
+                if i not in visited:
                     visited.add(i)
                     open_list.append(i)
         return visited

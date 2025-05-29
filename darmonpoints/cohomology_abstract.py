@@ -22,18 +22,15 @@ from sage.misc.verbose import verbose
 from sage.modules.free_module_element import free_module_element, vector
 from sage.modules.module import Module
 from sage.parallel.decorate import fork, parallel
-from sage.rings.all import (
-    RR,
-    ComplexField,
-    LaurentSeriesRing,
-    PolynomialRing,
-    Qp,
-    QuadraticField,
-    RealField,
-    Zmod,
-    Zp,
-)
+from sage.rings.real_mpfr import RR
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.laurent_series_ring import LaurentSeriesRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.number_field.number_field import QuadraticField
+from sage.rings.real_mpfr import RealField
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
 from sage.rings.number_field.number_field import NumberField
+from sage.rings.padics.factory import Qp, Zp
 from sage.rings.padics.precision_error import PrecisionError
 from sage.structure.element import ModuleElement, MultiplicativeGroupElement
 from sage.structure.parent import Parent
@@ -417,9 +414,7 @@ class CohomologyGroup(Module):
         vi = list(vi)
         V = self.coefficient_module()
         Vdim = V.dimension()
-        data = []
-        for i in range(0, len(vi), Vdim):
-            data.append(V(vi[i : i + Vdim]))
+        data = [V(vi[i : i + Vdim]) for i in range(0, len(vi), Vdim)]
         return self.element_class(self, data)
 
     def gens(self):

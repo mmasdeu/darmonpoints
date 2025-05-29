@@ -7,22 +7,20 @@ from collections import defaultdict
 from itertools import chain, groupby, islice, product, starmap, tee
 from operator import mul
 
-from sage.all import prod
+from sage.misc.misc_c import prod
 from sage.arith.misc import algdep
 from sage.misc.misc import cputime
 from sage.misc.verbose import verbose
 from sage.parallel.decorate import fork, parallel
-from sage.rings.all import (
-    RR,
-    ComplexField,
-    Infinity,
-    LaurentSeriesRing,
-    PolynomialRing,
-    PowerSeriesRing,
-    QuadraticField,
-    RealField,
-    Zmod,
-)
+from sage.rings.real_mpfr import RR
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.infinity import Infinity
+from sage.rings.laurent_series_ring import LaurentSeriesRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.power_series_ring import PowerSeriesRing
+from sage.rings.number_field.number_field import QuadraticField
+from sage.rings.real_mpfr import RealField
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
 from sage.structure.sage_object import SageObject
 
 from .limits import find_center, num_evals
@@ -334,7 +332,7 @@ def sample_point(G, e, prec=20):
     rev, h = e
     hemb = G.embed(set_immutable(h**-1), prec)
     wploc = G.embed(G.wp(), prec)
-    if rev == True:
+    if rev is True:
         hemb = hemb * wploc
     a, b, c, d = hemb.list()
     if d == 0:
@@ -401,7 +399,7 @@ class CoinducedElement(SageObject):
             ans = self.cocycle.evaluate_and_identity(a)
         else:
             ans = self.cocycle.evaluate(a)
-        if rev == False:
+        if rev is False:
             return ans
         else:
             return -ans

@@ -3,17 +3,16 @@ from operator import itemgetter, mul
 
 from sage.functions.other import floor
 from sage.groups.generic import discrete_log
-from sage.matrix.all import Matrix, matrix
+from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix as matrix
 from sage.misc.misc_c import prod
 from sage.misc.verbose import verbose
-from sage.rings.all import (
-    RR,
-    ComplexField,
-    PolynomialRing,
-    QuadraticField,
-    RealField,
-    Zmod,
-)
+from sage.rings.real_mpfr import RR
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.number_field.number_field import QuadraticField
+from sage.rings.real_mpfr import RealField
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
 
 from .util import *
 
@@ -172,7 +171,7 @@ def compute_tau0(v0, gamma, wD, return_exact=False):
     if c * tau0 + d != v0(wD):
         tau0 = v0(tau0_vec[1][0])
         idx = 1
-    return tau0_vec[idx][0] if return_exact == True else tau0
+    return tau0_vec[idx][0] if return_exact is True else tau0
 
 
 def order_and_unit(F, conductor):
@@ -383,7 +382,7 @@ def find_optimal_embeddings(F, use_magma=False, extra_conductor=1, magma=None):
     w = F.maximal_order().ring_generators()[0]
     D = F.discriminant()
     ## this matrix gives an optimal embedding of conductor 1
-    if use_magma == True or extra_conductor != 1:
+    if use_magma is True or extra_conductor != 1:
         if magma is None:
             from sage.interfaces.magma import magma
         tmp = magma.ReducedForms(str(D * extra_conductor**2), nvals=1)
