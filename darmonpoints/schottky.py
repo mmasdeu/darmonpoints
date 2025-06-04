@@ -563,11 +563,13 @@ class SchottkyGroup(SchottkyGroup_abstract):
         return balls
 
     @cached_method
-    def gens_extended(self):
+    def gens_extended(self, as_dict=False):
         gens = [(i + 1, o) for i, o in enumerate(self._generators)]
         gens.extend([(-i, o.determinant() ** -1 * o.adjugate()) for i, o in gens])
         for i, o in gens:
             o.set_immutable()
+        if as_dict:
+            gens = dict(gens)
         return gens
 
     @lazy_attribute

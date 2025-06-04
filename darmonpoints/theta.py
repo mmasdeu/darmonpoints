@@ -1,3 +1,4 @@
+from ast import In
 from copy import copy, deepcopy
 from itertools import chain
 
@@ -46,20 +47,41 @@ def eval_rat(D, z):
     assert fails == 0 # DEBUG !
     return ans
 
-
-def eval_rat_derivative(D, z):
+def eval_rat_dlog(D, z):
     ans = 0
     fails = 0
     for P, n in D:
-        if P == Infinity:
+        if P is Infinity:
             continue
         zP = z - P
         if zP == 0:
             fails += n
         else:
-            ans += n * zP**-1
+            zPinv = ~zP
+            ans += ZZ(n) * zPinv
     assert fails == 0 # DEBUG !
-    return ans * eval_rat(D, z)
+    return ans
+
+def eval_rat_derivative(D, z, return_value=False):
+    ans = 0
+    ans0 = 1
+    fails = 0
+    for P, n in D:
+        if P is Infinity:
+            continue
+        zP = z - P
+        if zP == 0:
+            fails += n
+        else:
+            zPinv = ~zP
+            zPn = zP**ZZ(n) if n > 0 else zPinv**ZZ(-n)
+            ans0 *= zPn
+            ans += ZZ(n) * zPinv
+    assert fails == 0 # DEBUG !
+    if return_value:
+        return ans0 * ans, ans0
+    else:
+        return ans0 * ans
 
 
 def act(mtrx, z):
@@ -233,39 +255,49 @@ class ThetaOC(SageObject):
         return ans0 * ans1
 
     def eval_derivative(self, z, return_value=False):
+        r'''
+        EXAMPLES::
+            sage: from darmonpoints.schottky import *
+            sage: p = 3
+            sage: prec = 10
+            sage: working_prec = 200
+            sage: K = Qp(p,working_prec)
+            sage: h1 = matrix(K, 2, 2, [-5,32,-8,35])
+            sage: h2 = matrix(K, 2, 2, [-13,80,-8,43])
+            sage: G = SchottkyGroup(K, (h1,h2))
+            sage: theta = G.theta(10, 7, 9)
+            sage: theta.eval_derivative(13)
+            2*3 + 3^2 + 2*3^6 + 3^7 + O(3^9)
+
+        '''
         if isinstance(z, DivisorsElement):
             raise NotImplementedError
-        z0, wd = self.G.to_fundamental_domain(z)
-        gens = (
-            [None]
-            + list(self.G.generators())
-            + [o.adjugate() for o in reversed(self.G.generators())]
-        )
-        g = prod((gens[i] for i in wd), gens[1].parent()(1)).adjugate()
-        assert act(g, z) == z0
-        a, b, c, d = g.list()
-        ans = (a * d - b * c) * (c * z + d) ** -2
-        z = z0
-        vz = eval_rat(self.val, z)
-        Fnz = {}
-        for FF in self.Fnlist:
-            for ky, F in FF.items():
-                FP = F(z)
-                try:
-                    Fnz[ky] *= FP
-                except KeyError:
-                    Fnz[ky] = FP
-        Fnzall = prod((o for o in Fnz.values()))
-        valder = eval_rat_derivative(self.val, z)
-
+        if not self.G.in_fundamental_domain(z):
+            raise ValueError("z must be in the fundamental domain of G")
+        z0 = z
+        # z0, wd = self.G.to_fundamental_domain(z)
+        # gens = self.G.gens_extended(as_dict=True)
+        # g = prod((gens[i] for i in wd), gens[1].parent()(1)).adjugate()
+        # a, b, c, d = g.list()
+        # ans = (a * d - b * c) * (c * z + d) ** -2
+        ans = 1
+        # valder = eval_rat_derivative(self.val, z0, return_value=False) # takes time
+        valdlog = eval_rat_dlog(self.val, z0) # takes time
+        fdlog = sum(f.eval_dlog(z0) for FF in self.Fnlist for f in FF.values()) # takes time
+        value = self.evaluate(z0)
+        if return_value:
+            return value * (valdlog + fdlog), value
+        else:
+            return value * (valdlog + fdlog)
+        # fder_list = [f.eval_derivative(z0, return_value=False) for FF in self.Fnlist for f in FF.values()] # takes time
+        # vz = prod(eval_rat(self.val, P)**n for P, n in D)
+        # Fnzall_list = [f(D) for FF in self.Fnlist for f in FF.values()]
+        # Fnzall = prod(Fnzall_list)
         v0 = vz * Fnzall
         # need to add the terms of val * Fn'
-        tmp = sum(
-            f.eval_derivative(z) / f(z) for FF in self.Fnlist for f in FF.values()
-        )
+        tmp = sum( u / v for u, v in zip(fder_list, Fnzall_list) )
         ans *= valder * Fnzall + tmp * v0
         if return_value:
-            value = self.evaluate(z0) # DEBUG: should be the same as v0
-            return ans, value
+            return ans, self.evaluate(z)#v0
         else:
             return ans

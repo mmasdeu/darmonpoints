@@ -115,24 +115,12 @@ class MeromorphicFunctionsElement(ModuleElement):
             D = K(D)
         a, b, c, d = self._parameter.list()
         phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
-        try:
-            _ = phi(self.normalize_point)
-            pole = -d / c
-        except AttributeError:
-            pole = None
-        valinf = 1
-        assert pole is None
-
-        def ev(P):
-            fac = (P - pole) if pole is not None else 1
-            return fac * evalpoly(self._value, phi(P)) / valinf
-
         if isinstance(D.parent(), Divisors):
-            return prod(ev(P) ** n for P, n in D)
+            return prod(evalpoly(self._value, phi(P)) ** n for P, n in D)
         else:
-            return ev(D)
+            return evalpoly(self._value, phi(D))
 
-    def eval_derivative(self, D):
+    def eval_derivative(self, D, return_value=False):
         K = self.parent().base_ring()
         if type(D) in (int, Integer):
             D = K(D)
@@ -141,21 +129,34 @@ class MeromorphicFunctionsElement(ModuleElement):
         K = self.parent().base_ring()
         a, b, c, d = self._parameter.list()
         phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+        phiD = phi(D)
+        if return_value:
+            val = evalpoly(self._value, phiD)
+        
         valder = self.power_series().derivative().list()
-        try:
-            _ = phi(self.normalize_point)
-            pole = -d / c
-        except AttributeError:
-            pole = None
-        valinf = 1
-        assert pole is None
         chainrule = (a * d - b * c) / (c * D + d) ** 2
-        return (
-            evalpoly(valder, phi(D))
+        ans = (
+            evalpoly(valder, phiD)
             * chainrule
-            / valinf
-            * ((D - pole) if pole is not None else 1)
         )
+        if return_value:
+            return ans, val
+        else:
+            return ans
+
+    def eval_dlog(self, D):
+        K = self.parent().base_ring()
+        if type(D) in (int, Integer):
+            D = K(D)
+        if isinstance(D.parent(), Divisors):
+            raise NotImplementedError
+        K = self.parent().base_ring()
+        a, b, c, d = self._parameter.list()
+        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
+        phiD = phi(D)        
+        valder = self.power_series().log().derivative().list()
+        chainrule = (a * d - b * c) / (c * D + d) ** 2
+        return evalpoly(valder, phiD) * chainrule
 
     def _cmp_(self, right):
         a = self.power_series()
