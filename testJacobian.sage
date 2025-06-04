@@ -31,3 +31,21 @@ print((q00g/q00-1).valuation())
 print((q01g/q01-1).valuation())
 print((q11g/q11-1).valuation())
 
+
+
+# Try to improve algorithm with a simpler iteration
+a = 8
+b = 11
+Th = G.theta(10,a,b)
+
+print(Th.evaluate(10)) # should be 1 + 2*3 + 2*3^4 + 2*3^5 + 3^6 + 2*3^7 + 3^8 + O(3^10)
+
+F = Th.Fnlist[0]
+F1p = F[1]
+F2p = F[2]
+F1m = F[-1]
+F2m = F[-2]
+
+g1, g2 = G.generators()
+
+
