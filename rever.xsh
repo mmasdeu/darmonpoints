@@ -35,6 +35,7 @@ tarball_name = 'dist/darmonpoints-' + $VERSION + '.tar.gz'
 command('build', 'python -m build --sdist')
 command('twine', ''.join(['twine upload ', tarball_name]))
 
+$GITHUB_CREDFILE = '~/.git-credentials'
 $PROJECT = 'darmonpoints'
 
 $ACTIVITIES = [
