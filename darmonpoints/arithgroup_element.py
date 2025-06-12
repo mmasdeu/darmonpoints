@@ -211,7 +211,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
 
     def _act_on_(self, x, on_left):
         assert on_left == True
-        return act_flt(self.matrix(), x)
+        return self.matrix() * x
 
     def conjugate_by(self, w):
         word_rep = None

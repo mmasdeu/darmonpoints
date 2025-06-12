@@ -205,8 +205,10 @@ class DivisorsElement(ModuleElement):
             return self.left_act_by_matrix(g)
 
     def left_act_by_matrix(self, g):
+        Div = self.parent()
+        K = Div.base_ring()
         a, b, c, d = g.list()
-        gp = self.parent()
+        
         newdict = defaultdict(ZZ)
         new_ptdata = {}
         for P, n in self:
@@ -217,7 +219,12 @@ class DivisorsElement(ModuleElement):
                     new_pt = Infinity
             else:
                 try:
-                    new_pt = (a * P + b) / (c * P + d)
+                    num = a * P + b
+                except TypeError:
+                    a, b, c, d = K(a), K(b), K(c), K(d)
+                    num = a * P + b
+                try:
+                    new_pt = num / (c * P + d)
                 except (PrecisionError, ZeroDivisionError):
                     new_pt = Infinity
             hnew_pt = _hash(new_pt)
@@ -228,7 +235,7 @@ class DivisorsElement(ModuleElement):
                 del new_ptdata[hnew_pt]
             else:
                 new_ptdata[hnew_pt] = new_pt
-        return gp(newdict, ptdata=new_ptdata)
+        return Div(newdict, ptdata=new_ptdata)
 
     @cached_method
     def degree(self):

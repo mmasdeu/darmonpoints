@@ -321,6 +321,10 @@ def set_immutable(x):
 def act_flt(g, x):
     a, b, c, d = g.list()
     K = x.parent()
+    if not K.is_field():
+        try:
+            K = K.base_ring()
+        except AttributeError: pass
     if x == Infinity:
         return a / c
     if K(c) * x + K(d) == 0:
