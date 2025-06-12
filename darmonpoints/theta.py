@@ -270,34 +270,29 @@ class ThetaOC(SageObject):
             2*3 + 3^2 + 2*3^6 + 3^7 + O(3^9)
 
         '''
+        dlog = self.eval_dlog(z)
+        z0 = self.G.to_fundamental_domain(z)[0]
+        value = self.evaluate(z0)
+        if return_value:
+            return value * dlog, value
+        else:
+            return value * dlog
+
+    def eval_dlog(self, z):
         if isinstance(z, DivisorsElement):
             raise NotImplementedError
         if not self.G.in_fundamental_domain(z):
             raise ValueError("z must be in the fundamental domain of G")
-        z0 = z
-        # z0, wd = self.G.to_fundamental_domain(z)
-        # gens = self.G.gens_extended(as_dict=True)
-        # g = prod((gens[i] for i in wd), gens[1].parent()(1)).adjugate()
-        # a, b, c, d = g.list()
-        # ans = (a * d - b * c) * (c * z + d) ** -2
-        ans = 1
-        # valder = eval_rat_derivative(self.val, z0, return_value=False) # takes time
+
+        z0, wd = self.G.to_fundamental_domain(z)
+        if len(wd) > 0:
+            gens = self.G.gens_extended(as_dict=True)
+            g = prod((gens[i] for i in wd), gens[1].parent()(1)).adjugate()
+            a, b, c, d = g.list()
+            fact = (a * d - b * c) * (c * z + d) ** -2
+        else:
+            fact = 1
+
         valdlog = eval_rat_dlog(self.val, z0) # takes time
         fdlog = sum(f.eval_dlog(z0) for FF in self.Fnlist for f in FF.values()) # takes time
-        value = self.evaluate(z0)
-        if return_value:
-            return value * (valdlog + fdlog), value
-        else:
-            return value * (valdlog + fdlog)
-        # fder_list = [f.eval_derivative(z0, return_value=False) for FF in self.Fnlist for f in FF.values()] # takes time
-        # vz = prod(eval_rat(self.val, P)**n for P, n in D)
-        # Fnzall_list = [f(D) for FF in self.Fnlist for f in FF.values()]
-        # Fnzall = prod(Fnzall_list)
-        v0 = vz * Fnzall
-        # need to add the terms of val * Fn'
-        tmp = sum( u / v for u, v in zip(fder_list, Fnzall_list) )
-        ans *= valder * Fnzall + tmp * v0
-        if return_value:
-            return ans, self.evaluate(z)#v0
-        else:
-            return ans
+        return fact * (valdlog + fdlog)
