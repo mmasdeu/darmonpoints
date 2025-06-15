@@ -890,6 +890,12 @@ class Ball(Element):
         self.is_open = is_open
         Element.__init__(self, parent)
 
+    def change_ring(self, L):
+        BB = Balls(L)
+        center = L(self.center)
+        radius = self.radius * L(self.parent().base_ring().uniformizer()).valuation()
+        return BB(center, radius, self.is_open, self.is_complement)
+    
     def __hash__(self):
         return hash(str(self.get_key()))
 

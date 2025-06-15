@@ -42,6 +42,11 @@ from .util import muted
 
 def evalpoly(poly, x, check=True):
     # Initialize result
+    if len(poly) == 0:
+        return 0
+    K = (poly[0].parent()(1) * x.parent()(1)).parent()
+    x = K(x)
+    poly = [K(a) for a in poly]
     if check:
         assert x.valuation() >= 0
     try:
@@ -150,13 +155,12 @@ class MeromorphicFunctionsElement(ModuleElement):
             D = K(D)
         if isinstance(D.parent(), Divisors):
             raise NotImplementedError
-        K = self.parent().base_ring()
         a, b, c, d = self._parameter.list()
         phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         phiD = phi(D)        
         valder = self.power_series().log().derivative().list()
         chainrule = (a * d - b * c) / (c * D + d) ** 2
-        return evalpoly(valder, phiD) * chainrule
+        return chainrule * evalpoly(valder, phiD)
 
     def _cmp_(self, right):
         a = self.power_series()

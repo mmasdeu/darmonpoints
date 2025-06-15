@@ -1,6 +1,7 @@
 from ast import In
 from copy import copy, deepcopy
 from itertools import chain
+from warnings import warn
 
 from sage.categories.groups import Groups
 from sage.functions.generalized import sgn
@@ -44,7 +45,8 @@ def eval_rat(D, z):
             fails += n
         else:
             ans *= zP**n
-    assert fails == 0 # DEBUG !
+    if fails != 0:
+        warn('Fails in eval_rat: %s' % fails)
     return ans
 
 def eval_rat_dlog(D, z):
@@ -59,7 +61,8 @@ def eval_rat_dlog(D, z):
         else:
             zPinv = ~zP
             ans += ZZ(n) * zPinv
-    assert fails == 0 # DEBUG !
+    if fails != 0:
+        warn('Fails in eval_rat_dlog: %s' % fails)
     return ans
 
 def eval_rat_derivative(D, z, return_value=False):
@@ -77,7 +80,9 @@ def eval_rat_derivative(D, z, return_value=False):
             zPn = zP**ZZ(n) if n > 0 else zPinv**ZZ(-n)
             ans0 *= zPn
             ans += ZZ(n) * zPinv
-    assert fails == 0 # DEBUG !
+        
+    if fails != 0:
+        warn('Fails in eval_rat_derivative: %s' % fails)
     if return_value:
         return ans0 * ans, ans0
     else:
@@ -283,7 +288,6 @@ class ThetaOC(SageObject):
             raise NotImplementedError
         if not self.G.in_fundamental_domain(z):
             raise ValueError("z must be in the fundamental domain of G")
-
         z0, wd = self.G.to_fundamental_domain(z)
         if len(wd) > 0:
             gens = self.G.gens_extended(as_dict=True)
@@ -292,7 +296,7 @@ class ThetaOC(SageObject):
             fact = (a * d - b * c) * (c * z + d) ** -2
         else:
             fact = 1
-
         valdlog = eval_rat_dlog(self.val, z0) # takes time
-        fdlog = sum(f.eval_dlog(z0) for FF in self.Fnlist for f in FF.values()) # takes time
-        return fact * (valdlog + fdlog)
+        fdlog = sum((f.eval_dlog(z0) for FF in self.Fnlist for f in FF.values()), valdlog) # takes time
+        ans = fact * fdlog
+        return ans

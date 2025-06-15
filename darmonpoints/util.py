@@ -317,6 +317,15 @@ def set_immutable(x):
     except AttributeError:
         return x
 
+def list_powers(x, M):
+    if x is None:
+        return x
+    plist = [x.parent()(1)]
+    for i in range(M):
+        plist.append(x * plist[-1])
+    return plist
+
+
 
 def act_flt(g, x):
     a, b, c, d = g.list()
