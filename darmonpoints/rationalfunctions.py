@@ -64,14 +64,15 @@ class RationalFunctionsElement(ModuleElement):
     def denominator(self):
         return self._value.denominator()
 
-    def power_series(self, names=None):
+    def power_series(self, names=None, prec=None):
         if names is None:
             names = "t"
         K = self.parent().base_ring()
-        try:
-            prec = K.precision_cap()
-        except AttributeError:
-            prec = 20  # DEBUG
+        if prec is None:
+            try:
+                prec = K.precision_cap()
+            except AttributeError:
+                raise ValueError('Must specify precision for power series in %s' % K)
         Ps = PowerSeriesRing(K, names, default_prec=prec)
         ans = Ps(self._value)
         return ans

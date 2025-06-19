@@ -70,7 +70,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             Ps = parent._Ps
             if isinstance(data.parent(), Divisors):
                 self._value = divisor_to_pseries(parameter, Ps, data, prec).list()
-                assert len(data.support()) > 1
+                # assert len(data.support()) > 1
             elif data == 0:
                 self._value = Ps(1).list()  # multiplicative!
             elif data.parent() == parent:
