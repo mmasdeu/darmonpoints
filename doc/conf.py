@@ -36,7 +36,7 @@ authors = "Marc Masdeu"
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-release = "8.0.3"
+release = "8.1"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
