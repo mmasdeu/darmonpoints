@@ -289,14 +289,14 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
         zz = (
             (self._Ps([b, a]) / self._Ps([d, c]))
-            .map_coefficients(lambda x: x.add_bigoh(prec))
+            .map_coefficients(lambda x: x.add_bigoh(prec+1))
             .truncate(prec)
         ) # zz = (at + b)/(ct + d)
         ans = [zz.parent()(1), zz]
         while len(ans) < prec:  # DEBUG - was prec + 1
             zz_ps = (
                 (zz * ans[-1])
-                .map_coefficients(lambda x: x.add_bigoh(prec))
+                .map_coefficients(lambda x: x.add_bigoh(prec+1))
                 .truncate(prec)  # DEBUG - was prec + 1
             )
             ans.append(zz_ps)
