@@ -169,13 +169,11 @@ class ThetaOC(SageObject):
         self.val = sum(D1dict.values(), D)
         initial_F = kwargs.get('initial_F', None)
         if initial_F is not None:
-            self.Fnlist = [{i : self.MM(vector(list(initial_F[i]._value.apply_map(lambda x:x.lift_to_precision()))+[0]), tau, check=False) for (i, _), tau in zip(gens_ext, params)}]
+            self.Fnlist = [{i : self.MM(initial_F[i], tau) for (i, _), tau in zip(gens_ext, params)}]
         else:
-            self.Fnlist = [{ i :
-            self.MM(sum(g * val for j, val in D1dict.items() if j != -i), tau)
-                for (i, g), tau in zip(gens_ext, params)}]
+            self.Fnlist = [deepcopy(self.F2)]
 
-    def improve(self, m):
+    def improve(self, m, **kwargs):
         gens_ext = self.G.gens_extended()
         params = self.G.parameters
         # Initialize action_data
@@ -187,6 +185,10 @@ class ThetaOC(SageObject):
                         self.MM.get_action_data(gi, Fj._parameter, tau),
                         tau,
                     )
+        implementation = kwargs.get('implementation', 'list')
+        if implementation not in ['list', 'fixedpoint']:
+            raise ValueError("implementation must be 'list' or 'fixedpoint'")
+
         for it in range(m):
             # Stop if we reach the maximum precision
             if self.m >= self.prec:
@@ -201,16 +203,18 @@ class ThetaOC(SageObject):
                             tmp[i] += vl
                         except KeyError:
                             tmp[i] = vl
-            # Append the new term
-            self.Fnlist.append(tmp)
-
-            # Add the new term to F2list:
-            # self.Fnlist = [{i : tmp[i] + self.F2[i] for i in tmp}]
+            
+            if implementation == 'list':
+                # Append the new term
+                self.Fnlist.append(tmp)
+            else:
+                # Add the new term to F2:
+                self.Fnlist = [{i : tmp[i] + self.F2[i] for i in tmp}]
             
             self.m += 1
         
         # Collapse the list to one term and return
-        if len(self.Fnlist) > 0:
+        if len(self.Fnlist) > 1:
             self.Fnlist = [
                 {
                     ky: sum((F[ky] for F in self.Fnlist[1:]), self.Fnlist[0][ky])

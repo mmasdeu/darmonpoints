@@ -75,6 +75,8 @@ class MeromorphicFunctionsElement(ModuleElement):
                 self._value = Ps(1).list()  # multiplicative!
             elif data.parent() == parent:
                 self._value = data._value
+            elif isinstance(data.parent(), MeromorphicFunctions):
+                self._value = vector(list(data._value.apply_map(lambda x:x.lift_to_precision())))
             else:
                 val = Ps(data)
                 val /= val[0]

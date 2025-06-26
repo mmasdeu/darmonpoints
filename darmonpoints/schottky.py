@@ -745,7 +745,8 @@ Try with a quadratic (ramified) extension."
         z = kwargs.pop("z", None)
         improve = kwargs.pop("improve", True)
         if improve or z is not None:
-            ans = ans.improve(prec)
+            m = kwargs.pop('m', prec)
+            ans = ans.improve(m, **kwargs)
         return ans if z is None else ans(z)
 
     def u_function(self, gamma, prec, a=None, **kwargs):
