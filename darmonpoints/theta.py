@@ -161,11 +161,17 @@ class ThetaOC(SageObject):
         D1dict = {i : g * D for i, g in gens_ext}
 
         # Corresponding to words of length exactly 2
-        # D2dict = {i : sum(g * val) for j, val in D1dict.items() if j != i for i, g in gens_ext }
+        self.F2 = { i :
+            self.MM(sum(g * val for j, val in D1dict.items() if j != -i), tau)
+                for (i, g), tau in zip(gens_ext, params)}
         
         # self.val will contain the 0, 1 terms
         self.val = sum(D1dict.values(), D)
-        self.Fnlist = [{ i :
+        initial_F = kwargs.get('initial_F', None)
+        if initial_F is not None:
+            self.Fnlist = [{i : self.MM(vector(list(initial_F[i]._value.apply_map(lambda x:x.lift_to_precision()))+[0]), tau, check=False) for (i, _), tau in zip(gens_ext, params)}]
+        else:
+            self.Fnlist = [{ i :
             self.MM(sum(g * val for j, val in D1dict.items() if j != -i), tau)
                 for (i, g), tau in zip(gens_ext, params)}]
 
@@ -197,6 +203,10 @@ class ThetaOC(SageObject):
                             tmp[i] = vl
             # Append the new term
             self.Fnlist.append(tmp)
+
+            # Add the new term to F2list:
+            # self.Fnlist = [{i : tmp[i] + self.F2[i] for i in tmp}]
+            
             self.m += 1
         
         # Collapse the list to one term and return
