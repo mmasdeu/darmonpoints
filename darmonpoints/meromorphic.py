@@ -236,9 +236,13 @@ def divisor_to_pseries(parameter, Ps, data, prec):
         K = Q.parent()
         if n > 0:
             num *= (1 - ((c * Q + d) / (a * Q + b)) * t) ** ZZ(n)
+            num = num.add_bigoh(prec)
         else:
             den *= (1 - ((c * Q + d) / (a * Q + b)) * t) ** ZZ(-n)
+            den = den.add_bigoh(prec)
+    verbose('Computing quotient num/den', level=2)
     ans = Ps(num).add_bigoh(prec) * ~(Ps(den).add_bigoh(prec))
+    verbose('Quotient computed', level=2)
     return ans
 
 

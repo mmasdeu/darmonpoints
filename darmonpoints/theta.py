@@ -151,7 +151,7 @@ class ThetaOC(SageObject):
         D = G.find_equivalent_divisor(D)
         self.a = a
         self.b = b
-        self.m = 1
+        # self.m = 1
         self.z = K["z"].gen()
         self.MM = MeromorphicFunctions(self.K, self.p, self.prec)
         params = G.parameters
@@ -161,9 +161,11 @@ class ThetaOC(SageObject):
         D1dict = {i : g * D for i, g in gens_ext}
 
         # Corresponding to words of length exactly 2
+        verbose("Computing F2", level=2)
         self.F2 = { i :
             self.MM(sum(g * val for j, val in D1dict.items() if j != -i), tau)
                 for (i, g), tau in zip(gens_ext, params)}
+        verbose("F2 computed", level=2)
         
         # self.val will contain the 0, 1 terms
         self.val = sum(D1dict.values(), D)
@@ -177,6 +179,7 @@ class ThetaOC(SageObject):
         gens_ext = self.G.gens_extended()
         params = self.G.parameters
         # Initialize action_data
+        verbose("Initializing action_data", level=2)
         action_data = {}
         for (i, gi), tau in zip(gens_ext, params):
             for j, Fj in self.Fnlist[-1].items():
@@ -185,15 +188,16 @@ class ThetaOC(SageObject):
                         self.MM.get_action_data(gi, Fj._parameter, tau),
                         tau,
                     )
+        verbose("action_data initialized", level=2)
         implementation = kwargs.get('implementation', 'list')
         if implementation not in ['list', 'fixedpoint']:
             raise ValueError("implementation must be 'list' or 'fixedpoint'")
 
         for it in range(m):
             # Stop if we reach the maximum precision
-            if self.m >= self.prec:
-                break
-            # Compute the next term from the last on in Fnlist
+            # if self.m >= self.prec:
+            #     break
+            # Compute the next term from the last on in Fnlist            
             tmp = {}
             for (i, gi), tau in zip(gens_ext, params):
                 for j, Fj in self.Fnlist[-1].items():
@@ -209,9 +213,11 @@ class ThetaOC(SageObject):
                 self.Fnlist.append(tmp)
             else:
                 # Add the new term to F2:
+                verbose("Adding new term to F2", level=2)
                 self.Fnlist = [{i : tmp[i] + self.F2[i] for i in tmp}]
+                verbose('F2 updated', level=2)
             
-            self.m += 1
+            # self.m += 1
         
         # Collapse the list to one term and return
         if len(self.Fnlist) > 1:
@@ -237,7 +243,7 @@ class ThetaOC(SageObject):
             b = b.lift()
         except AttributeError:
             pass
-        return f"Θ(z;{a},{b})_{{{self.m}}}"
+        return f"Θ(z;{a},{b})"
 
     def _latex_(self):
         a, b = self.a, self.b
@@ -258,7 +264,7 @@ class ThetaOC(SageObject):
             b = b.rational_reconstruction()
         except AttributeError:
             pass
-        return f"\\Theta(z;{latex(a)},{latex(b)})_{{{latex(self.m)}}}"
+        return f"\\Theta(z;{latex(a)},{latex(b)})"
 
     def __call__(self, z, **kwargs):
         return self.evaluate(z, **kwargs)
