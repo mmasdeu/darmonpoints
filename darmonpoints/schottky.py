@@ -24,6 +24,7 @@ from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
+from warnings import warn
 
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import *
@@ -420,22 +421,17 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
             return False
         tree = self.NJtree
         action_table = self.action_table()
-        edge_classes = self.edge_classes()
-        subtrees = []
         subtrees_dict = {}
         for e1, e2, w in pairing:
             for T in tree.get_subtree(*e1):
                 subtrees_dict[T] = (w, False)
             for T in tree.get_subtree(*e2):
                 subtrees_dict[T] = (w, True)
-        # print(f'{pairing = }')
         for act in action_table:
             gv = act[i0]
             if gv is None:
                 return False
             while True:
-                # print('certify')
-                # print('gv', gv)
                 try:
                     word, inv = subtrees_dict[gv]
                     wrev = (
@@ -635,6 +631,8 @@ Try with a quadratic (ramified) extension."
         and a word w = [i1,...,ik] (in Tietze notation)
         such that gi1 * ... * gik * z = x
         """
+        x0 = x
+        max_length = 10
         gens = self._generators
         inv_gens = self._inverse_generators
         gens = [None] + list(gens) + list(reversed(inv_gens))
@@ -642,6 +640,9 @@ Try with a quadratic (ramified) extension."
         i = self.in_which_ball(x)
         while i is not None:
             word.append(i)
+            if len(word) == max_length:
+                warn('Reached word length of %s, this might be a bug. x0 = %s, x = %s' %(max_length, x0, x))
+                max_length *= 2
             x1 = act(gens[-i], x)
             if x1 == x:
                 raise ValueError(
