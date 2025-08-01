@@ -116,7 +116,7 @@ class MeromorphicFunctionsElement(ModuleElement):
     #     ans = fac * (sum(a*phiz**n for n, a in enumerate(self._value[:m]))) / valinf
     #     return ans
 
-    def evaluate(self, D):  # meromorphic functions
+    def evaluate(self, D, prec = None):  # meromorphic functions
         K = self.parent().base_ring()
         if type(D) in (int, Integer):
             D = K(D)
@@ -125,7 +125,10 @@ class MeromorphicFunctionsElement(ModuleElement):
         if isinstance(D.parent(), Divisors):
             return prod(evalpoly(self._value, phi(P)) ** n for P, n in D)
         else:
-            return evalpoly(self._value, phi(D))
+            if prec is None:
+                return evalpoly(self._value, phi(D))
+            else:
+                return evalpoly(self._value[:prec], phi(D))
 
     def eval_derivative(self, D, return_value=False):
         K = self.parent().base_ring()
@@ -218,13 +221,28 @@ class MeromorphicFunctionsElement(ModuleElement):
             self.parent(), self._value * zz_ps_vec, param, check=False
         )
 
-    def left_act_by_matrix(self, g, param=None):  # meromorphic functions
+    def left_act_by_matrix(self, g, param=None, fast=True):  # meromorphic functions
         parent = self.parent()
         # Below we code the action which is compatible with the usual action
         # P |-> (aP+b)/(cP+D)
-        zz_ps_vec = parent.get_action_data(g, self._parameter, param)
-        ans = self._value * zz_ps_vec
-        return self.__class__(parent, ans, param, check=False)
+        if fast:
+            zz_ps_vec = parent.get_action_data(g, self._parameter, param)
+            ans = self._value * zz_ps_vec
+            return self.__class__(parent, ans, param, check=False)
+        else:
+            g.set_immutable()
+            K = parent.base_ring()
+            prec = parent._prec
+            assert param is not None
+            tg = param.change_ring(K)
+            # abcd = tau_0 g^-1 * tau_1^-1
+            a, b, c, d = (self._parameter * (tg * g).adjugate()).list()
+            zz = (
+                (parent._Ps([b, a]) / parent._Ps([d, c]))
+                .map_coefficients(lambda x: x.add_bigoh(prec+1))
+                .truncate(prec)
+            )
+            return evalpoly(self._value, zz)            
 
 
 def divisor_to_pseries(parameter, Ps, data, prec):
@@ -240,9 +258,7 @@ def divisor_to_pseries(parameter, Ps, data, prec):
         else:
             den *= (1 - ((c * Q + d) / (a * Q + b)) * t) ** ZZ(-n)
             den = den.add_bigoh(prec)
-    verbose('Computing quotient num/den', level=2)
     ans = Ps(num).add_bigoh(prec) * ~(Ps(den).add_bigoh(prec))
-    verbose('Quotient computed', level=2)
     return ans
 
 

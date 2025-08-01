@@ -49,6 +49,18 @@ def eval_rat(D, z):
         warn('Fails in eval_rat: %s' % fails)
     return ans
 
+def pair_divisors(D1, D2):
+    ans = 1
+    for P, n in D1:
+        for Q, m in D2:
+            if P is Infinity or Q is Infinity:
+                continue
+            b = P - Q
+            if b == 0:
+                continue
+            ans *= b**(m*n)
+    return ans
+ 
 def eval_rat_dlog(D, z):
     ans = 0
     fails = 0
@@ -203,6 +215,7 @@ class ThetaOC(SageObject):
                 for j, Fj in self.Fnlist[-1].items():
                     if i != -j:
                         vl = Fj.fast_act(action_data[i, j])
+                        # vl = Fj.left_act_by_matrix(gi, tau)
                         try:
                             tmp[i] += vl
                         except KeyError:
@@ -275,8 +288,9 @@ class ThetaOC(SageObject):
         if z.degree() != 0:
             z -= self.Div([(z.degree(), Infinity)])
         z = self.G.find_equivalent_divisor(z)
-        ans0 = prod(eval_rat(self.val, P) ** n for P, n in z)
-        ans1 = prod(F(z) for FF in self.Fnlist for F in FF.values())
+        ans0 = pair_divisors(self.val, z)
+        prec = kwargs.get('prec', None)
+        ans1 = prod(F.evaluate(z, prec) for FF in self.Fnlist for F in FF.values())
         return ans0 * ans1
 
     def eval_derivative(self, z, return_value=False):
