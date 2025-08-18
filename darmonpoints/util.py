@@ -523,7 +523,7 @@ def period_from_coords(R, E, P, prec=20, K_to_Cp=None):
     return un
 
 
-def our_lindep(V, prec=None, base=None):
+def our_lindep(V,prec = None, base=None, **kwargs):
     if base is None:
         K = V[0].parent()
     else:
@@ -531,30 +531,32 @@ def our_lindep(V, prec=None, base=None):
     V = [K(o) for o in V]
     if prec is None:
         prec = min([o.precision_absolute() for o in V])
+    algorithm = kwargs.get('algorithm','flint')
     field_deg = K.degree()
     p = K.prime()
     pn = p**prec
     n = len(V)
-    M = matrix(ZZ, n + field_deg, field_deg)
+    M = matrix(ZZ, n+field_deg, field_deg)
     for k in range(n):
         r = V[k]
         if field_deg == 1:
-            M[k, 0] = ZZ(r.lift()) % pn
+            M[k,0] = ZZ(r.lift()) % pn
         else:
-            for j, o in enumerate(r.expansion()):
-                for i, u in enumerate(o):
-                    M[k, -1 - i] += (p ** (j + r.valuation()) * u) % pn
+            for j,o in enumerate(r.expansion()):
+                for i,u in enumerate(o):
+                    M[k,-1-i] += (p**(j+r.valuation())*u) % pn
     for i in range(field_deg):
-        M[n + i, -1 - i] = pn
-    verb_lev = get_verbose()
-    set_verbose(0)
-    tmp = (
-        M.transpose()
-        .change_ring(ZZ)
-        .right_kernel_matrix(proof=False, algorithm="flint")
-    )
-    set_verbose(verb_lev)
-    tmp = tmp.LLL().row(0)
+        M[n+i,-1-i] = pn
+    M = M.transpose().change_ring(ZZ)
+    if algorithm == 'magma':
+        global magma
+        tmp = magma(M).Transpose().KernelMatrix().LLL()[1]
+        tmp = tuple(sage_eval(str(tmp).replace(' ', ',')))
+    else:
+        tmp = M.right_kernel_matrix(proof=False, algorithm=algorithm)
+        verbose('Running LLL', level=2)
+        tmp = tmp.LLL().row(0)
+        verbose('.. done running LLL', level=2)
     return list(tmp)[:n]
 
 
