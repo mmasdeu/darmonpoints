@@ -119,6 +119,15 @@ adventurous. Here are some sample calculations that one can try:
         sage: beta = -3*r^2 + 9*r - 6
         sage: darmon_point(P,E,beta,30)
 
+4)  A Darmon point for a curve over an imaginary quadratic field (aka Trifkovic point):
+
+        sage: F.<r> = QuadraticField(-3)
+        sage: w = (r+1)/2
+        sage: E = EllipticCurve([1, w+1, 0, w, 0])
+        sage: P = F.ideal(w+8)
+        sage: beta = 2*w + 21
+        sage: darmon_point(P,E,beta,30)
+
 We can also *discover* equations of curves!
 
 1)  We first find a curve over the rationals. The following command will

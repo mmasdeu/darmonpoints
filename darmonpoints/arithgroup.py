@@ -1672,11 +1672,13 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         verbose(ans)
         ans = gp.eval("\\r %s/Fdoms/fdom.gp" % path)
         verbose(ans)
-        yp = gp.variable()[2]
         Fp = gp.nfinit(str(QQ["y"](w.minpoly())))
-        abtuple = [self.a, self.b]
-        Ap = gp.alginit(Fp, [QQ["y"](wcoords(o)) for o in abtuple])
-        self.Ap = Ap
+        abtuple = (self.a, self.b)
+        if abtuple != (1,1):
+            Ap = gp.alginit(Fp, [QQ["y"](wcoords(o)) for o in abtuple])
+            self.Ap = Ap
+        else:
+            self.Ap = None
 
         if info_magma is None:
             Qx_magma = self.magma.PolynomialRing(self.magma.Rationals())
