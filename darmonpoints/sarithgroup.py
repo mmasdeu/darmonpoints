@@ -237,7 +237,7 @@ class BigArithGroup_class(AlgebraicGroup):
             self.magma.eval("SetSeed(%s)" % seed)
         self.F = base
         if self.F != QQ:
-            Fideal = self.F.maximal_order().ideal
+            Fideal = self.F.ideal
             self.ideal_p = Fideal(p)
             self.norm_p = ZZ(p.norm())
             self.discriminant = Fideal(discriminant)

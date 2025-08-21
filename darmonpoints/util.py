@@ -1408,7 +1408,7 @@ def _get_heegner_params_numberfield(P, N, beta):
     ]  #    if PK.relative_ramification_index() > 1 or not PK.is_prime():
     N1 = N / P
     if P.divides(N1):
-        raise ValueError("p (=%s) must exactly divide the conductor (=%s)" % (p, N))
+        raise ValueError("p (=%s) must exactly divide the conductor (=%s)" % (P, N))
     DB = F.ideal(1)
     Np = F.ideal(1)
     num_inert_primes = 0
