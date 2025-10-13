@@ -298,7 +298,6 @@ class CohomologyGroup(Module):
             self._gen_pows.append([GA(G(1)), GA(g)])
             self._gen_pows_neg.append([GA(G(1)), GA(ginv)])
         Module.__init__(self, base=ZZ)
-        return
 
     @cached_method
     def generator_acting_matrix(self, g):

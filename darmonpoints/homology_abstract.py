@@ -120,7 +120,6 @@ class HomologyGroup(Module, UniqueRepresentation):
             Ainv = self._acting_matrix(ginv, dim)
             self._gen_pows_neg.append([one, Ainv])
         Parent.__init__(self)
-        return
 
     def group(self):
         return self._group

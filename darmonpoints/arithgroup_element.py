@@ -210,7 +210,7 @@ class ArithGroupElement(MultiplicativeGroupElement):
         return self.embed(prec)
 
     def _act_on_(self, x, on_left):
-        assert on_left == True
+        assert on_left is True
         if hasattr(x, 'imag'): # x is a complex number
             mat = self.parent().get_archimedean_embedding(x.parent().precision())(self.quaternion_rep)
         else:

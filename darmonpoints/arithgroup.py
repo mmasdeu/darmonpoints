@@ -2653,7 +2653,6 @@ class ArithGroup_nf_matrix_new(ArithGroup_nf_generic, ArithGroup_matrix_generic)
             self._iso_mapping.append(
                 iso.ImageElm(g).UnderlyingElement().LetterRepAssocWord().sage()
             )
-        return
 
     def _represent_in_coset(self, g, check=False):
         """

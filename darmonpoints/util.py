@@ -317,6 +317,7 @@ def set_immutable(x):
     except AttributeError:
         return x
 
+
 def list_powers(x, M):
     if x is None:
         return x
@@ -326,14 +327,14 @@ def list_powers(x, M):
     return plist
 
 
-
 def act_flt(g, x):
     a, b, c, d = g.list()
     K = x.parent()
     if not K.is_field():
         try:
             K = K.base_ring()
-        except AttributeError: pass
+        except AttributeError:
+            pass
     if x == Infinity:
         return a / c
     if K(c) * x + K(d) == 0:
@@ -343,7 +344,6 @@ def act_flt(g, x):
 
 
 def tate_parameter(E, R):
-    p = R.prime()
     prec = R.precision_cap()
     jE = E.j_invariant()
 
@@ -351,8 +351,7 @@ def tate_parameter(E, R):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec + 7)) ** 3 / Delta.q_expansion(prec + 7)
-    qE = j.inverse().power_series().reverse()(R(1 / jE))
-    return qE
+    return j.inverse().power_series().reverse()(R(1 / jE))
 
 
 def get_C_and_C2(E, qEpows, R, prec):
@@ -514,8 +513,8 @@ def period_from_coords(R, E, P, prec=20, K_to_Cp=None):
     eqhat = Eq.formal()
     eqlog = eqhat.log(prec + 3)
     z = eqlog(tt)
-    u = ZZ(1)
-    fac = ZZ(1)
+    u = ZZ.one()
+    fac = ZZ.one()
     for i in range(1, 2 * prec + 1):
         fac = fac * i
         u = u + z**i / fac
@@ -945,7 +944,7 @@ def recognize_DV_lindep(
     else:
         verbose(str(clist_ans))
         if not clist[0] > 0:
-            verbose(f"Redundant set of primes?")
+            verbose("Redundant set of primes?")
             return None
         fact = Factorization([(u, -a) for u, a in zip(V[1:], clist[1:])])
         assert len(V) + len(extra_periods) == len(clist)

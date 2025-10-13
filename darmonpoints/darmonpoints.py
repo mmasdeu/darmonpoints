@@ -357,7 +357,7 @@ def darmon_point(
 
             G = kwargs.pop("G", None)
             if G is None:
-                fwrite(f"# Initializing S-arithmetic group...", outfile)
+                fwrite("# Initializing S-arithmetic group...", outfile)
                 print(f"abtuple = {abtuple} Np = {Np} F = {F}", outfile)
                 G = BigArithGroup(
                     P,
@@ -571,7 +571,7 @@ def darmon_point(
         if quit_when_done:
             magma.quit()
         return J, Jlist
-    verbose(f"About to call recognize_J")
+    verbose("About to call recognize_J")
     verbose(f"known_multiple = {known_multiple}")
     verbose(f"twopowlist = {twopowlist}")
     candidate, twopow, J1 = recognize_J(

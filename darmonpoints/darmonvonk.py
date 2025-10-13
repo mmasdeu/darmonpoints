@@ -84,7 +84,6 @@ class OverconvergentDVCocycle(SageObject):
             if val >= prec:
                 break
         self.phi_even, self.phi_odd = phi_list
-        return
 
     def evaluate_at_cycle(self, theta, parity):
         ans_even, ans_odd = self._evaluate_at_cycle(theta)

@@ -363,12 +363,10 @@ class PlecticGroup_class(AlgebraicGroup):
         self.GG[0].Gpn._compute_presentation = True
         self.GG[0].Gn._init_geometric_data(**self.GS._init_kwargs)
         self.GG[0].Gn._compute_presentation = True
-        return
 
     def compute_presentation_GS(self):
         self.GS._init_geometric_data(**self.GS._init_kwargs)
         self.GS._compute_presentation = True
-        return
 
     def get_degeneration(self, vv, f, idx):
         p = self.GG[idx].BT._p

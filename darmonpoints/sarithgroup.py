@@ -75,7 +75,6 @@ def attach_kleinian_code(magma):
     page_path = dirname(__file__) + "/KleinianGroups-1.0/klngpspec"
     magma.attach_spec(page_path)
     magma.eval("Page_initialized := true")
-    return
 
 
 def is_page_initialized(magma):

@@ -12,32 +12,37 @@ def fundamental_integral(self, alpha, i, j):
     r"""
     Returns the integral
 
-            int_{a + pZp, b + pZp} z_P^i z_Pbar^j d.Phi{0-->infty},
+    ::
 
-    where alpha = a mod P, b mod Pbar.
+        int_{a + pZp, b + pZp} z_P^i z_Pbar^j d.Phi{0-->infty},
+
+    where ``alpha = a mod P, b mod Pbar``.
 
     self: overconvergent Bianchi cohomology class.
 
-    From the theory, we can write this in terms of the moments of Phi{alpha/p --> \infty},
-    and we know how to compute this in terms of the overconvergent cohomology class.
+    From the theory, we can write this in terms of the moments of
+    ``Phi{alpha/p --> \infty}``, and we know how to compute this in terms
+    of the overconvergent cohomology class.
 
-    We need to keep track of which is our distinguished prime; it is the prime used to define the arithmetic
-    group. (The other prime is then in the `tame' level).
+    We need to keep track of which is our distinguished prime; it is
+    the prime used to define the arithmetic group. (The other prime is
+    then in the 'tame' level).
 
-    Note that a, b MUST be coprime to p. (We obtain this in any case after multiplying by psi(a)psi(b)).
+    Note that a, b MUST be coprime to p. (We obtain this in any case
+    after multiplying by ``psi(a) psi(b)``).
 
-    This is essentially just the product of two copies of the theory for GL2/Q with single valued
-    distributions.
+    This is essentially just the product of two copies of the theory
+    for ``GL2/Q`` with single valued distributions.
 
+    REMARKS::
 
-    ::::REMARKS::::
+        - CURRENTLY REQUIRES SQUARE-FREE LEVEL.
 
-     - CURRENTLY REQUIRES SQUARE-FREE LEVEL.
+        - ALSO SOMETIMES FAILS IF i = j = 0. IN THIS CASE HAVE
+          COMPLETE ANSWER IN BASE-CHANGE CASE USING ELLIPTIC MODULAR
+          SYMBOLS. REQUIRES IMPLEMENTATION!!!!
 
-     - ALSO SOMETIMES FAILS IF i = j = 0. IN THIS CASE HAVE COMPLETE ANSWER IN BASE-CHANGE CASE USING ELLIPTIC
-    MODULAR SYMBOLS. REQUIRES IMPLEMENTATION!!!!
-
-     - THIS IS WHAT IN THE RATIONAL CODE WE WERE CALLING 'BI(phi,a,j)'.
+        - THIS IS WHAT IN THE RATIONAL CODE WE WERE CALLING 'BI(phi,a,j)'.
 
     """
 
@@ -197,22 +202,27 @@ def basic_integral(self, alpha, i, j):
     r"""
     Returns the integral
 
-            int_{a + pZp, b + pZp} (z_P - {a})^i (z_Pbar - {b})^j d.Phi{0-->infty},
+    ::
+
+        int_{a + pZp, b + pZp} (z_P - {a})^i (z_Pbar - {b})^j d.Phi{0-->infty},
 
     where alpha = a mod P, b mod Pbar.
 
     self: overconvergent Bianchi cohomology class.
 
-    From the theory, we can write this in terms of the moments of Phi{alpha/p --> \infty},
-    and we know how to compute this in terms of the overconvergent cohomology class.
+    From the theory, we can write this in terms of the moments of
+    ``Phi{alpha/p --> \infty}``, and we know how to compute this in terms
+    of the overconvergent cohomology class.
 
-    We need to keep track of which is our distinguished prime; it is the prime used to define the arithmetic
-    group. (The other prime is then in the `tame' level).
+    We need to keep track of which is our distinguished prime; it is
+    the prime used to define the arithmetic group. (The other prime is
+    then in the 'tame' level).
 
-    Note that a, b MUST be coprime to p. (We obtain this in any case after multiplying by psi(a)psi(b)).
+    Note that a, b MUST be coprime to p. (We obtain this in any case
+    after multiplying by ``psi(a) psi(b)``).
 
-    This is essentially just the product of two copies of the theory for GL2/Q with single valued
-    distributions.
+    This is essentially just the product of two copies of the theory
+    for ``GL2/Q`` with single valued distributions.
 
     REQUIRES SQUARE-FREE LEVEL.
     ALSO SOMETIMES FAILS IF i = j = 0. IN THIS CASE HAVE COMPLETE ANSWER IN BASE-CHANGE CASE USING ELLIPTIC
@@ -252,20 +262,25 @@ def basic_integral_one_prime(self, alpha, i, j):
     r"""
     Returns the integral
 
-            int_{a + pZp, b + pZp} (z_P - {a})^i (z_Pbar - {b})^j d.Phi{0-->infty},
+    ::
+
+        int_{a + pZp, b + pZp} (z_P - {a})^i (z_Pbar - {b})^j d.Phi{0-->infty},
 
     where alpha = a mod P, b mod Pbar.
 
-    From the theory, we can write this in terms of the moments of Phi{alpha/p --> \infty},
-    and we know how to compute this in terms of the overconvergent cohomology class.
+    From the theory, we can write this in terms of the moments of
+    ``Phi{alpha/p --> \infty}``, and we know how to compute this in terms
+    of the overconvergent cohomology class.
 
-    We need to keep track of which is our distinguished prime; it is the prime used to define the arithmetic
-    group. (The other prime is then in the `tame' level).
+    We need to keep track of which is our distinguished prime; it is
+    the prime used to define the arithmetic group. (The other prime is
+    then in the 'tame' level).
 
-    Note that a, b MUST be coprime to p. (We obtain this in any case after multiplying by psi(a)psi(b)).
+    Note that a, b MUST be coprime to p. (We obtain this in any case
+    after multiplying by ``psi(a) psi(b)``).
 
-    This is essentially just the product of two copies of the theory for GL2/Q with single valued
-    distributions.
+    This is essentially just the product of two copies of the theory
+    for ``GL2/Q`` with single valued distributions.
 
     NOTE: THIS IS OLD CODE FOR COMPUTING WHEN THE LEVEL IS A PRIME IDEAL IN IQF F.
     """
