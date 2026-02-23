@@ -1004,7 +1004,11 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
 
         iotap = self.get_embedding(prec)
 
-        eps0 = K.units()[0] ** 2
+        eps0 = K.units()[0]
+        # Distinguish between negative and positive norm fundamental units.
+        if eps0.norm() != 1:
+            eps0 = eps0 ** 2
+        
         eps = eps0
         while coords(eps)[1] % extra_conductor != 0:
             eps *= eps0
