@@ -589,7 +589,7 @@ def darmon_vonk_point(
     return ans_list
 
 
-def admissible_discriminants(p, D, bound, magma=None):
+def admissible_discriminants(p, D, bound, level=1, magma=None):
     if magma is None:
         from sage.interfaces.magma import Magma
 
@@ -618,10 +618,13 @@ def admissible_discriminants(p, D, bound, magma=None):
     except AttributeError:
         F = QQ
         facts = [o[0] for o in ZZ(D).factor()] + [ZZ(p)]
+        facts_level = [o[0] for o in ZZ(level).factor()]
         for n in range(1, bound):
             if n != fundamental_discriminant(n):
                 continue
-            if all(kronecker_symbol(n, ell) in [-1, 0] for ell in facts) and n % p != 0:
+            field_embeddable = all(kronecker_symbol(n, ell) in [-1, 0] for ell in facts)
+            level_embeddable = all(kronecker_symbol(n, ell) in [1, 0] for ell in facts_level)
+            if field_embeddable and level_embeddable and n % p != 0:
                 ans.append(n)
     return ans
 
