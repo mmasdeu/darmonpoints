@@ -761,7 +761,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                 return
             except OSError:
                 verbose("Will save fundamental domain data to file %s" % filename)
-                print("Initialized fundamental domain data from file %s" % filename)
+                print("Will save fundamental domain data to file %s" % filename)
                 pass
 
         Gm = self.magma.FuchsianGroup(self._O_magma.name())
@@ -869,7 +869,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             verbose("Saved to file")
 
     def _init_magma_objects(
-        self, info_magma=None, O_magma=None, intersection=None
+        self, info_magma=None, O_magma=None, intersection=None, **kwargs
     ):  # Rational quaternions
         wtime = walltime()
         verbose("Calling _init_magma_objects...")
@@ -884,7 +884,12 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                 self._B_magma = self.magma.QuaternionAlgebra(
                     "%s*%s" % (self.discriminant, ZZ_magma.name())
                 )
-            self._Omax_magma = self._B_magma.MaximalOrder()
+            Omax_magma = kwargs.get("Omax_magma", None)
+            if Omax_magma is None:
+                self._Omax_magma = self._B_magma.MaximalOrder()
+            else:
+                self._Omax_magma = self.magma.Order([self._B_magma(o) for o in Omax_magma])
+
             if O_magma is None:
                 if self.level != ZZ(1):
                     self._O_magma = self._Omax_magma.Order(
@@ -966,9 +971,9 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
         sage: f = G.embed_order(23,20) # optional - magma
         """
-        mu = kwargs.get(
-            "quadratic_embedding", self.compute_quadratic_embedding(D, **kwargs)
-        )
+        mu = kwargs.get("quadratic_embedding", None)
+        if mu is None:
+            mu = self.compute_quadratic_embedding(D, **kwargs)
         F = self.base_ring()
         t = PolynomialRing(F, names="t").gen()
         K = F.extension(t * t - D, names="beta")
