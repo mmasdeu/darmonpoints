@@ -411,6 +411,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             x1, x2 = t0, act_flt(emb(self(g**-1).quaternion_rep), x2)
 
         # Here we can assume that x1 is in the fundamental domain
+        if not self.is_in_fundom(x1):
+            verbose("x1 is not in the fundamental domain, but we are assuming it is...")
         ans = [self(g)]
         while not self.is_in_fundom(x2):
             intersection_candidates = []
