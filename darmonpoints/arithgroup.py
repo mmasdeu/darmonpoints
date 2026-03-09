@@ -108,6 +108,10 @@ def perturb_point_on_arc(x1, x2, z, r):
     ans = []
     CC = z.parent()
     rnorm = r * (z.imag() ** 2)
+    if r2 is Infinity:
+        ans.append(CC(RR(z.real() + rnorm), RR(z.imag())))
+        ans.append(CC(RR(z.real() - rnorm), RR(z.imag())))
+        return ans
     ans.append(
         CC(RR(z.real() + rnorm), RR((r2 - (z.real() + rnorm - center) ** 2).sqrt()))
     )
