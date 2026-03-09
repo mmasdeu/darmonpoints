@@ -108,6 +108,10 @@ def perturb_point_on_arc(x1, x2, z, r):
     ans = []
     CC = z.parent()
     rnorm = r * (z.imag() ** 2)
+    if r2 is Infinity:
+        ans.append(CC(RR(z.real() + rnorm), RR(z.imag())))
+        ans.append(CC(RR(z.real() - rnorm), RR(z.imag())))
+        return ans
     ans.append(
         CC(RR(z.real() + rnorm), RR((r2 - (z.real() + rnorm - center) ** 2).sqrt()))
     )
@@ -411,6 +415,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             x1, x2 = t0, act_flt(emb(self(g**-1).quaternion_rep), x2)
 
         # Here we can assume that x1 is in the fundamental domain
+        if not self.is_in_fundom(x1):
+            verbose("x1 is not in the fundamental domain, but we are assuming it is...")
         ans = [self(g)]
         while not self.is_in_fundom(x2):
             intersection_candidates = []
@@ -761,7 +767,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                 return
             except OSError:
                 verbose("Will save fundamental domain data to file %s" % filename)
-                print("Initialized fundamental domain data from file %s" % filename)
+                print("Will save fundamental domain data to file %s" % filename)
                 pass
 
         Gm = self.magma.FuchsianGroup(self._O_magma.name())
@@ -869,7 +875,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             verbose("Saved to file")
 
     def _init_magma_objects(
-        self, info_magma=None, O_magma=None, intersection=None
+        self, info_magma=None, O_magma=None, intersection=None, **kwargs
     ):  # Rational quaternions
         wtime = walltime()
         verbose("Calling _init_magma_objects...")
@@ -884,7 +890,12 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                 self._B_magma = self.magma.QuaternionAlgebra(
                     "%s*%s" % (self.discriminant, ZZ_magma.name())
                 )
-            self._Omax_magma = self._B_magma.MaximalOrder()
+            Omax_magma = kwargs.get("Omax_magma", None)
+            if Omax_magma is None:
+                self._Omax_magma = self._B_magma.MaximalOrder()
+            else:
+                self._Omax_magma = self.magma.Order([self._B_magma(o) for o in Omax_magma])
+
             if O_magma is None:
                 if self.level != ZZ(1):
                     self._O_magma = self._Omax_magma.Order(
@@ -966,9 +977,9 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
         sage: f = G.embed_order(23,20) # optional - magma
         """
-        mu = kwargs.get(
-            "quadratic_embedding", self.compute_quadratic_embedding(D, **kwargs)
-        )
+        mu = kwargs.get("quadratic_embedding", None)
+        if mu is None:
+            mu = self.compute_quadratic_embedding(D, **kwargs)
         F = self.base_ring()
         t = PolynomialRing(F, names="t").gen()
         K = F.extension(t * t - D, names="beta")
@@ -1004,7 +1015,11 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
 
         iotap = self.get_embedding(prec)
 
-        eps0 = K.units()[0] ** 2
+        eps0 = K.units()[0]
+        # Distinguish between negative and positive norm fundamental units.
+        if eps0.norm() != 1:
+            eps0 = eps0 ** 2
+        
         eps = eps0
         while coords(eps)[1] % extra_conductor != 0:
             eps *= eps0
