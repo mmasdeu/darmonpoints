@@ -212,7 +212,7 @@ class DivisorsElement(ModuleElement):
         newdict = defaultdict(ZZ)
         new_ptdata = {}
         for P, n in self:
-            if P == Infinity:
+            if is_infinity(P):
                 try:
                     new_pt = a / c
                 except (PrecisionError, ZeroDivisionError):
