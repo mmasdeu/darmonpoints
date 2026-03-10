@@ -468,6 +468,11 @@ class ArithGroup_generic(AlgebraicGroup):
         return wd
 
     def _calculate_relation(self, wt, separated=False):
+        r'''
+        Given a weight vector wt, write it as a linear combination of the relation words,
+        and return the corresponding linear combination of the relation words, either as a list of words (if separated=True)
+        or as a single word (if separated=False).
+        '''
         relmat = self.get_relation_matrix()
         relwords = self.get_relation_words()
         num_rels = len(relwords)
@@ -493,16 +498,6 @@ class ArithGroup_generic(AlgebraicGroup):
                         ans += ZZ(lam) * [-j for j in reversed(relation)]
         return ans
 
-    def get_weight_vector(self, x):
-        gens = self.gens()
-        weight_vector = vector(ZZ, [0 for g in gens])
-        for i in x.word_rep:
-            if i > 0:
-                weight_vector[i - 1] += 1
-            else:
-                weight_vector[-i - 1] -= 1
-        return weight_vector
-
     def calculate_weight_zero_word(self, xlist, separated=False):
         Gab = self.abelianization()
         abxlist = [n * Gab(x) for x, n in xlist]
@@ -511,37 +506,112 @@ class ArithGroup_generic(AlgebraicGroup):
             raise ValueError(
                 "Must yield trivial element in the abelianization (%s)" % (sum_abxlist)
             )
-        oldwordlist = [x.word_rep[:] for x, n in xlist]
+        oldwordlist = [n * x.word_rep[:] for x, n in xlist]
+        ngens = len(self.gens())
         return oldwordlist, self._calculate_relation(
-            sum(n * self.get_weight_vector(x) for x, n in xlist), separated=separated
+            sum((get_weight_vector(n * x.word_rep, ngens) for x, n in xlist),[]), separated=separated
         )
 
-    def decompose_into_commutators(self, x):
-        oldwordlist, rel = self.calculate_weight_zero_word([x])
-        assert len(oldwordlist) == 1
-        oldword = oldwordlist[0] + rel
+    def decompose_into_commutators(self, gamma, n=1):
+        (oldwordlist,), rel = self.calculate_weight_zero_word([(gamma, n)])
+        oldword = oldwordlist + rel
         # At this point oldword has weight vector 0
         # We use the identity:
         # C W0 g^a W1 = C [W0,g^a] g^a W0 W1
         commutator_list = []
-        for i in range(len(self.gens())):
-            while True:
-                # Find the first occurrence of generator i
-                try:
-                    idx = [x[0] for x in oldword[1:]].index(i) + 1
-                except ValueError:
-                    break
-                w0 = self._element_constructor_(oldword[:idx])
-                gatmp = [oldword[idx]]
-                ga = self._element_constructor_(gatmp)
-                oldword = gatmp + oldword[:idx] + oldword[idx + 1 :]
-                w0q = w0.quaternion_rep
-                gaq = ga.quaternion_rep
-                commute = w0q * gaq * w0q**-1 * gaq**-1
-                if commute != 1:
-                    commutator_list.append((w0, ga))
-        assert len(oldword) == 0
+        while len(oldword) > 0:
+            g0 = oldword[0]
+            idx = oldword.index(-g0)
+            w0 = oldword[1 : idx]
+            g = oldword[idx]
+            w1 = oldword[idx + 1 :]
+            w0q = self._element_constructor_(w0).quaternion_rep
+            gq = self._element_constructor_([g]).quaternion_rep
+            if w0q * gq != gq * w0q:
+                verbose('Found commutator: %s, %s' % (w0, [g]))
+                commutator_list.append((self([g]), self(w0)))
+            oldword = w0 + w1
         return commutator_list
+
+    def find_bounding_cycle(self, gamma, npow=1):
+        r"""
+        Use recursively that:
+        - x^a g = a x + g - del(x^a|g) - del(x|(x + x^2 + ... + x^(a-1)))
+        - x^(-a) g = -a x + g + del(1|1) + del(x^(a)|(x^-a)) - del(x^(-a)|g) + del(x|(x + x^2 + ... + x^(a-1)))
+
+        Writes gamma^npow as a sum of elements of the form g and del(g|g'), where g and g' are elements of the group,
+        and del(g|g') is the boundary of the 2-chain (g|g').
+        """
+        assert npow > 0, "npow should be positive"
+        B = self.B
+        gamma = self(gamma)
+        gprimeq = gamma.quaternion_rep
+        gprime = self(gprimeq)
+        gword = tietze_to_syllables(gprime.word_rep)
+        rels = self._calculate_relation(
+            get_weight_vector(npow * gprime.word_rep, ngens=len(self.gens())), separated=True
+        )
+        # If npow > 1 then add the boundary relating self^npow with npow*self
+        ans = [(-1, [gprimeq**j for j in range(1, npow)], gprimeq)] if npow > 1 else []
+
+        num_terms = len(gword)
+        jj = 0
+        for i, a in gword:
+            jj += 1
+            # Decompose gword as g^a*gprime, where g is a generator
+            g = self.gens()[i]
+            gq = g.quaternion_rep
+            gaq = gq**a
+            # Add the boundary relating g^a*gprime with g^a + gprime
+            if jj < num_terms:
+                ans.extend([(-npow, [gaq], self(syllables_to_tietze(gword[jj:])).quaternion_rep)])
+            # If a < 0 use the relation g^a = -g^(-a) + del(g^a|g^(-a)) + del(1|1)
+            if a < 0:
+                ans.extend([(npow, [gaq**-1], gaq)])
+            # By the above line we have to deal with g^a with -g^abs(a) if a < 0
+            # We add the corresponding boundaries, which we will subtract if a > 0 and add if a < 0
+            ans.extend(
+                [(-sgn(a) * npow, [gq**j for j in range(1, abs(a))], gq)]
+                if abs(a) > 1
+                else []
+            )
+        for m, rel in rels:
+            # we deal with the relation rel^m
+            # it is equivalent to deal with m*rel, because these two differ by a boundary that integrates to 1
+            assert m > 0
+            num_terms = len(rel)
+            jj = 0
+            rel_syllables = tietze_to_syllables(rel)
+            for i, a in rel_syllables:
+                jj += 1
+                # we deal with a part of the relation of the form g*g'
+                g = self.gens()[i]
+                gq = g.quaternion_rep
+                ga = g**a
+                gaq = gq**a
+                # add the boundary relating g and g'
+                if jj < num_terms:
+                    ans.extend([(-m, [gaq], self(syllables_to_tietze(rel_syllables[jj:])).quaternion_rep)])
+                # If a < 0 use the relation g^a = -g^(-a) + del(g^a|g^(-a))
+                ans.extend([(m, [gaq**-1], gaq)] if a < 0 else [])
+                # add the boundaries of g^abs(a)
+                ans.extend(
+                    [(-sgn(a) * m, [gq**j for j in range(1, abs(a))], gq)]
+                    if abs(a) > 1
+                    else []
+                )
+        # Finally, fix boundaries of the form del(1|1), which we miscounted
+        check = 0 if gprimeq != 1 else -npow
+        for i, g1list, g2 in ans:
+            for g1 in g1list:
+                if self(g1).quaternion_rep == 1:
+                    check += i
+                if (self(g1)*self(g2)).quaternion_rep == 1:
+                    check -= i
+                if self(g2).quaternion_rep == 1:
+                    check += i
+        ans.append((-check, [B(1)], B(1)))
+        return ans
 
     @cached_method
     def abelianization(self):

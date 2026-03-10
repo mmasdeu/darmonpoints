@@ -222,11 +222,16 @@ class TensorProduct(Module):
 
 
 class OneChainsElement(TensorElement):
-    def is_degree_zero_valued(self):
-        for v in self._data.values():
-            if v.degree() != 0:
-                return False
-        return True
+    def is_degree_zero_valued(self, degree_map=None):
+        if isinstance(self.parent().coefficient_module(), Divisors):
+            if degree_map is not None:
+                raise ValueError('degree_map should not be provided when the coefficient module is divisors')
+            degree_map = lambda v: v.degree()
+        if degree_map is None:
+            raise NotImplementedError(
+                "zero_degree_equivalent only implemented for divisors coefficient module, or with a degree_map provided"
+            )
+        return all(degree_map(v) == 0 for v in self._data.values())
 
     def is_zero(self):
         return len(self._data) == 0
@@ -237,24 +242,29 @@ class OneChainsElement(TensorElement):
     def __eq__(self, other):
         return (self - other).is_zero()
 
-    def radius(self):
-        return max([0] + [v.radius() for g, v in self._data.items()])
-
-    def zero_degree_equivalent(self, allow_multiple=False, prec=None):
+    def zero_degree_equivalent(self, allow_multiple=False, degree_map=None, return_boundary=False):
         r"""
         Use the relations:
-            * gh|v = g|v + h|g^-1 v
-            * g^a|v = g|(v + g^-1v + ... + g^-(a-1)v)
-            * g^(-a)|v = - g^a|g^av
+            * gh|v = g|v + h|g^-1 v - delta(g|h|v))
+            * g^a|v = g|(v + g^-1v + ... + g^-(a-1)v) - delta(g|g^(a-1)|v + g|g^(a-2)|g^-1v + ... + g|g|g^(2-n)v)
+            * g^(-a)|v = - g^a|g^av + delta(g^-a|g^a|v + 1|1|v)
         """
+        if isinstance(self.parent().coefficient_module(), Divisors):
+            if degree_map is not None:
+                raise ValueError('degree_map should not be provided when the coefficient module is divisors')
+            degree_map = lambda v: v.degree()
+        if degree_map is None:
+            raise NotImplementedError(
+                "zero_degree_equivalent only implemented for divisors coefficient module, or with a degree_map provided"
+            )
         verbose("Entering zero_degree_equivalent")
+        boundary_list= []
         HH = self.parent()
         V = HH.coefficient_module()
         G = HH.group()
-        oldvals = list(self._data.values())
-        aux_element = list(oldvals[0])[0][0]
+        aux_element = V.an_element()
         Gab = G.abelianization()
-        xlist = [(g, v.degree()) for g, v in zip(self._data.keys(), oldvals)]
+        xlist = [(g, degree_map(v)) for g, v in zip(self._data.keys(), oldvals)]
         sum_abxlist = sum([Gab((x, n)) for x, n in xlist])
         x_ord = sum_abxlist.order()
         if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
@@ -265,12 +275,14 @@ class OneChainsElement(TensorElement):
         else:
             xlist = [(x, x_ord * n) for x, n in xlist]
         gwordlist, rel = G.calculate_weight_zero_word(xlist, separated=True)
+        oldvals = list(self._data.values())
         counter = 0
         assert len(gwordlist) == len(oldvals)
         newdict = defaultdict(V)
         for gword, v in zip(gwordlist, oldvals):
+            print("Processing %s|%s" % (gword, v))
             newv = V(x_ord * v)
-            for i, a in tietze_to_syllables(gword):
+            for i, a in tietze_to_syllables(gword): # gi^a|v
                 oldv = V(newv)
                 g = G.gen(i)
                 newv = (g**-a) * V(oldv)  # for the next iteration
@@ -281,6 +293,7 @@ class OneChainsElement(TensorElement):
                     sign = -1
                 for j in range(a):
                     newdict[g] += ZZ(sign) * oldv
+                    boundary_list.append((i,g, g**(a-j-1), g * (-ZZ(sign)*V(oldv)))) # negative sign included
                     oldv = (g**-1) * oldv
             counter += 1
             update_progress(
@@ -288,6 +301,7 @@ class OneChainsElement(TensorElement):
                 "Reducing to degree zero equivalent",
             )
         for b, r in rel:
+            print("Processing relation %s with coefficient %s" % (r, b))
             newv = V(aux_element)
             for i, a in tietze_to_syllables(r):
                 oldv = V(newv)
@@ -300,10 +314,11 @@ class OneChainsElement(TensorElement):
                     sign = -1
                 for j in range(a):
                     newdict[g] += ZZ(sign) * ZZ(b) * oldv
+                    boundary_list.append((i, g, g**(a-j-1), g * (-ZZ(sign)*ZZ(b)*V(oldv))))
                     oldv = (g**-1) * oldv
         verbose("Done zero_degree_equivalent")
         ans = HH(newdict)
-        if not ans.is_degree_zero_valued():
+        if not ans.is_degree_zero_valued(degree_map=degree_map):
             print(
                 "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
             )
@@ -315,9 +330,15 @@ class OneChainsElement(TensorElement):
                 "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
             )
         if allow_multiple:
-            return ans, x_ord
+            if return_boundary:
+                return ans, x_ord, boundary_list
+            else:
+                return ans, x_ord
         else:
-            return ans
+            if return_boundary:
+                return ans, boundary_list
+            else:
+                return ans
 
     def factor_into_generators(self, prec):
         r"""

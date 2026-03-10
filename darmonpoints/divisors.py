@@ -311,7 +311,7 @@ class Divisors(Parent, CachedRepresentation):
             return S._base is self._base
         else:
             return False
-
+        
     def base(self):
         return self._base
 

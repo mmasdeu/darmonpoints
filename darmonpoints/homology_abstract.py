@@ -23,6 +23,7 @@ from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
 
 from .representations import *
+from .divisors import *
 from .util import *
 
 
@@ -57,7 +58,7 @@ class HomologyElement(ModuleElement):
         return ambient(V(ans))
 
     def _repr_(self):
-        return "Homology class in %s" % self.parent()
+        return str(self.values())
 
     def _add_(self, right):
         return self.__class__(
@@ -432,9 +433,8 @@ class Abelianization(HomologyGroup):
         )
 
     def ab_to_G(self, x):
-        group = self.group()
         ans = 1
         if x.parent() == self:
-            for g, v in zip(self.group().gens(), x.values()):
-                ans *= g ** ZZ(v[0])
+            for g, (v,) in zip(self.group().gens(), x.values()):
+                ans *= g ** ZZ(v)
         return ans

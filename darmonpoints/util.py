@@ -1345,6 +1345,17 @@ def syllables_to_tietze(wd):
     return [sgn(a) * (i + 1) for i, a in wd for _ in range(abs(a))]
 
 
+def get_weight_vector(x, ngens=None):
+    weight_vector = dict()
+    for i in x:
+        if i > 0:
+            weight_vector[i - 1] = weight_vector.get(i - 1, 0) + 1
+        else:
+            weight_vector[-i - 1] = weight_vector.get(-i - 1, 0) - 1
+    if ngens is None:
+        ngens = max(weight_vector.keys()) + 1
+    return [weight_vector.get(i, 0) for i in range(ngens)]
+
 def reduce_word_tietze(word):
     r"""
     Simplifies the given word by cancelling out [g, -g] -> []
