@@ -30,6 +30,7 @@ from sage.structure.unique_representation import (
     UniqueRepresentation,
 )
 
+from .util import is_infinity
 
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)
 def _hash(x):
