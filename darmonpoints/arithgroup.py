@@ -109,8 +109,8 @@ def perturb_point_on_arc(x1, x2, z, r):
     CC = z.parent()
     rnorm = r * (z.imag() ** 2)
     if r2 is Infinity:
-        ans.append(CC(RR(z.real() + rnorm), RR(z.imag())))
-        ans.append(CC(RR(z.real() - rnorm), RR(z.imag())))
+        ans.append(CC(RR(z.real()), RR(z.imag() + rnorm)))
+        ans.append(CC(RR(z.real()), RR(z.imag() - rnorm)))
         return ans
     ans.append(
         CC(RR(z.real() + rnorm), RR((r2 - (z.real() + rnorm - center) ** 2).sqrt()))
@@ -200,10 +200,10 @@ def sorted_ideal_endpoints(geodesic):
     M = geodesic._model
     # infinity is the first endpoint, so the other ideal endpoint
     # is just the real part of the second coordinate
-    if start == Infinity:
+    if is_infinity(start):
         return [M.get_point(start), M.get_point(x2)]
     # Same idea as above
-    if end == Infinity:
+    if is_infinity(end):
         return [M.get_point(x1), M.get_point(end)]
     # We could also have a vertical line with two interior points
     if x1 == x2:
@@ -236,7 +236,7 @@ def moebius_transform(A, z):
     """
     if A.ncols() == 2 and A.nrows() == 2 and A.det() != 0:
         (a, b, c, d) = A.list()
-        if z == Infinity:
+        if is_infinity(z):
             if c == 0:
                 return Infinity
             return a / c
@@ -260,13 +260,13 @@ def angle_sign(left, right):  # UHP
     """
     (p1, p2) = (k.coordinates() for k in sorted_ideal_endpoints(left))
     (q1, q2) = (k.coordinates() for k in sorted_ideal_endpoints(right))
-    if p1 != Infinity and p2 != Infinity:  # geodesic not a straight line
+    if not is_infinity(p1) and not is_infinity(p2):  # geodesic not a straight line
         # So we send it to the geodesic with endpoints [0, oo]
         T = HyperbolicGeodesicUHP._crossratio_matrix(p1, (p1 + p2) / 2, p2)
     else:
         # geodesic is a straight line, so we send it to the geodesic
         # with endpoints [0,oo]
-        if p1 == Infinity:
+        if is_infinity(p1):
             T = HyperbolicGeodesicUHP._crossratio_matrix(p1, p2 + 1, p2)
         else:
             T = HyperbolicGeodesicUHP._crossratio_matrix(p1, p1 + 1, p2)
@@ -275,7 +275,7 @@ def angle_sign(left, right):  # UHP
         q1, q2 = q2, q1
     b1, b2 = (moebius_transform(T, k) for k in [q1, q2])
     # If right is now a straight line...
-    if b1 == Infinity or b2 == Infinity:
+    if is_infinity(b1) or is_infinity(b2):
         # then since they intersect, they are equal
         return ZZ(0)
     assert b1 * b2 < 0
@@ -1271,7 +1271,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
     def is_in_fundom(self, t, v0=None):
         if v0 is None:
             v0 = lambda x: x
-        if t is Infinity or t == Infinity:
+        if is_infinity(t):
             return True
         else:
             return 2 * t.real_part().abs() <= 1 and t.norm() >= 1
@@ -1325,7 +1325,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
             v0 = lambda x: x
 
         # We first deal with the case of x1 or x2 being Infinity
-        if x1 == Infinity or x2 == Infinity:
+        if is_infinity(x1) or is_infinity(x2):
             raise NotImplementedError
 
         verbose("Calling mat_list with x1 = %s and x2 = %s" % (x1, x2))

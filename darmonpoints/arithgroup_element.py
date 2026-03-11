@@ -221,7 +221,13 @@ class ArithGroupElement(MultiplicativeGroupElement):
             is_field = False
         if is_field:
             a, b, c, d = mat.list()
-            return (a * x + b) / (c * x + d)
+            if is_infinity(x):
+                if c == 0:
+                    return x
+                else:
+                    return a / c
+            else:
+                return (a * x + b) / (c * x + d)
         else:
             try:
                 return mat * x

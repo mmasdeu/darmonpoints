@@ -30,6 +30,7 @@ from sage.structure.unique_representation import (
     UniqueRepresentation,
 )
 
+from .util import is_infinity
 
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)
 def _hash(x):
@@ -212,7 +213,7 @@ class DivisorsElement(ModuleElement):
         newdict = defaultdict(ZZ)
         new_ptdata = {}
         for P, n in self:
-            if P == Infinity:
+            if is_infinity(P):
                 try:
                     new_pt = a / c
                 except (PrecisionError, ZeroDivisionError):
