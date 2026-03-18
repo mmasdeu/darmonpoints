@@ -589,7 +589,7 @@ def darmon_vonk_point(
     return ans_list
 
 
-def admissible_discriminants(p, D, bound, magma=None):
+def admissible_discriminants(p, D, bound, level=1, magma=None):
     if magma is None:
         from sage.interfaces.magma import Magma
 
@@ -618,10 +618,13 @@ def admissible_discriminants(p, D, bound, magma=None):
     except AttributeError:
         F = QQ
         facts = [o[0] for o in ZZ(D).factor()] + [ZZ(p)]
+        facts_level = [o[0] for o in ZZ(level).factor()]
         for n in range(1, bound):
             if n != fundamental_discriminant(n):
                 continue
-            if all(kronecker_symbol(n, ell) in [-1, 0] for ell in facts) and n % p != 0:
+            field_embeddable = all(kronecker_symbol(n, ell) in [-1, 0] for ell in facts)
+            level_embeddable = all(kronecker_symbol(n, ell) in [1, 0] for ell in facts_level)
+            if field_embeddable and level_embeddable and n % p != 0:
                 ans.append(n)
     return ans
 
@@ -693,6 +696,7 @@ def darmon_vonk_cycle(
     padic_field=None,
     hecke_data=None,
     outfile=None,
+    extra_data=False,
     **kwargs,
 ):
     p = G.prime()
@@ -736,6 +740,8 @@ def darmon_vonk_cycle(
         theta, mult = ans0.zero_degree_equivalent(allow_multiple=True)
     else:
         theta, mult = ans0, 1
+    if extra_data:
+        return theta, mult * scaling, gamma_zeta, zeta
     return theta, mult * scaling
 
 
@@ -821,6 +827,7 @@ class DVCocycle(SageObject):
         Returns a list S of matrices in G satisfying
         g * (x1, gamma1*x1) meets (x2, gamma2*x2) => g belongs to S.
         """
+        verbose("Finding all matrix candidates for gamma = %s" % gamma)
         x0 = self._x0
         gamma1 = self._gamma_tau
         x1 = self._t0
@@ -830,6 +837,7 @@ class DVCocycle(SageObject):
         return [self._G(o) for o in list(set(ans))]
 
     def evaluate(self, gamma):
+        verbose("Called evaluate at gamma = %s" % gamma)
         HH = HyperbolicPlane().UHP()
         Div = Divisors(self._tau.parent())
         if gamma.quaternion_rep == 1 or gamma.quaternion_rep == -1:

@@ -108,6 +108,10 @@ def perturb_point_on_arc(x1, x2, z, r):
     ans = []
     CC = z.parent()
     rnorm = r * (z.imag() ** 2)
+    if r2 is Infinity:
+        ans.append(CC(RR(z.real()), RR(z.imag() + rnorm)))
+        ans.append(CC(RR(z.real()), RR(z.imag() - rnorm)))
+        return ans
     ans.append(
         CC(RR(z.real() + rnorm), RR((r2 - (z.real() + rnorm - center) ** 2).sqrt()))
     )
@@ -196,10 +200,10 @@ def sorted_ideal_endpoints(geodesic):
     M = geodesic._model
     # infinity is the first endpoint, so the other ideal endpoint
     # is just the real part of the second coordinate
-    if start == Infinity:
+    if is_infinity(start):
         return [M.get_point(start), M.get_point(x2)]
     # Same idea as above
-    if end == Infinity:
+    if is_infinity(end):
         return [M.get_point(x1), M.get_point(end)]
     # We could also have a vertical line with two interior points
     if x1 == x2:
@@ -232,7 +236,7 @@ def moebius_transform(A, z):
     """
     if A.ncols() == 2 and A.nrows() == 2 and A.det() != 0:
         (a, b, c, d) = A.list()
-        if z == Infinity:
+        if is_infinity(z):
             if c == 0:
                 return Infinity
             return a / c
@@ -256,13 +260,13 @@ def angle_sign(left, right):  # UHP
     """
     (p1, p2) = (k.coordinates() for k in sorted_ideal_endpoints(left))
     (q1, q2) = (k.coordinates() for k in sorted_ideal_endpoints(right))
-    if p1 != Infinity and p2 != Infinity:  # geodesic not a straight line
+    if not is_infinity(p1) and not is_infinity(p2):  # geodesic not a straight line
         # So we send it to the geodesic with endpoints [0, oo]
         T = HyperbolicGeodesicUHP._crossratio_matrix(p1, (p1 + p2) / 2, p2)
     else:
         # geodesic is a straight line, so we send it to the geodesic
         # with endpoints [0,oo]
-        if p1 == Infinity:
+        if is_infinity(p1):
             T = HyperbolicGeodesicUHP._crossratio_matrix(p1, p2 + 1, p2)
         else:
             T = HyperbolicGeodesicUHP._crossratio_matrix(p1, p1 + 1, p2)
@@ -271,7 +275,7 @@ def angle_sign(left, right):  # UHP
         q1, q2 = q2, q1
     b1, b2 = (moebius_transform(T, k) for k in [q1, q2])
     # If right is now a straight line...
-    if b1 == Infinity or b2 == Infinity:
+    if is_infinity(b1) or is_infinity(b2):
         # then since they intersect, they are equal
         return ZZ(0)
     assert b1 * b2 < 0
@@ -411,6 +415,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             x1, x2 = t0, act_flt(emb(self(g**-1).quaternion_rep), x2)
 
         # Here we can assume that x1 is in the fundamental domain
+        if not self.is_in_fundom(x1):
+            verbose("x1 is not in the fundamental domain, but we are assuming it is...")
         ans = [self(g)]
         while not self.is_in_fundom(x2):
             intersection_candidates = []
@@ -761,7 +767,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                 return
             except OSError:
                 verbose("Will save fundamental domain data to file %s" % filename)
-                print("Initialized fundamental domain data from file %s" % filename)
+                print("Will save fundamental domain data to file %s" % filename)
                 pass
 
         Gm = self.magma.FuchsianGroup(self._O_magma.name())
@@ -869,7 +875,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             verbose("Saved to file")
 
     def _init_magma_objects(
-        self, info_magma=None, O_magma=None
+        self, info_magma=None, O_magma=None, intersection=None, **kwargs
     ):  # Rational quaternions
         wtime = walltime()
         verbose("Calling _init_magma_objects...")
@@ -884,7 +890,12 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                 self._B_magma = self.magma.QuaternionAlgebra(
                     "%s*%s" % (self.discriminant, ZZ_magma.name())
                 )
-            self._Omax_magma = self._B_magma.MaximalOrder()
+            Omax_magma = kwargs.get("Omax_magma", None)
+            if Omax_magma is None:
+                self._Omax_magma = self._B_magma.MaximalOrder()
+            else:
+                self._Omax_magma = self.magma.Order([self._B_magma(o) for o in Omax_magma])
+
             if O_magma is None:
                 if self.level != ZZ(1):
                     self._O_magma = self._Omax_magma.Order(
@@ -900,12 +911,25 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             self._B_magma = info_magma._B_magma
             self._Omax_magma = info_magma._Omax_magma
             if O_magma is None:
-                if self.level != ZZ(1):
-                    self._O_magma = info_magma._O_magma.pMaximalOrder(
-                        "%s*%s" % (ZZ(info_magma.level // self.level), ZZ_magma.name())
-                    )
+                if intersection is None:
+                    if self.level != ZZ(1):
+                        # We compute the additional level needed to reach self.level and an Eichler order of that level.
+                        missing_level = ZZ(self.level // info_magma.level)
+                        missing_order = self._Omax_magma.Order(f"{missing_level}*{ZZ_magma.name()}")
+                        # We intersect the already computed order with the missing_order to get an order of level self.level.
+                        self._O_magma = self.magma(
+                            f"{info_magma._O_magma.name()} meet {missing_order.name()}"
+                        )
+                        assert self.magma(f"{self._O_magma.name()} meet {missing_order.name()} eq {self._O_magma.name()}")
+                        assert self.magma(f"Discriminant({self._O_magma.name()}) eq {self.level*self.discriminant}*{ZZ_magma.name()}")
+                    else:
+                        self._O_magma = self._Omax_magma
                 else:
-                    self._O_magma = self._Omax_magma
+                    self._O_magma = self.magma(
+                        f"{info_magma._O_magma.name()} meet {intersection._O_magma.name()}"
+                    )
+                    assert self.magma(f"{self._O_magma.name()} meet {intersection._O_magma.name()} eq {self._O_magma.name()}")
+                    assert self.magma(f"Discriminant({self._O_magma.name()}) eq {self.level*self.discriminant}*{ZZ_magma.name()}")
             else:
                 self._O_magma = self.magma.Order([self._B_magma(o) for o in O_magma])
             if self._compute_presentation:
@@ -953,9 +977,9 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
         sage: f = G.embed_order(23,20) # optional - magma
         """
-        mu = kwargs.get(
-            "quadratic_embedding", self.compute_quadratic_embedding(D, **kwargs)
-        )
+        mu = kwargs.get("quadratic_embedding", None)
+        if mu is None:
+            mu = self.compute_quadratic_embedding(D, **kwargs)
         F = self.base_ring()
         t = PolynomialRing(F, names="t").gen()
         K = F.extension(t * t - D, names="beta")
@@ -991,7 +1015,11 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
 
         iotap = self.get_embedding(prec)
 
-        eps0 = K.units()[0] ** 2
+        eps0 = K.units()[0]
+        # Distinguish between negative and positive norm fundamental units.
+        if eps0.norm() != 1:
+            eps0 = eps0 ** 2
+        
         eps = eps0
         while coords(eps)[1] % extra_conductor != 0:
             eps *= eps0
@@ -1243,7 +1271,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
     def is_in_fundom(self, t, v0=None):
         if v0 is None:
             v0 = lambda x: x
-        if t is Infinity or t == Infinity:
+        if is_infinity(t):
             return True
         else:
             return 2 * t.real_part().abs() <= 1 and t.norm() >= 1
@@ -1297,7 +1325,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
             v0 = lambda x: x
 
         # We first deal with the case of x1 or x2 being Infinity
-        if x1 == Infinity or x2 == Infinity:
+        if is_infinity(x1) or is_infinity(x2):
             raise NotImplementedError
 
         verbose("Calling mat_list with x1 = %s and x2 = %s" % (x1, x2))
@@ -1651,7 +1679,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         a, b = self.B.invariants()
         return f"Arithmetic Group attached to quaternion algebra with a = {a}, b = {b} and level = {self.level}"
 
-    def _init_magma_objects(self, info_magma=None):  # NF generic
+    def _init_magma_objects(self, info_magma=None, intersection=None):  # NF generic
         r"""
         Initializes different Magma objects needed for calculations:
 
@@ -1750,8 +1778,20 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                         [(on + i) / 2, (j + k) / 2, Pgen * (j - k) / 2, (on - i) / 2]
                     )
                 else:
-                    M = sage_F_ideal_to_magma(self._F_magma, self.level)
-                    self._O_magma = info_magma._Omax_magma.Order(M)
+                    if intersection is None:
+                        # We compute the missing level and the intersection order
+                        missing_level = sage_F_ideal_to_magma(self._F_magma, self.level / info_magma.level)
+                        missing_order = info_magma._Omax_magma.Order(missing_level)
+
+                        self._O_magma = self.magma(
+                            f"{info_magma._O_magma.name()} meet {missing_order.name()}"
+                        )
+                    else:
+                        self._O_magma = self.magma(
+                            f"{info_magma._O_magma.name()} meet {intersection._O_magma.name()}"
+                        )
+                        assert self.magma(f"{self._O_magma.name()} meet {intersection._O_magma.name()} eq {self._O_magma.name()}")
+                        assert self.magma(f"{sage_F_ideal_to_magma(self._F_magma, self.level)} eq Discriminant({self._O_magma.name()})")
             else:
                 self._O_magma = self._Omax_magma
             try:
@@ -1873,9 +1913,9 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             and K.gen(0).norm(K.base_ring()) == mu.reduced_norm()
         )
 
-        found = False
+        #found = False
         coords = lambda x: K(x).list()  # K.gen().coordinates_in_terms_of_powers()
-        phi = K.hom([mu, self.B(self.F.gen())], check=False)
+        #phi = K.hom([mu, self.B(self.F.gen())], check=False)
         u0 = find_the_unit_of(self.F, K)
         assert u0.is_integral() and (1 / u0).is_integral()
         u = u0

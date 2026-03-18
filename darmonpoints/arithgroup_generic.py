@@ -330,7 +330,7 @@ class ArithGroup_generic(AlgebraicGroup):
         sage: G = ArithGroup(QQ,6,None,5,magma=Magma()) # optional - magma
         sage: reps = G.get_hecke_reps(11) # optional - magma
         """
-        if l == Infinity:
+        if is_infinity(l):
             reps = [self.non_positive_unit()]
         elif l == -Infinity:
             reps = [self.wp()]

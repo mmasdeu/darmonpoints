@@ -124,22 +124,25 @@ class PlecticGroup_class(AlgebraicGroup):
         **kwargs,
     ):
         self.F = base
-        self.GS = ArithGroup(
-            base,
-            discriminant,
-            abtuple,
-            p0 * p1 * level,
-            info_magma=kwargs.pop("info_magma", None),
-            magma=magma,
-            compute_presentation=False,
-            **kwargs,
-        )
+        info_magma = kwargs.pop("info_magma", None)
+        if info_magma is None:
+            G_base_n = ArithGroup(
+                base,
+                discriminant,
+                abtuple,
+                level,
+                info_magma=None,
+                magma=magma,
+                compute_presentation=False,
+                **kwargs,
+            )
+            info_magma = G_base_n
         Gp0 = ArithGroup(
             base,
             discriminant,
             abtuple,
             p0 * level,
-            info_magma=self.GS,
+            info_magma=info_magma,
             magma=magma,
             compute_presentation=False,
             **kwargs,
@@ -149,7 +152,18 @@ class PlecticGroup_class(AlgebraicGroup):
             discriminant,
             abtuple,
             p1 * level,
-            info_magma=self.GS,
+            info_magma=info_magma,
+            magma=magma,
+            compute_presentation=False,
+            **kwargs,
+        )
+        self.GS = ArithGroup(
+            base,
+            discriminant,
+            abtuple,
+            p0 * p1 * level,
+            info_magma=Gp1,
+            intersection=Gp0,
             magma=magma,
             compute_presentation=False,
             **kwargs,
@@ -178,13 +192,6 @@ class PlecticGroup_class(AlgebraicGroup):
             magma=magma,
             **kwargs,
         )
-        if not all(
-            [
-                G0.Gpn._is_in_order(g) and G0.Gn._is_in_order(g)
-                for g in self.GS._get_O_basis()
-            ]
-        ):
-            raise RuntimeError("Try again later...")
 
         kwargs["Gn"] = G0.Gpn
         kwargs["Gpn"] = G0.Gn
@@ -200,13 +207,6 @@ class PlecticGroup_class(AlgebraicGroup):
             magma=magma,
             **kwargs,
         )
-        if not all(
-            [
-                G1.Gpn._is_in_order(g) and G1.Gn._is_in_order(g)
-                for g in self.GS._get_O_basis()
-            ]
-        ):
-            raise RuntimeError("Try again later...")
 
         self.GG = [G0, G1]
         self.ideal_p0 = G0.ideal_p

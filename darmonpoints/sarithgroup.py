@@ -266,28 +266,9 @@ class BigArithGroup_class(AlgebraicGroup):
         verbose("Estimated Difficulty = %s" % difficulty)
 
         info_magma = kwargs.pop("info_magma", None)
-        verbose("Initializing arithmetic group G(pn)...")
-        kwargs["O_magma"] = kwargs.pop("GpnBasis", None)
-        t = walltime()
-        lev = self.ideal_p * self.level
-        if character is not None:
-            lev = [lev, character]
-        self.Gpn = kwargs.get("Gpn", None)
-        if self.Gpn is None:
-            self.Gpn = ArithGroup(
-                self.F,
-                self.discriminant,
-                abtuple,
-                lev,
-                info_magma=info_magma,
-                magma=magma,
-                compute_presentation=not self._use_shapiro,
-                **kwargs,
-            )
-        self.Gpn.get_embedding = self.get_embedding
-        self.Gpn.embed = self.embed
 
         verbose("Initializing arithmetic group G(n)...")
+        t = walltime()
         q = kwargs.get("extra_q", 1)
         self.ideal_q = Fideal(q)
         lev = self.ideal_q * self.level
@@ -296,8 +277,6 @@ class BigArithGroup_class(AlgebraicGroup):
         kwargs["O_magma"] = kwargs.pop("GnBasis", None)
         self.Gn = kwargs.get("Gn", None)
         if self.Gn is None:
-            if info_magma is None:
-                info_magma = self.Gpn
             self.Gn = ArithGroup(
                 self.F,
                 self.discriminant,
@@ -308,11 +287,33 @@ class BigArithGroup_class(AlgebraicGroup):
                 compute_presentation=True,
                 **kwargs,
             )
+        self.Gn.embed = self.embed
+        self.Gn.get_embedding = self.get_embedding
+
+        verbose("Initializing arithmetic group G(pn)...")
+        kwargs["O_magma"] = kwargs.pop("GpnBasis", None)
+        lev = self.ideal_p * self.level
+        if character is not None:
+            lev = [lev, character]
+        self.Gpn = kwargs.get("Gpn", None)
+        if self.Gpn is None:
+            if info_magma is None:
+                info_magma = self.Gn
+            self.Gpn = ArithGroup(
+                self.F,
+                self.discriminant,
+                abtuple,
+                lev,
+                info_magma=info_magma,
+                magma=magma,
+                compute_presentation=not self._use_shapiro,
+                **kwargs,
+            )
         t = walltime(t)
         verbose("Time for calculation T = %s" % t)
         verbose("T = %s x difficulty" % RealField(25)(t / difficulty))
-        self.Gn.embed = self.embed
-        self.Gn.get_embedding = self.get_embedding
+        self.Gpn.get_embedding = self.get_embedding
+        self.Gpn.embed = self.embed
 
         if hasattr(self.Gpn.B, "is_division_algebra"):
             fwrite(
