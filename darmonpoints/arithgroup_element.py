@@ -269,5 +269,4 @@ class ArithGroupElement(MultiplicativeGroupElement):
         )
 
     def is_trivial_in_abelianization(self):
-        return self.parent().abelianization()(self) == 0
-
+        return vector(self.parent().abelianization()(self)) == 0
