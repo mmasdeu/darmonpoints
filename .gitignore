@@ -15,3 +15,6 @@
 /rever
 /darmonpoints/*.c
 /darmonpoints.egg-info
+/darmonpoints/*.so
+/darmonpoints/__pycache__
+.gitignore
