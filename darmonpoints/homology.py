@@ -32,6 +32,7 @@ from sage.structure.unique_representation import (
     CachedRepresentation,
     UniqueRepresentation,
 )
+from _warnings import warn
 
 from .divisors import *
 from .homology_abstract import ArithHomology, HomologyGroup
@@ -225,8 +226,9 @@ class OneChainsElement(TensorElement):
     def is_degree_zero_valued(self, degree_map=None):
         if isinstance(self.parent().coefficient_module(), Divisors):
             if degree_map is not None:
-                raise ValueError('degree_map should not be provided when the coefficient module is divisors')
-            degree_map = lambda v: v.degree()
+                warn('Using provided degree_map')
+            else:
+                degree_map = lambda v: v.degree()
         if degree_map is None:
             raise NotImplementedError(
                 "zero_degree_equivalent only implemented for divisors coefficient module, or with a degree_map provided"
@@ -251,8 +253,9 @@ class OneChainsElement(TensorElement):
         """
         if isinstance(self.parent().coefficient_module(), Divisors):
             if degree_map is not None:
-                raise ValueError('degree_map should not be provided when the coefficient module is divisors')
-            degree_map = lambda v: v.degree()
+                warn('Using provided degree_map')
+            else:
+                degree_map = lambda v: v.degree()
         if degree_map is None:
             raise NotImplementedError(
                 "zero_degree_equivalent only implemented for divisors coefficient module, or with a degree_map provided"
@@ -262,11 +265,13 @@ class OneChainsElement(TensorElement):
         HH = self.parent()
         V = HH.coefficient_module()
         G = HH.group()
-        aux_element = V.an_element()
         Gab = G.abelianization()
+        aux_element = V.an_element()
+        oldvals = list(self._data.values())
         xlist = [(g, degree_map(v)) for g, v in zip(self._data.keys(), oldvals)]
         sum_abxlist = sum([Gab((x, n)) for x, n in xlist])
         x_ord = sum_abxlist.order()
+        print(f"{x_ord = }")
         if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
             raise ValueError(
                 "Must yield torsion element in abelianization (%s, order = %s)"
@@ -275,9 +280,10 @@ class OneChainsElement(TensorElement):
         else:
             xlist = [(x, x_ord * n) for x, n in xlist]
         gwordlist, rel = G.calculate_weight_zero_word(xlist, separated=True)
-        oldvals = list(self._data.values())
         counter = 0
         assert len(gwordlist) == len(oldvals)
+        verbose(f"{gwordlist=}")
+        verbose(f"{oldvals=}")
         newdict = defaultdict(V)
         for gword, v in zip(gwordlist, oldvals):
             print("Processing %s|%s" % (gword, v))
@@ -302,7 +308,7 @@ class OneChainsElement(TensorElement):
             )
         for b, r in rel:
             print("Processing relation %s with coefficient %s" % (r, b))
-            newv = V(aux_element)
+            newv = V(x_ord*oldvals[0])
             for i, a in tietze_to_syllables(r):
                 oldv = V(newv)
                 g = G.gen(i)
@@ -318,6 +324,7 @@ class OneChainsElement(TensorElement):
                     oldv = (g**-1) * oldv
         verbose("Done zero_degree_equivalent")
         ans = HH(newdict)
+        
         if not ans.is_degree_zero_valued(degree_map=degree_map):
             print(
                 "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
