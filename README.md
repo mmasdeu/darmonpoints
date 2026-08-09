@@ -81,13 +81,14 @@ by Aurel Page, the original of which can be found at
 
 To install the package use the following command:
 
-    sage -pip install --user --upgrade darmonpoints
+    SAGE_PY=$(sage -c 'import sys; print(sys.executable)')
+    "$SAGE_PY" -m pip install --user --upgrade darmonpoints
 
 If you rather install the cutting-edge version from the github
 repository (which is likely to be broken), then use the following
 command:
 
-    sage -pip install --user --upgrade -v git+https://github.com/mmasdeu/darmonpoints.git
+    "$SAGE_PY" -m pip install --user --upgrade -v git+https://github.com/mmasdeu/darmonpoints.git
 
 ### Basic usage
 
