@@ -382,6 +382,7 @@ class ArithGroup_nscartan(ArithGroup_generic):
         radius=None,
         max_elements=None,
         local_condition=None,
+        force_sign=None
     ):  # in nonsplitcartan
         try:
             if return_all:
