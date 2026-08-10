@@ -336,7 +336,7 @@ class ArithGroup_generic(AlgebraicGroup):
             reps = [self.wp()]
         else:
             if g0 is None:
-                g0 = self.element_of_norm(l, use_magma=use_magma)
+                g0 = self.element_of_norm(l, use_magma=use_magma, force_sign=True)
             reps = [g0]
             I = self.enumerate_elements()
             n_iters = ZZ(0)
