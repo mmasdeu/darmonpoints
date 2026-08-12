@@ -1054,7 +1054,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             return gamma, tau1
 
     @cached_method(
-        key=lambda self, N, use_magma, return_all, radius, max_elements: (
+        key=lambda self, N, use_magma, return_all, radius, max_elements, force_sign: (
             self,
             N,
             return_all,
@@ -1592,7 +1592,7 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
             return self.check_word(delta.matrix(), ans)
 
     @cached_method(
-        key=lambda self, N, use_magma, return_all, radius, max_elements: (
+        key=lambda self, N, use_magma, return_all, radius, max_elements, force_sign: (
             self,
             N,
             return_all,
@@ -1998,7 +1998,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                     yield candidate
 
     @cached_method(
-        key=lambda self, N, use_magma, return_all, radius, max_elements: (
+        key=lambda self, N, use_magma, return_all, radius, max_elements, force_sign: (
             self,
             N,
             return_all,
@@ -2868,7 +2868,7 @@ class ArithGroup_nf_matrix(ArithGroup_nf_kleinian, ArithGroup_matrix_generic):
         return [M([1, 0, 0, 1]), M([1, 0, 0, -1]), M([0, -1, -1, 0]), M([0, -1, 1, 0])]
 
     @cached_method(
-        key=lambda self, N, use_magma, return_all, radius, max_elements: (
+        key=lambda self, N, use_magma, return_all, radius, max_elements, force_sign: (
             self,
             N,
             return_all,
