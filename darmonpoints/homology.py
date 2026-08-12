@@ -281,12 +281,10 @@ class OneChainsElement(TensorElement):
                 % (sum_abxlist, x_ord)
             ) # TODO: if x_ord is Infinity, find a Hecke operator that kills it, and apply it to reduce to torsion
         else:
-            # We change our 1-chain to be x_ord * C, which is trivial in the abelianization
+            # We adjust the weight of our 1-chain to be as x_ord * C, which is trivial in the abelianization
             xlist = [(x, x_ord * n) for x, n in xlist]
-        # We store the word representation of the elements of G in xlist
-        gwordlist = [x.word_rep[:] for x, n in xlist]
         # Let C be our 1-chain, degC \in R^{ab}, so we find the relations in R^{ab} that satisfy degC + \sum r_i^{ab} = 0 in F^{ab}
-        _, rel = G.calculate_weight_zero_word(xlist, separated=True)
+        gwordlist, rel = G.calculate_weight_zero_word(xlist, separated=True)
         counter = 0
         assert len(gwordlist) == len(oldvals)
         verbose(f"{gwordlist=}")
@@ -299,7 +297,7 @@ class OneChainsElement(TensorElement):
         # We store all 1-boundaries used in boundary_list
         for gword, v in zip(gwordlist, oldvals):
             print("Processing %s|%s" % (gword, v))
-            newv = V(x_ord * v)
+            newv = V(v)
             for i, a in tietze_to_syllables(gword): # gi^a|v
                 oldv = V(newv)
                 g = G.gen(i)
@@ -320,11 +318,12 @@ class OneChainsElement(TensorElement):
             )
         # Generate a random degree 1 element of V to use in the relations
         aux_element = V.an_element()
+        verbose(f"{aux_element=}")
         # We decompose each tensor (r_i, v) into a sum of tensors of the form (g_i, v_i) where g_i is a generator of G
         # We store all 1-boundaries used in boundary_list
         for b, r in rel:
             print("Processing relation %s with coefficient %s" % (r, b))
-            newv = V(x_ord*aux_element)
+            newv = V(oldvals[0])
             for i, a in tietze_to_syllables(r):
                 oldv = V(newv)
                 g = G.gen(i)
