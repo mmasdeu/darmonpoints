@@ -301,8 +301,11 @@ class Divisors(Parent, CachedRepresentation):
         self._base = base
         Parent.__init__(self)
 
-    def _an_element_(self):
-        return self.element_class(self, [(3, self._base._an_element_())])
+    def _an_element_(self, degree=3):
+        return self.element_class(self, [(degree, self._base._an_element_())])
+
+    def an_element(self, degree=3):
+        return self._an_element_(degree=degree)
 
     def _element_constructor_(self, data, ptdata=None):
         return self.element_class(self, data, ptdata)
