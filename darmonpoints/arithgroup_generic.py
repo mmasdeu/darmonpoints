@@ -336,7 +336,7 @@ class ArithGroup_generic(AlgebraicGroup):
             reps = [self.wp()]
         else:
             if g0 is None:
-                g0 = self.element_of_norm(l, use_magma=use_magma)
+                g0 = self.element_of_norm(l, use_magma=use_magma, force_sign=True)
             reps = [g0]
             I = self.enumerate_elements()
             n_iters = ZZ(0)
@@ -508,8 +508,9 @@ class ArithGroup_generic(AlgebraicGroup):
             )
         oldwordlist = [n * x.word_rep[:] for x, n in xlist]
         ngens = len(self.gens())
+        weight_vector = list((get_weight_vector(n * x.word_rep, ngens) for x, n in xlist))
         return oldwordlist, self._calculate_relation(
-            sum((get_weight_vector(n * x.word_rep, ngens) for x, n in xlist),[]), separated=separated
+            [sum(o) for o in zip(*weight_vector)], separated=separated
         )
 
     def decompose_into_commutators(self, gamma, n=1):

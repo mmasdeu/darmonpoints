@@ -745,7 +745,7 @@ def affine_transformation(x1p, x2p, x3p):
 
 
 def height_polynomial(x, base=10):
-    return sum((RR(o).abs() + 1).log(base) for o in x.coefficients())
+    return sum((RR(o).abs() + 1).log(base) for o in x.coefficients(sparse=False))
 
 
 def recognize_DV_algdep(

@@ -32,6 +32,7 @@ from sage.structure.unique_representation import (
     CachedRepresentation,
     UniqueRepresentation,
 )
+from _warnings import warn
 
 from .divisors import *
 from .homology_abstract import ArithHomology, HomologyGroup
@@ -225,8 +226,9 @@ class OneChainsElement(TensorElement):
     def is_degree_zero_valued(self, degree_map=None):
         if isinstance(self.parent().coefficient_module(), Divisors):
             if degree_map is not None:
-                raise ValueError('degree_map should not be provided when the coefficient module is divisors')
-            degree_map = lambda v: v.degree()
+                warn('Using provided degree_map')
+            else:
+                degree_map = lambda v: v.degree()
         if degree_map is None:
             raise NotImplementedError(
                 "zero_degree_equivalent only implemented for divisors coefficient module, or with a degree_map provided"
@@ -251,37 +253,52 @@ class OneChainsElement(TensorElement):
         """
         if isinstance(self.parent().coefficient_module(), Divisors):
             if degree_map is not None:
-                raise ValueError('degree_map should not be provided when the coefficient module is divisors')
-            degree_map = lambda v: v.degree()
+                warn('Using provided degree_map')
+            else:
+                degree_map = lambda v: v.degree()
         if degree_map is None:
             raise NotImplementedError(
                 "zero_degree_equivalent only implemented for divisors coefficient module, or with a degree_map provided"
             )
         verbose("Entering zero_degree_equivalent")
-        boundary_list= []
         HH = self.parent()
         V = HH.coefficient_module()
-        G = HH.group()
-        aux_element = V.an_element()
-        Gab = G.abelianization()
+        G = HH.group() # Arithmetic group G = F/R
+        Gab = G.abelianization() # G^{ab} = F^{ab}/R^{ab}
+        # The elements of V forming the 1-chain, which are paired with the elements of G in self._data.keys()
+        oldvals = list(self._data.values())
+        # xlist represents taking the degree map of the divisor
         xlist = [(g, degree_map(v)) for g, v in zip(self._data.keys(), oldvals)]
+        # We interpret xlist as an element of the abelianization of G
         sum_abxlist = sum([Gab((x, n)) for x, n in xlist])
+        # Order in the abelianization
         x_ord = sum_abxlist.order()
+        print(f"{x_ord = }")
+        # We need a torsion element in the abelianization to reduce to degree zero
         if x_ord == Infinity or (x_ord > 1 and not allow_multiple):
             raise ValueError(
                 "Must yield torsion element in abelianization (%s, order = %s)"
                 % (sum_abxlist, x_ord)
-            )
+            ) # TODO: if x_ord is Infinity, find a Hecke operator that kills it, and apply it to reduce to torsion
         else:
+            # We adjust the weight of our 1-chain to be as x_ord * C, which is trivial in the abelianization
             xlist = [(x, x_ord * n) for x, n in xlist]
-        gwordlist, rel = G.calculate_weight_zero_word(xlist, separated=True)
-        oldvals = list(self._data.values())
+            gwordlist = [x.word_rep for x, n in xlist]
+        # Let C be our 1-chain, degC \in R^{ab}, so we find the relations in R^{ab} that satisfy degC + \sum r_i^{ab} = 0 in F^{ab}
+        _, rel = G.calculate_weight_zero_word(xlist, separated=True)
         counter = 0
         assert len(gwordlist) == len(oldvals)
+        verbose(f"{gwordlist=}")
+        verbose(f"{oldvals=}")
+        # For an arbitrary element v of V, \sum r_i \otimes v is a 1-boundary
+        # newdict will store the new 1-chain formed by C + \sum r_i \otimes v
         newdict = defaultdict(V)
+        boundary_list= []
+        # Decompose each (g,v) tensor in the 1-cycle into a sum of tensors of the form (g_i, v_i) where g_i is a generator of G
+        # We store all 1-boundaries used in boundary_list
         for gword, v in zip(gwordlist, oldvals):
             print("Processing %s|%s" % (gword, v))
-            newv = V(x_ord * v)
+            newv = V(x_ord*v)
             for i, a in tietze_to_syllables(gword): # gi^a|v
                 oldv = V(newv)
                 g = G.gen(i)
@@ -300,6 +317,11 @@ class OneChainsElement(TensorElement):
                 float(QQ(counter) / QQ(len(oldvals))),
                 "Reducing to degree zero equivalent",
             )
+        # Generate a generic degree 1 element of V to use in the relations
+        aux_element = V.an_element(degree=1)
+        verbose(f"{aux_element=}")
+        # We decompose each tensor (r_i, v) into a sum of tensors of the form (g_i, v_i) where g_i is a generator of G
+        # We store all 1-boundaries used in boundary_list
         for b, r in rel:
             print("Processing relation %s with coefficient %s" % (r, b))
             newv = V(aux_element)
@@ -318,6 +340,7 @@ class OneChainsElement(TensorElement):
                     oldv = (g**-1) * oldv
         verbose("Done zero_degree_equivalent")
         ans = HH(newdict)
+        # The final result should be valued in degree-zero divisors
         if not ans.is_degree_zero_valued(degree_map=degree_map):
             print(
                 "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"

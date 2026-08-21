@@ -1054,7 +1054,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             return gamma, tau1
 
     @cached_method(
-        key=lambda self, N, use_magma, return_all, radius, max_elements: (
+        key=lambda self, N, use_magma, return_all, radius, max_elements, force_sign: (
             self,
             N,
             return_all,
@@ -1062,10 +1062,11 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         )
     )
     def element_of_norm(
-        self, N, use_magma=True, return_all=False, radius=-1, max_elements=-1
+        self, N, use_magma=True, return_all=False, radius=-1, max_elements=-1, force_sign=None
     ):  # in rationalquaternion
         N = ZZ(N)
-        force_sign = "P" not in self._grouptype
+        if force_sign is None:
+            force_sign = "P" not in self._grouptype
         if use_magma:
             # assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(N * self._F_magma.Integers())
@@ -1591,14 +1592,14 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
             return self.check_word(delta.matrix(), ans)
 
     @cached_method(
-        key=lambda self, N, use_magma, return_all, radius, max_elements: (
+        key=lambda self, N, use_magma, return_all, radius, max_elements, force_sign: (
             self,
             N,
             return_all,
         )
     )
     def element_of_norm(
-        self, N, use_magma=False, return_all=False, radius=None, max_elements=None
+        self, N, use_magma=False, return_all=False, radius=None, max_elements=None, force_sign=None
     ):  # in rationalmatrix
         candidate = self.B([N, 0, 0, 1])
         set_immutable(candidate)
@@ -1997,7 +1998,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                     yield candidate
 
     @cached_method(
-        key=lambda self, N, use_magma, return_all, radius, max_elements: (
+        key=lambda self, N, use_magma, return_all, radius, max_elements, force_sign: (
             self,
             N,
             return_all,
@@ -2005,14 +2006,15 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         )
     )
     def element_of_norm(
-        self, N, use_magma=True, return_all=False, radius=-1, max_elements=-1
+        self, N, use_magma=True, return_all=False, radius=-1, max_elements=-1, force_sign=None
     ):  # in nf_generic
         Nideal = self.F.ideal(N)
         try:
             N = N.gens_reduced()[0]
         except AttributeError:
             pass
-        force_sign = "P" not in self._grouptype
+        if force_sign is None:
+            force_sign = "P" not in self._grouptype
         if return_all and radius < 0 and max_elements < 0:
             raise ValueError("Radius must be positive")
 
@@ -2866,14 +2868,14 @@ class ArithGroup_nf_matrix(ArithGroup_nf_kleinian, ArithGroup_matrix_generic):
         return [M([1, 0, 0, 1]), M([1, 0, 0, -1]), M([0, -1, -1, 0]), M([0, -1, 1, 0])]
 
     @cached_method(
-        key=lambda self, N, use_magma, return_all, radius, max_elements: (
+        key=lambda self, N, use_magma, return_all, radius, max_elements, force_sign: (
             self,
             N,
             return_all,
         )
     )
     def element_of_norm(
-        self, N, use_magma=False, return_all=False, radius=None, max_elements=None
+        self, N, use_magma=False, return_all=False, radius=None, max_elements=None, force_sign=None
     ):  # in nf_matrix
         mat = matrix(2, 2, [self.F.ideal(N).gens_reduced()[0], 0, 0, 1])
         candidate = self.matrix_to_quaternion(mat)
