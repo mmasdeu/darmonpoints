@@ -325,6 +325,7 @@ class ArithHomology(HomologyGroup):
 
     def __init__(self, G, V):
         self._use_shapiro = G._use_shapiro
+        self._S_arithgroup = G
         if self._use_shapiro:
             group = G.large_group()
             W = IndModule(G, V)
@@ -333,6 +334,12 @@ class ArithHomology(HomologyGroup):
             group = G.small_group()
             W = V
             HomologyGroup.__init__(self, group, W)
+
+    def S_arithgroup(self):
+        return self._S_arithgroup
+
+    def use_shapiro(self):
+        return self._use_shapiro
 
     @cached_method
     def hecke_matrix(
@@ -373,12 +380,53 @@ class ArithHomology(HomologyGroup):
         Apply the l-th Hecke operator operator to ``c``.
         """
         # verbose('Entering apply_hecke_operator')
+        # Under Shapiro self.group() is the LARGE group, but the homology is
+        # that of the small one (Shapiro's isomorphism), so the Hecke data has
+        # to be the small group's.
+        hecke_group = (
+            self.S_arithgroup().small_group() if self._use_shapiro else self.group()
+        )
         if hecke_reps is None:
-            hecke_reps = self.group().get_hecke_reps(
+            hecke_reps = hecke_group.get_hecke_reps(
                 l, use_magma=use_magma
             )  # Assume l != p here!
         # verbose('Got hecke reps')
         V = self.coefficient_module()
+        if self._use_shapiro:
+            # An induced-module element can only be acted on by elements of the
+            # S-arithmetic group: the action reduces t_i * g in the amalgam, and
+            # `is_in_Gamma0loc` accepts only determinant 1. A Hecke
+            # representative has determinant l -- and at l = Infinity it is the
+            # involution [-1, 0; 0, 1], of determinant -1 -- so the action
+            # raises instead. Decompose the cycle over the cosets here (which is
+            # Shapiro's map to the small group), apply the small group's Hecke
+            # operator there, and send the result back through the identity
+            # coset.
+            G = self.S_arithgroup()
+            Gn = G.large_group()
+            W = V.coefficient_module()
+            reps = G.coset_reps()
+            ncosets = len(reps)
+            ans = self([V(0) for _ in self.group().gens()])
+            for gamma, v in zip(self.group().gens(), c.values()):
+                gamma_q = gamma.quaternion_rep
+                for a, ti in zip(v.values(), reps):
+                    if a == 0:
+                        continue
+                    # t_i * gamma = delta * t_j, with delta in the small group
+                    delta = hecke_group(
+                        G.get_coset_ti(set_immutable(ti * gamma_q))[0]
+                    )
+                    for g in hecke_reps:
+                        tg = hecke_group.get_hecke_ti(g, delta, l, use_magma)
+                        w = g.conjugate() * a
+                        ans += self(
+                            (
+                                Gn(tg),
+                                V([w if j == 0 else W(0) for j in range(ncosets)]),
+                            )
+                        )
+            return scale * ans
         padic = not V.base_ring().is_exact()
         group = self.group()
         if padic:

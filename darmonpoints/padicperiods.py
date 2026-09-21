@@ -35,6 +35,7 @@ from .cohomology_arithmetic import *
 from .homology import get_homology_kernel, inverse_shapiro, lattice_homology_cycle
 from .integrals import integrate_H1
 from .sarithgroup import BigArithGroup
+from sage.arith.misc import GCD
 from .util import *
 
 pyximport.install()
@@ -1237,8 +1238,20 @@ def get_pseudo_orthonormal_homology(G, cocycles, hecke_data=None, outfile=None):
     ker = get_homology_kernel(G, hecke_data=tuple(hecke_data))
     assert len(ker) == 2
     f0, f1 = cocycles
+    # NOTE: `pair_with_cycle` is not usable here in either case. It is written as
+    # `sum(self.evaluate(g).pair_with(a) ...)`, and `pair_with` only exists on
+    # divisors and on overconvergent-module elements -- not on the plain ZZ^1
+    # values of an ArithCoh, nor on the coinduced ones under Shapiro.
     if G.use_shapiro():
-        pair = lambda f, xi : f.pair_with_cycle(xi)
+        # f.evaluate(g) lands in the coinduced module and the cycle's values in
+        # the induced one. Both are indexed by the cosets, so the pairing is the
+        # sum of the componentwise pairings.
+        def pair(f, xi):
+            return sum(
+                sum(u * v for u, v in zip(f.evaluate(g).values(), a.values()))
+                for g, a in zip(xi.parent().group().gens(), xi.values())
+            )
+
     else:
         def pair(f, xi):
             return sum(f.evaluate(g) * a for g, a in zip(xi.parent().group().gens(), xi.values()))
@@ -1248,14 +1261,39 @@ def get_pseudo_orthonormal_homology(G, cocycles, hecke_data=None, outfile=None):
     a10 = pair(f1, ker[0])
     a11 = pair(f1, ker[1])
     a00, a01, a10, a11 = ZZ(a00), ZZ(a01), ZZ(a10), ZZ(a11)
+    # Normalize by the gcd of the pairing matrix. This is what the code did up to
+    # commit 7047b6d ("Removed GCD calculation.", 2015-09-25), which dropped it.
+    # Without it the theta cycles come out `den` times too large, and since
+    # `integrate_H1` is multiplicative every period is then the `den`-th power of
+    # the intended value. It is also what makes the answer independent of
+    # `use_shapiro`: the two routes produce pairing matrices differing by an
+    # integer factor, which this divides out.
+    den = GCD([a00, a01, a10, a11])
+    if den == 0:
+        raise ValueError(
+            "The cocycles pair trivially with the homology kernel (matrix is zero)"
+        )
+    a00, a01, a10, a11 = ZZ(a00 / den), ZZ(a01 / den), ZZ(a10 / den), ZZ(a11 / den)
     determinant = a00 * a11 - a01 * a10
     fwrite(
-        "scaling = %s; mat = Matrix(ZZ,2,2,[%s, %s, %s, %s])"
-        % (determinant, a00, a01, a10, a11),
+        "scaling = %s; den = %s; mat = Matrix(ZZ,2,2,[%s, %s, %s, %s])"
+        % (determinant, den, a00, a01, a10, a11),
         outfile,
     )
     theta1 = a11 * ker[0] - a10 * ker[1]
     theta2 = -a01 * ker[0] + a00 * ker[1]
+    # By construction the thetas are pseudo-orthonormal for this pairing; check
+    # it, since a wrong pairing otherwise propagates silently into the periods.
+    # The pairings are with the un-normalized a_ij, hence the factor of `den`.
+    expected = determinant * den
+    assert pair(f0, theta1) == expected and pair(f1, theta2) == expected, (
+        "pseudo-orthonormality failed: diagonal is (%s, %s), expected (%s, %s)"
+        % (pair(f0, theta1), pair(f1, theta2), expected, expected)
+    )
+    assert pair(f0, theta2) == 0 and pair(f1, theta1) == 0, (
+        "pseudo-orthonormality failed: off-diagonal is (%s, %s), expected (0, 0)"
+        % (pair(f0, theta2), pair(f1, theta1))
+    )
     return theta1, theta2, determinant
 
 
