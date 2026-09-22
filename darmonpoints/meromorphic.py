@@ -36,25 +36,30 @@ from sage.structure.unique_representation import (
     CachedRepresentation,
     UniqueRepresentation,
 )
+from itertools import islice
 
 from .divisors import Divisors
 from .util import muted
 
-def evalpoly(poly, x, check=True):
+def evalpoly(poly, x, prec=None, check=True):
+    if prec is None:
+        prec = len(poly)
     # Initialize result
     if len(poly) == 0:
         return 0
     K = (poly[0].parent()(1) * x.parent()(1)).parent()
     x = K(x)
-    poly = [K(a) for a in poly]
+    # Keep the low-degree terms t^0, ..., t^{prec-1} (matches the semantics
+    # of the old call site `evalpoly(self._value[:prec], ...)`).
+    poly = [K(a) for a in poly[:prec]]
     if check:
         assert x.valuation() >= 0
-    try:
-        result = poly[-1]
-    except IndexError:
-        return x.parent()(0)
-    # Evaluate value of polynomial
-    # using Horner's method
+    # Evaluate value of polynomial using Horner's method:
+    # result starts at 0 and we fold in poly[-1], poly[-2], ..., poly[0].
+    # (Seeding result with a coefficient and then also including that same
+    # coefficient in the loop double-counts it and adds a spurious
+    # poly[-1] * x**len(poly) term -- that was the previous bug here.)
+    result = K(0)
     for a in reversed(poly):
         result *= x
         result += a
@@ -123,12 +128,9 @@ class MeromorphicFunctionsElement(ModuleElement):
         a, b, c, d = self._parameter.list()
         phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
         if isinstance(D.parent(), Divisors):
-            return prod(evalpoly(self._value, phi(P)) ** n for P, n in D)
+            return prod(evalpoly(self._value, phi(P), prec=prec) ** n for P, n in D)
         else:
-            if prec is None:
-                return evalpoly(self._value, phi(D))
-            else:
-                return evalpoly(self._value[:prec], phi(D))
+            return evalpoly(self._value, phi(D), prec=prec)
 
     def eval_derivative(self, D, return_value=False):
         K = self.parent().base_ring()

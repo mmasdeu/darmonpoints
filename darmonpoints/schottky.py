@@ -801,6 +801,7 @@ Try with a quadratic (ramified) extension."
         if z1 is None:
             z1 = self.a_point()
         z1 = self.base_ring()(1) * z1
+        z1 = z1.lift_to_precision()
         K = z1.parent()
         DK = Divisors(K)
         divs = [
@@ -809,8 +810,8 @@ Try with a quadratic (ramified) extension."
         ]
 
         for i in range(genus):
-            g1 = self._generators[i]
-            T = self.u_function(g1, prec, a=z1, **kwargs)
+            gi = self._generators[i]
+            T = self.u_function(gi, prec, a=z1, **kwargs)
             for j in range(i, genus):
                 ans = T(divs[j])
                 M[i, j] = ans
