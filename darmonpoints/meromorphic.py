@@ -39,7 +39,7 @@ from sage.structure.unique_representation import (
 from itertools import islice
 
 from .divisors import Divisors
-from .util import muted
+from .util import muted, set_immutable
 
 def evalpoly(poly, x, prec=None, check=True):
     if prec is None:
@@ -67,22 +67,26 @@ def evalpoly(poly, x, prec=None, check=True):
 
 
 class MeromorphicFunctionsElement(ModuleElement):
-    def __init__(self, parent, data, parameter, check=True):
+    def __init__(self, parent, data, parameter=None, check=True):
+        if parameter is None:
+            parameter = Matrix(parent.base_ring(), 2, 2, [1, 0, 0, 1])
         ModuleElement.__init__(self, parent)
         prec = parent._prec
         if check:
             K = parent.base_ring()
             Ps = parent._Ps
-            if isinstance(data.parent(), Divisors):
-                self._value = divisor_to_pseries(parameter, Ps, data, prec).list()
-                # assert len(data.support()) > 1
-            elif data == 0:
-                self._value = Ps(1).list()  # multiplicative!
-            elif data.parent() == parent:
-                self._value = data._value
-            elif isinstance(data.parent(), MeromorphicFunctions):
-                self._value = vector(list(data._value.apply_map(lambda x:x.lift_to_precision())))
-            else:
+            self._value = None
+            if data == 0:
+                self._value = Ps(1).list() # multiplicative!
+            elif hasattr(data, "parent"):
+                if isinstance(data.parent(), Divisors):
+                    self._value = divisor_to_pseries(parameter, Ps, data, prec).list()
+                    # assert len(data.support()) > 1
+                elif data.parent() == parent:
+                    self._value = data._value
+                elif isinstance(data.parent(), MeromorphicFunctions):
+                    self._value = vector(list(data._value.apply_map(lambda x:x.lift_to_precision())))
+            if self._value is None:
                 val = Ps(data)
                 val /= val[0]
                 self._value = val.add_bigoh(prec).list()
@@ -211,7 +215,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         return repr(self.power_series())
 
     def _acted_upon_(self, g, on_left):
-        assert not on_left
+        # assert not on_left
         if isinstance(g, Integer):
             return self.scale_by(g)
         else:
@@ -224,6 +228,8 @@ class MeromorphicFunctionsElement(ModuleElement):
         )
 
     def left_act_by_matrix(self, g, param=None, fast=True):  # meromorphic functions
+        if param is None:
+            param = self._parameter
         parent = self.parent()
         # Below we code the action which is compatible with the usual action
         # P |-> (aP+b)/(cP+D)
@@ -232,7 +238,8 @@ class MeromorphicFunctionsElement(ModuleElement):
             ans = self._value * zz_ps_vec
             return self.__class__(parent, ans, param, check=False)
         else:
-            g.set_immutable()
+            set_immutable(g)
+            assert g.parent() == MatrixSpace(parent.base_ring(), 2, 2), g.parent()
             K = parent.base_ring()
             prec = parent._prec
             assert param is not None
@@ -303,12 +310,14 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         which amounts to acting on the left by
         tau_1 g tau_0^-1
         '''
-        g.set_immutable()
         K = self.base_ring()
         if prec is None:
             prec = self._prec
         assert param is not None
         tg = param.change_ring(K)
+        if not hasattr(g, 'adjugate'):
+            g = g.matrix().change_ring(K)
+
         # abcd = tau_0 g^-1 * tau_1^-1
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
         zz = (
@@ -336,8 +345,10 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
     def power_series_ring(self):
         return self._Ps
 
-    def _element_constructor_(self, data, param, check=True):
-        return self.element_class(self, data, param, check=check)
+    def _element_constructor_(self, data, param=None, check=True):
+        if param is None:
+            param = Matrix(self.base_ring(), 2, 2, [1, 0, 0, 1])
+        return self.element_class(self, data, parameter=param, check=check)
 
     def _repr_(self):
         return (

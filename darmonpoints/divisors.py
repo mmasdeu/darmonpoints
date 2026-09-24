@@ -261,10 +261,14 @@ class DivisorsElement(ModuleElement):
     def __setitem__(self, P, val):
         self._ptdict[P] = val
 
-    def pair_with(self, D):
+    def pair_with(self, D, multiplicative=False):
         assert D.degree() == 0
         rat = self.rational_function(as_map=True)
-        return prod((rat(P) ** n for P, n in D), self.parent().base_ring()(1)).log(0)
+        ans = prod((rat(P) ** n for P, n in D), self.parent().base_ring()(1))
+        if multiplicative:
+            return ans
+        else:
+            return ans.log(0)
 
     def rational_function(self, as_map=False, z=None):
         if as_map:

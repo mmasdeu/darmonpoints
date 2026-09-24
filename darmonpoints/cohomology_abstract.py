@@ -191,8 +191,11 @@ class CohomologyElement(ModuleElement):
         except TypeError:
             return min([u.valuation() for u in self._val])
 
-    def pair_with_cycle(self, xi):
-        return sum(self.evaluate(g).pair_with(a) for g, a in xi)
+    def pair_with_cycle(self, xi, multiplicative=False):
+        if multiplicative:
+            return prod(self.evaluate(g).pair_with(a, multiplicative=True) for g, a in xi)
+        else:
+            return sum(self.evaluate(g).pair_with(a, multiplicative=False) for g, a in xi)
 
     def evaluate(self, x, left_act_by=None, at_identity=False):
         H = self.parent()

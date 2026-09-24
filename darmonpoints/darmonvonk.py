@@ -7,12 +7,13 @@ from sage.modular.pollack_stevens.manin_map import *
 from darmonpoints.arithgroup import angle_sign, intersect_geodesic_arcs
 from darmonpoints.cohomology_arithmetic import ArithAction, CohArbitrary
 from darmonpoints.homology import *
-from darmonpoints.ocmodule import AddMeromorphicFunctions
+# from darmonpoints.ocmodule import AddMeromorphicFunctions
+from darmonpoints.meromorphic import MeromorphicFunctions
 from darmonpoints.sarithgroup import *
 from darmonpoints.util import *
 
-distinguished_open = "OCp"  # Needed if we want to compare with Darmon points!
-# distinguished_open = 'Uinf'
+# distinguished_open = "OCp"  # Needed if we want to compare with Darmon points!
+distinguished_open = 'Uinf'
 
 
 class OverconvergentDVCocycle(SageObject):
@@ -31,10 +32,10 @@ class OverconvergentDVCocycle(SageObject):
         act = lambda g, v: g.matrix().change_ring(K) * v
 
         if distinguished_open == "Uinf":
-            Mer = AddMeromorphicFunctions(K)
+            Mer = MeromorphicFunctions(K, G.p, prec)
         else:
-            Mer = AddMeromorphicFunctions(
-                K, twisting_matrix=Matrix(ZZ, 2, 2, [0, 1, G.prime(), 0])
+            Mer = MeromorphicFunctions(
+                K, G.p, prec, twisting_matrix=Matrix(ZZ, 2, 2, [0, 1, G.prime(), 0])
             )  # DEBUG: used to be wp
         self.HpMer = CohArbitrary(G.small_group(), Mer, action_map=act)
         Gpgens = G.small_group().gens()
@@ -93,17 +94,17 @@ class OverconvergentDVCocycle(SageObject):
         elif parity == "odd":
             return ans_odd
         elif parity == "+":
-            return ans_even - ans_odd
+            return ans_even / ans_odd
         elif parity == "-":
-            return ans_even + ans_odd
+            return ans_even * ans_odd
 
     def _evaluate_at_cycle(self, theta):
         p = self.G.prime()
-        ans_odd = 0
-        ans_even = 0
+        ans_odd = 1
+        ans_even = 1
         for g, D in theta:
-            ans_odd += self.phi_odd.evaluate(g).evaluate_additive(D)
-            ans_even += self.phi_even.evaluate(g).evaluate_additive(D)
+            ans_odd *= self.phi_odd.evaluate(g).evaluate(D)
+            ans_even *= self.phi_even.evaluate(g).evaluate(D)
         return ans_even, ans_odd
 
 
@@ -392,7 +393,6 @@ def darmon_vonk_point(
         if ntries == max_tries:
             print("Reached maximum number of tries")
             return []
-
     else:
         G = Phi.G
         kwargs.pop("G", None)  # Discard extra parameter G
@@ -456,7 +456,7 @@ def darmon_vonk_point(
         fwrite(35 * "-", outfile)
         try:
             Jeven, Jodd = Phi._evaluate_at_cycle(theta)
-            J0 = Phi.phi0.pair_with_cycle(theta0)
+            J0 = Phi.phi0.pair_with_cycle(theta0, multiplicative=True)
         except ValueError as e:
             print("Found error while integrating (%s). Skipping..." % e)
             continue
@@ -466,13 +466,13 @@ def darmon_vonk_point(
             elif parity == "odd":
                 J = Jodd
             elif parity == "+":
-                J = Jeven - Jodd
+                J = Jeven / Jodd
             elif parity == "-":
-                J = Jeven + Jodd
+                J = Jeven * Jodd
             if parity != "odd":
-                J += J0
+                J *= J0
             print(f"factor = {factor}, scaling = {scaling}")
-            J = (J / (factor * scaling)).exp().add_bigoh(prec)
+            J = J.add_bigoh(prec)
             try:
                 p = ZZ(p)
                 fwrite("F = QQ", outfile)

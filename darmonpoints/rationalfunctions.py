@@ -89,8 +89,8 @@ class RationalFunctionsElement(ModuleElement):
         else:
             return self._value(D)
 
-    def pair_with(self, D):
-        return self(D).log(0)
+    def pair_with(self, D, multiplicative=False):
+        return self(D) if multiplicative else self(D).log(0)
 
     def _cmp_(self, right):
         return (self._value > right._value) - (self._value < right._value)
