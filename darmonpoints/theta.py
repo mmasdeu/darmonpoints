@@ -205,10 +205,7 @@ class ThetaOC(SageObject):
         if implementation not in ['list', 'fixedpoint']:
             raise ValueError("implementation must be 'list' or 'fixedpoint'")
 
-        for it in range(m):
-            # Stop if we reach the maximum precision
-            # if self.m >= self.prec:
-            #     break
+        for _ in range(m):
             # Compute the next term from the last on in Fnlist            
             tmp = {}
             for (i, gi), tau in zip(gens_ext, params):
@@ -229,8 +226,6 @@ class ThetaOC(SageObject):
                 verbose("Adding new term to F2", level=2)
                 self.Fnlist = [{i : tmp[i] + self.F2[i] for i in tmp}]
                 verbose('F2 updated', level=2)
-            
-            # self.m += 1
         
         # Collapse the list to one term and return
         if len(self.Fnlist) > 1:
