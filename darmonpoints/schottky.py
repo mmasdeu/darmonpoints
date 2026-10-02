@@ -743,7 +743,11 @@ Try with a quadratic (ramified) extension."
         if s is not None:
             D0 += s * D0
         D0 = self.find_equivalent_divisor(D0)
-        ans = ThetaOC(self, a=D0, b=None, prec=prec, base_ring=K, **kwargs)
+        if kwargs.pop("additive", False):
+            from .theta_additive import ThetaOCAdditive
+            ans = ThetaOCAdditive(self, a=D0, b=None, prec=prec, base_ring=K, **kwargs)
+        else:
+            ans = ThetaOC(self, a=D0, b=None, prec=prec, base_ring=K, **kwargs)
         z = kwargs.pop("z", None)
         improve = kwargs.pop("improve", True)
         if improve or z is not None:
