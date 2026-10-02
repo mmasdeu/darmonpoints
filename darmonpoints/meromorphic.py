@@ -39,7 +39,7 @@ from sage.structure.unique_representation import (
 from itertools import islice
 
 from .divisors import Divisors
-from .util import muted, set_immutable
+from .util import muted, set_immutable, speed_up_padic_inversion
 
 def evalpoly(poly, x, prec=None, check=True):
     if prec is None:
@@ -287,6 +287,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
 
     def __init__(self, K, p, prec):
         Parent.__init__(self)
+        speed_up_padic_inversion(K)
         if prec is None:
             self._prec = K.precision_cap()
         else:
@@ -302,7 +303,6 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         return self._p
 
     @cached_method
-    @muted
     def get_action_data(self, g, oldparam, param, prec=None):
         r'''
         Act on the power series by matrix g, given the old and new parameters.
@@ -310,6 +310,15 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         (g * phi)(t) = phi(tau_0 g^-1 * tau_1^-1 t)
         which amounts to acting on the left by
         tau_1 g tau_0^-1
+        '''
+        return self.compute_action_data(g, oldparam, param, prec)
+
+    @muted
+    def compute_action_data(self, g, oldparam, param, prec=None):
+        r'''
+        Uncached version of get_action_data. Looking up the cache of
+        get_action_data needs hashing p-adic matrices, which is slow, so
+        callers that do their own caching should use this one.
         '''
         K = self.base_ring()
         if prec is None:
@@ -321,6 +330,8 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
 
         # abcd = tau_0 g^-1 * tau_1^-1
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
+        if not d.is_zero() and (c / d).valuation() >= 0:
+            return self._action_matrix_moebius(a, b, c, d, prec)
         zz = (
             (self._Ps([b, a]) / self._Ps([d, c]))
             .truncate(prec)
@@ -338,6 +349,48 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         for i, zz_ps in enumerate(ans):
             for j, aij in enumerate(zz_ps):
                 m[i, j] = aij  # i, j entry contains j-th term of zz^i
+        return m
+
+    def _action_matrix_moebius(self, a, b, c, d, prec):
+        r'''
+        Same matrix as in get_action_data (row i contains the coefficients of
+        zz^i, where zz = (at + b)/(ct + d)), computed using that
+        zz^i = zz^(i-1) * (b1 + a1 t) / (1 + c1 t). This only needs O(prec)
+        operations per row instead of a product of power series.
+
+        Assumes that c/d has nonnegative valuation, so that the division by
+        1 + c1 t does not lose precision.
+        '''
+        K = self.base_ring()
+        dinv = ~d
+        a1, b1, c1 = a * dinv, b * dinv, c * dinv
+        bound = prec + 1
+        zero = K(0)
+        m = Matrix(K, prec, prec, 0)
+        m[0, 0] = 1
+        w = [K(1)] + [zero] * (prec - 1)
+        for i in range(1, prec):
+            u = []
+            prev_w = zero
+            prev_u = zero
+            for k in range(prec):
+                wk = w[k]
+                uk = b1 * wk + a1 * prev_w - c1 * prev_u
+                if not uk._is_exact_zero():
+                    uk = uk.add_bigoh(bound)
+                prev_w = wk
+                prev_u = uk
+                u.append(uk)
+            # Like the coefficients of a polynomial, drop the trailing zeros
+            # (they are left as exact zeros in the matrix)
+            n = prec
+            while n > 0 and u[n - 1].is_zero():
+                n -= 1
+            if n == 0:
+                break # All the remaining powers vanish
+            for j in range(n):
+                m[i, j] = u[j]
+            w = u
         return m
 
     def base_ring(self):

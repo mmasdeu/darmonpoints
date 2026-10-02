@@ -60,6 +60,40 @@ def muted(func):
     return ff
 
 
+def speed_up_padic_inversion(K):
+    r'''
+    Work around a slowness in Sage: in a two-step p-adic extension (such as
+    Qq(p^2).extension(x^4 + p)) every inversion calls
+    ``K.prime_pow.base_ring.change(field=True)``, which goes through the
+    p-adic factory and takes most of the time of the inversion. Since
+    ``change`` always returns the same (unique) parent for the same arguments,
+    cache it on that ring. This does nothing for other kinds of rings.
+    '''
+    for R in [K, getattr(K, 'integer_ring', lambda: None)(), getattr(K, 'fraction_field', lambda: None)()]:
+        try:
+            B = R.prime_pow.base_ring
+        except AttributeError:
+            continue
+        if getattr(B, '_change_is_cached', False):
+            continue
+        original_change = B.change
+        cache = {}
+        def change(original_change=original_change, cache=cache, **kwds):
+            try:
+                key = tuple(sorted(kwds.items()))
+                return cache[key]
+            except KeyError:
+                ans = cache[key] = original_change(**kwds)
+                return ans
+            except TypeError: # unhashable arguments
+                return original_change(**kwds)
+        try:
+            B.change = change
+            B._change_is_cached = True
+        except AttributeError:
+            pass
+
+
 def is_smooth(x, B):
     for p in B:
         x /= p ** (valuation(x, p))

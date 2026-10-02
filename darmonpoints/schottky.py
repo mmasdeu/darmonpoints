@@ -29,7 +29,7 @@ from warnings import warn
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import *
 from .theta import *
-from .util import muted, our_sqrt
+from .util import muted, our_sqrt, speed_up_padic_inversion
 
 infinity = Infinity
 
@@ -136,6 +136,7 @@ def find_parameter(g, ball, pi=None, check=True):
 
 class SchottkyGroup_abstract(SageObject):
     def __init__(self, K, generators):
+        speed_up_padic_inversion(K)
         self.K = K
         self.pi = K.uniformizer()
         self._generators = tuple([o.change_ring(K) for o in generators])
