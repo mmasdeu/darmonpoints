@@ -71,6 +71,8 @@ def lattice_homology_cycle(
     if smoothen is not None:
         newxi1 = newxi1.hecke_smoothen(smoothen)
         newxi2 = newxi2.hecke_smoothen(smoothen)
+    newxi1.twist = False
+    newxi2.twist = True
     return newxi1, newxi2
 
 

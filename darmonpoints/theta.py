@@ -190,6 +190,7 @@ class ThetaOC(SageObject):
     def improve(self, m, **kwargs):
         gens_ext = self.G.gens_extended()
         params = self.G.parameters
+        implementation = kwargs.get('implementation', 'list')
         # Initialize action_data
         verbose("Initializing action_data", level=2)
         action_data = {}
@@ -201,7 +202,6 @@ class ThetaOC(SageObject):
                         tau,
                     )
         verbose("action_data initialized", level=2)
-        implementation = kwargs.get('implementation', 'list')
         if implementation not in ['list', 'fixedpoint']:
             raise ValueError("implementation must be 'list' or 'fixedpoint'")
 

@@ -239,7 +239,7 @@ def integrate_H1(
     cocycle,
     depth=1,
     prec=None,
-    twist=False,
+    twist=None,
     progress_bar=False,
     multiplicative=True,
     return_valuation=True,
@@ -248,6 +248,9 @@ def integrate_H1(
         raise ValueError("Cycle should take values in divisors of degree 0")
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
+    if twist is None:
+        twist = getattr(cycle, 'twist', False)
+
     verbose("precision = %s" % prec)
     Cp = cycle.parent().coefficient_module().base()
     R = PolynomialRing(Cp, names="t")

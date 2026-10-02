@@ -248,10 +248,11 @@ class MeromorphicFunctionsElement(ModuleElement):
             a, b, c, d = (self._parameter * (tg * g).adjugate()).list()
             zz = (
                 (parent._Ps([b, a]) / parent._Ps([d, c]))
-                .map_coefficients(lambda x: x.add_bigoh(prec+1))
                 .truncate(prec)
+                .map_coefficients(lambda x: x.add_bigoh(prec+1))
+                
             )
-            return evalpoly(self._value, zz)            
+            return self.__class__(parent, evalpoly(self._value, zz), param, check=False)
 
 
 def divisor_to_pseries(parameter, Ps, data, prec):
@@ -322,15 +323,15 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         a, b, c, d = (oldparam * (tg * g).adjugate()).list()
         zz = (
             (self._Ps([b, a]) / self._Ps([d, c]))
-            .map_coefficients(lambda x: x.add_bigoh(prec+1))
             .truncate(prec)
+            .map_coefficients(lambda x: x.add_bigoh(prec+1))
         ) # zz = (at + b)/(ct + d)
         ans = [zz.parent()(1), zz]
-        while len(ans) < prec:  # DEBUG - was prec + 1
+        while len(ans) < prec:
             zz_ps = (
                 (zz * ans[-1])
+                .truncate(prec)
                 .map_coefficients(lambda x: x.add_bigoh(prec+1))
-                .truncate(prec)  # DEBUG - was prec + 1
             )
             ans.append(zz_ps)
         m = Matrix(K, prec, prec, 0)
