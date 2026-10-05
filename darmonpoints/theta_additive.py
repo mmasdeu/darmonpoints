@@ -28,8 +28,9 @@ principal units and the maximal ideal, that is e < p - 1.
 '''
 from copy import copy
 
-from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix, matrix
 from sage.misc.cachefunc import cached_function
+from sage.misc.misc_c import prod
 from sage.functions.log import log
 from sage.misc.verbose import verbose
 from sage.modules.free_module_element import free_module_element as vector
@@ -40,7 +41,39 @@ from sage.structure.sage_object import SageObject
 
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import MeromorphicFunctions, evalpoly
-from .theta import pair_divisors
+from .theta import eval_rat_dlog, pair_divisors
+
+
+def _to_integer(x, pN):
+    r'''
+    An integer congruent to the p-adic integer x modulo pN.
+    '''
+    return ZZ(0) if x.is_zero() else ZZ(x.lift()) % pN
+
+
+def _integer_moebius_matrix(a1, b1, c1, P, pN):
+    r'''
+    The P x P integer matrix whose row r contains the coefficients of zz^r
+    modulo pN, where zz = (b1 + a1 t) / (1 + c1 t) (as in
+    MeromorphicFunctions._action_matrix_moebius, but with integers).
+    '''
+    rows = [[1] + [0] * (P - 1)]
+    w = rows[0]
+    for _ in range(1, P):
+        u = []
+        prev_w = 0
+        prev_u = 0
+        for wk in w:
+            uk = (b1 * wk + a1 * prev_w - c1 * prev_u) % pN
+            prev_w = wk
+            prev_u = uk
+            u.append(uk)
+        if not any(u):
+            break # All the remaining powers vanish
+        rows.append(u)
+        w = u
+    rows += [[0] * P for _ in range(P - len(rows))]
+    return matrix(ZZ, rows)
 
 
 @cached_function
@@ -142,6 +175,17 @@ class LogSeries(SageObject):
         else:
             return evalpoly(self._value, phi(D), prec=prec)
 
+    def eval_dlog(self, D):
+        r'''
+        Logarithmic derivative of the corresponding multiplicative series,
+        which here is just the derivative of the log-series.
+        '''
+        a, b, c, d = self._parameter.list()
+        phiD = (a * D + b) / (c * D + d)
+        der = [k * o for k, o in enumerate(self._value)][1:]
+        chainrule = (a * d - b * c) / (c * D + d) ** 2
+        return chainrule * evalpoly(der, phiD)
+
     def act(self, action_data):
         r'''
         Log of the result of fast_act on the corresponding multiplicative
@@ -239,6 +283,10 @@ class ThetaOCAdditive(SageObject):
                             for (i, _), tau in zip(gens_ext, params)}]
         else:
             self.Fnlist = [copy(self.F2)]
+        # Last term of the list implementation (None means Fnlist[-1]). Since
+        # improve collapses Fnlist into its sum, it is needed to continue the
+        # iteration in a later call to improve.
+        self._last_term = None
 
     def _to_vector(self, data):
         K = self.K
@@ -265,47 +313,190 @@ class ThetaOCAdditive(SageObject):
         self._action_data = action_data
         return action_data
 
-    def improve(self, m, **kwargs):
+    def _integral_data(self):
         r'''
-        Same as ThetaOC.improve.
+        When K = Qp and all the action matrices and the series in F2 are
+        integral, return the data to do the iteration with integer matrices
+        modulo p^N (which uses FLINT, and is much faster than generic matrices
+        over Qp): the keys, the series length P, the precision N (the smallest
+        absolute precision of the inputs, so that the result is exact modulo
+        p^N), the block matrix A of the iteration and the vector of F2.
+        Otherwise return None.
         '''
-        gens_ext = self.G.gens_extended()
-        implementation = kwargs.get('implementation', 'list')
-        tol = kwargs.get('tol', None)
-        if implementation not in ['list', 'fixedpoint']:
-            raise ValueError("implementation must be 'list' or 'fixedpoint'")
-        action_data = self._get_action_data()
-        prec = self.prec
+        try:
+            return self._integral
+        except AttributeError:
+            pass
+        self._integral = None
+        K = self.K
+        try:
+            if K.absolute_degree() != 1:
+                return None
+        except AttributeError:
+            return None
+        keys = list(self.F2.keys())
+        P = self.prec
+        gens = dict(self.G.gens_extended())
+        params = {i : F._parameter for i, F in self.F2.items()}
+        # The action matrices are those of get_action_data: row r contains the
+        # coefficients of zz^r, where zz = (b1 + a1 t) / (1 + c1 t). Get a1, b1
+        # and c1, which must be integral.
+        moebius = {}
+        N = P
+        for i in keys:
+            for j in keys:
+                if i == -j:
+                    continue
+                tau = params[i].change_ring(K)
+                a, b, c, d = (params[j] * (tau * gens[i]).adjugate()).list()
+                if d.is_zero():
+                    return None
+                coeffs = [a / d, b / d, c / d]
+                if any(o.valuation() < 0 for o in coeffs if not o.is_zero()):
+                    return None
+                # Products and sums of integral elements do not lose absolute precision
+                N = min([N] + [o.precision_absolute() for o in coeffs])
+                moebius[i, j] = coeffs
+        series = [o for F in self.F2.values() for o in F._value]
+        if any(o.valuation() < 0 for o in series if not o.is_zero()):
+            return None
+        N = min([N] + [o.precision_absolute() for o in series])
+        pN = K.prime()**N
+        n = len(keys)
+        A = matrix(ZZ, n * P, n * P)
+        for bi, i in enumerate(keys):
+            for bj, j in enumerate(keys):
+                if i == -j:
+                    continue
+                a1, b1, c1 = [int(_to_integer(o, pN)) for o in moebius[i, j]]
+                M = _integer_moebius_matrix(a1, b1, c1, P, int(pN))
+                # The normalization (value 0 at t = 0) is linear: kill column 0
+                M.set_column(0, [0] * P)
+                # As row vectors: new_i = sum_j F_j * M_ij
+                A.set_block(bj * P, bi * P, M)
+        L2 = vector(ZZ, [_to_integer(o, pN) for i in keys for o in self.F2[i]._value])
+        self._integral = (keys, P, N, A, L2)
+        return self._integral
+
+    def _improve_integral(self, m, implementation, tol, data):
+        r'''
+        Same as improve, using integer matrices (see _integral_data). Return
+        False if it cannot be used for the current approximation.
+        '''
+        keys, P, N, A, L2 = data
+        K = self.K
+        p = K.prime()
+        if implementation == 'list' and self._last_term is not None:
+            source = self._last_term
+        else:
+            source = self.Fnlist[-1]
+        current = [o for i in keys for o in source[i]._value]
+        summed = [o for i in keys for o in self.Fnlist[0][i]._value]
+        if any(o.valuation() < 0 for o in current + summed if not o.is_zero()):
+            return False
+        # The result is exact modulo p^N
+        N = min([N] + [o.precision_absolute() for o in current + summed])
+        pN = p**N
+        reduce = lambda w : w.apply_map(lambda o : o % pN)
+        def size(w):
+            return min([ZZ(o).valuation(p) for o in w if o != 0] or [N])
+        to_series = lambda w : {i : LogSeries(vector(K, [K(o).add_bigoh(N) for o in w[bi * P : (bi + 1) * P]]),
+                                              self.F2[i]._parameter)
+                                for bi, i in enumerate(keys)}
+        v = vector(ZZ, [_to_integer(o, pN) for o in current])
+        total = vector(ZZ, [_to_integer(o, pN) for o in summed])
         self.last_change = None
         best = None
         stalled = 0
         for _ in range(m):
-            tmp = {}
-            for i, _ in gens_ext:
-                vl = sum(Fj._value * action_data[i, j][0]
-                         for j, Fj in self.Fnlist[-1].items() if i != -j)
-                vl[0] = 0
-                tmp[i] = vector(self.K, [o.add_bigoh(prec) for o in vl])
             if implementation == 'list':
-                new = {i : LogSeries(v, self.F2[i]._parameter) for i, v in tmp.items()}
-                self.Fnlist.append(new)
-                if tol is not None:
-                    change = min(min(o.valuation() for o in v) for v in tmp.values())
+                v = reduce(v * A)
+                total += v
+                change = size(v)
+                done = v.is_zero() # All the remaining terms vanish too
             else:
-                new = {i : LogSeries(tmp[i] + self.F2[i]._value, self.F2[i]._parameter) for i in tmp}
-                if tol is not None:
-                    old = self.Fnlist[-1]
-                    change = min(min(o.valuation() for o in (new[i]._value - old[i]._value)) for i in new)
-                self.Fnlist = [new]
+                w = reduce(L2 + v * A)
+                change = size(w - v)
+                done = (w == v) # Fixed point reached
+                v = w
+            self.last_change = change
+            if done:
+                break
             if tol is not None:
                 if best is None or change > best:
                     best = change
                     stalled = 0
                 else:
                     stalled += 1
-                self.last_change = change
                 if change >= tol or stalled >= 2:
                     break
+        if implementation == 'list':
+            self._last_term = to_series(v)
+            self.Fnlist = [to_series(reduce(total))]
+        else:
+            self._last_term = None
+            self.Fnlist = [to_series(v)]
+        return True
+
+    def improve(self, m, **kwargs):
+        r'''
+        Same as ThetaOC.improve. In addition, it stops as soon as the
+        iteration is exactly done (the new term of the list implementation is
+        zero, or the fixed point iteration does not change anything).
+        '''
+        gens_ext = self.G.gens_extended()
+        implementation = kwargs.get('implementation', 'list')
+        tol = kwargs.get('tol', None)
+        if implementation not in ['list', 'fixedpoint']:
+            raise ValueError("implementation must be 'list' or 'fixedpoint'")
+        if len(self.Fnlist) == 1 and kwargs.get('integral', True):
+            data = self._integral_data()
+            if data is not None and self._improve_integral(m, implementation, tol, data):
+                return self
+        action_data = self._get_action_data()
+        prec = self.prec
+        self.last_change = None
+        best = None
+        stalled = 0
+        if implementation == 'list' and self._last_term is not None:
+            source = self._last_term
+        else:
+            source = self.Fnlist[-1]
+        for _ in range(m):
+            tmp = {}
+            for i, _ in gens_ext:
+                vl = sum(Fj._value * action_data[i, j][0]
+                         for j, Fj in source.items() if i != -j)
+                vl[0] = 0
+                tmp[i] = vector(self.K, [o.add_bigoh(prec) for o in vl])
+            if implementation == 'list':
+                new = {i : LogSeries(v, self.F2[i]._parameter) for i, v in tmp.items()}
+                self.Fnlist.append(new)
+                source = new
+                change = min(min(o.valuation() for o in v) for v in tmp.values())
+                # All the remaining terms vanish too
+                done = all(o.is_zero() for v in tmp.values() for o in v)
+            else:
+                new = {i : LogSeries(tmp[i] + self.F2[i]._value, self.F2[i]._parameter) for i in tmp}
+                old = self.Fnlist[-1]
+                diffs = [new[i]._value - old[i]._value for i in new]
+                change = min(min(o.valuation() for o in v) for v in diffs)
+                # Fixed point reached
+                done = all(o.is_zero() for v in diffs for o in v)
+                self.Fnlist = [new]
+                source = new
+            self.last_change = change
+            if done:
+                break
+            if tol is not None:
+                if best is None or change > best:
+                    best = change
+                    stalled = 0
+                else:
+                    stalled += 1
+                if change >= tol or stalled >= 2:
+                    break
+        self._last_term = source if implementation == 'list' else None
         if len(self.Fnlist) > 1:
             self.Fnlist = [{ky : LogSeries(sum((F[ky]._value for F in self.Fnlist[1:]), self.Fnlist[0][ky]._value),
                                            self.Fnlist[0][ky]._parameter)
@@ -338,6 +529,38 @@ class ThetaOCAdditive(SageObject):
         prec = kwargs.get('prec', None)
         ans0 = pair_divisors(self.val, z)
         return ans0 * exp_small(self.log_series_part(z, prec))
+
+    def eval_derivative(self, z, return_value=False):
+        r'''
+        Same as ThetaOC.eval_derivative.
+        '''
+        dlog = self.eval_dlog(z)
+        z0 = self.G.to_fundamental_domain(z)[0]
+        value = self.evaluate(z0)
+        if return_value:
+            return value * dlog, value
+        else:
+            return value * dlog
+
+    def eval_dlog(self, z):
+        r'''
+        Same as ThetaOC.eval_dlog.
+        '''
+        if isinstance(z, DivisorsElement):
+            raise NotImplementedError
+        if not self.G.in_fundamental_domain(z):
+            raise ValueError("z must be in the fundamental domain of G")
+        z0, wd = self.G.to_fundamental_domain(z)
+        if len(wd) > 0:
+            gens = self.G.gens_extended(as_dict=True)
+            g = prod((gens[i] for i in wd), gens[1].parent()(1)).adjugate()
+            a, b, c, d = g.list()
+            fact = (a * d - b * c) * (c * z + d) ** -2
+        else:
+            fact = 1
+        valdlog = eval_rat_dlog(self.val, z0)
+        fdlog = sum((f.eval_dlog(z0) for FF in self.Fnlist for f in FF.values()), valdlog)
+        return fact * fdlog
 
     def evaluate_log(self, z, **kwargs):
         r'''
