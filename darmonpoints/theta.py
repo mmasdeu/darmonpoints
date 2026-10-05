@@ -186,6 +186,10 @@ class ThetaOC(SageObject):
             self.Fnlist = [{i : self.MM(initial_F[i], tau) for (i, _), tau in zip(gens_ext, params)}]
         else:
             self.Fnlist = [deepcopy(self.F2)]
+        # Last term of the list implementation (None means Fnlist[-1]). Since
+        # improve collapses Fnlist into its sum, it is needed to continue the
+        # iteration in a later call to improve.
+        self._last_term = None
 
     def _get_action_data(self):
         # The action data only depends on the group and on the parameters, which
@@ -231,12 +235,16 @@ class ThetaOC(SageObject):
         self.last_change = None
         best = None
         stalled = 0
+        if implementation == 'list' and self._last_term is not None:
+            source = self._last_term
+        else:
+            source = self.Fnlist[-1]
 
         for _ in range(m):
-            # Compute the next term from the last on in Fnlist            
+            # Compute the next term from the last one
             tmp = {}
             for (i, gi), tau in zip(gens_ext, params):
-                for j, Fj in self.Fnlist[-1].items():
+                for j, Fj in source.items():
                     if i != -j:
                         vl = Fj.fast_act(action_data[i, j])
                         # vl = Fj.left_act_by_matrix(gi, tau)
@@ -248,6 +256,7 @@ class ThetaOC(SageObject):
             if implementation == 'list':
                 # Append the new term
                 self.Fnlist.append(tmp)
+                source = tmp
                 if tol is not None:
                     # The new term is multiplicative, so its size is that of tmp - 1
                     change = min(min([(o - 1).valuation() for o in F._value[:1]]
@@ -262,6 +271,7 @@ class ThetaOC(SageObject):
                     change = min(min((a - b).valuation() for a, b in zip(new[i]._value, old[i]._value))
                                  for i in new)
                 self.Fnlist = [new]
+                source = new
                 verbose('F2 updated', level=2)
             if tol is not None:
                 if best is None or change > best:
@@ -273,6 +283,7 @@ class ThetaOC(SageObject):
                 if change >= tol or stalled >= 2:
                     break
 
+        self._last_term = source if implementation == 'list' else None
         # Collapse the list to one term and return
         if len(self.Fnlist) > 1:
             self.Fnlist = [
@@ -347,7 +358,7 @@ class ThetaOC(SageObject):
             sage: G = SchottkyGroup(K, (h1,h2))
             sage: theta = G.theta(10, 7, 9)
             sage: theta.eval_derivative(13)
-            2*3 + 3^2 + 2*3^6 + 3^7 + O(3^9)
+            2*3 + 3^2 + 3^5 + 3^6 + 2*3^7 + 2*3^8 + O(3^9)
 
         '''
         dlog = self.eval_dlog(z)
