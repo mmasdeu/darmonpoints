@@ -29,7 +29,7 @@ from warnings import warn
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import *
 from .theta import *
-from .util import muted, our_sqrt, speed_up_padic_inversion
+from .util import matrix_is_hyperbolic, muted, our_sqrt, speed_up_padic_inversion
 
 infinity = Infinity
 
@@ -326,9 +326,14 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
         raise RuntimeError("Base not found")
 
     def construct_tree(self, level):
+        elements = [g for _, g in self.all_elements_up_to_length(level)]
+        if not all(matrix_is_hyperbolic(g) for g in elements if g != 1):
+            raise ValueError(
+                "Not all elements up to length %s are hyperbolic" % level
+            )
         T = NeighborJoiningTree(
             self.K,
-            [act(g, self.base) for wd, g in self.all_elements_up_to_length(level)],
+            [act(g, self.base) for g in elements],
         )
         if level == 1:
             pp = [choose_leaf(tt) for tt in T.tree[1][:2]]
@@ -743,7 +748,14 @@ Try with a quadratic (ramified) extension."
         if s is not None:
             D0 += s * D0
         D0 = self.find_equivalent_divisor(D0)
-        if kwargs.pop("additive", True):
+        additive = kwargs.pop("additive", None)
+        if additive is None:
+            # The additive implementation needs exp and log to be inverse
+            # isomorphisms, which only happens when e < p - 1
+            from .theta_additive import _ramification_data
+            p, e = _ramification_data(K)
+            additive = e < p - 1
+        if additive:
             from .theta_additive import ThetaOCAdditive
             ans = ThetaOCAdditive(self, a=D0, b=None, prec=prec, base_ring=K, **kwargs)
         else:

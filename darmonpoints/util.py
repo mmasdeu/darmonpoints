@@ -2458,3 +2458,10 @@ def sage_order_basis_to_pari(w, Ap, basis):
         bp = gp.alg1ijktobasis(Ap, [QQ["y"](wcoords(o)) for o in coefs])
         paribasis.append(bp)
     return gp.matconcat(paribasis)
+
+
+def matrix_is_hyperbolic(g):
+    tr = g.trace()
+    det = g.determinant()
+    return 2 * tr.valuation() < det.valuation()
+    
