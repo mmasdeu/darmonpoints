@@ -640,7 +640,11 @@ class LogSeries(SageObject):
         '''
         a, b, c, d = self._parameter.list()
         phiD = (a * D + b) / (c * D + d)
-        der = [k * o for k, o in enumerate(self._value)][1:]
+        try:
+            der = self._der_coeffs
+        except AttributeError:
+            der = [k * o for k, o in enumerate(self._value)][1:]
+            self._der_coeffs = der
         chainrule = (a * d - b * c) / (c * D + d) ** 2
         return chainrule * evalpoly(der, phiD)
 
@@ -687,7 +691,8 @@ class ThetaOCAdditive(SageObject):
     Additive version of ThetaOC (see the module documentation).
 
     The interface is the same as that of ThetaOC (including initial_F, which
-    is here a dictionary of lists of coefficients of log F_i, and improve with
+    is here a dictionary of lists of coefficients of log F_i (or of LogSeries,
+    such as the Fnlist[-1] of a previous ThetaOCAdditive), and improve with
     tol), and evaluate returns the same values. evaluate_log returns the
     triple (v, d, L) such that the value is pi^v * teichmuller(d) * exp(L).
     '''
@@ -750,6 +755,9 @@ class ThetaOCAdditive(SageObject):
 
     def _to_vector(self, data):
         K = self.K
+        if isinstance(data, LogSeries):
+            # e.g. Fnlist[-1] of a previous theta, as for ThetaOC
+            data = data._value
         data = [K(o) for o in list(data)[:self.prec]]
         data += [K(0)] * (self.prec - len(data))
         data[0] = K(0)

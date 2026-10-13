@@ -47,11 +47,18 @@ def evalpoly(poly, x, prec=None, check=True):
     # Initialize result
     if len(poly) == 0:
         return 0
-    K = (poly[0].parent()(1) * x.parent()(1)).parent()
-    x = K(x)
     # Keep the low-degree terms t^0, ..., t^{prec-1} (matches the semantics
     # of the old call site `evalpoly(self._value[:prec], ...)`).
-    poly = [K(a) for a in poly[:prec]]
+    poly = poly[:prec]
+    K = x.parent()
+    P0 = poly[0].parent()
+    if P0 is not K:
+        K = (P0(1) * K(1)).parent()
+        x = K(x)
+    # Coercing coefficients that already lie in K is not free (it goes through
+    # the generic element constructor) and dominated the cost of evaluation.
+    if P0 is not K or any(a.parent() is not K for a in poly):
+        poly = [K(a) for a in poly]
     if check:
         assert x.valuation() >= 0
     # Evaluate value of polynomial using Horner's method:
@@ -149,7 +156,7 @@ class MeromorphicFunctionsElement(ModuleElement):
         if return_value:
             val = evalpoly(self._value, phiD)
         
-        valder = self.power_series().derivative().list()
+        valder = self._derivative_coeffs()
         chainrule = (a * d - b * c) / (c * D + d) ** 2
         ans = (
             evalpoly(valder, phiD)
@@ -160,6 +167,14 @@ class MeromorphicFunctionsElement(ModuleElement):
         else:
             return ans
 
+    @cached_method
+    def _derivative_coeffs(self):
+        return self.power_series().derivative().list()
+
+    @cached_method
+    def _dlog_coeffs(self):
+        return self.power_series().log().derivative().list()
+
     def eval_dlog(self, D):
         K = self.parent().base_ring()
         if type(D) in (int, Integer):
@@ -168,8 +183,10 @@ class MeromorphicFunctionsElement(ModuleElement):
             raise NotImplementedError
         a, b, c, d = self._parameter.list()
         phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
-        phiD = phi(D)        
-        valder = self.power_series().log().derivative().list()
+        phiD = phi(D)
+        # The coefficients of (log F)' do not depend on D: computing them (a power
+        # series logarithm) dominated the cost of each call, so cache them.
+        valder = self._dlog_coeffs()
         chainrule = (a * d - b * c) / (c * D + d) ** 2
         return chainrule * evalpoly(valder, phiD)
 
