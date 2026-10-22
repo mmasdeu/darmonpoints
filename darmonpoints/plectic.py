@@ -938,3 +938,158 @@ def check_is_cycle(G, cycle_list):
         )
     print(ans0 == 0)
     print(ans1 == 0)
+
+
+# ---------------------------------------------------------------------------
+# Plectic points by overconvergent cohomology: the invariant integrand
+# ---------------------------------------------------------------------------
+#
+# Let Phi be the overconvergent lift of kappa_A to two-variable distributions
+# (ArithCohBianchi.improve), let u be the cycle and h = u^(p+1). The integral
+# of X_1 X_2 against the measure c_A(u) is computed from the values Phi(g_e),
+# g_e = gamma_e^-1 h gamma_e, on the residue polydiscs D_e. Since the
+# distributions Phi(g_e) are not harmonic, X_1 X_2 is replaced by
+#
+#    F = X_1 X_2 - C_2/(2 C_1) X_1^2 - C_1/(2 C_2) X_2^2,    X_i o h = X_i + C_i,
+#
+# which differs from X_1 X_2 by functions of one variable and is invariant
+# under h, so that coboundaries integrate to zero against it.
+
+
+def _over_sqrt_delta(x, sd):
+    r"""
+    Return ``x / sd`` as an element of `\QQ_p`, for ``x`` in `\QQ_{p^2}` with
+    trace zero and ``sd`` a square root of a non-square of `\QQ_p`.
+
+    EXAMPLES::
+
+        sage: from darmonpoints.plectic import _over_sqrt_delta
+        sage: Cp = Qq(9, 10, names='g')
+        sage: sd = Cp(-1).sqrt()
+        sage: _over_sqrt_delta(5 * sd, sd)
+        2 + 3 + O(3^10)
+    """
+    s = x / sd
+    return s.trace() / 2
+
+
+def integrand_expansion(phi, tau, sd, M):
+    r"""
+    The coefficients `\xi_0, \ldots, \xi_{M-1}` of the expansion
+    `X(\phi(y)) = \sum \xi_n y^n`, where `X(t) = \log((t - \tau)/(t - \bar\tau))/\sqrt\delta`
+    and `\phi(y) = (ay + b)/(cy + d)`.
+
+    INPUT:
+
+    - ``phi`` -- a `2 \times 2` matrix over `\QQ_p` which maps `\ZZ_p` into a
+      residue disc not containing the roots of `\tau`.
+    - ``tau`` -- an element of `\QQ_{p^2}`, not in `\QQ_p`.
+    - ``sd`` -- the square root of `\delta` in `\QQ_{p^2}` used to define `X`.
+    - ``M`` -- the number of coefficients.
+
+    With `\kappa = (a - \tau c)/(b - \tau d)` one has
+    `\xi_0 = \log((b - \tau d)/(b - \bar\tau d))/\sqrt\delta` and
+    `\xi_n = (-1)^{n+1}(\kappa^n - \bar\kappa^n)/(n\sqrt\delta)`. If
+    `|\kappa| = 1/p` then `v_p(\xi_n) \ge n - v_p(n)`.
+
+    EXAMPLES::
+
+        sage: from darmonpoints.plectic import integrand_expansion
+        sage: Cp = Qq(9, 20, names='g')
+        sage: sd = Cp(-1).sqrt()
+        sage: tau = sd
+        sage: phi = matrix(Qp(3, 20), 2, 2, [0, 1, 3, 0])   # y -> 1/(3y)
+        sage: xi = integrand_expansion(phi, tau, sd, 6)
+        sage: [x.valuation() for x in xi]    # random
+        [...]
+    """
+    a, b, c, d = [tau.parent()(o) for o in phi.list()]
+    conj = lambda z: z.trace() - z
+    taubar = conj(tau)
+    u = b - tau * d
+    kappa = (a - tau * c) / u
+    if kappa.valuation() < 1:
+        raise ValueError("phi does not map Z_p into a disc avoiding tau")
+    xi = [_over_sqrt_delta((u / (b - taubar * d)).log(p_branch=0), sd)]
+    kn = kappa.parent()(1)
+    for n in range(1, M):
+        kn = kn * kappa
+        x = _over_sqrt_delta(kn - conj(kn), sd) / n
+        xi.append(x if n % 2 == 1 else -x)
+    return xi
+
+
+def invariant_integrand_coefficients(xi1, xi2, C1, C2, M):
+    r"""
+    The coefficients ``f[j][k]``, ``j + k < M``, of
+    `F(\phi_e(y_1, y_2))`, where `F = X_1 X_2 - C_2/(2C_1) X_1^2 - C_1/(2C_2) X_2^2`
+    and ``xi1``, ``xi2`` are the expansions of `X_1` and `X_2`.
+
+    EXAMPLES::
+
+        sage: from darmonpoints.plectic import invariant_integrand_coefficients
+        sage: f = invariant_integrand_coefficients([1, 2, 3], [1, 1, 1], 1, 1, 3)
+        sage: f[1][1], f[0][0], f[2][0]
+        (2, 0, -2)
+    """
+
+    def square(xi):
+        return [sum(xi[a] * xi[n - a] for a in range(n + 1)) for n in range(M)]
+
+    s1, s2 = square(xi1), square(xi2)
+    r1 = C2 / (2 * C1)
+    r2 = C1 / (2 * C2)
+    f = [[0] * M for _ in range(M)]
+    for j in range(M):
+        for k in range(M - j):
+            v = xi1[j] * xi2[k]
+            if k == 0:
+                v -= r1 * s1[j]
+            if j == 0:
+                v -= r2 * s2[k]
+            f[j][k] = v
+    return f
+
+
+def pair_with_moments(mu, f, M, sign=1):
+    r"""
+    The value `\sum_{j + k < M} f_{jk} \, m_{jk}(\mu)` of the distribution
+    ``mu`` (a ``BianchiDistributionElement``) at the function with
+    coefficients ``f[j][k]``, as an element of `\QQ_p`.
+
+    The moments of ``mu`` are the integrals of `x^j y^k`. If the variables of
+    ``f`` are the negatives of those of ``mu``, pass ``sign=-1``: the moment
+    `m_{jk}` is then multiplied by `(-1)^{j+k}`.
+    """
+    K = f[0][0].parent() if hasattr(f[0][0], "parent") else QQ
+    ans = K(0)
+    for j in range(M):
+        for k in range(M - j):
+            ans += f[j][k] * (sign ** (j + k)) * mu.moment((j, k))
+    return ans
+
+
+def invariant_integral(terms, taus, C, sd, M, sign=1):
+    r"""
+    The sum over the polydiscs `D_e` of the integrals of the invariant
+    integrand `F` against the distributions `\Phi(g_e)`.
+
+    INPUT:
+
+    - ``terms`` -- a list of triples ``(phi0, phi1, mu)``, where ``phi_i`` is
+      the `2 \times 2` matrix over `\QQ_p` of the map `\varphi_{e,i}`
+      from `\ZZ_p` onto the residue disc `D_{e_i}` and ``mu`` is the
+      distribution `\Phi(g_e)`.
+    - ``taus`` -- the fixed points `\tau_0, \tau_1` of the cycle in `\QQ_{p^2}`.
+    - ``C`` -- the translations `C_0, C_1`, with `X_i\circ h = X_i + C_i`.
+    - ``sd`` -- the square root of `\delta`.
+    - ``M`` -- the number of moments used.
+    - ``sign`` -- see :func:`pair_with_moments`.
+    """
+    ans = 0
+    for phi0, phi1, mu in terms:
+        xi1 = integrand_expansion(phi0, taus[0], sd, M)
+        xi2 = integrand_expansion(phi1, taus[1], sd, M)
+        f = invariant_integrand_coefficients(xi1, xi2, C[0], C[1], M)
+        ans += pair_with_moments(mu, f, M, sign=sign)
+    return ans
