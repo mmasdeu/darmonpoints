@@ -1093,3 +1093,97 @@ def invariant_integral(terms, taus, C, sd, M, sign=1):
         f = invariant_integrand_coefficients(xi1, xi2, C[0], C[1], M)
         ans += pair_with_moments(mu, f, M, sign=sign)
     return ans
+
+
+def _X_value(t, tau, sd):
+    r"""
+    `X(t) = \log((t - \tau)/(t - \bar\tau))/\sqrt\delta` as an element of `\QQ_p`.
+    """
+    taubar = tau.trace() - tau
+    return _over_sqrt_delta(((t - tau) / (t - taubar)).log(p_branch=0), sd)
+
+
+def plectic_integral(
+    G,
+    Phi,
+    gamma,
+    prec=40,
+    M=None,
+    sd=None,
+    twist=True,
+    inverse=False,
+    sign=-1,
+    return_terms=False,
+):
+    r"""
+    The integral `\int X_1 X_2 \, d\mu_{c_A(h)}`, `h = \gamma^{p+1}`, computed
+    from the overconvergent lift ``Phi`` with the invariant integrand.
+
+    INPUT:
+
+    - ``G`` -- a ``PlecticGroup``.
+    - ``Phi`` -- the lift of the cohomology class to ``BianchiDistributions``
+      (see ``get_overconvergent_class_bianchi``).
+    - ``gamma`` -- the quaternion giving the cycle, as returned by ``get_cycle``.
+    - ``prec`` -- the working `p`-adic precision.
+    - ``M`` -- the number of moments to use (default: the precision of ``Phi``).
+    - ``sd`` -- the square root of `\delta` used to define `X_i`; by default
+      a square root of `-1` if `-1` is not a square modulo `p`.
+    - ``twist`` -- conjugate `g_e` by `w_p`: the module of ``Phi`` is the
+      conjugate by `w_p` of the one of the report.
+    - ``inverse`` -- use ``he^-1`` in place of ``he`` as `\gamma_e`.
+    - ``sign`` -- ``-1`` if the variables of the distributions are the
+      negatives of the ones of the integrand.
+    """
+    p = G.p
+    K = Qq(p**2, prec, names="g")
+    if sd is None:
+        sd = our_sqrt(K(-1)) if p % 4 == 3 else 2 * K.gen() - K.gen().trace()
+    Kp = Qp(p, prec)
+    V = Phi.parent().coefficient_module()
+    if M is None:
+        M = V.depth()
+    _, tau0, tau1 = get_cycle_from_quaternion(G, gamma, prec)
+    taus = [K(tau0), K(tau1)]
+    emb = G.embeddings()
+    h = gamma ** (p + 1)
+    C = []
+    for i in range(2):
+        a, b, c, d = emb[i](h, prec).list()
+        t0 = Kp(0)
+        C.append(_X_value((a * t0 + b) / (c * t0 + d), taus[i], sd) - _X_value(t0, taus[i], sd))
+    wp = G.GG[0].wp() * G.GG[1].wp()
+    W = Matrix(Kp, 2, 2, [0, 1, p, 0])
+    terms = []
+    cov0 = [he for _, he in G.GG[0].get_covering(1)]
+    cov1 = [he for _, he in G.GG[1].get_covering(1)]
+    for he0, he1 in product(cov0, cov1):
+        he = he0 * he1
+        gamma_e = he**-1 if inverse else he
+        ge = gamma_e**-1 * h * gamma_e
+        if twist:
+            ge = ge.conjugate_by(wp)
+        mu = Phi.evaluate(ge, check=False)
+        phis = [
+            Matrix(Kp, 2, 2, emb[i](gamma_e, prec).list()) * W for i in range(2)
+        ]
+        terms.append((phis[0], phis[1], mu))
+    if return_terms:
+        return terms, taus, C, sd
+    return invariant_integral(terms, taus, C, sd, M, sign=sign)
+
+
+def get_cycle_from_quaternion(G, gammaquatrep, prec):
+    r"""
+    The fixed points of the images of ``gammaquatrep`` at the two primes, as in
+    ``get_cycle``.
+    """
+    iota0 = G.GG[0].get_embedding(prec)
+    iota1 = G.GG[1].get_embedding(prec)
+    Cp = Qq(G.p**2, prec, names="g")
+    ans = []
+    for iota in (iota0, iota1):
+        a, b, c, d = iota(gammaquatrep).list()
+        D0 = our_sqrt(Cp((a + d) ** 2 - 4))
+        ans.append((Cp(a - d) + D0) / Cp(2 * c))
+    return gammaquatrep, ans[0], ans[1]
