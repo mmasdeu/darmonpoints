@@ -1112,7 +1112,8 @@ def plectic_integral(
     M=None,
     sd=None,
     twist=True,
-    inverse=False,
+    inverse=True,
+    module_twist=False,
     sign=-1,
     return_terms=False,
 ):
@@ -1130,9 +1131,13 @@ def plectic_integral(
     - ``M`` -- the number of moments to use (default: the precision of ``Phi``).
     - ``sd`` -- the square root of `\delta` used to define `X_i`; by default
       a square root of `-1` if `-1` is not a square modulo `p`.
-    - ``twist`` -- conjugate `g_e` by `w_p`: the module of ``Phi`` is the
-      conjugate by `w_p` of the one of the report.
-    - ``inverse`` -- use ``he^-1`` in place of ``he`` as `\gamma_e`.
+    - ``twist`` -- conjugate the cycle (and its fixed points) by `w_p`, as in
+      ``do_twist``. The elements of ``get_covering`` fix the polydiscs around
+      the other vertex of the base edge, so that without it `g_e` is not in
+      `\Gamma_S`.
+    - ``inverse`` -- use `g_e = \gamma_e h \gamma_e^{-1}` in place of
+      `\gamma_e^{-1} h \gamma_e`.
+    - ``module_twist`` -- evaluate ``Phi`` at the conjugate of `g_e` by `w_p`.
     - ``sign`` -- ``-1`` if the variables of the distributions are the
       negatives of the ones of the integrand.
     """
@@ -1147,27 +1152,30 @@ def plectic_integral(
     _, tau0, tau1 = get_cycle_from_quaternion(G, gamma, prec)
     taus = [K(tau0), K(tau1)]
     emb = G.embeddings()
+    wp = G.GG[0].wp() * G.GG[1].wp()
+    if twist:
+        gamma = wp * gamma * wp**-1
+        for i in range(2):
+            a, b, c, d = [K(o) for o in emb[i](wp, prec).list()]
+            taus[i] = (a * taus[i] + b) / (c * taus[i] + d)
     h = gamma ** (p + 1)
     C = []
     for i in range(2):
         a, b, c, d = emb[i](h, prec).list()
         t0 = Kp(0)
         C.append(_X_value((a * t0 + b) / (c * t0 + d), taus[i], sd) - _X_value(t0, taus[i], sd))
-    wp = G.GG[0].wp() * G.GG[1].wp()
-    W = Matrix(Kp, 2, 2, [0, 1, p, 0])
     terms = []
     cov0 = [he for _, he in G.GG[0].get_covering(1)]
     cov1 = [he for _, he in G.GG[1].get_covering(1)]
     for he0, he1 in product(cov0, cov1):
         he = he0 * he1
-        gamma_e = he**-1 if inverse else he
-        ge = gamma_e**-1 * h * gamma_e
-        if twist:
+        ge = he * h * he**-1 if inverse else he**-1 * h * he
+        if module_twist:
             ge = wp * ge * wp**-1
         mu = Phi.evaluate(ge, check=False)
-        phis = [
-            Matrix(Kp, 2, 2, emb[i](gamma_e, prec).list()) * W for i in range(2)
-        ]
+        # g_e = gamma_e^-1 h gamma_e, and gamma_e maps the base disc onto D_e
+        gamma_e = he**-1 if inverse else he
+        phis = [Matrix(Kp, 2, 2, emb[i](gamma_e, prec).list()) for i in range(2)]
         terms.append((phis[0], phis[1], mu))
     if return_terms:
         return terms, taus, C, sd
