@@ -95,6 +95,7 @@ def get_word_rep_fast(self, delta, Pold=None):
             ii = -ngquats
             while ii <= ngquats:
                 if ii == 0:
+                    ii += 1
                     continue
                 if ii + ji != 0:
                     a,b,c,d = embgammas_tw[ii]

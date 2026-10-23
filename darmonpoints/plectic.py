@@ -1100,6 +1100,7 @@ def _X_value(t, tau, sd):
     `X(t) = \log((t - \tau)/(t - \bar\tau))/\sqrt\delta` as an element of `\QQ_p`.
     """
     taubar = tau.trace() - tau
+    t = tau.parent()(t)
     return _over_sqrt_delta(((t - tau) / (t - taubar)).log(p_branch=0), sd)
 
 
@@ -1135,7 +1136,7 @@ def plectic_integral(
     - ``sign`` -- ``-1`` if the variables of the distributions are the
       negatives of the ones of the integrand.
     """
-    p = G.p
+    p = ZZ(G.p)
     K = Qq(p**2, prec, names="g")
     if sd is None:
         sd = our_sqrt(K(-1)) if p % 4 == 3 else 2 * K.gen() - K.gen().trace()
@@ -1162,7 +1163,7 @@ def plectic_integral(
         gamma_e = he**-1 if inverse else he
         ge = gamma_e**-1 * h * gamma_e
         if twist:
-            ge = ge.conjugate_by(wp)
+            ge = wp * ge * wp**-1
         mu = Phi.evaluate(ge, check=False)
         phis = [
             Matrix(Kp, 2, 2, emb[i](gamma_e, prec).list()) * W for i in range(2)
@@ -1180,7 +1181,7 @@ def get_cycle_from_quaternion(G, gammaquatrep, prec):
     """
     iota0 = G.GG[0].get_embedding(prec)
     iota1 = G.GG[1].get_embedding(prec)
-    Cp = Qq(G.p**2, prec, names="g")
+    Cp = Qq(ZZ(G.p) ** 2, prec, names="g")
     ans = []
     for iota in (iota0, iota1):
         a, b, c, d = iota(gammaquatrep).list()
