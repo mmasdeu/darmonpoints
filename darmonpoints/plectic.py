@@ -29,7 +29,7 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.number_field.number_field import QuadraticField
 from sage.rings.real_mpfr import RealField
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
-from sage.rings.padics.factory import Qp, Qq
+from sage.rings.padics.factory import Qp, Qq, Zp
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.parent import Parent
 from sage.structure.sage_object import SageObject, load, save
@@ -1196,3 +1196,29 @@ def get_cycle_from_quaternion(G, gammaquatrep, prec):
         D0 = our_sqrt(Cp((a + d) ** 2 - 4))
         ans.append((Cp(a - d) + D0) / Cp(2 * c))
     return gammaquatrep, ans[0], ans[1]
+
+
+def get_overconvergent_class_plectic(G, phiE, prec, sign_ap=None, progress_bar=False):
+    r"""
+    The overconvergent lift of the class ``phiE`` to two-variable distributions
+    with ``prec`` moments, obtained by applying `U_{\mathfrak p_1}U_{\mathfrak p_2}`
+    repeatedly (``ArithCohBianchi.improve``).
+
+    INPUT:
+
+    - ``G`` -- a ``PlecticGroup``.
+    - ``phiE`` -- a class in ``ArithCoh(G)`` with integral values, which is an
+      eigenclass for `U_{\mathfrak p_1}U_{\mathfrak p_2}`.
+    - ``prec`` -- the number of moments (and the `p`-adic precision).
+    - ``sign_ap`` -- the eigenvalue `\pm 1` of `U_{\mathfrak p_1}U_{\mathfrak p_2}`
+      on ``phiE``. By default it is read off from the elliptic curve of ``phiE``
+      if it has one, and otherwise it must be given.
+    """
+    from .cohomology_arithmetic import ArithCohBianchi
+
+    if sign_ap is None:
+        raise ValueError("sign_ap (the eigenvalue of U_p1 U_p2) must be given")
+    Coh = ArithCohBianchi(G, base=Zp(ZZ(G.p), prec))
+    Coh.P_gen = G.ideal_p0.gens_reduced()[0]
+    Coh.Pbar_gen = G.ideal_p1.gens_reduced()[0]
+    return Coh.improve(Coh(phiE), prec=prec, sign=sign_ap, progress_bar=progress_bar)
