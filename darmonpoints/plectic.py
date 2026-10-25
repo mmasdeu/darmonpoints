@@ -1104,19 +1104,7 @@ def _X_value(t, tau, sd):
     return _over_sqrt_delta(((t - tau) / (t - taubar)).log(p_branch=0), sd)
 
 
-def plectic_integral(
-    G,
-    Phi,
-    gamma,
-    prec=40,
-    M=None,
-    sd=None,
-    twist=True,
-    inverse=True,
-    module_twist=False,
-    sign=-1,
-    return_terms=False,
-):
+def plectic_integral(G, Phi, gamma, prec=40, M=None, sd=None, return_terms=False):
     r"""
     The integral `\int X_1 X_2 \, d\mu_{c_A(h)}`, `h = \gamma^{p+1}`, computed
     from the overconvergent lift ``Phi`` with the invariant integrand.
@@ -1125,39 +1113,39 @@ def plectic_integral(
 
     - ``G`` -- a ``PlecticGroup``.
     - ``Phi`` -- the lift of the cohomology class to ``BianchiDistributions``
-      (see ``get_overconvergent_class_bianchi``).
+      (see ``get_overconvergent_class_plectic``).
     - ``gamma`` -- the quaternion giving the cycle, as returned by ``get_cycle``.
     - ``prec`` -- the working `p`-adic precision.
     - ``M`` -- the number of moments to use (default: the precision of ``Phi``).
     - ``sd`` -- the square root of `\delta` used to define `X_i`; by default
       a square root of `-1` if `-1` is not a square modulo `p`.
-    - ``twist`` -- conjugate the cycle (and its fixed points) by `w_p`, as in
-      ``do_twist``. The elements of ``get_covering`` fix the polydiscs around
-      the other vertex of the base edge, so that without it `g_e` is not in
-      `\Gamma_S`.
-    - ``inverse`` -- use `g_e = \gamma_e h \gamma_e^{-1}` in place of
-      `\gamma_e^{-1} h \gamma_e`.
-    - ``module_twist`` -- evaluate ``Phi`` at the conjugate of `g_e` by `w_p`.
-    - ``sign`` -- ``-1`` if the variables of the distributions are the
-      negatives of the ones of the integrand.
+
+    The conventions are the following, and they were fixed by testing that the
+    integral of `C_2 X_1 - C_1 X_2` against ``Phi`` vanishes. The elements of
+    ``get_covering`` fix the polydiscs around the other vertex of the base
+    edge, so the cycle and its fixed points are first conjugated by `w_p`, as
+    in ``do_twist``. For each polydisc `D_e` let `\gamma_e` be the covering
+    element, mapping the base disc `\ZZ_p^2` to `D_e`; then `g_e = \gamma_e h \gamma_e^{-1}`
+    is in `\Gamma_S`, and the integral is the sum of the integrals of `F` against
+    ``Phi(g_e)``. The variables of the distributions are the negatives of the
+    ones of the integrand (they come from the action of
+    ``BianchiDistributions``), hence ``sign=-1``.
     """
     p = ZZ(G.p)
     K = Qq(p**2, prec, names="g")
     if sd is None:
         sd = our_sqrt(K(-1)) if p % 4 == 3 else 2 * K.gen() - K.gen().trace()
     Kp = Qp(p, prec)
-    V = Phi.parent().coefficient_module()
     if M is None:
-        M = V.depth()
+        M = Phi.parent().coefficient_module().depth()
     _, tau0, tau1 = get_cycle_from_quaternion(G, gamma, prec)
     taus = [K(tau0), K(tau1)]
     emb = G.embeddings()
     wp = G.GG[0].wp() * G.GG[1].wp()
-    if twist:
-        gamma = wp * gamma * wp**-1
-        for i in range(2):
-            a, b, c, d = [K(o) for o in emb[i](wp, prec).list()]
-            taus[i] = (a * taus[i] + b) / (c * taus[i] + d)
+    gamma = wp * gamma * wp**-1
+    for i in range(2):
+        a, b, c, d = [K(o) for o in emb[i](wp, prec).list()]
+        taus[i] = (a * taus[i] + b) / (c * taus[i] + d)
     h = gamma ** (p + 1)
     C = []
     for i in range(2):
@@ -1168,18 +1156,13 @@ def plectic_integral(
     cov0 = [he for _, he in G.GG[0].get_covering(1)]
     cov1 = [he for _, he in G.GG[1].get_covering(1)]
     for he0, he1 in product(cov0, cov1):
-        he = he0 * he1
-        ge = he * h * he**-1 if inverse else he**-1 * h * he
-        if module_twist:
-            ge = wp * ge * wp**-1
-        mu = Phi.evaluate(ge, check=False)
-        # g_e = gamma_e^-1 h gamma_e, and gamma_e maps the base disc onto D_e
-        gamma_e = he**-1 if inverse else he
+        gamma_e = (he0 * he1) ** -1
+        mu = Phi.evaluate(gamma_e**-1 * h * gamma_e, check=False)
         phis = [Matrix(Kp, 2, 2, emb[i](gamma_e, prec).list()) for i in range(2)]
         terms.append((phis[0], phis[1], mu))
     if return_terms:
         return terms, taus, C, sd
-    return invariant_integral(terms, taus, C, sd, M, sign=sign)
+    return invariant_integral(terms, taus, C, sd, M, sign=-1)
 
 
 def get_cycle_from_quaternion(G, gammaquatrep, prec):

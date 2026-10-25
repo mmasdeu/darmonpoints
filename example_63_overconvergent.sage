@@ -16,7 +16,7 @@
 #
 # COST: the Magma part (Steps 2-3) took between 25 and 45 minutes, as in the
 # Riemann sum computation. Step 4 (the lift) and Step 5 (the integral) take a
-# few minutes for PREC = 6, and PREC = 10 gives more than 7 digits.
+# few minutes for PREC = 6; PREC = 13 takes a few hours and gives 10 digits.
 
 import time
 from darmonpoints.plectic import *
@@ -24,7 +24,7 @@ from darmonpoints.plectic import get_overconvergent_class_plectic, plectic_integ
 from darmonpoints.cohomology_arithmetic import ArithCoh, get_cocycle_from_elliptic_curve
 from darmonpoints.util import quaternion_algebra_invariants_from_ramification
 
-PREC = 10   # number of moments: the result is correct to about 3^(PREC - 3)
+PREC = 13   # number of moments: the result is correct to about PREC - 3 digits
 SEED = 271828   # for Magma: the running time depends on its random choices
 
 # ## Step 1. The curve and the primes (as in example_63_depth7.sage)
@@ -75,21 +75,22 @@ print('lift with %s moments: %.0f s' % (PREC, walltime() - wt0))
 # which differs from X_1 X_2 by functions of one variable and is invariant
 # under h = u^(p+1): coboundaries then integrate to zero, and the integral only
 # depends on the class of Phi. It is the sum over the (p+1)^2 residue polydiscs
-# D_e of the integrals of F against the values Phi(g_e), g_e = gamma_e h gamma_e^-1.
+# D_e of the integrals of F against the values Phi(g_e), g_e = gamma_e^-1 h gamma_e
+# (the cycle and its fixed points are first conjugated by w_p, as in do_twist).
 wt0 = walltime()
 kL = plectic_integral(G, Phi, gammaquatrep, prec=60, M=PREC)
 print('integral: %.0f s' % (walltime() - wt0))
 print('k L =', kL)
 
 # ## Step 6. Comparison with [FGM]
-# k = p + 1 because of h = u^(p+1), and the class phiE is the one of FGM divided
-# by fact = 8, so that detsym_scaled = fact * k^-1 * k L, up to a sign.
-fact = 8
+# Since h = u^(p+1), the integral is k L with k = p + 1, and L is the value of
+# the plectic invariant, which is detsym_scaled (the value in the paper is
+# -L modulo 3^10, up to the sign convention of the orientation of the cycle).
 k = p + 1
-L = fact * kL / k
+L = kL / k
 detsym_scaled = 3^2 + 2*3^3 + 2*3^4 + 2*3^5 + 3^6 + 2*3^8 + 3^9 + 2*3^10 + 3^11 + 3^12 + 3^13 + 2*3^15 + 2*3^17 + 2*3^18 + 2*3^20 + O(3^21)
 minus_detsym_scaled = 2*3^2 + 3^6 + 2*3^7 + 3^9 + O(3^10)   # the value of [FGM]
 print('L                  =', L)
 print('detsym_scaled      =', detsym_scaled)
 agreement = max((L - detsym_scaled).valuation(), (L + detsym_scaled).valuation())
-print('L agrees with +-detsym_scaled modulo 3^%s' % agreement)
+print('L agrees with +-detsym_scaled modulo 3^%s, that is, to %s digits' % (agreement, agreement - 2))
