@@ -57,7 +57,7 @@ G = PlecticGroup(P1, P2, abtuple, 1, base=F, grouptype='PGL2', magma=magma)
 Coh = ArithCoh(G, trivial_action=True)
 phiE = get_cocycle_from_elliptic_curve(Coh, E, sign=1)
 beta = -21 * w + 62   # E_beta = F(sqrt(beta)), the field of the cycle
-gammaquatrep, tau0, tau1 = get_cycle(G, beta, 20)
+gammaquatrep, tau0, tau1 = get_cycle(G, beta, 10)
 print('Magma part: %.0f s' % (walltime() - wt0))
 set_verbose(0)
 
