@@ -1125,7 +1125,7 @@ def plectic_integral(G, Phi, gamma, prec=40, M=None, sd=None, return_terms=False
     ``get_covering`` fix the polydiscs around the other vertex of the base
     edge, so the cycle and its fixed points are first conjugated by `w_p`, as
     in ``do_twist``. For each polydisc `D_e` let `\gamma_e` be the covering
-    element, mapping the base disc `\ZZ_p^2` to `D_e`; then `g_e = \gamma_e h \gamma_e^{-1}`
+    element, mapping the base disc `\ZZ_p^2` to `D_e`; then `g_e = \gamma_e^{-1} h \gamma_e`
     is in `\Gamma_S`, and the integral is the sum of the integrals of `F` against
     ``Phi(g_e)``. The variables of the distributions are the negatives of the
     ones of the integrand (they come from the action of
