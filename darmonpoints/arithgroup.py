@@ -1040,7 +1040,10 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
 
         fwrite("# O_K to R_0 given by w_K |-> %s" % phi(w), outfile)
         fwrite("# gamma_psi = %s" % gamma, outfile)
-        fwrite("# tau_psi satisfies %s = 0" % (our_algdep(tau1, 8).factor()), outfile)
+        if outfile is not None:  # the algebraic dependency is expensive
+            fwrite(
+                "# tau_psi satisfies %s = 0" % (our_algdep(tau1, 8).factor()), outfile
+            )
         fwrite("# tau_psi = %s" % (tau1), outfile)
         fwrite(
             "# (where {g} satisfies: {defpoly})".format(
@@ -1472,7 +1475,10 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         tau2 = (Cp(a - d) - DD) / Cp(2 * c)
 
         fwrite("# gamma_psi = %s" % gamma, outfile)
-        fwrite("# tau_psi satisfies %s = 0" % (our_algdep(tau1, 8).factor()), outfile)
+        if outfile is not None:  # the algebraic dependency is expensive
+            fwrite(
+                "# tau_psi satisfies %s = 0" % (our_algdep(tau1, 8).factor()), outfile
+            )
         fwrite("# tau_psi = %s" % tau1, outfile)
         fwrite(
             "# (where {g} satisfies: {defpoly})".format(
@@ -1553,7 +1559,10 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         assert (c * tau1**2 + (d - a) * tau1 - b) == 0
         fwrite("# O_K to R_0 given by w_K |-> %s" % mu, outfile)
         fwrite("# gamma_psi = %s" % gamma, outfile)
-        fwrite("# tau_psi satisfies %s = 0" % (our_algdep(tau1, 8).factor()), outfile)
+        if outfile is not None:  # the algebraic dependency is expensive
+            fwrite(
+                "# tau_psi satisfies %s = 0" % (our_algdep(tau1, 8).factor()), outfile
+            )
         fwrite("# tau_psi = %s" % (tau1), outfile)
         fwrite("# (where g satisfies: %s)" % w.minpoly(), outfile)
         if return_all:
@@ -1962,7 +1971,10 @@ class ArithGroup_nf_generic(ArithGroup_generic):
 
         fwrite("# O_K to R_0 given by w_K |-> %s" % wquatrep, outfile)
         fwrite("# gamma_psi = %s" % gamma, outfile)
-        fwrite("# tau_psi satisfies %s = 0" % (our_algdep(tau1, 8).factor()), outfile)
+        if outfile is not None:  # the algebraic dependency is expensive
+            fwrite(
+                "# tau_psi satisfies %s = 0" % (our_algdep(tau1, 8).factor()), outfile
+            )
         fwrite("# tau_psi = %s" % tau1, outfile)
         fwrite(
             "# (where {g} satisfies: {defpoly})".format(
