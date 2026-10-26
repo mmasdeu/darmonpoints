@@ -358,8 +358,22 @@ class CohomologyGroup(Module):
         Module.__init__(self, base=ZZ)
         return
 
-    @cached_method
     def generator_acting_matrix(self, g):
+        r"""
+        The matrix of the action of ``g`` on the coefficient module.
+
+        The results are cached, but the cache is bounded: ``g`` is in general not
+        a generator but any monomial of a group algebra element, such as a
+        prefix of a long word, and there are many of those.
+        """
+        try:
+            cache = self._generator_acting_matrix_cache
+        except AttributeError:
+            cache = self._generator_acting_matrix_cache = {}
+        try:
+            return cache[g]
+        except KeyError:
+            pass
         V = self.coefficient_module()
         if hasattr(V, "dimension"):
             dim = V.dimension()
@@ -367,7 +381,11 @@ class CohomologyGroup(Module):
             dim = len(V.basis())
         else:
             dim = None
-        return self._acting_matrix(g, dim)
+        ans = self._acting_matrix(g, dim)
+        if len(cache) >= 500:
+            cache.clear()
+        cache[g] = ans
+        return ans
 
     def GA_to_local(self, x, g0=None):
         r"""
