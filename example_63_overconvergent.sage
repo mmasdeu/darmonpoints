@@ -24,7 +24,8 @@ from darmonpoints.plectic import get_overconvergent_class_plectic, plectic_integ
 from darmonpoints.cohomology_arithmetic import ArithCoh, get_cocycle_from_elliptic_curve
 from darmonpoints.util import quaternion_algebra_invariants_from_ramification
 
-PREC = 13   # number of moments: the result is correct to about PREC - 3 digits
+import os
+PREC = int(os.environ.get('PLECTIC_PREC', 13))   # number of moments: the result is correct to about PREC - 3 digits
 SEED = 271828   # for Magma: the running time depends on its random choices
 
 # ## Step 1. The curve and the primes (as in example_63_depth7.sage)

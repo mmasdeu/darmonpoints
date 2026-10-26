@@ -84,7 +84,7 @@ class CohomologyElement(ModuleElement):
                 tuple(word), left_act_by=left_act_by
             )
         else:
-            return self._evaluate_word_tietze_foxgradient(
+            return self._evaluate_word_tietze_horner(
                 tuple(word), left_act_by=left_act_by
             )
 
@@ -256,6 +256,61 @@ class CohomologyElement(ModuleElement):
                 gamma = gamma * G.gen(g0) ** -1
                 ans -= gamma * self._val[g0]
         return ans if left_act_by is None else left_act_by * ans
+
+    def _evaluate_word_tietze_horner(self, word, left_act_by=None):
+        r"""
+        Evaluate the cocycle at the word, from the right:
+        `\Phi(g w) = \Phi(g) + g \Phi(w)`, and `\Phi(g^{-1}) = -g^{-1}\Phi(g)`.
+
+        This only uses the matrices of the generators and their inverses acting
+        on vectors, whereas the Fox gradient needs the matrix of every prefix
+        of the word.
+
+        TESTS::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: from darmonpoints.cohomology_arithmetic import ArithCoh
+            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='SL2', use_shapiro=True, outfile='/tmp/darmonpoints.tmp')
+            sage: f = ArithCoh(GS).gen(0)
+            sage: words = [(4,-2,-1,4,1,-4,4), (1,2,-1,3,-2), (2,2,-1,-1,3,4)]
+            sage: all(f._evaluate_word_tietze_horner(w) == f._evaluate_word_tietze_foxgradient(w) for w in words)
+            True
+        """
+        HH = self.parent()
+        G = HH.group()
+        V = HH.coefficient_module()
+        if len(word) == 0:
+            return V(0)
+        if hasattr(self._val[0], "_moments"):
+            ff = lambda v: v._moments.lift()
+        elif hasattr(self._val[0], "_vector_"):
+            ff = lambda v: v._vector_()
+        else:
+            ff = lambda v: v
+        modulus = getattr(V, "_pN", None)
+        reduce_ = (
+            (lambda v: v.apply_map(lambda x: ZZ(x) % modulus))
+            if modulus is not None
+            else (lambda v: v)
+        )
+        ans = None
+        for g in reversed(word):
+            if g > 0:
+                val = ff(self._val[g - 1])
+                if ans is None:
+                    ans = val
+                else:
+                    A = HH.generator_acting_matrix(G.gen(g - 1))
+                    ans = val + A * ans
+            else:
+                g0 = -g - 1
+                A = HH.generator_acting_matrix(G.gen(g0) ** -1)
+                val = -(A * ff(self._val[g0]))
+                ans = val if ans is None else val + A * ans
+            ans = reduce_(ans)
+        if left_act_by is not None:
+            ans = HH.generator_acting_matrix(left_act_by) * ans
+        return V(ans)
 
     def _evaluate_word_tietze_foxgradient(self, word, left_act_by=None):
         HH = self.parent()
