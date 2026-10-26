@@ -634,6 +634,7 @@ class BianchiDistributions(Module, UniqueRepresentation):
         self._depth = depth
         self._pN = self._p ** (depth - 1)
         self._cache_powers = dict()
+        self._cache_powers_maxsize = 2000
         self._unset_coercions_used()
 
         ## Initialise monoid Sigma_0(p) + action; use Pollack-Stevens modular symbol code
@@ -925,6 +926,10 @@ class BianchiDistributions(Module, UniqueRepresentation):
         ## Build matrix . DO NOT TAKE TRANSPOSE, (built this in as a consequence of implementation)
         matrix_action = Matrix(ZZ, matrix_rows)
         # acted_monomials_list = Matrix(R.base_ring(),self._depth,self._depth,acted_monomials_list)#.apply_map(ZZ)
+        # The cache is bounded: evaluating a cocycle on a long word acts by all
+        # the prefixes of the word, which are all different.
+        if len(self._cache_powers) >= self._cache_powers_maxsize:
+            self._cache_powers.clear()
         self._cache_powers[(abcdxZZ, abcdyZZ)] = matrix_action
         return matrix_action
 
