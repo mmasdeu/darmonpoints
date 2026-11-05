@@ -1,5 +1,8 @@
 # Add the import for which you want to give a direct access
-from sage.all_cmdline import *
+try:
+    from sage.all_cmdline import *
+except ImportError:
+    from sage.all__sagemath_modules import *
 
 from .cohomology_arithmetic import (
     ArithCoh,
