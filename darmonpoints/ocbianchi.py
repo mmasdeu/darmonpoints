@@ -634,7 +634,8 @@ class BianchiDistributions(Module, UniqueRepresentation):
         self._depth = depth
         self._pN = self._p ** (depth - 1)
         self._cache_powers = dict()
-        self._cache_powers_maxsize = 2000
+        # Each entry is a depth^2 x depth^2 matrix: bound the memory used
+        self._cache_powers_maxsize = max(8, min(2000, 15000000 // depth**4))
         self._unset_coercions_used()
 
         ## Initialise monoid Sigma_0(p) + action; use Pollack-Stevens modular symbol code
