@@ -25,665 +25,46 @@ logarithms. Altogether, a value of theta is obtained as
 where v and d (a residue field element) are computed multiplicatively and L
 additively. This needs exp and log to be inverse isomorphisms between the
 principal units and the maximal ideal, that is e < p - 1.
+
+The generic tools (log-series, p-adic logarithms and exponentials, and the
+iteration with integer matrices) are in the meromorphic module.
 '''
 from copy import copy
 
-from sage.matrix.constructor import Matrix, matrix
-from sage.misc.cachefunc import cached_function
-from sage.misc.lazy_attribute import lazy_attribute
 from sage.misc.misc_c import prod
-from sage.functions.log import log
 from sage.misc.verbose import verbose
 from sage.modules.free_module_element import free_module_element as vector
 from sage.rings.infinity import Infinity
-from sage.rings.integer_ring import ZZ
-from sage.rings.rational_field import QQ
 from sage.structure.sage_object import SageObject
 
 from .divisors import Divisors, DivisorsElement
-from .meromorphic import MeromorphicFunctions, evalpoly
+# Some of these are not used here, but they used to be defined in this module
+from .meromorphic import (
+    LogSeries,
+    LogSeriesOperator,
+    MeromorphicFunctions,
+    _check_integral,
+    _coordinate_moebius_entries,
+    _coordinates,
+    _from_coordinates,
+    _integer_moebius_matrix,
+    _IntegerOperator,
+    _integral_basis,
+    _integral_moebius_coefficients,
+    _inverse_integers,
+    _ok_coordinates,
+    _OKCoordinates,
+    _PrecisionTracker,
+    _ramification_data,
+    _reduce_columns,
+    _to_integer,
+    evalpoly,
+    exp_small,
+    log_principal,
+    log_series_of_divisor,
+    principal_part_log,
+)
 from .theta import eval_rat_dlog, pair_divisors
-
-
-def _to_integer(x, pN):
-    r'''
-    An integer congruent to the p-adic integer x modulo pN.
-    '''
-    return ZZ(0) if x.is_zero() else ZZ(x.lift()) % pN
-
-
-def _reduce_columns(R, mods):
-    return [[int(R[b, k]) % int(mods[k]) for k in range(R.ncols())] for b in range(R.nrows())]
-
-
-def _coordinate_moebius_entries(Ra, Rb, Rc, P, mods):
-    r'''
-    The nonzero entries (r, c, u) of the matrix whose row r contains the
-    coefficients of zz^r, where zz = (b1 + a1 t) / (1 + c1 t) is a power series
-    over the ring of integers O_K, given in coordinates: u is the list of
-    coordinates of the entry, reduced modulo mods (see _OKCoordinates).
-
-    The input are the matrices (as lists of rows) of the multiplication by a1,
-    b1 and c1, acting on row vectors of coordinates. The rows are computed with
-    zz^r = zz^(r-1) * (b1 + a1 t) / (1 + c1 t), that is, the coefficients satisfy
-    u_k = b1 w_k + a1 w_(k-1) - c1 u_(k-1).
-    '''
-    from operator import mul
-    d = len(mods)
-    mods = [int(o) for o in mods]
-    # Columns of the matrices, to compute the products with sum(map(mul, ...))
-    columns = lambda R : [[R[b][k] for b in range(d)] for k in range(d)]
-    Ca, Cb, Cc = columns(Ra), columns(Rb), columns(Rc)
-    zero = [0] * d
-    w = [[1] + [0] * (d - 1)] + [zero] * (P - 1) # zz^0 = 1
-    entries = []
-    for r in range(1, P):
-        u = []
-        prev_w = zero
-        prev_u = zero
-        nonzero = False
-        for k in range(P):
-            wk = w[k]
-            if any(wk) or any(prev_w) or any(prev_u):
-                uk = [(sum(map(mul, wk, Cb[j])) + sum(map(mul, prev_w, Ca[j])) - sum(map(mul, prev_u, Cc[j]))) % mods[j]
-                      for j in range(d)]
-                if any(uk):
-                    nonzero = True
-                    entries.append((r, k, uk))
-            else:
-                uk = zero
-            u.append(uk)
-            prev_w = wk
-            prev_u = uk
-        if not nonzero:
-            break # All the remaining powers vanish
-        w = u
-    return entries
-
-
-def _integer_moebius_matrix(a1, b1, c1, P, pN):
-    r'''
-    The P x P integer matrix whose row r contains the coefficients of zz^r
-    modulo pN, where zz = (b1 + a1 t) / (1 + c1 t) (as in
-    MeromorphicFunctions._action_matrix_moebius, but with integers).
-    '''
-    rows = [[1] + [0] * (P - 1)]
-    w = rows[0]
-    for _ in range(1, P):
-        u = []
-        prev_w = 0
-        prev_u = 0
-        for wk in w:
-            uk = (b1 * wk + a1 * prev_w - c1 * prev_u) % pN
-            prev_w = wk
-            prev_u = uk
-            u.append(uk)
-        if not any(u):
-            break # All the remaining powers vanish
-        rows.append(u)
-        w = u
-    rows += [[0] * P for _ in range(P - len(rows))]
-    return matrix(ZZ, rows)
-
-
-def _check_integral(elements):
-    if any(o.valuation() < 0 for o in elements if not o.is_zero()):
-        raise ValueError('Not integral')
-
-
-def _coordinates(x, F):
-    r'''
-    Coordinates of the integral element x of F in the basis given by
-    _integral_basis(F).
-    '''
-    if F.absolute_degree() == 1:
-        return [ZZ(0) if x.is_zero() else ZZ(x.lift())]
-    if x.is_zero():
-        return [ZZ(0)] * F.absolute_degree()
-    try:
-        # Unramified extensions (FLINT): x = p^v * poly(g)
-        poly, v = x._flint_rep_abs()
-        if v < 0:
-            raise ValueError('Not integral')
-        coeffs = poly.list()
-        pv = ZZ(F.prime())**v
-        return [ZZ(c) * pv for c in coeffs] + [ZZ(0)] * (F.absolute_degree() - len(coeffs))
-    except AttributeError:
-        pass
-    B = F.base_ring()
-    try:
-        # Relative extensions: the underlying polynomial in the generator,
-        # over the (floating point) base ring. Much faster than x.polynomial()
-        coeffs = x._poly_rep().list()
-    except AttributeError:
-        coeffs = x.polynomial().list()
-    ans = [c for a in coeffs for c in _coordinates(a, B)]
-    return ans + [ZZ(0)] * (F.absolute_degree() - len(ans))
-
-
-def _from_coordinates(c, F):
-    r'''
-    Inverse of _coordinates. The element is built from its coefficients (and
-    not as a linear combination of the basis), so that it has the best
-    precision that F can represent.
-    '''
-    if F.absolute_degree() == 1:
-        return F(ZZ(c[0]))
-    B = F.base_ring()
-    n = F.relative_degree()
-    k = len(c) // n
-    gen = F.gen()
-    # (F(list) loses precision for absolute Eisenstein extensions)
-    return sum((F(_from_coordinates(c[i * k : (i + 1) * k], B)) * gen**i for i in range(n)), F(0))
-
-
-def _integral_basis(F):
-    r'''
-    A Z_p-basis of the ring of integers of F: the products gen^i * b, where
-    gen is the generator of F over its base ring and b runs over the basis of
-    the base ring. For an Eisenstein extension of an unramified extension, it
-    is (pi^i * g^j).
-    '''
-    if F.absolute_degree() == 1:
-        return [F(1)]
-    gen = F.gen()
-    return [gen**i * F(b) for i in range(F.relative_degree()) for b in _integral_basis(F.base_ring())]
-
-
-class _IntegerOperator(SageObject):
-    r'''
-    The linear map v |-> v * A on row vectors of integers (given as lists),
-    for an integer matrix A whose column c is only needed modulo p^exps[c].
-
-    There are three ways of computing the product:
-
-    - 'dense': with FLINT (Sage's integer matrices).
-
-    - 'sparse': with python integers, from the nonzero entries of A (column by
-      column). Much faster than Sage's products when A is sparse.
-
-    - 'banded': write each entry of A, and of v, as p^val times a smaller
-      number. The rows and the columns of A are grouped in bands according
-      to the valuations of their entries, and each block (row band, column
-      band) is stored divided by p^mu, where mu is the smallest valuation of
-      its entries, and reduced modulo p^(M - mu) (M being the largest
-      exponent of its columns). In the product, the part of v corresponding
-      to a row band is also divided by the power of p of its valuation
-      beta, so that the block only needs to be computed modulo
-      p^(M - mu - beta), with much smaller numbers (and not at all when
-      mu + beta >= M). Integers modulo p^N cannot take advantage of the
-      valuations of their entries by themselves, but this way the products
-      only involve their significant digits.
-    '''
-    def __init__(self, A, p, exps, d, mode='auto', nbands=8, size=None):
-        r'''
-        A is either an integer matrix or a dictionary {(r, c) : A[r, c]} of
-        its nonzero entries, in which case size = (number of rows, number of
-        columns).
-        '''
-        if isinstance(A, dict):
-            self._entries = A
-            self._matrix = None
-            self.nrows, self.ncols = size
-        else:
-            self._entries = None
-            self._matrix = A
-            self.nrows, self.ncols = A.nrows(), A.ncols()
-        self.p = ZZ(p)
-        self.exps = list(exps)
-        if mode == 'auto':
-            # In our tests (theta functions with series length 120 and 200),
-            # FLINT was the fastest for Qp and the sparse products for all the
-            # extensions, also when A is not very sparse. The banded products
-            # are faster than the dense ones when the moduli are large, but
-            # still slower than the sparse ones: the cost of Sage's products of
-            # integer vectors and matrices per entry depends little on the
-            # size of the entries.
-            mode = 'dense' if d == 1 else 'sparse'
-        self.mode = mode
-        self.sparse = (mode == 'sparse')
-        if mode == 'sparse':
-            cols = [([], []) for _ in range(self.ncols)]
-            for (r, c), a in sorted(self.entries.items(), key=lambda o : o[0][::-1]):
-                cols[c][0].append(r)
-                cols[c][1].append(int(a))
-            self.cols = cols
-        elif mode == 'banded':
-            self._init_bands(nbands)
-
-    @lazy_attribute
-    def entries(self):
-        if self._entries is None:
-            self._entries = self._matrix.dict()
-        return self._entries
-
-    @lazy_attribute
-    def A(self):
-        if self._matrix is None:
-            self._matrix = matrix(ZZ, self.nrows, self.ncols, self._entries)
-        return self._matrix
-
-    def _init_bands(self, nbands):
-        p, exps = self.p, self.exps
-        n, m = self.nrows, self.ncols
-        entries = self.entries
-        Mmax = max(exps)
-        vals = {}
-        rowval = [Infinity] * n
-        colval = [Infinity] * m
-        for (r, c), a in entries.items():
-            v = ZZ(a).valuation(p)
-            vals[r, c] = v
-            rowval[r] = min(rowval[r], v)
-            colval[c] = min(colval[c], v)
-        width = max(1, -((-Mmax) // nbands))
-        rowband = {r : v // width for r, v in enumerate(rowval) if v is not Infinity}
-        colband = {c : v // width for c, v in enumerate(colval) if v is not Infinity}
-        self.row_bands = {}
-        for r, k in sorted(rowband.items()):
-            self.row_bands.setdefault(k, []).append(r)
-        self.col_bands = {}
-        for c, l in sorted(colband.items()):
-            self.col_bands.setdefault(l, []).append(c)
-        rowpos = {r : i for rows in self.row_bands.values() for i, r in enumerate(rows)}
-        colpos = {c : j for cols in self.col_bands.values() for j, c in enumerate(cols)}
-        block_entries = {}
-        for (r, c), v in vals.items():
-            block_entries.setdefault((rowband[r], colband[c]), []).append((rowpos[r], colpos[c], r, c, v))
-        self.col_exps = {l : max(exps[c] for c in cols) for l, cols in self.col_bands.items()}
-        self.blocks = []
-        for (k, l), ents in sorted(block_entries.items()):
-            mu = min(o[4] for o in ents)
-            M = self.col_exps[l]
-            if mu >= M:
-                continue
-            pmu = p**mu
-            mod = p**(M - mu)
-            B = matrix(ZZ, len(self.row_bands[k]), len(self.col_bands[l]),
-                       {(i, j) : (ZZ(entries[r, c]) // pmu) % mod for i, j, r, c, _ in ents})
-            self.blocks.append((k, l, mu, M, B))
-
-    def apply(self, v):
-        if self.mode == 'sparse':
-            return [sum([v[r] * a for r, a in zip(rows, vals)]) for rows, vals in self.cols]
-        if self.mode == 'dense':
-            return [int(o) for o in vector(ZZ, v) * self.A]
-        p = self.p
-        # The parts of v in each row band, divided by the power of p of their valuation
-        chunks = {}
-        for k, rows in self.row_bands.items():
-            chunk = [v[r] for r in rows]
-            nonzero = [o for o in chunk if o]
-            if not nonzero:
-                continue
-            beta = min(ZZ(o).valuation(p) for o in nonzero)
-            pb = p**beta
-            chunks[k] = (beta, [ZZ(o) // pb for o in chunk])
-        acc = {}
-        for k, l, mu, M, B in self.blocks:
-            try:
-                beta, w = chunks[k]
-            except KeyError:
-                continue
-            s = beta + mu
-            if s >= M:
-                continue
-            mod = p**(M - s)
-            prod = vector(ZZ, [o % mod for o in w]) * B
-            ps = p**s
-            try:
-                acc[l] += ps * prod
-            except KeyError:
-                acc[l] = ps * prod
-        ans = [0] * self.ncols
-        for l, w in acc.items():
-            for c, o in zip(self.col_bands[l], w):
-                ans[c] = o
-        return ans
-
-
-class _PrecisionTracker(SageObject):
-    r'''
-    The data needed to keep track of the precision of the coefficients in
-    _improve_integral: the nonzero entries of the action matrices, with their
-    valuations and precisions. They are only computed when needed (when some
-    input is not known to the full precision).
-    '''
-    def __init__(self, blocks, O, N, min_input_prec):
-        # blocks: list of (row offset, column offset, {(r, c) : entry}, precision),
-        # where the entries are integers (d = 1) or lists of coordinates
-        self._blocks = blocks
-        self._O = O
-        self._N = int(N)
-        self.min_input_prec = int(min(min_input_prec, N))
-
-    @lazy_attribute
-    def arrays(self):
-        import numpy as np
-        O, N = self._O, self._N
-        p, e = O.p, int(O.e)
-        src, dst, vals, precs = [], [], [], []
-        for r0, c0, entries, prec in self._blocks:
-            if not entries:
-                continue
-            positions = np.array(list(entries.keys()), dtype=np.int64)
-            src.append(positions[:, 0] + r0)
-            dst.append(positions[:, 1] + c0)
-            if O.d == 1:
-                vals.append(np.array([e * int(ZZ(x).valuation(p)) for x in entries.values()], dtype=np.int64))
-            else:
-                vals.append(np.array(O.element_valuations([c for u in entries.values() for c in u], N), dtype=np.int64))
-            precs.append(np.full(len(entries), int(prec), dtype=np.int64))
-        if not src:
-            empty = np.zeros(0, dtype=np.int64)
-            return empty, empty, empty, empty, empty, empty
-        src, dst, vals, precs = [np.concatenate(o) for o in (src, dst, vals, precs)]
-        # Sort by target, for np.minimum.reduceat
-        order = np.argsort(dst, kind='stable')
-        src, dst, vals, precs = src[order], dst[order], vals[order], precs[order]
-        targets, starts = np.unique(dst, return_index=True)
-        return src, dst, vals, precs, targets, starts
-
-
-class _OKCoordinates(SageObject):
-    r'''
-    Coordinates of the elements of the ring of integers O_K of a p-adic field
-    K in a Z_p-basis.
-
-    The basis elements (pi^i * g^j) have valuations i, so that the elements of
-    pi^N O_K are those whose coordinate (i, j) is divisible by
-    p^ceil((N - i) / e). Since all the maps that we use are O_K-linear, we can
-    reduce each coordinate modulo its own power of p without losing anything.
-    '''
-    def __init__(self, K):
-        self.K = K
-        self.p = ZZ(K.prime())
-        self.e = ZZ(K.absolute_e())
-        self.basis = _integral_basis(K)
-        self.d = len(self.basis)
-        self.offsets = [ZZ(b.valuation()) for b in self.basis]
-        # For absolute Eisenstein extensions, Sage's x.polynomial() can be wrong
-        # in the last digits when the absolute precision of x is larger than
-        # the precision cap (as happens for elements of positive valuation).
-        # So in that case we compute everything from the Eisenstein polynomial.
-        self._absolute_eisenstein = (K.absolute_degree() > 1 and self.e > 1
-                                     and K.base_ring().absolute_degree() == 1)
-        if self._absolute_eisenstein:
-            # Multiplication by pi: pi * pi^b = pi^(b+1), and pi^e = -sum_k f_k pi^k
-            e = self.e
-            f = [ZZ(c.lift()) for c in K.defining_polynomial().list()]
-            Rpi = matrix(ZZ, e, e)
-            for b in range(e - 1):
-                Rpi[b, b + 1] = 1
-            for k in range(e):
-                Rpi[e - 1, k] = -f[k]
-            self._Rpi_powers = {0 : matrix.identity(ZZ, e), 1 : Rpi}
-            # The b-th basis element is pi^b
-            self.R = [self._Rpi_power(b) for b in range(e)]
-        else:
-            # Matrix of the multiplication by the b-th basis element, acting on row vectors
-            self.R = [matrix(ZZ, [self.coords(bb * b) for bb in self.basis]) for b in self.basis]
-
-    def _Rpi_power(self, v):
-        try:
-            return self._Rpi_powers[v]
-        except KeyError:
-            ans = self._Rpi_powers[v] = self._Rpi_powers[1]**v
-            return ans
-
-    @lazy_attribute
-    def _kind(self):
-        K = self.K
-        if K.absolute_degree() == 1:
-            return 'Qp'
-        if self._absolute_eisenstein:
-            return 'absolute eisenstein'
-        try:
-            if self.e == 1:
-                _ = K(1)._flint_rep_abs()
-                return 'unramified'
-            B = K.base_ring()
-            if B.absolute_e() == 1 and B.absolute_degree() > 1:
-                _ = K(1)._poly_rep().list()[0]._flint_rep_abs()
-                return 'eisenstein over unramified'
-        except AttributeError:
-            pass
-        return 'generic'
-
-    def coords(self, x):
-        kind = self._kind
-        if x.is_zero():
-            return [ZZ(0)] * self.d
-        if kind == 'Qp':
-            return [ZZ(x.lift())]
-        if kind == 'unramified':
-            return self._unramified_coords(x, self.d)
-        if kind == 'eisenstein over unramified':
-            # The underlying polynomial in pi, over the (floating point)
-            # unramified ring. Much faster than x.polynomial()
-            f = self.d // self.e
-            ans = [c for a in x._poly_rep().list() for c in self._unramified_coords(a, f)]
-            return ans + [ZZ(0)] * (self.d - len(ans))
-        if kind == 'absolute eisenstein':
-            v = x.valuation()
-            if v > 0:
-                # x = pi^v * u, and the precision of the unit u is at most the cap
-                return list(vector(ZZ, _coordinates(x.unit_part(), self.K)) * self._Rpi_power(v))
-        return _coordinates(x, self.K)
-
-    def _unramified_coords(self, x, f):
-        if x.is_zero():
-            return [ZZ(0)] * f
-        # x = p^v * poly(g)
-        poly, v = x._flint_rep_abs()
-        if v < 0:
-            raise ValueError('Not integral')
-        pv = self.p**v
-        coeffs = poly.list()
-        return [ZZ(c) * pv for c in coeffs] + [ZZ(0)] * (f - len(coeffs))
-
-    def moduli(self, N):
-        r'''
-        The moduli of the coordinates of the elements of pi^N O_K.
-        '''
-        return [self.p**max(0, -((o - N) // self.e)) for o in self.offsets]
-
-    def valuation(self, w, N):
-        r'''
-        Valuation of a vector of coordinates of elements (at most N).
-        '''
-        p, e, d = self.p, self.e, self.d
-        return min([N] + [e * ZZ(c).valuation(p) + self.offsets[k % d] for k, c in enumerate(w) if c != 0])
-
-    def element_valuations(self, w, N):
-        r'''
-        The valuations (at most N) of the elements whose coordinates are the
-        consecutive blocks of d entries of w, as a list of python integers.
-        '''
-        p, e, d, offsets = self.p, int(self.e), self.d, self.offsets
-        N = int(N)
-        w = [ZZ(c) for c in w]
-        if d == 1:
-            return [e * int(c.valuation(p)) if c else N for c in w]
-        ans = []
-        for k in range(0, len(w), d):
-            v = N
-            for c, o in zip(w[k : k + d], offsets):
-                if c:
-                    v = min(v, e * int(c.valuation(p)) + int(o))
-            ans.append(v)
-        return ans
-
-    def element(self, c, N):
-        K = self.K
-        kind = self._kind
-        c = [ZZ(o) for o in c]
-        if kind == 'Qp':
-            return K(c[0]).add_bigoh(N)
-        if kind == 'unramified':
-            return K(c).add_bigoh(N)
-        if kind == 'eisenstein over unramified':
-            B = K.base_ring()
-            f = self.d // self.e
-            return K([B(c[i * f : (i + 1) * f]) for i in range(self.e)]).add_bigoh(N)
-        return _from_coordinates(c, K).add_bigoh(N)
-
-
-@cached_function
-def _ok_coordinates(K):
-    return _OKCoordinates(K)
-
-
-@cached_function
-def _inverse_integers(K, n):
-    r'''
-    The list [1/1, 1/2, ..., 1/n] of elements of K.
-    '''
-    return [None] + [K(QQ(1) / k) for k in range(1, n + 1)]
-
-
-def _ramification_data(K):
-    p = K.prime()
-    try:
-        e = K.absolute_e()
-    except AttributeError:
-        e = K.ramification_index()
-    return p, ZZ(e)
-
-
-def log_principal(u, prec=None):
-    r'''
-    Logarithm of a principal unit u (that is, u = 1 mod the maximal ideal),
-    computed with the power series of log(1 + y).
-
-    This is much faster than u.log() for extensions of extensions.
-    '''
-    K = u.parent()
-    p, e = _ramification_data(K)
-    y = u - 1
-    if y.is_zero():
-        return K(0).add_bigoh(u.precision_absolute())
-    vy = y.valuation()
-    if vy <= 0:
-        raise ValueError('Not a principal unit')
-    if prec is None:
-        prec = u.precision_absolute()
-    # The k-th term has valuation k * vy - e * v_p(k) >= f(k) = k * vy - e * log_p(k),
-    # and f is increasing for k >= e / (vy * ln(p)). Stop when all the
-    # remaining terms are negligible.
-    lnp = float(log(p))
-    kmax = 1
-    while kmax * vy * lnp < e or (kmax + 1) * vy - e * float(log(kmax + 1)) / lnp < prec:
-        kmax += 1
-    inv = _inverse_integers(K, kmax)
-    # Horner: log(1+y) = y (1 - y (1/2 - y (1/3 - ...)))
-    ans = inv[kmax]
-    for k in range(kmax - 1, 0, -1):
-        ans = inv[k] - y * ans
-    return (y * ans).add_bigoh(prec)
-
-
-def exp_small(s, prec=None):
-    r'''
-    Exponential of s, which is assumed to have valuation > e / (p - 1).
-    '''
-    K = s.parent()
-    p, e = _ramification_data(K)
-    if prec is None:
-        prec = min(s.precision_absolute(), K.precision_cap())
-    if s.is_zero():
-        return K(1).add_bigoh(prec)
-    vs = s.valuation()
-    if vs * (p - 1) <= e:
-        raise ValueError('exp does not converge')
-    # The k-th term has valuation k * vs - e * v_p(k!) >= k * vs - e * (k - 1) / (p - 1),
-    # which is increasing in k. Stop when all the remaining terms are negligible.
-    kmax = 1
-    while (kmax + 1) * vs - e * QQ(kmax) / (p - 1) < prec:
-        kmax += 1
-    inv = _inverse_integers(K, kmax)
-    # Horner: exp(s) = 1 + s (1 + s/2 (1 + s/3 (...)))
-    ans = K(1)
-    for k in range(kmax, 0, -1):
-        ans = 1 + s * inv[k] * ans
-    return ans.add_bigoh(prec)
-
-
-def principal_part_log(w, q):
-    r'''
-    For a unit w, return log of its principal part w / teichmuller(w), computed
-    as log(w^(q-1)) / (q-1), which avoids computing the Teichmuller lift.
-    '''
-    return log_principal(w**(q - 1)) / (q - 1)
-
-
-class LogSeries(SageObject):
-    r'''
-    Power series log F(t), where t is the coordinate given by the parameter.
-    '''
-    def __init__(self, value, parameter):
-        self._value = value
-        self._parameter = parameter
-
-    def evaluate(self, D, prec=None):
-        a, b, c, d = self._parameter.list()
-        phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)
-        if isinstance(D, DivisorsElement):
-            return sum(n * evalpoly(self._value, phi(P), prec=prec) for P, n in D)
-        else:
-            return evalpoly(self._value, phi(D), prec=prec)
-
-    def eval_dlog(self, D):
-        r'''
-        Logarithmic derivative of the corresponding multiplicative series,
-        which here is just the derivative of the log-series.
-        '''
-        a, b, c, d = self._parameter.list()
-        phiD = (a * D + b) / (c * D + d)
-        try:
-            der = self._der_coeffs
-        except AttributeError:
-            der = [k * o for k, o in enumerate(self._value)][1:]
-            self._der_coeffs = der
-        chainrule = (a * d - b * c) / (c * D + d) ** 2
-        return chainrule * evalpoly(der, phiD)
-
-    def act(self, action_data):
-        r'''
-        Log of the result of fast_act on the corresponding multiplicative
-        series: compose with the Mobius transformation, and normalize so that
-        the value at 0 is 0 (the multiplicative version divides by the value at
-        0 instead).
-        '''
-        M, param = action_data
-        ans = self._value * M
-        ans[0] = 0
-        return LogSeries(ans, param)
-
-    def _repr_(self):
-        return f'log-series {self._value}'
-
-
-def log_series_of_divisor(D, parameter, prec):
-    r'''
-    log of the power series that MeromorphicFunctions(K, p, prec)(D, parameter)
-    represents, namely the sum over (Q, n) in D of n * log(1 - x_Q t), where
-    x_Q = (c Q + d) / (a Q + b).
-    '''
-    K = parameter.base_ring()
-    a, b, c, d = parameter.list()
-    coeffs = [K(0) for _ in range(prec)]
-    for Q, n in D:
-        x = c / a if Q == Infinity else (c * Q + d) / (a * Q + b)
-        if x.valuation() <= 0:
-            raise NotImplementedError('The series is not a principal unit')
-        xk = x
-        for k in range(1, prec):
-            coeffs[k] += n * xk
-            xk *= x
-    inv = _inverse_integers(K, prec)
-    coeffs = [K(0)] + [-inv[k] * coeffs[k] for k in range(1, prec)]
-    return vector(K, [o.add_bigoh(prec) for o in coeffs])
 
 
 class ThetaOCAdditive(SageObject):
@@ -787,15 +168,8 @@ class ThetaOCAdditive(SageObject):
         the action, and the series in F2) is integral, return what is needed
         to do the iteration with integer matrices (which is much faster than
         with generic matrices over K): the keys, the series length P, the
-        iteration matrix (see _IntegerOperator), the vector of F2, the
-        coordinates of O_K (see _OKCoordinates) and the data to keep track of
-        the precision (see _PrecisionTracker). Otherwise return None.
-
-        Each element of O_K is replaced by its coordinates in a Z_p-basis of
-        O_K, and the multiplication by an element of O_K by an integer
-        matrix. The matrices of the action are computed directly in these
-        coordinates, with the recurrence that defines the powers of the
-        Mobius transformations, and everything is computed modulo pi^P.
+        iteration operator (see LogSeriesOperator), and the vector of F2 with
+        the precisions of its coefficients. Otherwise return None.
         '''
         try:
             return self._integral
@@ -810,95 +184,25 @@ class ThetaOCAdditive(SageObject):
 
     def _build_integral_data(self):
         K = self.K
-        O = _ok_coordinates(K)
         keys = list(self.F2.keys())
         P = self.prec
-        n = len(keys)
-        d = O.d
-        N = P
-        # Build the integer matrices directly, without computing the action
-        # matrices over K. They are those of get_action_data: row r contains
-        # the coefficients of zz^r, where zz = (b1 + a1 t) / (1 + c1 t), for a1,
-        # b1 and c1 integral.
+        # The Mobius transformations of the action (see get_action_data):
+        # new_i = sum_{j != -i} F_j o zz_ij, where zz_ij = (b1 + a1 t) / (1 + c1 t)
+        # with a1, b1 and c1 integral.
         gens = dict(self.G.gens_extended())
         params = {i : F._parameter for i, F in self.F2.items()}
-        moebius = {}
-        for i in keys:
-            for j in keys:
+        terms = {}
+        for bi, i in enumerate(keys):
+            for bj, j in enumerate(keys):
                 if i == -j:
                     continue
                 tau = params[i].change_ring(K)
-                a, b, c, dd = (params[j] * (tau * gens[i]).adjugate()).list()
-                if dd.is_zero():
-                    raise ValueError('d = 0')
-                coeffs = [a / dd, b / dd, c / dd]
-                _check_integral(coeffs)
-                moebius[i, j] = coeffs
-        series = [o for F in self.F2.values() for o in F._value]
+                abcd = (params[j] * (tau * gens[i]).adjugate()).list()
+                terms[bj, bi] = [(1, _integral_moebius_coefficients(abcd))]
+        series = [o for i in keys for o in self.F2[i]._value]
         _check_integral(series)
-        # We compute modulo pi^P, and keep track of the precision of each
-        # coefficient separately (see _improve_integral). The entries of the
-        # action matrices are known to the precision of a1, b1 and c1, since
-        # products and sums of integral elements do not lose absolute precision.
-        mods = O.moduli(P)
-        moebius_prec = {ij : min([P + 1] + [o.precision_absolute() for o in coeffs]) for ij, coeffs in moebius.items()}
-        # For the precision tracking: the nonzero entries of the action
-        # matrices, as (sources, targets, valuations, precision) for each pair
-        track = []
-        if d == 1:
-            pN = mods[0]
-            A = matrix(ZZ, n * P, n * P)
-            for bi, i in enumerate(keys):
-                for bj, j in enumerate(keys):
-                    if i == -j:
-                        continue
-                    a1, b1, c1 = [int(_to_integer(o, pN)) for o in moebius[i, j]]
-                    M = _integer_moebius_matrix(a1, b1, c1, P, int(pN))
-                    # The normalization (value 0 at t = 0) is linear: kill column 0
-                    M.set_column(0, [0] * P)
-                    track.append((bj * P, bi * P, M.dict(), moebius_prec[i, j]))
-                    # As row vectors: new_i = sum_j F_j * M_ij
-                    A.set_block(bj * P, bi * P, M)
-        else:
-            # The multiplication by x is the integer matrix sum_b x_b R[b]. Compute
-            # all of them at once: rows of X are coordinates, and the rows of
-            # Rflat the matrices R[b], flattened.
-            Rflat = matrix(ZZ, [Rb.list() for Rb in O.R])
-            mult = lambda y : _reduce_columns(sum((ZZ(c) * Rb for c, Rb in zip(O.coords(y), O.R)), matrix(ZZ, d, d)), mods)
-            positions = []
-            X = []
-            for bi, i in enumerate(keys):
-                for bj, j in enumerate(keys):
-                    if i == -j:
-                        continue
-                    Ra, Rb, Rc = [mult(o) for o in moebius[i, j]]
-                    pair_entries = {}
-                    # The coordinates of the entries of the action matrix
-                    for r, c, u in _coordinate_moebius_entries(Ra, Rb, Rc, P, mods):
-                        if c == 0:
-                            continue # The normalization (value 0 at t = 0) kills column 0
-                        # As row vectors: new_i = sum_j F_j * M_ij
-                        positions.append(((bj * P + r) * d, (bi * P + c) * d))
-                        X.append(u)
-                        pair_entries[r, c] = u
-                    track.append((bj * P, bi * P, pair_entries, moebius_prec[i, j]))
-            Y = (matrix(ZZ, len(X), d, X) * Rflat).list() if X else []
-            entries_A = {}
-            k = 0
-            for row, col in positions:
-                for b1 in range(d):
-                    for b2 in range(d):
-                        val = Y[k] % mods[b2]
-                        k += 1
-                        if val:
-                            entries_A[row + b1, col + b2] = val
-            A = entries_A
-        L2 = vector(ZZ, [c % m for i in keys for o in self.F2[i]._value for c, m in zip(O.coords(o), mods)])
-        exps = [ZZ(md).valuation(O.p) if md > 1 else 0 for md in mods] * (n * P)
-        import numpy as np
-        L2prec = np.array([int(min(o.precision_absolute(), P)) for i in keys for o in self.F2[i]._value], dtype=np.int64)
-        tracker = _PrecisionTracker(track, O, P, min(list(moebius_prec.values()) + [int(L2prec.min())]))
-        return (keys, P, _IntegerOperator(A, O.p, exps, d, mode=self._integral_mode, size=(n * P * d, n * P * d)), L2, O, (tracker, L2prec))
+        op = LogSeriesOperator(K, P, len(keys), terms, mode=self._integral_mode)
+        return (keys, P, op, op.to_vector(series), op.initial_precisions(series))
 
     def _improve_integral(self, m, implementation, tol, data):
         r'''
@@ -906,10 +210,7 @@ class ThetaOCAdditive(SageObject):
         False if it cannot be used for the current approximation.
         '''
         import numpy as np
-        keys, P, A, L2, O, (tracker, L2prec) = data
-        K = self.K
-        d = O.d
-        p = K.prime()
+        keys, P, op, L2, L2prec = data
         N = P
         if implementation == 'list' and self._last_term is not None:
             source = self._last_term
@@ -922,50 +223,21 @@ class ThetaOCAdditive(SageObject):
         except ValueError:
             return False
         # We compute modulo pi^N (lifting the inputs), and keep track of the
-        # precision of each coefficient as the p-adic elements would: the
-        # error of a sum of products F_j[r] * M[r, c] has valuation at least
-        # min(prec(F_j[r]) + val(M[r, c]), prec(M[r, c]) + val(F_j[r])).
-        initial_prec = lambda elts : np.array([int(min(o.precision_absolute(), N)) for o in elts], dtype=np.int64)
-        prec_v = initial_prec(current)
-        prec_total = initial_prec(summed)
+        # precision of each coefficient as the p-adic elements would (see
+        # LogSeriesOperator.propagate).
+        prec_v = op.initial_precisions(current)
+        prec_total = op.initial_precisions(summed)
         # If all the inputs are known modulo pi^N, so are all the results
-        tracking = min(int(prec_v.min()), int(prec_total.min()), tracker.min_input_prec) < N
-        if tracking:
-            src, dst, Mval, Mprec, targets, starts = tracker.arrays
+        tracking = min(int(prec_v.min()), int(prec_total.min()), op.min_input_prec, int(L2prec.min())) < N
         def propagate(precs, w):
             if not tracking:
                 return precs
-            vals = np.array(O.element_valuations(w, N), dtype=np.int64)
-            ans = np.full(len(precs), int(N), dtype=np.int64)
-            if len(src):
-                # The entries are sorted by target
-                q = np.minimum(precs[src] + Mval, Mprec + vals[src])
-                ans[targets] = np.minimum(ans[targets], np.minimum.reduceat(q, starts))
-            return ans
-        size = lambda w : O.valuation(w, N)
-        if d == 1 and A.mode == 'dense':
-            # A single modulus: use Sage's integer vectors (FLINT)
-            pN = O.moduli(N)[0]
-            reduce = lambda w : vector(ZZ, w).apply_map(lambda o : o % pN)
-            apply = lambda w : w * A.A
-            add = lambda a, b : a + b
-            sub = lambda a, b : a - b
-        else:
-            # Vectors are lists of python integers, coordinate k reduced modulo mods[k]
-            mods = [int(o) for o in O.moduli(N)] * (len(keys) * P)
-            reduce = lambda w : [o % md for o, md in zip(w, mods)]
-            apply = A.apply
-            add = lambda a, b : [x + y for x, y in zip(a, b)]
-            sub = lambda a, b : [x - y for x, y in zip(a, b)]
-        to_vector = lambda elts : reduce([int(c) for o in elts for c in O.coords(o)])
+            return op.propagate(precs, w)
         def to_series(w, precs):
-            return {i : LogSeries(vector(K, [O.element(w[(bi * P + r) * d : (bi * P + r + 1) * d], int(precs[bi * P + r]))
-                                             for r in range(P)]),
-                                  self.F2[i]._parameter)
-                    for bi, i in enumerate(keys)}
-        v = to_vector(current)
-        total = to_vector(summed)
-        L2 = reduce([int(o) for o in L2])
+            return {i : LogSeries(value, self.F2[i]._parameter) for i, value in zip(keys, op.to_values(w, precs))}
+        reduce, apply, add, sub, size = op.reduce, op.apply, op.add, op.sub, op.valuation
+        v = op.to_vector(current)
+        total = op.to_vector(summed)
         self.last_change = None
         best = None
         stalled = 0

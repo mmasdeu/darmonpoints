@@ -8,7 +8,14 @@ from darmonpoints.arithgroup import angle_sign, intersect_geodesic_arcs
 from darmonpoints.cohomology_arithmetic import ArithAction, CohArbitrary
 from darmonpoints.homology import *
 # from darmonpoints.ocmodule import AddMeromorphicFunctions
-from darmonpoints.meromorphic import MeromorphicFunctions
+from darmonpoints.meromorphic import (
+    AdditiveMeromorphicFunctions,
+    LogSeriesOperator,
+    MeromorphicFunctions,
+    _check_integral,
+    _integral_moebius_coefficients,
+    exp_small,
+)
 from darmonpoints.sarithgroup import *
 from darmonpoints.util import *
 
@@ -17,7 +24,20 @@ distinguished_open = 'Uinf'
 
 
 class OverconvergentDVCocycle(SageObject):
-    def __init__(self, G, phi0, base_ring=None):
+    r"""
+    The overconvergent lift of the Darmon-Vonk cocycle phi0, with values in
+    meromorphic functions.
+
+    If ``additive`` is True, the functions are stored additively (as their
+    logarithms, see AdditiveMeromorphicFunctions), and the iteration of Up
+    is done with integer matrices (see LogSeriesOperator), which is much
+    faster. This needs e < p - 1 and that the functions are principal units.
+    If ``additive`` is False, use the multiplicative implementation
+    (MeromorphicFunctions). If it is None (the default), use the additive
+    implementation when possible.
+    """
+
+    def __init__(self, G, phi0, base_ring=None, additive=None):
         self.G = G
         self.phi0 = phi0
         HDiv = phi0.parent()
@@ -31,29 +51,33 @@ class OverconvergentDVCocycle(SageObject):
         wp = G.embed(G.wp(), prec)
         act = lambda g, v: g.matrix().change_ring(K) * v
 
-        if distinguished_open == "Uinf":
-            Mer = MeromorphicFunctions(K, G.p, prec)
-        else:
-            Mer = MeromorphicFunctions(
-                K, G.p, prec, twisting_matrix=Matrix(ZZ, 2, 2, [0, 1, G.prime(), 0])
-            )  # DEBUG: used to be wp
-        self.HpMer = CohArbitrary(G.small_group(), Mer, action_map=act)
         Gpgens = G.small_group().gens()
-        phi = self.HpMer([phi0.evaluate(G.Gpn(g.quaternion_rep)) for g in Gpgens])
-        phi_tw = self.HpMer(
-            [
+        if distinguished_open == "Uinf":
+            values = [
                 phi0.evaluate(
                     G.Gpn(G.wp() ** -1 * g.quaternion_rep * G.wp())
                 ).left_act_by_matrix(wp)
                 for g in Gpgens
             ]
-        )
-        if distinguished_open == "Uinf":
-            self.phi1 = phi_tw
-            self.phi2 = phi
         else:
-            self.phi1 = phi
-            self.phi2 = phi_tw
+            values = [phi0.evaluate(G.Gpn(g.quaternion_rep)) for g in Gpgens]
+        # (For "OCp", the twisting matrix [0, 1, p, 0] used to be passed to
+        # MeromorphicFunctions, which ignores it.)
+        Mer = None
+        if additive is None or additive:
+            try:
+                Mer = AdditiveMeromorphicFunctions(K, G.p, prec)
+                values = [Mer(D) for D in values]
+            except NotImplementedError as e:
+                if additive:
+                    raise
+                verbose("Using the multiplicative implementation: %s" % e)
+                Mer = None
+        if Mer is None:
+            Mer = MeromorphicFunctions(K, G.p, prec)
+        self.additive = isinstance(Mer, AdditiveMeromorphicFunctions)
+        self.HpMer = CohArbitrary(G.small_group(), Mer, action_map=act)
+        self.phi1 = self.HpMer(values)
 
     def base_ring(self):
         return self.K
@@ -65,11 +89,16 @@ class OverconvergentDVCocycle(SageObject):
         G = self.G
         p = G.prime()
         GGp = G.small_group()
+        # (get_hecke_data is cached, and its keys are the Up_reps)
         if distinguished_open == "Uinf":
-            Up_reps = tuple([G.wp() ** -1 * o * G.wp() for o in G.get_Up_reps()])
+            Up_reps = tuple(
+                [set_immutable(G.wp() ** -1 * o * G.wp()) for o in G.get_Up_reps()]
+            )
         else:
-            Up_reps = tuple(G.get_Up_reps())
+            Up_reps = tuple([set_immutable(o) for o in G.get_Up_reps()])
         Up_data = GGp.get_hecke_data(p, hecke_reps=Up_reps)
+        if self.additive and self._improve_integral(prec, Up_reps, Up_data):
+            return
         tmp = self.HpMer(self.phi1)
         phi_list = [self.HpMer(0), self.HpMer(self.phi1)]
         val = -1
@@ -87,6 +116,55 @@ class OverconvergentDVCocycle(SageObject):
         self.phi_even, self.phi_odd = phi_list
         return
 
+    def _improve_integral(self, prec, Up_reps, Up_data):
+        r"""
+        Same as the iteration of improve, for the additive implementation.
+        Up is a linear map on the values of the cocycle at the generators,
+        which is computed once as an integer matrix (see LogSeriesOperator).
+        Return False if it cannot be used (when the Mobius transformations of
+        the action are not integral).
+        """
+        import numpy as np
+
+        GGp = self.G.small_group()
+        Mer = self.HpMer.coefficient_module()
+        K = Mer.base_ring()
+        P = Mer.series_length()
+        values = self.phi1.values()
+        current = [o for f in values for o in f._value]
+        try:
+            _check_integral(current)
+            terms = _up_operator_terms(GGp, Up_reps, Up_data, K)
+            op = LogSeriesOperator(K, P, len(values), terms)
+        except (TypeError, ValueError, ArithmeticError, NotImplementedError) as e:
+            verbose("Not using integer matrices: %s" % e)
+            return False
+        # The vectors of the iteration and of the two partial sums, and the
+        # precisions of their coefficients (see LogSeriesOperator.propagate)
+        v = op.to_vector(current)
+        prec_v = op.initial_precisions(current)
+        sums = [op.to_vector([K(0)] * len(current)), v]
+        sum_precs = [np.full(len(current), P, dtype=np.int64), prec_v]
+        tracking = min(int(prec_v.min()), op.min_input_prec) < P
+        val = -1
+        for i in range(prec):
+            update_progress(
+                float(val + 1) / prec, "Iterating Up (%s/%s)" % (val + 1, prec)
+            )
+            if tracking:
+                prec_v = op.propagate(prec_v, v)
+            v = op.reduce(op.apply(v))
+            sums[i % 2] = op.add(sums[i % 2], v)
+            sum_precs[i % 2] = np.minimum(sum_precs[i % 2], prec_v)
+            val = op.valuation(v)
+            if val >= prec or not any(v):
+                break
+        self.phi_even, self.phi_odd = [
+            self.HpMer([Mer(w, check=False) for w in op.to_values(s, sp)])
+            for s, sp in zip(sums, sum_precs)
+        ]
+        return True
+
     def evaluate_at_cycle(self, theta, parity):
         ans_even, ans_odd = self._evaluate_at_cycle(theta)
         if parity == "even":
@@ -99,6 +177,10 @@ class OverconvergentDVCocycle(SageObject):
             return ans_even * ans_odd
 
     def _evaluate_at_cycle(self, theta):
+        if self.additive:
+            # Sum the logarithms, and take the exponential at the end
+            ans_even, ans_odd = self._log_evaluate_at_cycle(theta)
+            return exp_small(ans_even), exp_small(ans_odd)
         p = self.G.prime()
         ans_odd = 1
         ans_even = 1
@@ -106,6 +188,54 @@ class OverconvergentDVCocycle(SageObject):
             ans_odd *= self.phi_odd.evaluate(g).evaluate(D)
             ans_even *= self.phi_even.evaluate(g).evaluate(D)
         return ans_even, ans_odd
+
+    def _log_evaluate_at_cycle(self, theta):
+        r"""
+        For the additive implementation, the logarithms of the values of
+        _evaluate_at_cycle.
+        """
+        ans_odd = self.K(0)
+        ans_even = self.K(0)
+        for g, D in theta:
+            ans_odd += self.phi_odd.evaluate(g).evaluate(D)
+            ans_even += self.phi_even.evaluate(g).evaluate(D)
+        return ans_even, ans_odd
+
+
+def _up_operator_terms(GGp, Up_reps, Up_data, K):
+    r"""
+    The terms (see LogSeriesOperator) of the Up operator acting on the values
+    of a cocycle at the generators of GGp, as computed by
+    CohArbitrary.apply_hecke_operator: the value at the i-th generator is the
+    sum over the g in Up_reps of g * c(w), where w = Up_data[g, gamma_i] and
+    c(w) is evaluated as in _evaluate_word_tietze_naive.
+    """
+    gens = GGp.gens()
+    gen_mats = [o.matrix() for o in gens]
+    gen_inv_mats = [(o**-1).matrix() for o in gens]
+    terms = {}
+    for i, gamma in enumerate(gens):
+        for g in Up_reps:
+            gmat = GGp(g).matrix()
+            w = Up_data[(g, gamma.quaternion_rep)]
+            word = (w if w.parent() is GGp else GGp(w)).word_rep
+            h = None  # The matrix of the prefix of the word
+            for l in word:
+                if l > 0:
+                    j = l - 1
+                    m = gmat if h is None else gmat * h
+                    terms.setdefault((j, i), []).append((1, m))
+                    h = gen_mats[j] if h is None else h * gen_mats[j]
+                else:
+                    j = -l - 1
+                    h = gen_inv_mats[j] if h is None else h * gen_inv_mats[j]
+                    terms.setdefault((j, i), []).append((-1, gmat * h))
+    # The action of a matrix m on the functions (see get_action_data) is the
+    # composition with the Mobius transformation of m.adjugate()
+    moebius = lambda m: _integral_moebius_coefficients(
+        m.change_ring(K).adjugate().list()
+    )
+    return {ji: [(n, moebius(m)) for n, m in lst] for ji, lst in terms.items()}
 
 
 def construct_conjectural_field(
@@ -234,13 +364,21 @@ def construct_bigfield(Dlist, magma, base=None, ringclassfield=True):
 
 
 def darmon_vonk_overconvergent_cocycle(
-    G, D, prec, lift=True, working_prec=None, extra_conductor=1, outfile=None, **kwargs
+    G,
+    D,
+    prec,
+    lift=True,
+    working_prec=None,
+    extra_conductor=1,
+    outfile=None,
+    additive=None,
+    **kwargs,
 ):
     fwrite("# Initializing cocycle...", outfile)
     phi0 = darmon_vonk_cocycle(
         G, D, prec, extra_conductor=extra_conductor, outfile=outfile, **kwargs
     )
-    Phi = OverconvergentDVCocycle(G, phi0)
+    Phi = OverconvergentDVCocycle(G, phi0, additive=additive)
     if lift:
         fwrite("# Lifting cocycle...", outfile)
         Phi.improve(prec)
@@ -291,6 +429,9 @@ def darmon_vonk_point(
     **kwargs,
 ):
     r"""
+    The keyword ``additive`` (None by default) selects the implementation of
+    the overconvergent cocycle, see OverconvergentDVCocycle.
+
     EXAMPLES ::
 
         sage: from darmonpoints.darmonvonk import darmon_vonk_point
@@ -327,6 +468,7 @@ def darmon_vonk_point(
         working_prec = prec
 
     max_degree = kwargs.get("max_degree", 16)
+    additive = kwargs.pop("additive", None)
 
     fwrite("#### Starting computation of the Darmon-Vonk point ####", outfile)
     magma_seed = kwargs.get("magma_seed", None)
@@ -376,6 +518,7 @@ def darmon_vonk_point(
                     lift=False,
                     extra_conductor=extra_conductor_1,
                     outfile=outfile,
+                    additive=additive,
                     **kwargs,
                 )
                 needs_lift = True
