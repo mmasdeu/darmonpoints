@@ -858,6 +858,20 @@ class CohArbitrary(CohomologyGroup):
 ##=================================================================================
 
 
+def up_method():
+    r"""
+    How ArithCohOverconvergent.apply_Up computes Up: the value of the
+    environment variable DARMONPOINTS_UP, 'legacy' (the default: evaluation of
+    the cocycle on the words of Up at every application) or 'operator' (the
+    same linear map, computed once as an integer matrix, see
+    ArithCohOverconvergent.up_operator; the same results).
+    """
+    method = os.environ.get("DARMONPOINTS_UP", "legacy")
+    if method not in ("legacy", "operator"):
+        raise ValueError("DARMONPOINTS_UP must be 'legacy' or 'operator', not %r" % method)
+    return method
+
+
 class ArithCohOverconvergent(ArithCoh):
     def __init__(self, G, base, use_ps_dists=False):
         self._overconvergent = 1
@@ -890,6 +904,95 @@ class ArithCohOverconvergent(ArithCoh):
         S0 = V.Sigma0()
         return [S0(self.group().embed(g, prec), check=False) for g in Up_reps]
 
+    @cached_method
+    def up_operator(self):
+        r"""
+        The Up operator of apply_Up as one integer matrix acting on the
+        concatenated moments of the values of a cocycle at the generators (see
+        up_method), wrapped in a meromorphic._IntegerOperator.
+
+        apply_Up computes, for the i-th generator gamma_i,
+
+            Up(c)(gamma_i) = sum_k s_k * c(t_k(gamma_i)),
+
+        where s_k runs over the local Up representatives and c(t) is evaluated
+        through the Fox gradient of the word of t: c(t) = sum_j G_(t, j) c(g_j),
+        G_(t, j) being the sum of the action matrices of the prefixes
+        (CohomologyGroup.GA_to_local). So Up(c)(gamma_i) = sum_j B_ij c(g_j),
+        with B_ij = sum_k P_(s_k) G_(t_k(gamma_i), j), P_(s_k) the action
+        matrix of s_k (OCVn._get_powers). All of it is exact modulo p^N (the
+        moments are integers modulo p^N), so the result is the same element as
+        with the legacy evaluation, whose products and sums are the same ones,
+        in another order.
+
+        It only depends on the group and the precision, so it is cached here
+        (this cohomology group is unique for the S-arithmetic group and the
+        base ring): the lifts of the two signs at infinity share it.
+
+        Returns a tuple (operator, n, D, pN) with n the number of generators and
+        D the number of moments, or None if it does not apply (Shapiro groups).
+        """
+        from .meromorphic import _IntegerOperator
+
+        if self.use_shapiro():
+            return None
+        V = self.coefficient_module()
+        R = V.base_ring()
+        prec = R.precision_cap()
+        G = self.S_arithgroup()
+        Gpn = G.small_group()
+        gammas = self.group().gens()
+        Up_reps = G.get_Up_reps()
+        repslocal = self.get_Up_reps_local(prec)
+        n = len(gammas)
+        D = V.dimension()
+        pN = ZZ(V._pN)
+        zero = Matrix(ZZ, D, D, 0)
+        B = [[None] * n for _ in range(n)]
+        Gr = self.group()
+        for i, gamma in enumerate(gammas):
+            for sk, g in zip(repslocal, Up_reps):
+                t = Gpn.get_hecke_ti(g, gamma)
+                x = t if t.parent() is Gr else Gr(t)  # as CohomologyElement.evaluate
+                Ps = V._get_powers(sk.matrix())  # as OCVnElement._acted_upon_
+                for j, A in enumerate(self.fox_gradient(tuple(x.word_rep))):
+                    Gtj = self.GA_to_local(A)
+                    if not hasattr(Gtj, "nrows"):  # the zero of the group algebra
+                        continue
+                    term = Ps * Gtj
+                    B[i][j] = term if B[i][j] is None else B[i][j] + term
+        # Row vectors (_IntegerOperator computes v * A): the block (j, i) of A is
+        # the transpose of B_ij, reduced modulo p^N
+        blocks = []
+        for j in range(n):
+            for i in range(n):
+                Bij = B[i][j]
+                blocks.append(zero if Bij is None else Bij.transpose().apply_map(lambda o: o % pN))
+                B[i][j] = None
+        A = block_matrix(ZZ, n, n, blocks, subdivide=False)
+        del blocks
+        op = _IntegerOperator(A, R.prime(), [ZZ(R.precision_cap())] * (n * D), 1)
+        return (op, n, D, pN)
+
+    def _apply_up_operator(self, c, scale=1):
+        r"""
+        apply_Up through up_operator (the same result as the legacy evaluation).
+        """
+        op, n, D, pN = self.up_operator()
+        V = self.coefficient_module()
+        v = [int(o) for val in c.values() for o in val._moments.lift().list()]
+        w = op.apply(v)
+        pN = int(pN)
+        R = V._R
+        vals = [
+            V.element_class(V, Matrix(R, D, 1, [o % pN for o in w[i * D : (i + 1) * D]]), check=False)
+            for i in range(n)
+        ]
+        ans = self(vals)
+        if scale != 1:
+            ans *= scale
+        return ans
+
     def apply_Up(
         self,
         c,
@@ -902,7 +1005,20 @@ class ArithCohOverconvergent(ArithCoh):
     ):  # one-variable overconvergent
         r"""
         Apply the Up Hecke operator operator to ``c``.
+
+        With up_method() == 'operator' (environment variable DARMONPOINTS_UP),
+        and the default representatives, through the integer matrix of
+        up_operator: the same result, much faster when it is applied many
+        times (as in improve).
         """
+        if (
+            up_method() == "operator"
+            and repslocal is None
+            and Up_reps is None
+            and times == 0
+            and not self.use_shapiro()
+        ):
+            return self._apply_up_operator(c, scale=scale)
         V = self.coefficient_module()
         R = V.base_ring()
         gammas = self.group().gens()
