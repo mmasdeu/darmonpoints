@@ -70,6 +70,22 @@ class ps_adjuster(Sigma0ActionAdjuster):
         return tuple([a, -b, -c, d])
 
 
+def powers_method():
+    r"""
+    How OCVn._get_powers computes the matrices of the action on the moments:
+    the value of the environment variable DARMONPOINTS_POWERS, 'legacy' (the
+    default: products of power series over ZpCA) or 'integer' (a recurrence
+    with integers modulo p^N, O(N^2) instead of O(N^3) operations, the same
+    matrices).
+    """
+    import os
+
+    method = os.environ.get("DARMONPOINTS_POWERS", "legacy")
+    if method not in ("legacy", "integer"):
+        raise ValueError("DARMONPOINTS_POWERS must be 'legacy' or 'integer', not %r" % method)
+    return method
+
+
 class OCVnElement(ModuleElement):
     r"""
     This class represents elements in an overconvergent coefficient module.
@@ -413,16 +429,67 @@ class OCVn(Module, UniqueRepresentation):
         return x.submatrix(0, 0, M, M)
 
     def _get_powers(self, abcd, emb=None):
+        r"""
+        The matrix of the action of the matrix ``abcd`` = (a b; c d) on the
+        moments: row i contains the coefficients of ((b + a z)/(d + c z))^i,
+        modulo p^(depth - 1), as integers (cached, immutable).
+
+        Two methods, with the same result (see powers_method):
+
+        - 'integer': the rows are computed with integers modulo p^(depth - 1)
+          with the recurrence of meromorphic._integer_moebius_matrix, O(depth^2)
+          operations (when d is a unit; otherwise as 'legacy');
+
+        - 'legacy': products of power series over ZpCA, O(depth^3) operations.
+        """
         abcd = tuple(abcd.list())
         try:
             return self._cache_powers[abcd]
         except KeyError:
             pass
-        R = self._PowerSeries
         if emb is None:
             a, b, c, d = abcd
         else:
             a, b, c, d = emb(abcd).list()
+        x = None
+        if powers_method() == "integer":
+            x = self._get_powers_integer(a, b, c, d)
+        if x is None:
+            x = self._get_powers_legacy(a, b, c, d)
+        x.set_immutable()  # shared by acting_matrix: must not be modified
+        self._cache_powers[abcd] = x
+        return x
+
+    def _get_powers_integer(self, a, b, c, d):
+        r"""
+        The matrix of _get_powers, from integers modulo p^(depth - 1): with
+        a1 = a/d, b1 = b/d, c1 = c/d, (b + a z)/(d + c z) = (b1 + a1 z)/(1 + c1 z),
+        whose powers meromorphic._integer_moebius_matrix computes with the
+        recurrence u_k = b1 w_k + a1 w_(k-1) - c1 u_(k-1). Everything is exact
+        modulo p^(depth - 1), as the products of power series over
+        ZpCA(p, depth - 1) of the legacy method, so the matrices are the same.
+        Returns None when d is not a unit, or when an entry is known to less
+        than p^(depth - 1) (absolute precision): then the legacy products of
+        power series, which carry that loss of precision, give other last
+        digits than exact integers would (this happens with the local U_p
+        representatives, embedded at exactly the precision of the moments).
+        """
+        from .meromorphic import _integer_moebius_matrix
+
+        K = self._Rmod
+        a, b, c, d = K(a), K(b), K(c), K(d)
+        N = self._depth - 1
+        if any(o.precision_absolute() < N for o in (a, b, c, d)):
+            return None
+        if d.is_zero() or d.valuation() != 0:
+            return None
+        dinv = ~d
+        pN = int(self._pN)
+        a1, b1, c1 = [int(ZZ((o * dinv).lift())) % pN for o in (a, b, c)]
+        return _integer_moebius_matrix(a1, b1, c1, self._depth, pN)
+
+    def _get_powers_legacy(self, a, b, c, d):
+        R = self._PowerSeries
         r = R([b, a])
         s = R([d, c])
         ratio = r * s**-1
@@ -435,10 +502,7 @@ class OCVn(Module, UniqueRepresentation):
                 [R.base_ring().zero() for o in range(self._depth - len(ylist))]
             )
             xlist.append([ZZ(o) for o in ylist])
-        x = Matrix(ZZ, self._depth, self._depth, xlist)
-        x.set_immutable()  # shared by acting_matrix: must not be modified
-        self._cache_powers[abcd] = x
-        return x
+        return Matrix(ZZ, self._depth, self._depth, xlist)
 
     def _repr_(self):
         r"""
