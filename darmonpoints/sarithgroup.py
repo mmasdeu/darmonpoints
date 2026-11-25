@@ -289,6 +289,7 @@ class BigArithGroup_class(AlgebraicGroup):
             )
         self.Gn.embed = self.embed
         self.Gn.get_embedding = self.get_embedding
+        self.Gn.embedding_precision = self.embedding_precision
 
         verbose("Initializing arithmetic group G(pn)...")
         kwargs["O_magma"] = kwargs.pop("GpnBasis", None)
@@ -314,6 +315,7 @@ class BigArithGroup_class(AlgebraicGroup):
         verbose("T = %s x difficulty" % RealField(25)(t / difficulty))
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
+        self.Gpn.embedding_precision = self.embedding_precision
 
         if hasattr(self.Gpn.B, "is_division_algebra"):
             fwrite(
@@ -739,6 +741,19 @@ class BigArithGroup_class(AlgebraicGroup):
             verbose("wp = %s" % list(wp))
             return wp
         raise RuntimeError("Trouble finding wp by enumeration")
+
+    def embedding_precision(self):
+        r"""
+        The current precision of the p-adic embedding, that is, the precision
+        that ``embed(q, -1)`` and ``get_embedding(-1)`` use. It only grows:
+        ``get_embedding(prec)`` raises it to ``prec`` when ``prec`` is larger.
+
+        The arithmetic groups ``Gn`` and ``Gpn`` share it (it is hooked to them,
+        as ``embed`` and ``get_embedding``), so that their elements can resolve
+        the default precision of ``matrix()`` when it is called (see
+        ``ArithGroupElement.matrix``).
+        """
+        return self._prec
 
     def get_embedding(self, prec):
         r"""

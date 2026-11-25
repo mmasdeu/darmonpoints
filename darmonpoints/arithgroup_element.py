@@ -261,9 +261,24 @@ class ArithGroupElement(MultiplicativeGroupElement):
         return self.parent().embed(self.quaternion_rep, prec)
 
     def __iter__(self):
-        return self.embed(-1).list().__iter__()
+        return self.matrix().list().__iter__()
 
     def matrix(self, prec=-1):
+        r"""
+        The image of ``self`` under the p-adic embedding, with precision ``prec``.
+
+        The default ``prec = -1`` means the current precision of the embedding
+        of the group. It is resolved here, before calling the cached method
+        ``embed``: otherwise ``embed(-1)`` would cache the matrix computed at the
+        precision of the first call, and keep returning it after the precision
+        of the embedding has been raised (in the overconvergent lift, this capped
+        the moments at the 200 digits that BigArithGroup starts with).
+        """
+        if prec == -1:
+            try:
+                prec = self.parent().embedding_precision()
+            except AttributeError:  # groups not attached to a BigArithGroup
+                pass
         return self.embed(prec)
 
     def _act_on_(self, x, on_left):

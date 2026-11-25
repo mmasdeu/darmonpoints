@@ -148,6 +148,22 @@ def get_overconvergent_class_quaternionic(
 
     base_ring = Zp(p, prec)
 
+    # The group elements act on the moments through their p-adic matrices at the
+    # current precision of the embedding (ArithGroupElement.matrix), which
+    # BigArithGroup starts at 200: raise it above the precision of the lift, or
+    # the moments are only right modulo p^200 (silently: the action matrices are
+    # stored as integers). Raised to the working precision of darmon_point
+    # (2 prec + 10), which darmon_point reaches anyway (it builds the homology
+    # cycle before the lift): with exactly prec digits, some entries (sums of
+    # products by the splitting matrices) are known to one digit less, and the
+    # last digit of the moments is lost.
+    try:
+        needed = max(2 * prec + 10, 30)
+        if G.embedding_precision() < needed:
+            G.get_embedding(needed)
+    except AttributeError:
+        pass
+
     sgninfty = "plus" if sign_at_infinity == 1 else "minus"
     dist_type = "ps" if use_ps_dists is True else "fm"
     fname = "moments_%s_%s_%s_%s_%s.sobj" % (p, Ename, sgninfty, prec, dist_type)
