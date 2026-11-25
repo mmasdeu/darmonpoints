@@ -73,14 +73,14 @@ class ps_adjuster(Sigma0ActionAdjuster):
 def powers_method():
     r"""
     How OCVn._get_powers computes the matrices of the action on the moments:
-    the value of the environment variable DARMONPOINTS_POWERS, 'legacy' (the
-    default: products of power series over ZpCA) or 'integer' (a recurrence
-    with integers modulo p^N, O(N^2) instead of O(N^3) operations, the same
-    matrices).
+    the value of the environment variable DARMONPOINTS_POWERS, 'integer' (the
+    default: a recurrence with integers modulo p^N, O(N^2) instead of O(N^3)
+    operations) or 'legacy' (products of power series over ZpCA). The same
+    matrices.
     """
     import os
 
-    method = os.environ.get("DARMONPOINTS_POWERS", "legacy")
+    method = os.environ.get("DARMONPOINTS_POWERS", "integer")
     if method not in ("legacy", "integer"):
         raise ValueError("DARMONPOINTS_POWERS must be 'legacy' or 'integer', not %r" % method)
     return method

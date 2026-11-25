@@ -861,12 +861,12 @@ class CohArbitrary(CohomologyGroup):
 def up_method():
     r"""
     How ArithCohOverconvergent.apply_Up computes Up: the value of the
-    environment variable DARMONPOINTS_UP, 'legacy' (the default: evaluation of
-    the cocycle on the words of Up at every application) or 'operator' (the
-    same linear map, computed once as an integer matrix, see
-    ArithCohOverconvergent.up_operator; the same results).
+    environment variable DARMONPOINTS_UP, 'operator' (the default: the linear
+    map of Up computed once as an integer matrix, see
+    ArithCohOverconvergent.up_operator) or 'legacy' (evaluation of the cocycle
+    on the words of Up at every application). The same results.
     """
-    method = os.environ.get("DARMONPOINTS_UP", "legacy")
+    method = os.environ.get("DARMONPOINTS_UP", "operator")
     if method not in ("legacy", "operator"):
         raise ValueError("DARMONPOINTS_UP must be 'legacy' or 'operator', not %r" % method)
     return method

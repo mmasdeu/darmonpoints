@@ -38,14 +38,14 @@ def _value_key(x):
     its printed form does: (absolute precision, valuation, coefficients of its
     unit part), from the FLINT representation of the elements of unramified
     extensions of Qp. None if x has no such representation, or if the key is
-    not enabled (environment variable DARMONPOINTS_DIVHASH, 'legacy' by
-    default, or 'value').
+    not enabled (environment variable DARMONPOINTS_DIVHASH, 'value' by
+    default, or 'legacy': the printed form).
 
     Printing an element (the legacy key) costs much more: with long divisors it
     took most of the time of the construction of homology cycles over the
     quadratic unramified extension.
     """
-    if os.environ.get("DARMONPOINTS_DIVHASH", "legacy") != "value":
+    if os.environ.get("DARMONPOINTS_DIVHASH", "value") != "value":
         return None
     try:
         poly, v = x._flint_rep_abs()
