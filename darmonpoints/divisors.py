@@ -32,12 +32,37 @@ from sage.structure.unique_representation import (
 
 from .util import is_infinity
 
+def _value_key(x):
+    r"""
+    A key that identifies the p-adic element x by its value and precision, as
+    its printed form does: (absolute precision, valuation, coefficients of its
+    unit part), from the FLINT representation of the elements of unramified
+    extensions of Qp. None if x has no such representation, or if the key is
+    not enabled (environment variable DARMONPOINTS_DIVHASH, 'legacy' by
+    default, or 'value').
+
+    Printing an element (the legacy key) costs much more: with long divisors it
+    took most of the time of the construction of homology cycles over the
+    quadratic unramified extension.
+    """
+    if os.environ.get("DARMONPOINTS_DIVHASH", "legacy") != "value":
+        return None
+    try:
+        poly, v = x._flint_rep_abs()
+        return ("padic", x.precision_absolute(), v, tuple(poly.list()))
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)
 def _hash(x):
     try:
         return hash(x)
     except TypeError:
         pass
+    key = _value_key(x)
+    if key is not None:
+        return hash(key)
     try:
         return hash(str(x))
     except TypeError:
