@@ -404,7 +404,13 @@ class OCVn(Module, UniqueRepresentation):
             g = g.matrix()
         except AttributeError:
             pass
-        return self._get_powers(g).submatrix(0, 0, M, M)
+        x = self._get_powers(g)
+        if M is None or M == x.nrows():
+            # The cached (immutable) matrix itself: a copy would store every
+            # matrix twice (here, in _cache_powers, and in the caches of the
+            # callers, such as CohomologyGroup.generator_acting_matrix)
+            return x
+        return x.submatrix(0, 0, M, M)
 
     def _get_powers(self, abcd, emb=None):
         abcd = tuple(abcd.list())
@@ -430,6 +436,7 @@ class OCVn(Module, UniqueRepresentation):
             )
             xlist.append([ZZ(o) for o in ylist])
         x = Matrix(ZZ, self._depth, self._depth, xlist)
+        x.set_immutable()  # shared by acting_matrix: must not be modified
         self._cache_powers[abcd] = x
         return x
 
