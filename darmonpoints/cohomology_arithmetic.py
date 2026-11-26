@@ -703,6 +703,14 @@ class ArithCoh(CohomologyGroup, UniqueRepresentation):
                     )
                 vals.append(V(newval))
             return scale * self(vals)
+        if self._trivial_action:
+            # The value at gamma_j is the sum over g of the values at the words
+            # t_g(gamma_j), that is sum_i N[j][i] c(gamma_i), where N[j][i]
+            # counts the occurrences of gamma_i in these words.
+            N = self._trivial_hecke_counts(l, hecke_reps, use_magma)
+            cvals = c._val
+            vals = [sum((m * cvals[i] for i, m in row), V(0)) for row in N]
+            return scale * self(vals)
         vals = [V(0) for gamma in gammas]
         # verbose('Calculating action')
         for j, gamma in enumerate(gammas):
@@ -712,6 +720,38 @@ class ArithCoh(CohomologyGroup, UniqueRepresentation):
                     group.get_hecke_ti(g, gamma, l, use_magma, reps=hecke_reps)
                 )
         return scale * self(vals)
+
+    def _trivial_hecke_counts(self, l, hecke_reps, use_magma):
+        r"""
+        For the trivial action: the list, for each generator `\gamma_j`, of
+        the pairs ``(i, m)`` such that the `l`-th Hecke operator sends a
+        cocycle `c` to the cocycle with value `\sum_i m c(\gamma_i)` at
+        `\gamma_j` (computed once for each list of representatives).
+        """
+        try:
+            cache = self._trivial_hecke_counts_cache
+        except AttributeError:
+            cache = self._trivial_hecke_counts_cache = {}
+        key = (l, use_magma)
+        try:
+            reps, N = cache[key]
+            if reps is hecke_reps:
+                return N
+        except KeyError:
+            pass
+        group = self.group()
+        N = []
+        for gamma in group.gens():
+            counts = defaultdict(int)
+            for g in hecke_reps:
+                x = group.get_hecke_ti(g, gamma, l, use_magma, reps=hecke_reps)
+                if x.parent() is not group:
+                    x = group(x)
+                for i, m in self._word_letter_counts(x.word_rep):
+                    counts[i] += m
+            N.append([(i, m) for i, m in sorted(counts.items()) if m != 0])
+        cache[key] = (hecke_reps, N)
+        return N
 
 
 class ArithAction(Action):
@@ -901,6 +941,12 @@ class ArithCohOverconvergent(ArithCoh):
         R = V.base_ring()
         gammas = self.group().gens()
 
+        if Up_reps is None and repslocal is None and self._Up_fast_path_available():
+            ans = self._apply_Up_matrix(c)
+            if scale != 1:
+                ans *= scale
+            return ans
+
         if Up_reps is None:
             Up_reps = self.S_arithgroup().get_Up_reps()
 
@@ -948,6 +994,114 @@ class ArithCohOverconvergent(ArithCoh):
         if scale != 1:
             ans *= scale
         return ans
+
+    def _Up_fast_path_available(self):
+        r"""
+        Whether `U_p` can be applied through its precomputed matrix, see
+        :meth:`_Up_local_matrix`.
+        """
+        return (
+            isinstance(self.coefficient_module(), OCVn)
+            and not self.use_shapiro()
+            and not self._trivial_action
+            and self._acting_matrix is not None
+        )
+
+    def _Up_local_matrix(self):
+        r"""
+        The matrix of `U_p` acting on the values of a cocycle at the generators.
+
+        `U_p` is a linear operator on the space of cocycles, which (in the
+        non-Shapiro setting) are determined by their values at the generators
+        `\gamma_1, \ldots, \gamma_n` of the group. Writing the cocycle as
+        the column vector of the moments of these values, `U_p` acts through
+        the block matrix whose `(j, i)` block is
+
+        .. MATH::
+
+            \sum_k s_k \cdot \partial_i(t_{k,j}),
+
+        where `t_{k,j}` = ``get_hecke_ti(g_k, gamma_j)``, `s_k` is the local
+        image of the `k`-th `U_p` representative and `\partial_i` is the
+        `i`-th Fox derivative, evaluated in the action on the moments.
+
+        The matrix (over `\ZZ`, with entries reduced modulo `p^N`) is computed
+        once and cached, so that iterating `U_p` (as in :meth:`improve`)
+        costs one matrix-vector product per iteration, instead of evaluating
+        the cocycle at `(p+1) n` words each time.
+        """
+        try:
+            return self._Up_local_matrix_cache
+        except AttributeError:
+            pass
+        V = self.coefficient_module()
+        G = self.group()
+        Gpn = self.S_arithgroup().small_group()
+        depth = V._depth
+        N = V._pN
+        Up_reps = self.S_arithgroup().get_Up_reps()
+        repslocal = self.get_Up_reps_local(V.base_ring().precision_cap())
+        local_mats = [V.acting_matrix(sk, depth) for sk in repslocal]
+        ngens = len(G.gens())
+        rows = []
+        for gamma in G.gens():
+            blocks = [None] * ngens
+            for Pk, g in zip(local_mats, Up_reps):
+                x = Gpn.get_hecke_ti(g, gamma)
+                if x.parent() is not G:
+                    x = G(x)
+                fgrad = self.fox_gradient(tuple(x.word_rep))
+                for i, A in enumerate(fgrad):
+                    if A.is_zero():
+                        continue
+                    term = (Pk * self.GA_to_local(A)) % N
+                    blocks[i] = term if blocks[i] is None else blocks[i] + term
+            rows.append(
+                [
+                    matrix(ZZ, depth, depth, 0) if b is None else b % N
+                    for b in blocks
+                ]
+            )
+        U = block_matrix(ZZ, rows, subdivide=False)
+        self._Up_local_matrix_cache = U
+        return U
+
+    def _apply_Up_matrix(self, c):
+        r"""
+        Apply `U_p` to ``c`` using :meth:`_Up_local_matrix`.
+
+        TESTS:
+
+        The result agrees with the evaluation of ``c`` at the Hecke words::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: from darmonpoints.cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic, get_cocycle_from_elliptic_curve
+            sage: G = BigArithGroup(13, 6, 1, base=QQ, use_shapiro=False, outfile='/tmp/darmonpoints.tmp')
+            sage: Coh = ArithCoh(G)
+            sage: phiE = get_cocycle_from_elliptic_curve(Coh, EllipticCurve('78a1'), sign=1)
+            sage: Phi = get_overconvergent_class_quaternionic(13, phiE, G, 10, 1, 1, progress_bar=False)
+            sage: CohOC = Phi.parent()
+            sage: CohOC._Up_fast_path_available()
+            True
+            sage: Up_reps = G.get_Up_reps()
+            sage: Phi1 = CohOC.apply_Up(Phi)
+            sage: Phi2 = CohOC.apply_Up(Phi, Up_reps=Up_reps)
+            sage: all((u - v).valuation() == Infinity for u, v in zip(Phi1.values(), Phi2.values()))
+            True
+        """
+        V = self.coefficient_module()
+        depth = V._depth
+        N = V._pN
+        w = block_matrix(ZZ, [[o._val.lift()] for o in c.values()], subdivide=False)
+        Uw = (self._Up_local_matrix() * w) % N
+        R = V._R
+        vals = [
+            V.element_class(
+                V, Matrix(R, depth, 1, Uw.submatrix(i, 0, depth, 1).list()), check=False
+            )
+            for i in range(0, Uw.nrows(), depth)
+        ]
+        return self(vals)
 
     def improve(
         self, Phi, prec=None, sign=None, progress_bar=False, check_convergence=False

@@ -8,7 +8,7 @@
 from copy import deepcopy
 
 from sage.categories.pushout import pushout
-from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import Matrix, block_matrix, matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.timing import cputime
 from sage.misc.cachefunc import cached_function, cached_method
@@ -31,7 +31,7 @@ from sage.rings.rational_field import QQ
 from sage.structure.element import ModuleElement
 from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
-from sage.structure.sage_object import load, save
+from sage.structure.sage_object import SageObject, load, save
 from sage.structure.unique_representation import (
     CachedRepresentation,
     UniqueRepresentation,
@@ -426,3 +426,201 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
             "Meromorphic Multiplicative Functions over %s with p = %s and prec = %s"
             % (self._base_ring, self._p, self._prec)
         )
+
+
+class MeromorphicIntegerArithmetic(SageObject):
+    r'''
+    Arithmetic of the power series of a :class:`MeromorphicFunctions` space
+    (truncated to ``prec`` terms) with integers, as used to iterate Hecke
+    operators quickly.
+
+    The base field ``K`` must be `\QQ_p` or an unramified extension of it,
+    and the series must have integral coefficients. An element of the ring
+    of integers `O_K` is represented by its coordinates in the basis
+    `1, g, \ldots, g^{d-1}` reduced modulo `p^N` (`N` = ``prec``), and a
+    series by the list of the `d` integer polynomials (FLINT) of its
+    coordinates. Since every operation is computed modulo `p^N`, the results
+    agree with the `p`-adic computation done with absolute precision `N`
+    (which is how :class:`MeromorphicFunctionsElement` works), but are much
+    faster than products of `p`-adic numbers.
+
+    The methods raise ``ValueError`` when the input is not integral or not
+    known to precision `N`, or when a unit is needed and the element is not
+    one, so that the caller can fall back to the `p`-adic computation.
+
+    EXAMPLES::
+
+        sage: from darmonpoints.meromorphic import MeromorphicFunctions, MeromorphicIntegerArithmetic
+        sage: R.<x> = QQ[]
+        sage: K.<g> = Qp(5, 10).extension(x^2 - 3)
+        sage: M = MeromorphicFunctions(K, 5, 10)
+        sage: I = MeromorphicIntegerArithmetic(M)
+        sage: f = M([K(o) for o in [1, 5*g, 25, 0, 5^4*g + 5]], check=False)
+        sage: h = M([K(o) for o in [1, 5, 5*g, 0, 0, 25]], check=False)
+        sage: F, H = I.from_element(f), I.from_element(h)
+        sage: (I.to_element(I.mul(F, H)) - (f + h)).valuation()
+        10
+        sage: (I.to_element(I.inverse(F)) - (-f)).valuation()
+        10
+        sage: A = matrix(K, 2, 2, [1, 2, 5, 3])
+        sage: B = I.action_matrix(M.compute_action_data(A, f._parameter, f._parameter))
+        sage: (I.to_element(I.normalize(I.act(F, B))) - f.left_act_by_matrix(A)).valuation()
+        10
+    '''
+
+    def __init__(self, M):
+        from .theta_additive import _ok_coordinates
+
+        K = M.base_ring()
+        O = _ok_coordinates(K)
+        if O.e != 1 or O._kind not in ("Qp", "unramified"):
+            raise NotImplementedError(
+                "Only implemented for Qp and its unramified extensions"
+            )
+        self._M = M
+        self._O = O
+        self.d = d = O.d
+        self.n = n = ZZ(M._prec)
+        self.p = p = ZZ(K.prime())
+        self.N = p**n
+        self._R = PolynomialRing(ZZ, names="t")
+        # Structure constants: basis[r] * basis[s] = sum_l c[r, s, l] basis[l]
+        self._structure = [
+            (r, s, l, O.R[s][r, l])
+            for r in range(d)
+            for s in range(d)
+            for l in range(d)
+            if O.R[s][r, l] != 0
+        ]
+        assert O.coords(K(1)) == [1] + [0] * (d - 1)
+        self.one = [self._R.one()] + [self._R.zero()] * (d - 1)
+
+    def _red(self, F):
+        N = self.N
+        return [f % N for f in F]
+
+    def _coords(self, x):
+        if x.is_zero():
+            if x.precision_absolute() < self.n:
+                raise ValueError("Not enough precision")
+            return [ZZ(0)] * self.d
+        if x.precision_absolute() < self.n:
+            raise ValueError("Not enough precision")
+        try:
+            c = self._O.coords(x)
+        except (TypeError, ArithmeticError) as e:
+            raise ValueError("Not integral") from e
+        return [ZZ(o) % self.N for o in c]
+
+    def from_element(self, f):
+        r'''
+        The integer representation of the series of ``f``.
+        '''
+        n, d = self.n, self.d
+        coords = [self._coords(o) for o in f._value[:n]]
+        return [self._R([c[r] for c in coords]) for r in range(d)]
+
+    def to_element(self, F, parameter=None):
+        r'''
+        The element of the space of meromorphic functions whose series is ``F``.
+        '''
+        n, d, O = self.n, self.d, self._O
+        lists = [f.padded_list(n) for f in F]
+        vals = [O.element([lists[r][k] for r in range(d)], n) for k in range(n)]
+        return self._M(vals, param=parameter, check=False)
+
+    def mul(self, F, H):
+        r'''
+        The product of the series ``F`` and ``H`` (truncated).
+        '''
+        n = self.n
+        if self.d == 1:
+            return [F[0]._mul_trunc_(H[0], n) % self.N]
+        out = [self._R.zero()] * self.d
+        for r, s, l, c in self._structure:
+            out[l] += c * F[r]._mul_trunc_(H[s], n)
+        return self._red(out)
+
+    def constant_term(self, F):
+        return [f[0] for f in F]
+
+    def _scalar(self, c):
+        return [self._R(o) for o in c]
+
+    def scalar_inverse(self, c):
+        r'''
+        The coordinates of the inverse of the unit of `O_K` with coordinates ``c``.
+        '''
+        x = self._O.element(c, self.n)
+        if x.valuation() != 0:
+            raise ValueError("Not a unit")
+        return self._coords(~x)
+
+    def inverse(self, F):
+        r'''
+        The inverse of the series ``F``, whose constant term must be a unit
+        (Newton iteration).
+        '''
+        R = self._R
+        Y = self._scalar(self.scalar_inverse(self.constant_term(F)))
+        k = 1
+        while k < self.n:
+            E = self.mul(F, Y)
+            E = [-e for e in E]
+            E[0] += 2
+            Y = self.mul(Y, E)
+            k *= 2
+        return Y
+
+    def normalize(self, F):
+        r'''
+        The multiple of ``F`` with constant term 1 (it must be a unit).
+        '''
+        c = self.constant_term(F)
+        if c == [1] + [0] * (self.d - 1):
+            return F
+        return self.mul(F, self._scalar(self.scalar_inverse(c)))
+
+    def valuation(self, F):
+        r'''
+        The valuation of ``F - 1`` (at most `N`), as computed by
+        :meth:`MeromorphicFunctionsElement.valuation`.
+        '''
+        n, p = self.n, self.p
+        G = list(F)
+        G[0] = G[0] - 1
+        ans = n
+        for f in G:
+            for c in f.list():
+                if c != 0:
+                    ans = min(ans, c.valuation(p))
+        return ans
+
+    def action_matrix(self, A):
+        r'''
+        The integer matrix of the action on the flattened coordinates of a
+        series of the matrix ``A`` over `K` returned by
+        :meth:`MeromorphicFunctions.get_action_data`.
+        '''
+        n, d, N = self.n, self.d, self.N
+        if A.nrows() != n or A.ncols() != n:
+            raise ValueError("Wrong size")
+        coords = [[self._coords(a) for a in row] for row in A.rows()]
+        As = [matrix(ZZ, n, n, [[c[s] for c in row] for row in coords]) for s in range(d)]
+        if d == 1:
+            return As[0]
+        blocks = [[matrix(ZZ, n, n, 0) for l in range(d)] for r in range(d)]
+        for r, s, l, c in self._structure:
+            blocks[r][l] += c * As[s]
+        return block_matrix(ZZ, blocks, subdivide=False) % N
+
+    def act(self, F, B):
+        r'''
+        The action on the series ``F`` of the matrix ``B`` returned by
+        :meth:`action_matrix` (not normalized).
+        '''
+        n, d = self.n, self.d
+        v = matrix(ZZ, 1, n * d, [c for f in F for c in f.padded_list(n)])
+        w = ((v * B) % self.N).list()
+        R = self._R
+        return [R(w[r * n : (r + 1) * n]) for r in range(d)]

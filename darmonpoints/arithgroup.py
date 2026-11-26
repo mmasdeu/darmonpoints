@@ -596,31 +596,30 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         F = self.F
         self.get_archimedean_embedding(200)
         v = self.F_into_RR
-        ramified = [w for w in F.real_places() if w(F.gen()) != v(F.gen())]
-        units = [F(u) for u in F.unit_group().gens_values()]
-        candidates = []
-        for exps in product(range(2), repeat=len(units)):
-            u = prod((g**e for g, e in zip(units, exps)), F(1))
-            if v(u) < 0 and all(w(u) > 0 for w in ramified):
-                candidates.append(u)
-        if not candidates:
-            raise RuntimeError("No unit with the required signs")
+
+        # The reduced norm generates the unit ideal and is negative at v.
+        # (The norms of such elements are only determined up to squares of
+        # units, so this is tested directly rather than against chosen units.)
+        def good(x):
+            n = x.reduced_norm()
+            return n != 0 and v(n) < 0
+
         if self._is_pari_backend():
-            for eps in candidates:
-                try:
-                    return self._QA.elements_of_norm(self._O_mat, eps, exact=True)[0]
-                except RuntimeError:
-                    continue
-            raise RuntimeError("No element of the order of norm a unit negative at the split place")
+            x = self._QA.search_elements_of_norm(self._O_mat, F(1), good)
+            if x is None:
+                raise RuntimeError(
+                    "No element of the order of norm a unit negative at the split place"
+                )
+            return x
         # Magma backend: brute force on the Z-basis of the order
         basis = self._get_O_basis()
+        one = F.ideal(1)
         M = 0
         while True:
             M += 1
             for a0, an in product(range(M), product(range(-M + 1, M), repeat=len(basis) - 1)):
                 cand = sum((ai * bi for ai, bi in zip([a0] + list(an), basis)), self.B(0))
-                n = cand.reduced_norm()
-                if n != 0 and n in candidates:
+                if good(cand) and F.ideal(cand.reduced_norm()) == one:
                     return cand
 
     def find_fundom_rep(
@@ -2340,6 +2339,13 @@ class ArithGroup_nf_generic(ArithGroup_generic):
 
     @cached_method(key=lambda self, radius: self)
     def non_positive_unit(self, radius=-1):
+        if self._is_pari_backend() and hasattr(self, "_unit_negative_at_split_place"):
+            # Fuchsian groups: an element whose norm is a unit, negative at the
+            # split real place (found by PARI rather than by enumeration)
+            try:
+                return self._unit_negative_at_split_place()
+            except RuntimeError:
+                pass
         v = self._get_O_basis()
         verbose("Doing long enumeration...")
         M = 0

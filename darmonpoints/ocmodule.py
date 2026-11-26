@@ -41,6 +41,11 @@ from .homology import Divisors
 from .rationalfunctions import RationalFunctions
 from .representations import MatrixAction, Scaling
 
+try:
+    from .moments import moebius_moment_matrix
+except ImportError:  # the compiled extension is not available
+    moebius_moment_matrix = None
+
 
 class our_adjuster(Sigma0ActionAdjuster):
     """
@@ -413,9 +418,11 @@ class OCVn(Module, UniqueRepresentation):
         `((b + a z)/(d + c z))^i`, modulo `p^{depth-1}`, where
         ``abcd = [[a, b], [c, d]]``.
 
-        The computation is done with (C-level) polynomials over
-        `\ZZ/p^{depth-1}`, using truncated products and a truncated
-        inverse; the result is the same as with `p`-adic power series.
+        The computation is done in C (see
+        :func:`darmonpoints.moments.moebius_moment_matrix`), falling back to
+        polynomials over `\ZZ/p^{depth-1}` with truncated products and a
+        truncated inverse; the result is the same as with `p`-adic power
+        series.
         """
         abcd = tuple(abcd.list())
         try:
@@ -434,6 +441,14 @@ class OCVn(Module, UniqueRepresentation):
         except (TypeError, ValueError, ArithmeticError):
             return self._get_powers_reference(abcd, emb)
         a, b, c, d = coeffs
+        if moebius_moment_matrix is not None:
+            try:
+                x = moebius_moment_matrix(a, b, c, d, N, depth)
+            except ZeroDivisionError:
+                pass
+            else:
+                self._cache_powers[abcd] = x
+                return x
         r = P([b, a])
         sinv = P([d, c]).inverse_series_trunc(depth)
         ratio = r._mul_trunc_(sinv, depth)
@@ -468,6 +483,7 @@ class OCVn(Module, UniqueRepresentation):
             )
             xlist.append([ZZ(o) for o in ylist])
         x = Matrix(ZZ, self._depth, self._depth, xlist)
+        return x
         self._cache_powers[abcd] = x
         return x
 

@@ -225,8 +225,25 @@ class PlecticGroup_class(AlgebraicGroup):
         self.GG[1].local_condition = e00
         del self.GG[0]._wp
         del self.GG[1]._wp
-        wp0 = self.GG[0].wp()
-        wp1 = self.GG[1].wp()
+        # The Bruhat-Tits representatives of GG[i] (get_BT_reps) must satisfy
+        # local_condition at the other prime, which is only possible if w_p is
+        # also in Gamma_0 at the other prime. So take w_p in the order of GS
+        # (of level p0 * p1): an element of this Eichler order whose norm
+        # generates p_i is an Atkin-Lehner element of it, and also of the
+        # orders of level p_i.
+        QA = getattr(self.GS, "_QA", None)
+        for Gi, pp in zip(self.GG, [p0, p1]):
+            if QA is not None:
+                cand = QA.normalizer_element_of_norm(
+                    self.GS._O_mat, pp.gens_reduced()[0]
+                )
+                if cand is not None:
+                    try:
+                        Gi.set_wp(cand)
+                        continue
+                    except TypeError:
+                        pass
+            Gi.wp()
 
     def small_group(self):
         return self.GS

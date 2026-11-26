@@ -293,6 +293,38 @@ class ArithGroup_generic(AlgebraicGroup):
     def _denominator_valuation(self, x, l):
         return max(o.denominator().valuation(l) for o in self._quaternion_to_list(x))
 
+    def _matrix_algebra_padic_splitting(self, P, R):
+        r"""
+        The splitting of `B = (1, 1 / F) = M_2(F)` at the prime ``P`` (of
+        degree one) over the `p`-adic field ``R``, in the matrix model of
+        :meth:`_get_O_basis`: `(1 \pm i)/2` and `(j \pm k)/2` are the matrix
+        units, so that the order (whose lower left entries lie in the level)
+        maps to an Eichler order in `M_2(\ZZ_p)`.
+
+        Returns ``(I, J, K), F_to_local``.
+        """
+        F = self.F
+        if F == QQ:
+            F_to_local = QQ.hom([R.one()])
+        else:
+            P = F.ideal(P)
+            if P.residue_class_degree() != 1:
+                raise NotImplementedError("Only primes of degree one are supported")
+            gbar = ZZ(P.residue_field()(F.gen()))
+            roots = [
+                r
+                for r, _ in F.defining_polynomial().change_ring(R).roots()
+                if (r - gbar).valuation() > 0
+            ]
+            if len(roots) != 1:
+                raise NotImplementedError("Could not determine the embedding F -> Qp")
+            F_to_local = F.hom([roots[0]], check=False)
+        MS = MatrixSpace(R, 2, 2)
+        II = MS([1, 0, 0, -1])
+        JJ = MS([0, 1, 1, 0])
+        KK = MS([0, 1, -1, 0])
+        return (II, JJ, KK), F_to_local
+
     @cached_method
     def _compute_padic_splitting(self, P, prec):  # arithgroup_generic
         verbose("Entering compute_padic_splitting")
@@ -302,6 +334,11 @@ class ArithGroup_generic(AlgebraicGroup):
             prime = P
         R = Qp(prime, prec)
         if getattr(self, "_backend", "magma") == "pari":
+            if self._QA is None and self.B.invariants() == (1, 1):
+                (II, JJ, KK), F_to_local = self._matrix_algebra_padic_splitting(P, R)
+                self._II, self._JJ, self._KK = II, JJ, KK
+                self._prec = prec
+                return (II, JJ, KK), F_to_local
             if self.F == QQ:
                 e = ZZ(self.level).valuation(prime)
             else:

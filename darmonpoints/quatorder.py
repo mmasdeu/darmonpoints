@@ -518,6 +518,16 @@ class QuaternionAlgebraPari(SageObject):
             max_count = min(4 * max(max_count, ZZ(res[0])), max_count_limit)
         return vecs
 
+    def _some_short_vectors(self, basis, C, count, prec=200, conj=None):
+        r"""
+        At most ``count`` of the vectors of :meth:`short_vectors` (those that
+        PARI finds first), and whether these are all of them.
+        """
+        G = pari(self._majorant_gram(basis, prec, conj))
+        res = pari.qfminim(G, C, count, 2)
+        vecs = res[2]
+        return vecs, ZZ(res[0]) <= len(vecs)
+
     def _vector_to_element(self, basis, v, affine=False):
         x = sum((ZZ(c) * o for c, o in zip(v, basis)), self.B(0))
         if affine:
@@ -562,12 +572,16 @@ class QuaternionAlgebraPari(SageObject):
         r"""
         Indices (0-based) of the columns of ``vecs`` whose element has reduced
         norm ``target`` (if ``absolute`` is ``False``) or reduced norm of
-        absolute norm ``|target|`` (an integer, if ``absolute`` is ``True``).
+        absolute norm ``|target|`` (a rational number, if ``absolute`` is ``True``).
         """
         _load_gp_code()
         Qs, den = forms
         if absolute:
-            tgt = pari(ZZ(target).abs() * den ** self._deg)
+            tgt = QQ(target).abs() * den ** self._deg
+            if tgt not in ZZ:
+                # den * nrd(x) has integral coordinates, so no x has this norm
+                return []
+            tgt = pari(ZZ(tgt))
             mode = 1
         else:
             tgt = pari([den * c for c in self._coords(target)])
@@ -598,8 +612,12 @@ class QuaternionAlgebraPari(SageObject):
         found = []
         forms = self._nrd_forms(basis)
         Nabs = ZZ(N).abs() if F is QQ else ZZ(N.norm()).abs()
+        # Only a few elements are needed, so enumerate the short vectors in
+        # batches (the lattice may have a huge number of vectors below the
+        # bound), and only enlarge the batch if it was not enough.
+        count, max_count = 2000, 500000
         for _ in range(max_tries):
-            vecs = self.short_vectors(basis, C, prec, conj)
+            vecs, complete = self._some_short_vectors(basis, C, count, prec, conj)
             if exact:
                 idx = self._filter_by_norm(forms, vecs, N, absolute=False)
             else:
@@ -615,7 +633,10 @@ class QuaternionAlgebraPari(SageObject):
                     found.append(x)
                     if len(found) >= max_elements:
                         return found
-            C *= growth
+            if not complete and count < max_count:
+                count *= 4
+            else:
+                C *= growth
         if found:
             return found
         raise RuntimeError("No element of norm %s found" % N)
@@ -634,8 +655,9 @@ class QuaternionAlgebraPari(SageObject):
         seen = set()
         forms = self._nrd_forms(basis)
         Nabs = ZZ(N).abs() if F is QQ else ZZ(N.norm()).abs()
+        count, max_count = 2000, 500000
         for _ in range(max_tries):
-            vecs = self.short_vectors(basis, C, prec)
+            vecs, complete = self._some_short_vectors(basis, C, count, prec)
             for jj in self._filter_by_norm(forms, vecs, Nabs, absolute=True):
                 x = self._vector_to_element(basis, vecs[jj])
                 key = tuple(tuple(c.list()) if hasattr(c, "list") else (c,) for c in x.coefficient_tuple())
@@ -648,7 +670,10 @@ class QuaternionAlgebraPari(SageObject):
                     for y in (x, -x):
                         if test(y):
                             return y
-            C *= growth
+            if not complete and count < max_count:
+                count *= 4
+            else:
+                C *= growth
         return None
 
     def element_of_norm(self, M, N, **kwargs):

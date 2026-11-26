@@ -313,8 +313,13 @@ class CohomologyElement(ModuleElement):
         return ans if left_act_by is None else left_act_by * ans
 
     def _evaluate_word_tietze_trivial(self, word):
+        # With the trivial action, the value at a word only depends on the net
+        # number of times that each generator appears in it. These counts are
+        # cached on the parent, since the same words (e.g. those of the Hecke
+        # operators) are evaluated for many cocycles.
+        counts = self.parent()._word_letter_counts(word)
         return sum(
-            (self._val[g - 1] if g > 0 else -self._val[-g - 1] for g in word),
+            (c * self._val[i] for i, c in counts),
             self.parent().coefficient_module()(0),
         )
 
@@ -357,6 +362,30 @@ class CohomologyGroup(Module):
             self._gen_pows_neg.append([GA(G(1)), GA(ginv)])
         Module.__init__(self, base=ZZ)
         return
+
+    def _word_letter_counts(self, word):
+        r"""
+        The list of pairs ``(i, c)``, with ``c`` nonzero, where ``c`` is the
+        number of occurrences of the ``i``-th generator (0-based) in the Tietze
+        word ``word`` minus the number of occurrences of its inverse.
+        """
+        word = tuple(word)
+        try:
+            cache = self._word_letter_counts_cache
+        except AttributeError:
+            cache = self._word_letter_counts_cache = {}
+        try:
+            return cache[word]
+        except KeyError:
+            pass
+        counts = defaultdict(int)
+        for g in word:
+            if g > 0:
+                counts[g - 1] += 1
+            else:
+                counts[-g - 1] -= 1
+        ans = cache[word] = [(i, c) for i, c in sorted(counts.items()) if c != 0]
+        return ans
 
     @cached_method
     def generator_acting_matrix(self, g):

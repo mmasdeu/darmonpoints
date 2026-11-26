@@ -41,6 +41,12 @@ from sage.structure.unique_representation import UniqueRepresentation
 ##===========================================================================================
 
 
+try:
+    from .moments import moebius_moment_matrix
+except ImportError:  # the compiled extension is not available
+    moebius_moment_matrix = None
+
+
 class left_ps_adjuster(Sigma0ActionAdjuster):
     """
     Callable object that turns matrices into 4-tuples.
@@ -869,6 +875,23 @@ class BianchiDistributions(Module, UniqueRepresentation):
             ),
             level=2,
         )
+
+        if emb is None and moebius_moment_matrix is not None:
+            ## The action on x^i y^j is the product of the one variable actions
+            ## x |-> (b + d x)/(a + c x) and y |-> (B + D y)/(A + C y), so the
+            ## matrix is the Kronecker product of the two one variable matrices
+            ## (rows and columns indexed by j * depth + i), reduced modulo p^(depth-1).
+            a, b, c, d = abcdxZZ
+            A, B, C, D = abcdyZZ
+            try:
+                Xr = moebius_moment_matrix(d, b, c, a, self._pN, self._depth)
+                Xs = moebius_moment_matrix(D, B, C, A, self._pN, self._depth)
+            except ZeroDivisionError:
+                pass
+            else:
+                matrix_action = Xs.tensor_product(Xr, subdivide=False) % self._pN
+                self._cache_powers[(abcdxZZ, abcdyZZ)] = matrix_action
+                return matrix_action
 
         R = self._PowerSeries  ## Zp[[x,y]]
         y = R.gen()

@@ -427,3 +427,140 @@ Remaining costs in the cubic example: integration (`log_pseries`,
 `lift_to_locally_analytic`, ~24 s), cycle construction (Hecke
 representatives and `zero_degree_equivalent`, ~27 s), fundamental domains
 (~14 s).
+
+### U_p lifting (2026-11-26)
+
+Bottleneck for `darmon_point(13, EllipticCurve('78a1'), 5, prec)`: `improve`
+applies U_p about prec+2 times, and each application re-evaluated the cocycle
+at the (p+1)·n Hecke words through Fox gradients, forming matrix sums
+Σ a_g M(g) each time (40 of the 47 s at prec 40).
+
+Changes:
+- `ArithCohOverconvergent._Up_local_matrix`: U_p is linear on the moments of
+  the values at the generators, so its block matrix
+  U_{j,i} = Σ_k P(s_k) ∂_i(t_{k,j}) is computed once (mod p^N, FLINT ZZ) and
+  cached; `apply_Up` then is one matrix-vector product (used when the module
+  is `OCVn`, no Shapiro, default representatives; otherwise the old code).
+- `darmonpoints/moments.pyx` (new Cython/FLINT extension):
+  `moebius_moment_matrix(a,b,c,d,N,depth)` computes the rows of
+  ((b+az)/(d+cz))^i mod N via the recurrence
+  y_i[j] = (b/d) y_{i-1}[j] + (a/d) y_{i-1}[j-1] − (c/d) y_i[j-1]
+  (O(depth^2) per matrix instead of O(depth^3)); 6–14× faster than the NTL
+  version, identical output. `OCVn._get_powers` uses it, falling back to NTL.
+  `setup.py` passes Sage's directory to Cython's include path and adds
+  `sage/libs/flint` (for `flint_wrap.h`) to the C include dirs.
+- `_get_powers_reference` was missing its `return`.
+
+Timings (whole `darmon_point` call; J_psi bit-for-bit identical to before):
+
+| prec | before | after |
+|---|---|---|
+| 20 | 9.4 s | 2.8 s |
+| 40 | 58.4 s | 6.8 s |
+| 60 | 117.7 s | 14.1 s |
+
+Remaining cost of the U_p build: the K·n² products P(s_k)·S (depth³ each),
+already at the FLINT/hardware limit; applying them lazily costs the same over
+~prec iterations.
+
+### Other overconvergent modules (2026-11-26)
+
+**Meromorphic functions / Darmon–Vonk** (`darmon_vonk_point(5, 1, 3, 13, 60, parity='+')`,
+K = Q_5(√3), prec 60): `OverconvergentDVCocycle.improve` (59 applications of U_p,
+multiplicative cocycle values) took 17.8 s of 19 s.
+- `ArithGroupElement._act_on_` tried `matrix * x` first; for meromorphic
+  functions the coercion model searched for an action (building pushouts of
+  p-adic rings, and calling the action on test elements: 3× more actions than
+  needed), failed with TypeError, and did not cache the failure. Failed
+  (matrix parent, parent) pairs are now remembered (17.8 → 13 s).
+- `MeromorphicIntegerArithmetic` (meromorphic.py): series over O_K (K = Q_p or
+  unramified) as d FLINT integer polynomials mod p^N; actions as one product
+  with a precomputed (d·n)×(d·n) integer matrix; products by d² truncated
+  products; inverses by Newton. Results equal the p-adic ones (absolute
+  precision N throughout).
+- `OverconvergentDVCocycle._improve_integer` replays exactly the naive
+  evaluation of `CohArbitrary.apply_hecke_operator` (same prefix group
+  elements, action by g after the product of each word; normalization by
+  the constant term done once at the end, which is exact) in integers;
+  falls back to the p-adic loop on non-integral data / insufficient
+  precision / non-units.
+- Result: improve 17.8 → 2.4 s, whole example 19 → 4 s, J bit-for-bit identical.
+- Note: `darmon_vonk_cocycle` fails intermittently (`assert found` in
+  `ArithGroup.mat_list`, ~35% of tries, same rate before and after these
+  changes); the retry loop in `darmon_vonk_point` absorbs it.
+
+**theta_additive**: `_integer_moebius_matrix` uses the FLINT kernel (2.3× faster, same matrices).
+
+**Bianchi** (ocbianchi.py): `BianchiDistributions._get_powers` is the Kronecker
+product of two one-variable FLINT moment matrices, reduced mod p^N (the old
+matrices had unreduced entries; congruent mod p^N); 4–18× faster, doctests pass.
+The Bianchi lift itself (`get_overconvergent_class_bianchi`) is unreachable on
+main and here: `BigArithGroup._hardcode_matrices` is forced to False since
+80d00ea, and `get_Up_reps_bianchi` requires it. So no precomputed U_p there.
+
+**PARI backend fixes for B = M_2(F), F imaginary quadratic** (found while trying
+the Bianchi lift; group construction used to crash):
+- `ArithGroup_generic._matrix_algebra_padic_splitting`: p-adic splitting in the
+  matrix model of `_get_O_basis` ((1±i)/2, (j±k)/2 matrix units).
+- `BigArithGroup._matrix_algebra_wp`: explicit Atkin–Lehner element
+  [[πx, y], [n, π]] with det π (doctest over Q(i), p = 2+i, level 3).
+
+### Further bottlenecks (2026-11-26, cubic-field Darmon point)
+
+Cubic example (`x^3 - x^2 - x + 2`, p = 17): 78 s → 41 s; 78a1 prec 60: 14.1 → 9.4 s;
+`darmonpoints.py` doctests 101 → 50 s. All points unchanged and sound; J for 78a1
+bit-for-bit identical.
+- `QuaternionAlgebraPari.elements_of_norm` / `search_elements_of_norm`: enumerate
+  short vectors in batches (`_some_short_vectors`, qfminim with a count of 2000,
+  enlarged ×4 only if nothing is found). One Hecke-representative search was
+  enumerating and filtering 500000 vectors (20 s) to find one element.
+- `recognize_J`: skip the (pnum, pden, i) whose valuation is not divisible by pden
+  before computing powers (our_nroot returned [] for 20000 of 20544 calls);
+  `_frobenius` (from `_flint_rep_abs`, cached Frob(g) powers; ~10× faster than
+  `.frobenius()` for FLINT q-adic fields, which also reports fake precision).
+- `our_nroot` (p ∤ n): residues of the roots from `nth_root(all=True)` in the
+  residue field (sorted as the old search found them), one Newton refinement,
+  the others by Teichmüller roots of unity; no quadratic dedup. Same roots, same order.
+- `recognize_point`: factor the algdep polynomial over QQ and only compute roots
+  over HCF of factors of degree dividing [HCF:QQ], and for degree = [HCF:QQ] only
+  if disc(g)/disc(HCF) is a square (exact necessary conditions).
+  recognize_J 25.6 → 7.9 s on the saved cubic instance.
+- `integrate_H1`: pair `log c0 + Σ n_P log(1 - x_P z)` with the moments directly
+  (power sums of the x_P, one division per degree, moments converted once per
+  edge) instead of building a polynomial per point (`_locally_analytic_data`,
+  `_pair_with_moments`; `lift_to_locally_analytic` kept).
+- `divisors._hash`: key FLINT q-adic points by (valuation, precision, integer
+  coefficients) instead of `hash(str(x))`; identifies exactly the same points
+  (checked on ~1.6M pairs), 10–18× cheaper.
+
+Remaining (cubic, 40 s): recognize_J ~13 s when the point is found late in the
+multiplier list (~2500 algdep calls at ~2 ms), cycle construction ~12 s
+(zero_degree_equivalent 6 s), integration 7 s, groups 4.7 s, Hecke matrices 3.7 s.
+Not done: the non-cohomological SH integral `double_integral_zero_infty` (5 s in
+the 35a1 example) could use the same closed form (the series is a Möbius
+transform of r), but its subdivision test would need care to stay equivalent.
+
+### Plectic points (2026-11-26, stopped here)
+
+Example: 63.2-d1 over Q(√37), p = 3, beta = 27w + 50 (Dropbox `sample_usage.sage`,
+without Magma). It did not run on the PARI backend; now depth 2 runs end to end
+(~22 s, J = O(3^2)). Fixes:
+- `quaternion_algebra_invariants_from_ramification`: an integer i in S means
+  `F.real_places()[i]` (as the old Magma path accepted indices).
+- `PlecticGroup_class`: w_{p_i} taken in the order of GS (level p0 p1) via
+  `normalizer_element_of_norm`; otherwise `get_BT_reps` never finds
+  representatives satisfying `local_condition` (it ran for hours).
+- `_filter_by_norm(absolute=True)` accepts rational targets (the
+  principalization in `get_cycle` uses N(nrd I) = 1/4).
+- `_unit_negative_at_split_place`: places compared with a tolerance (they were
+  compared at different precisions, so no unit qualified), and the PARI search
+  looks directly for an element with unit norm negative at the split place
+  (norms only matter up to squares of units). `ArithGroup_nf_generic.non_positive_unit`
+  uses it on the PARI backend (20 s brute force → instant).
+- Trivial action: cocycle values at words via cached letter counts, and Hecke
+  operators via cached count matrices (`ArithCoh._trivial_hecke_counts`);
+  identical Hecke matrices. Cocycle step 20–36 s → ~7 s.
+Not finished: at depth 3 one run had a very slow Riemann sum (~1 min per term,
+1296 terms), while profiling individual terms afterwards gave ~10 ms per term;
+not resolved (possibly a random choice of cycle). The depth 3/4 timings were
+not completed.

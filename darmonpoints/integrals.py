@@ -226,6 +226,72 @@ def lift_to_locally_analytic(G, divisor, prec=None, depth=1):
         edgelist = newedgelist
 
 
+def _locally_analytic_data(G, divisor, prec=None, depth=1):
+    r"""
+    The data of :func:`lift_to_locally_analytic`, without building the power
+    series: for each edge, yields ``((h, rev), xs, c0val, c0unit)``, where
+    ``xs`` is the list of pairs ``(x_P, n_P)`` such that the series is
+    `\log(c_0) + \sum_P n_P \log(1 - x_P z)`.
+    """
+    if depth % 2 != 1:
+        raise NotImplementedError("Need to allow for reversed edges.")
+    K = divisor.parent().base_ring()
+    if prec is None:
+        prec = K.precision_cap()
+    p = G.p
+    edgelist = [
+        ((-1) ** (depth + 1), o, QQ(1) / QQ(p + 1)) for o in G.get_covering(depth)
+    ]
+    while len(edgelist) > 0:
+        newedgelist = []
+        for parity, (rev, h), wt in edgelist:
+            assert not rev  # TODO: allow for reversed edges as well
+            a, b, c, d = (K(o) for o in G.embed(h, prec).list())
+            c0unit = K.one()
+            c0val = 0
+            xs = []
+            subdivide = False
+            for P, n in divisor:
+                hp0 = K(a * P + b)
+                x = K(c * P + d) / hp0
+                if x.valuation() <= 0:
+                    subdivide = True
+                    break
+                xs.append((x, QQ(n)))
+                c0unit *= (-hp0).unit_part() ** n
+                c0val += n * hp0.valuation()
+            if subdivide:
+                verbose("Subdividing because (Valuation problem)...")
+                newedgelist.extend(
+                    [
+                        ((-1) ** 2 * parity, o, wt / QQ(p**2))
+                        for o in G.subdivide([(rev, h)], parity, 2)
+                    ]
+                )
+                continue
+            yield ((h, rev), xs, c0val, c0unit)
+        edgelist = newedgelist
+
+
+def _pair_with_moments(K, xs, logc0, moments, prec, inverses):
+    r"""
+    The pairing of `\log(c_0) + \sum_P n_P \log(1 - x_P z)` (truncated at
+    degree ``prec``) with the moments ``moments`` (elements of ``K``), that
+    is `\log(c_0) \mu_0 - \sum_{m \geq 1} (\sum_P n_P x_P^m) \mu_m / m`.
+    """
+    M = min(prec, len(moments) - 1)
+    S = [K.zero()] * (M + 1)
+    for x, n in xs:
+        xpow = K.one()
+        for m in range(1, M + 1):
+            xpow = xpow * x
+            S[m] += n * xpow
+    ans = logc0 * moments[0] if not logc0.is_zero() else K.zero()
+    for m in range(1, M + 1):
+        ans -= S[m] * inverses[m] * moments[m]
+    return ans
+
+
 r"""
 Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
@@ -260,17 +326,18 @@ def integrate_H1(
     resmul = Cp(1)
     resadd = Cp(0)
     resval = ZZ(0)
+    inverses = [None] + [Cp(QQ(1) / m) for m in range(1, prec + 1)]
     for g, D in cycle:
         if twist:
             D = D.left_act_by_matrix(G.embed(G.wp(), prec).change_ring(Cp))
             g = g.conjugate_by(G.wp() ** -1)
-        for (h, rev), pol, c0val, c0unit in lift_to_locally_analytic(G, D, prec, depth):
+        for (h, rev), xs, c0val, c0unit in _locally_analytic_data(G, D, prec, depth):
             mu = cocycle.evaluate(g, h, at_identity=G.use_shapiro())
             mu0 = cocycle["liftee"].evaluate(g, h, at_identity=G.use_shapiro())[0]
-            newresadd = sum(
-                a * mu.moment(i)
-                for a, i in zip(pol.coefficients(), pol.exponents())
-                if i < len(mu.moments())
+            nmom = len(mu.moments())
+            moments = [Cp(mu.moment(i)) for i in range(min(nmom, prec + 1))]
+            newresadd = _pair_with_moments(
+                Cp, xs, c0unit.log(0), moments, prec, inverses
             )
             newresval = c0val * ZZ(mu0)
             newresmul = c0unit ** ZZ(mu0)

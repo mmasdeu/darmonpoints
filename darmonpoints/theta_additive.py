@@ -44,6 +44,11 @@ from .divisors import Divisors, DivisorsElement
 from .meromorphic import MeromorphicFunctions, evalpoly
 from .theta import eval_rat_dlog, pair_divisors
 
+try:
+    from .moments import moebius_moment_matrix
+except ImportError:  # the compiled extension is not available
+    moebius_moment_matrix = None
+
 
 def _to_integer(x, pN):
     r'''
@@ -107,6 +112,8 @@ def _integer_moebius_matrix(a1, b1, c1, P, pN):
     modulo pN, where zz = (b1 + a1 t) / (1 + c1 t) (as in
     MeromorphicFunctions._action_matrix_moebius, but with integers).
     '''
+    if moebius_moment_matrix is not None:
+        return moebius_moment_matrix(a1, b1, c1, 1, pN, P)
     rows = [[1] + [0] * (P - 1)]
     w = rows[0]
     for _ in range(1, P):

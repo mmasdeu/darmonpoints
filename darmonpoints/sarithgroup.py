@@ -695,6 +695,52 @@ class BigArithGroup_class(AlgebraicGroup):
     def embed_wp(self, prec):
         return self.embed(self.wp(), prec)
 
+    def _matrix_algebra_wp(self):
+        r"""
+        An Atkin-Lehner element at `P` for the order of ``Gpn`` when `B = M_2(F)`,
+        in the matrix model of its basis (see ``_get_O_basis``), in which the
+        order consists of the matrices whose lower left entry lies in the level
+        `N = P N'`.
+
+        It is `W = [[\pi x, y], [n, \pi]]`, where `\pi` generates `P`, `n`
+        generates `N`, `\pi x \equiv 1 \pmod{N'}` and `y = \pi (\pi x - 1) / n`,
+        so that `\det W = \pi`.
+
+        TESTS:
+
+        The `p`-adic embedding sends the group into `\Gamma_0(p)`, and `w_P`
+        normalizes the order::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: F.<i> = QuadraticField(-1)
+            sage: P = F.ideal(2 + i)
+            sage: G = BigArithGroup(P, (F(1), F(1)), F.ideal(3), base=F, use_shapiro=False, outfile='/tmp/darmonpoints.tmp')
+            sage: Gp = G.small_group()
+            sage: mats = [G.embed(g.quaternion_rep, 20) for g in Gp.gens()]
+            sage: all(m.determinant() == 1 and m[1, 0].valuation() >= 1 for m in mats)
+            True
+            sage: wp = G.wp()
+            sage: F.ideal(wp.reduced_norm()) == P
+            True
+            sage: all(Gp._is_in_order(wp**-1 * b * wp) for b in Gp._get_O_basis())
+            True
+        """
+        F = self.F
+        Gpn = self.Gpn
+        pi = self.ideal_p.gens_reduced()[0]
+        N = F.ideal(Gpn.level)
+        n = N.gens_reduced()[0]
+        Nprime = N / self.ideal_p
+        if Nprime == F.ideal(1):
+            x = F(0)
+        else:
+            x = F.ideal(pi).element_1_mod(Nprime) / pi
+        y = pi * (pi * x - 1) / n
+        a, b, c, d = pi * x, y, n, pi
+        assert a * d - b * c == pi
+        i, j, k = Gpn.B.gens()
+        return a * (1 + i) / 2 + b * (j + k) / 2 + c * (j - k) / 2 + d * (1 - i) / 2
+
     def wp(self, **kwargs):
         if self._hardcode_matrices:
             return self.Gn.matrix_to_quaternion(
@@ -705,6 +751,16 @@ class BigArithGroup_class(AlgebraicGroup):
         except AttributeError:
             pass
         verbose("Finding a suitable wp...")
+        if (
+            getattr(self.Gpn, "_backend", "magma") == "pari"
+            and getattr(self.Gpn, "_QA", None) is None
+            and self.F != QQ
+            and self.Gpn.B.invariants() == (1, 1)
+        ):
+            try:
+                return self.set_wp(self._matrix_algebra_wp())
+            except (TypeError, ValueError, ArithmeticError):
+                verbose("Atkin-Lehner candidate rejected, falling back to search")
         if (
             getattr(self.Gpn, "_backend", "magma") == "pari"
             and getattr(self.Gpn, "_QA", None) is not None

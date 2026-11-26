@@ -37,6 +37,14 @@ from sage.structure.richcmp import op_EQ, op_NE, richcmp
 from .util import *
 
 
+# Pairs (parent of the matrix, parent of x) for which ``matrix * x`` raised a
+# TypeError in ``ArithGroupElement._act_on_``. Sage's coercion model does not
+# remember failed action lookups, and redoing the lookup (which builds
+# pushouts of the p-adic rings involved) was a large part of the cost of
+# acting on meromorphic functions.
+_no_matrix_action = set()
+
+
 class ArithGroupElement(MultiplicativeGroupElement):
     def __init__(self, parent, word_rep=None, quaternion_rep=None, check=False):
         r"""
@@ -305,10 +313,13 @@ class ArithGroupElement(MultiplicativeGroupElement):
             else:
                 return (a * x + b) / (c * x + d)
         else:
-            try:
-                return mat * x
-            except TypeError:
-                return x._acted_upon_(self, on_left)
+            key = (mat.parent(), x.parent())
+            if key not in _no_matrix_action:
+                try:
+                    return mat * x
+                except TypeError:
+                    _no_matrix_action.add(key)
+            return x._acted_upon_(self, on_left)
 
     def conjugate_by(self, w):
         word_rep = None

@@ -70,6 +70,11 @@ class OverconvergentDVCocycle(SageObject):
         else:
             Up_reps = tuple(G.get_Up_reps())
         Up_data = GGp.get_hecke_data(p, hecke_reps=Up_reps)
+        try:
+            self._improve_integer(prec, Up_reps, Up_data)
+            return
+        except (ValueError, NotImplementedError) as e:
+            verbose("Using p-adic arithmetic to iterate Up (%s)" % e)
         tmp = self.HpMer(self.phi1)
         phi_list = [self.HpMer(0), self.HpMer(self.phi1)]
         val = -1
@@ -85,6 +90,126 @@ class OverconvergentDVCocycle(SageObject):
             if val >= prec:
                 break
         self.phi_even, self.phi_odd = phi_list
+        return
+
+    def _Up_terms(self, Up_reps, Up_data):
+        r"""
+        The data of the action of `U_p`, as computed by
+        ``CohArbitrary.apply_hecke_operator`` (with the naive evaluation of
+        cocycles): for each generator `\gamma_j` and each representative `g`,
+        the pair ``(terms, g)``, where ``terms`` is the list of triples
+        ``(i, h, sign)`` such that the value of `U_p c` at `\gamma_j` is the
+        product over `g` of `g` acting on the product of the
+        `(h \cdot c(\gamma_i))^{sign}` (``h = None`` meaning no action).
+        """
+        GGp = self.G.small_group()
+        ans = []
+        for gamma in GGp.gens():
+            row = []
+            for g in Up_reps:
+                x = Up_data[(g, gamma.quaternion_rep)]
+                if x.parent() is not GGp:
+                    x = GGp(x)
+                word = x.word_rep
+                terms = []
+                # Same group elements as in _evaluate_word_tietze_naive
+                if len(word) > 0:
+                    a = word[0]
+                    if a > 0:
+                        terms.append((a - 1, None, 1))
+                        h = GGp.gen(a - 1)
+                    else:
+                        a0 = -a - 1
+                        h = GGp.gen(a0) ** -1
+                        terms.append((a0, h, -1))
+                    for a in word[1:]:
+                        if a > 0:
+                            terms.append((a - 1, h, 1))
+                            h = h * GGp.gen(a - 1)
+                        else:
+                            a0 = -a - 1
+                            h = h * GGp.gen(a0) ** -1
+                            terms.append((a0, h, -1))
+                row.append((terms, GGp(g)))
+            ans.append(row)
+        return ans
+
+    def _improve_integer(self, prec, Up_reps, Up_data):
+        r"""
+        Same as :meth:`improve`, but computing with the integer coordinates of
+        the series modulo `p^N` (see
+        :class:`darmonpoints.meromorphic.MeromorphicIntegerArithmetic`). The
+        result is the same, since the `p`-adic computation is done with
+        absolute precision `N` anyway.
+
+        Raise ``ValueError`` or ``NotImplementedError`` (before changing
+        anything) if this is not possible.
+        """
+        from darmonpoints.meromorphic import MeromorphicIntegerArithmetic
+
+        HpMer = self.HpMer
+        Mer = HpMer.coefficient_module()
+        I = MeromorphicIntegerArithmetic(Mer)
+        phi1 = HpMer(self.phi1)
+        one_param = Matrix(Mer.base_ring(), 2, 2, [1, 0, 0, 1])
+        if any(v._parameter != one_param for v in phi1.values()):
+            raise NotImplementedError("Only implemented for the trivial parameter")
+        terms = self._Up_terms(Up_reps, Up_data)
+        # Integer matrices of the actions
+        mats = {}
+
+        def action(h):
+            try:
+                return mats[h]
+            except KeyError:
+                B = mats[h] = I.action_matrix(Mer.get_action_data(h, one_param, one_param))
+                return B
+
+        for row in terms:
+            for lst, g in row:
+                action(g)
+                for _, h, _ in lst:
+                    if h is not None:
+                        action(h)
+
+        def apply_Up(c):
+            ans = []
+            for row in terms:
+                res = None
+                for lst, g in row:
+                    if len(lst) == 0:
+                        continue  # the value at the empty word is 1
+                    num = None
+                    den = None
+                    for i, h, sign in lst:
+                        v = c[i] if h is None else I.act(c[i], mats[h])
+                        if sign > 0:
+                            num = v if num is None else I.mul(num, v)
+                        else:
+                            den = v if den is None else I.mul(den, v)
+                    W = I.inverse(den) if num is None else num
+                    if num is not None and den is not None:
+                        W = I.mul(W, I.inverse(den))
+                    W = I.act(W, mats[g])
+                    res = W if res is None else I.mul(res, W)
+                ans.append(I.one if res is None else I.normalize(res))
+            return ans
+
+        tmp = [I.from_element(v) for v in phi1.values()]
+        phi_list = [[I.one for _ in tmp], list(tmp)]
+        val = -1
+        for i in range(prec):
+            update_progress(
+                float(val + 1) / prec, "Iterating Up (%s/%s)" % (val + 1, prec)
+            )
+            tmp = apply_Up(tmp)
+            phi_list[i % 2] = [I.mul(a, b) for a, b in zip(phi_list[i % 2], tmp)]
+            val = min([I.valuation(o) for o in tmp])
+            if val >= prec:
+                break
+        self.phi_even, self.phi_odd = [
+            HpMer([I.to_element(o) for o in lst]) for lst in phi_list
+        ]
         return
 
     def evaluate_at_cycle(self, theta, parity):

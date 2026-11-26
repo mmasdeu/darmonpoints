@@ -39,6 +39,14 @@ def _hash(x):
     except TypeError:
         pass
     try:
+        # FLINT q-adic elements: valuation, precision and the (reduced)
+        # integer coefficients determine the printed value, and are much
+        # cheaper to get than str(x)
+        poly, v = x._flint_rep_abs()
+        return ("qadic", v, x.precision_absolute(), tuple(poly.list()))
+    except (AttributeError, TypeError, ValueError):
+        pass
+    try:
         return hash(str(x))
     except TypeError:
         pass
