@@ -3,6 +3,7 @@
 ##  INTEGRATION     ##
 ##                  ##
 ######################
+import os
 from collections import defaultdict
 from itertools import chain, groupby, islice, product, starmap, tee
 from operator import mul
@@ -226,6 +227,132 @@ def lift_to_locally_analytic(G, divisor, prec=None, depth=1):
         edgelist = newedgelist
 
 
+def integration_method():
+    r"""
+    How ``integrate_H1`` pairs the divisor with the moments of the cocycle:
+    'powersum' (default) or 'legacy', from the environment variable
+    DARMONPOINTS_INTEGRATION.
+
+    'legacy' builds, for every point of the divisor, the series log(1 - x z)
+    to the working precision and pairs the coefficients of their sum with
+    the moments. 'powersum' pairs the same coefficients, computed as power
+    sums of the points (see ``_pair_power_sums``): only as many terms as
+    there are moments, one division per degree instead of one per point and
+    degree, and no polynomials. The values are the same.
+    """
+    return os.environ.get("DARMONPOINTS_INTEGRATION", "powersum")
+
+
+def _lift_to_points(G, divisor, prec=None, depth=1):
+    r"""
+    The same as ``lift_to_locally_analytic``, but yields the points
+    x_P = (c P + d) / (a P + b) with their multiplicities and the constant
+    term log(c0unit), instead of the polynomial sum of the series of
+    log(1 - x_P z). The subdivision rule is the same: an edge is subdivided
+    when some x_P has valuation <= 0 (the ValueError of ``log_pseries``) or
+    when anything else in the computation of the edge raises a ValueError.
+    """
+    if depth % 2 != 1:
+        raise NotImplementedError("Need to allow for reversed edges.")
+    K = divisor.parent().base_ring()
+    if prec is None:
+        prec = K.precision_cap()
+    p = G.p
+    edgelist = [
+        ((-1) ** (depth + 1), o, QQ(1) / QQ(p + 1)) for o in G.get_covering(depth)
+    ]
+    while len(edgelist) > 0:
+        newedgelist = []
+        for parity, (rev, h), wt in edgelist:
+            assert not rev  # TODO: allow for reversed edges as well
+            a, b, c, d = (K(o) for o in G.embed(h, prec).list())
+            try:
+                c0unit = K.one()
+                c0val = 0
+                pts = []
+                for P, n in divisor:
+                    hp0 = K(a * P + b)
+                    x = K(c * P + d) / hp0
+                    if x.valuation() <= 0:
+                        raise ValueError("Valuation problem")
+                    pts.append((x, n))
+                    c0unit *= (-hp0).unit_part() ** n
+                    c0val += n * hp0.valuation()
+                c0log = c0unit.log(0)
+                yield ((h, rev), pts, c0val, c0unit, c0log)
+            except ValueError as msg:
+                verbose("Subdividing because (%s)..." % str(msg))
+                newedgelist.extend(
+                    [
+                        ((-1) ** 2 * parity, o, wt / QQ(p**2))
+                        for o in G.subdivide([(rev, h)], parity, 2)
+                    ]
+                )
+                continue
+        edgelist = newedgelist
+
+
+def _pair_power_sums(pts, c0log, mu, nterms):
+    r"""
+    The pairing of the legacy integration, sum_i a_i mu_i over the non-zero
+    coefficients a_i of degree i < min(number of moments, nterms) of
+
+        sum_P n_P log(1 - x_P z) + log(c0unit),
+
+    that is, a_0 = log(c0unit) and a_i = -(sum_P n_P x_P^i) / i for i >= 1.
+    ``nterms`` is the number of coefficients of the legacy series (working
+    precision + 1). Summed in the same order as the legacy code (increasing
+    degree, starting from the integer 0).
+
+    TESTS::
+
+        sage: from darmonpoints.integrals import _pair_power_sums, log_pseries
+        sage: Cp.<g> = Qq(25, 30)
+        sage: R = PolynomialRing(Cp, 'r')
+        sage: pts = [(5 * (g + 2), 1), (25 * g + 5, -1), (5 * g, 2), (5 + 5 * g, -2)]
+        sage: c0log = (1 + 5 * g).log(0)
+        sage: class Mu:
+        ....:     def __init__(self, v): self.v = v
+        ....:     def moments(self): return self.v
+        ....:     def moment(self, i): return self.v[i]
+        sage: mu = Mu([ZpCA(5, 12)(ZZ(7**k + k)) for k in range(13)])
+        sage: pol = sum(QQ(n) * log_pseries(R, x, 30) for x, n in pts) + c0log
+        sage: old = sum(a * mu.moment(i) for a, i in zip(pol.coefficients(), pol.exponents()) if i < 13)
+        sage: new = _pair_power_sums(pts, c0log, mu, 31)
+        sage: new == old and new.precision_absolute() == old.precision_absolute() and str(new) == str(old)
+        True
+    """
+    M = min(len(mu.moments()), nterms)
+    if M <= 0:
+        return 0
+    K = c0log.parent()
+    zero = K.zero()
+    s = [zero] * M
+    for x, n in pts:
+        xp = x
+        if n == 1:
+            for i in range(1, M):
+                s[i] += xp
+                xp *= x
+        elif n == -1:
+            for i in range(1, M):
+                s[i] -= xp
+                xp *= x
+        else:
+            n = QQ(n)
+            for i in range(1, M):
+                s[i] += n * xp
+                xp *= x
+    ans = 0
+    if c0log != zero:
+        ans = ans + c0log * mu.moment(0)
+    for i in range(1, M):
+        a = -s[i] / QQ(i)
+        if a != zero:
+            ans = ans + a * mu.moment(i)
+    return ans
+
+
 r"""
 Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
@@ -260,18 +387,30 @@ def integrate_H1(
     resmul = Cp(1)
     resadd = Cp(0)
     resval = ZZ(0)
+    powersum = integration_method() == "powersum"
     for g, D in cycle:
         if twist:
             D = D.left_act_by_matrix(G.embed(G.wp(), prec).change_ring(Cp))
             g = g.conjugate_by(G.wp() ** -1)
-        for (h, rev), pol, c0val, c0unit in lift_to_locally_analytic(G, D, prec, depth):
+        if powersum:
+            edges = _lift_to_points(G, D, prec, depth)
+        else:
+            edges = lift_to_locally_analytic(G, D, prec, depth)
+        for item in edges:
+            if powersum:
+                (h, rev), pts, c0val, c0unit, c0log = item
+            else:
+                (h, rev), pol, c0val, c0unit = item
             mu = cocycle.evaluate(g, h, at_identity=G.use_shapiro())
             mu0 = cocycle["liftee"].evaluate(g, h, at_identity=G.use_shapiro())[0]
-            newresadd = sum(
-                a * mu.moment(i)
-                for a, i in zip(pol.coefficients(), pol.exponents())
-                if i < len(mu.moments())
-            )
+            if powersum:
+                newresadd = _pair_power_sums(pts, c0log, mu, prec + 1)
+            else:
+                newresadd = sum(
+                    a * mu.moment(i)
+                    for a, i in zip(pol.coefficients(), pol.exponents())
+                    if i < len(mu.moments())
+                )
             newresval = c0val * ZZ(mu0)
             newresmul = c0unit ** ZZ(mu0)
             if rev:
