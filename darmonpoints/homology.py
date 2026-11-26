@@ -227,6 +227,16 @@ class TensorProduct(Module):
             return False
 
 
+def zde_method():
+    r"""
+    How ``OneChainsElement.zero_degree_equivalent`` decomposes the chain over
+    the generators: 'fast' (default) or 'legacy', from the environment
+    variable DARMONPOINTS_ZDE. Both give the same chain, divisor by divisor
+    and in the same order; 'fast' skips the work whose result is not used.
+    """
+    return os.environ.get("DARMONPOINTS_ZDE", "fast")
+
+
 class OneChainsElement(TensorElement):
     def is_degree_zero_valued(self, degree_map=None):
         if isinstance(self.parent().coefficient_module(), Divisors):
@@ -277,6 +287,24 @@ class OneChainsElement(TensorElement):
             sage: sys.stdout = _out
             sage: x_ord, ans.is_degree_zero_valued()
             (2, True)
+
+        The 'fast' and 'legacy' decompositions (DARMONPOINTS_ZDE) give the same
+        chain, divisor by divisor, with the same points in the same order::
+
+            sage: import os
+            sage: def terms(ch):
+            ....:     return [(g, [(str(P), n) for P, n in v]) for g, v in ch._data.items()]
+            sage: d = Div(Cp.gen() + 2) - Div(Cp.gen() + 7) + Div(3 * Cp.gen()) - Div(Cp.gen())
+            sage: c2 = OneChains(G, Div)({G.gen(13): d, G.gen(2) * G.gen(5)**-2 * G.gen(7): Div(Cp.gen()) - Div(1 + Cp.gen())})
+            sage: _out, sys.stdout = sys.stdout, io.StringIO()
+            sage: os.environ['DARMONPOINTS_ZDE'] = 'legacy'
+            sage: old = [ch.zero_degree_equivalent(allow_multiple=True)[0] for ch in (c, c2)]
+            sage: os.environ['DARMONPOINTS_ZDE'] = 'fast'
+            sage: new = [ch.zero_degree_equivalent(allow_multiple=True)[0] for ch in (c, c2)]
+            sage: del os.environ['DARMONPOINTS_ZDE']
+            sage: sys.stdout = _out
+            sage: [terms(x) == terms(y) for x, y in zip(old, new)], len(terms(new[1])) > 1
+            ([True, True], True)
         """
         # Keep the caller's argument around: the final check re-derives its own
         # map, and forwarding the one we filled in below would warn about a
@@ -334,29 +362,98 @@ class OneChainsElement(TensorElement):
         # newdict will store the new 1-chain formed by C + \sum r_i \otimes v
         newdict = defaultdict(V)
         boundary_list= []
-        # Decompose each (g,v) tensor in the 1-cycle into a sum of tensors of the form (g_i, v_i) where g_i is a generator of G
-        # We store all 1-boundaries used in boundary_list
-        for gword, v in zip(gwordlist, oldvals):
-            verbose("Processing %s|%s" % (gword, v))
-            newv = V(v)
-            for i, a in tietze_to_syllables(gword): # gi^a|v
-                oldv = V(newv)
-                g = G.gen(i)
-                newv = (g**-a) * V(oldv)  # for the next iteration
-                sign = 1
-                if a < 0:
-                    a = -a
-                    oldv = (g**a) * V(oldv)
-                    sign = -1
-                for j in range(a):
-                    newdict[g] += ZZ(sign) * oldv
-                    boundary_list.append((i,g, g**(a-j-1), g * (-ZZ(sign)*V(oldv)))) # negative sign included
-                    oldv = (g**-1) * oldv
-            counter += 1
-            update_progress(
-                float(QQ(counter) / QQ(len(oldvals))),
-                "Reducing to degree zero equivalent",
-            )
+        if zde_method() == "fast":
+            # The same decomposition as the legacy branch below, without its
+            # duplicated work (same divisors, in the same order):
+            #  - the 1-boundaries are only built when they are returned;
+            #  - for a syllable g^-1, (g**1) * V(oldv) is the computation just
+            #    done for newv: reuse it;
+            #  - the update of oldv after the last step of a syllable is not
+            #    used: skip it;
+            #  - the powers of the generators are built once per call, so that
+            #    their p-adic matrices (cached by each element) are computed
+            #    once instead of at every step;
+            #  - the divisors of newdict are accumulated in place (``acc``)
+            #    instead of copying the whole growing divisor at every step
+            #    (DivisorsElement._add_ of ZZ(sign) * oldv): the same keys, in
+            #    the same order, with the same stored points.
+            pows = {}
+            acc = {}  # g -> (_data, _ptdict), keys in the order of first use
+            inplace = isinstance(V, Divisors)  # other modules: newdict[g] += ...
+
+            def gpow(i, e):
+                try:
+                    return pows[i, e]
+                except KeyError:
+                    x = pows[i, e] = G.gen(i) ** e
+                    return x
+
+            for gword, v in zip(gwordlist, oldvals):
+                verbose("Processing %s|%s" % (gword, v))
+                newv = V(v)
+                for i, a in tietze_to_syllables(gword): # gi^a|v
+                    oldv = V(newv)
+                    g = G.gen(i)
+                    newv = gpow(i, -a) * V(oldv)  # for the next iteration
+                    sign = 1
+                    if a < 0:
+                        a = -a
+                        oldv = newv if a == 1 else gpow(i, a) * V(oldv)
+                        sign = -1
+                    for j in range(a):
+                        if inplace:
+                            try:
+                                data, pt = acc[g]
+                            except KeyError:
+                                data, pt = acc[g] = ({}, {})
+                            zsign = ZZ(sign)
+                            ptx = oldv._ptdict
+                            pt.update(ptx)
+                            for hP, n in oldv._data.items():
+                                m = data.get(hP, ZZ(0)) + zsign * n
+                                if m == 0:
+                                    data.pop(hP, None)
+                                    del pt[hP]
+                                else:
+                                    data[hP] = m
+                                    pt[hP] = ptx[hP]
+                        else:
+                            newdict[g] += ZZ(sign) * oldv
+                        if return_boundary:
+                            boundary_list.append((i,g, g**(a-j-1), g * (-ZZ(sign)*V(oldv)))) # negative sign included
+                        if j < a - 1:
+                            oldv = gpow(i, -1) * oldv
+                counter += 1
+                update_progress(
+                    float(QQ(counter) / QQ(len(oldvals))),
+                    "Reducing to degree zero equivalent",
+                )
+            for g, (data, pt) in acc.items():
+                newdict[g] = V.element_class(V, data, ptdata=pt)
+        else:
+            # Decompose each (g,v) tensor in the 1-cycle into a sum of tensors of the form (g_i, v_i) where g_i is a generator of G
+            # We store all 1-boundaries used in boundary_list
+            for gword, v in zip(gwordlist, oldvals):
+                verbose("Processing %s|%s" % (gword, v))
+                newv = V(v)
+                for i, a in tietze_to_syllables(gword): # gi^a|v
+                    oldv = V(newv)
+                    g = G.gen(i)
+                    newv = (g**-a) * V(oldv)  # for the next iteration
+                    sign = 1
+                    if a < 0:
+                        a = -a
+                        oldv = (g**a) * V(oldv)
+                        sign = -1
+                    for j in range(a):
+                        newdict[g] += ZZ(sign) * oldv
+                        boundary_list.append((i,g, g**(a-j-1), g * (-ZZ(sign)*V(oldv)))) # negative sign included
+                        oldv = (g**-1) * oldv
+                counter += 1
+                update_progress(
+                    float(QQ(counter) / QQ(len(oldvals))),
+                    "Reducing to degree zero equivalent",
+                )
 
         verbose("Done zero_degree_equivalent")
         ans = HH(newdict)
