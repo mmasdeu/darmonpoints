@@ -362,6 +362,7 @@ class OCVn(Module, UniqueRepresentation):
             self._Rmod, default_prec=self._depth, name="z"
         )
         self._cache_powers = dict()
+        self._poly_ring_mod = PolynomialRing(Zmod(self._pN), name="z")
         self._unset_coercions_used()
         self._Sigma0 = Sigma0(self._p, base_ring=self._Rmod, adjuster=our_adjuster())
         self.register_action(Sigma0Action(self._Sigma0, self))
@@ -407,11 +408,48 @@ class OCVn(Module, UniqueRepresentation):
         return self._get_powers(g).submatrix(0, 0, M, M)
 
     def _get_powers(self, abcd, emb=None):
+        r"""
+        The matrix whose ``i``-th row holds the first coefficients of
+        `((b + a z)/(d + c z))^i`, modulo `p^{depth-1}`, where
+        ``abcd = [[a, b], [c, d]]``.
+
+        The computation is done with (C-level) polynomials over
+        `\ZZ/p^{depth-1}`, using truncated products and a truncated
+        inverse; the result is the same as with `p`-adic power series.
+        """
         abcd = tuple(abcd.list())
         try:
             return self._cache_powers[abcd]
         except KeyError:
             pass
+        if emb is None:
+            a, b, c, d = abcd
+        else:
+            a, b, c, d = emb(abcd).list()
+        depth = self._depth
+        P = self._poly_ring_mod
+        N = self._pN
+        try:
+            coeffs = [ZZ(o) % N for o in (a, b, c, d)]
+        except (TypeError, ValueError, ArithmeticError):
+            return self._get_powers_reference(abcd, emb)
+        a, b, c, d = coeffs
+        r = P([b, a])
+        sinv = P([d, c]).inverse_series_trunc(depth)
+        ratio = r._mul_trunc_(sinv, depth)
+        y = P.one()
+        xlist = [[1] + [0] * (depth - 1)]
+        for ii in range(1, depth):
+            y = y._mul_trunc_(ratio, depth)
+            ylist = [o.lift() for o in y.list()]
+            ylist.extend([0] * (depth - len(ylist)))
+            xlist.append(ylist)
+        x = Matrix(ZZ, depth, depth, xlist)
+        self._cache_powers[abcd] = x
+        return x
+
+    def _get_powers_reference(self, abcd, emb=None):
+        abcd = tuple(abcd)
         R = self._PowerSeries
         if emb is None:
             a, b, c, d = abcd

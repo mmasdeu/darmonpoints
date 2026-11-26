@@ -86,6 +86,14 @@ _GP_EICHLER = [
     r"dp_eichleridempotent(A,pr) = { my(map,mapi,d,n,e); [map, mapi] = dp_algmodpr(A,pr); d = algdegree(A); n = pr.f; e = vectorv(n*d^2); for(i=1, d-1, e[1+n*(d+1)*i] = 1); mapi*e };",
     r"dp_eichlerprimepower(A,pr,k) = { my(e,p,polidem = 3*'x^2-2*'x^3,B,N,Me,Mzk,nf,prk,Mprk,i); p = pr.p; e = dp_eichleridempotent(A,pr); i = 1; while(i<k, e = algpoleval(A,polidem,e); i *= 2; e %= p^ceil(i/pr.e);); N = algdim(A,1); B = Vec(matid(N)); Me = Mat(vector(N,j,algmul(A,B[j],e))); nf = algcenter(A); Mzk = Mat([dp_algfromcenter(A,z) | z <- nf.zk]); prk = idealtwoelt(nf,idealpow(nf,pr,k)); Mprk = algtomatrix(A,dp_algfromcenter(A,prk[2]),1); mathnfmodid(matconcat([Me,Mzk,Mprk]),prk[1]) };",
 ]
+# Filter the columns v of V by the reduced norm, without building quaternions:
+# Qs[c] are integer matrices with den * nrd(sum v_i b_i) = sum_c (v~ Qs[c] v) y^c
+# (power basis of the centre). mode 0: exact equality with tgt (the vector of
+# den * coordinates); mode 1: |N_{F/Q}| equal to tgt (= |N(nrd)| * den^deg).
+# If aff is nonzero, a coordinate 1 is appended to each v (affine lattices).
+_GP_EICHLER.append(
+    r"dp_nrdfilter(Qs, V, aff, pol, mode, tgt) = { my(res = List(), d = #Qs, cs, z = vector(#Qs), W, V1); if(#V == 0, return([])); V1 = if(aff, matconcat([V; vector(#V, j, 1)]), V); W = vector(d, c, Qs[c] * V1); for(j = 1, #V1, cs = vector(d, c, W[c][,j]~ * V1[,j]); if(cs == z, next); if(mode == 0, if(cs == tgt, listput(res, j)), if(abs(norm(Mod(Polrev(cs, 'y), pol))) == tgt, listput(res, j)))); Vec(res) };"
+)
 _gp_loaded = False
 
 
@@ -491,10 +499,11 @@ class QuaternionAlgebraPari(SageObject):
                 G += 2 * L * D * L.transpose()
         return G
 
-    def short_elements(self, basis, C, prec=200, conj=None, max_count=2000, max_count_limit=500000):
+    def short_vectors(self, basis, C, prec=200, conj=None, max_count=2000, max_count_limit=500000):
         r"""
-        Elements `x` (up to sign) of the lattice spanned by ``basis`` with
-        `Q(x) \le C`, for the majorant `Q` of :meth:`_majorant_gram`.
+        The coordinates (as columns of a PARI matrix) of the vectors `x` (up
+        to sign) of the lattice spanned by ``basis`` with `Q(x) \le C`, for
+        the majorant `Q` of :meth:`_majorant_gram`.
 
         PARI returns at most ``max_count`` vectors; if there are more, the
         enumeration is repeated with a larger count (up to
@@ -507,11 +516,64 @@ class QuaternionAlgebraPari(SageObject):
             if ZZ(res[0]) <= len(vecs) or max_count >= max_count_limit:
                 break
             max_count = min(4 * max(max_count, ZZ(res[0])), max_count_limit)
-        ans = []
-        for j in range(len(vecs)):
-            v = vecs[j]
-            ans.append(sum((ZZ(c) * o for c, o in zip(v, basis)), self.B(0)))
-        return ans
+        return vecs
+
+    def _vector_to_element(self, basis, v, affine=False):
+        x = sum((ZZ(c) * o for c, o in zip(v, basis)), self.B(0))
+        if affine:
+            x += basis[-1]
+        return x
+
+    def short_elements(self, basis, C, prec=200, conj=None, max_count=2000, max_count_limit=500000):
+        r"""
+        Elements `x` (up to sign) of the lattice spanned by ``basis`` with
+        `Q(x) \le C`, for the majorant `Q` of :meth:`_majorant_gram`.
+        """
+        vecs = self.short_vectors(basis, C, prec, conj, max_count, max_count_limit)
+        return [self._vector_to_element(basis, vecs[j]) for j in range(len(vecs))]
+
+    def _coords(self, z):
+        z = self.F(z)
+        return [QQ(z)] if self.F is QQ else list(z.list())
+
+    def _nrd_forms(self, basis):
+        r"""
+        ``(Qs, den)``: integer matrices ``Qs[c]`` such that
+        ``den * nrd(sum v_i basis[i])`` has power-basis coordinates
+        ``v^T Qs[c] v``.
+        """
+        n = len(basis)
+        d = self._deg
+        nrds = [x.reduced_norm() for x in basis]
+        M = [[None] * n for _ in range(n)]
+        for i in range(n):
+            M[i][i] = self._coords(nrds[i])
+            for j in range(i + 1, n):
+                cross = (basis[i] + basis[j]).reduced_norm() - nrds[i] - nrds[j]
+                M[i][j] = M[j][i] = self._coords(cross / 2)
+        den = lcm([QQ(c).denominator() for row in M for e in row for c in e] + [1])
+        Qs = [
+            matrix(ZZ, n, n, [den * M[i][j][c] for i in range(n) for j in range(n)])
+            for c in range(d)
+        ]
+        return pari(Qs), ZZ(den)
+
+    def _filter_by_norm(self, forms, vecs, target, absolute, affine=False):
+        r"""
+        Indices (0-based) of the columns of ``vecs`` whose element has reduced
+        norm ``target`` (if ``absolute`` is ``False``) or reduced norm of
+        absolute norm ``|target|`` (an integer, if ``absolute`` is ``True``).
+        """
+        _load_gp_code()
+        Qs, den = forms
+        if absolute:
+            tgt = pari(ZZ(target).abs() * den ** self._deg)
+            mode = 1
+        else:
+            tgt = pari([den * c for c in self._coords(target)])
+            mode = 0
+        idx = pari("dp_nrdfilter")(Qs, vecs, 1 if affine else 0, self.nf.nf_get_pol(), mode, tgt)
+        return [ZZ(j) - 1 for j in idx]
 
     def _norm_lower_bound(self, N, prec=53):
         r"""
@@ -534,11 +596,17 @@ class QuaternionAlgebraPari(SageObject):
         NI = ZZ(N).abs() if F is QQ else F.ideal(N)
         C = self._norm_lower_bound(N) * growth
         found = []
+        forms = self._nrd_forms(basis)
+        Nabs = ZZ(N).abs() if F is QQ else ZZ(N.norm()).abs()
         for _ in range(max_tries):
-            for x in self.short_elements(basis, C, prec, conj):
+            vecs = self.short_vectors(basis, C, prec, conj)
+            if exact:
+                idx = self._filter_by_norm(forms, vecs, N, absolute=False)
+            else:
+                idx = self._filter_by_norm(forms, vecs, Nabs, absolute=True)
+            for jj in idx:
+                x = self._vector_to_element(basis, vecs[jj])
                 nx = x.reduced_norm()
-                if nx == 0:
-                    continue
                 if exact:
                     ok = nx == N
                 else:
@@ -564,15 +632,17 @@ class QuaternionAlgebraPari(SageObject):
         basis = self.order_basis(M)
         C = self._norm_lower_bound(N) * growth
         seen = set()
+        forms = self._nrd_forms(basis)
+        Nabs = ZZ(N).abs() if F is QQ else ZZ(N.norm()).abs()
         for _ in range(max_tries):
-            for x in self.short_elements(basis, C, prec):
+            vecs = self.short_vectors(basis, C, prec)
+            for jj in self._filter_by_norm(forms, vecs, Nabs, absolute=True):
+                x = self._vector_to_element(basis, vecs[jj])
                 key = tuple(tuple(c.list()) if hasattr(c, "list") else (c,) for c in x.coefficient_tuple())
                 if key in seen:
                     continue
                 seen.add(key)
                 nx = x.reduced_norm()
-                if nx == 0:
-                    continue
                 ok = (ZZ(nx).abs() == NI) if F is QQ else (F.ideal(nx) == NI)
                 if ok:
                     for y in (x, -x):
@@ -660,6 +730,7 @@ class QuaternionAlgebraPari(SageObject):
         # to -u with PARI's qfcvp.
         k = len(L0)
         lower = 2 * self._norm_lower_bound(n0) + 1
+        slice_forms = self._nrd_forms(L0 + [x0])
 
         def search(conj, C, maxcount):
             # Elements x0 + y (y in L0) with Q_conj(x0 + y) <= C
@@ -677,25 +748,28 @@ class QuaternionAlgebraPari(SageObject):
             targetp = pari([QQ((-ui * scale).round()) / scale for ui in u]).Col()
             res = pari.qfcvp(G0p, targetp, ((C - offset) * scale).ceil(), maxcount, 0)
             vecs = res[2]
-            for j in range(len(vecs)):
-                v = vecs[j]
-                y = x0 + sum((ZZ(cc) * o for cc, o in zip(v, L0)), self.B(0))
+            for jj in self._filter_by_norm(slice_forms, vecs, n0, absolute=False, affine=True):
+                y = self._vector_to_element(L0 + [x0], vecs[jj], affine=True)
                 if y.reduced_norm() == n0:
                     return y + c
             return None
 
-        # First a cheap search near the minimum (the solutions form a
-        # conjugacy class, so they are short only if their axis passes near
-        # the centre of the majorant).
+        # First: embed over F and conjugate into the order by principalizing
+        # a left ideal (fast in practice). If that fails, search near the
+        # minimum of the affine lattice of elements of the right trace (the
+        # solutions form a conjugacy class, so they are short only if their
+        # axis passes near the centre of the majorant).
+        try:
+            return self._element_with_minpoly_by_principalization(M, t, n, prec)
+        except RuntimeError:
+            pass
         C = lower
-        for _ in range(4):
+        for _ in range(max(4, max_tries)):
             ans = search(None, C, 20000)
             if ans is not None:
                 return ans
             C *= growth
-        # Otherwise: embed over F and conjugate into the order by
-        # principalizing a left ideal.
-        return self._element_with_minpoly_by_principalization(M, t, n, prec)
+        raise RuntimeError("No element with trace %s and norm %s found" % (t, n))
 
     def _solve_norm_equation(self, e, m, flag=100):
         r"""
@@ -801,6 +875,8 @@ class QuaternionAlgebraPari(SageObject):
         if target not in QQ:
             raise RuntimeError("Unexpected index of the ideal")
 
+        I_forms = self._nrd_forms(I)
+
         def is_gen(x):
             nx = x.reduced_norm()
             return nx != 0 and QQ(nx.norm() if F is not QQ else nx).abs() == target
@@ -809,7 +885,9 @@ class QuaternionAlgebraPari(SageObject):
         dg = self._deg
         C = RealField(53)(2 * dg) * RealField(53)(target) ** (RealField(53)(1) / dg) * 1.5
         for _ in range(60):
-            for x in self.short_elements(I, C, prec):
+            vecs = self.short_vectors(I, C, prec)
+            for jj in self._filter_by_norm(I_forms, vecs, target, absolute=True):
+                x = self._vector_to_element(I, vecs[jj])
                 if is_gen(x):
                     alpha = x
                     break

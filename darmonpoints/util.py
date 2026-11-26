@@ -596,7 +596,7 @@ def our_lindep(V,prec = None, base=None, **kwargs):
     return list(tmp)[:n]
 
 
-def our_algdep(z, degree, prec=None):
+def our_algdep(z, degree, prec=None, algorithm="pari"):
     if prec is None:
         prec = z.precision_relative()
     field_deg = z.parent().degree()
@@ -613,10 +613,17 @@ def our_algdep(z, degree, prec=None):
     r = 1
     M = matrix(ZZ, n + field_deg, field_deg)
     M[0, -1] = 1  # Encodes 1
+    unramified = field_deg == 1 or z.parent().absolute_e() == 1
     for k in range(1, degree + 1):
         r *= z
         if field_deg == 1:
             M[k, 0] = ZZ(r.lift()) % pn
+        elif unramified:
+            # The coefficients of r in the power basis of the generator (the
+            # same integers as summing the digits of r.expansion(), but
+            # computed in C)
+            for i, u in enumerate(r.polynomial().list()):
+                M[k, -1 - i] = ZZ(u) % pn
         else:
             for j, o in enumerate(r.expansion()):
                 for i, u in enumerate(o):
@@ -625,7 +632,16 @@ def our_algdep(z, degree, prec=None):
         M[n + i, -1 - i] = pn
     verb_lev = get_verbose()
     set_verbose(0)
-    tmp = M.transpose().right_kernel_matrix().change_ring(ZZ).LLL().row(0)
+    if algorithm == "pari":
+        # LLL-reduced integral kernel in one step (much faster than Sage's
+        # kernel + saturation + LLL for these small matrices)
+        K = pari(M.transpose()).matkerint()
+        if len(K) == 0:
+            set_verbose(verb_lev)
+            return R(0)
+        tmp = [ZZ(c) for c in K[0]]
+    else:
+        tmp = M.transpose().right_kernel_matrix().change_ring(ZZ).LLL().row(0)
     set_verbose(verb_lev)
     f = RQ(list(tmp[:n]))(x / ptozval)
     if f.leading_coefficient() < 0:
@@ -2171,16 +2187,55 @@ def recognize_J(
     CEloc, _ = get_C_and_C2(Eloc, qEpows, Cp, precp)
     EH = E.change_ring(HCF)
     success = False
-    for twopow in twopowlist:
+    tors = E.torsion_order()
+    # For each multiplier, first try without the torsion factor (den^2
+    # candidates instead of (tors * den)^2): the point is only defined up to
+    # torsion anyway, and any point found is checked below.
+    attempts = [(twopow, tf) for twopow in twopowlist for tf in sorted(set([1, tors]))]
+
+    # If the class number of K is 1, a Darmon point satisfies sigma(P) = +-P
+    # (up to torsion), so x(P) lies in the base field: its image in Cp is
+    # fixed by Frobenius. A first pass only runs the (expensive) algebraic
+    # recognition on such candidates; a second pass tries all of them.
+    def x_in_base_field(x):
+        try:
+            if x == 0:
+                return True
+            return (x - x.frobenius()).valuation() - x.valuation() >= prec - 3
+        except (AttributeError, NotImplementedError, TypeError, ValueError):
+            return True
+
+    # The same condition on the Tate parameter u of the point: frob(u) is
+    # u or u^-1 up to a power of qE (which lies in the base field). This is
+    # tested before computing the coordinates of the candidate.
+    def u_in_base_field(u):
+        try:
+            fu = u.frobenius()
+            for w in (fu / u, fu * u):
+                v = w.valuation()
+                if v % numqE != 0:
+                    continue
+                k = (v // numqE) * denqE
+                w1 = w / qE**k if k >= 0 else w * qE ** (-k)
+                if w1 == 1 or (w1 - 1).valuation() >= prec - 3:
+                    return True
+            return False
+        except (AttributeError, NotImplementedError, TypeError, ValueError, ZeroDivisionError):
+            return True
+
+    passes = [True, False] if hK == 1 else [False]
+    for prefilter, (twopow, tf) in ((pf, a) for pf in passes for a in attempts):
         success = False
         power = QQ(twopow * known_multiple) ** -1
-        pnum = E.torsion_order() * power.numerator()
-        pden = E.torsion_order() * power.denominator()
+        pnum = tf * power.numerator()
+        pden = tf * power.denominator()
         J1list = sum(
             (our_nroot(J**pnum * qE**i, pden, return_all=True) for i in range(pden)),
             [],
         )
         for J1 in J1list:
+            if prefilter and J1 != Cp(1) and not u_in_base_field(J1):
+                continue
             if J1 == Cp(1):
                 candidate = E.change_ring(HCF)(0)
                 verbose("Recognized the point, it is zero!")
@@ -2202,6 +2257,8 @@ def recognize_J(
                     verbose("Recognized the point, it is zero!")
                     success = True
                     break
+                if prefilter and not x_in_base_field(x):
+                    continue
                 success = False
                 prec0 = prec
                 while not success and prec0 > 0.9 * prec:

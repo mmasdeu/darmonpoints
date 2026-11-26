@@ -380,3 +380,50 @@ a value) and is now marked `# not tested`.
 Page's "Maximal" group type (normalizer) is not ported (darmonpoints does not
 use it); the Magma backend and the `KleinianGroups-1.0` Magma package are
 still shipped for comparisons (`backend='magma'`).
+
+### 2026-11-26 (evening): performance of Darmon point computations
+
+Profiled `darmon_point` on 78a1 (QQ, p = 13) and on the cubic field
+`x^3 - x^2 - x + 2` (Kleinian). Timings (without profiler):
+
+| Example | before | after |
+|---------|--------|-------|
+| 78a1, p = 13, beta = 5 | 56 s | 8.6 s |
+| 30a1, p = 5, beta = 53 | 9 s | 2.0 s |
+| cubic `x^3 - x^2 - x + 2` | 370 s | 75 s |
+| Stark-Heegner 35a1 (unchanged code path) | 12 s | 15 s |
+
+Changes (results unchanged; points checked: infinite order, `Q + sigma(Q) = 0`):
+
+- `OCVn._get_powers` (action matrices on overconvergent distributions,
+  the main cost of the overconvergent lift over QQ): computed with C-level
+  polynomials over `Z/p^(depth-1)` (truncated inverse and products) instead
+  of p-adic power series; identical matrices, 5-8x faster.
+- Searches for elements of given norm (`elements_of_norm`,
+  `search_elements_of_norm`, trace-slice search, principalization): the
+  reduced norm is evaluated on the raw integer vectors inside PARI (integer
+  quadratic forms, one matrix product per coordinate), and only matching
+  vectors become quaternions.
+- `element_with_minpoly`: principalization first (about 1.5 s), the
+  trace-slice search only as a fallback.
+- `ArithGroup_nf_generic._is_in_order`: now checks that the coordinates in the
+  Z-basis of the order are integers (one rational matrix-vector product).
+  The previous test grouped these coordinates into elements of F and tested
+  their integrality, which is wrong for general Z-bases (PARI's, Magma's) and
+  when `O_F != Z[r]`.
+- `our_algdep`: LLL-reduced integral kernel with PARI's `matkerint`
+  instead of Sage's kernel + saturation + LLL; the matrix of powers is read
+  from the polynomial representation for unramified extensions (same results
+  on tests, about 4x faster).
+- `recognize_J`: candidates `J1` are first restricted to those compatible
+  with `sigma(P) = +-P` (when the class number of K is 1): `frob(J1)` is `J1`
+  or `J1^-1` up to a power of `qE`, tested before computing coordinates; and
+  each multiplier is first tried without the torsion factor. A second pass
+  runs the previous exhaustive search if the first finds nothing. For the
+  cubic example this cut the number of algebraic recognitions from 20931 to a
+  few hundred.
+
+Remaining costs in the cubic example: integration (`log_pseries`,
+`lift_to_locally_analytic`, ~24 s), cycle construction (Hecke
+representatives and `zero_degree_equivalent`, ~27 s), fundamental domains
+(~14 s).

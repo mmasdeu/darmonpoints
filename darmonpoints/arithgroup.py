@@ -2067,7 +2067,13 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         return [self.F(y) for y in zip(*[iter(V)] * self.F.degree())]
 
     def _is_in_order(self, x):
-        return all([o.is_integral() for o in self._quaternion_to_list(x)])
+        # x is in the order iff its coordinates in the Z-basis of the order
+        # are integers. (Grouping these coordinates into elements of F and
+        # testing their integrality, as was done before, is wrong when the
+        # Z-basis is not of the form r^i * o_k, e.g. for PARI's or Magma's
+        # Z-bases, or when O_F != Z[r].)
+        xlist = [u for o in x.coefficient_tuple() for u in o.list()]
+        return (self._get_basis_invmat() * vector(QQ, xlist)).denominator() == 1
 
     # nf_quaternion
     def compute_quadratic_embedding(self, D, return_generator=False, **kwargs):
