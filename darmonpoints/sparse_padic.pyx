@@ -1,4 +1,3 @@
-# distutils: libraries = gmp
 # cython: boundscheck=False, wraparound=False, cdivision=True, language_level=3
 r"""
 Sparse integer matrices whose columns are only needed modulo powers of p.
@@ -47,15 +46,95 @@ EXAMPLES::
     True
     sage: S.columns()[1] == vals
     True
-"""
-from libc.stdlib cimport malloc, realloc, free
-from libc.string cimport memset, memcpy
-from libc.stdint cimport int32_t, int64_t
-from cysignals.signals cimport sig_check
 
-from sage.libs.gmp.types cimport __mpz_struct, mpz_t, mpz_ptr, mpz_srcptr, mp_limb_t, mp_size_t
-from sage.libs.gmp.mpz cimport *
-from sage.libs.gmp.pylong cimport mpz_set_pylong, mpz_get_pylong
+Negative entries, and entries of any size (also those that fit in a machine
+word), are converted exactly::
+
+    sage: v = [int(randrange(-3^60, 3^60)) for _ in range(30)]
+    sage: v[:3] = [-1, 2^63, -2^63 - 1]
+    sage: w = vector(ZZ, v) * A
+    sage: S.apply(v) == [int(w[c] % 3^exps[c]) for c in range(20)]
+    True
+
+The module only needs a C compiler and GMP (``gmp.h`` and ``libgmp``) to be
+built, and not the Sage sources: it declares the few GMP functions that it
+uses. If it is not built, the python products are used instead (see
+``meromorphic._IntegerOperator``), with the same results.
+"""
+from cpython.bytes cimport PyBytes_AS_STRING, PyBytes_FromStringAndSize
+from cpython.exc cimport PyErr_CheckSignals
+from cpython.long cimport PyLong_AsLongAndOverflow, PyLong_FromLong
+from libc.stdint cimport int32_t, int64_t
+from libc.stdlib cimport free, malloc, realloc
+from libc.string cimport memcpy, memset
+
+
+cdef extern from "gmp.h":
+    # The types and functions of GMP used here (the C types are those of gmp.h)
+    ctypedef unsigned long mp_limb_t
+    ctypedef long mp_size_t
+    ctypedef unsigned long mp_bitcnt_t
+    ctypedef struct __mpz_struct:
+        int _mp_alloc
+        int _mp_size
+        mp_limb_t* _mp_d
+    ctypedef __mpz_struct mpz_t[1]
+    ctypedef __mpz_struct* mpz_ptr
+    ctypedef const __mpz_struct* mpz_srcptr
+    void mpz_init(mpz_ptr)
+    void mpz_init2(mpz_ptr, mp_bitcnt_t)
+    void mpz_init_set_ui(mpz_ptr, unsigned long)
+    void mpz_clear(mpz_ptr)
+    void mpz_set_ui(mpz_ptr, unsigned long)
+    void mpz_set_si(mpz_ptr, long)
+    long mpz_get_si(mpz_srcptr)
+    int mpz_fits_slong_p(mpz_srcptr)
+    void mpz_neg(mpz_ptr, mpz_srcptr)
+    void mpz_mul(mpz_ptr, mpz_srcptr, mpz_srcptr)
+    void mpz_addmul(mpz_ptr, mpz_srcptr, mpz_srcptr)
+    void mpz_fdiv_r(mpz_ptr, mpz_srcptr, mpz_srcptr)
+    void mpz_divexact(mpz_ptr, mpz_srcptr, mpz_srcptr)
+    int mpz_divisible_p(mpz_srcptr, mpz_srcptr)
+    int mpz_sgn(mpz_srcptr)
+    size_t mpz_sizeinbase(mpz_srcptr, int)
+    mpz_srcptr mpz_roinit_n(mpz_ptr, const mp_limb_t*, mp_size_t)
+    void mpz_import(mpz_ptr, size_t, int, size_t, int, size_t, const void*)
+    void* mpz_export(void*, size_t*, int, size_t, int, size_t, mpz_srcptr)
+
+
+cdef int mpz_set_pylong(mpz_ptr z, x) except -1:
+    # z = x, for a python integer x (through its bytes when it does not fit in a long)
+    cdef int overflow = 0
+    cdef long s = PyLong_AsLongAndOverflow(x, &overflow)
+    if not overflow:
+        mpz_set_si(z, s)
+        return 0
+    cdef bint negative = x < 0
+    if negative:
+        x = -x
+    b = x.to_bytes((x.bit_length() + 7) // 8, 'little')
+    mpz_import(z, len(b), -1, 1, 0, 0, PyBytes_AS_STRING(b))
+    if negative:
+        mpz_neg(z, z)
+    return 0
+
+
+cdef object mpz_get_pylong(mpz_srcptr z):
+    # The python integer z (through its bytes when it does not fit in a long)
+    if mpz_fits_slong_p(z):
+        return PyLong_FromLong(mpz_get_si(z))
+    cdef size_t n = (mpz_sizeinbase(z, 2) + 7) // 8  # exactly the bytes that mpz_export writes
+    cdef size_t count = 0
+    b = PyBytes_FromStringAndSize(NULL, n)  # filled before it is used anywhere
+    mpz_export(PyBytes_AS_STRING(b), &count, -1, 1, 0, 0, z)
+    x = int.from_bytes(b, 'little')
+    return -x if mpz_sgn(z) < 0 else x
+
+
+cdef inline int sig_check() except -1:
+    # Let KeyboardInterrupt through (also under Sage, whose cysignals handler
+    # sets the python interrupt flag outside sig_on blocks)
+    return PyErr_CheckSignals()
 
 
 cdef int LIMB_BITS = 8 * sizeof(mp_limb_t)
