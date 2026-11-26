@@ -289,6 +289,7 @@ class BigArithGroup_class(AlgebraicGroup):
             )
         self.Gn.embed = self.embed
         self.Gn.get_embedding = self.get_embedding
+        self.Gn.embedding_precision = self.embedding_precision
 
         verbose("Initializing arithmetic group G(pn)...")
         kwargs["O_magma"] = kwargs.pop("GpnBasis", None)
@@ -314,6 +315,7 @@ class BigArithGroup_class(AlgebraicGroup):
         verbose("T = %s x difficulty" % RealField(25)(t / difficulty))
         self.Gpn.get_embedding = self.get_embedding
         self.Gpn.embed = self.embed
+        self.Gpn.embedding_precision = self.embedding_precision
 
         if hasattr(self.Gpn.B, "is_division_algebra"):
             fwrite(
@@ -324,6 +326,14 @@ class BigArithGroup_class(AlgebraicGroup):
             fwrite("# disc(B) = %s" % self.Gpn.B.discriminant(), outfile)
         else:
             fwrite("# B = M_2(F)", outfile)
+        # Stored data (see arithgroup_io): the p-adic splitting has to be set before the first call
+        # to get_embedding, and the BT representatives before the first call to get_BT_reps
+        padic_splitting = kwargs.pop("padic_splitting", None)
+        if padic_splitting is not None:
+            self.Gpn._stored_padic_splitting = padic_splitting
+        BT_reps = kwargs.pop("BT_reps", None)
+        if BT_reps is not None:
+            self._stored_BT_reps = [set_immutable(self.Gn.B(o)) for o in BT_reps]
         self._prec = -1
         iotap = self.get_embedding(200)
         fwrite(
@@ -351,7 +361,11 @@ class BigArithGroup_class(AlgebraicGroup):
         if not self.use_shapiro():
             fwrite("# R(p) with basis %s" % basis_data_p, outfile)
             self.Gpn.get_Up_reps = self.get_Up_reps
-        wp = kwargs.pop("wp", self.wp())
+        wp = kwargs.pop("wp", None)
+        if wp is not None:
+            self.set_wp(wp)  # Checks that it is valid
+        else:
+            self.wp()
         self.BT = BruhatTitsTree(self.norm_p)
         verbose("Done initializing arithmetic groups")
         verbose("Done initialization of BigArithmeticGroup")
@@ -490,6 +504,9 @@ class BigArithGroup_class(AlgebraicGroup):
 
     @cached_method
     def get_BT_reps(self):
+        stored = self.__dict__.get("_stored_BT_reps")
+        if stored is not None:
+            return list(stored)
         reps = [self.Gpn.B(1)] + [None for i in range(self.p)]
         emb = self.get_embedding(20)
         matrices = [(i + 1, matrix(QQ, 2, 2, [i, 1, -1, 0])) for i in range(self.p)]
@@ -724,6 +741,31 @@ class BigArithGroup_class(AlgebraicGroup):
             verbose("wp = %s" % list(wp))
             return wp
         raise RuntimeError("Trouble finding wp by enumeration")
+
+    def embedding_precision(self):
+        r"""
+        The current precision of the p-adic embedding, that is, the precision
+        that ``embed(q, -1)`` and ``get_embedding(-1)`` use. It only grows:
+        ``get_embedding(prec)`` raises it to ``prec`` when ``prec`` is larger.
+
+        The arithmetic groups ``Gn`` and ``Gpn`` share it (it is hooked to them,
+        as ``embed`` and ``get_embedding``), so that their elements can resolve
+        the default precision of ``matrix()`` when it is called (see
+        ``ArithGroupElement.matrix``).
+
+        EXAMPLES::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='PSL2', use_shapiro=False, outfile='/tmp/darmonpoints.tmp')
+            sage: prec = GS.embedding_precision()
+            sage: _ = GS.get_embedding(prec + 10)
+            sage: GS.embedding_precision() == prec + 10
+            True
+            sage: _ = GS.get_embedding(prec)  # it does not decrease
+            sage: GS.embedding_precision() == prec + 10
+            True
+        """
+        return self._prec
 
     def get_embedding(self, prec):
         r"""

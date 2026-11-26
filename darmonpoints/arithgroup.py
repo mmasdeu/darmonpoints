@@ -709,6 +709,12 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         self._prec_inf = -1
 
         O_magma = kwargs.pop("O_magma", None)
+        stored_data = kwargs.pop("stored_data", None)
+        if stored_data is not None:
+            # Rebuild from stored data (see arithgroup_io), without Magma
+            self._restore_from_data(stored_data)
+            super().__init__(**kwargs)
+            return
         self._init_magma_objects(info_magma, O_magma)
 
         self.B = QuaternionAlgebra(
@@ -738,6 +744,107 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             % (self.discriminant, self.level)
         )
 
+    # The Magma objects. For a group rebuilt from stored data they are only created (in its
+    # magma session, see arithgroup_io.LazyMagma) when some computation needs them.
+    def _magma_object(name):
+        key = "_magma_object" + name
+
+        def fget(self):
+            try:
+                return self.__dict__[key]
+            except KeyError:
+                pass
+            if "_stored_data" not in self.__dict__:
+                raise AttributeError(name)
+            self._init_magma_objects_from_stored()
+            return self.__dict__[key]
+
+        def fset(self, value):
+            self.__dict__[key] = value
+
+        def fdel(self):
+            self.__dict__.pop(key, None)
+
+        return property(fget, fset, fdel)
+
+    _B_magma = _magma_object("_B_magma")
+    _O_magma = _magma_object("_O_magma")
+    _Omax_magma = _magma_object("_Omax_magma")
+    _F_magma = _magma_object("_F_magma")
+    _D_magma = _magma_object("_D_magma")
+    del _magma_object
+
+    def _init_magma_objects_from_stored(self):
+        verbose("Creating the Magma objects of a group rebuilt from stored data")
+        QQ_magma = self.magma.RationalsAsNumberField()
+        a, b = self.B.invariants()
+        B_magma = self.magma.QuaternionAlgebra("%s" % QQ_magma.name(), a, b)
+        self._B_magma = B_magma
+        self._Omax_magma = self.magma.Order(
+            [B_magma(list(o)) for o in self._stored_Omax_basis]
+        )
+        self._O_magma = self.magma.Order([B_magma(list(o)) for o in self._stored_O_basis])
+        self._F_magma = B_magma.BaseRing()
+        self._D_magma = self.magma.UnitDisc(Precision=1000)
+
+    def _restore_from_data(self, data):
+        r"""
+        Set the attributes of the group from the data of arithgroup_io.export_arithgroup.
+        """
+        from .arithgroup_io import (
+            decode_complex,
+            decode_quaternion,
+            decode_rational,
+            decode_real,
+            decode_real_matrix,
+        )
+
+        self._stored_data = data
+        a, b = [decode_rational(x) for x in data["abtuple"]]
+        self.B = QuaternionAlgebra(a, b)
+        if self.B.discriminant() != self.discriminant:
+            raise ValueError("Error while constructing quaternion algebra")
+        B = self.B
+        self._stored_O_basis = [decode_quaternion(B, v) for v in data["O_basis"]]
+        self._stored_Omax_basis = [decode_quaternion(B, v) for v in data["Omax_basis"]]
+        # An ideal of ZZ, as computed by order_discriminant from the Magma order
+        self._stored_order_discriminant = ZZ.ideal(ZZ(data["order_discriminant"]))
+        self.O = B.quaternion_order(self._stored_O_basis)
+
+        # The splitting at infinity, set before anything calls _splitting_at_infinity
+        split = data["splitting_at_infinity"]
+        prec = int(split["prec"])
+        RRp = RealField(prec)
+        self._II_inf = decode_real_matrix(split["I"], prec)
+        self._JJ_inf = decode_real_matrix(split["J"], prec)
+        self._KK_inf = decode_real_matrix(split["K"], prec)
+        self._11_inf = matrix(RRp, 2, 2, 1)
+        self.rimg = RRp(1)
+        self.F_into_RR = self.F.hom([self.rimg], check=False)
+        self._prec_inf = prec
+
+        self.pi = 4 * RealField(800)(1).arctan()
+        self._fundamental_domain = [decode_complex(v) for v in data["fundamental_domain"]]
+        self.Ugens = [decode_quaternion(B, v) for v in data["Ugens"]]
+        self.Uside = [decode_quaternion(B, v) for v in data["Uside"]]
+        self.F_unit_offset = ZZ(data["F_unit_offset"])
+        self.ngquats = ZZ(data["ngquats"])
+        self.gquats = [None] + [decode_quaternion(B, v) for v in data["gquats"]]
+        self.findex = [ZZ(i) for i in data["findex"]]
+        self.fdargs = [decode_real(v) for v in data["fdargs"]]
+        self.minus_one_long = [ZZ(i) for i in data["minus_one_long"]]
+        self.translate = [None] + [[ZZ(i) for i in w] for w in data["translate"]]
+        self.translate_inv = [None] + [
+            [-o for o in reversed(trans)] for trans in self.translate[1:]
+        ]
+        self._relation_words = [[ZZ(i) for i in w] for w in data["relation_words"]]
+        emb = self.get_archimedean_embedding(prec)
+        self.embgquats = [None] + [emb(g) for g in self.gquats[1:]]
+        self._gens = [
+            self.element_class(self, quaternion_rep=g, word_rep=[i + 1], check=False)
+            for i, g in enumerate(self.Ugens)
+        ]
+
     def _init_geometric_data(self, **kwargs):  # rationalquaternion
         filename = kwargs.get("filename", None)
         self.pi = 4 * RealField(800)(1).arctan()
@@ -756,6 +863,9 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                 for ky, val in geom_dict.items():
                     setattr(self, ky, val)
                 self.embgquats = [None] + [emb(g) for g in self.gquats[1:]]
+                self.translate_inv = [None] + [
+                    [-o for o in reversed(trans)] for trans in self.translate[1:]
+                ]
                 self._gens = [
                     self.element_class(
                         self, quaternion_rep=g, word_rep=[i + 1], check=False
@@ -949,6 +1059,28 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
 
     # rationalquaternion
     def compute_quadratic_embedding(self, D, **kwargs):
+        r"""
+        The image of `\sqrt{D}` under an optimal embedding (computed with Magma) of the
+        maximal order of `\QQ(\sqrt{D})`.
+
+        A non-fundamental discriminant `D = d_K f^2` stands for the order of conductor `f`
+        (see :func:`darmonpoints.util.discriminant_conductor`), which this does not embed;
+        an optimal embedding of it has to be given to ``embed_order`` as
+        ``quadratic_embedding``::
+
+            sage: from darmonpoints.arithgroup import ArithGroup_rationalquaternion
+            sage: ArithGroup_rationalquaternion.compute_quadratic_embedding(None, 588)
+            Traceback (most recent call last):
+            ...
+            NotImplementedError: Only the maximal order of Q(sqrt(588)) is embedded, not the order of discriminant 588 (conductor 7); pass an optimal embedding of it as quadratic_embedding
+        """
+        f = discriminant_conductor(D)[1]
+        if f != 1:
+            raise NotImplementedError(
+                "Only the maximal order of Q(sqrt(%s)) is embedded, not the order of discriminant %s"
+                " (conductor %s); pass an optimal embedding of it as quadratic_embedding"
+                % (D, D, f)
+            )
         QQmagma = self.magma.Rationals()
         ZZmagma = self.magma.Integers()
         a, b = self.B.invariants()
@@ -973,9 +1105,50 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         self, p, D, prec, outfile=None, return_all=False, extra_conductor=1, **kwargs
     ):
         r"""
-        sage: from darmonpoints.sarithgroup import ArithGroup
-        sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
-        sage: f = G.embed_order(23,20) # optional - magma
+        The fixed point ``tau`` and the generator ``gamma`` of the stabilizer, in the group,
+        of an embedding of a quadratic order of `K = \QQ(\sqrt{D})`.
+
+        The embedding ``phi`` is given by the image ``quadratic_embedding`` of `\sqrt{D}`
+        (computed with Magma, for the maximal order, if it is not given). The order
+        embedded optimally by ``phi``, `\ZZ + c O_K`, is found from it: its conductor `c`
+        is the smallest positive integer with `\phi(c w) \in R` (`w` the generator of
+        `O_K`). It is 1 for an optimal embedding of `O_K`, and `f` for an optimal
+        embedding of the order `O_D` of a non-fundamental discriminant `D = d_K f^2`.
+        ``gamma`` is the image of the smallest power of the fundamental unit (squared if
+        of norm -1) in the order of conductor ``c * extra_conductor``.
+
+        EXAMPLES:
+
+        An optimal embedding of the order of conductor 7 of `\QQ(\sqrt{3})`, of
+        discriminant `588 = 12 \cdot 7^2`: the embedding of `\ZZ[\sqrt{3}]` conjugated by an
+        element of norm 7 (as 7 is inert in `\QQ(\sqrt{3})`, `\sqrt{3}` is no longer sent
+        into the order)::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: G = BigArithGroup(5, 6, 1, magma=Magma(), use_shapiro=False, outfile='/tmp/darmonpoints.tmp') # optional - magma
+            sage: GG = G.large_group() # optional - magma
+            sage: s = GG.compute_quadratic_embedding(3) # optional - magma
+            sage: x = next(a * 14 * s * a**-1 for a in GG.get_hecke_reps(7) if not GG._is_in_order(a * s * a**-1)) # optional - magma
+            sage: x**2, GG._is_in_order(x / 2), GG._is_in_order(x / 14) # optional - magma
+            (588, True, False)
+            sage: gamma, tau = GG.embed_order(5, 588, 20, quadratic_embedding=x, outfile='/tmp/darmonpoints.tmp') # optional - magma
+            sage: g = gamma.quaternion_rep # optional - magma
+            sage: g * x == x * g, g.reduced_norm(), g.reduced_trace() # optional - magma
+            (True, 1, 194)
+
+        This is the image of `(2 + \sqrt{3})^4 = 97 + 4 \sqrt{588}`, the smallest power of the
+        fundamental unit in the order of conductor 7. For the optimal embedding of
+        `\ZZ[\sqrt{3}]` it is `2 + \sqrt{3}` itself::
+
+            sage: gamma, tau = GG.embed_order(5, 12, 20, quadratic_embedding=2 * s, outfile='/tmp/darmonpoints.tmp') # optional - magma
+            sage: gamma.quaternion_rep.reduced_trace() # optional - magma
+            4
+
+        ::
+
+            sage: from darmonpoints.sarithgroup import ArithGroup
+            sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
+            sage: f = G.embed_order(23,20) # optional - magma
         """
         mu = kwargs.get("quadratic_embedding", None)
         if mu is None:
@@ -1011,7 +1184,20 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         fwrite("# w is %s" % w, outfile)
         fwrite("# w_K satisfies: %s" % w.minpoly(), outfile)
         fwrite("# Cp has precision: %s" % Cp.precision_cap(), outfile)
-        assert self._is_in_order(phi(w))
+        # The conductor of the order embedded optimally by phi: phi(c * w) is in R for c
+        # dividing the index of Z[sqrt(D)] in O_K (or twice it, if phi(sqrt(D)) is not in R)
+        conductor = next(
+            (c for c in ZZ(2 * r1).abs().divisors() if self._is_in_order(phi(c * w))),
+            None,
+        )
+        if conductor is None:  # (the callers catch AssertionError)
+            raise AssertionError(
+                "The quadratic embedding does not map an order of K = Q(sqrt(%s)) into the order"
+                % D
+            )
+        if conductor != 1:
+            fwrite("# Optimal embedding of the order of conductor %s" % conductor, outfile)
+        extra_conductor = conductor * ZZ(extra_conductor)
 
         iotap = self.get_embedding(prec)
 

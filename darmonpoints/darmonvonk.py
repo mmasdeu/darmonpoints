@@ -1,3 +1,6 @@
+import traceback
+import warnings
+import weakref
 from itertools import product
 
 from sage.arith.misc import fundamental_discriminant
@@ -6,19 +9,74 @@ from sage.modular.pollack_stevens.manin_map import *
 
 from darmonpoints.arithgroup import angle_sign, intersect_geodesic_arcs
 from darmonpoints.cohomology_arithmetic import ArithAction, CohArbitrary
+from darmonpoints.divisors import DivisorsElement
 from darmonpoints.homology import *
 # from darmonpoints.ocmodule import AddMeromorphicFunctions
-from darmonpoints.meromorphic import MeromorphicFunctions
+from darmonpoints.meromorphic import (
+    AdditiveMeromorphicFunctions,
+    LogSeriesOperator,
+    MeromorphicFunctions,
+    _check_integral,
+    _integral_moebius_coefficients,
+    _moved_points,
+    _parameter_points,
+    _power_sums,
+    default_integer_mode,
+    exp_small,
+)
 from darmonpoints.sarithgroup import *
 from darmonpoints.util import *
 
 # distinguished_open = "OCp"  # Needed if we want to compare with Darmon points!
 distinguished_open = 'Uinf'
 
+# The Up operators of the additive implementation (see
+# OverconvergentDVCocycle.up_operator), for each group (by id, dropped when
+# the group is garbage collected; the groups are not used as keys, since
+# hashing them is not cheap). Forked processes inherit them.
+_UP_OPERATORS = {}
+
+
+def _up_operator_cache(GGp):
+    key = id(GGp)
+    try:
+        return _UP_OPERATORS[key]
+    except KeyError:
+        pass
+    try:
+        weakref.finalize(GGp, _UP_OPERATORS.pop, key, None)
+    except TypeError:
+        return {}  # Cannot tell when the group goes away: do not cache
+    cache = _UP_OPERATORS[key] = {}
+    return cache
+
 
 class OverconvergentDVCocycle(SageObject):
-    def __init__(self, G, phi0, base_ring=None):
+    r"""
+    The overconvergent lift of the Darmon-Vonk cocycle phi0, with values in
+    meromorphic functions.
+
+    If ``additive`` is True, the functions are stored additively (as their
+    logarithms, see AdditiveMeromorphicFunctions), and the iteration of Up
+    is done with integer matrices (see LogSeriesOperator), which is much
+    faster. This needs e < p - 1 and that the functions are principal units.
+    If ``additive`` is False, use the multiplicative implementation
+    (MeromorphicFunctions). If it is None (the default), use the additive
+    implementation when possible.
+
+    The products with integer matrices of the additive implementation use a
+    compiled kernel (darmonpoints.sparse_padic) by default. ``integer_mode``
+    selects how they are computed (see _IntegerOperator): ``'python'`` for the
+    pure python products (same results, much slower), for example if the
+    compiled part breaks. The default (None) is the value of the environment
+    variable DARMONPOINTS_INTEGER_MODE, or ``'auto'`` (the compiled kernel).
+    """
+
+    def __init__(self, G, phi0, base_ring=None, additive=None, integer_mode=None):
         self.G = G
+        # How to compute the products with integer matrices (see
+        # _IntegerOperator); None: default_integer_mode()
+        self.integer_mode = integer_mode
         self.phi0 = phi0
         HDiv = phi0.parent()
         Div = HDiv.coefficient_module()
@@ -31,29 +89,33 @@ class OverconvergentDVCocycle(SageObject):
         wp = G.embed(G.wp(), prec)
         act = lambda g, v: g.matrix().change_ring(K) * v
 
-        if distinguished_open == "Uinf":
-            Mer = MeromorphicFunctions(K, G.p, prec)
-        else:
-            Mer = MeromorphicFunctions(
-                K, G.p, prec, twisting_matrix=Matrix(ZZ, 2, 2, [0, 1, G.prime(), 0])
-            )  # DEBUG: used to be wp
-        self.HpMer = CohArbitrary(G.small_group(), Mer, action_map=act)
         Gpgens = G.small_group().gens()
-        phi = self.HpMer([phi0.evaluate(G.Gpn(g.quaternion_rep)) for g in Gpgens])
-        phi_tw = self.HpMer(
-            [
+        if distinguished_open == "Uinf":
+            values = [
                 phi0.evaluate(
                     G.Gpn(G.wp() ** -1 * g.quaternion_rep * G.wp())
                 ).left_act_by_matrix(wp)
                 for g in Gpgens
             ]
-        )
-        if distinguished_open == "Uinf":
-            self.phi1 = phi_tw
-            self.phi2 = phi
         else:
-            self.phi1 = phi
-            self.phi2 = phi_tw
+            values = [phi0.evaluate(G.Gpn(g.quaternion_rep)) for g in Gpgens]
+        # (For "OCp", the twisting matrix [0, 1, p, 0] used to be passed to
+        # MeromorphicFunctions, which ignores it.)
+        Mer = None
+        if additive is None or additive:
+            try:
+                Mer = AdditiveMeromorphicFunctions(K, G.p, prec)
+                values = [Mer(D) for D in values]
+            except NotImplementedError as e:
+                if additive:
+                    raise
+                verbose("Using the multiplicative implementation: %s" % e)
+                Mer = None
+        if Mer is None:
+            Mer = MeromorphicFunctions(K, G.p, prec)
+        self.additive = isinstance(Mer, AdditiveMeromorphicFunctions)
+        self.HpMer = CohArbitrary(G.small_group(), Mer, action_map=act)
+        self.phi1 = self.HpMer(values)
 
     def base_ring(self):
         return self.K
@@ -61,15 +123,66 @@ class OverconvergentDVCocycle(SageObject):
     def _str_(self):
         return "Overconvergent DV cocycle for group %s" % self.G
 
-    def improve(self, prec):
+    def _up_data(self):
+        r"""
+        The representatives of Up and the data needed to apply it (see
+        CohArbitrary.apply_hecke_operator).
+        """
         G = self.G
         p = G.prime()
         GGp = G.small_group()
+        # (get_hecke_data is cached, and its keys are the Up_reps)
         if distinguished_open == "Uinf":
-            Up_reps = tuple([G.wp() ** -1 * o * G.wp() for o in G.get_Up_reps()])
+            Up_reps = tuple(
+                [set_immutable(G.wp() ** -1 * o * G.wp()) for o in G.get_Up_reps()]
+            )
         else:
-            Up_reps = tuple(G.get_Up_reps())
+            Up_reps = tuple([set_immutable(o) for o in G.get_Up_reps()])
         Up_data = GGp.get_hecke_data(p, hecke_reps=Up_reps)
+        return Up_reps, Up_data
+
+    def up_operator(self, Up_reps=None, Up_data=None):
+        r"""
+        For the additive implementation, the Up operator acting on the values
+        of the cocycle at the generators, as a LogSeriesOperator.
+
+        It only depends on the group, the base ring and the length of the
+        series (and not on phi0), so it is cached: all the cocycles over the
+        same group and p-adic field (for example, those of all the embeddings
+        and all the discriminants of a computation) share it. Computing it
+        before forking several processes that lift cocycles over the same
+        group spares each of them the construction.
+
+        Raises ValueError if the Mobius transformations of the action are not
+        integral (see _integral_moebius_coefficients).
+        """
+        if not self.additive:
+            raise ValueError("Only for the additive implementation")
+        if Up_reps is None:
+            Up_reps, Up_data = self._up_data()
+        GGp = self.G.small_group()
+        Mer = self.HpMer.coefficient_module()
+        K = Mer.base_ring()
+        P = Mer.series_length()
+        n = len(self.phi1.values())
+        mode = self.integer_mode or default_integer_mode()
+        cache = _up_operator_cache(GGp)
+        key = (Up_reps, K, P, n, mode)
+        try:
+            return cache[key]
+        except KeyError:
+            pass
+        terms = _up_operator_terms(GGp, Up_reps, Up_data, K)
+        op = LogSeriesOperator(K, P, n, terms, mode=mode)
+        del terms
+        cache[key] = op
+        return op
+
+    def improve(self, prec):
+        p = self.G.prime()
+        Up_reps, Up_data = self._up_data()
+        if self.additive and self._improve_integral(prec, Up_reps, Up_data):
+            return
         tmp = self.HpMer(self.phi1)
         phi_list = [self.HpMer(0), self.HpMer(self.phi1)]
         val = -1
@@ -87,6 +200,62 @@ class OverconvergentDVCocycle(SageObject):
         self.phi_even, self.phi_odd = phi_list
         return
 
+    def _improve_integral(self, prec, Up_reps, Up_data):
+        r"""
+        Same as the iteration of improve, for the additive implementation.
+        Up is a linear map on the values of the cocycle at the generators,
+        which is computed once as an integer matrix (see LogSeriesOperator).
+        Return False if it cannot be used (when the Mobius transformations of
+        the action are not integral).
+        """
+        import numpy as np
+
+        Mer = self.HpMer.coefficient_module()
+        K = Mer.base_ring()
+        P = Mer.series_length()
+        values = self.phi1.values()
+        current = [o for f in values for o in f._value]
+        try:
+            _check_integral(current)
+            op = self.up_operator(Up_reps, Up_data)
+        except (TypeError, ValueError, ArithmeticError, NotImplementedError) as e:
+            # The iteration below is much faster than the generic one, so say
+            # it loudly: an unexpected error here only shows up as a (much)
+            # slower computation.
+            warnings.warn(
+                "OverconvergentDVCocycle: not using integer matrices for Up (%s: %s), "
+                "falling back to the much slower iteration over K" % (type(e).__name__, e),
+                RuntimeWarning,
+                stacklevel=3,
+            )
+            verbose(traceback.format_exc())
+            return False
+        # The vectors of the iteration and of the two partial sums, and the
+        # precisions of their coefficients (see LogSeriesOperator.propagate)
+        v = op.to_vector(current)
+        prec_v = op.initial_precisions(current)
+        sums = [op.to_vector([K(0)] * len(current)), v]
+        sum_precs = [np.full(len(current), P, dtype=np.int64), prec_v]
+        tracking = min(int(prec_v.min()), op.min_input_prec) < P
+        val = -1
+        for i in range(prec):
+            update_progress(
+                float(val + 1) / prec, "Iterating Up (%s/%s)" % (val + 1, prec)
+            )
+            if tracking:
+                prec_v = op.propagate(prec_v, v)
+            v = op.reduce(op.apply(v))
+            sums[i % 2] = op.add(sums[i % 2], v)
+            sum_precs[i % 2] = np.minimum(sum_precs[i % 2], prec_v)
+            val = op.valuation(v)
+            if val >= prec or not any(v):
+                break
+        self.phi_even, self.phi_odd = [
+            self.HpMer([Mer(w, check=False) for w in op.to_values(s, sp)])
+            for s, sp in zip(sums, sum_precs)
+        ]
+        return True
+
     def evaluate_at_cycle(self, theta, parity):
         ans_even, ans_odd = self._evaluate_at_cycle(theta)
         if parity == "even":
@@ -99,6 +268,10 @@ class OverconvergentDVCocycle(SageObject):
             return ans_even * ans_odd
 
     def _evaluate_at_cycle(self, theta):
+        if self.additive:
+            # Sum the logarithms, and take the exponential at the end
+            ans_even, ans_odd = self._log_evaluate_at_cycle(theta)
+            return exp_small(ans_even), exp_small(ans_odd)
         p = self.G.prime()
         ans_odd = 1
         ans_even = 1
@@ -106,6 +279,145 @@ class OverconvergentDVCocycle(SageObject):
             ans_odd *= self.phi_odd.evaluate(g).evaluate(D)
             ans_even *= self.phi_even.evaluate(g).evaluate(D)
         return ans_even, ans_odd
+
+    def _log_evaluate_at_cycle(self, theta):
+        r"""
+        For the additive implementation, the logarithms of the values of
+        _evaluate_at_cycle.
+
+        The value of a cocycle at g is the sum over the letters of the word
+        of g of the terms +-(gamma * F), as in _evaluate_word_tietze_naive,
+        where gamma is a prefix of the word and F the value at a generator.
+        Only their values at D are needed, which are products of the vector
+        of coefficients of F with a vector W that does not depend on F (so
+        it is the same for phi_even and phi_odd). There are two ways of
+        computing W:
+
+        - from the matrix M of the action of gamma on the series (see
+          get_action_data, which caches them), as M * T, where T is the
+          vector of power sums of the points of D (in the coordinate of the
+          parameter): one product of a matrix and a vector of size the length
+          P of the series;
+
+        - as the vector of power sums of the images of the points of D (see
+          evaluate_acted): about P operations for each point.
+
+        The second one is used when D has at most P / 2 points (a product of
+        a matrix of the action, often sparse, and a vector costs about as much
+        as the power sums of P points), and when it can be used (see
+        _moved_points).
+        """
+        K = self.K
+        G = self.HpMer.group()
+        Mer = self.HpMer.coefficient_module()
+        P = Mer.series_length()
+        even, odd = self.phi_even.values(), self.phi_odd.values()
+        parameter = even[0]._parameter
+        if any(F._parameter is not parameter for F in even + odd):
+            return self._log_evaluate_at_cycle_series(theta)
+        # As the action (ArithGroupElement._act_on_ and get_action_data)
+        to_K = lambda h: set_immutable(h.matrix().change_ring(K))
+        ans_even = K(0)
+        ans_odd = K(0)
+        for g, D in theta:
+            points = _parameter_points(parameter, D)
+            if points is None:
+                # (fails as LogSeries.evaluate)
+                e, o = self._log_evaluate_at_cycle_series([(g, D)])
+                ans_even += e
+                ans_odd += o
+                continue
+            direct = 2 * len(points) <= P
+            T = None  # The power sums of the points of D
+            T0 = None  # The same, without the constant term
+            x = g if g.parent() is G else G(g)
+            gamma = None  # the prefix of the word (None for the identity)
+            for l in x.word_rep:
+                if l > 0:
+                    j = l - 1
+                    sign = 1
+                    m = None if gamma is None else to_K(gamma)
+                    gamma = G.gen(j) if gamma is None else gamma * G.gen(j)
+                else:
+                    j = -l - 1
+                    sign = -1
+                    gi = G.gen(j) ** -1
+                    gamma = gi if gamma is None else gamma * gi
+                    m = to_K(gamma)
+                W = None
+                if m is not None and direct:
+                    moved = _moved_points(parameter, m, points)
+                    if moved is not None:
+                        W = _power_sums(moved, P, K)
+                if W is None:
+                    if T is None:
+                        T = _power_sums(points, P, K)
+                    if m is None:
+                        W = T
+                    else:
+                        # The series of gamma * F is F * M, with the
+                        # constant term set to 0
+                        if T0 is None:
+                            T0 = T.__copy__()
+                            T0[0] = 0
+                        W = Mer.get_action_data(m, parameter, parameter) * T0
+                ve = even[j]._value * W
+                vo = odd[j]._value * W
+                if sign == 1:
+                    ans_even += ve
+                    ans_odd += vo
+                else:
+                    ans_even -= ve
+                    ans_odd -= vo
+        return ans_even, ans_odd
+
+    def _log_evaluate_at_cycle_series(self, theta):
+        r"""
+        Same as _log_evaluate_at_cycle, computing the series of the values of
+        the cocycles.
+        """
+        ans_odd = self.K(0)
+        ans_even = self.K(0)
+        for g, D in theta:
+            ans_odd += self.phi_odd.evaluate(g).evaluate(D)
+            ans_even += self.phi_even.evaluate(g).evaluate(D)
+        return ans_even, ans_odd
+
+
+def _up_operator_terms(GGp, Up_reps, Up_data, K):
+    r"""
+    The terms (see LogSeriesOperator) of the Up operator acting on the values
+    of a cocycle at the generators of GGp, as computed by
+    CohArbitrary.apply_hecke_operator: the value at the i-th generator is the
+    sum over the g in Up_reps of g * c(w), where w = Up_data[g, gamma_i] and
+    c(w) is evaluated as in _evaluate_word_tietze_naive.
+    """
+    gens = GGp.gens()
+    gen_mats = [o.matrix() for o in gens]
+    gen_inv_mats = [(o**-1).matrix() for o in gens]
+    terms = {}
+    for i, gamma in enumerate(gens):
+        for g in Up_reps:
+            gmat = GGp(g).matrix()
+            w = Up_data[(g, gamma.quaternion_rep)]
+            word = (w if w.parent() is GGp else GGp(w)).word_rep
+            h = None  # The matrix of the prefix of the word
+            for l in word:
+                if l > 0:
+                    j = l - 1
+                    m = gmat if h is None else gmat * h
+                    terms.setdefault((j, i), []).append((1, m))
+                    h = gen_mats[j] if h is None else h * gen_mats[j]
+                else:
+                    j = -l - 1
+                    h = gen_inv_mats[j] if h is None else h * gen_inv_mats[j]
+                    terms.setdefault((j, i), []).append((-1, gmat * h))
+    # The action of a matrix m on the functions (see get_action_data) is the
+    # composition with the Mobius transformation of m.adjugate()
+    moebius = lambda m: _integral_moebius_coefficients(
+        m.change_ring(K).adjugate().list()
+    )
+    return {ji: [(n, moebius(m)) for n, m in lst] for ji, lst in terms.items()}
 
 
 def construct_conjectural_field(
@@ -124,6 +436,11 @@ def construct_conjectural_field(
             base = QQ
         except TypeError:
             base = D1.parent()
+    if base == QQ:
+        # The conductor of a non-fundamental discriminant D = d_K f^2: the ray class
+        # field modulo f contains the narrow ring class field of conductor f
+        extra_conductor_1 *= discriminant_conductor(D1)[1]
+        extra_conductor_2 *= discriminant_conductor(D2)[1]
     R = PolynomialRing(QQ, "x")
     x = R.gen()
     F1 = (
@@ -234,13 +551,21 @@ def construct_bigfield(Dlist, magma, base=None, ringclassfield=True):
 
 
 def darmon_vonk_overconvergent_cocycle(
-    G, D, prec, lift=True, working_prec=None, extra_conductor=1, outfile=None, **kwargs
+    G,
+    D,
+    prec,
+    lift=True,
+    working_prec=None,
+    extra_conductor=1,
+    outfile=None,
+    additive=None,
+    **kwargs,
 ):
     fwrite("# Initializing cocycle...", outfile)
     phi0 = darmon_vonk_cocycle(
         G, D, prec, extra_conductor=extra_conductor, outfile=outfile, **kwargs
     )
-    Phi = OverconvergentDVCocycle(G, phi0)
+    Phi = OverconvergentDVCocycle(G, phi0, additive=additive)
     if lift:
         fwrite("# Lifting cocycle...", outfile)
         Phi.improve(prec)
@@ -291,6 +616,9 @@ def darmon_vonk_point(
     **kwargs,
 ):
     r"""
+    The keyword ``additive`` (None by default) selects the implementation of
+    the overconvergent cocycle, see OverconvergentDVCocycle.
+
     EXAMPLES ::
 
         sage: from darmonpoints.darmonvonk import darmon_vonk_point
@@ -327,6 +655,7 @@ def darmon_vonk_point(
         working_prec = prec
 
     max_degree = kwargs.get("max_degree", 16)
+    additive = kwargs.pop("additive", None)
 
     fwrite("#### Starting computation of the Darmon-Vonk point ####", outfile)
     magma_seed = kwargs.get("magma_seed", None)
@@ -376,6 +705,7 @@ def darmon_vonk_point(
                     lift=False,
                     extra_conductor=extra_conductor_1,
                     outfile=outfile,
+                    additive=additive,
                     **kwargs,
                 )
                 needs_lift = True
@@ -858,15 +1188,40 @@ class DVCocycle(SageObject):
 
 
 def prime_list_candidates(D1, D2, extra_conductor_1=1, extra_conductor_2=1):
+    r"""
+    The primes `\ell` dividing `(D_1 D_2 - x^2)/4` for some `x`, and not split in
+    `\QQ(\sqrt{D_1})` nor in `\QQ(\sqrt{D_2})`. Here `D_i` is the discriminant of the
+    order that ``Di`` stands for (see :func:`darmonpoints.util.discriminant_conductor`;
+    the maximal order for a fundamental discriminant or a radicand like 3), multiplied by
+    the square of ``extra_conductor_i``.
+
+    EXAMPLES::
+
+        sage: from darmonpoints.darmonvonk import prime_list_candidates
+        sage: prime_list_candidates(92, 12)
+        [2, 3, 5, 17, 31, 53, 89]
+        sage: prime_list_candidates(3, 13) == prime_list_candidates(12, 13)
+        True
+
+    The order of discriminant `588 = 12 \cdot 7^2` (of conductor 7 in `\QQ(\sqrt{3})`)::
+
+        sage: L = prime_list_candidates(92, 588); len(L), L[:10]
+        (39, [2, 3, 5, 17, 31, 53, 89, 113, 127, 137])
+        sage: L == prime_list_candidates(92, 12, extra_conductor_2=7)
+        True
+    """
     prime_list = set([])
     try:
         D1 = D1.norm().abs()
         D2 = D2.norm().abs()
         D1D2 = D1 * D2
     except AttributeError:
+        (dK1, f1), (dK2, f2) = discriminant_conductor(D1), discriminant_conductor(D2)
         D1D2 = (
-            fundamental_discriminant(D1)
-            * fundamental_discriminant(D2)
+            dK1
+            * f1**2
+            * dK2
+            * f2**2
             * extra_conductor_1**2
             * extra_conductor_2**2
         )

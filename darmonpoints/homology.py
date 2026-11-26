@@ -277,6 +277,20 @@ class OneChainsElement(TensorElement):
             sage: sys.stdout = _out
             sage: x_ord, ans.is_degree_zero_valued()
             (2, True)
+
+        A chain supported on words with several syllables and negative
+        exponents. The 1-boundaries used in the decomposition are only built
+        when they are asked for (``return_boundary=True``), and asking for them
+        does not change the chain::
+
+            sage: d = Div(Cp.gen() + 2) - Div(Cp.gen() + 7) + Div(3 * Cp.gen()) - Div(Cp.gen())
+            sage: c2 = OneChains(G, Div)({G.gen(13): d, G.gen(2) * G.gen(5)**-2 * G.gen(7): Div(Cp.gen()) - Div(1 + Cp.gen())})
+            sage: _out, sys.stdout = sys.stdout, io.StringIO()
+            sage: ans, x_ord = c2.zero_degree_equivalent(allow_multiple=True)
+            sage: ans2, x_ord2, boundaries = c2.zero_degree_equivalent(allow_multiple=True, return_boundary=True)
+            sage: sys.stdout = _out
+            sage: ans.is_degree_zero_valued(), ans == ans2, x_ord == x_ord2, len(boundaries) > 0
+            (True, True, True, True)
         """
         # Keep the caller's argument around: the final check re-derives its own
         # map, and forwarding the one we filled in below would warn about a
@@ -334,29 +348,70 @@ class OneChainsElement(TensorElement):
         # newdict will store the new 1-chain formed by C + \sum r_i \otimes v
         newdict = defaultdict(V)
         boundary_list= []
-        # Decompose each (g,v) tensor in the 1-cycle into a sum of tensors of the form (g_i, v_i) where g_i is a generator of G
-        # We store all 1-boundaries used in boundary_list
+        # Decompose each (g,v) tensor in the 1-cycle into a sum of tensors of
+        # the form (g_i, v_i) where g_i is a generator of G. The 1-boundaries
+        # used are stored in boundary_list, only when they are returned.
+        #  - The powers of the generators are built once per call (gpow), so
+        #    that their p-adic matrices (cached by each element) are computed
+        #    once instead of at every step.
+        #  - For divisors, the values of newdict are accumulated in place (acc)
+        #    instead of copying the whole growing divisor at every step: the
+        #    keys, their order and the stored points are those of the sums
+        #    newdict[g] += ZZ(sign) * oldv (DivisorsElement._add_).
+        pows = {}
+        acc = {}  # g -> (_data, _ptdict), keys in the order of first use
+        inplace = isinstance(V, Divisors)  # other modules: newdict[g] += ...
+
+        def gpow(i, e):
+            try:
+                return pows[i, e]
+            except KeyError:
+                x = pows[i, e] = G.gen(i) ** e
+                return x
+
         for gword, v in zip(gwordlist, oldvals):
             verbose("Processing %s|%s" % (gword, v))
             newv = V(v)
             for i, a in tietze_to_syllables(gword): # gi^a|v
                 oldv = V(newv)
                 g = G.gen(i)
-                newv = (g**-a) * V(oldv)  # for the next iteration
+                newv = gpow(i, -a) * V(oldv)  # for the next iteration
                 sign = 1
                 if a < 0:
                     a = -a
-                    oldv = (g**a) * V(oldv)
+                    # for a = 1, g * oldv is newv, just computed
+                    oldv = newv if a == 1 else gpow(i, a) * V(oldv)
                     sign = -1
                 for j in range(a):
-                    newdict[g] += ZZ(sign) * oldv
-                    boundary_list.append((i,g, g**(a-j-1), g * (-ZZ(sign)*V(oldv)))) # negative sign included
-                    oldv = (g**-1) * oldv
+                    if inplace:
+                        try:
+                            data, pt = acc[g]
+                        except KeyError:
+                            data, pt = acc[g] = ({}, {})
+                        zsign = ZZ(sign)
+                        ptx = oldv._ptdict
+                        pt.update(ptx)
+                        for hP, n in oldv._data.items():
+                            m = data.get(hP, ZZ(0)) + zsign * n
+                            if m == 0:
+                                data.pop(hP, None)
+                                del pt[hP]
+                            else:
+                                data[hP] = m
+                                pt[hP] = ptx[hP]
+                    else:
+                        newdict[g] += ZZ(sign) * oldv
+                    if return_boundary:
+                        boundary_list.append((i,g, g**(a-j-1), g * (-ZZ(sign)*V(oldv)))) # negative sign included
+                    if j < a - 1:  # (not needed after the last step)
+                        oldv = gpow(i, -1) * oldv
             counter += 1
             update_progress(
                 float(QQ(counter) / QQ(len(oldvals))),
                 "Reducing to degree zero equivalent",
             )
+        for g, (data, pt) in acc.items():
+            newdict[g] = V.element_class(V, data, ptdata=pt)
 
         verbose("Done zero_degree_equivalent")
         ans = HH(newdict)
@@ -419,7 +474,7 @@ class OneChainsElement(TensorElement):
             set_immutable(gk1inv)
             gk1inv0 = self.parent().get_arith_action().emb(gk1inv, prec)
             for g, v in self._data.items():
-                ti = G.get_hecke_ti(gk1, g, l, True)
+                ti = G.get_hecke_ti(gk1, g, l, True, reps=hecke_reps)
                 try:
                     newv = v.left_act_by_matrix(gk1inv0)
                 except AttributeError:

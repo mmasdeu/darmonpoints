@@ -404,19 +404,125 @@ class OCVn(Module, UniqueRepresentation):
             g = g.matrix()
         except AttributeError:
             pass
-        return self._get_powers(g).submatrix(0, 0, M, M)
+        x = self._get_powers(g)
+        if M is None or M == x.nrows():
+            # The cached (immutable) matrix itself: a copy would store every
+            # matrix twice (here, in _cache_powers, and in the caches of the
+            # callers, such as CohomologyGroup.generator_acting_matrix)
+            return x
+        return x.submatrix(0, 0, M, M)
 
     def _get_powers(self, abcd, emb=None):
+        r"""
+        The matrix of the action of the matrix ``abcd`` = (a b; c d) on the
+        moments: row i contains the coefficients of ((b + a z)/(d + c z))^i,
+        modulo p^(depth - 1), as integers (cached, immutable).
+
+        The rows are computed with integers modulo p^(depth - 1), with the
+        recurrence of meromorphic._integer_moebius_matrix, in O(depth^2)
+        operations (_get_powers_integer). When that does not apply (d is not a
+        unit, or the entries are not known modulo p^(depth - 1)), they are the
+        products of power series over ZpCA, in O(depth^3) operations
+        (_get_powers_series). Both give the same matrix when both apply.
+
+        EXAMPLES::
+
+            sage: from darmonpoints.ocmodule import OCVn
+            sage: V = OCVn(5, 10)
+            sage: g = matrix(ZZ, 2, 2, [3, 7, 5, 11])
+            sage: P = V._get_powers(g)
+            sage: P == V._get_powers_series(3, 7, 5, 11), P.is_immutable()
+            (True, True)
+            sage: V._get_powers(g) is P  # cached
+            True
+
+        When an entry is known to less than p^(depth - 1), the power series
+        are used (they carry the loss of precision)::
+
+            sage: a = Zp(5, 4)(3)
+            sage: V._get_powers_integer(a, 7, 5, 11) is None
+            True
+            sage: V._compute_powers(a, 7, 5, 11) == V._get_powers_series(a, 7, 5, 11)
+            True
+        """
         abcd = tuple(abcd.list())
         try:
             return self._cache_powers[abcd]
         except KeyError:
             pass
-        R = self._PowerSeries
         if emb is None:
             a, b, c, d = abcd
         else:
             a, b, c, d = emb(abcd).list()
+        x = self._compute_powers(a, b, c, d)
+        self._cache_powers[abcd] = x
+        return x
+
+    def _compute_powers(self, a, b, c, d):
+        r"""
+        The (immutable, not cached) matrix of _get_powers for (a b; c d).
+        """
+        x = self._get_powers_integer(a, b, c, d)
+        if x is None:
+            x = self._get_powers_series(a, b, c, d)
+        x.set_immutable()  # shared by acting_matrix: must not be modified
+        return x
+
+    def _acting_matrix_uncached(self, g, M):
+        r"""
+        The matrix of ``acting_matrix(g, M)``, without storing it in
+        ``_cache_powers`` (the cached matrix is returned if it is there).
+
+        For callers that hold many matrices only for a short time, such as the
+        assembly of the Up operator (ArithCohOverconvergent.up_operator), so
+        that they can be freed after their last use.
+        """
+        try:
+            g = g.matrix()
+        except AttributeError:
+            pass
+        abcd = tuple(g.list())
+        try:
+            x = self._cache_powers[abcd]
+        except KeyError:
+            x = self._compute_powers(*abcd)
+        if M is None or M == x.nrows():
+            return x
+        return x.submatrix(0, 0, M, M)
+
+    def _get_powers_integer(self, a, b, c, d):
+        r"""
+        The matrix of _get_powers, from integers modulo p^(depth - 1): with
+        a1 = a/d, b1 = b/d, c1 = c/d, (b + a z)/(d + c z) = (b1 + a1 z)/(1 + c1 z),
+        whose powers meromorphic._integer_moebius_matrix computes with the
+        recurrence u_k = b1 w_k + a1 w_(k-1) - c1 u_(k-1). Everything is exact
+        modulo p^(depth - 1), as the products of power series over
+        ZpCA(p, depth - 1) of _get_powers_series, so the matrices are the same.
+        Returns None when d is not a unit, or when an entry is known to less
+        than p^(depth - 1) (absolute precision): then the products of power
+        series, which carry that loss of precision, give other last digits
+        than exact integers would.
+        """
+        from .meromorphic import _integer_moebius_matrix
+
+        K = self._Rmod
+        a, b, c, d = K(a), K(b), K(c), K(d)
+        N = self._depth - 1
+        if any(o.precision_absolute() < N for o in (a, b, c, d)):
+            return None
+        if d.is_zero() or d.valuation() != 0:
+            return None
+        dinv = ~d
+        pN = int(self._pN)
+        a1, b1, c1 = [int(ZZ((o * dinv).lift())) % pN for o in (a, b, c)]
+        return _integer_moebius_matrix(a1, b1, c1, self._depth, pN)
+
+    def _get_powers_series(self, a, b, c, d):
+        r"""
+        The matrix of _get_powers, from products of power series over
+        ZpCA(p, depth - 1).
+        """
+        R = self._PowerSeries
         r = R([b, a])
         s = R([d, c])
         ratio = r * s**-1
@@ -429,9 +535,7 @@ class OCVn(Module, UniqueRepresentation):
                 [R.base_ring().zero() for o in range(self._depth - len(ylist))]
             )
             xlist.append([ZZ(o) for o in ylist])
-        x = Matrix(ZZ, self._depth, self._depth, xlist)
-        self._cache_powers[abcd] = x
-        return x
+        return Matrix(ZZ, self._depth, self._depth, xlist)
 
     def _repr_(self):
         r"""

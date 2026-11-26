@@ -148,6 +148,18 @@ def get_overconvergent_class_quaternionic(
 
     base_ring = Zp(p, prec)
 
+    # The group elements act on the moments through their p-adic matrices at the
+    # current precision of the embedding (ArithGroupElement.matrix): it must be
+    # above the precision of the lift, with some margin (some entries are known
+    # to one digit less than the embedding). 2 prec + 10 is the working
+    # precision of darmon_point.
+    try:
+        needed = max(2 * prec + 10, 30)
+        if G.embedding_precision() < needed:
+            G.get_embedding(needed)
+    except AttributeError:
+        pass
+
     sgninfty = "plus" if sign_at_infinity == 1 else "minus"
     dist_type = "ps" if use_ps_dists is True else "fm"
     fname = "moments_%s_%s_%s_%s_%s.sobj" % (p, Ename, sgninfty, prec, dist_type)
@@ -288,6 +300,97 @@ class ArithCohElement(CohomologyElement):
             return G.Gpn(hp) * super().evaluate(newg, at_identity=at_identity)
         else:
             return super().evaluate(newg, at_identity=at_identity)
+
+    def evaluate_many(self, pairs, at_identity=False):
+        r"""
+        ``[self.evaluate(g, he, at_identity=at_identity) for g, he in pairs]``,
+        computed with less memory: the words of all the pairs and their Fox
+        gradients are computed first, and the action matrix of each word prefix
+        is kept only until its last use among all the pairs, in a local
+        dictionary (not in the caches of the cohomology group, see
+        CohomologyGroup.generator_acting_matrix). The values are the same: the
+        same exact integer sums of the same integer products as
+        CohomologyElement._evaluate_word_tietze_foxgradient, in the same order.
+
+        Anything but the Fox-gradient evaluation of an overconvergent class
+        (for instance at_identity, or a trivial action) uses ``evaluate``.
+
+        EXAMPLES::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: from darmonpoints.cohomology_arithmetic import ArithCoh, get_cocycle_from_elliptic_curve, get_overconvergent_class_quaternionic
+            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='PSL2', use_shapiro=False, outfile='/tmp/darmonpoints.tmp')
+            sage: E = EllipticCurve('55a1')
+            sage: phiE = get_cocycle_from_elliptic_curve(ArithCoh(GS), E, sign=1, use_magma=False)
+            sage: Phi = get_overconvergent_class_quaternionic(5, phiE, GS, 10, 1, E.ap(5))
+            sage: pairs = [(g, h) for g in GS.large_group().gens()[:2] for rev, h in GS.get_covering(1)]
+            sage: moments = lambda v: [ZZ(x) for x in v._val.list()]
+            sage: many = Phi.evaluate_many(pairs)
+            sage: len(many) == len(pairs), [moments(v) for v in many] == [moments(Phi.evaluate(g, h)) for g, h in pairs]
+            (True, True)
+        """
+        H = self.parent()
+        V = H.coefficient_module()
+        if (
+            at_identity
+            or H._trivial_action
+            or H._acting_matrix is None
+            or not hasattr(V, "_acting_matrix_uncached")
+            or not all(hasattr(v, "_moments") for v in self._val)
+        ):
+            return [self.evaluate(g, he, at_identity=at_identity) for g, he in pairs]
+        G = H.S_arithgroup()
+        Gr = H.group()
+        dim = V.dimension()
+        plan = []
+        for g, he in pairs:  # as evaluate(g, he, check=True)
+            try:
+                g = g.quaternion_rep
+            except AttributeError:
+                pass
+            hp = G.reduce_in_amalgam(he, return_word=False)
+            he = hp**-1 * he
+            x = G.reduce_in_amalgam(he * g, return_word=False)
+            if x.parent() is not Gr:  # as CohomologyElement.evaluate
+                x = Gr(x)
+            wd = tuple(x.word_rep)
+            fg = (
+                [A.monomial_coefficients(copy=False) for A in H.fox_gradient(wd)]
+                if len(wd) > 0
+                else None
+            )
+            plan.append((hp, fg))
+        last = {}
+        pos = 0
+        for _, fg in plan:
+            for mons in fg or []:
+                for h in mons:
+                    last[h] = pos
+                    pos += 1
+        mats = {}
+        pos = 0
+        ans = []
+        for hp, fg in plan:
+            if fg is None:  # the empty word
+                val = V(0)
+            else:
+                # as _evaluate_word_tietze_foxgradient: sum(GA_to_local(A) * ff(val))
+                tot = 0
+                for mons, v in zip(fg, self._val):
+                    Gtj = 0  # as GA_to_local: sum(a * M_h)
+                    for h, a in mons.items():
+                        try:
+                            M = mats[h]
+                        except KeyError:
+                            M = mats[h] = V._acting_matrix_uncached(h, dim)
+                        Gtj = Gtj + a * M
+                        if last[h] == pos:
+                            del mats[h]
+                        pos += 1
+                    tot = tot + Gtj * v._moments.lift()
+                val = V(tot)
+            ans.append(G.Gpn(hp) * val)
+        return ans
 
     def Tq_eigenvalue(self, ell, check=True):
         r"""
@@ -874,6 +977,147 @@ class ArithCohOverconvergent(ArithCoh):
         S0 = V.Sigma0()
         return [S0(self.group().embed(g, prec), check=False) for g in Up_reps]
 
+    @cached_method
+    def up_operator(self):
+        r"""
+        The Up operator of apply_Up as one integer matrix acting on the
+        concatenated moments of the values of a cocycle at the generators,
+        wrapped in a meromorphic._IntegerOperator.
+
+        apply_Up computes, for the i-th generator gamma_i,
+
+            Up(c)(gamma_i) = sum_k s_k * c(t_k(gamma_i)),
+
+        where s_k runs over the local Up representatives and c(t) is evaluated
+        through the Fox gradient of the word of t: c(t) = sum_j G_(t, j) c(g_j),
+        G_(t, j) being the sum of the action matrices of the prefixes
+        (CohomologyGroup.GA_to_local). So Up(c)(gamma_i) = sum_j B_ij c(g_j),
+        with B_ij = sum_k P_(s_k) G_(t_k(gamma_i), j), P_(s_k) the action
+        matrix of s_k (OCVn._get_powers). All of it is exact modulo p^N (the
+        moments are integers modulo p^N), so the result is the same element as
+        with the evaluation of the cocycle on the words (apply_Up with explicit
+        representatives), whose products and sums are the same ones, in another
+        order.
+
+        To keep the memory low, the words t_k(gamma_i) and their Fox gradients
+        are computed first, so that each prefix matrix (the action matrix of a
+        monomial of the Fox gradients, as in GA_to_local) is kept only until its
+        last use, in a local dictionary (they are not stored in the caches of
+        the group or of the coefficient module); the reduced transposed blocks
+        are written directly into the operator.
+
+        It only depends on the group and the precision, so it is cached here
+        (this cohomology group is unique for the S-arithmetic group and the
+        base ring): the lifts of the two signs at infinity share it.
+
+        Returns a tuple (operator, n, D, pN) with n the number of generators and
+        D the number of moments, or None if it does not apply (Shapiro groups).
+
+        EXAMPLES:
+
+        An overconvergent class attached to the curve 55a1, with 10 moments.
+        ``apply_Up`` uses this operator, unless other representatives are
+        given: then it evaluates the cocycle on the words of Up. Both give the
+        same moments::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: from darmonpoints.cohomology_arithmetic import ArithCoh, get_cocycle_from_elliptic_curve, get_overconvergent_class_quaternionic
+            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='PSL2', use_shapiro=False, outfile='/tmp/darmonpoints.tmp')
+            sage: E = EllipticCurve('55a1')
+            sage: phiE = get_cocycle_from_elliptic_curve(ArithCoh(GS), E, sign=1, use_magma=False)
+            sage: Phi = get_overconvergent_class_quaternionic(5, phiE, GS, 10, 1, E.ap(5))
+            sage: H = Phi.parent()
+            sage: op, n, D, pN = H.up_operator()
+            sage: n == len(H.group().gens()), D, pN == 5^10
+            (True, 11, True)
+            sage: moments = lambda c: [[ZZ(x) for x in v._val.list()] for v in c.values()]
+            sage: moments(H.apply_Up(Phi)) == moments(H.apply_Up(Phi, Up_reps=GS.get_Up_reps()))
+            True
+        """
+        from .meromorphic import _IntegerOperator
+
+        if self.use_shapiro():
+            return None
+        V = self.coefficient_module()
+        R = V.base_ring()
+        prec = R.precision_cap()
+        G = self.S_arithgroup()
+        Gpn = G.small_group()
+        gammas = self.group().gens()
+        Up_reps = G.get_Up_reps()
+        repslocal = self.get_Up_reps_local(prec)
+        n = len(gammas)
+        D = V.dimension()
+        pN = ZZ(V._pN)
+        B = [[None] * n for _ in range(n)]
+        Gr = self.group()
+        plan = []
+        for i, gamma in enumerate(gammas):
+            for sk, g in zip(repslocal, Up_reps):
+                t = Gpn.get_hecke_ti(g, gamma)
+                x = t if t.parent() is Gr else Gr(t)  # as CohomologyElement.evaluate
+                fg = [(j, A.monomial_coefficients(copy=False))
+                      for j, A in enumerate(self.fox_gradient(tuple(x.word_rep)))]
+                plan.append((i, sk, fg))
+        last = {}
+        pos = 0
+        for _, _, fg in plan:
+            for _, mons in fg:
+                for h in mons:
+                    last[h] = pos
+                    pos += 1
+        mats = {}
+        pos = 0
+        for i, sk, fg in plan:
+            Ps = V._get_powers(sk.matrix())  # as OCVnElement._acted_upon_
+            for j, mons in fg:
+                Gtj = 0  # as GA_to_local: sum(a * M_h), summed left to right
+                for h, a in mons.items():
+                    try:
+                        M = mats[h]
+                    except KeyError:
+                        M = mats[h] = V._acting_matrix_uncached(h, D)
+                    Gtj = Gtj + a * M
+                    if last[h] == pos:
+                        del mats[h]
+                    pos += 1
+                if not hasattr(Gtj, "nrows"):  # the zero of the group algebra
+                    continue
+                term = Ps * Gtj
+                B[i][j] = term if B[i][j] is None else B[i][j] + term
+        del plan, mats
+        # Row vectors (_IntegerOperator computes v * A): the block (j, i) of A is
+        # the transpose of B_ij, reduced modulo p^N
+        A = Matrix(ZZ, n * D, n * D, 0)
+        for j in range(n):
+            for i in range(n):
+                Bij = B[i][j]
+                if Bij is not None:
+                    A.set_block(j * D, i * D, Bij.transpose().apply_map(lambda o: o % pN))
+                B[i][j] = None
+        op = _IntegerOperator(A, R.prime(), [ZZ(R.precision_cap())] * (n * D), 1)
+        return (op, n, D, pN)
+
+    def _apply_up_operator(self, c, scale=1):
+        r"""
+        apply_Up through up_operator (the same result as the evaluation of the
+        cocycle on the words of Up).
+        """
+        op, n, D, pN = self.up_operator()
+        V = self.coefficient_module()
+        v = [int(o) for val in c.values() for o in val._moments.lift().list()]
+        w = op.apply(v)
+        pN = int(pN)
+        R = V._R
+        vals = [
+            V.element_class(V, Matrix(R, D, 1, [o % pN for o in w[i * D : (i + 1) * D]]), check=False)
+            for i in range(n)
+        ]
+        ans = self(vals)
+        if scale != 1:
+            ans *= scale
+        return ans
+
     def apply_Up(
         self,
         c,
@@ -886,7 +1130,19 @@ class ArithCohOverconvergent(ArithCoh):
     ):  # one-variable overconvergent
         r"""
         Apply the Up Hecke operator operator to ``c``.
+
+        With the default representatives (and without Shapiro), through the
+        integer matrix of up_operator: the same result as the evaluation of
+        the cocycle on the words of Up, much faster when it is applied many
+        times (as in improve).
         """
+        if (
+            repslocal is None
+            and Up_reps is None
+            and times == 0
+            and not self.use_shapiro()
+        ):
+            return self._apply_up_operator(c, scale=scale)
         V = self.coefficient_module()
         R = V.base_ring()
         gammas = self.group().gens()

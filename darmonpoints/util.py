@@ -6,7 +6,7 @@ from functools import reduce
 from itertools import chain, groupby, islice, product, starmap, tee
 
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
-from sage.arith.misc import divisors
+from sage.arith.misc import divisors, fundamental_discriminant
 from sage.arith.misc import kronecker as kronecker_symbol
 from sage.arith.misc import next_prime
 from sage.arith.functions import lcm
@@ -1086,6 +1086,31 @@ def solve_quadratic(f, K=None, return_all=False):
         return [(-b + discrt) / (2 * a), (-b - discrt) / (2 * a)]
     else:
         return (-b + discrt) / (2 * a)
+
+
+def discriminant_conductor(D):
+    r"""
+    The fundamental discriminant `d_K` of `K = \QQ(\sqrt{D})` and the conductor `f` of
+    the quadratic order that the integer ``D`` stands for.
+
+    If `D` is the discriminant of an order, `D = d_K f^2`, it stands for that order (of
+    conductor `f`, the maximal one if `D` is fundamental). Otherwise, as when `D` is a
+    squarefree radicand like 3, it stands for the maximal order of `K`, and `f = 1`.
+
+    EXAMPLES::
+
+        sage: from darmonpoints.util import discriminant_conductor
+        sage: [discriminant_conductor(D) for D in [12, 3, 5, 8, 2, 27]]
+        [(12, 1), (12, 1), (5, 1), (8, 1), (8, 1), (12, 1)]
+        sage: [discriminant_conductor(D) for D in [48, 588, 20, 392]]
+        [(12, 2), (12, 7), (5, 2), (8, 7)]
+    """
+    D = ZZ(D)
+    dK = ZZ(fundamental_discriminant(D))
+    f2 = D / dK
+    if f2 in ZZ and ZZ(f2).is_square():
+        return dK, ZZ(f2).sqrt()
+    return dK, ZZ(1)
 
 
 def our_sqrt(xx, K=None, return_all=False):
