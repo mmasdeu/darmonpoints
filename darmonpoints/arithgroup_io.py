@@ -148,7 +148,9 @@ def encode_quaternion(x):
 
 def decode_quaternion(B, v):
     if len(v) != 4:
-        raise StoredGroupMismatch("A quaternion should have 4 coordinates, got %s" % (v,))
+        raise StoredGroupMismatch(
+            "A quaternion should have 4 coordinates, got %s" % (v,)
+        )
     return B([decode_rational(c) for c in v])
 
 
@@ -262,7 +264,9 @@ def payload(data):
 
 def _check_kind(data, kind):
     if data.get("kind") != kind:
-        raise StoredGroupMismatch("Expected data of kind %s, got %s" % (kind, data.get("kind")))
+        raise StoredGroupMismatch(
+            "Expected data of kind %s, got %s" % (kind, data.get("kind"))
+        )
     if data.get("schema_version") != SCHEMA_VERSION:
         raise StoredGroupMismatch(
             "Unsupported schema version %s (this code reads version %s)"
@@ -290,7 +294,9 @@ def export_arithgroup(G, seed=None):
     from .arithgroup import ArithGroup_rationalquaternion
 
     if not isinstance(G, ArithGroup_rationalquaternion):
-        raise NotImplementedError("Only groups of rational quaternion algebras can be exported")
+        raise NotImplementedError(
+            "Only groups of rational quaternion algebras can be exported"
+        )
     if not G._compute_presentation:
         raise ValueError("The presentation of the group has not been computed")
     B = G.B
@@ -364,7 +370,10 @@ def _fail(msg):
 def _close(x, y, prec):
     # Entrywise, as matrix norms may be computed in double precision
     size = max([1] + [abs(c) for c in y.list()])
-    return max(abs(c) for c in (x - y).list()) <= RealField(prec)(2) ** (-(prec - 40)) * size
+    return (
+        max(abs(c) for c in (x - y).list())
+        <= RealField(prec)(2) ** (-(prec - 40)) * size
+    )
 
 
 def validate_arithgroup(G, expected_order_basis=None):
@@ -377,9 +386,15 @@ def validate_arithgroup(G, expected_order_basis=None):
     B = G.B
     one = B.one()
     if B.discriminant() != G.discriminant:
-        _fail("The quaternion algebra has discriminant %s, not %s" % (B.discriminant(), G.discriminant))
+        _fail(
+            "The quaternion algebra has discriminant %s, not %s"
+            % (B.discriminant(), G.discriminant)
+        )
     if G.O.discriminant() != G.discriminant * G.level:
-        _fail("The order has discriminant %s, not %s" % (G.O.discriminant(), G.discriminant * G.level))
+        _fail(
+            "The order has discriminant %s, not %s"
+            % (G.O.discriminant(), G.discriminant * G.level)
+        )
     if expected_order_basis is not None:
         expected = B.quaternion_order([B(o) for o in expected_order_basis])
         if expected != G.O:
@@ -393,7 +408,9 @@ def validate_arithgroup(G, expected_order_basis=None):
     n = G.ngquats
     if len(G.gquats) != 2 * n + 1 or len(G.translate) != 2 * n + 1:
         _fail("Expected %s side pairings and translations" % (2 * n))
-    if len(G.findex) != len(G.fdargs) + 1 or any(abs(i) > n or i == 0 for i in G.findex):
+    if len(G.findex) != len(G.fdargs) + 1 or any(
+        abs(i) > n or i == 0 for i in G.findex
+    ):
         _fail("Inconsistent fundamental domain indices")
     if any(x >= y for x, y in zip(G.fdargs, G.fdargs[1:])):
         _fail("The fundamental domain arguments are not increasing")
@@ -445,7 +462,9 @@ def arithgroup_invariants(G, nsamples=20, seed=0, max_length=6):
             _fail("The word problem gives a wrong word for %s" % x)
         words.append(encode_word(w))
     return {
-        "relation_matrix": [[int(c) for c in row] for row in G.get_relation_matrix().rows()],
+        "relation_matrix": [
+            [int(c) for c in row] for row in G.get_relation_matrix().rows()
+        ],
         "abelian_invariants": [int(c) for c in G.abelianization().abelian_invariants()],
         "samples": [encode_quaternion(x) for x in samples],
         "words": words,
@@ -509,16 +528,24 @@ def import_sarithgroup(data, Gn, Gpn, magma=None, validate=True):
     _check_kind(data, SARITH_KIND)
     B = Gn.B
     if [encode_rational(x) for x in B.invariants()] != data["abtuple"]:
-        _fail("The arithmetic groups are not in the quaternion algebra %s" % data["abtuple"])
+        _fail(
+            "The arithmetic groups are not in the quaternion algebra %s"
+            % data["abtuple"]
+        )
     if Gpn.B is not B:
         _fail("The two arithmetic groups are not in the same quaternion algebra")
     for name, H in (("Gn", Gn), ("Gpn", Gpn)):
-        expected = B.quaternion_order([decode_quaternion(B, v) for v in data[name + "_O_basis"]])
+        expected = B.quaternion_order(
+            [decode_quaternion(B, v) for v in data[name + "_O_basis"]]
+        )
         if expected != H.O:
             _fail("The order of %s is not the stored one" % name)
     p, D, N = ZZ(data["p"]), ZZ(data["discriminant"]), ZZ(data["level"])
     if Gn.level != N or Gpn.level != p * N or Gn.discriminant != D:
-        _fail("The arithmetic groups do not have the levels N = %s and pN = %s" % (N, p * N))
+        _fail(
+            "The arithmetic groups do not have the levels N = %s and pN = %s"
+            % (N, p * N)
+        )
     G = BigArithGroup_class(
         QQ,
         p,
@@ -556,16 +583,24 @@ def validate_sarithgroup(G):
         _fail("The p-adic splitting is not a splitting of the quaternion algebra")
     for o in Gpn._get_O_basis():
         if not is_in_Gamma0loc(G.embed(o, prec), det_condition=False):
-            _fail("The p-adic splitting does not send the order of level pN to an Eichler order")
+            _fail(
+                "The p-adic splitting does not send the order of level pN to an Eichler order"
+            )
     # wp was checked when it was set (BigArithGroup_class.set_wp)
     reps = G.get_BT_reps()
     if len(reps) != p + 1 or reps[0] != 1:
-        _fail("Expected %s representatives of the Bruhat-Tits edges, starting with 1" % (p + 1))
+        _fail(
+            "Expected %s representatives of the Bruhat-Tits edges, starting with 1"
+            % (p + 1)
+        )
     for r in reps:
         if r.reduced_norm() != 1 or not Gn._is_in_order(r):
-            _fail("BT representative %s is not a unit of norm 1 of the order of level N" % r)
+            _fail(
+                "BT representative %s is not a unit of norm 1 of the order of level N"
+                % r
+            )
     for i, r in enumerate(reps):
-        rinv = r ** -1
+        rinv = r**-1
         for s in reps[:i]:
             if G.is_in_Gpn_order(s * rinv):
                 _fail("Two BT representatives are in the same coset")

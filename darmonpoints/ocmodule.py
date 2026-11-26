@@ -82,7 +82,9 @@ def powers_method():
 
     method = os.environ.get("DARMONPOINTS_POWERS", "integer")
     if method not in ("legacy", "integer"):
-        raise ValueError("DARMONPOINTS_POWERS must be 'legacy' or 'integer', not %r" % method)
+        raise ValueError(
+            "DARMONPOINTS_POWERS must be 'legacy' or 'integer', not %r" % method
+        )
     return method
 
 
