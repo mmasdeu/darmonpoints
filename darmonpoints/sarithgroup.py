@@ -97,7 +97,9 @@ def BigArithGroup(
     logfile=None,
     **kwargs,
 ):
-    if magma is None:
+    backend = kwargs.get("backend", None)
+    needs_magma = backend == "magma"
+    if magma is None and needs_magma:
         try:
             from sage.interfaces.magma import Magma
 
@@ -105,15 +107,16 @@ def BigArithGroup(
         except RuntimeError:
             print("Could not initialize Magma. Continue at your own risk!")
             pass
-    try:
-        if seed is not None:
-            magma.eval("SetSeed(%s)" % seed)
-        if not is_page_initialized(magma):
-            attach_kleinian_code(magma)
-        if logfile is not None:
-            magma.eval('SetVerbose("Kleinian",2)')
-    except RuntimeError:
-        pass
+    if magma is not None:
+        try:
+            if seed is not None:
+                magma.eval("SetSeed(%s)" % seed)
+            if not is_page_initialized(magma):
+                attach_kleinian_code(magma)
+            if logfile is not None:
+                magma.eval('SetVerbose("Kleinian",2)')
+        except RuntimeError:
+            pass
     a, b = None, None
     try:
         discriminant = ZZ(quat_data)
@@ -201,14 +204,14 @@ class BigArithGroup_class(AlgebraicGroup):
     TESTS:
 
         sage: from darmonpoints.sarithgroup import BigArithGroup
-        sage: GS = BigArithGroup(7,6,1,outfile='/tmp/darmonpoints.tmp',use_shapiro=False) #  optional - magma
-        sage: G = GS.small_group() #  optional - magma
-        sage: a = G([2,2,1,1,1,-3]) #  optional - magma
-        sage: b = G([2,2,2])    #  optional - magma
-        sage: c = G([3])        #  optional - magma
-        sage: print(a * b) # random #  optional - magma
+        sage: GS = BigArithGroup(7,6,1,outfile='/tmp/darmonpoints.tmp',use_shapiro=False)
+        sage: G = GS.small_group()
+        sage: a = G([2,2,1,1,1,-3])
+        sage: b = G([2,2,2])
+        sage: c = G([3])
+        sage: print(a * b) # random
         -236836769/2 + 120098645/2*i - 80061609/2*j - 80063439/2*k
-        sage: b.quaternion_rep # random #  optional - magma
+        sage: b.quaternion_rep # random
         846 - 429*i + 286*j + 286*k
     """
 
@@ -230,7 +233,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self._use_shapiro = kwargs.get("use_shapiro", False)
         self._hardcode_matrices = False # kwargs.get('hardcode_matrices', (abtuple is None and discriminant == 1) or abtuple == (1,1))
         nscartan = kwargs.get("nscartan", None)
-        if seed is not None:
+        if seed is not None and magma is not None:
             verbose("Setting Magma seed to %s" % seed)
             self.magma.eval("SetSeed(%s)" % seed)
         self.F = base
@@ -432,10 +435,10 @@ class BigArithGroup_class(AlgebraicGroup):
         EXAMPLES::
 
             sage: from darmonpoints.sarithgroup import BigArithGroup
-            sage: X = BigArithGroup(13,2*3,1,outfile='/tmp/darmonpoints.tmp') #  optional - magma
-            sage: One, II, JJ, KK = X.local_splitting(10) #  optional - magma
-            sage: B = X.Gn.B    #  optional - magma
-            sage: II**2 == QQ(B.gen(0)**2) #  optional - magma
+            sage: X = BigArithGroup(13,2*3,1,outfile='/tmp/darmonpoints.tmp')
+            sage: One, II, JJ, KK = X.local_splitting(10)
+            sage: B = X.Gn.B
+            sage: II**2 == QQ(B.gen(0)**2)
             True
 
         """
@@ -702,6 +705,31 @@ class BigArithGroup_class(AlgebraicGroup):
         except AttributeError:
             pass
         verbose("Finding a suitable wp...")
+        if (
+            getattr(self.Gpn, "_backend", "magma") == "pari"
+            and getattr(self.Gpn, "_QA", None) is not None
+        ):
+            pgen = self.ideal_p if self.F == QQ else self.ideal_p.gens_reduced()[0]
+            wp = self.Gpn._QA.normalizer_element_of_norm(self.Gpn._O_mat, pgen)
+            if wp is not None:
+                try:
+                    return self.set_wp(wp)
+                except TypeError:
+                    verbose("Atkin-Lehner candidate rejected, falling back to search")
+            # Search the short elements of the order of Gpn whose reduced norm
+            # generates p (Atkin-Lehner elements are short)
+
+            def test(x):
+                try:
+                    self.set_wp(x)
+                    return True
+                except TypeError:
+                    return False
+
+            wp = self.Gpn._QA.search_elements_of_norm(self.Gpn._O_mat, pgen, test)
+            if wp is not None:
+                return self._wp
+            verbose("No wp found among short elements, falling back to random search")
         i = 0
         max_iterations = kwargs.get("max_iterations", -1)
         try:
@@ -961,8 +989,6 @@ def ArithGroup(base, discriminant, abtuple=None, level=1, magma=None, **kwargs):
             else:
                 return ArithGroup_rationalmatrix(level, magma=magma, **kwargs)
         else:
-            if magma is None:
-                raise ValueError("Should specify magma session")
             if abtuple is not None:
                 return ArithGroup_rationalquaternion(
                     abtuple, level, magma=magma, **kwargs
@@ -973,12 +999,10 @@ def ArithGroup(base, discriminant, abtuple=None, level=1, magma=None, **kwargs):
                 )
     else:  # Number Field
         a, b = abtuple
-        if magma is None:
-            raise ValueError("Should specify magma session")
         if base.signature()[1] == 0:
             return ArithGroup_nf_fuchsian(base, a, b, level, magma=magma, **kwargs)
         else:
-            if not is_page_initialized(magma):
+            if magma is not None and not is_page_initialized(magma):
                 attach_kleinian_code(magma)
             if implementation is None:
                 if False: #(a, b) == (1, 1):

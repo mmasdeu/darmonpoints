@@ -1558,12 +1558,62 @@ def module_generators_new(K):
 
 
 @cached_function
+def _generates_relative_integers(K, w):
+    r"""
+    Whether `O_K = O_F[w]` for the quadratic extension ``K`` of ``F``: ``w``
+    is integral and the discriminant of `(1, w)` generates the relative
+    discriminant.
+    """
+    F = K.base_field()
+    if not w.is_integral():
+        return False
+    t = w.trace(F)
+    n = w.norm(F)
+    if t * t - 4 * n == 0:
+        return False
+    return F.ideal(t * t - 4 * n) == K.relative_discriminant()
+
+
 def module_generators(K):
-    x = var("x")
-    y = var("y")
+    r"""
+    Return ``[1, w]`` with `O_K = O_F[w]` for a quadratic extension ``K`` of
+    ``F`` (when the ring of integers is monogenic over `O_F`).
+
+    EXAMPLES::
+
+        sage: from darmonpoints.util import module_generators
+        sage: F.<r> = NumberField(x^3 - x^2 - x + 2)
+        sage: K.<b> = F.extension(polygen(F)^2 - (-3*r^2 + 9*r - 6))
+        sage: one, w = module_generators(K)
+        sage: t, n = w.trace(F), w.norm(F)
+        sage: w.is_integral() and F.ideal(t^2 - 4*n) == K.relative_discriminant()
+        True
+    """
     F = K.base_field()
     if F == QQ:
         return [1, K.maximal_order().ring_generators()[0]]
+    try:
+        ans = _module_generators_rnf(K)
+        if _generates_relative_integers(K, ans[1]):
+            return ans
+    except (TypeError, ValueError, ArithmeticError):
+        pass
+    # Search small integral combinations of a Z-basis of O_K
+    OKbasis = K.maximal_order().basis()
+    for bound in range(1, 6):
+        for coeffs in product(range(-bound, bound + 1), repeat=len(OKbasis)):
+            if max(abs(c) for c in coeffs) != bound:
+                continue
+            w = sum((c * o for c, o in zip(coeffs, OKbasis)), K(0))
+            if _generates_relative_integers(K, w):
+                return [K(1), w]
+    raise NotImplementedError("Could not find a monogenic generator of O_K over O_F")
+
+
+def _module_generators_rnf(K):
+    x = var("x")
+    y = var("y")
+    F = K.base_field()
     f = F.polynomial()
     a = F.gen()
     g = K.relative_polynomial()
@@ -1678,9 +1728,15 @@ def sage_F_ideal_to_magma(F_magma, x):
 
 def magma_F_elt_to_sage(F_sage, x, magma):
     if F_sage != QQ:
+        name = x.name()
+        # Elements of an order (e.g. from TwoElement of an ideal) have
+        # coordinates with respect to the integral basis; coerce them into
+        # the number field first to get coordinates in the power basis.
+        if magma.eval("Type(%s)" % name).strip() == "RngOrdElt":
+            name = "(NumberField(Parent(%s))!%s)" % (name, name)
         return F_sage(
             sage_eval(
-                magma.eval("[%s[i] : i in [1..%s]]" % (x.name(), F_sage.degree()))
+                magma.eval("[%s[i] : i in [1..%s]]" % (name, F_sage.degree()))
             )
         )
     else:
@@ -1720,8 +1776,74 @@ def magma_F_ideal_to_sage(F_sage, x, magma):
         )
 
 
+def _quaternion_algebra_invariants_pari(F, P, S):
+    r"""
+    Invariants `(a,b)` (integral, in the power basis) of the quaternion algebra
+    over ``F`` ramified exactly at the primes in ``P`` (a list of
+    ``(prime, exponent)``) and the real places in ``S``, computed by PARI.
+
+    Returns ``None`` if ``F`` is not defined by a monic integral polynomial.
+    """
+    from sage.libs.pari import pari
+    from .afuch import algab
+
+    if F == QQ or F.degree() == 1:
+        nfpol = pari("y")
+        roots = [0]
+    else:
+        f = F.defining_polynomial()
+        if not (f.is_monic() and all(c in ZZ for c in f.list())):
+            return None
+        nfpol = pari(f.change_ring(QQ)).subst(f.variable_name(), "y")
+        roots = sorted(f.roots(RealField(200), multiplicities=False))
+    nf = pari.nfinit(nfpol)
+    prs = []
+    for pp, _ in P:
+        p = ZZ(pp.norm()).prime_divisors()[0] if F != QQ else ZZ(pp.gen())
+        dec = pari.idealprimedec(nf, p)
+        if F == QQ or F.degree() == 1:
+            prs.append(dec[0])
+            continue
+        for pr in dec:
+            # identify pr with pp via its two-element representation
+            alpha = pari.nfbasistoalg(nf, pr[1]).lift()
+            alpha = F([QQ(c) for c in alpha.Vecrev()] + [0] * (F.degree() - len(alpha.Vecrev())))
+            if F.ideal(ZZ(pr[0]), alpha) == pp:
+                prs.append(pr)
+                break
+        else:
+            return None
+    hasse_inf = [0] * len(roots)
+    for v in S:
+        r = v(F.gen())
+        idx = min(range(len(roots)), key=lambda i: (roots[i] - r).abs())
+        hasse_inf[idx] = 1
+    A = pari.alginit(
+        nf, [2, [prs, [QQ(1) / 2] * len(prs)], [QQ(h) / 2 for h in hasse_inf]]
+    )
+    ab = algab(A)
+    ans = []
+    for z in ab:
+        z = pari(z)
+        if z.type() == "t_POLMOD":
+            z = z.lift()
+        if z.type() == "t_POL":
+            coeffs = [QQ(c) for c in z.Vecrev()]
+        else:
+            coeffs = [QQ(z)]
+        if F == QQ:
+            x = QQ(coeffs[0])
+        else:
+            x = F(coeffs + [0] * (F.degree() - len(coeffs)))
+        if not x.is_integral():  # make it integral by scaling with a square
+            d = lcm([QQ(c).denominator() for c in (x.list() if F != QQ else [x])])
+            x *= d**2
+        ans.append(x)
+    return tuple(ans)
+
+
 def quaternion_algebra_invariants_from_ramification(
-    F, I, S=None, optimize_through_magma=True, magma=None
+    F, I, S=None, optimize_through_magma=False, magma=None
 ):
     r"""
     Creates a quaternion algebra over a number field which ramifies exactly at
@@ -1749,27 +1871,27 @@ def quaternion_algebra_invariants_from_ramification(
 
         sage: F.<r> = QuadraticField(5)
         sage: from darmonpoints.util import quaternion_algebra_invariants_from_ramification
-        sage: quaternion_algebra_invariants_from_ramification(F,F.ideal(11),[]); # random #  optional - magma
+        sage: quaternion_algebra_invariants_from_ramification(F,F.ideal(11),[]); # random
         (22, -22*r - 31)
         sage: F.<r> = NumberField(x^2 - x - 24)
         sage: D = F.ideal(106*r + 469)
         sage: S = [F.real_places()[0]]
-        sage: a, b = quaternion_algebra_invariants_from_ramification(F,D,S) #  optional - magma
-        sage: B = QuaternionAlgebra(F,a,b) #  optional - magma
-        sage: B.discriminant() == D #  optional - magma
+        sage: a, b = quaternion_algebra_invariants_from_ramification(F,D,S)
+        sage: B = QuaternionAlgebra(F,a,b)
+        sage: B.discriminant() == D
         True
-        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+1,[]) #  optional - magma
-        sage: B = QuaternionAlgebra(F,a,b) #  optional - magma
-        sage: B.discriminant() == F.ideal(r + 1) #  optional - magma
+        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+1,[])
+        sage: B = QuaternionAlgebra(F,a,b)
+        sage: B.discriminant() == F.ideal(r + 1)
         True
-        sage: a,b = B.invariants() #  optional - magma
-        sage: all([v(a) > 0 or v(b) > 0 for v in F.real_places()]) #  optional - magma
+        sage: a,b = B.invariants()
+        sage: all([v(a) > 0 or v(b) > 0 for v in F.real_places()])
         True
 
     The number of ramified places must be even:
 
         sage: F.<r> = NumberField(x^2 - x - 24)
-        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+4,[]) #  optional - magma
+        sage: a, b = quaternion_algebra_invariants_from_ramification(F,r+4,[])
         Traceback (most recent call last):
         ...
         ValueError: Number of ramified places must be even
@@ -1782,6 +1904,13 @@ def quaternion_algebra_invariants_from_ramification(
         raise ValueError("Number of ramified places must be even")
     if any([ri > 1 for _, ri in P]):
         raise ValueError("All exponents in the discriminant factorization must be odd")
+
+    if not optimize_through_magma:
+        ans = _quaternion_algebra_invariants_pari(F, P, S)
+        if ans is not None:
+            a, b = ans
+            assert F.ideal(QuaternionAlgebra(F, a, b).discriminant()) == I
+            return a, b
 
     if optimize_through_magma:
         if magma is None:
@@ -2438,30 +2567,65 @@ def field_element_pari_to_sage(w, Fp, elt):
     return sage_eval(str(elt), locals={"y": w})
 
 
-def pari_ordmax_basis_to_sage(w, Ap):
-    gp = Ap.parent()
-    Fp = Ap.algcenter()
-    stdbasis = [
-        gp.mattranspose(list(e)) for e in (ZZ ** (4 * Fp[1].poldegree())).basis()
-    ]
-    c = lambda o: field_element_pari_to_sage(w, Fp, o)
-    Omaxbasis = [[c(o) for o in gp.algbasisto1ijk(Ap, e)] for e in stdbasis]
-    return Omaxbasis
-
-
-def sage_order_basis_to_pari(w, Ap, basis):
-    gp = Ap.parent()
-    paribasis = []
-    wcoords = w.coordinates_in_terms_of_powers()
-    for b in basis:
-        coefs = b.coefficient_tuple()
-        bp = gp.alg1ijktobasis(Ap, [QQ["y"](wcoords(o)) for o in coefs])
-        paribasis.append(bp)
-    return gp.matconcat(paribasis)
-
-
 def matrix_is_hyperbolic(g):
     tr = g.trace()
     det = g.determinant()
     return 2 * tr.valuation() < det.valuation()
     
+
+def quadratic_field_embeds_in_quaternion_algebra(K, B):
+    r"""
+    Whether the quadratic extension ``K`` of ``F`` embeds into the quaternion
+    algebra ``B`` over ``F``: no place ramified in ``B`` splits in ``K``.
+
+    EXAMPLES::
+
+        sage: from darmonpoints.util import quadratic_field_embeds_in_quaternion_algebra
+        sage: B = QuaternionAlgebra(6)
+        sage: [quadratic_field_embeds_in_quaternion_algebra(QuadraticField(d), B) for d in [-1, -23, 5, 7, -6]]
+        [True, False, True, False, True]
+    """
+    F = B.base_ring()
+    if F == QQ:
+        d = K.discriminant()
+        if any(kronecker_symbol(d, ell) == 1 for ell in B.ramified_primes()):
+            return False
+        a, b = B.invariants()
+        if a < 0 and b < 0 and d > 0:
+            return False
+        return True
+    n = K.relative_polynomial().discriminant()
+    for P in B.ramified_primes():
+        if len(K.primes_above(P)) > 1:
+            return False
+    a, b = B.invariants()
+    for v in F.real_places():
+        if v(a) < 0 and v(b) < 0 and v(n) > 0:
+            return False
+    return True
+
+
+def ray_class_field_polynomial(K, conductor=1):
+    r"""
+    An absolute defining polynomial (polredabs-reduced) of the ray class field
+    of the absolute number field ``K`` of modulus ``conductor`` times all the
+    real places of ``K``. For a quadratic field and an integer conductor this
+    is the ring class field of that conductor (in the narrow sense).
+
+    EXAMPLES::
+
+        sage: from darmonpoints.util import ray_class_field_polynomial
+        sage: ray_class_field_polynomial(QuadraticField(-23)).degree()
+        6
+        sage: ray_class_field_polynomial(QuadraticField(3)).degree()
+        4
+    """
+    from sage.libs.pari import pari
+
+    f = K.defining_polynomial()
+    bnf = pari.bnfinit(pari(f.change_ring(QQ)).subst(f.variable_name(), "y"), 1)
+    r1 = K.signature()[0]
+    bnr = pari.bnrinit(bnf, [pari(ZZ(conductor)), [1] * r1])
+    pol = pari.bnrclassfield(bnr, 0, 2)
+    pol = pari.polredabs(pol)
+    return PolynomialRing(QQ, "x")([QQ(c) for c in pol.Vecrev()])

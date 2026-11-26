@@ -47,7 +47,7 @@ def find_curve(
     First example::
 
         sage: from darmonpoints.findcurve import find_curve
-        sage: find_curve(5,6,30,20) # long time # optional - magma
+        sage: find_curve(5,6,30,20) # long time
         # B = F<i,j,k>, with i^2 = -1 and j^2 = 3
         ...
         '(1, 0, 1, -289, 1862)'
@@ -58,7 +58,7 @@ def find_curve(
         sage: F.<r> = QuadraticField(5)
         sage: P = F.ideal(3/2*r + 1/2)
         sage: D = F.ideal(3)
-        sage: find_curve(P,D,P*D,30,ramification_at_infinity = F.real_places()[:1]) # long time # optional - magma
+        sage: find_curve(P,D,P*D,30,ramification_at_infinity = F.real_places()[:1]) # long time
         ...
 
     Now over a cubic of mixed signature::
@@ -67,7 +67,7 @@ def find_curve(
         sage: F.<r> = NumberField(x^3 -3)
         sage: P = F.ideal(r-2)
         sage: D = F.ideal(r-1)
-        sage: find_curve(P,D,P*D,30) # long time # optional - magma
+        sage: find_curve(P,D,P*D,30) # long time
         ...
 
     """
@@ -94,15 +94,15 @@ def find_curve(
     timeout = param.get("timeout", 0)
     check_conductor = param.get("check_conductor", True)
 
-    if initial_data is None:
+    try:
+        _F = P.ring()
+    except AttributeError:
+        _F = QQ
+    # Magma is only used when a session is passed (backend='magma')
+    needs_magma = magma is not None
+    if initial_data is None and needs_magma:
         page_path = os.path.dirname(__file__) + "/KleinianGroups-1.0/klngpspec"
-        if magma is None:
-            from sage.interfaces.magma import Magma
-
-            quit_when_done = True
-            magma = Magma()
-        else:
-            quit_when_done = False
+        quit_when_done = False
         if magma_seed is not None:
             magma.eval("SetSeed(%s)" % magma_seed)
         magma.attach_spec(page_path)

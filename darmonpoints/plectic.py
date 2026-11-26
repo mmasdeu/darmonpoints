@@ -72,17 +72,13 @@ def PlecticGroup(
     progress_bar = param.get("progress_bar", True)
     sign_at_infinity = param.get("sign_at_infinity", ZZ(1))
 
-    page_path = param.get("page_path", os.path.dirname(__file__))
-    page_path += "/KleinianGroups-1.0/klngpspec"
-    if magma is None:
-        from sage.interfaces.magma import Magma
-
-        magma = Magma()
-        quit_when_done = True
-    else:
-        quit_when_done = False
-    print("Using Magma version : %s" % str(magma.version()))
-    magma.attach_spec(page_path)
+    # Magma is only used when a session is passed (backend='magma')
+    quit_when_done = False
+    if magma is not None:
+        page_path = param.get("page_path", os.path.dirname(__file__))
+        page_path += "/KleinianGroups-1.0/klngpspec"
+        print("Using Magma version : %s" % str(magma.version()))
+        magma.attach_spec(page_path)
 
     a, b = quat_data
     if base is None:

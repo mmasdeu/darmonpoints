@@ -188,7 +188,7 @@ class CoIndModule(Parent):
         sage: from darmonpoints.homology import *
         sage: from darmonpoints.cohomology_abstract import *
         sage: from darmonpoints.sarithgroup import *
-        sage: G = BigArithGroup(5,6,1,outfile='/tmp/darmonpoints.tmp') #  optional - magma
+        sage: G = BigArithGroup(5,6,1,outfile='/tmp/darmonpoints.tmp')
     """
 
     Element = CoIndElement

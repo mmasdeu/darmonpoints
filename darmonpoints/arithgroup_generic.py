@@ -49,6 +49,7 @@ from .homology_abstract import Abelianization
 
 # from sage.modular.modsym.p1list_nf import lift_to_sl2_Ok, P1NFList
 from .my_p1list_nf import P1NFList, lift_to_sl2_Ok
+from .quatorder import QuaternionAlgebraPari
 from .util import *
 
 
@@ -57,6 +58,46 @@ class ArithGroup_generic(AlgebraicGroup):
 
     def __init__(self, **kwargs):
         super().__init__()
+
+    def _is_pari_backend(self):
+        return getattr(self, "_backend", "magma") == "pari"
+
+    def _init_pari_objects(self, info=None, O_basis=None, intersection=None):
+        r"""
+        Initialize ``self._QA`` (the algebra with PARI data) and ``self._O_mat``
+        (the order, as a matrix in the basis of PARI's maximal order).
+
+        If ``info`` (another group in the same algebra) is given, the order is
+        computed inside the order of ``info`` so that both are compatible.
+        """
+        if info is not None and getattr(info, "_QA", None) is not None:
+            self._QA = info._QA
+        elif self.B.invariants() == (1, 1):
+            # Matrix algebra: the orders are given explicitly by _get_O_basis
+            self._QA = None
+            self._O_mat = None
+            return
+        else:
+            a, b = self.B.invariants()
+            self._QA = QuaternionAlgebraPari(self.F, a, b)
+        QA = self._QA
+        if O_basis is not None:
+            self._O_mat = QA.order_matrix_from_basis([self.B(o) for o in O_basis])
+        elif intersection is not None:
+            self._O_mat = QA.intersect_orders(info._O_mat, intersection._O_mat)
+        elif info is not None and getattr(info, "_O_mat", None) is not None:
+            if self.F is QQ:
+                missing, divides = self.level // info.level, info.level.divides(self.level)
+            else:
+                missing, divides = self.level / info.level, info.level.divides(self.level)
+            if divides:
+                self._O_mat = QA.intersect_orders(
+                    info._O_mat, QA.eichler_order_matrix(missing)
+                )
+            else:
+                self._O_mat = QA.eichler_order_matrix(self.level)
+        else:
+            self._O_mat = QA.eichler_order_matrix(self.level)
 
     def base_field(self):
         return self.F
@@ -92,6 +133,8 @@ class ArithGroup_generic(AlgebraicGroup):
     def order_discriminant(self):
         if not hasattr(self.B, "invariants") or self.B.invariants() == (1, 1):
             return self.level
+        elif getattr(self, "_backend", "magma") == "pari":
+            return self.B.discriminant() * self.level
         else:
             O_magma = self._get_O_magma()
             return magma_F_ideal_to_sage(self.F, O_magma.Discriminant(), self.magma)
@@ -117,6 +160,8 @@ class ArithGroup_generic(AlgebraicGroup):
                 for o in tmpObasis_F
                 for i in range(self.F.degree())
             ]
+        elif getattr(self, "_backend", "magma") == "pari":
+            return self._QA.order_basis(self._O_mat)
         else:
             O_magma = self._get_O_magma()
             return [
@@ -256,6 +301,15 @@ class ArithGroup_generic(AlgebraicGroup):
         except AttributeError:
             prime = P
         R = Qp(prime, prec)
+        if getattr(self, "_backend", "magma") == "pari":
+            if self.F == QQ:
+                e = ZZ(self.level).valuation(prime)
+            else:
+                e = self.F.ideal(self.level).valuation(P)
+            (II, JJ, KK), F_to_local = self._QA.local_splitting(self._O_mat, P, e, prec)
+            self._II, self._JJ, self._KK = II, JJ, KK
+            self._prec = prec
+            return (II, JJ, KK), F_to_local
         verbose("Calling magma pMatrixRing")
         a, b = self.B.invariants()
         B_magma = self._get_B_magma()
@@ -330,10 +384,9 @@ class ArithGroup_generic(AlgebraicGroup):
         TESTS:
 
         sage: from darmonpoints.sarithgroup import ArithGroup
-        sage: magma.eval('SetSeed(2000000)') #  optional - magma
-        ''
-        sage: G = ArithGroup(QQ,6,None,5,magma=Magma()) # optional - magma
-        sage: reps = G.get_hecke_reps(11) # optional - magma
+        sage: set_random_seed(2000000)
+        sage: G = ArithGroup(QQ,6,None,5)
+        sage: reps = G.get_hecke_reps(11)
         """
         if is_infinity(l):
             reps = [self.non_positive_unit()]

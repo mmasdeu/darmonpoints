@@ -32,7 +32,7 @@ jobs:
       - name: install package
         shell: bash -l {0}
         run: |
-          pip install --no-dependencies .
+          pip install --no-build-isolation --no-dependencies .
       - name: doctest
         shell: bash -l {0}
         run: |

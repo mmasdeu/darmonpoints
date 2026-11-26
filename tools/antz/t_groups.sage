@@ -1,0 +1,11 @@
+load("tools/compare_magma.sage")
+res = []
+res.append(compare_group(5, 6, 1, magma=magma)[0])
+res.append(compare_group(7, 6, 1, magma=magma)[0])
+res.append(compare_group(3, 10, 1, magma=magma)[0])
+res.append(compare_group(3, 22, 1, magma=magma)[0])
+F = QuadraticField(5, "r"); r = F.gen()
+ab = quaternion_algebra_invariants_from_ramification(F, F.ideal(3), F.real_places()[:1])
+res.append(compare_group(F.ideal(3 / 2 * r + 1 / 2), ab, F.ideal(1), base=F, magma=magma)[0])
+print("@@SUMMARY groups: %s/%s agree" % (sum(res), len(res)))
+print("@@DONE@@")

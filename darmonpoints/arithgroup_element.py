@@ -96,6 +96,15 @@ class ArithGroupElement(MultiplicativeGroupElement):
         return "P" in (self.parent()._grouptype or "")
 
     def __hash__(self):
+        # Elements are immutable, so the hash is computed only once
+        try:
+            return self._cached_hash
+        except AttributeError:
+            pass
+        self._cached_hash = self._compute_hash()
+        return self._cached_hash
+
+    def _compute_hash(self):
         try:
             coeffs = tuple(self.quaternion_rep.coefficient_tuple())
         except (TypeError, ValueError, AttributeError):
@@ -105,9 +114,14 @@ class ArithGroupElement(MultiplicativeGroupElement):
             # representative. This is coarser than equality (which is up to
             # units), but a coarser hash is still consistent with it.
             for c in coeffs:
-                if c != 0:
-                    coeffs = tuple(o / c for o in coeffs)
+                # is_zero() rather than != 0: Sage's coefficient_tuple() over
+                # number fields can return non-normalized zeros (with a
+                # denominator), which compare as nonzero.
+                if not c.is_zero():
+                    cinv = ~c
+                    coeffs = tuple(o * cinv for o in coeffs)
                     break
+            coeffs = tuple(tuple(o.list()) if hasattr(o, "list") else o for o in coeffs)
         return hash((hash(self.parent()), hash(coeffs)))
 
     def _repr_(self):
@@ -149,7 +163,12 @@ class ArithGroupElement(MultiplicativeGroupElement):
         if not self._is_projective():
             return selfquatrep == rightquatrep
         # In a projective group the two elements are equal as soon as they
-        # differ by a unit scalar.
+        # differ by a unit scalar. The (cached) hash is invariant under
+        # scalars, so it gives a quick negative answer.
+        if hash(self) != hash(right):
+            return False
+        if selfquatrep == rightquatrep:
+            return True
         tmp = self._scalar_part(selfquatrep / rightquatrep)
         if tmp is None:
             return False
@@ -189,12 +208,12 @@ class ArithGroupElement(MultiplicativeGroupElement):
         TESTS::
 
             sage: from darmonpoints.sarithgroup import BigArithGroup
-            sage: GS = BigArithGroup(5, 6, 1, use_shapiro=False, outfile='/tmp/darmonpoints.tmp') #  optional - magma
-            sage: G = GS.small_group() #  optional - magma
-            sage: g = G.gen(0) #  optional - magma
-            sage: g * g**-1 == G(1) #  optional - magma
+            sage: GS = BigArithGroup(5, 6, 1, use_shapiro=False, outfile='/tmp/darmonpoints.tmp')
+            sage: G = GS.small_group()
+            sage: g = G.gen(0)
+            sage: g * g**-1 == G(1)
             True
-            sage: hash(g * g**-1) == hash(G(1)) #  optional - magma
+            sage: hash(g * g**-1) == hash(G(1))
             True
         """
         if op == op_EQ:

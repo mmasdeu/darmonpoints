@@ -1,18 +1,21 @@
 r'''
 This file contains functionality to compute p-adic periods of abelian surfaces of GL2-type.
 
-EXAMPLES::
+EXAMPLES:
 
-    sage: from darmonpoints.padicperiods import *
-    sage: from darmonpoints.darmonpoints import construct_homology_cycle
-    sage: prec = 20
-    sage: G = BigArithGroup(5, (1,1), 33, base=QQ, grouptype='PSL2',magma=magma)
-    sage: Coh = ArithCoh(G)
-    sage: (f0, f1), hecke_data = get_twodim_cocycle(Coh, 1)
-    sage: Phi0 = get_overconvergent_class_quaternionic(5, f0, G, prec, 1, 1)
-    sage: Phi1 = get_overconvergent_class_quaternionic(5, f1, G, prec, 1, 1)
-    sage: beta =
-    sage: cycleGn, nn, ell = construct_homology_cycle(5, G, beta, 2*prec, lambda q: Coh.hecke_matrix(q).minpoly(), use_magma=True, magma=magma)
+This example is incomplete (the value of ``beta`` is missing), so it is not
+tested::
+
+    sage: from darmonpoints.padicperiods import *  # not tested
+    sage: from darmonpoints.darmonpoints import construct_homology_cycle  # not tested
+    sage: prec = 20  # not tested
+    sage: G = BigArithGroup(5, (1,1), 33, base=QQ, grouptype='PSL2')  # not tested
+    sage: Coh = ArithCoh(G)  # not tested
+    sage: (f0, f1), hecke_data = get_twodim_cocycle(Coh, 1)  # not tested
+    sage: Phi0 = get_overconvergent_class_quaternionic(5, f0, G, prec, 1, 1)  # not tested
+    sage: Phi1 = get_overconvergent_class_quaternionic(5, f1, G, prec, 1, 1)  # not tested
+    sage: beta = ...  # not tested
+    sage: cycleGn, nn, ell = construct_homology_cycle(5, G, beta, 2*prec, lambda q: Coh.hecke_matrix(q).minpoly(), use_magma=True)  # not tested
 
 '''
 

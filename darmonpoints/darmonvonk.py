@@ -139,40 +139,10 @@ def construct_conjectural_field(
     F1 = F1.absolute_field(names="aaa")
     F2 = F2.absolute_field(names="bbb")
 
-    magma.eval(
-        "_, m := RayClassGroup(%s * MaximalOrder(%s), %s)"
-        % (
-            extra_conductor_1,
-            magma(F1).name(),
-            str(list(range(1, len(F1.real_embeddings()) + 1))),
-        )
-    )
-    fF1 = R(
-        sage_eval(
-            magma.eval(
-                "ElementToSequence(DefiningPolynomial(AbsoluteField(NumberField(AbelianExtension(m)))))"
-            )
-        )
-    )
-    H1 = NumberField(sage_eval(str(gp.polredabs(fF1)), locals={"x": x}), names="a")
+    H1 = NumberField(ray_class_field_polynomial(F1, extra_conductor_1), names="a")
     a = H1.gen()
 
-    magma.eval(
-        "_, m := RayClassGroup(%s * MaximalOrder(%s), %s)"
-        % (
-            extra_conductor_2,
-            magma(F2).name(),
-            str(list(range(1, len(F2.real_embeddings()) + 1))),
-        )
-    )
-    fF2 = R(
-        sage_eval(
-            magma.eval(
-                "ElementToSequence(DefiningPolynomial(AbsoluteField(NumberField(AbelianExtension(m)))))"
-            )
-        )
-    )
-    H2 = NumberField(sage_eval(str(gp.polredabs(fF2)), locals={"x": x}), names="b")
+    H2 = NumberField(ray_class_field_polynomial(F2, extra_conductor_2), names="b")
     b = H2.gen()
     M = NumberField(
         sage_eval(
@@ -200,22 +170,7 @@ def construct_bigfield(Dlist, magma, base=None, ringclassfield=True):
         F1 = base.extension(x**2 - D, names="a") if base != QQ else QuadraticField(D)
         F1 = F1.absolute_field(names="a")
         if ringclassfield:
-            magma.eval(
-                "_, m := RayClassGroup(%s * MaximalOrder(%s), %s)"
-                % (
-                    1,
-                    magma(F1).name(),
-                    str(list(range(1, len(F1.real_embeddings()) + 1))),
-                )
-            )
-            fF1 = R(
-                sage_eval(
-                    magma.eval(
-                        "ElementToSequence(DefiningPolynomial(AbsoluteField(NumberField(AbelianExtension(m)))))"
-                    )
-                )
-            )
-            H1 = NumberField(fF1, names="a")
+            H1 = NumberField(ray_class_field_polynomial(F1, 1), names="a")
             a = H1.gen()
         else:
             H1 = F1
@@ -250,10 +205,6 @@ def darmon_vonk_overconvergent_cocycle(
 def darmon_vonk_group(p, DB, outfile=None, **kwargs):
     magma = kwargs.pop("magma", None)
     additional_level = kwargs.pop("additional_level", 1)
-    if magma is None:
-        from sage.interfaces.magma import Magma
-
-        magma = Magma()
     grouptype = kwargs.pop("grouptype", "PSL2")
     try:
         _ = ZZ(p)
@@ -293,16 +244,15 @@ def darmon_vonk_point(
     r"""
     EXAMPLES ::
 
+    The invariant is only defined up to a root of unity, so the polynomial
+    recognized may be the one of `J` or of `-J`::
+
         sage: from darmonpoints.darmonvonk import darmon_vonk_point
-        sage: J = darmon_vonk_point(5, 1, 3, 13, 60, parity='+', recognize_point='algdep',magma=magma) # optional - magma
+        sage: J = darmon_vonk_point(5, 1, 3, 13, 60, parity='+', recognize_point='algdep') # long time
         #### Starting computation of the Darmon-Vonk point ####
         ...
-        f = 7*x^2 + 11*x + 7
+        f = 7*x^2 ...11*x + 7
     """
-    if magma is None:
-        from sage.interfaces.magma import Magma
-
-        magma = Magma()
     if recognize_point not in ["algdep", "lindep", "all", "none"]:
         raise ValueError(
             "recognize_point (= '%s' ) should be one of 'algdep', 'lindep', 'all' or 'none'"
@@ -590,10 +540,7 @@ def darmon_vonk_point(
 
 
 def admissible_discriminants(p, D, bound, level=1, magma=None):
-    if magma is None:
-        from sage.interfaces.magma import Magma
-
-        magma = Magma()
+    # The parameter magma is ignored (kept for backwards compatibility)
     ans = []
     try:
         F = p.number_field()
@@ -610,9 +557,8 @@ def admissible_discriminants(p, D, bound, level=1, magma=None):
                 z = K.gen()
             except ValueError:
                 continue
-            B = magma.QuaternionAlgebra(magma(F), magma(a), magma(b))
-            Km = magma(K)
-            if magma.eval(f"HasEmbedding({Km.name()}, {B.name()})")[:5] == "true":
+            B = QuaternionAlgebra(F, a, b)
+            if quadratic_field_embeds_in_quaternion_algebra(K, B):
                 if len(K.units()) > len(F.units()):
                     ans.append(n)
     except AttributeError:

@@ -70,25 +70,38 @@ The full documentation can be found at
 
 Installation of the *darmonpoints* package has been greatly simplified,
 thanks to Matthias Köppe "Sample Sage"
-(<https://github.com/mkoeppe/sage_sample>). For most operations one
-*does need* to have **Magma** (<https://magma.maths.usyd.edu.au/magma/>)
-installed, although we do hope that in the future Sage will include the
-required functionality.
+(<https://github.com/mkoeppe/sage_sample>). **Magma is no longer
+required**: the arithmetic of quaternion algebras uses PARI/GP (through
+SageMath), fundamental domains of arithmetic Fuchsian groups are computed
+with James Rickards' library (vendored in `darmonpoints/fdom`, see the
+README there), and fundamental domains of arithmetic Kleinian groups with
+a Python port of Aurel Page's *KleinianGroups* package
+(`darmonpoints/kleinian.py`).
 
-We include for convenience the dependency Magma package *KleinianGroups*
-by Aurel Page, the original of which can be found at
-<http://www.normalesup.org/~page/Recherche/Logiciels/KleinianGroups/KleinianGroups-1.0.tar.gz>.
+Building the package compiles a C extension against the PARI library
+used by Sage, so the PARI headers must be available (they are in the
+conda/SageMath distributions). If they live outside `sys.prefix`, set the
+environment variable `PARI_PREFIX`.
+
+Magma (<https://magma.maths.usyd.edu.au/magma/>) can still be used, for
+instance to compare results: pass a Magma session (`magma=magma`) or
+`backend='magma'` to the arithmetic groups and the high level routines.
+For this we include the original Magma package *KleinianGroups* by
+Aurel Page (<http://www.normalesup.org/~page/Recherche/Logiciels/KleinianGroups/KleinianGroups-1.0.tar.gz>).
 
 To install the package use the following command:
 
     SAGE_PY=$(sage -c 'import sys; print(sys.executable)')
-    "$SAGE_PY" -m pip install --user --upgrade darmonpoints
+    "$SAGE_PY" -m pip install --user --upgrade --no-build-isolation darmonpoints
+
+(`--no-build-isolation` makes the C extension compile against the cypari2
+and PARI of your Sage installation, which is required.)
 
 If you rather install the cutting-edge version from the github
 repository (which is likely to be broken), then use the following
 command:
 
-    "$SAGE_PY" -m pip install --user --upgrade -v git+https://github.com/mmasdeu/darmonpoints.git
+    "$SAGE_PY" -m pip install --user --upgrade --no-build-isolation -v git+https://github.com/mmasdeu/darmonpoints.git
 
 ### Basic usage
 

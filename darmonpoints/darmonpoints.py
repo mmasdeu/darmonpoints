@@ -41,10 +41,13 @@ r"""
     TESTS:
 
     sage: from darmonpoints.darmonpoints import darmon_point
-    sage: P = darmon_point(13,EllipticCurve('78a1'),5,20); P #  optional - magma
+    sage: P = darmon_point(13,EllipticCurve('78a1'),5,20) # long time
     Starting computation of the Darmon point
     ...
-    (22 : 48*alpha - 11 : 1)
+    sage: E = P.curve(); a = E.base_ring().gen() # long time
+    sage: P0 = E(22, 48*a - 11) # long time
+    sage: any(P == s * P0 + T for s in [1, -1] for T in E.torsion_points()) # long time
+    True
 
 """
 
@@ -191,9 +194,18 @@ def darmon_point(
         ...
         -70*alpha + 449
 
-    A quaternionic (Greenberg) point::
+    A quaternionic (Greenberg) point. It is only defined up to sign and
+    torsion: the cohomology class attached to the curve is only defined up to
+    sign (here the result is `\pm P_0` plus a torsion point, where `P_0` is a
+    generator of `E(K)`)::
 
-        sage: darmon_point(13,EllipticCurve('78a1'),5,20) # long time # optional - magma
+        sage: P = darmon_point(13,EllipticCurve('78a1'),5,20) # long time
+        Starting computation of the Darmon point
+        ...
+        sage: E = P.curve(); a = E.base_ring().gen() # long time
+        sage: P0 = E(22, 48*a - 11) # long time
+        sage: any(P == s * P0 + T for s in [1, -1] for T in E.torsion_points()) # long time
+        True
 
     A Darmon point over a cubic (1,1) field::
 
@@ -202,7 +214,16 @@ def darmon_point(
         sage: N = E.conductor()
         sage: P = F.ideal(r^2 - 2*r - 1)
         sage: beta = -3*r^2 + 9*r - 6
-        sage: darmon_point(P,E,beta,20) # long time # optional - magma
+        sage: Q = darmon_point(P,E,beta,20) # long time
+        Starting computation of the Darmon point
+        ...
+        sage: Q.order() # long time
+        +Infinity
+        sage: K = Q.curve().base_ring(); sigma = K.hom([-K.gen()], K) # long time
+        sage: Q + Q.curve()(sigma(Q[0]), sigma(Q[1])) # long time
+        (0 : 1 : 0)
+
+    The point lies in the minus part of `E(K)`, as it should.
 
     """
     # global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist
@@ -233,16 +254,13 @@ def darmon_point(
     if working_prec is None:
         working_prec = max([2 * prec + 10, 30])
 
-    if use_magma:
+    # Magma is only used when a session is passed (backend='magma')
+    F = E.base_ring()
+    needs_magma = magma is not None
+    if use_magma and needs_magma:
         page_path = param.get("page_path", os.path.dirname(__file__))
         page_path += "/KleinianGroups-1.0/klngpspec"
-        if magma is None:
-            from sage.interfaces.magma import Magma
-
-            magma = Magma()
-            quit_when_done = True
-        else:
-            quit_when_done = False
+        quit_when_done = False
         print("Using Magma version : %s" % str(magma.version()))
         magma.attach_spec(page_path)
     else:
@@ -556,7 +574,14 @@ def darmon_point(
     twopowlist = [QQ(1) / 4, QQ(1) / 2, QQ(1), QQ(2), QQ(4)]
     twopowlist = [a * b for a, b in product(mysterious_multiples, twopowlist)]
     twopowlist = twopowlist + [o**-1 for o in twopowlist]
-    twopowlist = sorted(list(set(twopowlist)))
+    # Try the simplest multiples first (1, then 1/2, 2, ...), so that the
+    # recognized point is the smallest multiple of the generator found. (Sorted
+    # increasingly, 1/14 was tried before 1 and the point returned for 78a1
+    # was -14 times the generator, with either backend.)
+    twopowlist = sorted(
+        set(twopowlist),
+        key=lambda t: (max(abs(t.numerator()), t.denominator()), -t),
+    )
 
     known_multiple = ZZ(nn * eisenstein_constant)
     while known_multiple % p == 0:

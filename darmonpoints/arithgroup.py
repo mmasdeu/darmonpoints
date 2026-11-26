@@ -55,7 +55,22 @@ from sage.structure.sage_object import SageObject, load, save
 
 from .arithgroup_generic import ArithGroup_generic, ArithGroup_matrix_generic
 from .mixed_extension import get_word_rep_fast
+from .quatorder import QuaternionAlgebraPari
 from .util import *
+
+
+def _select_backend(magma, backend):
+    r"""
+    The backend for quaternion arithmetic: ``'pari'`` (default when no Magma
+    session is given) or ``'magma'``.
+    """
+    if backend is None:
+        backend = "pari" if magma is None else "magma"
+    if backend not in ("pari", "magma"):
+        raise ValueError("backend must be 'pari' or 'magma'")
+    if backend == "magma" and magma is None:
+        raise ValueError("The magma backend needs a Magma session")
+    return backend
 
 
 def hyperbolic_distance(alpha, beta):
@@ -283,6 +298,87 @@ def angle_sign(left, right):  # UHP
 
 
 class ArithGroup_fuchsian_generic(ArithGroup_generic):
+    def _init_geometric_data_pari(self, **kwargs):
+        r"""
+        Fundamental domain, presentation and word problem through Rickards'
+        library (see :mod:`darmonpoints.afuch`).
+        """
+        bitprec = kwargs.get("afuch_prec", 128)
+        dat = self._QA.fuchsian_group_data(self._O_mat, bitprec=bitprec)
+        self._afuch_data = dat
+        self.pi = 4 * RealField(800)(1).arctan()
+        self._fundom_center = dat["center"]
+        self._fundamental_domain = [
+            ComplexField(1000)(z.real(), z.imag()) for z in dat["vertices"]
+        ]
+        self.Ugens = list(dat["gens"])
+        self.F_unit_offset = len(self.Ugens)
+        sides = dat["side_elements"]
+        self.ngquats = ZZ(len(sides))
+        # The side pairing elements are closed under inverses
+        self.gquats = [None] + sides
+        emb = self.get_archimedean_embedding(1000)
+        self.embgquats = [None] + [emb(g) for g in sides]
+        self.minus_one_long = [len(self.Ugens) + 1]
+        self.Ugens.append(self.B(-1))
+        self._gens = [
+            self.element_class(self, quaternion_rep=g, word_rep=[i + 1], check=False)
+            for i, g in enumerate(self.Ugens)
+        ]
+        temp_relation_words = list(dat["relations"]) + [
+            [len(self.Ugens), len(self.Ugens)]
+        ]
+        self._relation_words = []
+        for rel in temp_relation_words:
+            sign = multiply_out(rel, self.Ugens, self.B.one())
+            if sign == 1 or "P" in self._grouptype:
+                self._relation_words.append(rel)
+            else:
+                assert sign == -1
+                newrel = rel + self.minus_one_long
+                assert multiply_out(newrel, self.Ugens, self.B.one()) == 1
+                self._relation_words.append(newrel)
+
+    def _get_word_rep_pari(self, delta):
+        if not self._is_in_order(delta):
+            raise RuntimeError("delta (= %s) is not in order!" % delta)
+        ans = self._QA.word_problem(self._afuch_data["X"], delta)
+        if "P" not in self._grouptype:
+            if multiply_out(ans, self.Ugens, self.B.one()) != delta:
+                ans = ans + self.minus_one_long
+        return reduce_word_tietze(ans)
+
+    def _find_fundom_rep_pari(self, z0_H, max_iters=1000):
+        r"""
+        Return ``t0, g`` with ``g * t0 = z0_H`` and ``t0`` in the fundamental
+        domain, by reducing towards the centre of the (Dirichlet) domain.
+        """
+        CC = z0_H.parent()
+        emb = self.get_archimedean_embedding(CC.precision())
+        p = CC(self._fundom_center)
+        pc = p.conjugate()
+        sides = self.gquats[1:]
+        embsides = [emb(g) for g in sides]
+
+        def dist(z):  # monotone in the hyperbolic distance to p
+            return ((z - p) / (z - pc)).abs()
+
+        z = z0_H
+        delta = self.B.one()
+        for _ in range(max_iters):
+            dz = dist(z)
+            best = None
+            for g, m in zip(sides, embsides):
+                w = act_flt(m, z)
+                dw = dist(w)
+                if dw < dz * (1 - 10 ** (-20)):
+                    best, dz, zbest = g, dw, w
+            if best is None:
+                return z, delta**-1
+            z = zbest
+            delta = best * delta
+        raise RuntimeError("Reached maximum number of iterations (%s)" % max_iters)
+
     @cached_method
     def get_embgquats_twisted(self, P=None):
         if P is None:
@@ -295,6 +391,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
 
 
     def get_word_rep(self, delta, P=None):  # fuchsian generic
+        if self._is_pari_backend():
+            return self._get_word_rep_pari(delta)
         while True:
             try:
                 return get_word_rep_fast(self, delta, P)  # DEBUG
@@ -453,11 +551,30 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         return [o.quaternion_rep for o in ans]
 
     def _fix_sign(self, x, N):
+        r"""
+        Multiply ``x`` by a unit of the order, if needed, so that its reduced
+        norm has the right sign at the split real place: the sign of ``N``
+        over `\QQ`, and positive (so `\mathrm{nrd}(x)` is totally positive)
+        over totally real fields of higher degree.
+
+        At the ramified real places the reduced norm is always positive, so
+        this pins down `\mathrm{nrd}(x)` up to totally positive units, and
+        therefore the Hecke operators `T_\ell`, which commute with the
+        involution at infinity. Without this, `T_\ell` could be composed with
+        that involution depending on the element of norm `\ell` found (and
+        on the sign of the chosen generator of `\ell`).
+        """
         if self.F.signature()[1] == 1 or self.F.signature()[0] == 0:
             return x
         elif self.F.signature()[0] > 1:
-            # raise NotImplementedError
-            return x  # FIXME this may not be correct
+            self.get_archimedean_embedding(200)
+            v = self.F_into_RR  # the split real place
+            if v(x.reduced_norm()) > 0:
+                return x
+            x = x * self._unit_negative_at_split_place()
+            if v(x.reduced_norm()) < 0:
+                raise RuntimeError("Error in fix_sign")
+            return x
         emb = self.F.embeddings(RealField(800))[0]
         try:
             N = N.gens_reduced()[0]
@@ -469,12 +586,56 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             raise RuntimeError("Error in fix_sign")
         return x
 
+    @cached_method
+    def _unit_negative_at_split_place(self):
+        r"""
+        An element of the order whose reduced norm is a unit of the base
+        field, negative at the split real place (and positive at the ramified
+        ones, as all reduced norms).
+        """
+        F = self.F
+        self.get_archimedean_embedding(200)
+        v = self.F_into_RR
+        ramified = [w for w in F.real_places() if w(F.gen()) != v(F.gen())]
+        units = [F(u) for u in F.unit_group().gens_values()]
+        candidates = []
+        for exps in product(range(2), repeat=len(units)):
+            u = prod((g**e for g, e in zip(units, exps)), F(1))
+            if v(u) < 0 and all(w(u) > 0 for w in ramified):
+                candidates.append(u)
+        if not candidates:
+            raise RuntimeError("No unit with the required signs")
+        if self._is_pari_backend():
+            for eps in candidates:
+                try:
+                    return self._QA.elements_of_norm(self._O_mat, eps, exact=True)[0]
+                except RuntimeError:
+                    continue
+            raise RuntimeError("No element of the order of norm a unit negative at the split place")
+        # Magma backend: brute force on the Z-basis of the order
+        basis = self._get_O_basis()
+        M = 0
+        while True:
+            M += 1
+            for a0, an in product(range(M), product(range(-M + 1, M), repeat=len(basis) - 1)):
+                cand = sum((ai * bi for ai, bi in zip([a0] + list(an), basis)), self.B(0))
+                n = cand.reduced_norm()
+                if n != 0 and n in candidates:
+                    return cand
+
     def find_fundom_rep(
         self, z0_H, v0 =None, return_alternative=False, max_iters=100
     ):  # generic -- Take z0 to the fundamental domain
         r"""
         Returns t0 and g such that g * t0 = z0_H, and t0 is in the fundamental domain
         """
+        if self._is_pari_backend():
+            if z0_H.imag() < 0:
+                raise ValueError("z0_H must be in the upper half plane")
+            t0, g = self._find_fundom_rep_pari(z0_H)
+            if return_alternative:
+                return (t0, g), (t0, g)
+            return t0, g
         B = self.B
         CC = z0_H.parent()
         if z0_H.imag() < 0:
@@ -556,7 +717,12 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
 
     @cached_method
     def fundamental_domain_interior_data(self):  # generic
-        P = CC(0, 90.0 / 100.0)  # A point inside the fundamental domain.
+        # A point inside the fundamental domain.
+        P = getattr(self, "_fundom_center", None)
+        if P is None:
+            P = CC(0, 90.0 / 100.0)
+        else:
+            P = self._fundamental_domain[0].parent()(P)
         in_interior = {}
         for v1, v2 in self.fundamental_domain_data():
             center, r2 = geodesic_circle(v1, v2, False)
@@ -646,7 +812,14 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         - Matrices I, J, K giving the splitting.
 
         """
-        if prec > self._prec_inf:
+        if prec > self._prec_inf and self._is_pari_backend():
+            phi, (one, II, JJ, KK) = self._QA.splitting_at_infinity(prec)
+            self._prec_inf = prec
+            self._11_inf, self._II_inf, self._JJ_inf, self._KK_inf = one, II, JJ, KK
+            self.F_into_RR = phi
+            if self.F is not QQ:
+                self.rimg = phi(self.F.gen())
+        elif prec > self._prec_inf:
             wtime = walltime()
             verbose("Calling MatrixRing...")
             B_magma = self._B_magma
@@ -688,6 +861,8 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         compute_presentation=True,
         **kwargs,
     ):
+        if grouptype is None:
+            grouptype = "PSL2"
         assert grouptype in [
             "SL2",
             "PSL2",
@@ -696,6 +871,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         self._grouptype = grouptype
         self._compute_presentation = compute_presentation
         self.magma = magma
+        self._backend = _select_backend(magma, kwargs.pop("backend", None))
         self.F = QQ
         if isinstance(discriminant, list) or isinstance(discriminant, tuple):
             self.abtuple = discriminant
@@ -709,6 +885,23 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         self._prec_inf = -1
 
         O_magma = kwargs.pop("O_magma", None)
+        intersection = kwargs.pop("intersection", None)
+        if self._backend == "pari":
+            if info_magma is not None:
+                self.B = info_magma.B
+            elif hasattr(self, "abtuple"):
+                self.B = QuaternionAlgebra(QQ, *self.abtuple)
+            else:
+                self.B = QuaternionAlgebra(self.discriminant)
+            assert (
+                self.B.discriminant() == self.discriminant
+            ), "Error while constructing quaternion algebra"
+            self._init_pari_objects(info_magma, O_magma, intersection)
+            self.O = self.B.quaternion_order(self._get_O_basis())
+            if self._compute_presentation:
+                self._init_geometric_data(**kwargs)
+            super().__init__(**kwargs)
+            return
         self._init_magma_objects(info_magma, O_magma)
 
         self.B = QuaternionAlgebra(
@@ -739,6 +932,9 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         )
 
     def _init_geometric_data(self, **kwargs):  # rationalquaternion
+        if self._is_pari_backend():
+            # The PARI structure is not picklable; the "filename" cache is not used
+            return self._init_geometric_data_pari(**kwargs)
         filename = kwargs.get("filename", None)
         self.pi = 4 * RealField(800)(1).arctan()
         emb = self.get_archimedean_embedding(1000)
@@ -949,6 +1145,16 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
 
     # rationalquaternion
     def compute_quadratic_embedding(self, D, **kwargs):
+        if self._is_pari_backend():
+            # Image of sqrt(D) under an embedding of the maximal order of
+            # QQ(sqrt(D)) into the order.
+            K = QuadraticField(D, names="beta")
+            w = K.maximal_order().ring_generators()[0]
+            x = self._QA.element_with_minpoly(
+                self._O_mat, w.trace(), w.norm()
+            )
+            r0, r1 = w.coordinates_in_terms_of_powers()(K.gen())
+            return r0 + r1 * x
         QQmagma = self.magma.Rationals()
         ZZmagma = self.magma.Integers()
         a, b = self.B.invariants()
@@ -973,13 +1179,20 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         self, p, D, prec, outfile=None, return_all=False, extra_conductor=1, **kwargs
     ):
         r"""
-        sage: from darmonpoints.sarithgroup import ArithGroup
-        sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
-        sage: f = G.embed_order(23,20) # optional - magma
+        sage: from darmonpoints.sarithgroup import BigArithGroup
+        sage: GS = BigArithGroup(23, 6, 1, outfile='/dev/null')
+        sage: gamma, tau = GS.Gn.embed_order(23, 20, 20, outfile='/dev/null')
+        sage: gamma.quaternion_rep.reduced_norm()
+        1
         """
         mu = kwargs.get("quadratic_embedding", None)
         if mu is None:
             mu = self.compute_quadratic_embedding(D, **kwargs)
+        # The optimal embedding is only determined up to its orientation:
+        # orientation=-1 uses the conjugate embedding (sqrt(D) -> -mu), which
+        # replaces the Darmon period J by J^-1 (up to torsion).
+        if kwargs.get("orientation", 1) == -1:
+            mu = -mu
         F = self.base_ring()
         t = PolynomialRing(F, names="t").gen()
         K = F.extension(t * t - D, names="beta")
@@ -1067,6 +1280,11 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         N = ZZ(N)
         if force_sign is None:
             force_sign = "P" not in self._grouptype
+        if use_magma and self._is_pari_backend():
+            candidate = self._QA.element_of_norm(self._O_mat, N)
+            if force_sign:
+                candidate = self._fix_sign(candidate, N)
+            return [candidate] if return_all else candidate
         if use_magma:
             # assert return_all == False
             elt_magma = self._O_magma.ElementOfNorm(N * self._F_magma.Integers())
@@ -1644,6 +1862,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             % (base, a, b, level)
         )
         self.magma = magma
+        self._backend = _select_backend(magma, kwargs.pop("backend", None))
         if base.signature()[1] == 0:
             self.algorithm = "jv"
         elif base.signature()[1] == 1:
@@ -1669,7 +1888,12 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             self.abtuple = (self.a, self.b)
             self.B = QuaternionAlgebra(self.F, self.a, self.b)
         self.level = base.ideal(level)
-        self._init_magma_objects(info_magma)
+        if self._backend == "pari":
+            self._init_pari_objects(
+                info_magma, kwargs.pop("O_magma", None), kwargs.pop("intersection", None)
+            )
+        else:
+            self._init_magma_objects(info_magma)
         if self._compute_presentation:
             self._init_geometric_data(**kwargs)
         else:
@@ -1805,10 +2029,35 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         # Create pari order
         verbose("Spent %s seconds in init_magma_objects" % walltime(wtime))
 
-    @cached_method
-    def _get_O_pari(self):
-        w = self.F.maximal_order().ring_generators()[0]
-        return sage_order_basis_to_pari(w, self.Ap, self._get_O_basis())
+    def _matrix_embedding(self, t, n):
+        r"""
+        For `B = M_2(F)` (``self.B`` with invariants `(1, 1)`), an element of
+        the order of level `N` (upper triangular modulo `N`) with reduced
+        trace ``t`` and norm ``n``: the matrix
+        `\begin{pmatrix} s & (s(t-s)-n)/g \\ g & t-s \end{pmatrix}` where `g`
+        generates `N` and `s` is a root of `x^2 - t x + n` modulo `N` (which
+        exists under the Heegner condition).
+        """
+        F = self.F
+        N = self.F.ideal(self.level)
+        g = N.gens_reduced()[0]
+        if len(N.gens_reduced()) > 1:
+            raise NotImplementedError("The level must be principal")
+        s0 = None
+        for res in N.residues():
+            res = F(res)
+            if res * res - t * res + n in N:
+                s0 = res
+                break
+        if s0 is None:
+            raise ValueError("The quadratic order does not embed in the Eichler order (Heegner condition)")
+        A, Bm, Cm, D = s0, (s0 * (t - s0) - n) / g, g, t - s0
+        # Matrix units of B = (1, 1) as in _get_O_basis: e11 = (1+i)/2,
+        # e12 = (j+k)/2, e21 = (j-k)/2, e22 = (1-i)/2
+        x = self.B([(A + D) / 2, (A - D) / 2, (Bm + Cm) / 2, (Bm - Cm) / 2])
+        if not self._is_in_order(x):
+            raise RuntimeError("Could not embed the quadratic order in the matrix order")
+        return x
 
     def _quaternion_to_list(self, x):
         xlist = [u for o in x.coefficient_tuple() for u in o.list()]
@@ -1822,6 +2071,26 @@ class ArithGroup_nf_generic(ArithGroup_generic):
 
     # nf_quaternion
     def compute_quadratic_embedding(self, D, return_generator=False, **kwargs):
+        if getattr(self, "_backend", "magma") == "pari":
+            # Embed the maximal order of F(sqrt(D)) into the maximal order
+            F = self.base_ring()
+            t = PolynomialRing(F, names="t").gen()
+            K = F.extension(t * t - D, names="beta")
+            w = module_generators(K)[1]
+            wl = K(w).list()
+            if self._QA is None:
+                x = self._matrix_embedding(w.trace(F), w.norm(F))
+            else:
+                x = self._QA.element_with_minpoly(
+                    self._QA.maximal_order_matrix(), w.trace(F), w.norm(F)
+                )
+            # K.gen() = (w - wl[0]) / wl[1]
+            ans = (x - wl[0]) / wl[1]
+            assert ans.reduced_norm() == K.gen().norm(F)
+            assert ans.reduced_trace() == K.gen().trace(F)
+            if return_generator:
+                return ans, w
+            return ans
         O_magma = self._Omax_magma
         F_magma = self._F_magma
 
@@ -1888,6 +2157,9 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         t = PolynomialRing(F, names="t").gen()
         K = F.extension(t * t - D, names="beta")
         mu = self.compute_quadratic_embedding(D, return_generator=False)
+        # See ArithGroup_rationalquaternion.embed_order for the orientation
+        if kwargs.get("orientation", 1) == -1:
+            mu = -mu
         verbose("Finding module generators")
         w = module_generators(K)[1]
         verbose("Done")
@@ -2046,7 +2318,9 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 candidate = phi2(gr[0])
                 if self._is_in_order(candidate):
                     found_candidate = True
-        if not found_candidate:
+        if not found_candidate and getattr(self, "_backend", "magma") == "pari":
+            candidate = self._QA.element_of_norm(self._O_mat, N)
+        elif not found_candidate:
             elt_magma = self._O_magma.ElementOfNorm(
                 sage_F_ideal_to_magma(self._F_magma, Nideal)
             )
@@ -2082,6 +2356,8 @@ class ArithGroup_nf_fuchsian(ArithGroup_nf_generic, ArithGroup_fuchsian_generic)
     def _init_geometric_data(self, timeout=0, **kwargs):  # nf quaternion
         if timeout != 0:
             raise NotImplementedError("Timeout functionality not implemented yet")
+        if self._is_pari_backend():
+            return self._init_geometric_data_pari(**kwargs)
         filename = kwargs.get("filename", None)
         if filename is not None:
             raise NotImplementedError
@@ -2202,6 +2478,10 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
         self._gens
         """
         self.F_units = self.F.unit_group()
+        if self._is_pari_backend():
+            return self._init_geometric_data_kleinian_pari(
+                center=center, timeout=timeout, **kwargs
+            )
         filename = kwargs.get("filename", None)
         if filename is not None:
             filename += "_kleinian_{fielddisc}_{quatalg}_{levelnorm}_{grouptype}_{code}.sobj".format(
@@ -2430,6 +2710,139 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             save(ans, filename)
             verbose("Saved to file")
         return
+
+    def _fix_sign(self, x, N):
+        # No sign conditions for fields with a complex place
+        return x
+
+    def _kleinian_order_data(self, center):
+        r"""
+        The order (and a maximal order containing it) in the format of
+        :mod:`darmonpoints.kleinian`.
+        """
+        from .kleinian import KleinianOrderData
+
+        B = self.B
+        if self._QA is not None:
+            QA = self._QA
+            Mmax = QA.maximal_order_matrix()
+            if self._O_mat.det().abs() == 1:
+                maximal = None
+            else:
+                maximal = KleinianOrderData(
+                    B,
+                    QA.order_basis(Mmax),
+                    lambda x: QA.is_in_order(Mmax, x),
+                    center=center,
+                )
+        else:
+            # B = M_2(F) with the standard maximal order
+            i, j, k = B.gens()
+            r = self.F.gen()
+            basis_max = [
+                r**e * o
+                for o in [(1 + i) / 2, (j + k) / 2, (j - k) / 2, (1 - i) / 2]
+                for e in range(self.F.degree())
+            ]
+            if self.level == self.F.ideal(1):
+                maximal = None
+            else:
+                Mmat = matrix(
+                    QQ,
+                    [[u for o in x.coefficient_tuple() for u in o.list()] for x in basis_max],
+                ).transpose()
+                Mmatinv = Mmat.inverse()
+
+                def in_max(x):
+                    v = Mmatinv * vector(QQ, [u for o in x.coefficient_tuple() for u in o.list()])
+                    return all(c in ZZ for c in v)
+
+                maximal = KleinianOrderData(B, basis_max, in_max, center=center)
+        return KleinianOrderData(
+            B, self._get_O_basis(), self._is_in_order, maximal=maximal, center=center
+        )
+
+    def _init_geometric_data_kleinian_pari(self, center=None, timeout=0, **kwargs):
+        r"""
+        Fundamental domain and presentation through the Python port of
+        Aurel Page's algorithm (:mod:`darmonpoints.kleinian`).
+        """
+        from .kleinian import (
+            KleinianTimeout,
+            normalized_basis,
+            presentation,
+            simplify_presentation,
+        )
+
+        if center is None:
+            center = [QQ(1) / 3, QQ(-1) / 2, QQ(17) / 5, 0]
+        center = [QQ(c) for c in center]
+        grouptype = "Units" if "GL" in self._grouptype else "NormOne"
+        pr = kwargs.get("kleinian_prec", 60)
+        data = self._kleinian_order_data(center[:3])
+        try:
+            res = normalized_basis(
+                data,
+                grouptype=grouptype,
+                pr=pr,
+                period_enum=kwargs.get("periodenum", 100),
+                max_time=timeout,
+            )
+        except KleinianTimeout:
+            raise RuntimeError("Timed out (%s sec) in NormalizedBasis" % timeout)
+        faces = res["faces"]
+        verbose("Done normalizedbasis (%s faces)" % len(faces))
+        gens, rels = presentation(
+            faces, res["finite_edges"], data, res["ctx"], res["embedding"]
+        )
+        verbose("Computing presentation")
+        new_rels, images, preimages = simplify_presentation(len(gens), rels)
+        self._simplification_iso = images
+
+        bits = res["ctx"].bits
+        self._RR = RR = RealField(bits)
+        CC = ComplexField(bits)
+        self._vC = data.complex_place(bits)
+        self._HH = QuaternionAlgebra(RR, -1, -1)
+        ih, jh, kh = self._HH.gens()
+        self._center = self._HH(center)
+        self._Pmat, self._Pmatinv = JtoP(self._HH, MatrixSpace(CC, 2, 2), self._center)
+
+        def toHH(q):
+            return self._HH([RR(o) for o in q])
+
+        self._fundom_data = [
+            (toHH(f.center), RR(f.radius), Matrix(self._HH, 2, 2, [toHH(o) for o in f.matrix]))
+            for f in faces
+        ]
+        self._kleinian_result = res
+        self.Ugens = [multiply_out(w, gens, self.B.one()) for w in preimages]
+        self.F_unit_offset = len(self.Ugens)
+        if "P" not in self._grouptype:
+            self.Ugens.extend([self.B(self.F(u)) for u in self.F_units.gens()])
+            temp_relation_words = [list(r) for r in new_rels] + [
+                [self.F_unit_offset + i + 1] * ZZ(u.multiplicative_order())
+                for i, u in enumerate(self.F_units.gens())
+                if u.multiplicative_order() != Infinity
+            ]
+            self._relation_words = []
+            for rel in temp_relation_words:
+                remaining_unit = self.F_units(
+                    self.F(multiply_out(rel, self.Ugens, self.B.one()))
+                )
+                assert remaining_unit.multiplicative_order() != Infinity
+                ulist = remaining_unit.exponents()
+                newrel = rel + syllables_to_tietze(
+                    [(self.F_unit_offset + i, a) for i, a in enumerate(ulist) if a != 0]
+                )
+                assert multiply_out(newrel, self.Ugens, self.B.one()) == 1
+                self._relation_words.append(newrel)
+        else:
+            self._relation_words = [list(r) for r in new_rels]
+        self._gens = [
+            self.element_class(self, quaternion_rep=g, word_rep=[i + 1], check=False)
+            for i, g in enumerate(self.Ugens)
+        ]
 
     def _kleinianmatrix(self, gamma):
         B = gamma.parent()

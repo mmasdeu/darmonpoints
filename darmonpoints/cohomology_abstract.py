@@ -54,13 +54,13 @@ class CohomologyElement(ModuleElement):
 
             sage: from darmonpoints.sarithgroup import BigArithGroup
             sage: from darmonpoints.cohomology_arithmetic import ArithCoh
-            sage: G = BigArithGroup(5,6,1,use_shapiro=False,outfile='/tmp/darmonpoints.tmp') #  optional - magma
-            sage: Coh = ArithCoh(G) #  optional - magma
-            sage: 2 in Coh.hecke_matrix(13).eigenvalues() #  optional - magma
+            sage: G = BigArithGroup(5,6,1,use_shapiro=False,outfile='/tmp/darmonpoints.tmp')
+            sage: Coh = ArithCoh(G)
+            sage: 2 in Coh.hecke_matrix(13).eigenvalues()
             True
-            sage: -4 in Coh.hecke_matrix(7).eigenvalues() #  optional - magma
+            sage: -4 in Coh.hecke_matrix(7).eigenvalues()
             True
-            sage: PhiE = Coh.gen(1) #  optional - magma
+            sage: PhiE = Coh.gen(1)
         """
         G = parent.group()
         V = parent.coefficient_module()
@@ -422,10 +422,10 @@ class CohomologyGroup(Module):
         sage: from darmonpoints.sarithgroup import *
         sage: from darmonpoints.cohomology_abstract import *
         sage: from darmonpoints.ocmodule import *
-        sage: GS = BigArithGroup(5, 6,1,use_shapiro=False,outfile='/tmp/darmonpoints.tmp') #  optional - magma
-        sage: G = GS.large_group() #  optional - magma
-        sage: V = OCVn(5,1)     #  optional - magma
-        sage: Coh = CohomologyGroup(G,V) #  optional - magma
+        sage: GS = BigArithGroup(5, 6,1,use_shapiro=False,outfile='/tmp/darmonpoints.tmp')
+        sage: G = GS.large_group()
+        sage: V = OCVn(5,1)
+        sage: Coh = CohomologyGroup(G,V)
         """
         verb = get_verbose()
         set_verbose(0)

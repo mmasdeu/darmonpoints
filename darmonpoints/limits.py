@@ -383,10 +383,17 @@ def find_optimal_embeddings(F, use_magma=False, extra_conductor=1, magma=None):
     D = F.discriminant()
     ## this matrix gives an optimal embedding of conductor 1
     if use_magma is True or extra_conductor != 1:
-        if magma is None:
-            from sage.interfaces.magma import magma
-        tmp = magma.ReducedForms(str(D * extra_conductor**2), nvals=1)
-        G = [[tmp[i + 1][j]._sage_() for j in [1, 2, 3]] for i in range(len(tmp))]
+        # One reduced primitive form for each (narrow) class of discriminant
+        # D * extra_conductor^2. The parameters use_magma and magma are kept
+        # for backwards compatibility and are ignored.
+        from sage.quadratic_forms.binary_qf import BinaryQF_reduced_representatives
+
+        G = [
+            list(f)
+            for f in BinaryQF_reduced_representatives(
+                D * extra_conductor**2, primitive_only=True
+            )
+        ]
     elif F.class_number() == 1:
         assert extra_conductor == 1
         return [Matrix(QQ, 2, 2, [w.trace(), -w.norm(), 1, 0])]

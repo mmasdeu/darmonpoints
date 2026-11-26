@@ -16,15 +16,25 @@ sage: from darmonpoints.cohomology_arithmetic import *
 sage: F.<r> = QuadraticField(5)
 sage: P = F.ideal(3/2*r + 1/2)
 sage: D = F.ideal(3)
-sage: abtuple = quaternion_algebra_invariants_from_ramification(F,D,F.real_places()[:1]) #  optional - magma
-sage: G = BigArithGroup(P,abtuple, F.ideal(1), grouptype = 'PSL2',outfile = "/tmp/darmonpoints.tmp") #  optional - magma
-sage: H = ArithCoh(G)           #  optional - magma
-sage: primes = F.primes_of_degree_one_list(10) #  optional - magma
-sage: H.hecke_matrix(primes[0]).charpoly() #  optional - magma
-x^2 - 16
-sage: ell = F.ideal(1/2*r + 5/2) #  optional - magma
-sage: H.hecke_matrix(ell).charpoly() #  optional - magma
-x^2 - 4
+sage: abtuple = quaternion_algebra_invariants_from_ramification(F,D,F.real_places()[:1])
+sage: G = BigArithGroup(P,abtuple, F.ideal(1), grouptype = 'PSL2',outfile = "/tmp/darmonpoints.tmp")
+sage: H = ArithCoh(G)
+sage: primes = F.primes_of_degree_one_list(10)
+sage: H.hecke_matrix(primes[0]).charpoly()
+x^2 + 8*x + 16
+sage: ell = F.ideal(1/2*r + 5/2)
+sage: H.hecke_matrix(ell).charpoly()
+x^2 + 4*x + 4
+
+The Hecke operators are computed with elements of totally positive reduced
+norm, so they commute with the involution at infinity and their eigenvalues
+are the a_q of the elliptic curve of conductor P*D::
+
+sage: E = EllipticCurve(F, [1/2*r + 1/2, 0, 0, -3/2*r - 363/2, 1251/2*r - 4815/2])
+sage: E.conductor() == P * D
+True
+sage: [q.norm() + 1 - E.reduction(q).cardinality() for q in [primes[0], ell]]
+[-4, -2]
 """
 import operator
 import os
