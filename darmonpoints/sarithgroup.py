@@ -752,6 +752,18 @@ class BigArithGroup_class(AlgebraicGroup):
         as ``embed`` and ``get_embedding``), so that their elements can resolve
         the default precision of ``matrix()`` when it is called (see
         ``ArithGroupElement.matrix``).
+
+        EXAMPLES::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='PSL2', use_shapiro=False, outfile='/tmp/darmonpoints.tmp')
+            sage: prec = GS.embedding_precision()
+            sage: _ = GS.get_embedding(prec + 10)
+            sage: GS.embedding_precision() == prec + 10
+            True
+            sage: _ = GS.get_embedding(prec)  # it does not decrease
+            sage: GS.embedding_precision() == prec + 10
+            True
         """
         return self._prec
 

@@ -3,7 +3,6 @@
 ##  INTEGRATION     ##
 ##                  ##
 ######################
-import os
 from collections import defaultdict
 from itertools import chain, groupby, islice, product, starmap, tee
 from operator import mul
@@ -227,22 +226,6 @@ def lift_to_locally_analytic(G, divisor, prec=None, depth=1):
         edgelist = newedgelist
 
 
-def integration_method():
-    r"""
-    How ``integrate_H1`` pairs the divisor with the moments of the cocycle:
-    'powersum' (default) or 'legacy', from the environment variable
-    DARMONPOINTS_INTEGRATION.
-
-    'legacy' builds, for every point of the divisor, the series log(1 - x z)
-    to the working precision and pairs the coefficients of their sum with
-    the moments. 'powersum' pairs the same coefficients, computed as power
-    sums of the points (see ``_pair_power_sums``): only as many terms as
-    there are moments, one division per degree instead of one per point and
-    degree, and no polynomials. The values are the same.
-    """
-    return os.environ.get("DARMONPOINTS_INTEGRATION", "powersum")
-
-
 def _lift_to_points(G, divisor, prec=None, depth=1):
     r"""
     The same as ``lift_to_locally_analytic``, but yields the points
@@ -294,15 +277,21 @@ def _lift_to_points(G, divisor, prec=None, depth=1):
 
 def _pair_power_sums(pts, c0log, mu, nterms):
     r"""
-    The pairing of the legacy integration, sum_i a_i mu_i over the non-zero
-    coefficients a_i of degree i < min(number of moments, nterms) of
+    The pairing of the divisor with the moments ``mu`` in ``integrate_H1``:
+    sum_i a_i mu_i over the non-zero coefficients a_i of degree
+    i < min(number of moments, nterms) of
 
         sum_P n_P log(1 - x_P z) + log(c0unit),
 
     that is, a_0 = log(c0unit) and a_i = -(sum_P n_P x_P^i) / i for i >= 1.
-    ``nterms`` is the number of coefficients of the legacy series (working
-    precision + 1). Summed in the same order as the legacy code (increasing
-    degree, starting from the integer 0).
+    These are the coefficients of the series of ``lift_to_locally_analytic``,
+    computed as power sums of the points: only as many terms as there are
+    moments, one division per degree instead of one per point and degree,
+    and no polynomials. ``nterms`` is the number of coefficients of those
+    series (working precision + 1). Summed in increasing degree, starting
+    from the integer 0 (as the sum over the series).
+
+    The test compares with the pairing of the series of ``log_pseries``:
 
     TESTS::
 
@@ -353,25 +342,6 @@ def _pair_power_sums(pts, c0log, mu, nterms):
     return ans
 
 
-def inteval_method():
-    r"""
-    How ``integrate_H1`` evaluates the cocycle at the pairs (g, h) of the
-    cycle (g a group element, h an edge of the covering): 'cached' (default)
-    or 'legacy', from the environment variable DARMONPOINTS_INTEVAL.
-
-    'legacy' evaluates the cocycle at every pair of every integration; the
-    evaluation caches the action matrices of all the word prefixes in the
-    cohomology group. 'cached' keeps the values (and those of the classical
-    cocycle 'liftee') in a cache attached to the cocycle: the cycles of
-    darmon_points are written over the generators, so every integration with
-    the same cocycle needs the same values. The values that are not cached
-    yet are computed together with ``evaluate_many`` (each prefix matrix kept
-    only until its last use, nothing cached in the cohomology group). The
-    values are the same, so the integrals are the same.
-    """
-    return os.environ.get("DARMONPOINTS_INTEVAL", "cached")
-
-
 def _eval_key(x):
     r"""
     A key of a group element or quaternion for the evaluation cache: its
@@ -390,8 +360,14 @@ def _eval_key(x):
 def _evaluation_caches(cocycle):
     r"""
     The caches ({key: value of the cocycle}, {key: value of its liftee}) of
-    ``integrate_H1`` attached to ``cocycle`` (see inteval_method). They assume
-    that the values of the cocycle are not modified in place.
+    ``integrate_H1`` attached to ``cocycle``. They assume that the values of
+    the cocycle are not modified in place.
+
+    The cycles of darmon_points are written over the generators, so every
+    integration with the same cocycle needs the same values: they are kept
+    here instead of being evaluated again at every integration (and the
+    action matrices of the word prefixes are not cached in the cohomology
+    group, see ``evaluate_many``).
     """
     try:
         return cocycle._evaluation_caches
@@ -405,10 +381,9 @@ def _evaluation_caches(cocycle):
 
 
 def _evaluate_pairs(cocycle, pairs, at_identity):
-    try:
+    if hasattr(cocycle, "evaluate_many"):
         return cocycle.evaluate_many(pairs, at_identity=at_identity)
-    except AttributeError:
-        return [cocycle.evaluate(g, h, at_identity=at_identity) for g, h in pairs]
+    return [cocycle.evaluate(g, h, at_identity=at_identity) for g, h in pairs]
 
 
 r"""
@@ -445,59 +420,41 @@ def integrate_H1(
     resmul = Cp(1)
     resadd = Cp(0)
     resval = ZZ(0)
-    powersum = integration_method() == "powersum"
-    cached = inteval_method() == "cached"
     at_id = G.use_shapiro()
-    if cached:
-        mucache, mu0cache = _evaluation_caches(cocycle)
-        if depth % 2 == 1:
-            # The values at the edges of the covering that are not cached yet,
-            # all together (evaluate_many: low memory)
-            pairs, keys, seen = [], [], set()
-            for g, D in cycle:
-                if twist:
-                    g = g.conjugate_by(G.wp() ** -1)
-                for rev, h in G.get_covering(depth):
-                    k = (_eval_key(g), _eval_key(h), at_id)
-                    if k not in mucache and k not in seen:
-                        seen.add(k)
-                        pairs.append((g, h))
-                        keys.append(k)
-            if pairs:
-                mucache.update(zip(keys, _evaluate_pairs(cocycle, pairs, at_id)))
-            del pairs, keys, seen
+    # The values of the cocycle (and of its liftee) at the pairs (g, h), kept
+    # with the cocycle (see _evaluation_caches)
+    mucache, mu0cache = _evaluation_caches(cocycle)
+    if depth % 2 == 1:
+        # The values at the edges of the covering that are not cached yet,
+        # all together (evaluate_many: low memory)
+        pairs, keys, seen = [], [], set()
+        for g, D in cycle:
+            if twist:
+                g = g.conjugate_by(G.wp() ** -1)
+            for rev, h in G.get_covering(depth):
+                k = (_eval_key(g), _eval_key(h), at_id)
+                if k not in mucache and k not in seen:
+                    seen.add(k)
+                    pairs.append((g, h))
+                    keys.append(k)
+        if pairs:
+            mucache.update(zip(keys, _evaluate_pairs(cocycle, pairs, at_id)))
+        del pairs, keys, seen
     for g, D in cycle:
         if twist:
             D = D.left_act_by_matrix(G.embed(G.wp(), prec).change_ring(Cp))
             g = g.conjugate_by(G.wp() ** -1)
-        if powersum:
-            edges = _lift_to_points(G, D, prec, depth)
-        else:
-            edges = lift_to_locally_analytic(G, D, prec, depth)
-        for item in edges:
-            if powersum:
-                (h, rev), pts, c0val, c0unit, c0log = item
-            else:
-                (h, rev), pol, c0val, c0unit = item
-            if cached:
-                k = (_eval_key(g), _eval_key(h), at_id)
-                mu = mucache.get(k)
-                if mu is None:  # an edge of a subdivision
-                    mu = mucache[k] = _evaluate_pairs(cocycle, [(g, h)], at_id)[0]
-                mu0 = mu0cache.get(k)
-                if mu0 is None:
-                    mu0 = mu0cache[k] = cocycle["liftee"].evaluate(g, h, at_identity=at_id)[0]
-            else:
-                mu = cocycle.evaluate(g, h, at_identity=G.use_shapiro())
-                mu0 = cocycle["liftee"].evaluate(g, h, at_identity=G.use_shapiro())[0]
-            if powersum:
-                newresadd = _pair_power_sums(pts, c0log, mu, prec + 1)
-            else:
-                newresadd = sum(
-                    a * mu.moment(i)
-                    for a, i in zip(pol.coefficients(), pol.exponents())
-                    if i < len(mu.moments())
-                )
+        # The edges as lift_to_locally_analytic, with the points instead of
+        # the series (paired by power sums, see _pair_power_sums)
+        for (h, rev), pts, c0val, c0unit, c0log in _lift_to_points(G, D, prec, depth):
+            k = (_eval_key(g), _eval_key(h), at_id)
+            mu = mucache.get(k)
+            if mu is None:  # an edge of a subdivision
+                mu = mucache[k] = _evaluate_pairs(cocycle, [(g, h)], at_id)[0]
+            mu0 = mu0cache.get(k)
+            if mu0 is None:
+                mu0 = mu0cache[k] = cocycle["liftee"].evaluate(g, h, at_identity=at_id)[0]
+            newresadd = _pair_power_sums(pts, c0log, mu, prec + 1)
             newresval = c0val * ZZ(mu0)
             newresmul = c0unit ** ZZ(mu0)
             if rev:

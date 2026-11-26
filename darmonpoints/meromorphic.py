@@ -5,7 +5,9 @@
 #
 #                  http://www.gnu.org/licenses/
 #########################################################################
+from array import array
 from copy import deepcopy
+from itertools import islice
 
 from sage.categories.pushout import pushout
 from sage.functions.log import log as _log
@@ -38,10 +40,9 @@ from sage.structure.unique_representation import (
     CachedRepresentation,
     UniqueRepresentation,
 )
-from array import array
-from itertools import islice
 
 from .divisors import Divisors, DivisorsElement
+from .util import muted, set_immutable, speed_up_padic_inversion
 
 try:
     from .sparse_padic import SparsePadicMatrix, propagate_precisions
@@ -88,7 +89,7 @@ def _warn_python_products(reason):
     import warnings
     warnings.warn(f"_IntegerOperator: not using the compiled kernel darmonpoints.sparse_padic ({reason}); "
                   "using the (much slower) python products, with the same results", RuntimeWarning, stacklevel=3)
-from .util import muted, set_immutable, speed_up_padic_inversion
+
 
 def evalpoly(poly, x, prec=None, check=True):
     if prec is None:
@@ -638,7 +639,7 @@ class _IntegerOperator(SageObject):
     The linear map v |-> v * A on row vectors of integers (given as lists),
     for an integer matrix A whose column c is only needed modulo p^exps[c].
 
-    There are three ways of computing the product:
+    There are four ways of computing the product:
 
     - 'dense': with FLINT (Sage's integer matrices).
 
@@ -650,20 +651,7 @@ class _IntegerOperator(SageObject):
       valuation of v: when p^s divides v, column c is only needed modulo
       p^(exps[c] - s), so it works with reduced copies of A, with smaller
       entries (and fewer, since many of them vanish). The result is the same
-      as with 'sparse', reduced modulo p^exps[c] (and about 5 to 10 times
-      faster).
-
-    and two automatic choices:
-
-    - 'auto' (the default, see default_integer_mode): 'dense' for Qp and
-      'compiled' for its extensions.
-
-    - 'python': the same, with 'sparse' instead of 'compiled', that is, without
-      the compiled kernel.
-
-    If the compiled kernel is not available (the extension is not compiled), or
-    if it fails, a warning is issued and the python products ('sparse') are
-    used instead.
+      as with 'sparse', reduced modulo p^exps[c], and much faster.
 
     - 'banded': write each entry of A, and of v, as p^val times a smaller
       number. The rows and the columns of A are grouped in bands according
@@ -677,6 +665,18 @@ class _IntegerOperator(SageObject):
       mu + beta >= M). Integers modulo p^N cannot take advantage of the
       valuations of their entries by themselves, but this way the products
       only involve their significant digits.
+
+    The mode can also be given as
+
+    - 'auto' (the default, see default_integer_mode): 'dense' for Qp (d = 1)
+      and 'compiled' for its extensions;
+
+    - 'python': 'dense' for Qp and 'sparse' for its extensions, that is, the
+      same as 'auto' without the compiled kernel.
+
+    If the compiled kernel is not available (the extension is not compiled), or
+    if it fails, a warning is issued and the python products ('sparse') are
+    used instead.
     '''
     def __init__(self, A, p, exps, d, mode=None, nbands=8, size=None):
         r'''
@@ -712,15 +712,11 @@ class _IntegerOperator(SageObject):
         if mode == 'python':
             mode = 'dense' if d == 1 else 'sparse'
         if mode == 'auto':
-            # In our tests (theta functions with series length 120 and 200),
-            # FLINT was the fastest for Qp and the sparse products for all the
-            # extensions, also when A is not very sparse. The banded products
+            # FLINT is the fastest for Qp, and the sparse products for its
+            # extensions, also when A is not very sparse (the banded products
             # are faster than the dense ones when the moduli are large, but
-            # still slower than the sparse ones: the cost of Sage's products of
-            # integer vectors and matrices per entry depends little on the
-            # size of the entries.
-            # The compiled kernel is 5 to 10 times faster than the sparse
-            # products with python integers.
+            # still slower than the sparse ones). The compiled kernel computes
+            # the sparse products much faster than python integers.
             mode = 'dense' if d == 1 else 'compiled'
         if mode == 'compiled' and SparsePadicMatrix is None:
             _warn_python_products("the extension is not compiled")
@@ -1604,7 +1600,7 @@ def _moved_points(parameter, g, points):
     The formula is used when zz = (b1 + a1 t) / (1 + c1 t) has c1 integral
     (as for the matrices of the action), and the points x are integral and
     computed without loss of precision (1 + c1 t is a unit). Otherwise, the
-    series of g * F should be computed, as before.
+    series of g * F has to be computed.
     '''
     a, b, c, d = (parameter * (parameter * g).adjugate()).list()
     if d.is_zero():

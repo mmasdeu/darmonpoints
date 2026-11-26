@@ -302,14 +302,10 @@ class OverconvergentDVCocycle(SageObject):
         - as the vector of power sums of the images of the points of D (see
           evaluate_acted): about P operations for each point.
 
-        The second one is used when D has at most P / 2 points (the products
-        of matrices and vectors cost between 0.6 and 1.2 times the power sums
-        of P points in our tests, and the matrices of the action are often
-        sparse), and when it can be used (see _moved_points).
-
-        Before, the series of the terms (two products of a vector and a matrix
-        for each term, for phi_even and phi_odd) were added up and evaluated
-        at the points of D.
+        The second one is used when D has at most P / 2 points (a product of
+        a matrix of the action, often sparse, and a vector costs about as much
+        as the power sums of P points), and when it can be used (see
+        _moved_points).
         """
         K = self.K
         G = self.HpMer.group()

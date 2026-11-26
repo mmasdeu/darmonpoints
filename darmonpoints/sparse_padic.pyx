@@ -280,7 +280,8 @@ cdef class SparsePadicMatrix:
 
     def nbytes(self):
         r"""
-        The memory used by the original entries and by the current reduced copy.
+        The memory used by the original entries and by the current reduced copy
+        (for diagnostics).
         """
         ans = 0
         if self.base.starts != NULL:
@@ -362,7 +363,8 @@ cdef class SparsePadicMatrix:
 
     def reset(self):
         r"""
-        Free the reduced copy of the matrix.
+        Free the reduced copy of the matrix (to release memory between
+        computations; it is rebuilt when needed).
         """
         free_level(&self.cur)
 

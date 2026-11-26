@@ -1147,8 +1147,8 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         ::
 
             sage: from darmonpoints.sarithgroup import ArithGroup
-        sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
-        sage: f = G.embed_order(23,20) # optional - magma
+            sage: G = ArithGroup(QQ,6,magma=Magma()) # optional - magma
+            sage: f = G.embed_order(23,20) # optional - magma
         """
         mu = kwargs.get("quadratic_embedding", None)
         if mu is None:
@@ -1190,7 +1190,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             (c for c in ZZ(2 * r1).abs().divisors() if self._is_in_order(phi(c * w))),
             None,
         )
-        if conductor is None:  # AssertionError, as the assert this replaces (callers catch it)
+        if conductor is None:  # (the callers catch AssertionError)
             raise AssertionError(
                 "The quadratic embedding does not map an order of K = Q(sqrt(%s)) into the order"
                 % D

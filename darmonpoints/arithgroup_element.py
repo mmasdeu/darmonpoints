@@ -268,11 +268,9 @@ class ArithGroupElement(MultiplicativeGroupElement):
         The image of ``self`` under the p-adic embedding, with precision ``prec``.
 
         The default ``prec = -1`` means the current precision of the embedding
-        of the group. It is resolved here, before calling the cached method
-        ``embed``: otherwise ``embed(-1)`` would cache the matrix computed at the
-        precision of the first call, and keep returning it after the precision
-        of the embedding has been raised (in the overconvergent lift, this capped
-        the moments at the 200 digits that BigArithGroup starts with).
+        of the group (see ``BigArithGroup_class.embedding_precision``). It is
+        resolved here, before calling the cached method ``embed``, so that the
+        matrix follows the precision of the embedding when it is raised.
         """
         if prec == -1:
             try:

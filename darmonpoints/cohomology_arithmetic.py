@@ -149,14 +149,10 @@ def get_overconvergent_class_quaternionic(
     base_ring = Zp(p, prec)
 
     # The group elements act on the moments through their p-adic matrices at the
-    # current precision of the embedding (ArithGroupElement.matrix), which
-    # BigArithGroup starts at 200: raise it above the precision of the lift, or
-    # the moments are only right modulo p^200 (silently: the action matrices are
-    # stored as integers). Raised to the working precision of darmon_point
-    # (2 prec + 10), which darmon_point reaches anyway (it builds the homology
-    # cycle before the lift): with exactly prec digits, some entries (sums of
-    # products by the splitting matrices) are known to one digit less, and the
-    # last digit of the moments is lost.
+    # current precision of the embedding (ArithGroupElement.matrix): it must be
+    # above the precision of the lift, with some margin (some entries are known
+    # to one digit less than the embedding). 2 prec + 10 is the working
+    # precision of darmon_point.
     try:
         needed = max(2 * prec + 10, 30)
         if G.embedding_precision() < needed:
@@ -318,6 +314,20 @@ class ArithCohElement(CohomologyElement):
 
         Anything but the Fox-gradient evaluation of an overconvergent class
         (for instance at_identity, or a trivial action) uses ``evaluate``.
+
+        EXAMPLES::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: from darmonpoints.cohomology_arithmetic import ArithCoh, get_cocycle_from_elliptic_curve, get_overconvergent_class_quaternionic
+            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='PSL2', use_shapiro=False, outfile='/tmp/darmonpoints.tmp')
+            sage: E = EllipticCurve('55a1')
+            sage: phiE = get_cocycle_from_elliptic_curve(ArithCoh(GS), E, sign=1, use_magma=False)
+            sage: Phi = get_overconvergent_class_quaternionic(5, phiE, GS, 10, 1, E.ap(5))
+            sage: pairs = [(g, h) for g in GS.large_group().gens()[:2] for rev, h in GS.get_covering(1)]
+            sage: moments = lambda v: [ZZ(x) for x in v._val.list()]
+            sage: many = Phi.evaluate_many(pairs)
+            sage: len(many) == len(pairs), [moments(v) for v in many] == [moments(Phi.evaluate(g, h)) for g, h in pairs]
+            (True, True)
         """
         H = self.parent()
         V = H.coefficient_module()
@@ -935,40 +945,6 @@ class CohArbitrary(CohomologyGroup):
 ##=================================================================================
 
 
-def up_method():
-    r"""
-    How ArithCohOverconvergent.apply_Up computes Up: the value of the
-    environment variable DARMONPOINTS_UP, 'operator' (the default: the linear
-    map of Up computed once as an integer matrix, see
-    ArithCohOverconvergent.up_operator) or 'legacy' (evaluation of the cocycle
-    on the words of Up at every application). The same results.
-    """
-    method = os.environ.get("DARMONPOINTS_UP", "operator")
-    if method not in ("legacy", "operator"):
-        raise ValueError("DARMONPOINTS_UP must be 'legacy' or 'operator', not %r" % method)
-    return method
-
-
-def upasm_method():
-    r"""
-    How ArithCohOverconvergent.up_operator assembles the Up operator: the
-    value of the environment variable DARMONPOINTS_UPASM, 'lean' (the
-    default) or 'legacy'. The same operator (the same integer matrix).
-
-    'legacy' keeps the action matrices of all the word prefixes in the caches
-    of the cohomology group (generator_acting_matrix) and of the coefficient
-    module (_cache_powers) and builds the operator from a list of blocks.
-    'lean' plans the words first and keeps each prefix matrix only until its
-    last use (they are not cached), and writes the blocks directly into the
-    operator: the peak memory of the lift is much lower. The integration then
-    computes (and caches) the prefix matrices it needs.
-    """
-    method = os.environ.get("DARMONPOINTS_UPASM", "lean")
-    if method not in ("legacy", "lean"):
-        raise ValueError("DARMONPOINTS_UPASM must be 'legacy' or 'lean', not %r" % method)
-    return method
-
-
 class ArithCohOverconvergent(ArithCoh):
     def __init__(self, G, base, use_ps_dists=False):
         self._overconvergent = 1
@@ -1005,8 +981,8 @@ class ArithCohOverconvergent(ArithCoh):
     def up_operator(self):
         r"""
         The Up operator of apply_Up as one integer matrix acting on the
-        concatenated moments of the values of a cocycle at the generators (see
-        up_method), wrapped in a meromorphic._IntegerOperator.
+        concatenated moments of the values of a cocycle at the generators,
+        wrapped in a meromorphic._IntegerOperator.
 
         apply_Up computes, for the i-th generator gamma_i,
 
@@ -1019,8 +995,16 @@ class ArithCohOverconvergent(ArithCoh):
         with B_ij = sum_k P_(s_k) G_(t_k(gamma_i), j), P_(s_k) the action
         matrix of s_k (OCVn._get_powers). All of it is exact modulo p^N (the
         moments are integers modulo p^N), so the result is the same element as
-        with the legacy evaluation, whose products and sums are the same ones,
-        in another order.
+        with the evaluation of the cocycle on the words (apply_Up with explicit
+        representatives), whose products and sums are the same ones, in another
+        order.
+
+        To keep the memory low, the words t_k(gamma_i) and their Fox gradients
+        are computed first, so that each prefix matrix (the action matrix of a
+        monomial of the Fox gradients, as in GA_to_local) is kept only until its
+        last use, in a local dictionary (they are not stored in the caches of
+        the group or of the coefficient module); the reduced transposed blocks
+        are written directly into the operator.
 
         It only depends on the group and the precision, so it is cached here
         (this cohomology group is unique for the S-arithmetic group and the
@@ -1028,6 +1012,27 @@ class ArithCohOverconvergent(ArithCoh):
 
         Returns a tuple (operator, n, D, pN) with n the number of generators and
         D the number of moments, or None if it does not apply (Shapiro groups).
+
+        EXAMPLES:
+
+        An overconvergent class attached to the curve 55a1, with 10 moments.
+        ``apply_Up`` uses this operator, unless other representatives are
+        given: then it evaluates the cocycle on the words of Up. Both give the
+        same moments::
+
+            sage: from darmonpoints.sarithgroup import BigArithGroup
+            sage: from darmonpoints.cohomology_arithmetic import ArithCoh, get_cocycle_from_elliptic_curve, get_overconvergent_class_quaternionic
+            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='PSL2', use_shapiro=False, outfile='/tmp/darmonpoints.tmp')
+            sage: E = EllipticCurve('55a1')
+            sage: phiE = get_cocycle_from_elliptic_curve(ArithCoh(GS), E, sign=1, use_magma=False)
+            sage: Phi = get_overconvergent_class_quaternionic(5, phiE, GS, 10, 1, E.ap(5))
+            sage: H = Phi.parent()
+            sage: op, n, D, pN = H.up_operator()
+            sage: n == len(H.group().gens()), D, pN == 5^10
+            (True, 11, True)
+            sage: moments = lambda c: [[ZZ(x) for x in v._val.list()] for v in c.values()]
+            sage: moments(H.apply_Up(Phi)) == moments(H.apply_Up(Phi, Up_reps=GS.get_Up_reps()))
+            True
         """
         from .meromorphic import _IntegerOperator
 
@@ -1044,53 +1049,8 @@ class ArithCohOverconvergent(ArithCoh):
         n = len(gammas)
         D = V.dimension()
         pN = ZZ(V._pN)
-        zero = Matrix(ZZ, D, D, 0)
         B = [[None] * n for _ in range(n)]
         Gr = self.group()
-        if upasm_method() == "lean":
-            return self._up_operator_lean(
-                V, R, G, Gpn, Gr, gammas, Up_reps, repslocal, n, D, pN, B
-            )
-        for i, gamma in enumerate(gammas):
-            for sk, g in zip(repslocal, Up_reps):
-                t = Gpn.get_hecke_ti(g, gamma)
-                x = t if t.parent() is Gr else Gr(t)  # as CohomologyElement.evaluate
-                Ps = V._get_powers(sk.matrix())  # as OCVnElement._acted_upon_
-                for j, A in enumerate(self.fox_gradient(tuple(x.word_rep))):
-                    Gtj = self.GA_to_local(A)
-                    if not hasattr(Gtj, "nrows"):  # the zero of the group algebra
-                        continue
-                    term = Ps * Gtj
-                    B[i][j] = term if B[i][j] is None else B[i][j] + term
-        # Row vectors (_IntegerOperator computes v * A): the block (j, i) of A is
-        # the transpose of B_ij, reduced modulo p^N
-        blocks = []
-        for j in range(n):
-            for i in range(n):
-                Bij = B[i][j]
-                blocks.append(zero if Bij is None else Bij.transpose().apply_map(lambda o: o % pN))
-                B[i][j] = None
-        A = block_matrix(ZZ, n, n, blocks, subdivide=False)
-        del blocks
-        op = _IntegerOperator(A, R.prime(), [ZZ(R.precision_cap())] * (n * D), 1)
-        return (op, n, D, pN)
-
-    def _up_operator_lean(self, V, R, G, Gpn, Gr, gammas, Up_reps, repslocal, n, D, pN, B):
-        r"""
-        The assembly of ``up_operator`` with less memory (upasm_method 'lean'):
-        the same sums B_ij = sum_k P_(s_k) G_(t_k(gamma_i), j), hence the same
-        integer matrix (integer sums do not depend on the order), but
-
-        - the words t_k(gamma_i) and their Fox gradients are computed first, so
-          that each prefix matrix (the action matrix of a monomial of the Fox
-          gradients, as in GA_to_local) is kept only until its last use, in a
-          local dictionary: they are not stored in the caches of the group;
-        - the reduced transposed blocks are written directly into the operator
-          (one copy of it instead of a list of blocks plus block_matrix).
-        """
-        from .meromorphic import _IntegerOperator
-
-        dim = V.dimension()
         plan = []
         for i, gamma in enumerate(gammas):
             for sk, g in zip(repslocal, Up_reps):
@@ -1116,7 +1076,7 @@ class ArithCohOverconvergent(ArithCoh):
                     try:
                         M = mats[h]
                     except KeyError:
-                        M = mats[h] = V._acting_matrix_uncached(h, dim)
+                        M = mats[h] = V._acting_matrix_uncached(h, D)
                     Gtj = Gtj + a * M
                     if last[h] == pos:
                         del mats[h]
@@ -1140,7 +1100,8 @@ class ArithCohOverconvergent(ArithCoh):
 
     def _apply_up_operator(self, c, scale=1):
         r"""
-        apply_Up through up_operator (the same result as the legacy evaluation).
+        apply_Up through up_operator (the same result as the evaluation of the
+        cocycle on the words of Up).
         """
         op, n, D, pN = self.up_operator()
         V = self.coefficient_module()
@@ -1170,14 +1131,13 @@ class ArithCohOverconvergent(ArithCoh):
         r"""
         Apply the Up Hecke operator operator to ``c``.
 
-        With up_method() == 'operator' (environment variable DARMONPOINTS_UP),
-        and the default representatives, through the integer matrix of
-        up_operator: the same result, much faster when it is applied many
+        With the default representatives (and without Shapiro), through the
+        integer matrix of up_operator: the same result as the evaluation of
+        the cocycle on the words of Up, much faster when it is applied many
         times (as in improve).
         """
         if (
-            up_method() == "operator"
-            and repslocal is None
+            repslocal is None
             and Up_reps is None
             and times == 0
             and not self.use_shapiro()

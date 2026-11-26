@@ -70,24 +70,6 @@ class ps_adjuster(Sigma0ActionAdjuster):
         return tuple([a, -b, -c, d])
 
 
-def powers_method():
-    r"""
-    How OCVn._get_powers computes the matrices of the action on the moments:
-    the value of the environment variable DARMONPOINTS_POWERS, 'integer' (the
-    default: a recurrence with integers modulo p^N, O(N^2) instead of O(N^3)
-    operations) or 'legacy' (products of power series over ZpCA). The same
-    matrices.
-    """
-    import os
-
-    method = os.environ.get("DARMONPOINTS_POWERS", "integer")
-    if method not in ("legacy", "integer"):
-        raise ValueError(
-            "DARMONPOINTS_POWERS must be 'legacy' or 'integer', not %r" % method
-        )
-    return method
-
-
 class OCVnElement(ModuleElement):
     r"""
     This class represents elements in an overconvergent coefficient module.
@@ -436,13 +418,32 @@ class OCVn(Module, UniqueRepresentation):
         moments: row i contains the coefficients of ((b + a z)/(d + c z))^i,
         modulo p^(depth - 1), as integers (cached, immutable).
 
-        Two methods, with the same result (see powers_method):
+        The rows are computed with integers modulo p^(depth - 1), with the
+        recurrence of meromorphic._integer_moebius_matrix, in O(depth^2)
+        operations (_get_powers_integer). When that does not apply (d is not a
+        unit, or the entries are not known modulo p^(depth - 1)), they are the
+        products of power series over ZpCA, in O(depth^3) operations
+        (_get_powers_series). Both give the same matrix when both apply.
 
-        - 'integer': the rows are computed with integers modulo p^(depth - 1)
-          with the recurrence of meromorphic._integer_moebius_matrix, O(depth^2)
-          operations (when d is a unit; otherwise as 'legacy');
+        EXAMPLES::
 
-        - 'legacy': products of power series over ZpCA, O(depth^3) operations.
+            sage: from darmonpoints.ocmodule import OCVn
+            sage: V = OCVn(5, 10)
+            sage: g = matrix(ZZ, 2, 2, [3, 7, 5, 11])
+            sage: P = V._get_powers(g)
+            sage: P == V._get_powers_series(3, 7, 5, 11), P.is_immutable()
+            (True, True)
+            sage: V._get_powers(g) is P  # cached
+            True
+
+        When an entry is known to less than p^(depth - 1), the power series
+        are used (they carry the loss of precision)::
+
+            sage: a = Zp(5, 4)(3)
+            sage: V._get_powers_integer(a, 7, 5, 11) is None
+            True
+            sage: V._compute_powers(a, 7, 5, 11) == V._get_powers_series(a, 7, 5, 11)
+            True
         """
         abcd = tuple(abcd.list())
         try:
@@ -453,13 +454,18 @@ class OCVn(Module, UniqueRepresentation):
             a, b, c, d = abcd
         else:
             a, b, c, d = emb(abcd).list()
-        x = None
-        if powers_method() == "integer":
-            x = self._get_powers_integer(a, b, c, d)
-        if x is None:
-            x = self._get_powers_legacy(a, b, c, d)
-        x.set_immutable()  # shared by acting_matrix: must not be modified
+        x = self._compute_powers(a, b, c, d)
         self._cache_powers[abcd] = x
+        return x
+
+    def _compute_powers(self, a, b, c, d):
+        r"""
+        The (immutable, not cached) matrix of _get_powers for (a b; c d).
+        """
+        x = self._get_powers_integer(a, b, c, d)
+        if x is None:
+            x = self._get_powers_series(a, b, c, d)
+        x.set_immutable()  # shared by acting_matrix: must not be modified
         return x
 
     def _acting_matrix_uncached(self, g, M):
@@ -468,7 +474,7 @@ class OCVn(Module, UniqueRepresentation):
         ``_cache_powers`` (the cached matrix is returned if it is there).
 
         For callers that hold many matrices only for a short time, such as the
-        assembly of the Up operator (cohomology_arithmetic, upasm_method), so
+        assembly of the Up operator (ArithCohOverconvergent.up_operator), so
         that they can be freed after their last use.
         """
         try:
@@ -479,13 +485,7 @@ class OCVn(Module, UniqueRepresentation):
         try:
             x = self._cache_powers[abcd]
         except KeyError:
-            a, b, c, d = abcd
-            x = None
-            if powers_method() == "integer":
-                x = self._get_powers_integer(a, b, c, d)
-            if x is None:
-                x = self._get_powers_legacy(a, b, c, d)
-            x.set_immutable()
+            x = self._compute_powers(*abcd)
         if M is None or M == x.nrows():
             return x
         return x.submatrix(0, 0, M, M)
@@ -497,12 +497,11 @@ class OCVn(Module, UniqueRepresentation):
         whose powers meromorphic._integer_moebius_matrix computes with the
         recurrence u_k = b1 w_k + a1 w_(k-1) - c1 u_(k-1). Everything is exact
         modulo p^(depth - 1), as the products of power series over
-        ZpCA(p, depth - 1) of the legacy method, so the matrices are the same.
+        ZpCA(p, depth - 1) of _get_powers_series, so the matrices are the same.
         Returns None when d is not a unit, or when an entry is known to less
-        than p^(depth - 1) (absolute precision): then the legacy products of
-        power series, which carry that loss of precision, give other last
-        digits than exact integers would (this happens with the local U_p
-        representatives, embedded at exactly the precision of the moments).
+        than p^(depth - 1) (absolute precision): then the products of power
+        series, which carry that loss of precision, give other last digits
+        than exact integers would.
         """
         from .meromorphic import _integer_moebius_matrix
 
@@ -518,7 +517,11 @@ class OCVn(Module, UniqueRepresentation):
         a1, b1, c1 = [int(ZZ((o * dinv).lift())) % pN for o in (a, b, c)]
         return _integer_moebius_matrix(a1, b1, c1, self._depth, pN)
 
-    def _get_powers_legacy(self, a, b, c, d):
+    def _get_powers_series(self, a, b, c, d):
+        r"""
+        The matrix of _get_powers, from products of power series over
+        ZpCA(p, depth - 1).
+        """
         R = self._PowerSeries
         r = R([b, a])
         s = R([d, c])

@@ -21,6 +21,27 @@ invariants used to check that a rebuilt group reproduces the original one.
 The magma session of a rebuilt group is a LazyMagma, which only starts Magma when some computation
 needs it (for example Hecke operators at a new prime). Setting the environment variable
 ``DARMONPOINTS_FORBID_MAGMA`` to a nonempty value other than ``0`` makes it raise instead.
+
+EXAMPLES:
+
+The encodings are exact, also for real and complex numbers (at their precision), and only use
+strings, integers and lists::
+
+    sage: import json
+    sage: from darmonpoints.arithgroup_io import encode_real, decode_real, encode_complex, decode_complex
+    sage: from darmonpoints.arithgroup_io import encode_rational, decode_rational
+    sage: x = RealField(100)(pi)
+    sage: v = json.loads(json.dumps(encode_real(x)))
+    sage: y = decode_real(v)
+    sage: y == x, y.prec()
+    (True, 100)
+    sage: decode_real(encode_real(RealField(53)(0))).is_zero()
+    True
+    sage: z = ComplexField(80)(1/3, -2)
+    sage: decode_complex(json.loads(json.dumps(encode_complex(z)))) == z
+    True
+    sage: encode_rational(-7/12), decode_rational(encode_rational(-7/12))
+    ('-7/12', -7/12)
 """
 
 import datetime
@@ -483,9 +504,7 @@ def export_sarithgroup(G, seed=None, padic_prec=None):
     splitting (at the precision it was computed at, or at least ``padic_prec``). The two arithmetic
     groups are exported separately (see export_arithgroup).
     """
-    from sage.rings.rational_field import QQ as Q
-
-    if G.F != Q:
+    if G.F != QQ:
         raise NotImplementedError("Only S-arithmetic groups over QQ can be exported")
     if G.use_shapiro():
         raise NotImplementedError("Groups using Shapiro's lemma cannot be exported")

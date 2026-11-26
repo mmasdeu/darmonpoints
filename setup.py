@@ -1,5 +1,4 @@
 import os
-import os.path
 import sys
 
 from Cython.Build import cythonize
@@ -34,6 +33,7 @@ class build_ext_optional(build_ext):
             )
 
 
+# The extensions are listed explicitly (a new .pyx file has to be added here)
 extensions = [
     Extension("darmonpoints.mixed_extension", [os.path.join("darmonpoints", "mixed_extension.pyx")]),
     Extension("darmonpoints.sparse", [os.path.join("darmonpoints", "sparse.pyx")]),
