@@ -460,6 +460,34 @@ class OCVn(Module, UniqueRepresentation):
         self._cache_powers[abcd] = x
         return x
 
+    def _acting_matrix_uncached(self, g, M):
+        r"""
+        The matrix of ``acting_matrix(g, M)``, without storing it in
+        ``_cache_powers`` (the cached matrix is returned if it is there).
+
+        For callers that hold many matrices only for a short time, such as the
+        assembly of the Up operator (cohomology_arithmetic, upasm_method), so
+        that they can be freed after their last use.
+        """
+        try:
+            g = g.matrix()
+        except AttributeError:
+            pass
+        abcd = tuple(g.list())
+        try:
+            x = self._cache_powers[abcd]
+        except KeyError:
+            a, b, c, d = abcd
+            x = None
+            if powers_method() == "integer":
+                x = self._get_powers_integer(a, b, c, d)
+            if x is None:
+                x = self._get_powers_legacy(a, b, c, d)
+            x.set_immutable()
+        if M is None or M == x.nrows():
+            return x
+        return x.submatrix(0, 0, M, M)
+
     def _get_powers_integer(self, a, b, c, d):
         r"""
         The matrix of _get_powers, from integers modulo p^(depth - 1): with

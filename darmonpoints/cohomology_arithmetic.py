@@ -872,6 +872,26 @@ def up_method():
     return method
 
 
+def upasm_method():
+    r"""
+    How ArithCohOverconvergent.up_operator assembles the Up operator: the
+    value of the environment variable DARMONPOINTS_UPASM, 'lean' (the
+    default) or 'legacy'. The same operator (the same integer matrix).
+
+    'legacy' keeps the action matrices of all the word prefixes in the caches
+    of the cohomology group (generator_acting_matrix) and of the coefficient
+    module (_cache_powers) and builds the operator from a list of blocks.
+    'lean' plans the words first and keeps each prefix matrix only until its
+    last use (they are not cached), and writes the blocks directly into the
+    operator: the peak memory of the lift is much lower. The integration then
+    computes (and caches) the prefix matrices it needs.
+    """
+    method = os.environ.get("DARMONPOINTS_UPASM", "lean")
+    if method not in ("legacy", "lean"):
+        raise ValueError("DARMONPOINTS_UPASM must be 'legacy' or 'lean', not %r" % method)
+    return method
+
+
 class ArithCohOverconvergent(ArithCoh):
     def __init__(self, G, base, use_ps_dists=False):
         self._overconvergent = 1
@@ -950,6 +970,10 @@ class ArithCohOverconvergent(ArithCoh):
         zero = Matrix(ZZ, D, D, 0)
         B = [[None] * n for _ in range(n)]
         Gr = self.group()
+        if upasm_method() == "lean":
+            return self._up_operator_lean(
+                V, R, G, Gpn, Gr, gammas, Up_reps, repslocal, n, D, pN, B
+            )
         for i, gamma in enumerate(gammas):
             for sk, g in zip(repslocal, Up_reps):
                 t = Gpn.get_hecke_ti(g, gamma)
@@ -971,6 +995,69 @@ class ArithCohOverconvergent(ArithCoh):
                 B[i][j] = None
         A = block_matrix(ZZ, n, n, blocks, subdivide=False)
         del blocks
+        op = _IntegerOperator(A, R.prime(), [ZZ(R.precision_cap())] * (n * D), 1)
+        return (op, n, D, pN)
+
+    def _up_operator_lean(self, V, R, G, Gpn, Gr, gammas, Up_reps, repslocal, n, D, pN, B):
+        r"""
+        The assembly of ``up_operator`` with less memory (upasm_method 'lean'):
+        the same sums B_ij = sum_k P_(s_k) G_(t_k(gamma_i), j), hence the same
+        integer matrix (integer sums do not depend on the order), but
+
+        - the words t_k(gamma_i) and their Fox gradients are computed first, so
+          that each prefix matrix (the action matrix of a monomial of the Fox
+          gradients, as in GA_to_local) is kept only until its last use, in a
+          local dictionary: they are not stored in the caches of the group;
+        - the reduced transposed blocks are written directly into the operator
+          (one copy of it instead of a list of blocks plus block_matrix).
+        """
+        from .meromorphic import _IntegerOperator
+
+        dim = V.dimension()
+        plan = []
+        for i, gamma in enumerate(gammas):
+            for sk, g in zip(repslocal, Up_reps):
+                t = Gpn.get_hecke_ti(g, gamma)
+                x = t if t.parent() is Gr else Gr(t)  # as CohomologyElement.evaluate
+                fg = [(j, A.monomial_coefficients(copy=False))
+                      for j, A in enumerate(self.fox_gradient(tuple(x.word_rep)))]
+                plan.append((i, sk, fg))
+        last = {}
+        pos = 0
+        for _, _, fg in plan:
+            for _, mons in fg:
+                for h in mons:
+                    last[h] = pos
+                    pos += 1
+        mats = {}
+        pos = 0
+        for i, sk, fg in plan:
+            Ps = V._get_powers(sk.matrix())  # as OCVnElement._acted_upon_
+            for j, mons in fg:
+                Gtj = 0  # as GA_to_local: sum(a * M_h), summed left to right
+                for h, a in mons.items():
+                    try:
+                        M = mats[h]
+                    except KeyError:
+                        M = mats[h] = V._acting_matrix_uncached(h, dim)
+                    Gtj = Gtj + a * M
+                    if last[h] == pos:
+                        del mats[h]
+                    pos += 1
+                if not hasattr(Gtj, "nrows"):  # the zero of the group algebra
+                    continue
+                term = Ps * Gtj
+                B[i][j] = term if B[i][j] is None else B[i][j] + term
+        del plan, mats
+        # Row vectors (_IntegerOperator computes v * A): the block (j, i) of A is
+        # the transpose of B_ij, reduced modulo p^N
+        A = Matrix(ZZ, n * D, n * D, 0)
+        for j in range(n):
+            for i in range(n):
+                Bij = B[i][j]
+                if Bij is not None:
+                    A.set_block(j * D, i * D, Bij.transpose().apply_map(lambda o: o % pN))
+                B[i][j] = None
         op = _IntegerOperator(A, R.prime(), [ZZ(R.precision_cap())] * (n * D), 1)
         return (op, n, D, pN)
 
