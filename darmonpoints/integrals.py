@@ -353,6 +353,64 @@ def _pair_power_sums(pts, c0log, mu, nterms):
     return ans
 
 
+def inteval_method():
+    r"""
+    How ``integrate_H1`` evaluates the cocycle at the pairs (g, h) of the
+    cycle (g a group element, h an edge of the covering): 'cached' (default)
+    or 'legacy', from the environment variable DARMONPOINTS_INTEVAL.
+
+    'legacy' evaluates the cocycle at every pair of every integration; the
+    evaluation caches the action matrices of all the word prefixes in the
+    cohomology group. 'cached' keeps the values (and those of the classical
+    cocycle 'liftee') in a cache attached to the cocycle: the cycles of
+    darmon_points are written over the generators, so every integration with
+    the same cocycle needs the same values. The values that are not cached
+    yet are computed together with ``evaluate_many`` (each prefix matrix kept
+    only until its last use, nothing cached in the cohomology group). The
+    values are the same, so the integrals are the same.
+    """
+    return os.environ.get("DARMONPOINTS_INTEVAL", "cached")
+
+
+def _eval_key(x):
+    r"""
+    A key of a group element or quaternion for the evaluation cache: its
+    quaternion coefficients (equal keys, equal elements).
+    """
+    try:
+        x = x.quaternion_rep
+    except AttributeError:
+        pass
+    try:
+        return tuple(x.coefficient_tuple())
+    except (AttributeError, TypeError):
+        return x
+
+
+def _evaluation_caches(cocycle):
+    r"""
+    The caches ({key: value of the cocycle}, {key: value of its liftee}) of
+    ``integrate_H1`` attached to ``cocycle`` (see inteval_method). They assume
+    that the values of the cocycle are not modified in place.
+    """
+    try:
+        return cocycle._evaluation_caches
+    except AttributeError:
+        c = ({}, {})
+        try:
+            cocycle._evaluation_caches = c
+        except AttributeError:  # no attributes: a cache for this call only
+            pass
+        return c
+
+
+def _evaluate_pairs(cocycle, pairs, at_identity):
+    try:
+        return cocycle.evaluate_many(pairs, at_identity=at_identity)
+    except AttributeError:
+        return [cocycle.evaluate(g, h, at_identity=at_identity) for g, h in pairs]
+
+
 r"""
 Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
@@ -388,6 +446,26 @@ def integrate_H1(
     resadd = Cp(0)
     resval = ZZ(0)
     powersum = integration_method() == "powersum"
+    cached = inteval_method() == "cached"
+    at_id = G.use_shapiro()
+    if cached:
+        mucache, mu0cache = _evaluation_caches(cocycle)
+        if depth % 2 == 1:
+            # The values at the edges of the covering that are not cached yet,
+            # all together (evaluate_many: low memory)
+            pairs, keys, seen = [], [], set()
+            for g, D in cycle:
+                if twist:
+                    g = g.conjugate_by(G.wp() ** -1)
+                for rev, h in G.get_covering(depth):
+                    k = (_eval_key(g), _eval_key(h), at_id)
+                    if k not in mucache and k not in seen:
+                        seen.add(k)
+                        pairs.append((g, h))
+                        keys.append(k)
+            if pairs:
+                mucache.update(zip(keys, _evaluate_pairs(cocycle, pairs, at_id)))
+            del pairs, keys, seen
     for g, D in cycle:
         if twist:
             D = D.left_act_by_matrix(G.embed(G.wp(), prec).change_ring(Cp))
@@ -401,8 +479,17 @@ def integrate_H1(
                 (h, rev), pts, c0val, c0unit, c0log = item
             else:
                 (h, rev), pol, c0val, c0unit = item
-            mu = cocycle.evaluate(g, h, at_identity=G.use_shapiro())
-            mu0 = cocycle["liftee"].evaluate(g, h, at_identity=G.use_shapiro())[0]
+            if cached:
+                k = (_eval_key(g), _eval_key(h), at_id)
+                mu = mucache.get(k)
+                if mu is None:  # an edge of a subdivision
+                    mu = mucache[k] = _evaluate_pairs(cocycle, [(g, h)], at_id)[0]
+                mu0 = mu0cache.get(k)
+                if mu0 is None:
+                    mu0 = mu0cache[k] = cocycle["liftee"].evaluate(g, h, at_identity=at_id)[0]
+            else:
+                mu = cocycle.evaluate(g, h, at_identity=G.use_shapiro())
+                mu0 = cocycle["liftee"].evaluate(g, h, at_identity=G.use_shapiro())[0]
             if powersum:
                 newresadd = _pair_power_sums(pts, c0log, mu, prec + 1)
             else:

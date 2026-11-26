@@ -305,6 +305,83 @@ class ArithCohElement(CohomologyElement):
         else:
             return super().evaluate(newg, at_identity=at_identity)
 
+    def evaluate_many(self, pairs, at_identity=False):
+        r"""
+        ``[self.evaluate(g, he, at_identity=at_identity) for g, he in pairs]``,
+        computed with less memory: the words of all the pairs and their Fox
+        gradients are computed first, and the action matrix of each word prefix
+        is kept only until its last use among all the pairs, in a local
+        dictionary (not in the caches of the cohomology group, see
+        CohomologyGroup.generator_acting_matrix). The values are the same: the
+        same exact integer sums of the same integer products as
+        CohomologyElement._evaluate_word_tietze_foxgradient, in the same order.
+
+        Anything but the Fox-gradient evaluation of an overconvergent class
+        (for instance at_identity, or a trivial action) uses ``evaluate``.
+        """
+        H = self.parent()
+        V = H.coefficient_module()
+        if (
+            at_identity
+            or H._trivial_action
+            or H._acting_matrix is None
+            or not hasattr(V, "_acting_matrix_uncached")
+            or not all(hasattr(v, "_moments") for v in self._val)
+        ):
+            return [self.evaluate(g, he, at_identity=at_identity) for g, he in pairs]
+        G = H.S_arithgroup()
+        Gr = H.group()
+        dim = V.dimension()
+        plan = []
+        for g, he in pairs:  # as evaluate(g, he, check=True)
+            try:
+                g = g.quaternion_rep
+            except AttributeError:
+                pass
+            hp = G.reduce_in_amalgam(he, return_word=False)
+            he = hp**-1 * he
+            x = G.reduce_in_amalgam(he * g, return_word=False)
+            if x.parent() is not Gr:  # as CohomologyElement.evaluate
+                x = Gr(x)
+            wd = tuple(x.word_rep)
+            fg = (
+                [A.monomial_coefficients(copy=False) for A in H.fox_gradient(wd)]
+                if len(wd) > 0
+                else None
+            )
+            plan.append((hp, fg))
+        last = {}
+        pos = 0
+        for _, fg in plan:
+            for mons in fg or []:
+                for h in mons:
+                    last[h] = pos
+                    pos += 1
+        mats = {}
+        pos = 0
+        ans = []
+        for hp, fg in plan:
+            if fg is None:  # the empty word
+                val = V(0)
+            else:
+                # as _evaluate_word_tietze_foxgradient: sum(GA_to_local(A) * ff(val))
+                tot = 0
+                for mons, v in zip(fg, self._val):
+                    Gtj = 0  # as GA_to_local: sum(a * M_h)
+                    for h, a in mons.items():
+                        try:
+                            M = mats[h]
+                        except KeyError:
+                            M = mats[h] = V._acting_matrix_uncached(h, dim)
+                        Gtj = Gtj + a * M
+                        if last[h] == pos:
+                            del mats[h]
+                        pos += 1
+                    tot = tot + Gtj * v._moments.lift()
+                val = V(tot)
+            ans.append(G.Gpn(hp) * val)
+        return ans
+
     def Tq_eigenvalue(self, ell, check=True):
         r"""
         Computes the eigenvalue of the T_q operator (where q = ell in the input)
