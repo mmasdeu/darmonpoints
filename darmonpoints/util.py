@@ -6,11 +6,10 @@ from functools import reduce
 from itertools import chain, groupby, islice, product, starmap, tee
 
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
+from sage.arith.functions import lcm
 from sage.arith.misc import divisors
 from sage.arith.misc import kronecker as kronecker_symbol
-from sage.arith.misc import next_prime
-from sage.arith.functions import lcm
-from sage.arith.misc import valuation
+from sage.arith.misc import next_prime, valuation
 from sage.calculus.var import var
 from sage.functions.generalized import sgn
 from sage.functions.transcendental import Function_zeta
@@ -18,28 +17,26 @@ from sage.interfaces.gp import gp
 from sage.libs.pari.all import PariError, pari
 from sage.matrix.constructor import Matrix
 from sage.matrix.constructor import Matrix as matrix
-from sage.misc.cachefunc import cached_method
-from sage.misc.mrange import cartesian_product_iterator
-from sage.misc.cachefunc import cached_function
+from sage.misc.cachefunc import cached_function, cached_method
 from sage.misc.functional import cyclotomic_polynomial
 from sage.misc.latex import LatexExpr, latex
 from sage.misc.misc_c import prod
+from sage.misc.mrange import cartesian_product_iterator
 from sage.misc.sage_eval import sage_eval
 from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.modular.modform.constructor import CuspForms, EisensteinForms
 from sage.modules.fg_pid.fgp_module import FGP_Module, FGP_Module_class
-from sage.rings.cc import CC
-from sage.rings.rational_field import Q as QQ
-from sage.rings.real_mpfr import RR
-from sage.rings.integer_ring import Z as ZZ
-from sage.rings.real_mpfr import RealField
 from sage.rings.big_oh import O
+from sage.rings.cc import CC
 from sage.rings.fast_arith import prime_range
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing, Zmod
 from sage.rings.infinity import Infinity
+from sage.rings.integer_ring import Z as ZZ
 from sage.rings.padics.factory import Qp
 from sage.rings.padics.padic_generic import local_print_mode
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR, RealField
 from sage.schemes.elliptic_curves.constructor import (
     EllipticCurve,
     EllipticCurve_from_c4c6,
@@ -61,23 +58,28 @@ def muted(func):
 
 
 def speed_up_padic_inversion(K):
-    r'''
+    r"""
     Work around a slowness in Sage: in a two-step p-adic extension (such as
     Qq(p^2).extension(x^4 + p)) every inversion calls
     ``K.prime_pow.base_ring.change(field=True)``, which goes through the
     p-adic factory and takes most of the time of the inversion. Since
     ``change`` always returns the same (unique) parent for the same arguments,
     cache it on that ring. This does nothing for other kinds of rings.
-    '''
-    for R in [K, getattr(K, 'integer_ring', lambda: None)(), getattr(K, 'fraction_field', lambda: None)()]:
+    """
+    for R in [
+        K,
+        getattr(K, "integer_ring", lambda: None)(),
+        getattr(K, "fraction_field", lambda: None)(),
+    ]:
         try:
             B = R.prime_pow.base_ring
         except AttributeError:
             continue
-        if getattr(B, '_change_is_cached', False):
+        if getattr(B, "_change_is_cached", False):
             continue
         original_change = B.change
         cache = {}
+
         def change(original_change=original_change, cache=cache, **kwds):
             try:
                 key = tuple(sorted(kwds.items()))
@@ -85,8 +87,9 @@ def speed_up_padic_inversion(K):
             except KeyError:
                 ans = cache[key] = original_change(**kwds)
                 return ans
-            except TypeError: # unhashable arguments
+            except TypeError:  # unhashable arguments
                 return original_change(**kwds)
+
         try:
             B.change = change
             B._change_is_cached = True
@@ -351,6 +354,7 @@ def set_immutable(x):
     except AttributeError:
         return x
 
+
 def list_powers(x, M):
     if x is None:
         return x
@@ -360,14 +364,14 @@ def list_powers(x, M):
     return plist
 
 
-
 def act_flt(g, x):
     a, b, c, d = g.list()
     K = x.parent()
     if not K.is_field():
         try:
             K = K.base_ring()
-        except AttributeError: pass
+        except AttributeError:
+            pass
     if is_infinity(x):
         return a / c
     if K(c) * x + K(d) == 0:
@@ -557,7 +561,7 @@ def period_from_coords(R, E, P, prec=20, K_to_Cp=None):
     return un
 
 
-def our_lindep(V,prec = None, base=None, **kwargs):
+def our_lindep(V, prec=None, base=None, **kwargs):
     if base is None:
         K = V[0].parent()
     else:
@@ -565,34 +569,34 @@ def our_lindep(V,prec = None, base=None, **kwargs):
     V = [K(o) for o in V]
     if prec is None:
         prec = min([o.precision_absolute() for o in V])
-    algorithm = kwargs.get('algorithm','flint')
+    algorithm = kwargs.get("algorithm", "flint")
     field_deg = K.degree()
     p = K.prime()
     pn = p**prec
     n = len(V)
-    M = matrix(ZZ, n+field_deg, field_deg)
+    M = matrix(ZZ, n + field_deg, field_deg)
     for k in range(n):
         r = V[k]
         if field_deg == 1:
-            M[k,0] = ZZ(r.lift()) % pn
+            M[k, 0] = ZZ(r.lift()) % pn
         else:
-            for j,o in enumerate(r.expansion()):
-                for i,u in enumerate(o):
-                    M[k,-1-i] += (p**(j+r.valuation())*u) % pn
+            for j, o in enumerate(r.expansion()):
+                for i, u in enumerate(o):
+                    M[k, -1 - i] += (p ** (j + r.valuation()) * u) % pn
     for i in range(field_deg):
-        M[n+i,-1-i] = pn
+        M[n + i, -1 - i] = pn
     M = M.transpose().change_ring(ZZ)
-    if algorithm == 'magma':
-        magma = kwargs.get('magma', None)
+    if algorithm == "magma":
+        magma = kwargs.get("magma", None)
         if magma is None:
             from sage.interfaces.magma import magma
         tmp = magma(M).Transpose().KernelMatrix().LLL()[1]
-        tmp = tuple(sage_eval(str(tmp).replace(' ', ',')))
+        tmp = tuple(sage_eval(str(tmp).replace(" ", ",")))
     else:
         tmp = M.right_kernel_matrix(proof=False, algorithm=algorithm)
-        verbose('Running LLL', level=2)
+        verbose("Running LLL", level=2)
         tmp = tmp.LLL().row(0)
-        verbose('.. done running LLL', level=2)
+        verbose(".. done running LLL", level=2)
     return list(tmp)[:n]
 
 
@@ -1346,7 +1350,15 @@ def our_nroot(xx, n, K=None, return_all=False):
                 zetas = [zpows[dlog[r / rbar[0]]] for r in rbar]
             else:
                 zetas = None
-        except (AttributeError, NotImplementedError, TypeError, ValueError, ArithmeticError, ZeroDivisionError, KeyError):
+        except (
+            AttributeError,
+            NotImplementedError,
+            TypeError,
+            ValueError,
+            ArithmeticError,
+            ZeroDivisionError,
+            KeyError,
+        ):
             y0list = None
             zetas = None
     if y0list is not None:
@@ -1482,6 +1494,7 @@ def get_weight_vector(x, ngens=None):
     if ngens is None:
         ngens = max(weight_vector.keys()) + 1
     return [weight_vector.get(i, 0) for i in range(ngens)]
+
 
 def reduce_word_tietze(word):
     r"""
@@ -1828,9 +1841,7 @@ def magma_F_elt_to_sage(F_sage, x, magma):
         if magma.eval("Type(%s)" % name).strip() == "RngOrdElt":
             name = "(NumberField(Parent(%s))!%s)" % (name, name)
         return F_sage(
-            sage_eval(
-                magma.eval("[%s[i] : i in [1..%s]]" % (name, F_sage.degree()))
-            )
+            sage_eval(magma.eval("[%s[i] : i in [1..%s]]" % (name, F_sage.degree())))
         )
     else:
         return F_sage(sage_eval(magma.eval("%s" % x.name())))
@@ -1878,6 +1889,7 @@ def _quaternion_algebra_invariants_pari(F, P, S):
     Returns ``None`` if ``F`` is not defined by a monic integral polynomial.
     """
     from sage.libs.pari import pari
+
     from .afuch import algab
 
     if F == QQ or F.degree() == 1:
@@ -1900,7 +1912,10 @@ def _quaternion_algebra_invariants_pari(F, P, S):
         for pr in dec:
             # identify pr with pp via its two-element representation
             alpha = pari.nfbasistoalg(nf, pr[1]).lift()
-            alpha = F([QQ(c) for c in alpha.Vecrev()] + [0] * (F.degree() - len(alpha.Vecrev())))
+            alpha = F(
+                [QQ(c) for c in alpha.Vecrev()]
+                + [0] * (F.degree() - len(alpha.Vecrev()))
+            )
             if F.ideal(ZZ(pr[0]), alpha) == pp:
                 prs.append(pr)
                 break
@@ -2343,7 +2358,13 @@ def recognize_J(
                 if w1 == 1 or (w1 - 1).valuation() >= prec - 3:
                     return True
             return False
-        except (AttributeError, NotImplementedError, TypeError, ValueError, ZeroDivisionError):
+        except (
+            AttributeError,
+            NotImplementedError,
+            TypeError,
+            ValueError,
+            ZeroDivisionError,
+        ):
             return True
 
     vJ = J.valuation()
@@ -2565,12 +2586,17 @@ def simplification_isomorphism(G, return_inverse=False):
 
     I = G.gap().IsomorphismSimplifiedFpGroup()
     domain = G
-    try: # Sagemath >= 10.5
+    try:  # Sagemath >= 10.5
         codomain = I.Range().sage()
         phi = lambda x: codomain(I.ImageElm(x))
-        ans = G.hom(im_gens=[phi(x) for x in G.gap().GeneratorsOfGroup], codomain=codomain, check=False)
-    except NotImplementedError: # Sagemath < 10.5
+        ans = G.hom(
+            im_gens=[phi(x) for x in G.gap().GeneratorsOfGroup],
+            codomain=codomain,
+            check=False,
+        )
+    except NotImplementedError:  # Sagemath < 10.5
         from sage.groups.finitely_presented import wrap_FpGroup
+
         codomain = wrap_FpGroup(I.Range())
         phi = lambda x: codomain(I.ImageElm(x.gap()))
         ans = G.hom(phi, codomain)
@@ -2582,7 +2608,7 @@ def simplification_isomorphism(G, return_inverse=False):
         return ans
 
 
-def update_progress(progress, msg="", barLength=20):    
+def update_progress(progress, msg="", barLength=20):
     if len(msg) > 0:
         msg = "( %s )" % msg
     if isinstance(progress, int):
@@ -2764,7 +2790,7 @@ def matrix_is_hyperbolic(g):
     tr = g.trace()
     det = g.determinant()
     return 2 * tr.valuation() < det.valuation()
-    
+
 
 def quadratic_field_embeds_in_quaternion_algebra(K, B):
     r"""

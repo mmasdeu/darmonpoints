@@ -1,7 +1,7 @@
 from sage.categories.fields import Fields
-from sage.rings.rational_field import Q as QQ
 from sage.rings.integer_ring import Z as ZZ
 from sage.rings.padics.padic_generic import pAdicGeneric
+from sage.rings.rational_field import Q as QQ
 from sage.rings.ring import Field
 from sage.structure.element import Element, FieldElement
 from sage.structure.richcmp import richcmp
@@ -18,16 +18,14 @@ from bisect import bisect_left as bisect
 from math import atan as atan
 
 from sage.matrix.constructor import Matrix
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.number_field.number_field import NumberField, QuadraticField
+from sage.rings.padics.factory import Qp
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.qqbar import AA
 from sage.rings.rational_field import Q as QQ
-from sage.rings.real_mpfr import RR
-from sage.rings.integer_ring import Z as ZZ
-from sage.rings.complex_mpfr import ComplexField
-from sage.rings.number_field.number_field import NumberField
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.rings.number_field.number_field import QuadraticField
-from sage.rings.real_mpfr import RealField
-from sage.rings.padics.factory import Qp
+from sage.rings.real_mpfr import RR, RealField
 
 
 def get_word_rep_fast(self, delta, Pold=None):

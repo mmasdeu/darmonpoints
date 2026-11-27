@@ -16,25 +16,23 @@ from sage.matrix.constructor import Matrix
 from sage.matrix.constructor import Matrix as matrix
 from sage.misc.cachefunc import cached_method
 from sage.misc.lazy_attribute import lazy_attribute
-from sage.misc.timing import walltime
 from sage.misc.misc_c import prod
 from sage.misc.persist import db
+from sage.misc.timing import walltime
 from sage.misc.verbose import verbose
 from sage.modular.arithgroup.congroup_gamma0 import Gamma0_constructor as Gamma0
 from sage.modular.btquotients.btquotient import BruhatTitsTree
 from sage.modular.cusps import Cusp
-from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.free_module import FreeModule_generic
-from sage.rings.rational_field import Q as QQ
-from sage.rings.real_mpfr import RR
-from sage.rings.integer_ring import Z as ZZ
+from sage.modules.free_module_element import free_module_element as vector
 from sage.rings.complex_mpfr import ComplexField
-from sage.rings.number_field.number_field import NumberField
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.rings.number_field.number_field import QuadraticField
-from sage.rings.real_mpfr import RealField
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.number_field.number_field import NumberField, QuadraticField
 from sage.rings.padics.factory import Qp, Qq
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR, RealField
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.parent import Parent
 from sage.structure.sage_object import SageObject, load, save
@@ -231,7 +229,7 @@ class BigArithGroup_class(AlgebraicGroup):
         self.seed = seed
         self.magma = magma
         self._use_shapiro = kwargs.get("use_shapiro", False)
-        self._hardcode_matrices = False # kwargs.get('hardcode_matrices', (abtuple is None and discriminant == 1) or abtuple == (1,1))
+        self._hardcode_matrices = False  # kwargs.get('hardcode_matrices', (abtuple is None and discriminant == 1) or abtuple == (1,1))
         nscartan = kwargs.get("nscartan", None)
         if seed is not None and magma is not None:
             verbose("Setting Magma seed to %s" % seed)
@@ -514,9 +512,7 @@ class BigArithGroup_class(AlgebraicGroup):
                 1
                 / pi
                 * wp
-                * self.Gn.matrix_to_quaternion(
-                    matrix(self.F, 2, 2, [1, -a, 0, pi])
-                )
+                * self.Gn.matrix_to_quaternion(matrix(self.F, 2, 2, [1, -a, 0, pi]))
                 for a in alist
             ]
         else:
@@ -529,7 +525,11 @@ class BigArithGroup_class(AlgebraicGroup):
             random = False if self.p <= 17 else True  # DEBUG - hardcoded bound here...
             for elt0 in self.Gn.enumerate_elements(random=random):
                 replist = [r for r in reps if r is not None]
-                elt = replist[ZZ.random_element(0, len(replist))] * elt0 * replist[ZZ.random_element(0, len(replist))]
+                elt = (
+                    replist[ZZ.random_element(0, len(replist))]
+                    * elt0
+                    * replist[ZZ.random_element(0, len(replist))]
+                )
                 n_iters += 1
                 new_inv = elt**-1
                 embelt = emb(elt)
@@ -1061,7 +1061,7 @@ def ArithGroup(base, discriminant, abtuple=None, level=1, magma=None, **kwargs):
             if magma is not None and not is_page_initialized(magma):
                 attach_kleinian_code(magma)
             if implementation is None:
-                if False: #(a, b) == (1, 1):
+                if False:  # (a, b) == (1, 1):
                     return MatrixArithGroup(
                         base, level, magma=magma, implementation="geometric", **kwargs
                     )

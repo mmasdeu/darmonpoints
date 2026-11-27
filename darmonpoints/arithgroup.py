@@ -25,31 +25,29 @@ from sage.matrix.constructor import Matrix
 from sage.matrix.constructor import Matrix as matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.cachefunc import cached_method
-from sage.misc.timing import walltime
 from sage.misc.misc_c import prod
 from sage.misc.persist import db
 from sage.misc.sage_eval import sage_eval
+from sage.misc.timing import walltime
 from sage.misc.verbose import verbose
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
-from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modules.free_module import FreeModule_generic
+from sage.modules.free_module_element import free_module_element as vector
 from sage.plot.hyperbolic_arc import hyperbolic_arc
 from sage.plot.hyperbolic_polygon import hyperbolic_polygon, hyperbolic_triangle
 from sage.plot.plot import plot
 from sage.plot.point import point2d
 from sage.repl.rich_output.pretty_print import show
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.infinity import Infinity
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.number_field.number_field import NumberField, QuadraticField
+from sage.rings.padics.factory import Qp
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.qqbar import AA
 from sage.rings.rational_field import Q as QQ
-from sage.rings.real_mpfr import RR
-from sage.rings.integer_ring import Z as ZZ
-from sage.rings.complex_mpfr import ComplexField
-from sage.rings.number_field.number_field import NumberField
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.rings.number_field.number_field import QuadraticField
-from sage.rings.real_mpfr import RealField
-from sage.rings.padics.factory import Qp
-from sage.rings.infinity import Infinity
+from sage.rings.real_mpfr import RR, RealField
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.sage_object import SageObject, load, save
 
@@ -389,7 +387,6 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         madj = m.adjugate()
         return [None] + [tuple((madj * o * m).list()) for o in self.embgquats[1:]]
 
-
     def get_word_rep(self, delta, P=None):  # fuchsian generic
         if self._is_pari_backend():
             return self._get_word_rep_pari(delta)
@@ -617,13 +614,17 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
         M = 0
         while True:
             M += 1
-            for a0, an in product(range(M), product(range(-M + 1, M), repeat=len(basis) - 1)):
-                cand = sum((ai * bi for ai, bi in zip([a0] + list(an), basis)), self.B(0))
+            for a0, an in product(
+                range(M), product(range(-M + 1, M), repeat=len(basis) - 1)
+            ):
+                cand = sum(
+                    (ai * bi for ai, bi in zip([a0] + list(an), basis)), self.B(0)
+                )
                 if good(cand) and F.ideal(cand.reduced_norm()) == one:
                     return cand
 
     def find_fundom_rep(
-        self, z0_H, v0 =None, return_alternative=False, max_iters=100
+        self, z0_H, v0=None, return_alternative=False, max_iters=100
     ):  # generic -- Take z0 to the fundamental domain
         r"""
         Returns t0 and g such that g * t0 = z0_H, and t0 is in the fundamental domain
@@ -699,8 +700,8 @@ class ArithGroup_fuchsian_generic(ArithGroup_generic):
             oldji, oldgg = ji, gg
             wd.append(gg)
             verbose("New g = %s\t delta = %s\t z0=%s" % (gg, delta, z0))
-            t0 = act_flt(emb(self(delta).quaternion_rep),z0_H)
-            t1 = act_flt(emb(self(wd[-1] ** -1 * delta).quaternion_rep),z0_H)
+            t0 = act_flt(emb(self(delta).quaternion_rep), z0_H)
+            t1 = act_flt(emb(self(wd[-1] ** -1 * delta).quaternion_rep), z0_H)
         delta_inv = delta**-1
         if return_alternative:
             return (t0, delta_inv), (t1, delta_inv * wd[-1])
@@ -1089,7 +1090,9 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             if Omax_magma is None:
                 self._Omax_magma = self._B_magma.MaximalOrder()
             else:
-                self._Omax_magma = self.magma.Order([self._B_magma(o) for o in Omax_magma])
+                self._Omax_magma = self.magma.Order(
+                    [self._B_magma(o) for o in Omax_magma]
+                )
 
             if O_magma is None:
                 if self.level != ZZ(1):
@@ -1110,21 +1113,31 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
                     if self.level != ZZ(1):
                         # We compute the additional level needed to reach self.level and an Eichler order of that level.
                         missing_level = ZZ(self.level // info_magma.level)
-                        missing_order = self._Omax_magma.Order(f"{missing_level}*{ZZ_magma.name()}")
+                        missing_order = self._Omax_magma.Order(
+                            f"{missing_level}*{ZZ_magma.name()}"
+                        )
                         # We intersect the already computed order with the missing_order to get an order of level self.level.
                         self._O_magma = self.magma(
                             f"{info_magma._O_magma.name()} meet {missing_order.name()}"
                         )
-                        assert self.magma(f"{self._O_magma.name()} meet {missing_order.name()} eq {self._O_magma.name()}")
-                        assert self.magma(f"Discriminant({self._O_magma.name()}) eq {self.level*self.discriminant}*{ZZ_magma.name()}")
+                        assert self.magma(
+                            f"{self._O_magma.name()} meet {missing_order.name()} eq {self._O_magma.name()}"
+                        )
+                        assert self.magma(
+                            f"Discriminant({self._O_magma.name()}) eq {self.level*self.discriminant}*{ZZ_magma.name()}"
+                        )
                     else:
                         self._O_magma = self._Omax_magma
                 else:
                     self._O_magma = self.magma(
                         f"{info_magma._O_magma.name()} meet {intersection._O_magma.name()}"
                     )
-                    assert self.magma(f"{self._O_magma.name()} meet {intersection._O_magma.name()} eq {self._O_magma.name()}")
-                    assert self.magma(f"Discriminant({self._O_magma.name()}) eq {self.level*self.discriminant}*{ZZ_magma.name()}")
+                    assert self.magma(
+                        f"{self._O_magma.name()} meet {intersection._O_magma.name()} eq {self._O_magma.name()}"
+                    )
+                    assert self.magma(
+                        f"Discriminant({self._O_magma.name()}) eq {self.level*self.discriminant}*{ZZ_magma.name()}"
+                    )
             else:
                 self._O_magma = self.magma.Order([self._B_magma(o) for o in O_magma])
             if self._compute_presentation:
@@ -1149,9 +1162,7 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
             # QQ(sqrt(D)) into the order.
             K = QuadraticField(D, names="beta")
             w = K.maximal_order().ring_generators()[0]
-            x = self._QA.element_with_minpoly(
-                self._O_mat, w.trace(), w.norm()
-            )
+            x = self._QA.element_with_minpoly(self._O_mat, w.trace(), w.norm())
             r0, r1 = w.coordinates_in_terms_of_powers()(K.gen())
             return r0 + r1 * x
         QQmagma = self.magma.Rationals()
@@ -1230,8 +1241,8 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         eps0 = K.units()[0]
         # Distinguish between negative and positive norm fundamental units.
         if eps0.norm() != 1:
-            eps0 = eps0 ** 2
-        
+            eps0 = eps0**2
+
         eps = eps0
         while coords(eps)[1] % extra_conductor != 0:
             eps *= eps0
@@ -1274,7 +1285,13 @@ class ArithGroup_rationalquaternion(ArithGroup_fuchsian_generic):
         )
     )
     def element_of_norm(
-        self, N, use_magma=True, return_all=False, radius=-1, max_elements=-1, force_sign=None
+        self,
+        N,
+        use_magma=True,
+        return_all=False,
+        radius=-1,
+        max_elements=-1,
+        force_sign=None,
     ):  # in rationalquaternion
         N = ZZ(N)
         if force_sign is None:
@@ -1533,10 +1550,10 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
 
             self._debug_plot = hyperbolic_polygon(
                 [
-                    CC(-0.5, 10 ** 2),
+                    CC(-0.5, 10**2),
                     self.fundamental_domain()[1],
                     self.fundamental_domain()[2],
-                    CC(0.5, 10 ** 2),
+                    CC(0.5, 10**2),
                 ]
             )
         if v0 is None:
@@ -1816,7 +1833,13 @@ class ArithGroup_rationalmatrix(ArithGroup_matrix_generic):
         )
     )
     def element_of_norm(
-        self, N, use_magma=False, return_all=False, radius=None, max_elements=None, force_sign=None
+        self,
+        N,
+        use_magma=False,
+        return_all=False,
+        radius=None,
+        max_elements=None,
+        force_sign=None,
     ):  # in rationalmatrix
         candidate = self.B([N, 0, 0, 1])
         set_immutable(candidate)
@@ -1889,7 +1912,9 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         self.level = base.ideal(level)
         if self._backend == "pari":
             self._init_pari_objects(
-                info_magma, kwargs.pop("O_magma", None), kwargs.pop("intersection", None)
+                info_magma,
+                kwargs.pop("O_magma", None),
+                kwargs.pop("intersection", None),
             )
         else:
             self._init_magma_objects(info_magma)
@@ -1952,7 +1977,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 self._F_magma, self.b
             )
             self._B_magma = self.magma.QuaternionAlgebra(FF_magma, am, bm)
-            if False: # isinstance(self, ArithGroup_matrix_generic):
+            if False:  # isinstance(self, ArithGroup_matrix_generic):
                 i, j = self._B_magma.gen(1), self._B_magma.gen(2)
                 k = i * j
                 on = self._B_magma.One()
@@ -1968,7 +1993,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 # self._Omax_magma = self.magma.Order(Omaxbasis)
                 self._Omax_magma = self._B_magma.MaximalOrder()
             if self.level != self.F.ideal(1):
-                if False: #isinstance(self, ArithGroup_matrix_generic):
+                if False:  # isinstance(self, ArithGroup_matrix_generic):
                     i, j = self._B_magma.gen(1), self._B_magma.gen(2)
                     k = i * j
                     Pgen = sage_F_elt_to_magma(
@@ -1991,7 +2016,7 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             self._B_magma = info_magma._B_magma
             self._Omax_magma = info_magma._Omax_magma
             if self.level != self.F.ideal(1):
-                if False: # isinstance(self, ArithGroup_matrix_generic):
+                if False:  # isinstance(self, ArithGroup_matrix_generic):
                     i, j = self._B_magma.gen(1), self._B_magma.gen(2)
                     k = i * j
                     Pgen = sage_F_elt_to_magma(
@@ -2004,7 +2029,9 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 else:
                     if intersection is None:
                         # We compute the missing level and the intersection order
-                        missing_level = sage_F_ideal_to_magma(self._F_magma, self.level / info_magma.level)
+                        missing_level = sage_F_ideal_to_magma(
+                            self._F_magma, self.level / info_magma.level
+                        )
                         missing_order = info_magma._Omax_magma.Order(missing_level)
 
                         self._O_magma = self.magma(
@@ -2014,8 +2041,12 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                         self._O_magma = self.magma(
                             f"{info_magma._O_magma.name()} meet {intersection._O_magma.name()}"
                         )
-                        assert self.magma(f"{self._O_magma.name()} meet {intersection._O_magma.name()} eq {self._O_magma.name()}")
-                        assert self.magma(f"{sage_F_ideal_to_magma(self._F_magma, self.level)} eq Discriminant({self._O_magma.name()})")
+                        assert self.magma(
+                            f"{self._O_magma.name()} meet {intersection._O_magma.name()} eq {self._O_magma.name()}"
+                        )
+                        assert self.magma(
+                            f"{sage_F_ideal_to_magma(self._F_magma, self.level)} eq Discriminant({self._O_magma.name()})"
+                        )
             else:
                 self._O_magma = self._Omax_magma
             try:
@@ -2049,13 +2080,17 @@ class ArithGroup_nf_generic(ArithGroup_generic):
                 s0 = res
                 break
         if s0 is None:
-            raise ValueError("The quadratic order does not embed in the Eichler order (Heegner condition)")
+            raise ValueError(
+                "The quadratic order does not embed in the Eichler order (Heegner condition)"
+            )
         A, Bm, Cm, D = s0, (s0 * (t - s0) - n) / g, g, t - s0
         # Matrix units of B = (1, 1) as in _get_O_basis: e11 = (1+i)/2,
         # e12 = (j+k)/2, e21 = (j-k)/2, e22 = (1-i)/2
         x = self.B([(A + D) / 2, (A - D) / 2, (Bm + Cm) / 2, (Bm - Cm) / 2])
         if not self._is_in_order(x):
-            raise RuntimeError("Could not embed the quadratic order in the matrix order")
+            raise RuntimeError(
+                "Could not embed the quadratic order in the matrix order"
+            )
         return x
 
     def _quaternion_to_list(self, x):
@@ -2191,9 +2226,9 @@ class ArithGroup_nf_generic(ArithGroup_generic):
             and K.gen(0).norm(K.base_ring()) == mu.reduced_norm()
         )
 
-        #found = False
+        # found = False
         coords = lambda x: K(x).list()  # K.gen().coordinates_in_terms_of_powers()
-        #phi = K.hom([mu, self.B(self.F.gen())], check=False)
+        # phi = K.hom([mu, self.B(self.F.gen())], check=False)
         u0 = find_the_unit_of(self.F, K)
         assert u0.is_integral() and (1 / u0).is_integral()
         u = u0
@@ -2283,7 +2318,13 @@ class ArithGroup_nf_generic(ArithGroup_generic):
         )
     )
     def element_of_norm(
-        self, N, use_magma=True, return_all=False, radius=-1, max_elements=-1, force_sign=None
+        self,
+        N,
+        use_magma=True,
+        return_all=False,
+        radius=-1,
+        max_elements=-1,
+        force_sign=None,
     ):  # in nf_generic
         Nideal = self.F.ideal(N)
         try:
@@ -2761,12 +2802,17 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             else:
                 Mmat = matrix(
                     QQ,
-                    [[u for o in x.coefficient_tuple() for u in o.list()] for x in basis_max],
+                    [
+                        [u for o in x.coefficient_tuple() for u in o.list()]
+                        for x in basis_max
+                    ],
                 ).transpose()
                 Mmatinv = Mmat.inverse()
 
                 def in_max(x):
-                    v = Mmatinv * vector(QQ, [u for o in x.coefficient_tuple() for u in o.list()])
+                    v = Mmatinv * vector(
+                        QQ, [u for o in x.coefficient_tuple() for u in o.list()]
+                    )
                     return all(c in ZZ for c in v)
 
                 maximal = KleinianOrderData(B, basis_max, in_max, center=center)
@@ -2824,7 +2870,11 @@ class ArithGroup_nf_kleinian(ArithGroup_nf_generic):
             return self._HH([RR(o) for o in q])
 
         self._fundom_data = [
-            (toHH(f.center), RR(f.radius), Matrix(self._HH, 2, 2, [toHH(o) for o in f.matrix]))
+            (
+                toHH(f.center),
+                RR(f.radius),
+                Matrix(self._HH, 2, 2, [toHH(o) for o in f.matrix]),
+            )
             for f in faces
         ]
         self._kleinian_result = res
@@ -3300,7 +3350,13 @@ class ArithGroup_nf_matrix(ArithGroup_nf_kleinian, ArithGroup_matrix_generic):
         )
     )
     def element_of_norm(
-        self, N, use_magma=False, return_all=False, radius=None, max_elements=None, force_sign=None
+        self,
+        N,
+        use_magma=False,
+        return_all=False,
+        radius=None,
+        max_elements=None,
+        force_sign=None,
     ):  # in nf_matrix
         mat = matrix(2, 2, [self.F.ideal(N).gens_reduced()[0], 0, 0, 1])
         candidate = self.matrix_to_quaternion(mat)

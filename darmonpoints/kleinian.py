@@ -47,11 +47,11 @@ at the two primes above `2`::
 """
 
 import random as _pyrandom
-from math import floor, log as _flog
+from math import floor
+from math import log as _flog
 
 import gmpy2
 from gmpy2 import mpc, mpfr
-
 from sage.misc.prandom import randint as _sage_randint
 from sage.misc.verbose import verbose
 from sage.rings.integer_ring import ZZ
@@ -274,7 +274,9 @@ def angle_in_plane(ctx, x, e1, e2):
 def point_in_circle(C, theta):
     return qadd(
         C.center,
-        qscal(C.radius, qadd(qscal(gmpy2.cos(theta), C.e1), qscal(gmpy2.sin(theta), C.e2))),
+        qscal(
+            C.radius, qadd(qscal(gmpy2.cos(theta), C.e1), qscal(gmpy2.sin(theta), C.e2))
+        ),
     )
 
 
@@ -335,10 +337,10 @@ def spheres_intersection(ctx, S1, S2):
 
 
 def points_to_sphere(x, y, z):
-    a = (y[0] - x[0])
-    b = (y[1] - x[1])
-    c = (z[0] - x[0])
-    d = (z[1] - x[1])
+    a = y[0] - x[0]
+    b = y[1] - x[1]
+    c = z[0] - x[0]
+    d = z[1] - x[1]
     alpha = (sqrnorm(y) - sqrnorm(x)) / 2
     beta = (sqrnorm(z) - sqrnorm(x)) / 2
     D = a * d - b * c
@@ -374,7 +376,10 @@ def perturbated_btoh(w):
 
 
 def same_sphere(S1, S2, eps):
-    return sqrnorm(qsub(S1.center, S2.center)) < eps**2 and abs(S1.radius - S2.radius) < eps
+    return (
+        sqrnorm(qsub(S1.center, S2.center)) < eps**2
+        and abs(S1.radius - S2.radius) < eps
+    )
 
 
 def same_circle(C1, C2, eps):
@@ -497,7 +502,9 @@ def cut_interval(ctx, C, S, interior):
     if n > 2:
         return [mpfr(0), pi2]
     if n <= 1:
-        ptci = qadd(CCenter, qscal(R2, qadd(qscal(mpfr(3) / 5, Ce1), qscal(mpfr(4) / 5, Ce2))))
+        ptci = qadd(
+            CCenter, qscal(R2, qadd(qscal(mpfr(3) / 5, Ce1), qscal(mpfr(4) / 5, Ce2)))
+        )
         ok = is_interior(ptci, S, eps12) if interior else is_exterior(ptci, S, eps12)
         return [mpfr(0), pi2] if ok else []
     a1, a2 = angles
@@ -656,7 +663,11 @@ def lobachevsky(ctx, x, zetas):
     quo = x / pi
     quo2 = quo * quo
     logquo = gmpy2.log10(1 / quo2)
-    N = int(gmpy2.floor((ctx.pr + gmpy2.log10(mpfr(2) / 3) - gmpy2.log10(1 - quo2)) / logquo))
+    N = int(
+        gmpy2.floor(
+            (ctx.pr + gmpy2.log10(mpfr(2) / 3) - gmpy2.log10(1 - quo2)) / logquo
+        )
+    )
     N = min(max(N, 0), len(zetas))
     value = mpfr(0)
     for n in range(N, 0, -1):
@@ -823,7 +834,9 @@ class KleinianOrderData:
       part on the generator of ``F``)
     """
 
-    def __init__(self, B, basis, contains, maximal=None, center=None, vC=None, discriminant=None):
+    def __init__(
+        self, B, basis, contains, maximal=None, center=None, vC=None, discriminant=None
+    ):
         self.B = B
         self.F = B.base_ring()
         self.basis = list(basis)
@@ -883,7 +896,10 @@ class _Embedding:
         self.sa = self._c(sa)
         self.bb = self._c(bb)
         self.bsa = self.bb * self.sa
-        x, y, t = (ctx.R(c) for c in [QQ(data.center[0]), QQ(data.center[1]), QQ(data.center[2])])
+        x, y, t = (
+            ctx.R(c)
+            for c in [QQ(data.center[0]), QQ(data.center[1]), QQ(data.center[2])]
+        )
         aa = mpc(x, y)
         st = gmpy2.sqrt(t)
         self.P = (mpc(st), aa / st, mpc(0), mpc(1 / st))
@@ -901,7 +917,12 @@ class _Embedding:
     def complex_matrix(self, x, normalize):
         c = [self._cf(o) for o in x.coefficient_tuple()]
         x1, x2, x3, x4 = c
-        M = (x1 + x2 * self.sa, x3 + x4 * self.sa, x3 * self.bb - x4 * self.bsa, x1 - x2 * self.sa)
+        M = (
+            x1 + x2 * self.sa,
+            x3 + x4 * self.sa,
+            x3 * self.bb - x4 * self.bsa,
+            x1 - x2 * self.sa,
+        )
         m = _cmul(_cmul(self.Pinv, M), self.P)
         if normalize and x.reduced_norm() != 1:
             det = m[0] * m[3] - m[1] * m[2]
@@ -1220,9 +1241,13 @@ def _check_pairing(ctx, emb, G, F, FE, IE, check_time):
             for f in sorted(e[2]):
                 if f < len(F):
                     gamma = F[f].g
-                    if not is_in_exterior_domain(action(ctx, F[f].matrix, z1), F, ctx.eps110):
+                    if not is_in_exterior_domain(
+                        action(ctx, F[f].matrix, z1), F, ctx.eps110
+                    ):
                         allpaired = False
-                        _, delta, _, _ = reduce_element(ctx, emb, gamma, F, z=z1, word=False)
+                        _, delta, _, _ = reduce_element(
+                            ctx, emb, gamma, F, z=z1, word=False
+                        )
                         gamma = delta * gamma
                         if not _isscalar(gamma):
                             _add_nb(ctx, emb, gamma, F, FE, IE, G)
@@ -1300,7 +1325,9 @@ def normalized_basis(
     from sage.misc.timing import walltime
 
     if grouptype not in ("NormOne", "Units"):
-        raise NotImplementedError("Only the NormOne and Units group types are implemented")
+        raise NotImplementedError(
+            "Only the NormOne and Units group types are implemented"
+        )
     gtype = 1 if grouptype == "NormOne" else 2
     if pr_zetas is None:
         pr_zetas = pr
@@ -1331,7 +1358,9 @@ def normalized_basis(
         )
         LG = [f.g for f in resmax["faces"]]
         index, _, genes = _my_index(LG, data.contains, B)
-        verbose("Subgroup has index %s, %s generators found" % (index, len(genes)), level=1)
+        verbose(
+            "Subgroup has index %s, %s generators found" % (index, len(genes)), level=1
+        )
         initial_gens += genes
         nb_enum = 1
     emb = _Embedding(ctx, data)
@@ -1399,7 +1428,9 @@ def normalized_basis(
                     enumcenter = action(ctx, hx, enumcenter)
                 else:
                     enumcenter = _random_hyperbolic_ball(ctx, rng, radenum)
-                Gram = _definite_gram(ctx, emb, data, basis, enumcenter, 4 * factor, balance)
+                Gram = _definite_gram(
+                    ctx, emb, data, basis, enumcenter, 4 * factor, balance
+                )
                 st.partialgpelt = 0
                 _enumerate_ball(st, basis, Gram, allowsq)
                 newelts += st.partialgpelt
@@ -1418,7 +1449,14 @@ def normalized_basis(
                     c = ieg.coefficient_tuple()
                     x, y = c[0], c[2] - c[3]
                     for om in [K.one(), omega]:
-                        gamma = B([1, x * y * om, (y**2 - x**2) * om / 2, (x**2 + y**2) * om / 2])
+                        gamma = B(
+                            [
+                                1,
+                                x * y * om,
+                                (y**2 - x**2) * om / 2,
+                                (x**2 + y**2) * om / 2,
+                            ]
+                        )
                         enum.append(gamma)
                         _add_nb(ctx, emb, gamma, F, FE, IE, G)
             for gamma in enum:
@@ -1461,7 +1499,9 @@ def normalized_basis(
             level=1,
         )
         if 0 < Vol < Covol * mpfr(9999) / 10000:
-            verbose("Error in the computation, rebuilding the exterior domain.", level=1)
+            verbose(
+                "Error in the computation, rebuilding the exterior domain.", level=1
+            )
             F2, FE2, IE2 = exterior_domain(ctx, list(F))
             F[:], FE[:], IE[:] = F2, FE2, IE2
             allpaired = False
@@ -1575,7 +1615,11 @@ def presentation(faces, finite_edges, data=None, ctx=None, emb=None):
     i = 0
     while i < nf:
         grp = [order_[i]]
-        while i + 1 < nf and abs(sqrnorm(F[order_[i]].center) - sqrnorm(F[order_[i + 1]].center)) <= eps:
+        while (
+            i + 1 < nf
+            and abs(sqrnorm(F[order_[i]].center) - sqrnorm(F[order_[i + 1]].center))
+            <= eps
+        ):
             i += 1
             grp.append(order_[i])
         groups.append(grp)
@@ -1625,10 +1669,13 @@ def simplify_presentation(ngens, rels):
         for g in Ggens
     ]
     preimages = [
-        [ZZ(o) for o in iso.PreImagesRepresentative(h).UnderlyingElement().LetterRepAssocWord()]
+        [
+            ZZ(o)
+            for o in iso.PreImagesRepresentative(h)
+            .UnderlyingElement()
+            .LetterRepAssocWord()
+        ]
         for h in Hgens
     ]
-    new_rels = [
-        [ZZ(o) for o in r.LetterRepAssocWord()] for r in H.RelatorsOfFpGroup()
-    ]
+    new_rels = [[ZZ(o) for o in r.LetterRepAssocWord()] for r in H.RelatorsOfFpGroup()]
     return new_rels, images, preimages

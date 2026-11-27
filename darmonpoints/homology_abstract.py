@@ -22,8 +22,8 @@ from sage.structure.parent import Parent
 from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
 
-from .representations import *
 from .divisors import *
+from .representations import *
 from .util import *
 
 
@@ -414,9 +414,7 @@ class ArithHomology(HomologyGroup):
                     if a == 0:
                         continue
                     # t_i * gamma = delta * t_j, with delta in the small group
-                    delta = hecke_group(
-                        G.get_coset_ti(set_immutable(ti * gamma_q))[0]
-                    )
+                    delta = hecke_group(G.get_coset_ti(set_immutable(ti * gamma_q))[0])
                     for g in hecke_reps:
                         tg = hecke_group.get_hecke_ti(g, delta, l, use_magma)
                         w = g.conjugate() * a

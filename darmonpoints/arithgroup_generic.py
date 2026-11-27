@@ -18,28 +18,26 @@ from sage.matrix.constructor import Matrix
 from sage.matrix.constructor import Matrix as matrix
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.cachefunc import cached_method
-from sage.misc.timing import walltime
 from sage.misc.misc_c import prod
 from sage.misc.persist import db
 from sage.misc.sage_eval import sage_eval
+from sage.misc.timing import walltime
 from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.modular.arithgroup.congroup_sl2z import SL2Z
 from sage.modular.modsym.p1list import P1List, lift_to_sl2z
-from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.fg_pid.fgp_module import FGP_Module
 from sage.modules.free_module import FreeModule_generic
-from sage.rings.qqbar import AA
-from sage.rings.rational_field import Q as QQ
-from sage.rings.real_mpfr import RR
+from sage.modules.free_module_element import free_module_element as vector
+from sage.rings.complex_mpfr import ComplexField
+from sage.rings.infinity import Infinity
 from sage.rings.integer import Integer
 from sage.rings.integer_ring import Z as ZZ
-from sage.rings.complex_mpfr import ComplexField
-from sage.rings.number_field.number_field import NumberField
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.rings.number_field.number_field import QuadraticField
-from sage.rings.real_mpfr import RealField
-from sage.rings.infinity import Infinity
+from sage.rings.number_field.number_field import NumberField, QuadraticField
 from sage.rings.padics.factory import Qp
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.qqbar import AA
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR, RealField
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.sage_object import SageObject, load, save
 from sage.structure.unique_representation import UniqueRepresentation
@@ -87,9 +85,13 @@ class ArithGroup_generic(AlgebraicGroup):
             self._O_mat = QA.intersect_orders(info._O_mat, intersection._O_mat)
         elif info is not None and getattr(info, "_O_mat", None) is not None:
             if self.F is QQ:
-                missing, divides = self.level // info.level, info.level.divides(self.level)
+                missing, divides = self.level // info.level, info.level.divides(
+                    self.level
+                )
             else:
-                missing, divides = self.level / info.level, info.level.divides(self.level)
+                missing, divides = self.level / info.level, info.level.divides(
+                    self.level
+                )
             if divides:
                 self._O_mat = QA.intersect_orders(
                     info._O_mat, QA.eichler_order_matrix(missing)
@@ -405,7 +407,13 @@ class ArithGroup_generic(AlgebraicGroup):
         max_length = kwargs.get("max_length", None)
         if random:
             my_iter = (
-                [ZZ.random_element(ngens) for _ in range(1+ZZ.random_element(10, distribution='gaussian').abs())] for _ in ZZ
+                [
+                    ZZ.random_element(ngens)
+                    for _ in range(
+                        1 + ZZ.random_element(10, distribution="gaussian").abs()
+                    )
+                ]
+                for _ in ZZ
             )
         else:
             my_iter = enumerate_words(range(ngens))
@@ -565,11 +573,11 @@ class ArithGroup_generic(AlgebraicGroup):
         return wd
 
     def _calculate_relation(self, wt, separated=False):
-        r'''
+        r"""
         Given a weight vector wt, write it as a linear combination of the relation words,
         and return the corresponding linear combination of the relation words, either as a list of words (if separated=True)
         or as a single word (if separated=False).
-        '''
+        """
         relmat = self.get_relation_matrix()
         relwords = self.get_relation_words()
         num_rels = len(relwords)
@@ -658,13 +666,13 @@ class ArithGroup_generic(AlgebraicGroup):
         while len(oldword) > 0:
             g0 = oldword[0]
             idx = oldword.index(-g0)
-            w0 = oldword[1 : idx]
+            w0 = oldword[1:idx]
             g = oldword[idx]
             w1 = oldword[idx + 1 :]
             w0q = self._element_constructor_(w0).quaternion_rep
             gq = self._element_constructor_([g]).quaternion_rep
             if w0q * gq != gq * w0q:
-                verbose('Found commutator: %s, %s' % (w0, [g]))
+                verbose("Found commutator: %s, %s" % (w0, [g]))
                 commutator_list.append((self([g]), self(w0)))
             oldword = w0 + w1
         return commutator_list
@@ -685,10 +693,13 @@ class ArithGroup_generic(AlgebraicGroup):
         gprime = self(gprimeq)
         gword = tietze_to_syllables(gprime.word_rep)
         rels = self._calculate_relation(
-            get_weight_vector(npow * gprime.word_rep, ngens=len(self.gens())), separated=True
+            get_weight_vector(npow * gprime.word_rep, ngens=len(self.gens())),
+            separated=True,
         )
         # If npow > 1 then add the boundary relating self^npow with npow*self
-        ans = [(-1, [gprimeq**j for j in range(1, npow)], gprimeq)] if npow > 1 else []
+        ans = (
+            [(-1, [gprimeq**j for j in range(1, npow)], gprimeq)] if npow > 1 else []
+        )
 
         num_terms = len(gword)
         jj = 0
@@ -700,7 +711,15 @@ class ArithGroup_generic(AlgebraicGroup):
             gaq = gq**a
             # Add the boundary relating g^a*gprime with g^a + gprime
             if jj < num_terms:
-                ans.extend([(-npow, [gaq], self(syllables_to_tietze(gword[jj:])).quaternion_rep)])
+                ans.extend(
+                    [
+                        (
+                            -npow,
+                            [gaq],
+                            self(syllables_to_tietze(gword[jj:])).quaternion_rep,
+                        )
+                    ]
+                )
             # If a < 0 use the relation g^a = -g^(-a) + del(g^a|g^(-a)) + del(1|1)
             if a < 0:
                 ans.extend([(npow, [gaq**-1], gaq)])
@@ -727,7 +746,17 @@ class ArithGroup_generic(AlgebraicGroup):
                 gaq = gq**a
                 # add the boundary relating g and g'
                 if jj < num_terms:
-                    ans.extend([(-m, [gaq], self(syllables_to_tietze(rel_syllables[jj:])).quaternion_rep)])
+                    ans.extend(
+                        [
+                            (
+                                -m,
+                                [gaq],
+                                self(
+                                    syllables_to_tietze(rel_syllables[jj:])
+                                ).quaternion_rep,
+                            )
+                        ]
+                    )
                 # If a < 0 use the relation g^a = -g^(-a) + del(g^a|g^(-a))
                 ans.extend([(m, [gaq**-1], gaq)] if a < 0 else [])
                 # add the boundaries of g^abs(a)
@@ -742,7 +771,7 @@ class ArithGroup_generic(AlgebraicGroup):
             for g1 in g1list:
                 if self(g1).quaternion_rep == 1:
                     check += i
-                if (self(g1)*self(g2)).quaternion_rep == 1:
+                if (self(g1) * self(g2)).quaternion_rep == 1:
                     check -= i
                 if self(g2).quaternion_rep == 1:
                     check += i

@@ -11,9 +11,9 @@ from sage.misc.cachefunc import cached_method
 from sage.misc.latex import latex
 from sage.misc.verbose import verbose
 from sage.modules.module import Module
-from sage.rings.integer_ring import Z as ZZ
-from sage.rings.integer_ring import IntegerRing
 from sage.rings.infinity import Infinity
+from sage.rings.integer_ring import IntegerRing
+from sage.rings.integer_ring import Z as ZZ
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.sets.set import Set
 from sage.structure.element import Element, ModuleElement
@@ -46,8 +46,9 @@ def eval_rat(D, z):
         else:
             ans *= zP**n
     if fails != 0:
-        warn('Fails in eval_rat: %s' % fails)
+        warn("Fails in eval_rat: %s" % fails)
     return ans
+
 
 def pair_divisors(D1, D2):
     ans = 1
@@ -58,9 +59,10 @@ def pair_divisors(D1, D2):
             b = P - Q
             if b == 0:
                 continue
-            ans *= b**(m*n)
+            ans *= b ** (m * n)
     return ans
- 
+
+
 def eval_rat_dlog(D, z):
     ans = 0
     fails = 0
@@ -74,8 +76,9 @@ def eval_rat_dlog(D, z):
             zPinv = ~zP
             ans += ZZ(n) * zPinv
     if fails != 0:
-        warn('Fails in eval_rat_dlog: %s' % fails)
+        warn("Fails in eval_rat_dlog: %s" % fails)
     return ans
+
 
 def eval_rat_derivative(D, z, return_value=False):
     ans = 0
@@ -89,12 +92,12 @@ def eval_rat_derivative(D, z, return_value=False):
             fails += n
         else:
             zPinv = ~zP
-            zPn = zP**ZZ(n) if n > 0 else zPinv**ZZ(-n)
+            zPn = zP ** ZZ(n) if n > 0 else zPinv ** ZZ(-n)
             ans0 *= zPn
             ans += ZZ(n) * zPinv
-        
+
     if fails != 0:
-        warn('Fails in eval_rat_derivative: %s' % fails)
+        warn("Fails in eval_rat_derivative: %s" % fails)
     if return_value:
         return ans0 * ans, ans0
     else:
@@ -168,22 +171,25 @@ class ThetaOC(SageObject):
         self.MM = MeromorphicFunctions(self.K, self.p, self.prec)
         params = G.parameters
         gens_ext = G.gens_extended()
-        
+
         # Corresponding to words of length exactly 1
-        D1dict = {i : g * D for i, g in gens_ext}
+        D1dict = {i: g * D for i, g in gens_ext}
 
         # Corresponding to words of length exactly 2
         verbose("Computing F2", level=2)
-        self.F2 = { i :
-            self.MM(sum(g * val for j, val in D1dict.items() if j != -i), tau)
-                for (i, g), tau in zip(gens_ext, params)}
+        self.F2 = {
+            i: self.MM(sum(g * val for j, val in D1dict.items() if j != -i), tau)
+            for (i, g), tau in zip(gens_ext, params)
+        }
         verbose("F2 computed", level=2)
-        
+
         # self.val will contain the 0, 1 terms
         self.val = sum(D1dict.values(), D)
-        initial_F = kwargs.get('initial_F', None)
+        initial_F = kwargs.get("initial_F", None)
         if initial_F is not None:
-            self.Fnlist = [{i : self.MM(initial_F[i], tau) for (i, _), tau in zip(gens_ext, params)}]
+            self.Fnlist = [
+                {i: self.MM(initial_F[i], tau) for (i, _), tau in zip(gens_ext, params)}
+            ]
         else:
             self.Fnlist = [deepcopy(self.F2)]
         # Last term of the list implementation (None means Fnlist[-1]). Since
@@ -216,7 +222,7 @@ class ThetaOC(SageObject):
         return action_data
 
     def improve(self, m, **kwargs):
-        r'''
+        r"""
         Perform (at most) m improvement steps.
 
         If ``tol`` is given, stop as soon as the last step changed the
@@ -224,18 +230,18 @@ class ThetaOC(SageObject):
         size of the change has not decreased for two steps in a row (which
         means that the working precision has been reached). The valuation of
         the last change is stored in ``self.last_change``.
-        '''
+        """
         gens_ext = self.G.gens_extended()
         params = self.G.parameters
-        implementation = kwargs.get('implementation', 'list')
-        tol = kwargs.get('tol', None)
-        if implementation not in ['list', 'fixedpoint']:
+        implementation = kwargs.get("implementation", "list")
+        tol = kwargs.get("tol", None)
+        if implementation not in ["list", "fixedpoint"]:
             raise ValueError("implementation must be 'list' or 'fixedpoint'")
         action_data = self._get_action_data()
         self.last_change = None
         best = None
         stalled = 0
-        if implementation == 'list' and self._last_term is not None:
+        if implementation == "list" and self._last_term is not None:
             source = self._last_term
         else:
             source = self.Fnlist[-1]
@@ -252,27 +258,36 @@ class ThetaOC(SageObject):
                             tmp[i] += vl
                         except KeyError:
                             tmp[i] = vl
-            
-            if implementation == 'list':
+
+            if implementation == "list":
                 # Append the new term
                 self.Fnlist.append(tmp)
                 source = tmp
                 if tol is not None:
                     # The new term is multiplicative, so its size is that of tmp - 1
-                    change = min(min([(o - 1).valuation() for o in F._value[:1]]
-                                     + [o.valuation() for o in F._value[1:]])
-                                 for F in tmp.values())
+                    change = min(
+                        min(
+                            [(o - 1).valuation() for o in F._value[:1]]
+                            + [o.valuation() for o in F._value[1:]]
+                        )
+                        for F in tmp.values()
+                    )
             else:
                 # Add the new term to F2:
                 verbose("Adding new term to F2", level=2)
-                new = {i : tmp[i] + self.F2[i] for i in tmp}
+                new = {i: tmp[i] + self.F2[i] for i in tmp}
                 if tol is not None:
                     old = self.Fnlist[-1]
-                    change = min(min((a - b).valuation() for a, b in zip(new[i]._value, old[i]._value))
-                                 for i in new)
+                    change = min(
+                        min(
+                            (a - b).valuation()
+                            for a, b in zip(new[i]._value, old[i]._value)
+                        )
+                        for i in new
+                    )
                 self.Fnlist = [new]
                 source = new
-                verbose('F2 updated', level=2)
+                verbose("F2 updated", level=2)
             if tol is not None:
                 if best is None or change > best:
                     best = change
@@ -283,7 +298,7 @@ class ThetaOC(SageObject):
                 if change >= tol or stalled >= 2:
                     break
 
-        self._last_term = source if implementation == 'list' else None
+        self._last_term = source if implementation == "list" else None
         # Collapse the list to one term and return
         if len(self.Fnlist) > 1:
             self.Fnlist = [
@@ -341,12 +356,12 @@ class ThetaOC(SageObject):
             z -= self.Div([(z.degree(), Infinity)])
         z = self.G.find_equivalent_divisor(z)
         ans0 = pair_divisors(self.val, z)
-        prec = kwargs.get('prec', None)
+        prec = kwargs.get("prec", None)
         ans1 = prod(F.evaluate(z, prec) for FF in self.Fnlist for F in FF.values())
         return ans0 * ans1
 
     def eval_derivative(self, z, return_value=False):
-        r'''
+        r"""
         EXAMPLES::
             sage: from darmonpoints.schottky import *
             sage: p = 3
@@ -360,7 +375,7 @@ class ThetaOC(SageObject):
             sage: theta.eval_derivative(13)
             2*3 + 3^2 + 3^5 + 3^6 + 2*3^7 + 2*3^8 + O(3^9)
 
-        '''
+        """
         dlog = self.eval_dlog(z)
         z0 = self.G.to_fundamental_domain(z)[0]
         value = self.evaluate(z0)
@@ -382,7 +397,9 @@ class ThetaOC(SageObject):
             fact = (a * d - b * c) * (c * z + d) ** -2
         else:
             fact = 1
-        valdlog = eval_rat_dlog(self.val, z0) # takes time
-        fdlog = sum((f.eval_dlog(z0) for FF in self.Fnlist for f in FF.values()), valdlog) # takes time
+        valdlog = eval_rat_dlog(self.val, z0)  # takes time
+        fdlog = sum(
+            (f.eval_dlog(z0) for FF in self.Fnlist for f in FF.values()), valdlog
+        )  # takes time
         ans = fact * fdlog
         return ans

@@ -1,4 +1,4 @@
-r'''
+r"""
 Additive version of ThetaOC.
 
 The multiplicative implementation (ThetaOC) represents the theta function on
@@ -25,14 +25,14 @@ logarithms. Altogether, a value of theta is obtained as
 where v and d (a residue field element) are computed multiplicatively and L
 additively. This needs exp and log to be inverse isomorphisms between the
 principal units and the maximal ideal, that is e < p - 1.
-'''
+"""
 from copy import copy
 
+from sage.functions.log import log
 from sage.matrix.constructor import Matrix, matrix
 from sage.misc.cachefunc import cached_function
 from sage.misc.lazy_attribute import lazy_attribute
 from sage.misc.misc_c import prod
-from sage.functions.log import log
 from sage.misc.verbose import verbose
 from sage.modules.free_module_element import free_module_element as vector
 from sage.rings.infinity import Infinity
@@ -51,18 +51,21 @@ except ImportError:  # the compiled extension is not available
 
 
 def _to_integer(x, pN):
-    r'''
+    r"""
     An integer congruent to the p-adic integer x modulo pN.
-    '''
+    """
     return ZZ(0) if x.is_zero() else ZZ(x.lift()) % pN
 
 
 def _reduce_columns(R, mods):
-    return [[int(R[b, k]) % int(mods[k]) for k in range(R.ncols())] for b in range(R.nrows())]
+    return [
+        [int(R[b, k]) % int(mods[k]) for k in range(R.ncols())]
+        for b in range(R.nrows())
+    ]
 
 
 def _coordinate_moebius_entries(Ra, Rb, Rc, P, mods):
-    r'''
+    r"""
     The nonzero entries (r, c, u) of the matrix whose row r contains the
     coefficients of zz^r, where zz = (b1 + a1 t) / (1 + c1 t) is a power series
     over the ring of integers O_K, given in coordinates: u is the list of
@@ -72,15 +75,16 @@ def _coordinate_moebius_entries(Ra, Rb, Rc, P, mods):
     b1 and c1, acting on row vectors of coordinates. The rows are computed with
     zz^r = zz^(r-1) * (b1 + a1 t) / (1 + c1 t), that is, the coefficients satisfy
     u_k = b1 w_k + a1 w_(k-1) - c1 u_(k-1).
-    '''
+    """
     from operator import mul
+
     d = len(mods)
     mods = [int(o) for o in mods]
     # Columns of the matrices, to compute the products with sum(map(mul, ...))
-    columns = lambda R : [[R[b][k] for b in range(d)] for k in range(d)]
+    columns = lambda R: [[R[b][k] for b in range(d)] for k in range(d)]
     Ca, Cb, Cc = columns(Ra), columns(Rb), columns(Rc)
     zero = [0] * d
-    w = [[1] + [0] * (d - 1)] + [zero] * (P - 1) # zz^0 = 1
+    w = [[1] + [0] * (d - 1)] + [zero] * (P - 1)  # zz^0 = 1
     entries = []
     for r in range(1, P):
         u = []
@@ -90,8 +94,15 @@ def _coordinate_moebius_entries(Ra, Rb, Rc, P, mods):
         for k in range(P):
             wk = w[k]
             if any(wk) or any(prev_w) or any(prev_u):
-                uk = [(sum(map(mul, wk, Cb[j])) + sum(map(mul, prev_w, Ca[j])) - sum(map(mul, prev_u, Cc[j]))) % mods[j]
-                      for j in range(d)]
+                uk = [
+                    (
+                        sum(map(mul, wk, Cb[j]))
+                        + sum(map(mul, prev_w, Ca[j]))
+                        - sum(map(mul, prev_u, Cc[j]))
+                    )
+                    % mods[j]
+                    for j in range(d)
+                ]
                 if any(uk):
                     nonzero = True
                     entries.append((r, k, uk))
@@ -101,17 +112,17 @@ def _coordinate_moebius_entries(Ra, Rb, Rc, P, mods):
             prev_w = wk
             prev_u = uk
         if not nonzero:
-            break # All the remaining powers vanish
+            break  # All the remaining powers vanish
         w = u
     return entries
 
 
 def _integer_moebius_matrix(a1, b1, c1, P, pN):
-    r'''
+    r"""
     The P x P integer matrix whose row r contains the coefficients of zz^r
     modulo pN, where zz = (b1 + a1 t) / (1 + c1 t) (as in
     MeromorphicFunctions._action_matrix_moebius, but with integers).
-    '''
+    """
     if moebius_moment_matrix is not None:
         return moebius_moment_matrix(a1, b1, c1, 1, pN, P)
     rows = [[1] + [0] * (P - 1)]
@@ -126,7 +137,7 @@ def _integer_moebius_matrix(a1, b1, c1, P, pN):
             prev_u = uk
             u.append(uk)
         if not any(u):
-            break # All the remaining powers vanish
+            break  # All the remaining powers vanish
         rows.append(u)
         w = u
     rows += [[0] * P for _ in range(P - len(rows))]
@@ -135,14 +146,14 @@ def _integer_moebius_matrix(a1, b1, c1, P, pN):
 
 def _check_integral(elements):
     if any(o.valuation() < 0 for o in elements if not o.is_zero()):
-        raise ValueError('Not integral')
+        raise ValueError("Not integral")
 
 
 def _coordinates(x, F):
-    r'''
+    r"""
     Coordinates of the integral element x of F in the basis given by
     _integral_basis(F).
-    '''
+    """
     if F.absolute_degree() == 1:
         return [ZZ(0) if x.is_zero() else ZZ(x.lift())]
     if x.is_zero():
@@ -151,10 +162,12 @@ def _coordinates(x, F):
         # Unramified extensions (FLINT): x = p^v * poly(g)
         poly, v = x._flint_rep_abs()
         if v < 0:
-            raise ValueError('Not integral')
+            raise ValueError("Not integral")
         coeffs = poly.list()
-        pv = ZZ(F.prime())**v
-        return [ZZ(c) * pv for c in coeffs] + [ZZ(0)] * (F.absolute_degree() - len(coeffs))
+        pv = ZZ(F.prime()) ** v
+        return [ZZ(c) * pv for c in coeffs] + [ZZ(0)] * (
+            F.absolute_degree() - len(coeffs)
+        )
     except AttributeError:
         pass
     B = F.base_ring()
@@ -169,11 +182,11 @@ def _coordinates(x, F):
 
 
 def _from_coordinates(c, F):
-    r'''
+    r"""
     Inverse of _coordinates. The element is built from its coefficients (and
     not as a linear combination of the basis), so that it has the best
     precision that F can represent.
-    '''
+    """
     if F.absolute_degree() == 1:
         return F(ZZ(c[0]))
     B = F.base_ring()
@@ -181,24 +194,31 @@ def _from_coordinates(c, F):
     k = len(c) // n
     gen = F.gen()
     # (F(list) loses precision for absolute Eisenstein extensions)
-    return sum((F(_from_coordinates(c[i * k : (i + 1) * k], B)) * gen**i for i in range(n)), F(0))
+    return sum(
+        (F(_from_coordinates(c[i * k : (i + 1) * k], B)) * gen**i for i in range(n)),
+        F(0),
+    )
 
 
 def _integral_basis(F):
-    r'''
+    r"""
     A Z_p-basis of the ring of integers of F: the products gen^i * b, where
     gen is the generator of F over its base ring and b runs over the basis of
     the base ring. For an Eisenstein extension of an unramified extension, it
     is (pi^i * g^j).
-    '''
+    """
     if F.absolute_degree() == 1:
         return [F(1)]
     gen = F.gen()
-    return [gen**i * F(b) for i in range(F.relative_degree()) for b in _integral_basis(F.base_ring())]
+    return [
+        gen**i * F(b)
+        for i in range(F.relative_degree())
+        for b in _integral_basis(F.base_ring())
+    ]
 
 
 class _IntegerOperator(SageObject):
-    r'''
+    r"""
     The linear map v |-> v * A on row vectors of integers (given as lists),
     for an integer matrix A whose column c is only needed modulo p^exps[c].
 
@@ -221,13 +241,14 @@ class _IntegerOperator(SageObject):
       mu + beta >= M). Integers modulo p^N cannot take advantage of the
       valuations of their entries by themselves, but this way the products
       only involve their significant digits.
-    '''
-    def __init__(self, A, p, exps, d, mode='auto', nbands=8, size=None):
-        r'''
+    """
+
+    def __init__(self, A, p, exps, d, mode="auto", nbands=8, size=None):
+        r"""
         A is either an integer matrix or a dictionary {(r, c) : A[r, c]} of
         its nonzero entries, in which case size = (number of rows, number of
         columns).
-        '''
+        """
         if isinstance(A, dict):
             self._entries = A
             self._matrix = None
@@ -238,7 +259,7 @@ class _IntegerOperator(SageObject):
             self.nrows, self.ncols = A.nrows(), A.ncols()
         self.p = ZZ(p)
         self.exps = list(exps)
-        if mode == 'auto':
+        if mode == "auto":
             # In our tests (theta functions with series length 120 and 200),
             # FLINT was the fastest for Qp and the sparse products for all the
             # extensions, also when A is not very sparse. The banded products
@@ -246,16 +267,16 @@ class _IntegerOperator(SageObject):
             # still slower than the sparse ones: the cost of Sage's products of
             # integer vectors and matrices per entry depends little on the
             # size of the entries.
-            mode = 'dense' if d == 1 else 'sparse'
+            mode = "dense" if d == 1 else "sparse"
         self.mode = mode
-        self.sparse = (mode == 'sparse')
-        if mode == 'sparse':
+        self.sparse = mode == "sparse"
+        if mode == "sparse":
             cols = [([], []) for _ in range(self.ncols)]
-            for (r, c), a in sorted(self.entries.items(), key=lambda o : o[0][::-1]):
+            for (r, c), a in sorted(self.entries.items(), key=lambda o: o[0][::-1]):
                 cols[c][0].append(r)
                 cols[c][1].append(int(a))
             self.cols = cols
-        elif mode == 'banded':
+        elif mode == "banded":
             self._init_bands(nbands)
 
     @lazy_attribute
@@ -284,20 +305,24 @@ class _IntegerOperator(SageObject):
             rowval[r] = min(rowval[r], v)
             colval[c] = min(colval[c], v)
         width = max(1, -((-Mmax) // nbands))
-        rowband = {r : v // width for r, v in enumerate(rowval) if v is not Infinity}
-        colband = {c : v // width for c, v in enumerate(colval) if v is not Infinity}
+        rowband = {r: v // width for r, v in enumerate(rowval) if v is not Infinity}
+        colband = {c: v // width for c, v in enumerate(colval) if v is not Infinity}
         self.row_bands = {}
         for r, k in sorted(rowband.items()):
             self.row_bands.setdefault(k, []).append(r)
         self.col_bands = {}
         for c, l in sorted(colband.items()):
             self.col_bands.setdefault(l, []).append(c)
-        rowpos = {r : i for rows in self.row_bands.values() for i, r in enumerate(rows)}
-        colpos = {c : j for cols in self.col_bands.values() for j, c in enumerate(cols)}
+        rowpos = {r: i for rows in self.row_bands.values() for i, r in enumerate(rows)}
+        colpos = {c: j for cols in self.col_bands.values() for j, c in enumerate(cols)}
         block_entries = {}
         for (r, c), v in vals.items():
-            block_entries.setdefault((rowband[r], colband[c]), []).append((rowpos[r], colpos[c], r, c, v))
-        self.col_exps = {l : max(exps[c] for c in cols) for l, cols in self.col_bands.items()}
+            block_entries.setdefault((rowband[r], colband[c]), []).append(
+                (rowpos[r], colpos[c], r, c, v)
+            )
+        self.col_exps = {
+            l: max(exps[c] for c in cols) for l, cols in self.col_bands.items()
+        }
         self.blocks = []
         for (k, l), ents in sorted(block_entries.items()):
             mu = min(o[4] for o in ents)
@@ -305,15 +330,21 @@ class _IntegerOperator(SageObject):
             if mu >= M:
                 continue
             pmu = p**mu
-            mod = p**(M - mu)
-            B = matrix(ZZ, len(self.row_bands[k]), len(self.col_bands[l]),
-                       {(i, j) : (ZZ(entries[r, c]) // pmu) % mod for i, j, r, c, _ in ents})
+            mod = p ** (M - mu)
+            B = matrix(
+                ZZ,
+                len(self.row_bands[k]),
+                len(self.col_bands[l]),
+                {(i, j): (ZZ(entries[r, c]) // pmu) % mod for i, j, r, c, _ in ents},
+            )
             self.blocks.append((k, l, mu, M, B))
 
     def apply(self, v):
-        if self.mode == 'sparse':
-            return [sum([v[r] * a for r, a in zip(rows, vals)]) for rows, vals in self.cols]
-        if self.mode == 'dense':
+        if self.mode == "sparse":
+            return [
+                sum([v[r] * a for r, a in zip(rows, vals)]) for rows, vals in self.cols
+            ]
+        if self.mode == "dense":
             return [int(o) for o in vector(ZZ, v) * self.A]
         p = self.p
         # The parts of v in each row band, divided by the power of p of their valuation
@@ -335,7 +366,7 @@ class _IntegerOperator(SageObject):
             s = beta + mu
             if s >= M:
                 continue
-            mod = p**(M - s)
+            mod = p ** (M - s)
             prod = vector(ZZ, [o % mod for o in w]) * B
             ps = p**s
             try:
@@ -350,12 +381,13 @@ class _IntegerOperator(SageObject):
 
 
 class _PrecisionTracker(SageObject):
-    r'''
+    r"""
     The data needed to keep track of the precision of the coefficients in
     _improve_integral: the nonzero entries of the action matrices, with their
     valuations and precisions. They are only computed when needed (when some
     input is not known to the full precision).
-    '''
+    """
+
     def __init__(self, blocks, O, N, min_input_prec):
         # blocks: list of (row offset, column offset, {(r, c) : entry}, precision),
         # where the entries are integers (d = 1) or lists of coordinates
@@ -367,6 +399,7 @@ class _PrecisionTracker(SageObject):
     @lazy_attribute
     def arrays(self):
         import numpy as np
+
         O, N = self._O, self._N
         p, e = O.p, int(O.e)
         src, dst, vals, precs = [], [], [], []
@@ -377,23 +410,35 @@ class _PrecisionTracker(SageObject):
             src.append(positions[:, 0] + r0)
             dst.append(positions[:, 1] + c0)
             if O.d == 1:
-                vals.append(np.array([e * int(ZZ(x).valuation(p)) for x in entries.values()], dtype=np.int64))
+                vals.append(
+                    np.array(
+                        [e * int(ZZ(x).valuation(p)) for x in entries.values()],
+                        dtype=np.int64,
+                    )
+                )
             else:
-                vals.append(np.array(O.element_valuations([c for u in entries.values() for c in u], N), dtype=np.int64))
+                vals.append(
+                    np.array(
+                        O.element_valuations(
+                            [c for u in entries.values() for c in u], N
+                        ),
+                        dtype=np.int64,
+                    )
+                )
             precs.append(np.full(len(entries), int(prec), dtype=np.int64))
         if not src:
             empty = np.zeros(0, dtype=np.int64)
             return empty, empty, empty, empty, empty, empty
         src, dst, vals, precs = [np.concatenate(o) for o in (src, dst, vals, precs)]
         # Sort by target, for np.minimum.reduceat
-        order = np.argsort(dst, kind='stable')
+        order = np.argsort(dst, kind="stable")
         src, dst, vals, precs = src[order], dst[order], vals[order], precs[order]
         targets, starts = np.unique(dst, return_index=True)
         return src, dst, vals, precs, targets, starts
 
 
 class _OKCoordinates(SageObject):
-    r'''
+    r"""
     Coordinates of the elements of the ring of integers O_K of a p-adic field
     K in a Z_p-basis.
 
@@ -401,7 +446,8 @@ class _OKCoordinates(SageObject):
     pi^N O_K are those whose coordinate (i, j) is divisible by
     p^ceil((N - i) / e). Since all the maps that we use are O_K-linear, we can
     reduce each coordinate modulo its own power of p without losing anything.
-    '''
+    """
+
     def __init__(self, K):
         self.K = K
         self.p = ZZ(K.prime())
@@ -413,8 +459,11 @@ class _OKCoordinates(SageObject):
         # in the last digits when the absolute precision of x is larger than
         # the precision cap (as happens for elements of positive valuation).
         # So in that case we compute everything from the Eisenstein polynomial.
-        self._absolute_eisenstein = (K.absolute_degree() > 1 and self.e > 1
-                                     and K.base_ring().absolute_degree() == 1)
+        self._absolute_eisenstein = (
+            K.absolute_degree() > 1
+            and self.e > 1
+            and K.base_ring().absolute_degree() == 1
+        )
         if self._absolute_eisenstein:
             # Multiplication by pi: pi * pi^b = pi^(b+1), and pi^e = -sum_k f_k pi^k
             e = self.e
@@ -424,58 +473,65 @@ class _OKCoordinates(SageObject):
                 Rpi[b, b + 1] = 1
             for k in range(e):
                 Rpi[e - 1, k] = -f[k]
-            self._Rpi_powers = {0 : matrix.identity(ZZ, e), 1 : Rpi}
+            self._Rpi_powers = {0: matrix.identity(ZZ, e), 1: Rpi}
             # The b-th basis element is pi^b
             self.R = [self._Rpi_power(b) for b in range(e)]
         else:
             # Matrix of the multiplication by the b-th basis element, acting on row vectors
-            self.R = [matrix(ZZ, [self.coords(bb * b) for bb in self.basis]) for b in self.basis]
+            self.R = [
+                matrix(ZZ, [self.coords(bb * b) for bb in self.basis])
+                for b in self.basis
+            ]
 
     def _Rpi_power(self, v):
         try:
             return self._Rpi_powers[v]
         except KeyError:
-            ans = self._Rpi_powers[v] = self._Rpi_powers[1]**v
+            ans = self._Rpi_powers[v] = self._Rpi_powers[1] ** v
             return ans
 
     @lazy_attribute
     def _kind(self):
         K = self.K
         if K.absolute_degree() == 1:
-            return 'Qp'
+            return "Qp"
         if self._absolute_eisenstein:
-            return 'absolute eisenstein'
+            return "absolute eisenstein"
         try:
             if self.e == 1:
                 _ = K(1)._flint_rep_abs()
-                return 'unramified'
+                return "unramified"
             B = K.base_ring()
             if B.absolute_e() == 1 and B.absolute_degree() > 1:
                 _ = K(1)._poly_rep().list()[0]._flint_rep_abs()
-                return 'eisenstein over unramified'
+                return "eisenstein over unramified"
         except AttributeError:
             pass
-        return 'generic'
+        return "generic"
 
     def coords(self, x):
         kind = self._kind
         if x.is_zero():
             return [ZZ(0)] * self.d
-        if kind == 'Qp':
+        if kind == "Qp":
             return [ZZ(x.lift())]
-        if kind == 'unramified':
+        if kind == "unramified":
             return self._unramified_coords(x, self.d)
-        if kind == 'eisenstein over unramified':
+        if kind == "eisenstein over unramified":
             # The underlying polynomial in pi, over the (floating point)
             # unramified ring. Much faster than x.polynomial()
             f = self.d // self.e
-            ans = [c for a in x._poly_rep().list() for c in self._unramified_coords(a, f)]
+            ans = [
+                c for a in x._poly_rep().list() for c in self._unramified_coords(a, f)
+            ]
             return ans + [ZZ(0)] * (self.d - len(ans))
-        if kind == 'absolute eisenstein':
+        if kind == "absolute eisenstein":
             v = x.valuation()
             if v > 0:
                 # x = pi^v * u, and the precision of the unit u is at most the cap
-                return list(vector(ZZ, _coordinates(x.unit_part(), self.K)) * self._Rpi_power(v))
+                return list(
+                    vector(ZZ, _coordinates(x.unit_part(), self.K)) * self._Rpi_power(v)
+                )
         return _coordinates(x, self.K)
 
     def _unramified_coords(self, x, f):
@@ -484,29 +540,36 @@ class _OKCoordinates(SageObject):
         # x = p^v * poly(g)
         poly, v = x._flint_rep_abs()
         if v < 0:
-            raise ValueError('Not integral')
+            raise ValueError("Not integral")
         pv = self.p**v
         coeffs = poly.list()
         return [ZZ(c) * pv for c in coeffs] + [ZZ(0)] * (f - len(coeffs))
 
     def moduli(self, N):
-        r'''
+        r"""
         The moduli of the coordinates of the elements of pi^N O_K.
-        '''
-        return [self.p**max(0, -((o - N) // self.e)) for o in self.offsets]
+        """
+        return [self.p ** max(0, -((o - N) // self.e)) for o in self.offsets]
 
     def valuation(self, w, N):
-        r'''
+        r"""
         Valuation of a vector of coordinates of elements (at most N).
-        '''
+        """
         p, e, d = self.p, self.e, self.d
-        return min([N] + [e * ZZ(c).valuation(p) + self.offsets[k % d] for k, c in enumerate(w) if c != 0])
+        return min(
+            [N]
+            + [
+                e * ZZ(c).valuation(p) + self.offsets[k % d]
+                for k, c in enumerate(w)
+                if c != 0
+            ]
+        )
 
     def element_valuations(self, w, N):
-        r'''
+        r"""
         The valuations (at most N) of the elements whose coordinates are the
         consecutive blocks of d entries of w, as a list of python integers.
-        '''
+        """
         p, e, d, offsets = self.p, int(self.e), self.d, self.offsets
         N = int(N)
         w = [ZZ(c) for c in w]
@@ -525,11 +588,11 @@ class _OKCoordinates(SageObject):
         K = self.K
         kind = self._kind
         c = [ZZ(o) for o in c]
-        if kind == 'Qp':
+        if kind == "Qp":
             return K(c[0]).add_bigoh(N)
-        if kind == 'unramified':
+        if kind == "unramified":
             return K(c).add_bigoh(N)
-        if kind == 'eisenstein over unramified':
+        if kind == "eisenstein over unramified":
             B = K.base_ring()
             f = self.d // self.e
             return K([B(c[i * f : (i + 1) * f]) for i in range(self.e)]).add_bigoh(N)
@@ -543,9 +606,9 @@ def _ok_coordinates(K):
 
 @cached_function
 def _inverse_integers(K, n):
-    r'''
+    r"""
     The list [1/1, 1/2, ..., 1/n] of elements of K.
-    '''
+    """
     return [None] + [K(QQ(1) / k) for k in range(1, n + 1)]
 
 
@@ -559,12 +622,12 @@ def _ramification_data(K):
 
 
 def log_principal(u, prec=None):
-    r'''
+    r"""
     Logarithm of a principal unit u (that is, u = 1 mod the maximal ideal),
     computed with the power series of log(1 + y).
 
     This is much faster than u.log() for extensions of extensions.
-    '''
+    """
     K = u.parent()
     p, e = _ramification_data(K)
     y = u - 1
@@ -572,7 +635,7 @@ def log_principal(u, prec=None):
         return K(0).add_bigoh(u.precision_absolute())
     vy = y.valuation()
     if vy <= 0:
-        raise ValueError('Not a principal unit')
+        raise ValueError("Not a principal unit")
     if prec is None:
         prec = u.precision_absolute()
     # The k-th term has valuation k * vy - e * v_p(k) >= f(k) = k * vy - e * log_p(k),
@@ -580,7 +643,9 @@ def log_principal(u, prec=None):
     # remaining terms are negligible.
     lnp = float(log(p))
     kmax = 1
-    while kmax * vy * lnp < e or (kmax + 1) * vy - e * float(log(kmax + 1)) / lnp < prec:
+    while (
+        kmax * vy * lnp < e or (kmax + 1) * vy - e * float(log(kmax + 1)) / lnp < prec
+    ):
         kmax += 1
     inv = _inverse_integers(K, kmax)
     # Horner: log(1+y) = y (1 - y (1/2 - y (1/3 - ...)))
@@ -591,9 +656,9 @@ def log_principal(u, prec=None):
 
 
 def exp_small(s, prec=None):
-    r'''
+    r"""
     Exponential of s, which is assumed to have valuation > e / (p - 1).
-    '''
+    """
     K = s.parent()
     p, e = _ramification_data(K)
     if prec is None:
@@ -602,7 +667,7 @@ def exp_small(s, prec=None):
         return K(1).add_bigoh(prec)
     vs = s.valuation()
     if vs * (p - 1) <= e:
-        raise ValueError('exp does not converge')
+        raise ValueError("exp does not converge")
     # The k-th term has valuation k * vs - e * v_p(k!) >= k * vs - e * (k - 1) / (p - 1),
     # which is increasing in k. Stop when all the remaining terms are negligible.
     kmax = 1
@@ -617,17 +682,18 @@ def exp_small(s, prec=None):
 
 
 def principal_part_log(w, q):
-    r'''
+    r"""
     For a unit w, return log of its principal part w / teichmuller(w), computed
     as log(w^(q-1)) / (q-1), which avoids computing the Teichmuller lift.
-    '''
-    return log_principal(w**(q - 1)) / (q - 1)
+    """
+    return log_principal(w ** (q - 1)) / (q - 1)
 
 
 class LogSeries(SageObject):
-    r'''
+    r"""
     Power series log F(t), where t is the coordinate given by the parameter.
-    '''
+    """
+
     def __init__(self, value, parameter):
         self._value = value
         self._parameter = parameter
@@ -641,10 +707,10 @@ class LogSeries(SageObject):
             return evalpoly(self._value, phi(D), prec=prec)
 
     def eval_dlog(self, D):
-        r'''
+        r"""
         Logarithmic derivative of the corresponding multiplicative series,
         which here is just the derivative of the log-series.
-        '''
+        """
         a, b, c, d = self._parameter.list()
         phiD = (a * D + b) / (c * D + d)
         try:
@@ -656,34 +722,34 @@ class LogSeries(SageObject):
         return chainrule * evalpoly(der, phiD)
 
     def act(self, action_data):
-        r'''
+        r"""
         Log of the result of fast_act on the corresponding multiplicative
         series: compose with the Mobius transformation, and normalize so that
         the value at 0 is 0 (the multiplicative version divides by the value at
         0 instead).
-        '''
+        """
         M, param = action_data
         ans = self._value * M
         ans[0] = 0
         return LogSeries(ans, param)
 
     def _repr_(self):
-        return f'log-series {self._value}'
+        return f"log-series {self._value}"
 
 
 def log_series_of_divisor(D, parameter, prec):
-    r'''
+    r"""
     log of the power series that MeromorphicFunctions(K, p, prec)(D, parameter)
     represents, namely the sum over (Q, n) in D of n * log(1 - x_Q t), where
     x_Q = (c Q + d) / (a Q + b).
-    '''
+    """
     K = parameter.base_ring()
     a, b, c, d = parameter.list()
     coeffs = [K(0) for _ in range(prec)]
     for Q, n in D:
         x = c / a if Q == Infinity else (c * Q + d) / (a * Q + b)
         if x.valuation() <= 0:
-            raise NotImplementedError('The series is not a principal unit')
+            raise NotImplementedError("The series is not a principal unit")
         xk = x
         for k in range(1, prec):
             coeffs[k] += n * xk
@@ -694,7 +760,7 @@ def log_series_of_divisor(D, parameter, prec):
 
 
 class ThetaOCAdditive(SageObject):
-    r'''
+    r"""
     Additive version of ThetaOC (see the module documentation).
 
     The interface is the same as that of ThetaOC (including initial_F, which
@@ -702,7 +768,8 @@ class ThetaOCAdditive(SageObject):
     such as the Fnlist[-1] of a previous ThetaOCAdditive), and improve with
     tol), and evaluate returns the same values. evaluate_log returns the
     triple (v, d, L) such that the value is pi^v * teichmuller(d) * exp(L).
-    '''
+    """
+
     def __init__(self, G, a=None, b=None, prec=None, **kwargs):
         K = kwargs.get("base_ring", None)
         if K is None:
@@ -712,7 +779,7 @@ class ThetaOCAdditive(SageObject):
         self.p = G.pi
         p, e = _ramification_data(K)
         if e >= p - 1:
-            raise NotImplementedError('The additive implementation needs e < p - 1')
+            raise NotImplementedError("The additive implementation needs e < p - 1")
         self.q = K.residue_field().cardinality()
         _ = G.generators()
         _ = G.balls()
@@ -737,24 +804,35 @@ class ThetaOCAdditive(SageObject):
         gens_ext = G.gens_extended()
 
         # Corresponding to words of length exactly 1
-        D1dict = {i : g * D for i, g in gens_ext}
+        D1dict = {i: g * D for i, g in gens_ext}
 
         # Corresponding to words of length exactly 2
         verbose("Computing L2", level=2)
-        self.F2 = {i : LogSeries(log_series_of_divisor(sum(g * val for j, val in D1dict.items() if j != -i), tau, prec), tau)
-                   for (i, g), tau in zip(gens_ext, params)}
+        self.F2 = {
+            i: LogSeries(
+                log_series_of_divisor(
+                    sum(g * val for j, val in D1dict.items() if j != -i), tau, prec
+                ),
+                tau,
+            )
+            for (i, g), tau in zip(gens_ext, params)
+        }
         verbose("L2 computed", level=2)
 
         # self.val will contain the 0, 1 terms
         self.val = sum(D1dict.values(), D)
-        initial_F = kwargs.get('initial_F', None)
+        initial_F = kwargs.get("initial_F", None)
         if initial_F is not None:
-            self.Fnlist = [{i : LogSeries(self._to_vector(initial_F[i]), tau)
-                            for (i, _), tau in zip(gens_ext, params)}]
+            self.Fnlist = [
+                {
+                    i: LogSeries(self._to_vector(initial_F[i]), tau)
+                    for (i, _), tau in zip(gens_ext, params)
+                }
+            ]
         else:
             self.Fnlist = [copy(self.F2)]
         # How to compute the products with integer matrices (see _IntegerOperator)
-        self._integral_mode = kwargs.get('integral_mode', 'auto')
+        self._integral_mode = kwargs.get("integral_mode", "auto")
         # Last term of the list implementation (None means Fnlist[-1]). Since
         # improve collapses Fnlist into its sum, it is needed to continue the
         # iteration in a later call to improve.
@@ -765,7 +843,7 @@ class ThetaOCAdditive(SageObject):
         if isinstance(data, LogSeries):
             # e.g. Fnlist[-1] of a previous theta, as for ThetaOC
             data = data._value
-        data = [K(o) for o in list(data)[:self.prec]]
+        data = [K(o) for o in list(data)[: self.prec]]
         data += [K(0)] * (self.prec - len(data))
         data[0] = K(0)
         return vector(K, [o.add_bigoh(self.prec) for o in data])
@@ -789,7 +867,7 @@ class ThetaOCAdditive(SageObject):
         return action_data
 
     def _integral_data(self):
-        r'''
+        r"""
         When all the data (the coefficients of the Mobius transformations of
         the action, and the series in F2) is integral, return what is needed
         to do the iteration with integer matrices (which is much faster than
@@ -803,7 +881,7 @@ class ThetaOCAdditive(SageObject):
         matrix. The matrices of the action are computed directly in these
         coordinates, with the recurrence that defines the powers of the
         Mobius transformations, and everything is computed modulo pi^P.
-        '''
+        """
         try:
             return self._integral
         except AttributeError:
@@ -811,7 +889,7 @@ class ThetaOCAdditive(SageObject):
         try:
             self._integral = self._build_integral_data()
         except (TypeError, ValueError, ArithmeticError, NotImplementedError) as e:
-            verbose(f'Not using integer matrices: {e}', level=2)
+            verbose(f"Not using integer matrices: {e}", level=2)
             self._integral = None
         return self._integral
 
@@ -828,7 +906,7 @@ class ThetaOCAdditive(SageObject):
         # the coefficients of zz^r, where zz = (b1 + a1 t) / (1 + c1 t), for a1,
         # b1 and c1 integral.
         gens = dict(self.G.gens_extended())
-        params = {i : F._parameter for i, F in self.F2.items()}
+        params = {i: F._parameter for i, F in self.F2.items()}
         moebius = {}
         for i in keys:
             for j in keys:
@@ -837,7 +915,7 @@ class ThetaOCAdditive(SageObject):
                 tau = params[i].change_ring(K)
                 a, b, c, dd = (params[j] * (tau * gens[i]).adjugate()).list()
                 if dd.is_zero():
-                    raise ValueError('d = 0')
+                    raise ValueError("d = 0")
                 coeffs = [a / dd, b / dd, c / dd]
                 _check_integral(coeffs)
                 moebius[i, j] = coeffs
@@ -848,7 +926,10 @@ class ThetaOCAdditive(SageObject):
         # action matrices are known to the precision of a1, b1 and c1, since
         # products and sums of integral elements do not lose absolute precision.
         mods = O.moduli(P)
-        moebius_prec = {ij : min([P + 1] + [o.precision_absolute() for o in coeffs]) for ij, coeffs in moebius.items()}
+        moebius_prec = {
+            ij: min([P + 1] + [o.precision_absolute() for o in coeffs])
+            for ij, coeffs in moebius.items()
+        }
         # For the precision tracking: the nonzero entries of the action
         # matrices, as (sources, targets, valuations, precision) for each pair
         track = []
@@ -871,7 +952,10 @@ class ThetaOCAdditive(SageObject):
             # all of them at once: rows of X are coordinates, and the rows of
             # Rflat the matrices R[b], flattened.
             Rflat = matrix(ZZ, [Rb.list() for Rb in O.R])
-            mult = lambda y : _reduce_columns(sum((ZZ(c) * Rb for c, Rb in zip(O.coords(y), O.R)), matrix(ZZ, d, d)), mods)
+            mult = lambda y: _reduce_columns(
+                sum((ZZ(c) * Rb for c, Rb in zip(O.coords(y), O.R)), matrix(ZZ, d, d)),
+                mods,
+            )
             positions = []
             X = []
             for bi, i in enumerate(keys):
@@ -883,7 +967,7 @@ class ThetaOCAdditive(SageObject):
                     # The coordinates of the entries of the action matrix
                     for r, c, u in _coordinate_moebius_entries(Ra, Rb, Rc, P, mods):
                         if c == 0:
-                            continue # The normalization (value 0 at t = 0) kills column 0
+                            continue  # The normalization (value 0 at t = 0) kills column 0
                         # As row vectors: new_i = sum_j F_j * M_ij
                         positions.append(((bj * P + r) * d, (bi * P + c) * d))
                         X.append(u)
@@ -900,25 +984,53 @@ class ThetaOCAdditive(SageObject):
                         if val:
                             entries_A[row + b1, col + b2] = val
             A = entries_A
-        L2 = vector(ZZ, [c % m for i in keys for o in self.F2[i]._value for c, m in zip(O.coords(o), mods)])
+        L2 = vector(
+            ZZ,
+            [
+                c % m
+                for i in keys
+                for o in self.F2[i]._value
+                for c, m in zip(O.coords(o), mods)
+            ],
+        )
         exps = [ZZ(md).valuation(O.p) if md > 1 else 0 for md in mods] * (n * P)
         import numpy as np
-        L2prec = np.array([int(min(o.precision_absolute(), P)) for i in keys for o in self.F2[i]._value], dtype=np.int64)
-        tracker = _PrecisionTracker(track, O, P, min(list(moebius_prec.values()) + [int(L2prec.min())]))
-        return (keys, P, _IntegerOperator(A, O.p, exps, d, mode=self._integral_mode, size=(n * P * d, n * P * d)), L2, O, (tracker, L2prec))
+
+        L2prec = np.array(
+            [
+                int(min(o.precision_absolute(), P))
+                for i in keys
+                for o in self.F2[i]._value
+            ],
+            dtype=np.int64,
+        )
+        tracker = _PrecisionTracker(
+            track, O, P, min(list(moebius_prec.values()) + [int(L2prec.min())])
+        )
+        return (
+            keys,
+            P,
+            _IntegerOperator(
+                A, O.p, exps, d, mode=self._integral_mode, size=(n * P * d, n * P * d)
+            ),
+            L2,
+            O,
+            (tracker, L2prec),
+        )
 
     def _improve_integral(self, m, implementation, tol, data):
-        r'''
+        r"""
         Same as improve, using integer matrices (see _integral_data). Return
         False if it cannot be used for the current approximation.
-        '''
+        """
         import numpy as np
+
         keys, P, A, L2, O, (tracker, L2prec) = data
         K = self.K
         d = O.d
         p = K.prime()
         N = P
-        if implementation == 'list' and self._last_term is not None:
+        if implementation == "list" and self._last_term is not None:
             source = self._last_term
         else:
             source = self.Fnlist[-1]
@@ -932,13 +1044,18 @@ class ThetaOCAdditive(SageObject):
         # precision of each coefficient as the p-adic elements would: the
         # error of a sum of products F_j[r] * M[r, c] has valuation at least
         # min(prec(F_j[r]) + val(M[r, c]), prec(M[r, c]) + val(F_j[r])).
-        initial_prec = lambda elts : np.array([int(min(o.precision_absolute(), N)) for o in elts], dtype=np.int64)
+        initial_prec = lambda elts: np.array(
+            [int(min(o.precision_absolute(), N)) for o in elts], dtype=np.int64
+        )
         prec_v = initial_prec(current)
         prec_total = initial_prec(summed)
         # If all the inputs are known modulo pi^N, so are all the results
-        tracking = min(int(prec_v.min()), int(prec_total.min()), tracker.min_input_prec) < N
+        tracking = (
+            min(int(prec_v.min()), int(prec_total.min()), tracker.min_input_prec) < N
+        )
         if tracking:
             src, dst, Mval, Mprec, targets, starts = tracker.arrays
+
         def propagate(precs, w):
             if not tracking:
                 return precs
@@ -949,27 +1066,42 @@ class ThetaOCAdditive(SageObject):
                 q = np.minimum(precs[src] + Mval, Mprec + vals[src])
                 ans[targets] = np.minimum(ans[targets], np.minimum.reduceat(q, starts))
             return ans
-        size = lambda w : O.valuation(w, N)
-        if d == 1 and A.mode == 'dense':
+
+        size = lambda w: O.valuation(w, N)
+        if d == 1 and A.mode == "dense":
             # A single modulus: use Sage's integer vectors (FLINT)
             pN = O.moduli(N)[0]
-            reduce = lambda w : vector(ZZ, w).apply_map(lambda o : o % pN)
-            apply = lambda w : w * A.A
-            add = lambda a, b : a + b
-            sub = lambda a, b : a - b
+            reduce = lambda w: vector(ZZ, w).apply_map(lambda o: o % pN)
+            apply = lambda w: w * A.A
+            add = lambda a, b: a + b
+            sub = lambda a, b: a - b
         else:
             # Vectors are lists of python integers, coordinate k reduced modulo mods[k]
             mods = [int(o) for o in O.moduli(N)] * (len(keys) * P)
-            reduce = lambda w : [o % md for o, md in zip(w, mods)]
+            reduce = lambda w: [o % md for o, md in zip(w, mods)]
             apply = A.apply
-            add = lambda a, b : [x + y for x, y in zip(a, b)]
-            sub = lambda a, b : [x - y for x, y in zip(a, b)]
-        to_vector = lambda elts : reduce([int(c) for o in elts for c in O.coords(o)])
+            add = lambda a, b: [x + y for x, y in zip(a, b)]
+            sub = lambda a, b: [x - y for x, y in zip(a, b)]
+        to_vector = lambda elts: reduce([int(c) for o in elts for c in O.coords(o)])
+
         def to_series(w, precs):
-            return {i : LogSeries(vector(K, [O.element(w[(bi * P + r) * d : (bi * P + r + 1) * d], int(precs[bi * P + r]))
-                                             for r in range(P)]),
-                                  self.F2[i]._parameter)
-                    for bi, i in enumerate(keys)}
+            return {
+                i: LogSeries(
+                    vector(
+                        K,
+                        [
+                            O.element(
+                                w[(bi * P + r) * d : (bi * P + r + 1) * d],
+                                int(precs[bi * P + r]),
+                            )
+                            for r in range(P)
+                        ],
+                    ),
+                    self.F2[i]._parameter,
+                )
+                for bi, i in enumerate(keys)
+            }
+
         v = to_vector(current)
         total = to_vector(summed)
         L2 = reduce([int(o) for o in L2])
@@ -977,18 +1109,18 @@ class ThetaOCAdditive(SageObject):
         best = None
         stalled = 0
         for _ in range(m):
-            if implementation == 'list':
+            if implementation == "list":
                 prec_v = propagate(prec_v, v)
                 prec_total = np.minimum(prec_total, prec_v)
                 v = reduce(apply(v))
                 total = add(total, v)
                 change = size(v)
-                done = not any(v) # All the remaining terms vanish too
+                done = not any(v)  # All the remaining terms vanish too
             else:
                 prec_v = np.minimum(propagate(prec_v, v), L2prec)
                 w = reduce(add(L2, apply(v)))
                 change = size(sub(w, v))
-                done = (w == v) # Fixed point reached
+                done = w == v  # Fixed point reached
                 v = w
             self.last_change = change
             if done:
@@ -1001,7 +1133,7 @@ class ThetaOCAdditive(SageObject):
                     stalled += 1
                 if change >= tol or stalled >= 2:
                     break
-        if implementation == 'list':
+        if implementation == "list":
             self._last_term = to_series(v, prec_v)
             self.Fnlist = [to_series(reduce(total), prec_total)]
         else:
@@ -1010,7 +1142,7 @@ class ThetaOCAdditive(SageObject):
         return True
 
     def improve(self, m, **kwargs):
-        r'''
+        r"""
         Same as ThetaOC.improve. In addition, it stops as soon as the
         iteration is exactly done (the new term of the list implementation is
         zero, or the fixed point iteration does not change anything).
@@ -1019,41 +1151,49 @@ class ThetaOCAdditive(SageObject):
         iteration with integer matrices when possible (see _integral_data),
         which is much faster: in our tests, from 2 to 15 times for Qp,
         unramified extensions and Eisenstein extensions of both.
-        '''
+        """
         gens_ext = self.G.gens_extended()
-        implementation = kwargs.get('implementation', 'list')
-        tol = kwargs.get('tol', None)
-        if implementation not in ['list', 'fixedpoint']:
+        implementation = kwargs.get("implementation", "list")
+        tol = kwargs.get("tol", None)
+        if implementation not in ["list", "fixedpoint"]:
             raise ValueError("implementation must be 'list' or 'fixedpoint'")
-        if len(self.Fnlist) == 1 and kwargs.get('integral', True):
+        if len(self.Fnlist) == 1 and kwargs.get("integral", True):
             data = self._integral_data()
-            if data is not None and self._improve_integral(m, implementation, tol, data):
+            if data is not None and self._improve_integral(
+                m, implementation, tol, data
+            ):
                 return self
         action_data = self._get_action_data()
         prec = self.prec
         self.last_change = None
         best = None
         stalled = 0
-        if implementation == 'list' and self._last_term is not None:
+        if implementation == "list" and self._last_term is not None:
             source = self._last_term
         else:
             source = self.Fnlist[-1]
         for _ in range(m):
             tmp = {}
             for i, _ in gens_ext:
-                vl = sum(Fj._value * action_data[i, j][0]
-                         for j, Fj in source.items() if i != -j)
+                vl = sum(
+                    Fj._value * action_data[i, j][0]
+                    for j, Fj in source.items()
+                    if i != -j
+                )
                 vl[0] = 0
                 tmp[i] = vector(self.K, [o.add_bigoh(prec) for o in vl])
-            if implementation == 'list':
-                new = {i : LogSeries(v, self.F2[i]._parameter) for i, v in tmp.items()}
+            if implementation == "list":
+                new = {i: LogSeries(v, self.F2[i]._parameter) for i, v in tmp.items()}
                 self.Fnlist.append(new)
                 source = new
                 change = min(min(o.valuation() for o in v) for v in tmp.values())
                 # All the remaining terms vanish too
                 done = all(o.is_zero() for v in tmp.values() for o in v)
             else:
-                new = {i : LogSeries(tmp[i] + self.F2[i]._value, self.F2[i]._parameter) for i in tmp}
+                new = {
+                    i: LogSeries(tmp[i] + self.F2[i]._value, self.F2[i]._parameter)
+                    for i in tmp
+                }
                 old = self.Fnlist[-1]
                 diffs = [new[i]._value - old[i]._value for i in new]
                 change = min(min(o.valuation() for o in v) for v in diffs)
@@ -1072,11 +1212,20 @@ class ThetaOCAdditive(SageObject):
                     stalled += 1
                 if change >= tol or stalled >= 2:
                     break
-        self._last_term = source if implementation == 'list' else None
+        self._last_term = source if implementation == "list" else None
         if len(self.Fnlist) > 1:
-            self.Fnlist = [{ky : LogSeries(sum((F[ky]._value for F in self.Fnlist[1:]), self.Fnlist[0][ky]._value),
-                                           self.Fnlist[0][ky]._parameter)
-                            for ky in self.Fnlist[0]}]
+            self.Fnlist = [
+                {
+                    ky: LogSeries(
+                        sum(
+                            (F[ky]._value for F in self.Fnlist[1:]),
+                            self.Fnlist[0][ky]._value,
+                        ),
+                        self.Fnlist[0][ky]._parameter,
+                    )
+                    for ky in self.Fnlist[0]
+                }
+            ]
         return self
 
     def _prepare_divisor(self, z):
@@ -1087,29 +1236,29 @@ class ThetaOCAdditive(SageObject):
         return self.G.find_equivalent_divisor(z)
 
     def log_series_part(self, z, prec=None):
-        r'''
+        r"""
         The sum of the log F_i evaluated at the divisor z (already in the
         fundamental domain).
-        '''
+        """
         return sum(F.evaluate(z, prec) for FF in self.Fnlist for F in FF.values())
 
     def __call__(self, z, **kwargs):
         return self.evaluate(z, **kwargs)
 
     def evaluate(self, z, **kwargs):
-        r'''
+        r"""
         Value of theta at z. The rational part is computed exactly, and the
         rest as the exponential of a sum of logarithms.
-        '''
+        """
         z = self._prepare_divisor(z)
-        prec = kwargs.get('prec', None)
+        prec = kwargs.get("prec", None)
         ans0 = pair_divisors(self.val, z)
         return ans0 * exp_small(self.log_series_part(z, prec))
 
     def eval_derivative(self, z, return_value=False):
-        r'''
+        r"""
         Same as ThetaOC.eval_derivative.
-        '''
+        """
         dlog = self.eval_dlog(z)
         z0 = self.G.to_fundamental_domain(z)[0]
         value = self.evaluate(z0)
@@ -1119,9 +1268,9 @@ class ThetaOCAdditive(SageObject):
             return value * dlog
 
     def eval_dlog(self, z):
-        r'''
+        r"""
         Same as ThetaOC.eval_dlog.
-        '''
+        """
         if isinstance(z, DivisorsElement):
             raise NotImplementedError
         if not self.G.in_fundamental_domain(z):
@@ -1135,18 +1284,20 @@ class ThetaOCAdditive(SageObject):
         else:
             fact = 1
         valdlog = eval_rat_dlog(self.val, z0)
-        fdlog = sum((f.eval_dlog(z0) for FF in self.Fnlist for f in FF.values()), valdlog)
+        fdlog = sum(
+            (f.eval_dlog(z0) for FF in self.Fnlist for f in FF.values()), valdlog
+        )
         return fact * fdlog
 
     def evaluate_log(self, z, **kwargs):
-        r'''
+        r"""
         Return (v, d, L) such that theta(z) = pi^v * teichmuller(d) * exp(L).
 
         Only the valuation v and the first digit d (an element of the residue
         field) are computed multiplicatively. L is a sum of logarithms.
-        '''
+        """
         z = self._prepare_divisor(z)
-        prec = kwargs.get('prec', None)
+        prec = kwargs.get("prec", None)
         K = self.K
         q = self.q
         v = 0
@@ -1164,16 +1315,18 @@ class ThetaOCAdditive(SageObject):
                 vi = diff.valuation()
                 w = diff >> vi
                 v += m * n * vi
-                d *= w.residue()**(m * n)
+                d *= w.residue() ** (m * n)
                 L += (m * n) * principal_part_log(w, q)
         return v, d, L
 
     def value_from_log(self, v, d, L):
-        r'''
+        r"""
         Inverse of evaluate_log.
-        '''
+        """
         K = self.K
-        return K.uniformizer()**v * K.teichmuller(self._lift_residue(d)) * exp_small(L)
+        return (
+            K.uniformizer() ** v * K.teichmuller(self._lift_residue(d)) * exp_small(L)
+        )
 
     def _lift_residue(self, d):
         K = self.K

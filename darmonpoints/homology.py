@@ -5,6 +5,7 @@
 ######################
 import operator
 import os
+from _warnings import warn
 from collections import defaultdict
 from copy import deepcopy
 from itertools import chain, groupby, islice, product, starmap, tee
@@ -32,7 +33,6 @@ from sage.structure.unique_representation import (
     CachedRepresentation,
     UniqueRepresentation,
 )
-from _warnings import warn
 
 from .divisors import *
 from .homology_abstract import ArithHomology, HomologyGroup
@@ -57,7 +57,9 @@ def lattice_homology_cycle(
     xi2 = H1({})
     for x, a in xlist:
         xi1 += H1({G(x.quaternion_rep): Div(tau)}).mult_by(a)
-        xi2 += H1({G(wp**-1 * x.quaternion_rep * wp): wpinv_mat * Div(tau)}).mult_by(a)
+        xi2 += H1({G(wp**-1 * x.quaternion_rep * wp): wpinv_mat * Div(tau)}).mult_by(
+            a
+        )
     xi10 = xi1
     xi20 = xi2
     while True:
@@ -231,7 +233,7 @@ class OneChainsElement(TensorElement):
     def is_degree_zero_valued(self, degree_map=None):
         if isinstance(self.parent().coefficient_module(), Divisors):
             if degree_map is not None:
-                warn('Using provided degree_map')
+                warn("Using provided degree_map")
             else:
                 degree_map = lambda v: v.degree()
         if degree_map is None:
@@ -249,7 +251,9 @@ class OneChainsElement(TensorElement):
     def __eq__(self, other):
         return (self - other).is_zero()
 
-    def zero_degree_equivalent(self, allow_multiple=False, degree_map=None, return_boundary=False):
+    def zero_degree_equivalent(
+        self, allow_multiple=False, degree_map=None, return_boundary=False
+    ):
         r"""
         Use the relations:
             * gh|v = g|v + h|g^-1 v - delta(g|h|v))
@@ -284,7 +288,7 @@ class OneChainsElement(TensorElement):
         given_degree_map = degree_map
         if isinstance(self.parent().coefficient_module(), Divisors):
             if degree_map is not None:
-                warn('Using provided degree_map')
+                warn("Using provided degree_map")
             else:
                 degree_map = lambda v: v.degree()
         if degree_map is None:
@@ -294,9 +298,9 @@ class OneChainsElement(TensorElement):
         verbose("Entering zero_degree_equivalent")
         HH = self.parent()
         V = HH.coefficient_module()
-        G = HH.group() # Arithmetic group G = F/R
+        G = HH.group()  # Arithmetic group G = F/R
         ngens = len(G.gens())
-        Gab = G.abelianization() # G^{ab} = F^{ab}/R^{ab}
+        Gab = G.abelianization()  # G^{ab} = F^{ab}/R^{ab}
         # The elements of V forming the 1-chain, which are paired with the elements of G in self._data.keys()
         oldvals = list(self._data.values())
         # xlist represents taking the degree map of the divisor
@@ -311,7 +315,7 @@ class OneChainsElement(TensorElement):
             raise ValueError(
                 "Must yield torsion element in abelianization (%s, order = %s)"
                 % (sum_abxlist, x_ord)
-            ) # TODO: if x_ord is Infinity, find a Hecke operator that kills it, and apply it to reduce to torsion
+            )  # TODO: if x_ord is Infinity, find a Hecke operator that kills it, and apply it to reduce to torsion
         else:
             # We adjust the weight of our 1-chain to be x_ord * C, which is trivial in the abelianization.
             # The scaling has to happen here, on the values themselves: the relation
@@ -321,7 +325,9 @@ class OneChainsElement(TensorElement):
             gwordlist = [x.word_rep for x, n in xlist]
             oldvals = [x_ord * v for v in oldvals]
         # Let C be our 1-chain, degC \in R^{ab}, so we find the relations in R^{ab} that satisfy degC + \sum r_i^{ab} = 0 in F^{ab}
-        weight_vector = sum(n * vector(ZZ, get_weight_vector(x.word_rep, ngens)) for x, n in xlist)
+        weight_vector = sum(
+            n * vector(ZZ, get_weight_vector(x.word_rep, ngens)) for x, n in xlist
+        )
         rel = G._calculate_relation(weight_vector, separated=True)
         for c, r in rel:
             gwordlist.append(r)
@@ -333,13 +339,13 @@ class OneChainsElement(TensorElement):
         # For an arbitrary element v of V, \sum r_i \otimes v is a 1-boundary
         # newdict will store the new 1-chain formed by C + \sum r_i \otimes v
         newdict = defaultdict(V)
-        boundary_list= []
+        boundary_list = []
         # Decompose each (g,v) tensor in the 1-cycle into a sum of tensors of the form (g_i, v_i) where g_i is a generator of G
         # We store all 1-boundaries used in boundary_list
         for gword, v in zip(gwordlist, oldvals):
             verbose("Processing %s|%s" % (gword, v))
             newv = V(v)
-            for i, a in tietze_to_syllables(gword): # gi^a|v
+            for i, a in tietze_to_syllables(gword):  # gi^a|v
                 oldv = V(newv)
                 g = G.gen(i)
                 newv = (g**-a) * V(oldv)  # for the next iteration
@@ -350,7 +356,9 @@ class OneChainsElement(TensorElement):
                     sign = -1
                 for j in range(a):
                     newdict[g] += ZZ(sign) * oldv
-                    boundary_list.append((i,g, g**(a-j-1), g * (-ZZ(sign)*V(oldv)))) # negative sign included
+                    boundary_list.append(
+                        (i, g, g ** (a - j - 1), g * (-ZZ(sign) * V(oldv)))
+                    )  # negative sign included
                     oldv = (g**-1) * oldv
             counter += 1
             update_progress(

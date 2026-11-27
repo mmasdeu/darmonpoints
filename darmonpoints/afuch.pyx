@@ -26,11 +26,11 @@ EXAMPLES::
     Vecsmall([1, 2])
 """
 
-from cysignals.signals cimport sig_on
-from cypari2.types cimport GEN
 from cypari2.gen cimport Gen, objtogen
-from cypari2.stack cimport new_gen, clear_stack
 from cypari2.paridecl cimport nbits2prec
+from cypari2.stack cimport clear_stack, new_gen
+from cypari2.types cimport GEN
+from cysignals.signals cimport sig_on
 
 
 cdef extern from "fdom.h":

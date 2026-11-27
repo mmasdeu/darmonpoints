@@ -22,16 +22,14 @@ from sage.misc.verbose import verbose
 from sage.modules.free_module_element import free_module_element, vector
 from sage.modules.module import Module
 from sage.parallel.decorate import fork, parallel
-from sage.rings.real_mpfr import RR
 from sage.rings.complex_mpfr import ComplexField
-from sage.rings.laurent_series_ring import LaurentSeriesRing
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.rings.number_field.number_field import QuadraticField
-from sage.rings.real_mpfr import RealField
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
-from sage.rings.number_field.number_field import NumberField
+from sage.rings.laurent_series_ring import LaurentSeriesRing
+from sage.rings.number_field.number_field import NumberField, QuadraticField
 from sage.rings.padics.factory import Qp, Zp
 from sage.rings.padics.precision_error import PrecisionError
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.real_mpfr import RR, RealField
 from sage.structure.element import ModuleElement, MultiplicativeGroupElement
 from sage.structure.parent import Parent
 from sage.structure.richcmp import op_EQ, op_NE
@@ -193,9 +191,13 @@ class CohomologyElement(ModuleElement):
 
     def pair_with_cycle(self, xi, multiplicative=False):
         if multiplicative:
-            return prod(self.evaluate(g).pair_with(a, multiplicative=True) for g, a in xi)
+            return prod(
+                self.evaluate(g).pair_with(a, multiplicative=True) for g, a in xi
+            )
         else:
-            return sum(self.evaluate(g).pair_with(a, multiplicative=False) for g, a in xi)
+            return sum(
+                self.evaluate(g).pair_with(a, multiplicative=False) for g, a in xi
+            )
 
     def evaluate(self, x, left_act_by=None, at_identity=False):
         H = self.parent()

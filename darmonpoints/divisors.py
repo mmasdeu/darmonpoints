@@ -32,6 +32,7 @@ from sage.structure.unique_representation import (
 
 from .util import is_infinity
 
+
 # Returns a hash of an element of Cp (which is a quadratic extension of Qp)
 def _hash(x):
     try:
@@ -219,7 +220,7 @@ class DivisorsElement(ModuleElement):
         Div = self.parent()
         K = Div.base_ring()
         a, b, c, d = g.list()
-        
+
         newdict = defaultdict(ZZ)
         new_ptdata = {}
         for P, n in self:
@@ -284,7 +285,7 @@ class DivisorsElement(ModuleElement):
         else:
             if z is None:
                 K = self.parent().base()
-                if hasattr(K, 'base_field'):
+                if hasattr(K, "base_field"):
                     K = K.base_field()
                 z = K["z"].gen()
             # return prod(((1 - z / P) ** n for P, n in self), z.parent()(1))
@@ -329,7 +330,7 @@ class Divisors(Parent, CachedRepresentation):
             return S._base is self._base
         else:
             return False
-        
+
     def base(self):
         return self._base
 

@@ -6,21 +6,22 @@
 #                  http://www.gnu.org/licenses/
 #########################################################################
 from copy import deepcopy
+from itertools import islice
 
 from sage.categories.pushout import pushout
 from sage.matrix.constructor import Matrix, block_matrix, matrix
 from sage.matrix.matrix_space import MatrixSpace
-from sage.misc.timing import cputime
 from sage.misc.cachefunc import cached_function, cached_method
 from sage.misc.misc_c import prod
+from sage.misc.timing import cputime
 from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.module import Module
 from sage.modules.vector_integer_dense import Vector_integer_dense
-from sage.rings.integer import Integer
 from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.infinity import Infinity
+from sage.rings.integer import Integer
 from sage.rings.integer_ring import ZZ
 from sage.rings.padics.factory import Zp, ZpCA
 from sage.rings.padics.padic_generic import pAdicGeneric
@@ -36,10 +37,10 @@ from sage.structure.unique_representation import (
     CachedRepresentation,
     UniqueRepresentation,
 )
-from itertools import islice
 
 from .divisors import Divisors
 from .util import muted, set_immutable, speed_up_padic_inversion
+
 
 def evalpoly(poly, x, prec=None, check=True):
     if prec is None:
@@ -84,7 +85,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             Ps = parent._Ps
             self._value = None
             if data == 0:
-                self._value = Ps(1).list() # multiplicative!
+                self._value = Ps(1).list()  # multiplicative!
             elif hasattr(data, "parent"):
                 if isinstance(data.parent(), Divisors):
                     self._value = divisor_to_pseries(parameter, Ps, data, prec).list()
@@ -92,7 +93,9 @@ class MeromorphicFunctionsElement(ModuleElement):
                 elif data.parent() == parent:
                     self._value = data._value
                 elif isinstance(data.parent(), MeromorphicFunctions):
-                    self._value = vector(list(data._value.apply_map(lambda x:x.lift_to_precision())))
+                    self._value = vector(
+                        list(data._value.apply_map(lambda x: x.lift_to_precision()))
+                    )
             if self._value is None:
                 val = Ps(data)
                 val /= val[0]
@@ -132,7 +135,7 @@ class MeromorphicFunctionsElement(ModuleElement):
     #     ans = fac * (sum(a*phiz**n for n, a in enumerate(self._value[:m]))) / valinf
     #     return ans
 
-    def evaluate(self, D, prec = None):  # meromorphic functions
+    def evaluate(self, D, prec=None):  # meromorphic functions
         K = self.parent().base_ring()
         if type(D) in (int, Integer):
             D = K(D)
@@ -155,13 +158,10 @@ class MeromorphicFunctionsElement(ModuleElement):
         phiD = phi(D)
         if return_value:
             val = evalpoly(self._value, phiD)
-        
+
         valder = self._derivative_coeffs()
         chainrule = (a * d - b * c) / (c * D + d) ** 2
-        ans = (
-            evalpoly(valder, phiD)
-            * chainrule
-        )
+        ans = evalpoly(valder, phiD) * chainrule
         if return_value:
             return ans, val
         else:
@@ -266,8 +266,7 @@ class MeromorphicFunctionsElement(ModuleElement):
             zz = (
                 (parent._Ps([b, a]) / parent._Ps([d, c]))
                 .truncate(prec)
-                .map_coefficients(lambda x: x.add_bigoh(prec+1))
-                
+                .map_coefficients(lambda x: x.add_bigoh(prec + 1))
             )
             return self.__class__(parent, evalpoly(self._value, zz), param, check=False)
 
@@ -321,28 +320,28 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
 
     @cached_method
     def get_action_data(self, g, oldparam, param, prec=None):
-        r'''
+        r"""
         Act on the power series by matrix g, given the old and new parameters.
         The action is given by the formula:
         (g * phi)(t) = phi(tau_0 g^-1 * tau_1^-1 t)
         which amounts to acting on the left by
         tau_1 g tau_0^-1
-        '''
+        """
         return self.compute_action_data(g, oldparam, param, prec)
 
     @muted
     def compute_action_data(self, g, oldparam, param, prec=None):
-        r'''
+        r"""
         Uncached version of get_action_data. Looking up the cache of
         get_action_data needs hashing p-adic matrices, which is slow, so
         callers that do their own caching should use this one.
-        '''
+        """
         K = self.base_ring()
         if prec is None:
             prec = self._prec
         assert param is not None
         tg = param.change_ring(K)
-        if not hasattr(g, 'adjugate'):
+        if not hasattr(g, "adjugate"):
             g = g.matrix().change_ring(K)
 
         # abcd = tau_0 g^-1 * tau_1^-1
@@ -352,14 +351,14 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         zz = (
             (self._Ps([b, a]) / self._Ps([d, c]))
             .truncate(prec)
-            .map_coefficients(lambda x: x.add_bigoh(prec+1))
-        ) # zz = (at + b)/(ct + d)
+            .map_coefficients(lambda x: x.add_bigoh(prec + 1))
+        )  # zz = (at + b)/(ct + d)
         ans = [zz.parent()(1), zz]
         while len(ans) < prec:
             zz_ps = (
                 (zz * ans[-1])
                 .truncate(prec)
-                .map_coefficients(lambda x: x.add_bigoh(prec+1))
+                .map_coefficients(lambda x: x.add_bigoh(prec + 1))
             )
             ans.append(zz_ps)
         m = Matrix(K, prec, prec, 0)
@@ -369,7 +368,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
         return m
 
     def _action_matrix_moebius(self, a, b, c, d, prec):
-        r'''
+        r"""
         Same matrix as in get_action_data (row i contains the coefficients of
         zz^i, where zz = (at + b)/(ct + d)), computed using that
         zz^i = zz^(i-1) * (b1 + a1 t) / (1 + c1 t). This only needs O(prec)
@@ -377,7 +376,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
 
         Assumes that c/d has nonnegative valuation, so that the division by
         1 + c1 t does not lose precision.
-        '''
+        """
         K = self.base_ring()
         dinv = ~d
         a1, b1, c1 = a * dinv, b * dinv, c * dinv
@@ -404,7 +403,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
             while n > 0 and u[n - 1].is_zero():
                 n -= 1
             if n == 0:
-                break # All the remaining powers vanish
+                break  # All the remaining powers vanish
             for j in range(n):
                 m[i, j] = u[j]
             w = u
@@ -429,7 +428,7 @@ class MeromorphicFunctions(Parent, UniqueRepresentation):
 
 
 class MeromorphicIntegerArithmetic(SageObject):
-    r'''
+    r"""
     Arithmetic of the power series of a :class:`MeromorphicFunctions` space
     (truncated to ``prec`` terms) with integers, as used to iterate Hecke
     operators quickly.
@@ -466,7 +465,7 @@ class MeromorphicIntegerArithmetic(SageObject):
         sage: B = I.action_matrix(M.compute_action_data(A, f._parameter, f._parameter))
         sage: (I.to_element(I.normalize(I.act(F, B))) - f.left_act_by_matrix(A)).valuation()
         10
-    '''
+    """
 
     def __init__(self, M):
         from .theta_additive import _ok_coordinates
@@ -513,26 +512,26 @@ class MeromorphicIntegerArithmetic(SageObject):
         return [ZZ(o) % self.N for o in c]
 
     def from_element(self, f):
-        r'''
+        r"""
         The integer representation of the series of ``f``.
-        '''
+        """
         n, d = self.n, self.d
         coords = [self._coords(o) for o in f._value[:n]]
         return [self._R([c[r] for c in coords]) for r in range(d)]
 
     def to_element(self, F, parameter=None):
-        r'''
+        r"""
         The element of the space of meromorphic functions whose series is ``F``.
-        '''
+        """
         n, d, O = self.n, self.d, self._O
         lists = [f.padded_list(n) for f in F]
         vals = [O.element([lists[r][k] for r in range(d)], n) for k in range(n)]
         return self._M(vals, param=parameter, check=False)
 
     def mul(self, F, H):
-        r'''
+        r"""
         The product of the series ``F`` and ``H`` (truncated).
-        '''
+        """
         n = self.n
         if self.d == 1:
             return [F[0]._mul_trunc_(H[0], n) % self.N]
@@ -548,19 +547,19 @@ class MeromorphicIntegerArithmetic(SageObject):
         return [self._R(o) for o in c]
 
     def scalar_inverse(self, c):
-        r'''
+        r"""
         The coordinates of the inverse of the unit of `O_K` with coordinates ``c``.
-        '''
+        """
         x = self._O.element(c, self.n)
         if x.valuation() != 0:
             raise ValueError("Not a unit")
         return self._coords(~x)
 
     def inverse(self, F):
-        r'''
+        r"""
         The inverse of the series ``F``, whose constant term must be a unit
         (Newton iteration).
-        '''
+        """
         R = self._R
         Y = self._scalar(self.scalar_inverse(self.constant_term(F)))
         k = 1
@@ -573,19 +572,19 @@ class MeromorphicIntegerArithmetic(SageObject):
         return Y
 
     def normalize(self, F):
-        r'''
+        r"""
         The multiple of ``F`` with constant term 1 (it must be a unit).
-        '''
+        """
         c = self.constant_term(F)
         if c == [1] + [0] * (self.d - 1):
             return F
         return self.mul(F, self._scalar(self.scalar_inverse(c)))
 
     def valuation(self, F):
-        r'''
+        r"""
         The valuation of ``F - 1`` (at most `N`), as computed by
         :meth:`MeromorphicFunctionsElement.valuation`.
-        '''
+        """
         n, p = self.n, self.p
         G = list(F)
         G[0] = G[0] - 1
@@ -597,16 +596,18 @@ class MeromorphicIntegerArithmetic(SageObject):
         return ans
 
     def action_matrix(self, A):
-        r'''
+        r"""
         The integer matrix of the action on the flattened coordinates of a
         series of the matrix ``A`` over `K` returned by
         :meth:`MeromorphicFunctions.get_action_data`.
-        '''
+        """
         n, d, N = self.n, self.d, self.N
         if A.nrows() != n or A.ncols() != n:
             raise ValueError("Wrong size")
         coords = [[self._coords(a) for a in row] for row in A.rows()]
-        As = [matrix(ZZ, n, n, [[c[s] for c in row] for row in coords]) for s in range(d)]
+        As = [
+            matrix(ZZ, n, n, [[c[s] for c in row] for row in coords]) for s in range(d)
+        ]
         if d == 1:
             return As[0]
         blocks = [[matrix(ZZ, n, n, 0) for l in range(d)] for r in range(d)]
@@ -615,10 +616,10 @@ class MeromorphicIntegerArithmetic(SageObject):
         return block_matrix(ZZ, blocks, subdivide=False) % N
 
     def act(self, F, B):
-        r'''
+        r"""
         The action on the series ``F`` of the matrix ``B`` returned by
         :meth:`action_matrix` (not normalized).
-        '''
+        """
         n, d = self.n, self.d
         v = matrix(ZZ, 1, n * d, [c for f in F for c in f.padded_list(n)])
         w = ((v * B) % self.N).list()

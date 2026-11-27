@@ -10,17 +10,17 @@ from copy import deepcopy
 from sage.categories.pushout import pushout
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
-from sage.misc.timing import cputime
 from sage.misc.cachefunc import cached_function, cached_method
 from sage.misc.misc_c import prod
+from sage.misc.timing import cputime
 from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.modules.free_module_element import free_module_element as vector
 from sage.modules.module import Module
 from sage.modules.vector_integer_dense import Vector_integer_dense
-from sage.rings.integer import Integer
 from sage.rings.finite_rings.integer_mod_ring import Zmod
 from sage.rings.infinity import Infinity
+from sage.rings.integer import Integer
 from sage.rings.integer_ring import ZZ
 from sage.rings.padics.factory import Zp, ZpCA
 from sage.rings.padics.padic_generic import pAdicGeneric
@@ -72,7 +72,7 @@ class RationalFunctionsElement(ModuleElement):
             try:
                 prec = K.precision_cap()
             except AttributeError:
-                raise ValueError('Must specify precision for power series in %s' % K)
+                raise ValueError("Must specify precision for power series in %s" % K)
         Ps = PowerSeriesRing(K, names, default_prec=prec)
         ans = Ps(self._value)
         return ans

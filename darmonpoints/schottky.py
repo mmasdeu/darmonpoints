@@ -1,6 +1,7 @@
 from copy import copy, deepcopy
 from itertools import chain
 from math import e
+from warnings import warn
 
 from sage.categories.groups import Groups
 from sage.combinat.rooted_tree import LabelledRootedTree as LTR
@@ -14,9 +15,9 @@ from sage.misc.latex import latex
 from sage.misc.lazy_attribute import lazy_attribute
 from sage.misc.verbose import verbose
 from sage.modules.module import Module
-from sage.rings.integer_ring import Z as ZZ
-from sage.rings.integer_ring import IntegerRing
 from sage.rings.infinity import Infinity
+from sage.rings.integer_ring import IntegerRing
+from sage.rings.integer_ring import Z as ZZ
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.sets.set import Set
 from sage.structure.element import Element, ModuleElement
@@ -24,7 +25,6 @@ from sage.structure.parent import Parent
 from sage.structure.richcmp import richcmp
 from sage.structure.sage_object import SageObject
 from sage.structure.unique_representation import UniqueRepresentation
-from warnings import warn
 
 from .divisors import Divisors, DivisorsElement
 from .meromorphic import *
@@ -81,6 +81,7 @@ def enumerate_group_elements(gens, invgens, length):
                 if wd[-1] != i + 1:
                     yield wd + [-i - 1], g * vinv
 
+
 def hash_vertex(v):
     try:
         return hash(v)
@@ -107,8 +108,9 @@ def find_eigenvector_matrix(g):
     veps = []
     for l in vaps:
         B = g - l
-        veps.append((B[0,1], -B[0,0])) # The right kernel of a rank-1 2x2 matrix
+        veps.append((B[0, 1], -B[0, 0]))  # The right kernel of a rank-1 2x2 matrix
     return g.matrix_space()(veps).transpose()
+
 
 @cached_function
 def find_parameter(g, ball, pi=None, check=True):
@@ -133,6 +135,7 @@ def find_parameter(g, ball, pi=None, check=True):
         if ans * ball.complement() != ball.parent()(0, 0).closure():
             raise RuntimeError
     return ans
+
 
 class SchottkyGroup_abstract(SageObject):
     def __init__(self, K, generators):
@@ -193,8 +196,10 @@ class SchottkyGroup_abstract(SageObject):
         K = self.K
         if z is Infinity:
             return K(1)
-        if isinstance(z, Divisors): # z is a divisor!
-            return prod(self.theta_naive(m, a, b, P, gamma, **kwargs)**n for P, n in z)
+        if isinstance(z, Divisors):  # z is a divisor!
+            return prod(
+                self.theta_naive(m, a, b, P, gamma, **kwargs) ** n for P, n in z
+            )
         if gamma is not None:
             if b != ZZ(1):
                 raise ValueError("If gamma is specified, then b should not")
@@ -230,11 +235,26 @@ class SchottkyGroup_abstract(SageObject):
         return num / den
 
     def theta_derivative_naive(
-        self, m, a, b, z=None, max_length=-1, base_field=None, s=None, return_value=False
+        self,
+        m,
+        a,
+        b,
+        z=None,
+        max_length=-1,
+        base_field=None,
+        s=None,
+        return_value=False,
     ):
         if s is not None:
             Ap, A = self.theta_derivative_naive(
-                m, a, b, z=z, max_length=max_length, base_field=base_field, s=None, return_value=True
+                m,
+                a,
+                b,
+                z=z,
+                max_length=max_length,
+                base_field=base_field,
+                s=None,
+                return_value=True,
             )
             Bp, B = self.theta_derivative_naive(
                 m,
@@ -243,7 +263,8 @@ class SchottkyGroup_abstract(SageObject):
                 z=z,
                 max_length=max_length,
                 base_field=base_field,
-                s=None, return_value=True
+                s=None,
+                return_value=True,
             )
             if return_value:
                 return Ap * B + A * Bp, A * B
@@ -328,9 +349,7 @@ class PreSchottkyGroup(SchottkyGroup_abstract):
     def construct_tree(self, level):
         elements = [g for _, g in self.all_elements_up_to_length(level)]
         if not all(matrix_is_hyperbolic(g) for g in elements if g != 1):
-            raise ValueError(
-                "Not all elements up to length %s are hyperbolic" % level
-            )
+            raise ValueError("Not all elements up to length %s are hyperbolic" % level)
         T = NeighborJoiningTree(
             self.K,
             [act(g, self.base) for g in elements],
@@ -647,7 +666,10 @@ Try with a quadratic (ramified) extension."
         while i is not None:
             word.append(i)
             if len(word) == max_length:
-                warn('Reached word length of %s, this might be a bug. x0 = %s, x = %s' %(max_length, x0, x))
+                warn(
+                    "Reached word length of %s, this might be a bug. x0 = %s, x = %s"
+                    % (max_length, x0, x)
+                )
                 max_length *= 2
             x1 = act(gens[-i], x)
             if x1 == x:
@@ -753,17 +775,19 @@ Try with a quadratic (ramified) extension."
             # The additive implementation needs exp and log to be inverse
             # isomorphisms, which only happens when e < p - 1
             from .theta_additive import _ramification_data
+
             p, e = _ramification_data(K)
             additive = e < p - 1
         if additive:
             from .theta_additive import ThetaOCAdditive
+
             ans = ThetaOCAdditive(self, a=D0, b=None, prec=prec, base_ring=K, **kwargs)
         else:
             ans = ThetaOC(self, a=D0, b=None, prec=prec, base_ring=K, **kwargs)
         z = kwargs.pop("z", None)
         improve = kwargs.pop("improve", True)
         if improve or z is not None:
-            m = kwargs.pop('m', prec)
+            m = kwargs.pop("m", prec)
             ans = ans.improve(m, **kwargs)
         return ans if z is None else ans(z)
 
@@ -777,14 +801,12 @@ Try with a quadratic (ramified) extension."
             if z is None:
                 kwargs.pop("z", None)
                 return lambda z: prod(
-                    self._u_function(abs(i) - 1, prec, a=a)(z) ** ZZ(sgn(i))
-                    for i in wd
+                    self._u_function(abs(i) - 1, prec, a=a)(z) ** ZZ(sgn(i)) for i in wd
                 )
             return prod(
-                self._u_function(abs(i) - 1, prec, a=a)(z) ** ZZ(sgn(i))
-                for i in wd
+                self._u_function(abs(i) - 1, prec, a=a)(z) ** ZZ(sgn(i)) for i in wd
             )
-        naive = kwargs.get('naive', None)
+        naive = kwargs.get("naive", None)
         if z is None:
             return lambda z: self._u_function(wd[0] - 1, prec, a=a, naive=naive)(z)
         else:
@@ -797,13 +819,13 @@ Try with a quadratic (ramified) extension."
         """
         gamma = self._generators[i]
         if a is None:
-            a = self.find_point(gamma, idx=i+1) # self.a_point()
+            a = self.find_point(gamma, idx=i + 1)  # self.a_point()
             K = a.parent()
         else:
             a = self.base_ring()(1) * a
-            K = a.parent()            
+            K = a.parent()
         if naive:
-            return lambda z : self.theta_naive(prec, z=z, a=a, gamma=gamma)
+            return lambda z: self.theta_naive(prec, z=z, a=a, gamma=gamma)
         else:
             D = self.find_equivalent_divisor(Divisors(K)([(1, a), (-1, act(gamma, a))]))
             ans = ThetaOC(self, a=D, b=None, prec=prec, base_ring=K)
@@ -915,7 +937,7 @@ class Ball(Element):
         center = L(self.center)
         radius = self.radius * L(self.parent().base_ring().uniformizer()).valuation()
         return BB(center, radius, self.is_open, self.is_complement)
-    
+
     def __hash__(self):
         return hash(str(self.get_key()))
 
@@ -1113,12 +1135,15 @@ def four_point_configuration(K, pts):
     else:
         return None, 0
 
+
 leaf = lambda t: t[0] is None
+
 
 def choose_leaf(tree):
     while not leaf(tree):
         tree = tree[1][0]
     return tree[1]
+
 
 class NeighborJoiningTree(SageObject):
     def __init__(self, K, leaves):

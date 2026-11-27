@@ -17,25 +17,22 @@ from sage.matrix.constructor import Matrix
 from sage.matrix.constructor import Matrix as matrix
 from sage.misc.cachefunc import cached_method
 from sage.misc.lazy_attribute import lazy_attribute
-from sage.misc.timing import walltime
 from sage.misc.misc_c import prod
 from sage.misc.persist import db
-from sage.modules.free_module_element import free_module_element as vector
+from sage.misc.timing import walltime
 from sage.modules.free_module import FreeModule_generic
-from sage.rings.rational_field import Q as QQ
-from sage.rings.real_mpfr import RR
-from sage.rings.integer_ring import Z as ZZ
+from sage.modules.free_module_element import free_module_element as vector
 from sage.rings.complex_mpfr import ComplexField
-from sage.rings.number_field.number_field import NumberField
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.rings.number_field.number_field import QuadraticField
-from sage.rings.real_mpfr import RealField
+from sage.rings.integer_ring import Z as ZZ
+from sage.rings.number_field.number_field import NumberField, QuadraticField
 from sage.rings.padics.factory import Qp
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR, RealField
 from sage.structure.element import MultiplicativeGroupElement
 from sage.structure.richcmp import op_EQ, op_NE, richcmp
 
 from .util import *
-
 
 # Pairs (parent of the matrix, parent of x) for which ``matrix * x`` raised a
 # TypeError in ``ArithGroupElement._act_on_``. Sage's coercion model does not
@@ -295,8 +292,10 @@ class ArithGroupElement(MultiplicativeGroupElement):
 
     def _act_on_(self, x, on_left):
         assert on_left == True
-        if hasattr(x, 'imag'): # x is a complex number
-            mat = self.parent().get_archimedean_embedding(x.parent().precision())(self.quaternion_rep)
+        if hasattr(x, "imag"):  # x is a complex number
+            mat = self.parent().get_archimedean_embedding(x.parent().precision())(
+                self.quaternion_rep
+            )
         else:
             mat = self.matrix()
         try:

@@ -10,9 +10,9 @@ from copy import deepcopy
 from sage.categories.pushout import pushout
 from sage.matrix.constructor import Matrix
 from sage.matrix.matrix_space import MatrixSpace
-from sage.misc.timing import cputime
 from sage.misc.cachefunc import cached_function, cached_method
 from sage.misc.misc_c import prod
+from sage.misc.timing import cputime
 from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.modules.free_module_element import FreeModuleElement_generic_dense
 from sage.modules.free_module_element import free_module_element as vector

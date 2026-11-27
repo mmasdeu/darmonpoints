@@ -3,8 +3,9 @@ r"""
 Fast computation of the matrices giving the action of `2 \times 2` matrices
 on moments, as used by :class:`darmonpoints.ocmodule.OCVn`.
 """
-from sage.libs.flint.types cimport fmpz_t, fmpz_poly_t, slong
+from sage.libs.flint.types cimport fmpz_poly_t, fmpz_t, slong
 from sage.libs.gmp.types cimport mpz_t
+
 
 # Declared here rather than cimported from ``sage.libs.flint.fmpz``, whose
 # ``.pxd`` is not usable in some Sage installations (it cimports a missing

@@ -7,20 +7,19 @@ from collections import defaultdict
 from itertools import chain, groupby, islice, product, starmap, tee
 from operator import mul
 
-from sage.misc.misc_c import prod
 from sage.arith.misc import algdep
 from sage.misc.misc import cputime
+from sage.misc.misc_c import prod
 from sage.misc.verbose import verbose
 from sage.parallel.decorate import fork, parallel
-from sage.rings.real_mpfr import RR
 from sage.rings.complex_mpfr import ComplexField
+from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
 from sage.rings.infinity import Infinity
 from sage.rings.laurent_series_ring import LaurentSeriesRing
+from sage.rings.number_field.number_field import QuadraticField
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.power_series_ring import PowerSeriesRing
-from sage.rings.number_field.number_field import QuadraticField
-from sage.rings.real_mpfr import RealField
-from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
+from sage.rings.real_mpfr import RR, RealField
 from sage.structure.sage_object import SageObject
 
 from .limits import find_center, num_evals
@@ -315,7 +314,7 @@ def integrate_H1(
     if prec is None:
         prec = cocycle.parent().coefficient_module().base_ring().precision_cap()
     if twist is None:
-        twist = getattr(cycle, 'twist', False)
+        twist = getattr(cycle, "twist", False)
 
     verbose("precision = %s" % prec)
     Cp = cycle.parent().coefficient_module().base()

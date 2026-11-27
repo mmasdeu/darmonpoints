@@ -39,9 +39,9 @@ sage: [q.norm() + 1 - E.reduction(q).cardinality() for q in [primes[0], ell]]
 import operator
 import os
 from collections import defaultdict
+from copy import deepcopy
 from itertools import chain, groupby, islice, product, starmap, tee
 from time import sleep
-from copy import deepcopy
 
 from sage.arith.all import dedekind_sum, gcd, lcm, xgcd
 from sage.categories.action import Action
@@ -681,9 +681,7 @@ class ArithCoh(CohomologyGroup, UniqueRepresentation):
                     # x_i * gamma = delta * x_j with delta in the small group,
                     # and the value at the coset x_i is the small-group cocycle
                     # (Shapiro) evaluated at t_g(delta).
-                    delta = hecke_group(
-                        G.get_coset_ti(set_immutable(xi * gamma_q))[0]
-                    )
+                    delta = hecke_group(G.get_coset_ti(set_immutable(xi * gamma_q))[0])
                     newval.append(
                         sum(
                             (
@@ -854,7 +852,6 @@ class CohArbitrary(CohomologyGroup):
                 for _ in range(e):
                     ans = self.act_by_poly_hecke(ans, r, f0, **kwargs)
             return ZZ(u) * ans
-
 
     def apply_hecke_operator(
         self,
@@ -1057,10 +1054,7 @@ class ArithCohOverconvergent(ArithCoh):
                     term = (Pk * self.GA_to_local(A)) % N
                     blocks[i] = term if blocks[i] is None else blocks[i] + term
             rows.append(
-                [
-                    matrix(ZZ, depth, depth, 0) if b is None else b % N
-                    for b in blocks
-                ]
+                [matrix(ZZ, depth, depth, 0) if b is None else b % N for b in blocks]
             )
         U = block_matrix(ZZ, rows, subdivide=False)
         self._Up_local_matrix_cache = U

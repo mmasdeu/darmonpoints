@@ -111,13 +111,9 @@ def _zp_span_basis(vecs):
     `\ZZ_p`-span of the given vectors of `\QQ_p^2`.
     """
     vecs = [v for v in vecs if not v.is_zero()]
-    c1 = min(
-        (v for v in vecs if not v[0].is_zero()), key=lambda v: v[0].valuation()
-    )
+    c1 = min((v for v in vecs if not v[0].is_zero()), key=lambda v: v[0].valuation())
     reduced = [v - (v[0] / c1[0]) * c1 for v in vecs]
-    c2 = min(
-        (v for v in reduced if not v[1].is_zero()), key=lambda v: v[1].valuation()
-    )
+    c2 = min((v for v in reduced if not v[1].is_zero()), key=lambda v: v[1].valuation())
     return matrix(c1.parent().base_ring(), 2, 2, [c1[0], c2[0], c1[1], c2[1]])
 
 
@@ -182,7 +178,9 @@ class QuaternionAlgebraPari(SageObject):
             self.B([self._pari_to_F(c) for c in self._basis_vector_to_1ijk(i)])
             for i in range(n)
         ]
-        self._Omax_mat = matrix(QQ, n, n, [self._B_to_Qvector(o) for o in self.Omax_basis])
+        self._Omax_mat = matrix(
+            QQ, n, n, [self._B_to_Qvector(o) for o in self.Omax_basis]
+        )
         self._Omax_mat_inv = self._Omax_mat.inverse()
 
     def _repr_(self):
@@ -471,7 +469,12 @@ class QuaternionAlgebraPari(SageObject):
                 rows = []
                 for x in basis:
                     c = [v(t) for t in x.coefficient_tuple()]
-                    m = [c[0] + c[1] * sa, c[2] + c[3] * sa, b * (c[2] - c[3] * sa), c[0] - c[1] * sa]
+                    m = [
+                        c[0] + c[1] * sa,
+                        c[2] + c[3] * sa,
+                        b * (c[2] - c[3] * sa),
+                        c[0] - c[1] * sa,
+                    ]
                     if conj is not None:
                         # conj is a 2x2 complex matrix (a random "centre")
                         mm = conj.inverse() * matrix(CC, 2, 2, m) * conj
@@ -494,12 +497,16 @@ class QuaternionAlgebraPari(SageObject):
                 L = matrix(RR, rows)
                 G += L * L.transpose()
             else:
-                D = matrix(RR, 4, 4, [1, 0, 0, 0, 0, -a, 0, 0, 0, 0, -b, 0, 0, 0, 0, a * b])
+                D = matrix(
+                    RR, 4, 4, [1, 0, 0, 0, 0, -a, 0, 0, 0, 0, -b, 0, 0, 0, 0, a * b]
+                )
                 L = matrix(RR, coeffs)
                 G += 2 * L * D * L.transpose()
         return G
 
-    def short_vectors(self, basis, C, prec=200, conj=None, max_count=2000, max_count_limit=500000):
+    def short_vectors(
+        self, basis, C, prec=200, conj=None, max_count=2000, max_count_limit=500000
+    ):
         r"""
         The coordinates (as columns of a PARI matrix) of the vectors `x` (up
         to sign) of the lattice spanned by ``basis`` with `Q(x) \le C`, for
@@ -534,7 +541,9 @@ class QuaternionAlgebraPari(SageObject):
             x += basis[-1]
         return x
 
-    def short_elements(self, basis, C, prec=200, conj=None, max_count=2000, max_count_limit=500000):
+    def short_elements(
+        self, basis, C, prec=200, conj=None, max_count=2000, max_count_limit=500000
+    ):
         r"""
         Elements `x` (up to sign) of the lattice spanned by ``basis`` with
         `Q(x) \le C`, for the majorant `Q` of :meth:`_majorant_gram`.
@@ -577,7 +586,7 @@ class QuaternionAlgebraPari(SageObject):
         _load_gp_code()
         Qs, den = forms
         if absolute:
-            tgt = QQ(target).abs() * den ** self._deg
+            tgt = QQ(target).abs() * den**self._deg
             if tgt not in ZZ:
                 # den * nrd(x) has integral coordinates, so no x has this norm
                 return []
@@ -586,7 +595,9 @@ class QuaternionAlgebraPari(SageObject):
         else:
             tgt = pari([den * c for c in self._coords(target)])
             mode = 0
-        idx = pari("dp_nrdfilter")(Qs, vecs, 1 if affine else 0, self.nf.nf_get_pol(), mode, tgt)
+        idx = pari("dp_nrdfilter")(
+            Qs, vecs, 1 if affine else 0, self.nf.nf_get_pol(), mode, tgt
+        )
         return [ZZ(j) - 1 for j in idx]
 
     def _norm_lower_bound(self, N, prec=53):
@@ -598,7 +609,17 @@ class QuaternionAlgebraPari(SageObject):
         n = self._deg
         return 2 * n * RealField(prec)(QQ(N.norm()).abs()) ** (1 / n)
 
-    def elements_of_norm(self, M, N, max_elements=1, conj=None, prec=200, growth=1.5, max_tries=40, exact=False):
+    def elements_of_norm(
+        self,
+        M,
+        N,
+        max_elements=1,
+        conj=None,
+        prec=200,
+        growth=1.5,
+        max_tries=40,
+        exact=False,
+    ):
         r"""
         Elements `x` of the order with matrix ``M`` such that
         `\mathrm{nrd}(x)` generates the same ideal as ``N`` (or, if ``exact``
@@ -660,7 +681,10 @@ class QuaternionAlgebraPari(SageObject):
             vecs, complete = self._some_short_vectors(basis, C, count, prec)
             for jj in self._filter_by_norm(forms, vecs, Nabs, absolute=True):
                 x = self._vector_to_element(basis, vecs[jj])
-                key = tuple(tuple(c.list()) if hasattr(c, "list") else (c,) for c in x.coefficient_tuple())
+                key = tuple(
+                    tuple(c.list()) if hasattr(c, "list") else (c,)
+                    for c in x.coefficient_tuple()
+                )
                 if key in seen:
                     continue
                 seen.add(key)
@@ -773,7 +797,9 @@ class QuaternionAlgebraPari(SageObject):
             targetp = pari([QQ((-ui * scale).round()) / scale for ui in u]).Col()
             res = pari.qfcvp(G0p, targetp, ((C - offset) * scale).ceil(), maxcount, 0)
             vecs = res[2]
-            for jj in self._filter_by_norm(slice_forms, vecs, n0, absolute=False, affine=True):
+            for jj in self._filter_by_norm(
+                slice_forms, vecs, n0, absolute=False, affine=True
+            ):
                 y = self._vector_to_element(L0 + [x0], vecs[jj], affine=True)
                 if y.reduced_norm() == n0:
                     return y + c
@@ -908,7 +934,11 @@ class QuaternionAlgebraPari(SageObject):
 
         alpha = None
         dg = self._deg
-        C = RealField(53)(2 * dg) * RealField(53)(target) ** (RealField(53)(1) / dg) * 1.5
+        C = (
+            RealField(53)(2 * dg)
+            * RealField(53)(target) ** (RealField(53)(1) / dg)
+            * 1.5
+        )
         for _ in range(60):
             vecs = self.short_vectors(I, C, prec)
             for jj in self._filter_by_norm(I_forms, vecs, target, absolute=True):
@@ -1002,7 +1032,12 @@ class QuaternionAlgebraPari(SageObject):
                 raise
             # The base point lies on a set of measure zero: try other ones
             X0 = afuchinit(self.A, pari(M), 0, 0, bitprec)
-            for x0, y0 in [(QQ(3) / 7, QQ(5) / 9), (QQ(-2) / 11, QQ(7) / 13), (QQ(1) / 5, QQ(9) / 10), (QQ(5) / 17, QQ(3) / 7)]:
+            for x0, y0 in [
+                (QQ(3) / 7, QQ(5) / 9),
+                (QQ(-2) / 11, QQ(7) / 13),
+                (QQ(1) / 5, QQ(9) / 10),
+                (QQ(5) / 17, QQ(3) / 7),
+            ]:
                 try:
                     X = afuchmakefdom(afuchnewp(X0, pari(x0) + pari(y0) * pari("I")))
                     pc = CC(x0, y0)

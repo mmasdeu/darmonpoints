@@ -9,18 +9,18 @@ from itertools import product
 
 from sage.algebras.quatalg.quaternion_algebra import QuaternionAlgebra
 from sage.arith.misc import factor, fundamental_discriminant
-from sage.misc.timing import walltime
 from sage.misc.misc_c import prod
+from sage.misc.timing import walltime
 from sage.misc.verbose import get_verbose, set_verbose, verbose
-from sage.rings.rational_field import Q as QQ
-from sage.rings.real_mpfr import RR
-from sage.rings.integer_ring import Z as ZZ
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
-from sage.rings.padics.factory import Qp
 from sage.rings.infinity import Infinity
+from sage.rings.integer_ring import Z as ZZ
 from sage.rings.number_field.number_field import is_fundamental_discriminant
+from sage.rings.padics.factory import Qp
 from sage.rings.padics.precision_error import PrecisionError
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.rational_field import Q as QQ
+from sage.rings.real_mpfr import RR
 from sage.schemes.curves.constructor import Curve
 
 from .cohomology_arithmetic import *
@@ -409,9 +409,7 @@ def darmon_point(
                     % working_prec
                 )
             except ValueError as e:
-                fwrite(
-                    "ValueError occurred when constructing homology cycle.", outfile
-                )
+                fwrite("ValueError occurred when constructing homology cycle.", outfile)
                 fwrite("Error : %s" % str(e), outfile)
                 fwrite("Returning the S-arithmetic group.", outfile)
                 if quit_when_done:
@@ -427,9 +425,7 @@ def darmon_point(
                     magma.quit()
                 return G
         eisenstein_constant = -ZZ(E.reduction(ell).count_points())
-        fwrite(
-            "r = %s, so a_r(E) - r - 1 = %s" % (ell, eisenstein_constant), outfile
-        )
+        fwrite("r = %s, so a_r(E) - r - 1 = %s" % (ell, eisenstein_constant), outfile)
         fwrite("exponent = %s" % nn, outfile)
         phiE = get_cocycle_from_elliptic_curve(Coh, E, sign=sign_at_infinity)
         if hasattr(E, "ap"):

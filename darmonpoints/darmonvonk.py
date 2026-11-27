@@ -7,13 +7,14 @@ from sage.modular.pollack_stevens.manin_map import *
 from darmonpoints.arithgroup import angle_sign, intersect_geodesic_arcs
 from darmonpoints.cohomology_arithmetic import ArithAction, CohArbitrary
 from darmonpoints.homology import *
+
 # from darmonpoints.ocmodule import AddMeromorphicFunctions
 from darmonpoints.meromorphic import MeromorphicFunctions
 from darmonpoints.sarithgroup import *
 from darmonpoints.util import *
 
 # distinguished_open = "OCp"  # Needed if we want to compare with Darmon points!
-distinguished_open = 'Uinf'
+distinguished_open = "Uinf"
 
 
 class OverconvergentDVCocycle(SageObject):
@@ -162,7 +163,9 @@ class OverconvergentDVCocycle(SageObject):
             try:
                 return mats[h]
             except KeyError:
-                B = mats[h] = I.action_matrix(Mer.get_action_data(h, one_param, one_param))
+                B = mats[h] = I.action_matrix(
+                    Mer.get_action_data(h, one_param, one_param)
+                )
                 return B
 
         for row in terms:
@@ -694,7 +697,9 @@ def admissible_discriminants(p, D, bound, level=1, magma=None):
             if n != fundamental_discriminant(n):
                 continue
             field_embeddable = all(kronecker_symbol(n, ell) in [-1, 0] for ell in facts)
-            level_embeddable = all(kronecker_symbol(n, ell) in [1, 0] for ell in facts_level)
+            level_embeddable = all(
+                kronecker_symbol(n, ell) in [1, 0] for ell in facts_level
+            )
             if field_embeddable and level_embeddable and n % p != 0:
                 ans.append(n)
     return ans
@@ -918,7 +923,7 @@ class DVCocycle(SageObject):
         tau = x0.parent()(self._tau_inf)
         tau_bar = x0.parent()(self._tau_inf_bar)
         ans = Div(0)
-        c1 = HH.get_geodesic(x0, gamma_of_x0)        
+        c1 = HH.get_geodesic(x0, gamma_of_x0)
         for g in self.all_matrix_candidates(gamma):
             gtau = g * tau
             gtau_bar = g * tau_bar

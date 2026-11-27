@@ -1,4 +1,4 @@
-r'''
+r"""
 This file contains functionality to compute p-adic periods of abelian surfaces of GL2-type.
 
 EXAMPLES:
@@ -17,7 +17,7 @@ tested::
     sage: beta = ...  # not tested
     sage: cycleGn, nn, ell = construct_homology_cycle(5, G, beta, 2*prec, lambda q: Coh.hecke_matrix(q).minpoly(), use_magma=True)  # not tested
 
-'''
+"""
 
 import configparser
 import datetime
@@ -25,6 +25,7 @@ import os
 from itertools import chain, groupby, islice, product, starmap, tee
 
 import pyximport
+from sage.arith.misc import GCD
 from sage.arith.srange import srange
 from sage.matrix.constructor import Matrix, block_diagonal_matrix, block_matrix, matrix
 from sage.misc.banner import version as sage_version
@@ -38,7 +39,6 @@ from .cohomology_arithmetic import *
 from .homology import get_homology_kernel, inverse_shapiro, lattice_homology_cycle
 from .integrals import integrate_H1
 from .sarithgroup import BigArithGroup
-from sage.arith.misc import GCD
 from .util import *
 
 pyximport.install()
@@ -1256,8 +1256,12 @@ def get_pseudo_orthonormal_homology(G, cocycles, hecke_data=None, outfile=None):
             )
 
     else:
+
         def pair(f, xi):
-            return sum(f.evaluate(g) * a for g, a in zip(xi.parent().group().gens(), xi.values()))
+            return sum(
+                f.evaluate(g) * a
+                for g, a in zip(xi.parent().group().gens(), xi.values())
+            )
 
     a00 = pair(f0, ker[0])
     a01 = pair(f0, ker[1])
@@ -1289,13 +1293,19 @@ def get_pseudo_orthonormal_homology(G, cocycles, hecke_data=None, outfile=None):
     # it, since a wrong pairing otherwise propagates silently into the periods.
     # The pairings are with the un-normalized a_ij, hence the factor of `den`.
     expected = determinant * den
-    assert pair(f0, theta1) == expected and pair(f1, theta2) == expected, (
-        "pseudo-orthonormality failed: diagonal is (%s, %s), expected (%s, %s)"
-        % (pair(f0, theta1), pair(f1, theta2), expected, expected)
+    assert (
+        pair(f0, theta1) == expected and pair(f1, theta2) == expected
+    ), "pseudo-orthonormality failed: diagonal is (%s, %s), expected (%s, %s)" % (
+        pair(f0, theta1),
+        pair(f1, theta2),
+        expected,
+        expected,
     )
-    assert pair(f0, theta2) == 0 and pair(f1, theta1) == 0, (
-        "pseudo-orthonormality failed: off-diagonal is (%s, %s), expected (0, 0)"
-        % (pair(f0, theta2), pair(f1, theta1))
+    assert (
+        pair(f0, theta2) == 0 and pair(f1, theta1) == 0
+    ), "pseudo-orthonormality failed: off-diagonal is (%s, %s), expected (0, 0)" % (
+        pair(f0, theta2),
+        pair(f1, theta1),
     )
     return theta1, theta2, determinant
 
