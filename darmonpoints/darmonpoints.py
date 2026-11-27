@@ -85,6 +85,12 @@ def construct_homology_cycle(
     **kwargs,
 ):
     F_to_Qp = G.base_ring_local_embedding(prec)
+    # Group elements act on points through their embedding at the default
+    # precision of G (that of the most precise embedding computed so far,
+    # initially 200). Make it at least prec, so that gamma fixes tau1 to its
+    # full precision (points of divisors with different precisions are
+    # different).
+    G.get_embedding(prec)
     G = G.Gn
     F = G.base_ring()
     t = PolynomialRing(F, names="t").gen()
