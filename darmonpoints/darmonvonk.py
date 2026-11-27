@@ -72,6 +72,17 @@ class OverconvergentDVCocycle(SageObject):
             Up_reps = tuple(G.get_Up_reps())
         Up_data = GGp.get_hecke_data(p, hecke_reps=Up_reps)
         try:
+            self._improve_log(prec, Up_reps, Up_data)
+            return
+        except (
+            ValueError,
+            TypeError,
+            NotImplementedError,
+            ZeroDivisionError,
+            ImportError,
+        ) as e:
+            verbose("Not using logarithms to iterate Up (%s)" % e)
+        try:
             self._improve_integer(prec, Up_reps, Up_data)
             return
         except (ValueError, NotImplementedError) as e:
@@ -91,6 +102,161 @@ class OverconvergentDVCocycle(SageObject):
             if val >= prec:
                 break
         self.phi_even, self.phi_odd = phi_list
+        return
+
+    def _improve_log(self, prec, Up_reps, Up_data):
+        r"""
+        Same as :meth:`improve`, computing with the logarithms of the series.
+
+        The values of the cocycle are principal units `f` (`f(0) = 1`) whose
+        coefficient of degree `m` is divisible by `p^m`. Their logarithms add
+        up when the series are multiplied, and the action of the group (with
+        the normalization `f(0) = 1`, which becomes `\log f(0) = 0`) is
+        linear on them: `U_p` becomes a linear map, whose matrix is built once
+        with the moment matrices of the products `g h` of `2 \times 2`
+        matrices (see
+        :meth:`darmonpoints.cohomology_arithmetic.ArithCohOverconvergent._Up_local_matrix_filtration`,
+        here acting on coefficients instead of moments). Then the iteration
+        only involves matrix-vector products, which get cheaper as the terms
+        gain `p`-adic digits, and the exponential is taken at the end.
+
+        The coefficients are scaled: `L' = p^c \log f`, with `p^c` larger than
+        the length `n` of the series, has its coefficient of degree `m`
+        divisible by `p^m`, and is stored as the integer coordinates of
+        `L'_m / p^m`, modulo `p^{n - m}`.
+
+        Raise ``ValueError`` (before changing anything) if some hypothesis
+        does not hold, so that :meth:`improve` falls back to the multiplicative
+        iteration.
+        """
+        from darmonpoints.meromorphic import MeromorphicIntegerArithmetic
+        from darmonpoints.moments import (
+            divexact_inplace,
+            filtration_valuation,
+            filtration_weighted_valuation,
+            moebius_moment_accumulate_scaled,
+            reduce_scaled_matrix,
+            scaled_matvec,
+        )
+
+        G = self.G
+        GGp = G.small_group()
+        HpMer = self.HpMer
+        Mer = HpMer.coefficient_module()
+        K = Mer.base_ring()
+        I = MeromorphicIntegerArithmetic(Mer)  # NotImplementedError if not unramified
+        O = I._O
+        dK = I.d
+        p = ZZ(K.prime())
+        n = ZZ(Mer._prec)
+        N = p**n
+        c = 0
+        while p**c <= n:
+            c += 1
+        phi1 = HpMer(self.phi1)
+        one_param = Matrix(K, 2, 2, [1, 0, 0, 1])
+        if any(v._parameter != one_param for v in phi1.values()):
+            raise NotImplementedError("Only implemented for the trivial parameter")
+        gens = GGp.gens()
+        ng = len(gens)
+        Ps = Mer.power_series_ring()
+
+        # Scaled logarithms of the values of phi1
+        def scaled_log(f):
+            F = Ps(list(f._value))
+            if F[0] != 1 or any(
+                F[m] != 0 and F[m].valuation() < m for m in range(1, n)
+            ):
+                raise ValueError("The values are not principal units of the right kind")
+            L = (F.derivative() / F).integral()
+            cols = [[] for _ in range(dK)]
+            for m in range(n):
+                x = p**c * K(L[m]) if m > 0 else K(0)
+                coords = I._coords(x.add_bigoh(n))
+                for r in range(dK):
+                    if coords[r] % p**m != 0:
+                        raise ValueError("Unexpected valuation of the logarithm")
+                    cols[r].append(coords[r] // p**m % p ** (n - m))
+            return cols
+
+        logs = [scaled_log(f) for f in phi1.values()]
+        T = [matrix(ZZ, ng * n, 1, [x for L in logs for x in L[r]]) for r in range(dK)]
+
+        # The matrix of U_p on the scaled coefficients, built transposed: the
+        # rows of the block (i, j) are indexed by the coefficients of the input
+        # (value at gamma_i) and the columns by those of the output (gamma_j).
+        terms = self._Up_terms(Up_reps, Up_data)
+        contributions = {}
+        for j, row in enumerate(terms):
+            for lst, g in row:
+                for i, h, sign in lst:
+                    key = g if h is None else g * h
+                    targets = contributions.setdefault(key, {})
+                    targets[i, j] = targets.get((i, j), 0) + sign
+        Ut = matrix(ZZ, ng * n, ng * n)
+        for x, targets in contributions.items():
+            a, b, cc, d = (
+                ZZ(o.lift() if hasattr(o, "lift") else o) % N
+                for o in G.embed(x.quaternion_rep, n).adjugate().list()
+            )
+            for (i, j), coeff in targets.items():
+                if coeff != 0:
+                    moebius_moment_accumulate_scaled(
+                        Ut, i * n, j * n, coeff, a, b, cc, d, p, n, n
+                    )
+        U = Ut.transpose()
+        del Ut
+        reduce_scaled_matrix(U, p, n, n)
+        for j in range(ng):
+            U.set_row_to_multiple_of_row(j * n, j * n, 0)  # f(0) = 1
+
+        # Iterate on the logarithms
+        acc = [
+            [matrix(ZZ, ng * n, 1) for _ in range(dK)],
+            [t.__copy__() for t in T],
+        ]
+        reduced_to = n
+        for it in range(prec):
+            update_progress(float(it) / prec, "Iterating Up (%s/%s)" % (it, prec))
+            v = min(filtration_valuation(t, p, n, n) for t in T)
+            if v >= n:
+                break
+            if 8 * (reduced_to - (n - v)) >= n:
+                reduce_scaled_matrix(U, p, n - v, n)
+                reduced_to = n - v
+            newT = []
+            for t in T:
+                if v > 0:
+                    divexact_inplace(t, p**v)
+                w = scaled_matvec(U, t, p, n - v, n)
+                if v > 0:
+                    w = p**v * w
+                newT.append(w)
+            T = newT
+            for r in range(dK):
+                acc[it % 2][r] += T[r]
+            val = min(filtration_weighted_valuation(t, p, n, n) for t in T) - c
+            if val >= prec:
+                break
+        update_progress(1.0, "Iterating Up (%s/%s)" % (prec, prec))
+
+        # Back to the series: f = exp(L), with f' = L' f
+        inv = [None] + [K(1) / k for k in range(1, n)]
+
+        def to_series(cols, gi):
+            L = [K(0)]
+            for m in range(1, n):
+                coords = [p**m * ZZ(cols[r][gi * n + m, 0]) for r in range(dK)]
+                L.append(O.element([x % N for x in coords], n) / p**c)
+            dL = [m * L[m] for m in range(n)]
+            f = [K(1)]
+            for m in range(1, n):
+                f.append(inv[m] * sum(dL[k] * f[m - k] for k in range(1, m + 1)))
+            return Mer([o.add_bigoh(n) for o in f], check=False)
+
+        self.phi_even, self.phi_odd = [
+            HpMer([to_series(cols, gi) for gi in range(ng)]) for cols in acc
+        ]
         return
 
     def _Up_terms(self, Up_reps, Up_data):

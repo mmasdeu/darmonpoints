@@ -13,6 +13,7 @@ from sage.categories.action import Action
 from sage.categories.homset import Hom
 from sage.groups.group import AlgebraicGroup
 from sage.matrix.constructor import Matrix, block_matrix, column_matrix, matrix
+from sage.matrix.matrix_integer_dense import Matrix_integer_dense
 from sage.matrix.matrix_space import MatrixSpace
 from sage.misc.cachefunc import cached_method
 from sage.misc.lazy_attribute import lazy_attribute
@@ -426,12 +427,23 @@ class CohomologyGroup(Module):
         # returns the coefficients sorted by the indexing set, while monomials()
         # follows the (arbitrary) order of the underlying dictionary, so zipping
         # the two scrambles the pairing as soon as x has two distinct coefficients.
-        ans = sum(
-            (
-                a * self.generator_acting_matrix(g)
-                for g, a in x.monomial_coefficients(copy=False).items()
-            )
-        )
+        terms = [
+            (self.generator_acting_matrix(g), a)
+            for g, a in x.monomial_coefficients(copy=False).items()
+        ]
+        ans = None
+        if terms and all(type(M) is Matrix_integer_dense for M, _ in terms):
+            try:
+                from .moments import matrix_axpy
+            except ImportError:
+                pass
+            else:
+                # In place: much cheaper than creating a matrix for each term
+                ans = terms[0][0].parent()().__copy__()
+                for M, a in terms:
+                    matrix_axpy(ans, a, M)
+        if ans is None:
+            ans = sum((a * M for M, a in terms))
         if g0 is None:
             return ans
         else:

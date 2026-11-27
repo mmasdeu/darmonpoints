@@ -410,7 +410,46 @@ class OCVn(Module, UniqueRepresentation):
             g = g.matrix()
         except AttributeError:
             pass
+        if M == self._depth:
+            try:
+                return self._get_powers_filtered(g)
+            except (ImportError, ZeroDivisionError, TypeError, ValueError):
+                pass
         return self._get_powers(g).submatrix(0, 0, M, M)
+
+    def _get_powers_filtered(self, abcd):
+        r"""
+        The matrix of :meth:`_get_powers`, with row `i` only computed modulo
+        `p^{N - i}` (`N` = ``depth - 1``), which is the precision of the moment
+        `i` in the filtration of overconvergent distributions. Cached, and
+        immutable.
+
+        EXAMPLES::
+
+            sage: from darmonpoints.ocmodule import OCVn
+            sage: V = OCVn(5, 6)
+            sage: g = matrix(ZZ, 2, 2, [2, 3, 5, 7])
+            sage: A, B = V._get_powers(g), V._get_powers_filtered(g)
+            sage: all((A[i, j] - B[i, j]) % 5^(5 - i) == 0 for i in range(5) for j in range(6))
+            True
+        """
+        from .moments import moebius_moment_accumulate
+
+        key = tuple(abcd.list())
+        try:
+            return self._cache_powers_filtered[key]
+        except AttributeError:
+            self._cache_powers_filtered = {}
+        except KeyError:
+            pass
+        N = self._pN
+        a, b, c, d = (ZZ(o) % N for o in key)
+        depth = self._depth
+        M = MatrixSpace(ZZ, depth, depth)()
+        moebius_moment_accumulate(M, 0, 0, 1, a, b, c, d, self._p, depth - 1, depth)
+        M.set_immutable()
+        self._cache_powers_filtered[key] = M
+        return M
 
     def _get_powers(self, abcd, emb=None):
         r"""

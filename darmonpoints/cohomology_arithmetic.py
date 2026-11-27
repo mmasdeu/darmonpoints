@@ -1026,11 +1026,107 @@ class ArithCohOverconvergent(ArithCoh):
         once and cached, so that iterating `U_p` (as in :meth:`improve`)
         costs one matrix-vector product per iteration, instead of evaluating
         the cocycle at `(p+1) n` words each time.
+
+        Each term `s_k \cdot h` (for a monomial `h` of a Fox derivative) is the
+        moment matrix of the product `s_k h` of `2 \times 2` matrices, which
+        agrees with the product of the moment matrices modulo the filtration
+        of overconvergent distributions (the moment `i` is only meaningful
+        modulo `p^{N - i}`), and is much cheaper: `O(N^2)` instead of `O(N^3)`
+        operations. Row `i` of the matrix is computed modulo `p^{N - i}`.
         """
         try:
             return self._Up_local_matrix_cache
         except AttributeError:
             pass
+        self._Up_scaled = False
+        try:
+            U = self._Up_local_matrix_filtration(scaled=True)
+            self._Up_scaled = True
+        except ValueError:
+            # The products s_k h do not satisfy the divisibility conditions
+            # of the scaled matrix
+            try:
+                U = self._Up_local_matrix_filtration(scaled=False)
+            except (ImportError, ZeroDivisionError):
+                U = self._Up_local_matrix_exact()
+        except (ImportError, ZeroDivisionError):
+            U = self._Up_local_matrix_exact()
+        self._Up_local_matrix_cache = U
+        return U
+
+    def _Up_local_matrix_filtration(self, scaled=True):
+        r"""
+        The matrix of :meth:`_Up_local_matrix`, computed with the moment
+        matrices of the products `s_k h` (see there).
+
+        If ``scaled`` is ``True``, return instead the matrix `U'` such that
+        `U = U' \cdot \mathrm{diag}(p^{m'})` (the column of the moment `m'` of
+        `U` is divisible by `p^{m'}`, since `\det(s_k h)` has valuation 1),
+        whose entry in the rows of the moment `m` and the columns of the moment
+        `m'` is only needed modulo `p^{N - m - m'}`, and vanishes if
+        `m + m' \geq N`. This has about a sixth of the digits of `U`. It is
+        applied with :func:`darmonpoints.moments.scaled_matvec`.
+        """
+        from .moments import (
+            add_block_scaled,
+            moebius_moment_accumulate,
+            moebius_moment_accumulate_scaled,
+            reduce_scaled_matrix,
+        )
+
+        accumulate = (
+            moebius_moment_accumulate_scaled if scaled else moebius_moment_accumulate
+        )
+
+        V = self.coefficient_module()
+        G = self.group()
+        Gpn = self.S_arithgroup().small_group()
+        depth = V._depth
+        n = depth - 1
+        N = V._pN
+        p = V._p
+        Up_reps = self.S_arithgroup().get_Up_reps()
+        repslocal = self.get_Up_reps_local(V.base_ring().precision_cap())
+        local_s = [sk.matrix() for sk in repslocal]
+        gens = G.gens()
+        ngens = len(gens)
+        U = matrix(ZZ, ngens * depth, ngens * depth)
+        # The same product s_k h appears in several blocks: collect the
+        # coefficients first, and compute each moment matrix once.
+        contributions = {}
+        for j, gamma in enumerate(gens):
+            for k, g in enumerate(Up_reps):
+                x = Gpn.get_hecke_ti(g, gamma)
+                if x.parent() is not G:
+                    x = G(x)
+                fgrad = self.fox_gradient(tuple(x.word_rep))
+                for i, A in enumerate(fgrad):
+                    for h, coeff in A.monomial_coefficients(copy=False).items():
+                        targets = contributions.setdefault((k, h), {})
+                        targets[j, i] = targets.get((j, i), 0) + coeff
+        for (k, h), targets in contributions.items():
+            targets = [(ji, c) for ji, c in targets.items() if c != 0]
+            if not targets:
+                continue
+            a, b, c, d = (ZZ(o) % N for o in (local_s[k] * h.matrix()).list())
+            if len(targets) == 1 or not scaled:
+                for (j, i), coeff in targets:
+                    accumulate(U, j * depth, i * depth, coeff, a, b, c, d, p, n, depth)
+            else:
+                S = matrix(ZZ, depth, depth)
+                accumulate(S, 0, 0, 1, a, b, c, d, p, n, depth)
+                for (j, i), coeff in targets:
+                    add_block_scaled(U, j * depth, i * depth, coeff, S, n, depth)
+        if scaled:
+            reduce_scaled_matrix(U, p, n, depth)
+            return U
+        return U % N
+
+    def _Up_local_matrix_exact(self):
+        r"""
+        The matrix of :meth:`_Up_local_matrix`, computed exactly modulo `p^N`
+        with products of moment matrices.
+        """
         V = self.coefficient_module()
         G = self.group()
         Gpn = self.S_arithgroup().small_group()
@@ -1056,9 +1152,7 @@ class ArithCohOverconvergent(ArithCoh):
             rows.append(
                 [matrix(ZZ, depth, depth, 0) if b is None else b % N for b in blocks]
             )
-        U = block_matrix(ZZ, rows, subdivide=False)
-        self._Up_local_matrix_cache = U
-        return U
+        return block_matrix(ZZ, rows, subdivide=False)
 
     def _apply_Up_matrix(self, c):
         r"""
@@ -1066,7 +1160,9 @@ class ArithCohOverconvergent(ArithCoh):
 
         TESTS:
 
-        The result agrees with the evaluation of ``c`` at the Hecke words::
+        The result agrees with the evaluation of ``c`` at the Hecke words,
+        modulo the filtration of overconvergent distributions (the moment `m`
+        is meaningful modulo `p^{N - m}`)::
 
             sage: from darmonpoints.sarithgroup import BigArithGroup
             sage: from darmonpoints.cohomology_arithmetic import ArithCoh, get_overconvergent_class_quaternionic, get_cocycle_from_elliptic_curve
@@ -1080,14 +1176,22 @@ class ArithCohOverconvergent(ArithCoh):
             sage: Up_reps = G.get_Up_reps()
             sage: Phi1 = CohOC.apply_Up(Phi)
             sage: Phi2 = CohOC.apply_Up(Phi, Up_reps=Up_reps)
-            sage: all((u - v).valuation() == Infinity for u, v in zip(Phi1.values(), Phi2.values()))
+            sage: n = CohOC.coefficient_module()._depth - 1
+            sage: all(((u - v)._val[m, 0].lift()) % 13^(n - m) == 0
+            ....:     for u, v in zip(Phi1.values(), Phi2.values()) for m in range(n))
             True
         """
         V = self.coefficient_module()
         depth = V._depth
         N = V._pN
         w = block_matrix(ZZ, [[o._val.lift()] for o in c.values()], subdivide=False)
-        Uw = (self._Up_local_matrix() * w) % N
+        U = self._Up_local_matrix()
+        if self._Up_scaled:
+            from .moments import scaled_matvec
+
+            Uw = scaled_matvec(U, w, V._p, depth - 1, depth)
+        else:
+            Uw = (U * w) % N
         R = V._R
         vals = [
             V.element_class(
@@ -1096,6 +1200,84 @@ class ArithCohOverconvergent(ArithCoh):
             for i in range(0, Uw.nrows(), depth)
         ]
         return self(vals)
+
+    def _improve_scaled(self, Phi, sign):
+        r"""
+        Same as :meth:`improve`, with the scaled matrix of `U_p` (see
+        :meth:`_Up_local_matrix_filtration`), iterating on the differences.
+
+        The lift is the limit of `h_{k+1} = a_p U_p h_k` (`a_p = \pm 1`), and
+        `h_{k+1} - h_k = (a_p U_p)^k (h_1 - h_0)` gains one `p`-adic digit at
+        each step. Once it is divisible by `p^v`, only the moments `m < N - v`
+        matter, modulo `p^{N - v - m}`, so the products get cheaper as the
+        iteration goes on. The result agrees with :meth:`improve` modulo the
+        filtration of overconvergent distributions.
+
+        Returns ``None`` (without modifying ``Phi``) if the differences do not
+        converge, so that :meth:`improve` falls back to the plain iteration.
+        """
+        from .moments import (
+            divexact_inplace,
+            filtration_valuation,
+            reduce_scaled_matrix,
+            scaled_matvec,
+        )
+
+        V = self.coefficient_module()
+        depth = V._depth
+        n = depth - 1
+        p = V._p
+        N = V._pN
+        eps = 1 if sign is None else ZZ(sign)
+        if eps not in (1, -1):
+            return None
+        Umat = self._Up_local_matrix()
+        h = block_matrix(ZZ, [[o._val.lift()] for o in Phi.values()], subdivide=False)
+        d = eps * scaled_matvec(Umat, h, p, n, depth) - h
+        h = h + d
+        old_v = -1
+        stalled = 0
+        # As v grows, the entries of the matrix are only needed modulo smaller
+        # powers of p: reduce it (in place) from time to time.
+        reduced_to = n
+        while True:
+            v = filtration_valuation(d, p, n, depth)
+            if v >= n:
+                break
+            if 8 * (reduced_to - (n - v)) >= n:
+                reduce_scaled_matrix(Umat, p, n - v, depth)
+                reduced_to = n - v
+            if v <= old_v:
+                stalled += 1
+                if stalled > 3:
+                    if reduced_to < n:
+                        del self._Up_local_matrix_cache
+                    return None
+            else:
+                stalled = 0
+            old_v = v
+            if v > 0:
+                divexact_inplace(d, p**v)
+            d = scaled_matvec(Umat, d, p, n - v, depth)
+            if eps != 1:
+                d = -d
+            if v > 0:
+                d = p**v * d
+            h += d
+        if reduced_to < n:
+            # The cached matrix has lost precision: compute it again if needed
+            del self._Up_local_matrix_cache
+        h = h % N
+        R = V._R
+        vals = [
+            V.element_class(
+                V, Matrix(R, depth, 1, h.submatrix(i, 0, depth, 1).list()), check=False
+            )
+            for i in range(0, h.nrows(), depth)
+        ]
+        ans = self(vals)
+        Phi._val = ans._val
+        return ans
 
     def improve(
         self, Phi, prec=None, sign=None, progress_bar=False, check_convergence=False
@@ -1113,6 +1295,12 @@ class ArithCohOverconvergent(ArithCoh):
         if prec is None:
             prec = U.base_ring().precision_cap()
         assert prec is not None
+        if self._Up_fast_path_available():
+            self._Up_local_matrix()
+            if self._Up_scaled:
+                ans = self._improve_scaled(Phi, sign)
+                if ans is not None:
+                    return ans
         repslocal = self.get_Up_reps_local(prec)
 
         h2 = self.apply_Up(Phi, group=group, scale=1, times=0, progress_bar=False)

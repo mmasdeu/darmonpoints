@@ -291,6 +291,234 @@ def _pair_with_moments(K, xs, logc0, moments, prec, inverses):
     return ans
 
 
+# Use _collect_pairing_points from this number of moments on (below, it is
+# slower than pairing with the moments; above, it is faster, and it does not
+# need to keep the matrices of moments, which take a lot of memory)
+_FAST_PAIRING_MIN_PREC = 150
+
+
+def _fast_pairing_data(G, cocycle, Cp, prec):
+    r"""
+    The data used by :func:`_pair_cocycle_with_series`, or ``None`` if it
+    does not apply (``cocycle`` must take values in ``OCVn``, without
+    Shapiro's lemma, and ``Cp`` must be `\QQ_p` or a quadratic unramified
+    extension).
+    """
+    from .ocmodule import OCVn
+    from .theta_additive import _ok_coordinates
+
+    try:
+        H = cocycle.parent()
+        V = H.coefficient_module()
+        if not (
+            isinstance(V, OCVn)
+            and not G.use_shapiro()
+            and not H._trivial_action
+            and H._acting_matrix is not None
+        ):
+            return None
+        O = _ok_coordinates(Cp)
+    except (AttributeError, NotImplementedError):
+        return None
+    if O.e != 1 or O.d > 2 or O._kind not in ("Qp", "unramified"):
+        return None
+    p = ZZ(Cp.prime())
+    n = V._depth - 1
+    if n < _FAST_PAIRING_MIN_PREC:
+        # At low precision, the matrices of moments are small and caching
+        # them is faster
+        return None
+    N = p**n
+    if O.d == 2:
+        # g^2 = t1 g + t0
+        f = [ZZ(c.lift()) for c in Cp.defining_polynomial().list()]
+        if f[2] != 1:
+            return None
+        t0, t1 = -f[0], -f[1]
+    else:
+        t0, t1 = 0, 0
+    # f_i(Y) = sum_{m >= 1} v_i[m] p^m / m Y^m, where v_i are the moments of
+    # the value at the i-th generator: then sum_m v_i[m] y^m / m = f_i(y / p)
+    M = min(n, prec)
+    polys = []
+    for v in cocycle.values():
+        mom = v._val.list()
+        cf = [ZZ(0)]
+        for m in range(1, min(M, len(mom) - 1) + 1):
+            e = m.valuation(p) if hasattr(m, "valuation") else ZZ(m).valuation(p)
+            unit = ZZ(m) // p**e
+            cf.append(ZZ(mom[m].lift()) * p ** (m - e) * unit.inverse_mod(N) % N)
+        polys.append((cf, Cp(ZZ(mom[0].lift()))))
+    acc = [
+        dict(logc0=Cp(0), unit=[ZZ(1)] + [ZZ(0)] * (O.d - 1), points=[], weights=[])
+        for _ in polys
+    ]
+    return dict(H=H, O=O, p=p, N=N, d=O.d, t0=t0, t1=t1, polys=polys, local={}, acc=acc)
+
+
+def _collect_pairing_points(G, cocycle, g, h, xs, logc0, data):
+    r"""
+    Record the contribution to the integral of the pairing of the series
+    `\log(c_0) + \sum_P n_P \log(1 - x_P z)` with the moments of
+    ``cocycle.evaluate(g, h)``, without computing these moments (it is
+    finished by :func:`_finish_pairing`).
+
+    The value is `hp \cdot \sum_i \partial_i(w) c(\gamma_i)` (see
+    ``ArithCohElement.evaluate``), a sum of terms `M(x) c(\gamma_i)` for
+    `2 \times 2` matrices `x`. Pairing a series with the moments of `M(x)\mu`
+    is pairing the series composed with the Moebius map of `x` with those of
+    `\mu` (modulo the filtration of overconvergent distributions, which is
+    the precision of the moments anyway), and since `\sum_P n_P = 0` the
+    composed series has the same form:
+
+    .. MATH::
+
+        \log(c_0) + \sum_P n_P \log(1 - x_P b/d) + \sum_P n_P \log(1 - y_P z),
+        \qquad y_P = \frac{a x_P - c}{d - b x_P},
+
+    for `x = [[a, b], [c, d]]`. So, for each generator `\gamma_i`, only the
+    constant term and the points `y_P / p` (with their weights) are recorded.
+    """
+    H = data["H"]
+    O, p, N = data["O"], data["p"], data["N"]
+    S = H.S_arithgroup()
+    Gpn = H.group()
+    K = logc0.parent()
+    try:
+        gq = g.quaternion_rep
+    except AttributeError:
+        gq = g
+    hp = S.reduce_in_amalgam(h, return_word=False)
+    he = hp**-1 * h
+    newg = S.reduce_in_amalgam(he * gq, return_word=False)
+    x = newg if newg.parent() is Gpn else Gpn(newg)
+    fgrad = H.fox_gradient(tuple(x.word_rep))
+    from .moments import mobius_transform_points
+
+    Mh = Gpn(hp).matrix()
+    local = data["local"]
+    d, t0, t1 = data["d"], data["t0"], data["t1"]
+    xcoords = [[o % N for o in O.coords(xP)] for xP, _ in xs]
+    ns = [ZZ(nP) for _, nP in xs]
+    for i, A in enumerate(fgrad):
+        mono = A.monomial_coefficients(copy=False)
+        if not mono:
+            continue
+        acc = data["acc"][i]
+        asum = 0
+        for gp, coeff in mono.items():
+            if coeff == 0:
+                continue
+            try:
+                Mg = local[gp]
+            except KeyError:
+                Mg = local[gp] = gp.matrix()
+            a, b, c, dd = (ZZ(o.lift()) % N for o in (Mh * Mg).list())
+            asum += coeff
+            pts, ws, u = mobius_transform_points(
+                a, b, c, dd, xcoords, ns, ZZ(coeff), p, N, t0, t1, d
+            )
+            acc["points"].extend(pts)
+            acc["weights"].extend(ws)
+            acc["unit"] = _ok_mul(acc["unit"], u, N, d, t0, t1)
+        acc["logc0"] += asum * logc0
+
+
+def _ok_mul(x, y, N, d, t0, t1):
+    r"""
+    Product of the coordinates ``x`` and ``y`` in `\ZZ[g]/(g^2 - t_1 g - t_0)`
+    (``d = 2``) or `\ZZ` (``d = 1``), modulo ``N``.
+    """
+    if d == 1:
+        return [x[0] * y[0] % N]
+    w = x[1] * y[1]
+    return [(x[0] * y[0] + t0 * w) % N, (x[0] * y[1] + x[1] * y[0] + t1 * w) % N]
+
+
+def _power_sums(points, weights, n, N, d, t0, t1):
+    r"""
+    The coordinates (``d`` lists of length ``n``) of the power sums
+    `\sum_k w_k y_k^m` for `0 \leq m < n`, modulo ``N``, for points `y_k` of
+    `\ZZ[g]/(g^2 - t_1 g - t_0)` (``d = 2``) or `\ZZ` (``d = 1``).
+
+    They are the coefficients of `\sum_k w_k / (1 - y_k T)`, which is computed
+    by adding the fractions in pairs (a product tree), truncating at `T^n`,
+    and expanding the final fraction.
+
+    EXAMPLES::
+
+        sage: from darmonpoints.integrals import _power_sums
+        sage: _power_sums([[2], [3]], [1, 5], 4, 1000, 1, 0, 0)
+        [[6, 17, 49, 143]]
+        sage: [2^m + 5 * 3^m for m in range(4)]
+        [6, 17, 49, 143]
+    """
+    R = PolynomialRing(ZZ, "T")
+    T = R.gen()
+
+    def red(P):
+        return [f.truncate(n) % N for f in P]
+
+    def mul(A, B):
+        if d == 1:
+            return red([A[0]._mul_trunc_(B[0], n)])
+        p00 = A[0]._mul_trunc_(B[0], n)
+        p11 = A[1]._mul_trunc_(B[1], n)
+        p01 = A[0]._mul_trunc_(B[1], n) + A[1]._mul_trunc_(B[0], n)
+        return red([p00 + t0 * p11, p01 + t1 * p11])
+
+    def add(A, B):
+        return red([a + b for a, b in zip(A, B)])
+
+    from .moments import chunk_fractions
+
+    one = [R.one()] + [R.zero()] * (d - 1)
+    if not points:
+        return [[ZZ(0)] * n for _ in range(d)]
+    # Leaves: the fractions of chunks of points, computed in C
+    nodes = [
+        ([R(c) for c in num], [R(c) for c in den])
+        for num, den in chunk_fractions(points, weights, 32, n, N, t0, t1, d)
+    ]
+    while len(nodes) > 1:
+        new = []
+        for k in range(0, len(nodes) - 1, 2):
+            (N1, D1), (N2, D2) = nodes[k], nodes[k + 1]
+            new.append((add(mul(N1, D2), mul(N2, D1)), mul(D1, D2)))
+        if len(nodes) % 2:
+            new.append(nodes[-1])
+        nodes = new
+    num, den = nodes[0]
+    # Inverse of den (whose constant term is 1) by Newton's method
+    inv = one
+    prec = 1
+    while prec < n:
+        prec = min(2 * prec, n)
+        e = mul(den, inv)
+        e = [-f for f in e]
+        e[0] += 2
+        inv = mul(inv, e)
+    S = mul(num, inv)
+    return [f.padded_list(n) for f in S]
+
+
+def _finish_pairing(data):
+    r"""
+    The sum of the pairings recorded by :func:`_collect_pairing_points`.
+    """
+    O, p, N, d = data["O"], data["p"], data["N"], data["d"]
+    total = None
+    for (cf, v0), acc in zip(data["polys"], data["acc"]):
+        K = v0.parent()
+        n = len(cf)
+        S = _power_sums(acc["points"], acc["weights"], n, N, d, data["t0"], data["t1"])
+        coords = [sum(c * s for c, s in zip(cf[1:], Sr[1:])) % N for Sr in S]
+        unit = O.element(acc["unit"], K.precision_cap())
+        val = (acc["logc0"] + unit.log(0)) * v0 - O.element(coords, K.precision_cap())
+        total = val if total is None else total + val
+    return total
+
+
 r"""
 Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)
 and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).
@@ -326,18 +554,25 @@ def integrate_H1(
     resadd = Cp(0)
     resval = ZZ(0)
     inverses = [None] + [Cp(QQ(1) / m) for m in range(1, prec + 1)]
+    fast = _fast_pairing_data(G, cocycle, Cp, prec)
     for g, D in cycle:
         if twist:
             D = D.left_act_by_matrix(G.embed(G.wp(), prec).change_ring(Cp))
             g = g.conjugate_by(G.wp() ** -1)
         for (h, rev), xs, c0val, c0unit in _locally_analytic_data(G, D, prec, depth):
-            mu = cocycle.evaluate(g, h, at_identity=G.use_shapiro())
             mu0 = cocycle["liftee"].evaluate(g, h, at_identity=G.use_shapiro())[0]
-            nmom = len(mu.moments())
-            moments = [Cp(mu.moment(i)) for i in range(min(nmom, prec + 1))]
-            newresadd = _pair_with_moments(
-                Cp, xs, c0unit.log(0), moments, prec, inverses
-            )
+            if fast is not None:
+                if rev:
+                    raise NotImplementedError("reversed edges")
+                _collect_pairing_points(G, cocycle, g, h, xs, c0unit.log(0), fast)
+                newresadd = 0
+            else:
+                mu = cocycle.evaluate(g, h, at_identity=G.use_shapiro())
+                nmom = len(mu.moments())
+                moments = [Cp(mu.moment(i)) for i in range(min(nmom, prec + 1))]
+                newresadd = _pair_with_moments(
+                    Cp, xs, c0unit.log(0), moments, prec, inverses
+                )
             newresval = c0val * ZZ(mu0)
             newresmul = c0unit ** ZZ(mu0)
             if rev:
@@ -347,6 +582,8 @@ def integrate_H1(
             resadd += newresadd
             resval += newresval
             resmul *= newresmul
+    if fast is not None:
+        resadd += _finish_pairing(fast)
     if not multiplicative:
         return resadd, resval, resmul if return_valuation else resadd
     else:
