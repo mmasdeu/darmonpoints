@@ -32,7 +32,7 @@ except KeyboardInterrupt:
 from rever.activities.command import command
 
 tarball_name = 'dist/darmonpoints-' + $VERSION + '.tar.gz'
-command('build', 'python -m build --sdist')
+command('build', 'python -m build --sdist --no-isolation')
 command('twine', ''.join(['twine upload ', tarball_name]))
 
 $GITHUB_CREDFILE = '~/.git-credentials'
