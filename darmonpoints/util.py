@@ -380,6 +380,26 @@ def act_flt(g, x):
         return (K(a) * x + K(b)) / (K(c) * x + K(d))
 
 
+def _series_revert(f):
+    r"""
+    The compositional inverse of the power series ``f``.
+
+    Recent versions of Sage call it ``revert`` (``reverse`` is deprecated).
+
+    EXAMPLES::
+
+        sage: from darmonpoints.util import _series_revert
+        sage: R.<q> = PowerSeriesRing(QQ)
+        sage: _series_revert(q + q^2 + O(q^5))
+        q - q^2 + 2*q^3 - 5*q^4 + O(q^5)
+    """
+    try:
+        revert = f.revert
+    except AttributeError:
+        revert = f.reverse
+    return revert()
+
+
 def tate_parameter(E, R):
     p = R.prime()
     prec = R.precision_cap()
@@ -389,7 +409,7 @@ def tate_parameter(E, R):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec + 7)) ** 3 / Delta.q_expansion(prec + 7)
-    qE = j.inverse().power_series().reverse()(R(1 / jE))
+    qE = _series_revert(j.inverse().power_series())(R(1 / jE))
     return qE
 
 
@@ -449,7 +469,7 @@ def getcoords(E, u, prec=None, R=None, qE=None, qEpows=None, C=None):
             E4 = EisensteinForms(weight=4).basis()[0]
             Delta = CuspForms(weight=12).basis()[0]
             j = (E4.q_expansion(prec + 7)) ** 3 / Delta.q_expansion(prec + 7)
-            qE = j.inverse().power_series().reverse()(R(1 / jE))
+            qE = _series_revert(j.inverse().power_series())(R(1 / jE))
 
     qEval = qE.valuation()
 
@@ -522,7 +542,7 @@ def period_from_coords(R, E, P, prec=20, K_to_Cp=None):
     E4 = EisensteinForms(weight=4).basis()[0]
     Delta = CuspForms(weight=12).basis()[0]
     j = (E4.q_expansion(prec + 7)) ** 3 / Delta.q_expansion(prec + 7)
-    qE = j.inverse().power_series().reverse()(R(1 / jE))
+    qE = _series_revert(j.inverse().power_series())(R(1 / jE))
     sk = lambda q, k, pprec: sum(
         [n**k * q**n / (1 - q**n) for n in range(1, pprec + 1)]
     )
@@ -2631,6 +2651,60 @@ def update_progress(progress, msg="", barLength=20):
     )
     sys.stdout.write(text)
     sys.stdout.flush()
+
+
+class _ProgressBar:
+    r"""
+    A progress bar for a loop of ``total`` steps, shown with
+    :func:`update_progress`, which redraws only when the percentage changes.
+
+    If ``show`` is ``False``, do nothing.
+
+    EXAMPLES::
+
+        sage: from darmonpoints.util import _ProgressBar
+        sage: bar = _ProgressBar(3, "Working")
+        sage: for _ in range(3):
+        ....:     bar.step()
+        Percent: [--------------------] 0.00% ( Working (0/3) )
+        Percent: [#######-------------] 33.33% ( Working (1/3) )
+        Percent: [#############-------] 66.67% ( Working (2/3) )
+        sage: bar.done()
+        Percent: [####################] 100.00% Done...( Working (3/3) )
+        sage: _ProgressBar(3, "Working", show=False).step()
+    """
+
+    def __init__(self, total, msg, show=True):
+        self._total = max(int(total), 1)
+        self._msg = msg
+        self._show = show
+        self._count = 0
+        self._shown = -1
+
+    def _draw(self):
+        percent = (100 * self._count) // self._total
+        if percent != self._shown:
+            self._shown = percent
+            update_progress(
+                float(self._count) / self._total,
+                "%s (%s/%s)" % (self._msg, self._count, self._total),
+            )
+
+    def step(self):
+        r"""
+        Call at the beginning of each step.
+        """
+        if self._show:
+            self._draw()
+            self._count += 1
+
+    def done(self):
+        r"""
+        Call after the last step.
+        """
+        if self._show:
+            self._count = self._total
+            self._draw()
 
 
 def selmer_group_iterator(self, S, m, proof=True):

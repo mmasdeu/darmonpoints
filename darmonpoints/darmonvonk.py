@@ -12,6 +12,7 @@ from darmonpoints.homology import *
 from darmonpoints.meromorphic import MeromorphicFunctions
 from darmonpoints.sarithgroup import *
 from darmonpoints.util import *
+from darmonpoints.util import _ProgressBar
 
 # distinguished_open = "OCp"  # Needed if we want to compare with Darmon points!
 distinguished_open = "Uinf"
@@ -194,7 +195,9 @@ class OverconvergentDVCocycle(SageObject):
                     targets = contributions.setdefault(key, {})
                     targets[i, j] = targets.get((i, j), 0) + sign
         Ut = matrix(ZZ, ng * n, ng * n)
+        bar = _ProgressBar(len(contributions), "Building Up matrix")
         for x, targets in contributions.items():
+            bar.step()
             a, b, cc, d = (
                 ZZ(o.lift() if hasattr(o, "lift") else o) % N
                 for o in G.embed(x.quaternion_rep, n).adjugate().list()
@@ -204,6 +207,7 @@ class OverconvergentDVCocycle(SageObject):
                     moebius_moment_accumulate_scaled(
                         Ut, i * n, j * n, coeff, a, b, cc, d, p, n, n
                     )
+        bar.done()
         U = Ut.transpose()
         del Ut
         reduce_scaled_matrix(U, p, n, n)

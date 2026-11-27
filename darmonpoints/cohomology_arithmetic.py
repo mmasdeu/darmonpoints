@@ -83,6 +83,7 @@ from .ocmodule import OCVn, our_adjuster, ps_adjuster
 from .representations import *
 from .representations import TrivialAction
 from .util import *
+from .util import _ProgressBar
 
 
 def get_overconvergent_class_matrices(
@@ -1004,7 +1005,7 @@ class ArithCohOverconvergent(ArithCoh):
             and self._acting_matrix is not None
         )
 
-    def _Up_local_matrix(self):
+    def _Up_local_matrix(self, progress_bar=False):
         r"""
         The matrix of `U_p` acting on the values of a cocycle at the generators.
 
@@ -1033,6 +1034,10 @@ class ArithCohOverconvergent(ArithCoh):
         of overconvergent distributions (the moment `i` is only meaningful
         modulo `p^{N - i}`), and is much cheaper: `O(N^2)` instead of `O(N^3)`
         operations. Row `i` of the matrix is computed modulo `p^{N - i}`.
+
+        If ``progress_bar`` is ``True``, show the progress of the construction
+        (which is the most expensive part of :meth:`improve` at high
+        precision).
         """
         try:
             return self._Up_local_matrix_cache
@@ -1040,21 +1045,23 @@ class ArithCohOverconvergent(ArithCoh):
             pass
         self._Up_scaled = False
         try:
-            U = self._Up_local_matrix_filtration(scaled=True)
+            U = self._Up_local_matrix_filtration(scaled=True, progress_bar=progress_bar)
             self._Up_scaled = True
         except ValueError:
             # The products s_k h do not satisfy the divisibility conditions
             # of the scaled matrix
             try:
-                U = self._Up_local_matrix_filtration(scaled=False)
+                U = self._Up_local_matrix_filtration(
+                    scaled=False, progress_bar=progress_bar
+                )
             except (ImportError, ZeroDivisionError):
-                U = self._Up_local_matrix_exact()
+                U = self._Up_local_matrix_exact(progress_bar=progress_bar)
         except (ImportError, ZeroDivisionError):
-            U = self._Up_local_matrix_exact()
+            U = self._Up_local_matrix_exact(progress_bar=progress_bar)
         self._Up_local_matrix_cache = U
         return U
 
-    def _Up_local_matrix_filtration(self, scaled=True):
+    def _Up_local_matrix_filtration(self, scaled=True, progress_bar=False):
         r"""
         The matrix of :meth:`_Up_local_matrix`, computed with the moment
         matrices of the products `s_k h` (see there).
@@ -1104,7 +1111,9 @@ class ArithCohOverconvergent(ArithCoh):
                     for h, coeff in A.monomial_coefficients(copy=False).items():
                         targets = contributions.setdefault((k, h), {})
                         targets[j, i] = targets.get((j, i), 0) + coeff
+        bar = _ProgressBar(len(contributions), "Building Up matrix", progress_bar)
         for (k, h), targets in contributions.items():
+            bar.step()
             targets = [(ji, c) for ji, c in targets.items() if c != 0]
             if not targets:
                 continue
@@ -1117,12 +1126,13 @@ class ArithCohOverconvergent(ArithCoh):
                 accumulate(S, 0, 0, 1, a, b, c, d, p, n, depth)
                 for (j, i), coeff in targets:
                     add_block_scaled(U, j * depth, i * depth, coeff, S, n, depth)
+        bar.done()
         if scaled:
             reduce_scaled_matrix(U, p, n, depth)
             return U
         return U % N
 
-    def _Up_local_matrix_exact(self):
+    def _Up_local_matrix_exact(self, progress_bar=False):
         r"""
         The matrix of :meth:`_Up_local_matrix`, computed exactly modulo `p^N`
         with products of moment matrices.
@@ -1137,7 +1147,9 @@ class ArithCohOverconvergent(ArithCoh):
         local_mats = [V.acting_matrix(sk, depth) for sk in repslocal]
         ngens = len(G.gens())
         rows = []
+        bar = _ProgressBar(ngens, "Building Up matrix", progress_bar)
         for gamma in G.gens():
+            bar.step()
             blocks = [None] * ngens
             for Pk, g in zip(local_mats, Up_reps):
                 x = Gpn.get_hecke_ti(g, gamma)
@@ -1152,6 +1164,7 @@ class ArithCohOverconvergent(ArithCoh):
             rows.append(
                 [matrix(ZZ, depth, depth, 0) if b is None else b % N for b in blocks]
             )
+        bar.done()
         return block_matrix(ZZ, rows, subdivide=False)
 
     def _apply_Up_matrix(self, c):
@@ -1296,7 +1309,7 @@ class ArithCohOverconvergent(ArithCoh):
             prec = U.base_ring().precision_cap()
         assert prec is not None
         if self._Up_fast_path_available():
-            self._Up_local_matrix()
+            self._Up_local_matrix(progress_bar=progress_bar)
             if self._Up_scaled:
                 ans = self._improve_scaled(Phi, sign)
                 if ans is not None:
