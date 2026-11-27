@@ -277,11 +277,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.algebras.quatalg.quaternion_algebra</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">lcm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">divisors</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">kronecker</span> <span class="k">as</span> <span class="n">kronecker_symbol</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">next_prime</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">lcm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">valuation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">next_prime</span><span class="p">,</span> <span class="n">valuation</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.calculus.var</span><span class="w"> </span><span class="kn">import</span> <span class="n">var</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.functions.generalized</span><span class="w"> </span><span class="kn">import</span> <span class="n">sgn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.functions.transcendental</span><span class="w"> </span><span class="kn">import</span> <span class="n">Function_zeta</span>
@@ -289,28 +288,26 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.libs.pari.all</span><span class="w"> </span><span class="kn">import</span> <span class="n">PariError</span><span class="p">,</span> <span class="n">pari</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span> <span class="k">as</span> <span class="n">matrix</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_method</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.mrange</span><span class="w"> </span><span class="kn">import</span> <span class="n">cartesian_product_iterator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_function</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_function</span><span class="p">,</span> <span class="n">cached_method</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cyclotomic_polynomial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.latex</span><span class="w"> </span><span class="kn">import</span> <span class="n">LatexExpr</span><span class="p">,</span> <span class="n">latex</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc_c</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.mrange</span><span class="w"> </span><span class="kn">import</span> <span class="n">cartesian_product_iterator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.sage_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">sage_eval</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.verbose</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_verbose</span><span class="p">,</span> <span class="n">set_verbose</span><span class="p">,</span> <span class="n">verbose</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modular.modform.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">CuspForms</span><span class="p">,</span> <span class="n">EisensteinForms</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.fg_pid.fgp_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">FGP_Module</span><span class="p">,</span> <span class="n">FGP_Module_class</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.cc</span><span class="w"> </span><span class="kn">import</span> <span class="n">CC</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.rational_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span> <span class="k">as</span> <span class="n">QQ</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Z</span> <span class="k">as</span> <span class="n">ZZ</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.big_oh</span><span class="w"> </span><span class="kn">import</span> <span class="n">O</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.cc</span><span class="w"> </span><span class="kn">import</span> <span class="n">CC</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.fast_arith</span><span class="w"> </span><span class="kn">import</span> <span class="n">prime_range</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.integer_mod_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerModRing</span><span class="p">,</span> <span class="n">Zmod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.infinity</span><span class="w"> </span><span class="kn">import</span> <span class="n">Infinity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Z</span> <span class="k">as</span> <span class="n">ZZ</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.padic_generic</span><span class="w"> </span><span class="kn">import</span> <span class="n">local_print_mode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolynomialRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.rational_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span> <span class="k">as</span> <span class="n">QQ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span><span class="p">,</span> <span class="n">RealField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.schemes.elliptic_curves.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">EllipticCurve</span><span class="p">,</span>
     <span class="n">EllipticCurve_from_c4c6</span><span class="p">,</span>
@@ -337,23 +334,28 @@
 <div class="viewcode-block" id="speed_up_padic_inversion">
 <a class="viewcode-back" href="../../internals.html#darmonpoints.util.speed_up_padic_inversion">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">speed_up_padic_inversion</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Work around a slowness in Sage: in a two-step p-adic extension (such as</span>
 <span class="sd">    Qq(p^2).extension(x^4 + p)) every inversion calls</span>
 <span class="sd">    ``K.prime_pow.base_ring.change(field=True)``, which goes through the</span>
 <span class="sd">    p-adic factory and takes most of the time of the inversion. Since</span>
 <span class="sd">    ``change`` always returns the same (unique) parent for the same arguments,</span>
 <span class="sd">    cache it on that ring. This does nothing for other kinds of rings.</span>
-<span class="sd">    '''</span>
-    <span class="k">for</span> <span class="n">R</span> <span class="ow">in</span> <span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="s1">'integer_ring'</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)(),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="s1">'fraction_field'</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)()]:</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">R</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="n">K</span><span class="p">,</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="s2">"integer_ring"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)(),</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="s2">"fraction_field"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">)(),</span>
+    <span class="p">]:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">B</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">prime_pow</span><span class="o">.</span><span class="n">base_ring</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="s1">'_change_is_cached'</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="s2">"_change_is_cached"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="n">original_change</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">change</span>
         <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
+
         <span class="k">def</span><span class="w"> </span><span class="nf">change</span><span class="p">(</span><span class="n">original_change</span><span class="o">=</span><span class="n">original_change</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="n">cache</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">kwds</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
@@ -361,8 +363,9 @@
             <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
                 <span class="n">ans</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">original_change</span><span class="p">(</span><span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">ans</span>
-            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span> <span class="c1"># unhashable arguments</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># unhashable arguments</span>
                 <span class="k">return</span> <span class="n">original_change</span><span class="p">(</span><span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="n">B</span><span class="o">.</span><span class="n">change</span> <span class="o">=</span> <span class="n">change</span>
             <span class="n">B</span><span class="o">.</span><span class="n">_change_is_cached</span> <span class="o">=</span> <span class="kc">True</span>
@@ -682,6 +685,7 @@
         <span class="k">return</span> <span class="n">x</span></div>
 
 
+
 <div class="viewcode-block" id="list_powers">
 <a class="viewcode-back" href="../../internals.html#darmonpoints.util.list_powers">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_powers</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">M</span><span class="p">):</span>
@@ -694,7 +698,6 @@
 
 
 
-
 <div class="viewcode-block" id="act_flt">
 <a class="viewcode-back" href="../../internals.html#darmonpoints.util.act_flt">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">act_flt</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
@@ -703,7 +706,8 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">K</span><span class="o">.</span><span class="n">is_field</span><span class="p">():</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">K</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span> <span class="k">pass</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
     <span class="k">if</span> <span class="n">is_infinity</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">a</span> <span class="o">/</span> <span class="n">c</span>
     <span class="k">if</span> <span class="n">K</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">K</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -914,7 +918,7 @@
 
 <div class="viewcode-block" id="our_lindep">
 <a class="viewcode-back" href="../../internals.html#darmonpoints.util.our_lindep">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">our_lindep</span><span class="p">(</span><span class="n">V</span><span class="p">,</span><span class="n">prec</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">our_lindep</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">K</span> <span class="o">=</span> <span class="n">V</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
@@ -922,34 +926,34 @@
     <span class="n">V</span> <span class="o">=</span> <span class="p">[</span><span class="n">K</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">V</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">prec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">prec</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">o</span><span class="o">.</span><span class="n">precision_absolute</span><span class="p">()</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">V</span><span class="p">])</span>
-    <span class="n">algorithm</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'algorithm'</span><span class="p">,</span><span class="s1">'flint'</span><span class="p">)</span>
+    <span class="n">algorithm</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"algorithm"</span><span class="p">,</span> <span class="s2">"flint"</span><span class="p">)</span>
     <span class="n">field_deg</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">prime</span><span class="p">()</span>
     <span class="n">pn</span> <span class="o">=</span> <span class="n">p</span><span class="o">**</span><span class="n">prec</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
-    <span class="n">M</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="n">field_deg</span><span class="p">,</span> <span class="n">field_deg</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="n">field_deg</span><span class="p">,</span> <span class="n">field_deg</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
         <span class="n">r</span> <span class="o">=</span> <span class="n">V</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">field_deg</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">M</span><span class="p">[</span><span class="n">k</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">lift</span><span class="p">())</span> <span class="o">%</span> <span class="n">pn</span>
+            <span class="n">M</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">lift</span><span class="p">())</span> <span class="o">%</span> <span class="n">pn</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">j</span><span class="p">,</span><span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">expansion</span><span class="p">()):</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
-                    <span class="n">M</span><span class="p">[</span><span class="n">k</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">p</span><span class="o">**</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="n">r</span><span class="o">.</span><span class="n">valuation</span><span class="p">())</span><span class="o">*</span><span class="n">u</span><span class="p">)</span> <span class="o">%</span> <span class="n">pn</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">expansion</span><span class="p">()):</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+                    <span class="n">M</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">p</span> <span class="o">**</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="n">valuation</span><span class="p">())</span> <span class="o">*</span> <span class="n">u</span><span class="p">)</span> <span class="o">%</span> <span class="n">pn</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">field_deg</span><span class="p">):</span>
-        <span class="n">M</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="n">i</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pn</span>
+        <span class="n">M</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pn</span>
     <span class="n">M</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">ZZ</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">'magma'</span><span class="p">:</span>
-        <span class="n">magma</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'magma'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"magma"</span><span class="p">:</span>
+        <span class="n">magma</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"magma"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">magma</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">sage.interfaces.magma</span><span class="w"> </span><span class="kn">import</span> <span class="n">magma</span>
         <span class="n">tmp</span> <span class="o">=</span> <span class="n">magma</span><span class="p">(</span><span class="n">M</span><span class="p">)</span><span class="o">.</span><span class="n">Transpose</span><span class="p">()</span><span class="o">.</span><span class="n">KernelMatrix</span><span class="p">()</span><span class="o">.</span><span class="n">LLL</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">tmp</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sage_eval</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">' '</span><span class="p">,</span> <span class="s1">','</span><span class="p">)))</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sage_eval</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">","</span><span class="p">)))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">tmp</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">right_kernel_matrix</span><span class="p">(</span><span class="n">proof</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">)</span>
-        <span class="n">verbose</span><span class="p">(</span><span class="s1">'Running LLL'</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">verbose</span><span class="p">(</span><span class="s2">"Running LLL"</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">LLL</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">verbose</span><span class="p">(</span><span class="s1">'.. done running LLL'</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">verbose</span><span class="p">(</span><span class="s2">".. done running LLL"</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">tmp</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span></div>
 
 
@@ -1745,7 +1749,15 @@
                 <span class="n">zetas</span> <span class="o">=</span> <span class="p">[</span><span class="n">zpows</span><span class="p">[</span><span class="n">dlog</span><span class="p">[</span><span class="n">r</span> <span class="o">/</span> <span class="n">rbar</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rbar</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">zetas</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">ArithmeticError</span><span class="p">,</span> <span class="ne">ZeroDivisionError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+        <span class="k">except</span> <span class="p">(</span>
+            <span class="ne">AttributeError</span><span class="p">,</span>
+            <span class="ne">NotImplementedError</span><span class="p">,</span>
+            <span class="ne">TypeError</span><span class="p">,</span>
+            <span class="ne">ValueError</span><span class="p">,</span>
+            <span class="ne">ArithmeticError</span><span class="p">,</span>
+            <span class="ne">ZeroDivisionError</span><span class="p">,</span>
+            <span class="ne">KeyError</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="n">y0list</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="n">zetas</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">y0list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1905,6 +1917,7 @@
     <span class="k">if</span> <span class="n">ngens</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ngens</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">weight_vector</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">weight_vector</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ngens</span><span class="p">)]</span></div>
+
 
 
 <div class="viewcode-block" id="reduce_word_tietze">
@@ -2290,9 +2303,7 @@
         <span class="k">if</span> <span class="n">magma</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s2">"Type(</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"RngOrdElt"</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="s2">"(NumberField(Parent(</span><span class="si">%s</span><span class="s2">))!</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">F_sage</span><span class="p">(</span>
-            <span class="n">sage_eval</span><span class="p">(</span>
-                <span class="n">magma</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s2">"[</span><span class="si">%s</span><span class="s2">[i] : i in [1..</span><span class="si">%s</span><span class="s2">]]"</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">F_sage</span><span class="o">.</span><span class="n">degree</span><span class="p">()))</span>
-            <span class="p">)</span>
+            <span class="n">sage_eval</span><span class="p">(</span><span class="n">magma</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s2">"[</span><span class="si">%s</span><span class="s2">[i] : i in [1..</span><span class="si">%s</span><span class="s2">]]"</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">F_sage</span><span class="o">.</span><span class="n">degree</span><span class="p">())))</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">F_sage</span><span class="p">(</span><span class="n">sage_eval</span><span class="p">(</span><span class="n">magma</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">x</span><span class="o">.</span><span class="n">name</span><span class="p">())))</span></div>
@@ -2350,6 +2361,7 @@
 <span class="sd">    Returns ``None`` if ``F`` is not defined by a monic integral polynomial.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">sage.libs.pari</span><span class="w"> </span><span class="kn">import</span> <span class="n">pari</span>
+
     <span class="kn">from</span><span class="w"> </span><span class="nn">.afuch</span><span class="w"> </span><span class="kn">import</span> <span class="n">algab</span>
 
     <span class="k">if</span> <span class="n">F</span> <span class="o">==</span> <span class="n">QQ</span> <span class="ow">or</span> <span class="n">F</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -2372,7 +2384,10 @@
         <span class="k">for</span> <span class="n">pr</span> <span class="ow">in</span> <span class="n">dec</span><span class="p">:</span>
             <span class="c1"># identify pr with pp via its two-element representation</span>
             <span class="n">alpha</span> <span class="o">=</span> <span class="n">pari</span><span class="o">.</span><span class="n">nfbasistoalg</span><span class="p">(</span><span class="n">nf</span><span class="p">,</span> <span class="n">pr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">lift</span><span class="p">()</span>
-            <span class="n">alpha</span> <span class="o">=</span> <span class="n">F</span><span class="p">([</span><span class="n">QQ</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">alpha</span><span class="o">.</span><span class="n">Vecrev</span><span class="p">()]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">alpha</span><span class="o">.</span><span class="n">Vecrev</span><span class="p">())))</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">F</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">QQ</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">alpha</span><span class="o">.</span><span class="n">Vecrev</span><span class="p">()]</span>
+                <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">alpha</span><span class="o">.</span><span class="n">Vecrev</span><span class="p">()))</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="n">F</span><span class="o">.</span><span class="n">ideal</span><span class="p">(</span><span class="n">ZZ</span><span class="p">(</span><span class="n">pr</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">==</span> <span class="n">pp</span><span class="p">:</span>
                 <span class="n">prs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pr</span><span class="p">)</span>
                 <span class="k">break</span>
@@ -2823,7 +2838,13 @@
                 <span class="k">if</span> <span class="n">w1</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="p">(</span><span class="n">w1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">prec</span> <span class="o">-</span> <span class="mi">3</span><span class="p">:</span>
                     <span class="k">return</span> <span class="kc">True</span>
             <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">ZeroDivisionError</span><span class="p">):</span>
+        <span class="k">except</span> <span class="p">(</span>
+            <span class="ne">AttributeError</span><span class="p">,</span>
+            <span class="ne">NotImplementedError</span><span class="p">,</span>
+            <span class="ne">TypeError</span><span class="p">,</span>
+            <span class="ne">ValueError</span><span class="p">,</span>
+            <span class="ne">ZeroDivisionError</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
 
     <span class="n">vJ</span> <span class="o">=</span> <span class="n">J</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span>
@@ -3054,12 +3075,17 @@
 
     <span class="n">I</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">gap</span><span class="p">()</span><span class="o">.</span><span class="n">IsomorphismSimplifiedFpGroup</span><span class="p">()</span>
     <span class="n">domain</span> <span class="o">=</span> <span class="n">G</span>
-    <span class="k">try</span><span class="p">:</span> <span class="c1"># Sagemath &gt;= 10.5</span>
+    <span class="k">try</span><span class="p">:</span>  <span class="c1"># Sagemath &gt;= 10.5</span>
         <span class="n">codomain</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">Range</span><span class="p">()</span><span class="o">.</span><span class="n">sage</span><span class="p">()</span>
         <span class="n">phi</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">codomain</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">ImageElm</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-        <span class="n">ans</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">hom</span><span class="p">(</span><span class="n">im_gens</span><span class="o">=</span><span class="p">[</span><span class="n">phi</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">gap</span><span class="p">()</span><span class="o">.</span><span class="n">GeneratorsOfGroup</span><span class="p">],</span> <span class="n">codomain</span><span class="o">=</span><span class="n">codomain</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span> <span class="c1"># Sagemath &lt; 10.5</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">hom</span><span class="p">(</span>
+            <span class="n">im_gens</span><span class="o">=</span><span class="p">[</span><span class="n">phi</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">gap</span><span class="p">()</span><span class="o">.</span><span class="n">GeneratorsOfGroup</span><span class="p">],</span>
+            <span class="n">codomain</span><span class="o">=</span><span class="n">codomain</span><span class="p">,</span>
+            <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>  <span class="c1"># Sagemath &lt; 10.5</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">sage.groups.finitely_presented</span><span class="w"> </span><span class="kn">import</span> <span class="n">wrap_FpGroup</span>
+
         <span class="n">codomain</span> <span class="o">=</span> <span class="n">wrap_FpGroup</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">Range</span><span class="p">())</span>
         <span class="n">phi</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">codomain</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">ImageElm</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">gap</span><span class="p">()))</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">hom</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">codomain</span><span class="p">)</span>
@@ -3074,7 +3100,7 @@
 
 <div class="viewcode-block" id="update_progress">
 <a class="viewcode-back" href="../../internals.html#darmonpoints.util.update_progress">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">update_progress</span><span class="p">(</span><span class="n">progress</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">barLength</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>    
+<span class="k">def</span><span class="w"> </span><span class="nf">update_progress</span><span class="p">(</span><span class="n">progress</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">barLength</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="s2">"( </span><span class="si">%s</span><span class="s2"> )"</span> <span class="o">%</span> <span class="n">msg</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">progress</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
@@ -3287,7 +3313,7 @@
     <span class="n">det</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span>
     <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">tr</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">det</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span></div>
 
-    
+
 
 <div class="viewcode-block" id="quadratic_field_embeds_in_quaternion_algebra">
 <a class="viewcode-back" href="../../internals.html#darmonpoints.util.quadratic_field_embeds_in_quaternion_algebra">[docs]</a>

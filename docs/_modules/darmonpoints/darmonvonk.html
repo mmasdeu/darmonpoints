@@ -278,13 +278,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.arithgroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">angle_sign</span><span class="p">,</span> <span class="n">intersect_geodesic_arcs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.cohomology_arithmetic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArithAction</span><span class="p">,</span> <span class="n">CohArbitrary</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.homology</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
 <span class="c1"># from darmonpoints.ocmodule import AddMeromorphicFunctions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.meromorphic</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeromorphicFunctions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.sarithgroup</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 
 <span class="c1"># distinguished_open = "OCp"  # Needed if we want to compare with Darmon points!</span>
-<span class="n">distinguished_open</span> <span class="o">=</span> <span class="s1">'Uinf'</span>
+<span class="n">distinguished_open</span> <span class="o">=</span> <span class="s2">"Uinf"</span>
 
 
 <div class="viewcode-block" id="OverconvergentDVCocycle">
@@ -441,7 +442,9 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">mats</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
             <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                <span class="n">B</span> <span class="o">=</span> <span class="n">mats</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">action_matrix</span><span class="p">(</span><span class="n">Mer</span><span class="o">.</span><span class="n">get_action_data</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">one_param</span><span class="p">,</span> <span class="n">one_param</span><span class="p">))</span>
+                <span class="n">B</span> <span class="o">=</span> <span class="n">mats</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">action_matrix</span><span class="p">(</span>
+                    <span class="n">Mer</span><span class="o">.</span><span class="n">get_action_data</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">one_param</span><span class="p">,</span> <span class="n">one_param</span><span class="p">)</span>
+                <span class="p">)</span>
                 <span class="k">return</span> <span class="n">B</span>
 
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">:</span>
@@ -994,7 +997,9 @@
             <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">fundamental_discriminant</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
                 <span class="k">continue</span>
             <span class="n">field_embeddable</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">kronecker_symbol</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">ell</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">ell</span> <span class="ow">in</span> <span class="n">facts</span><span class="p">)</span>
-            <span class="n">level_embeddable</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">kronecker_symbol</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">ell</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">ell</span> <span class="ow">in</span> <span class="n">facts_level</span><span class="p">)</span>
+            <span class="n">level_embeddable</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="n">kronecker_symbol</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">ell</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">ell</span> <span class="ow">in</span> <span class="n">facts_level</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="n">field_embeddable</span> <span class="ow">and</span> <span class="n">level_embeddable</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">%</span> <span class="n">p</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">ans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ans</span></div>
@@ -1235,7 +1240,7 @@
         <span class="n">tau</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tau_inf</span><span class="p">)</span>
         <span class="n">tau_bar</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tau_inf_bar</span><span class="p">)</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">Div</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">c1</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">get_geodesic</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">gamma_of_x0</span><span class="p">)</span>        
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">get_geodesic</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">gamma_of_x0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_matrix_candidates</span><span class="p">(</span><span class="n">gamma</span><span class="p">):</span>
             <span class="n">gtau</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">tau</span>
             <span class="n">gtau_bar</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">tau_bar</span>

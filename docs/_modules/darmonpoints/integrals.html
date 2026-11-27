@@ -278,20 +278,19 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">mul</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc_c</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">algdep</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cputime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc_c</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.verbose</span><span class="w"> </span><span class="kn">import</span> <span class="n">verbose</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.parallel.decorate</span><span class="w"> </span><span class="kn">import</span> <span class="n">fork</span><span class="p">,</span> <span class="n">parallel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.complex_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComplexField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.integer_mod_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerModRing</span> <span class="k">as</span> <span class="n">Zmod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.infinity</span><span class="w"> </span><span class="kn">import</span> <span class="n">Infinity</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.laurent_series_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">LaurentSeriesRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolynomialRing</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.power_series_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">PowerSeriesRing</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.integer_mod_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerModRing</span> <span class="k">as</span> <span class="n">Zmod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span><span class="p">,</span> <span class="n">RealField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.sage_object</span><span class="w"> </span><span class="kn">import</span> <span class="n">SageObject</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.limits</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_center</span><span class="p">,</span> <span class="n">num_evals</span>
@@ -603,7 +602,7 @@
     <span class="k">if</span> <span class="n">prec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">prec</span> <span class="o">=</span> <span class="n">cocycle</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span><span class="o">.</span><span class="n">precision_cap</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">twist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">twist</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cycle</span><span class="p">,</span> <span class="s1">'twist'</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">twist</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cycle</span><span class="p">,</span> <span class="s2">"twist"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
     <span class="n">verbose</span><span class="p">(</span><span class="s2">"precision = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">prec</span><span class="p">)</span>
     <span class="n">Cp</span> <span class="o">=</span> <span class="n">cycle</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span><span class="o">.</span><span class="n">base</span><span class="p">()</span>

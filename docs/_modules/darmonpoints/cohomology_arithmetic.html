@@ -310,9 +310,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">sleep</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.all</span><span class="w"> </span><span class="kn">import</span> <span class="n">dedekind_sum</span><span class="p">,</span> <span class="n">gcd</span><span class="p">,</span> <span class="n">lcm</span><span class="p">,</span> <span class="n">xgcd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.categories.action</span><span class="w"> </span><span class="kn">import</span> <span class="n">Action</span>
@@ -998,9 +998,7 @@
                     <span class="c1"># x_i * gamma = delta * x_j with delta in the small group,</span>
                     <span class="c1"># and the value at the coset x_i is the small-group cocycle</span>
                     <span class="c1"># (Shapiro) evaluated at t_g(delta).</span>
-                    <span class="n">delta</span> <span class="o">=</span> <span class="n">hecke_group</span><span class="p">(</span>
-                        <span class="n">G</span><span class="o">.</span><span class="n">get_coset_ti</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">xi</span> <span class="o">*</span> <span class="n">gamma_q</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="p">)</span>
+                    <span class="n">delta</span> <span class="o">=</span> <span class="n">hecke_group</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">get_coset_ti</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">xi</span> <span class="o">*</span> <span class="n">gamma_q</span><span class="p">))[</span><span class="mi">0</span><span class="p">])</span>
                     <span class="n">newval</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                         <span class="nb">sum</span><span class="p">(</span>
                             <span class="p">(</span>
@@ -1183,7 +1181,6 @@
                 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
                     <span class="n">ans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act_by_poly_hecke</span><span class="p">(</span><span class="n">ans</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">*</span> <span class="n">ans</span></div>
-
 
 
 <div class="viewcode-block" id="CohArbitrary.apply_hecke_operator">
@@ -1399,10 +1396,7 @@
                     <span class="n">term</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pk</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">GA_to_local</span><span class="p">(</span><span class="n">A</span><span class="p">))</span> <span class="o">%</span> <span class="n">N</span>
                     <span class="n">blocks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">term</span> <span class="k">if</span> <span class="n">blocks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">blocks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">term</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">[</span>
-                    <span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">b</span> <span class="o">%</span> <span class="n">N</span>
-                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">blocks</span>
-                <span class="p">]</span>
+                <span class="p">[</span><span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">b</span> <span class="o">%</span> <span class="n">N</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">]</span>
             <span class="p">)</span>
         <span class="n">U</span> <span class="o">=</span> <span class="n">block_matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">subdivide</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_Up_local_matrix_cache</span> <span class="o">=</span> <span class="n">U</span>

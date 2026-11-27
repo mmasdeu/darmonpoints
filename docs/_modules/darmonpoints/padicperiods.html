@@ -269,7 +269,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for darmonpoints.padicperiods</h1><div class="highlight"><pre>
-<span></span><span class="sa">r</span><span class="sd">'''</span>
+<span></span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">This file contains functionality to compute p-adic periods of abelian surfaces of GL2-type.</span>
 
 <span class="sd">EXAMPLES:</span>
@@ -288,7 +288,7 @@
 <span class="sd">    sage: beta = ...  # not tested</span>
 <span class="sd">    sage: cycleGn, nn, ell = construct_homology_cycle(5, G, beta, 2*prec, lambda q: Coh.hecke_matrix(q).minpoly(), use_magma=True)  # not tested</span>
 
-<span class="sd">'''</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
@@ -296,6 +296,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pyximport</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">GCD</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.srange</span><span class="w"> </span><span class="kn">import</span> <span class="n">srange</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">block_diagonal_matrix</span><span class="p">,</span> <span class="n">block_matrix</span><span class="p">,</span> <span class="n">matrix</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.banner</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span> <span class="k">as</span> <span class="n">sage_version</span>
@@ -309,7 +310,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.homology</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_homology_kernel</span><span class="p">,</span> <span class="n">inverse_shapiro</span><span class="p">,</span> <span class="n">lattice_homology_cycle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.integrals</span><span class="w"> </span><span class="kn">import</span> <span class="n">integrate_H1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.sarithgroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">BigArithGroup</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">GCD</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">pyximport</span><span class="o">.</span><span class="n">install</span><span class="p">()</span>
@@ -1649,8 +1649,12 @@
             <span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
+
         <span class="k">def</span><span class="w"> </span><span class="nf">pair</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">xi</span><span class="p">):</span>
-            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="o">*</span> <span class="n">a</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xi</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">group</span><span class="p">()</span><span class="o">.</span><span class="n">gens</span><span class="p">(),</span> <span class="n">xi</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="o">*</span> <span class="n">a</span>
+                <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xi</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">group</span><span class="p">()</span><span class="o">.</span><span class="n">gens</span><span class="p">(),</span> <span class="n">xi</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="p">)</span>
 
     <span class="n">a00</span> <span class="o">=</span> <span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">ker</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">a01</span> <span class="o">=</span> <span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">ker</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
@@ -1682,13 +1686,19 @@
     <span class="c1"># it, since a wrong pairing otherwise propagates silently into the periods.</span>
     <span class="c1"># The pairings are with the un-normalized a_ij, hence the factor of `den`.</span>
     <span class="n">expected</span> <span class="o">=</span> <span class="n">determinant</span> <span class="o">*</span> <span class="n">den</span>
-    <span class="k">assert</span> <span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">theta1</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span> <span class="ow">and</span> <span class="n">pair</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">theta2</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span><span class="p">,</span> <span class="p">(</span>
-        <span class="s2">"pseudo-orthonormality failed: diagonal is (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">), expected (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)"</span>
-        <span class="o">%</span> <span class="p">(</span><span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">theta1</span><span class="p">),</span> <span class="n">pair</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">theta2</span><span class="p">),</span> <span class="n">expected</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">theta1</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span> <span class="ow">and</span> <span class="n">pair</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">theta2</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span>
+    <span class="p">),</span> <span class="s2">"pseudo-orthonormality failed: diagonal is (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">), expected (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">theta1</span><span class="p">),</span>
+        <span class="n">pair</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">theta2</span><span class="p">),</span>
+        <span class="n">expected</span><span class="p">,</span>
+        <span class="n">expected</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">assert</span> <span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">theta2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">pair</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">theta1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span>
-        <span class="s2">"pseudo-orthonormality failed: off-diagonal is (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">), expected (0, 0)"</span>
-        <span class="o">%</span> <span class="p">(</span><span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">theta2</span><span class="p">),</span> <span class="n">pair</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">theta1</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">theta2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">pair</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">theta1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="p">),</span> <span class="s2">"pseudo-orthonormality failed: off-diagonal is (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">), expected (0, 0)"</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">pair</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">theta2</span><span class="p">),</span>
+        <span class="n">pair</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">theta1</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">theta1</span><span class="p">,</span> <span class="n">theta2</span><span class="p">,</span> <span class="n">determinant</span></div>
 

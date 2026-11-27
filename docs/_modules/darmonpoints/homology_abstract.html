@@ -293,8 +293,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.sage_object</span><span class="w"> </span><span class="kn">import</span> <span class="n">SageObject</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.unique_representation</span><span class="w"> </span><span class="kn">import</span> <span class="n">UniqueRepresentation</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.representations</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.divisors</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.representations</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 
 
@@ -752,9 +752,7 @@
                     <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                         <span class="k">continue</span>
                     <span class="c1"># t_i * gamma = delta * t_j, with delta in the small group</span>
-                    <span class="n">delta</span> <span class="o">=</span> <span class="n">hecke_group</span><span class="p">(</span>
-                        <span class="n">G</span><span class="o">.</span><span class="n">get_coset_ti</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">ti</span> <span class="o">*</span> <span class="n">gamma_q</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="p">)</span>
+                    <span class="n">delta</span> <span class="o">=</span> <span class="n">hecke_group</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">get_coset_ti</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">ti</span> <span class="o">*</span> <span class="n">gamma_q</span><span class="p">))[</span><span class="mi">0</span><span class="p">])</span>
                     <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">hecke_reps</span><span class="p">:</span>
                         <span class="n">tg</span> <span class="o">=</span> <span class="n">hecke_group</span><span class="o">.</span><span class="n">get_hecke_ti</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">use_magma</span><span class="p">)</span>
                         <span class="n">w</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">conjugate</span><span class="p">()</span> <span class="o">*</span> <span class="n">a</span>

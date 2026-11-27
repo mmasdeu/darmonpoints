@@ -276,6 +276,7 @@
 <span class="c1">######################</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">_warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
@@ -303,7 +304,6 @@
     <span class="n">CachedRepresentation</span><span class="p">,</span>
     <span class="n">UniqueRepresentation</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">_warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.divisors</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.homology_abstract</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArithHomology</span><span class="p">,</span> <span class="n">HomologyGroup</span>
@@ -330,7 +330,9 @@
     <span class="n">xi2</span> <span class="o">=</span> <span class="n">H1</span><span class="p">({})</span>
     <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">:</span>
         <span class="n">xi1</span> <span class="o">+=</span> <span class="n">H1</span><span class="p">({</span><span class="n">G</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">):</span> <span class="n">Div</span><span class="p">(</span><span class="n">tau</span><span class="p">)})</span><span class="o">.</span><span class="n">mult_by</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
-        <span class="n">xi2</span> <span class="o">+=</span> <span class="n">H1</span><span class="p">({</span><span class="n">G</span><span class="p">(</span><span class="n">wp</span><span class="o">**-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">*</span> <span class="n">wp</span><span class="p">):</span> <span class="n">wpinv_mat</span> <span class="o">*</span> <span class="n">Div</span><span class="p">(</span><span class="n">tau</span><span class="p">)})</span><span class="o">.</span><span class="n">mult_by</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">xi2</span> <span class="o">+=</span> <span class="n">H1</span><span class="p">({</span><span class="n">G</span><span class="p">(</span><span class="n">wp</span><span class="o">**-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">*</span> <span class="n">wp</span><span class="p">):</span> <span class="n">wpinv_mat</span> <span class="o">*</span> <span class="n">Div</span><span class="p">(</span><span class="n">tau</span><span class="p">)})</span><span class="o">.</span><span class="n">mult_by</span><span class="p">(</span>
+            <span class="n">a</span>
+        <span class="p">)</span>
     <span class="n">xi10</span> <span class="o">=</span> <span class="n">xi1</span>
     <span class="n">xi20</span> <span class="o">=</span> <span class="n">xi2</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
@@ -536,7 +538,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">is_degree_zero_valued</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">degree_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">(),</span> <span class="n">Divisors</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">degree_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">warn</span><span class="p">(</span><span class="s1">'Using provided degree_map'</span><span class="p">)</span>
+                <span class="n">warn</span><span class="p">(</span><span class="s2">"Using provided degree_map"</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">degree_map</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">degree_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -560,7 +562,9 @@
 
 <div class="viewcode-block" id="OneChainsElement.zero_degree_equivalent">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.zero_degree_equivalent">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">zero_degree_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">degree_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_boundary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">zero_degree_equivalent</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">degree_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_boundary</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Use the relations:</span>
 <span class="sd">            * gh|v = g|v + h|g^-1 v - delta(g|h|v))</span>
@@ -595,7 +599,7 @@
         <span class="n">given_degree_map</span> <span class="o">=</span> <span class="n">degree_map</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">(),</span> <span class="n">Divisors</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">degree_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">warn</span><span class="p">(</span><span class="s1">'Using provided degree_map'</span><span class="p">)</span>
+                <span class="n">warn</span><span class="p">(</span><span class="s2">"Using provided degree_map"</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">degree_map</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">degree_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -605,9 +609,9 @@
         <span class="n">verbose</span><span class="p">(</span><span class="s2">"Entering zero_degree_equivalent"</span><span class="p">)</span>
         <span class="n">HH</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
         <span class="n">V</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
-        <span class="n">G</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">group</span><span class="p">()</span> <span class="c1"># Arithmetic group G = F/R</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>  <span class="c1"># Arithmetic group G = F/R</span>
         <span class="n">ngens</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">gens</span><span class="p">())</span>
-        <span class="n">Gab</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">abelianization</span><span class="p">()</span> <span class="c1"># G^{ab} = F^{ab}/R^{ab}</span>
+        <span class="n">Gab</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">abelianization</span><span class="p">()</span>  <span class="c1"># G^{ab} = F^{ab}/R^{ab}</span>
         <span class="c1"># The elements of V forming the 1-chain, which are paired with the elements of G in self._data.keys()</span>
         <span class="n">oldvals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="c1"># xlist represents taking the degree map of the divisor</span>
@@ -622,7 +626,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Must yield torsion element in abelianization (</span><span class="si">%s</span><span class="s2">, order = </span><span class="si">%s</span><span class="s2">)"</span>
                 <span class="o">%</span> <span class="p">(</span><span class="n">sum_abxlist</span><span class="p">,</span> <span class="n">x_ord</span><span class="p">)</span>
-            <span class="p">)</span> <span class="c1"># TODO: if x_ord is Infinity, find a Hecke operator that kills it, and apply it to reduce to torsion</span>
+            <span class="p">)</span>  <span class="c1"># TODO: if x_ord is Infinity, find a Hecke operator that kills it, and apply it to reduce to torsion</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># We adjust the weight of our 1-chain to be x_ord * C, which is trivial in the abelianization.</span>
             <span class="c1"># The scaling has to happen here, on the values themselves: the relation</span>
@@ -632,7 +636,9 @@
             <span class="n">gwordlist</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">word_rep</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">]</span>
             <span class="n">oldvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">x_ord</span> <span class="o">*</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">oldvals</span><span class="p">]</span>
         <span class="c1"># Let C be our 1-chain, degC \in R^{ab}, so we find the relations in R^{ab} that satisfy degC + \sum r_i^{ab} = 0 in F^{ab}</span>
-        <span class="n">weight_vector</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">vector</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">get_weight_vector</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">word_rep</span><span class="p">,</span> <span class="n">ngens</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">)</span>
+        <span class="n">weight_vector</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="n">n</span> <span class="o">*</span> <span class="n">vector</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">get_weight_vector</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">word_rep</span><span class="p">,</span> <span class="n">ngens</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">xlist</span>
+        <span class="p">)</span>
         <span class="n">rel</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">_calculate_relation</span><span class="p">(</span><span class="n">weight_vector</span><span class="p">,</span> <span class="n">separated</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rel</span><span class="p">:</span>
             <span class="n">gwordlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
@@ -644,13 +650,13 @@
         <span class="c1"># For an arbitrary element v of V, \sum r_i \otimes v is a 1-boundary</span>
         <span class="c1"># newdict will store the new 1-chain formed by C + \sum r_i \otimes v</span>
         <span class="n">newdict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
-        <span class="n">boundary_list</span><span class="o">=</span> <span class="p">[]</span>
+        <span class="n">boundary_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># Decompose each (g,v) tensor in the 1-cycle into a sum of tensors of the form (g_i, v_i) where g_i is a generator of G</span>
         <span class="c1"># We store all 1-boundaries used in boundary_list</span>
         <span class="k">for</span> <span class="n">gword</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gwordlist</span><span class="p">,</span> <span class="n">oldvals</span><span class="p">):</span>
             <span class="n">verbose</span><span class="p">(</span><span class="s2">"Processing </span><span class="si">%s</span><span class="s2">|</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">gword</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
             <span class="n">newv</span> <span class="o">=</span> <span class="n">V</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tietze_to_syllables</span><span class="p">(</span><span class="n">gword</span><span class="p">):</span> <span class="c1"># gi^a|v</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tietze_to_syllables</span><span class="p">(</span><span class="n">gword</span><span class="p">):</span>  <span class="c1"># gi^a|v</span>
                 <span class="n">oldv</span> <span class="o">=</span> <span class="n">V</span><span class="p">(</span><span class="n">newv</span><span class="p">)</span>
                 <span class="n">g</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
                 <span class="n">newv</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span><span class="o">**-</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">V</span><span class="p">(</span><span class="n">oldv</span><span class="p">)</span>  <span class="c1"># for the next iteration</span>
@@ -661,7 +667,9 @@
                     <span class="n">sign</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
                 <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
                     <span class="n">newdict</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">+=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">sign</span><span class="p">)</span> <span class="o">*</span> <span class="n">oldv</span>
-                    <span class="n">boundary_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span><span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="o">**</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">g</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">ZZ</span><span class="p">(</span><span class="n">sign</span><span class="p">)</span><span class="o">*</span><span class="n">V</span><span class="p">(</span><span class="n">oldv</span><span class="p">))))</span> <span class="c1"># negative sign included</span>
+                    <span class="n">boundary_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">g</span> <span class="o">**</span> <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">g</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">ZZ</span><span class="p">(</span><span class="n">sign</span><span class="p">)</span> <span class="o">*</span> <span class="n">V</span><span class="p">(</span><span class="n">oldv</span><span class="p">)))</span>
+                    <span class="p">)</span>  <span class="c1"># negative sign included</span>
                     <span class="n">oldv</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span><span class="o">**-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">oldv</span>
             <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">update_progress</span><span class="p">(</span>

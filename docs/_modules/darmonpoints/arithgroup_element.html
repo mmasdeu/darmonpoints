@@ -288,25 +288,22 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span> <span class="k">as</span> <span class="n">matrix</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_method</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.lazy_attribute</span><span class="w"> </span><span class="kn">import</span> <span class="n">lazy_attribute</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.timing</span><span class="w"> </span><span class="kn">import</span> <span class="n">walltime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc_c</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.persist</span><span class="w"> </span><span class="kn">import</span> <span class="n">db</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_module_element</span> <span class="k">as</span> <span class="n">vector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.timing</span><span class="w"> </span><span class="kn">import</span> <span class="n">walltime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">FreeModule_generic</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.rational_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span> <span class="k">as</span> <span class="n">QQ</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Z</span> <span class="k">as</span> <span class="n">ZZ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_module_element</span> <span class="k">as</span> <span class="n">vector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.complex_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComplexField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumberField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolynomialRing</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Z</span> <span class="k">as</span> <span class="n">ZZ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumberField</span><span class="p">,</span> <span class="n">QuadraticField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolynomialRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.rational_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span> <span class="k">as</span> <span class="n">QQ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span><span class="p">,</span> <span class="n">RealField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.richcmp</span><span class="w"> </span><span class="kn">import</span> <span class="n">op_EQ</span><span class="p">,</span> <span class="n">op_NE</span><span class="p">,</span> <span class="n">richcmp</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
-
 
 <span class="c1"># Pairs (parent of the matrix, parent of x) for which ``matrix * x`` raised a</span>
 <span class="c1"># TypeError in ``ArithGroupElement._act_on_``. Sage's coercion model does not</span>
@@ -592,8 +589,10 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_act_on_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">on_left</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">on_left</span> <span class="o">==</span> <span class="kc">True</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'imag'</span><span class="p">):</span> <span class="c1"># x is a complex number</span>
-            <span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">get_archimedean_embedding</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">precision</span><span class="p">())(</span><span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">"imag"</span><span class="p">):</span>  <span class="c1"># x is a complex number</span>
+            <span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">get_archimedean_embedding</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">precision</span><span class="p">())(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quaternion_rep</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>

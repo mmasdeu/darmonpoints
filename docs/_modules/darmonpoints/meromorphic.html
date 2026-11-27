@@ -277,21 +277,22 @@
 <span class="c1">#                  http://www.gnu.org/licenses/</span>
 <span class="c1">#########################################################################</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.categories.pushout</span><span class="w"> </span><span class="kn">import</span> <span class="n">pushout</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">block_matrix</span><span class="p">,</span> <span class="n">matrix</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.matrix_space</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixSpace</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.timing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cputime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_function</span><span class="p">,</span> <span class="n">cached_method</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc_c</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.timing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cputime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.verbose</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_verbose</span><span class="p">,</span> <span class="n">set_verbose</span><span class="p">,</span> <span class="n">verbose</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">FreeModuleElement_generic_dense</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_module_element</span> <span class="k">as</span> <span class="n">vector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.module</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.vector_integer_dense</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vector_integer_dense</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Integer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.integer_mod_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Zmod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.infinity</span><span class="w"> </span><span class="kn">import</span> <span class="n">Infinity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Integer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZZ</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Zp</span><span class="p">,</span> <span class="n">ZpCA</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.padic_generic</span><span class="w"> </span><span class="kn">import</span> <span class="n">pAdicGeneric</span>
@@ -307,10 +308,10 @@
     <span class="n">CachedRepresentation</span><span class="p">,</span>
     <span class="n">UniqueRepresentation</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.divisors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Divisors</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">muted</span><span class="p">,</span> <span class="n">set_immutable</span><span class="p">,</span> <span class="n">speed_up_padic_inversion</span>
+
 
 <div class="viewcode-block" id="evalpoly">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.evalpoly">[docs]</a>
@@ -360,7 +361,7 @@
             <span class="n">Ps</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_Ps</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">data</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">Ps</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span> <span class="c1"># multiplicative!</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">Ps</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>  <span class="c1"># multiplicative!</span>
             <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s2">"parent"</span><span class="p">):</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">Divisors</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">divisor_to_pseries</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">Ps</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
@@ -368,7 +369,9 @@
                 <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span> <span class="o">==</span> <span class="n">parent</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">_value</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">MeromorphicFunctions</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">vector</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">_value</span><span class="o">.</span><span class="n">apply_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="n">x</span><span class="o">.</span><span class="n">lift_to_precision</span><span class="p">())))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">vector</span><span class="p">(</span>
+                        <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">_value</span><span class="o">.</span><span class="n">apply_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">lift_to_precision</span><span class="p">()))</span>
+                    <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">val</span> <span class="o">=</span> <span class="n">Ps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
                 <span class="n">val</span> <span class="o">/=</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -413,7 +416,7 @@
 
 <div class="viewcode-block" id="MeromorphicFunctionsElement.evaluate">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement.evaluate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">prec</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>  <span class="c1"># meromorphic functions</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># meromorphic functions</span>
         <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">D</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Integer</span><span class="p">):</span>
             <span class="n">D</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
@@ -439,13 +442,10 @@
         <span class="n">phiD</span> <span class="o">=</span> <span class="n">phi</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">return_value</span><span class="p">:</span>
             <span class="n">val</span> <span class="o">=</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">phiD</span><span class="p">)</span>
-        
+
         <span class="n">valder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_derivative_coeffs</span><span class="p">()</span>
         <span class="n">chainrule</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">d</span> <span class="o">-</span> <span class="n">b</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">D</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
-        <span class="n">ans</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">evalpoly</span><span class="p">(</span><span class="n">valder</span><span class="p">,</span> <span class="n">phiD</span><span class="p">)</span>
-            <span class="o">*</span> <span class="n">chainrule</span>
-        <span class="p">)</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="n">evalpoly</span><span class="p">(</span><span class="n">valder</span><span class="p">,</span> <span class="n">phiD</span><span class="p">)</span> <span class="o">*</span> <span class="n">chainrule</span>
         <span class="k">if</span> <span class="n">return_value</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ans</span><span class="p">,</span> <span class="n">val</span>
         <span class="k">else</span><span class="p">:</span>
@@ -565,8 +565,7 @@
             <span class="n">zz</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">_Ps</span><span class="p">([</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">])</span> <span class="o">/</span> <span class="n">parent</span><span class="o">.</span><span class="n">_Ps</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">c</span><span class="p">]))</span>
                 <span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
-                
+                <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">zz</span><span class="p">),</span> <span class="n">param</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 </div>
@@ -632,13 +631,13 @@
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctions.get_action_data">[docs]</a>
     <span class="nd">@cached_method</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_action_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">oldparam</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Act on the power series by matrix g, given the old and new parameters.</span>
 <span class="sd">        The action is given by the formula:</span>
 <span class="sd">        (g * phi)(t) = phi(tau_0 g^-1 * tau_1^-1 t)</span>
 <span class="sd">        which amounts to acting on the left by</span>
 <span class="sd">        tau_1 g tau_0^-1</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_action_data</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">oldparam</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span></div>
 
 
@@ -646,17 +645,17 @@
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctions.compute_action_data">[docs]</a>
     <span class="nd">@muted</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_action_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">oldparam</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Uncached version of get_action_data. Looking up the cache of</span>
 <span class="sd">        get_action_data needs hashing p-adic matrices, which is slow, so</span>
 <span class="sd">        callers that do their own caching should use this one.</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">prec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">prec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prec</span>
         <span class="k">assert</span> <span class="n">param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">tg</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s1">'adjugate'</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"adjugate"</span><span class="p">):</span>
             <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">matrix</span><span class="p">()</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
 
         <span class="c1"># abcd = tau_0 g^-1 * tau_1^-1</span>
@@ -666,14 +665,14 @@
         <span class="n">zz</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Ps</span><span class="p">([</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Ps</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">c</span><span class="p">]))</span>
             <span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
-        <span class="p">)</span> <span class="c1"># zz = (at + b)/(ct + d)</span>
+            <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="p">)</span>  <span class="c1"># zz = (at + b)/(ct + d)</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="p">[</span><span class="n">zz</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span><span class="mi">1</span><span class="p">),</span> <span class="n">zz</span><span class="p">]</span>
         <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">prec</span><span class="p">:</span>
             <span class="n">zz_ps</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="p">(</span><span class="n">zz</span> <span class="o">*</span> <span class="n">ans</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
                 <span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
             <span class="p">)</span>
             <span class="n">ans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zz_ps</span><span class="p">)</span>
         <span class="n">m</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -684,7 +683,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_action_matrix_moebius</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Same matrix as in get_action_data (row i contains the coefficients of</span>
 <span class="sd">        zz^i, where zz = (at + b)/(ct + d)), computed using that</span>
 <span class="sd">        zz^i = zz^(i-1) * (b1 + a1 t) / (1 + c1 t). This only needs O(prec)</span>
@@ -692,7 +691,7 @@
 
 <span class="sd">        Assumes that c/d has nonnegative valuation, so that the division by</span>
 <span class="sd">        1 + c1 t does not lose precision.</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="n">dinv</span> <span class="o">=</span> <span class="o">~</span><span class="n">d</span>
         <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">dinv</span><span class="p">,</span> <span class="n">b</span> <span class="o">*</span> <span class="n">dinv</span><span class="p">,</span> <span class="n">c</span> <span class="o">*</span> <span class="n">dinv</span>
@@ -719,7 +718,7 @@
             <span class="k">while</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">u</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">is_zero</span><span class="p">():</span>
                 <span class="n">n</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">break</span> <span class="c1"># All the remaining powers vanish</span>
+                <span class="k">break</span>  <span class="c1"># All the remaining powers vanish</span>
             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
                 <span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
             <span class="n">w</span> <span class="o">=</span> <span class="n">u</span>
@@ -753,7 +752,7 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MeromorphicIntegerArithmetic</span><span class="p">(</span><span class="n">SageObject</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Arithmetic of the power series of a :class:`MeromorphicFunctions` space</span>
 <span class="sd">    (truncated to ``prec`` terms) with integers, as used to iterate Hecke</span>
 <span class="sd">    operators quickly.</span>
@@ -790,7 +789,7 @@
 <span class="sd">        sage: B = I.action_matrix(M.compute_action_data(A, f._parameter, f._parameter))</span>
 <span class="sd">        sage: (I.to_element(I.normalize(I.act(F, B))) - f.left_act_by_matrix(A)).valuation()</span>
 <span class="sd">        10</span>
-<span class="sd">    '''</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">M</span><span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.theta_additive</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ok_coordinates</span>
@@ -839,9 +838,9 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic.from_element">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.from_element">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The integer representation of the series of ``f``.</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
         <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_coords</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">_value</span><span class="p">[:</span><span class="n">n</span><span class="p">]]</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_R</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span></div>
@@ -850,9 +849,9 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic.to_element">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.to_element">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The element of the space of meromorphic functions whose series is ``F``.</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">O</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_O</span>
         <span class="n">lists</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">padded_list</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">F</span><span class="p">]</span>
         <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">O</span><span class="o">.</span><span class="n">element</span><span class="p">([</span><span class="n">lists</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)],</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
@@ -862,9 +861,9 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic.mul">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.mul">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">H</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The product of the series ``F`` and ``H`` (truncated).</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="n">F</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_mul_trunc_</span><span class="p">(</span><span class="n">H</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">]</span>
@@ -886,9 +885,9 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic.scalar_inverse">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.scalar_inverse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">scalar_inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The coordinates of the inverse of the unit of `O_K` with coordinates ``c``.</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_O</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Not a unit"</span><span class="p">)</span>
@@ -898,10 +897,10 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic.inverse">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.inverse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The inverse of the series ``F``, whose constant term must be a unit</span>
 <span class="sd">        (Newton iteration).</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_R</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scalar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scalar_inverse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constant_term</span><span class="p">(</span><span class="n">F</span><span class="p">)))</span>
         <span class="n">k</span> <span class="o">=</span> <span class="mi">1</span>
@@ -917,9 +916,9 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic.normalize">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.normalize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The multiple of ``F`` with constant term 1 (it must be a unit).</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_term</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">F</span>
@@ -929,10 +928,10 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic.valuation">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.valuation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">valuation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The valuation of ``F - 1`` (at most `N`), as computed by</span>
 <span class="sd">        :meth:`MeromorphicFunctionsElement.valuation`.</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
         <span class="n">G</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
         <span class="n">G</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">G</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
@@ -947,16 +946,18 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic.action_matrix">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.action_matrix">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">action_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The integer matrix of the action on the flattened coordinates of a</span>
 <span class="sd">        series of the matrix ``A`` over `K` returned by</span>
 <span class="sd">        :meth:`MeromorphicFunctions.get_action_data`.</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span>
         <span class="k">if</span> <span class="n">A</span><span class="o">.</span><span class="n">nrows</span><span class="p">()</span> <span class="o">!=</span> <span class="n">n</span> <span class="ow">or</span> <span class="n">A</span><span class="o">.</span><span class="n">ncols</span><span class="p">()</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Wrong size"</span><span class="p">)</span>
         <span class="n">coords</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">_coords</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">A</span><span class="o">.</span><span class="n">rows</span><span class="p">()]</span>
-        <span class="n">As</span> <span class="o">=</span> <span class="p">[</span><span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[[</span><span class="n">c</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
+        <span class="n">As</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[[</span><span class="n">c</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="p">]</span>
         <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">As</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">blocks</span> <span class="o">=</span> <span class="p">[[</span><span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
@@ -968,10 +969,10 @@
 <div class="viewcode-block" id="MeromorphicIntegerArithmetic.act">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.act">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">act</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        The action on the series ``F`` of the matrix ``B`` returned by</span>
 <span class="sd">        :meth:`action_matrix` (not normalized).</span>
-<span class="sd">        '''</span>
+<span class="sd">        """</span>
         <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
         <span class="n">v</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">F</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">padded_list</span><span class="p">(</span><span class="n">n</span><span class="p">)])</span>
         <span class="n">w</span> <span class="o">=</span> <span class="p">((</span><span class="n">v</span> <span class="o">*</span> <span class="n">B</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>

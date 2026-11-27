@@ -292,28 +292,26 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.matrix_space</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixSpace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_method</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.timing</span><span class="w"> </span><span class="kn">import</span> <span class="n">walltime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc_c</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.persist</span><span class="w"> </span><span class="kn">import</span> <span class="n">db</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.sage_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">sage_eval</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.timing</span><span class="w"> </span><span class="kn">import</span> <span class="n">walltime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.verbose</span><span class="w"> </span><span class="kn">import</span> <span class="n">verbose</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modular.arithgroup.congroup_sl2z</span><span class="w"> </span><span class="kn">import</span> <span class="n">SL2Z</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modular.modsym.p1list</span><span class="w"> </span><span class="kn">import</span> <span class="n">lift_to_sl2z</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_module_element</span> <span class="k">as</span> <span class="n">vector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.fg_pid.fgp_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">FGP_Module</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">FreeModule_generic</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.rational_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span> <span class="k">as</span> <span class="n">QQ</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Z</span> <span class="k">as</span> <span class="n">ZZ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_module_element</span> <span class="k">as</span> <span class="n">vector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.complex_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComplexField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumberField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolynomialRing</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.integer_mod_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerModRing</span> <span class="k">as</span> <span class="n">Zmod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.finite_field_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">FiniteField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.integer_mod_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerModRing</span> <span class="k">as</span> <span class="n">Zmod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.infinity</span><span class="w"> </span><span class="kn">import</span> <span class="n">Infinity</span> <span class="k">as</span> <span class="n">oo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Z</span> <span class="k">as</span> <span class="n">ZZ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumberField</span><span class="p">,</span> <span class="n">QuadraticField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolynomialRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.rational_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span> <span class="k">as</span> <span class="n">QQ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span><span class="p">,</span> <span class="n">RealField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.parent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.sage_object</span><span class="w"> </span><span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
@@ -672,7 +670,7 @@
         <span class="n">radius</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">max_elements</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">local_condition</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">force_sign</span><span class="o">=</span><span class="kc">None</span>
+        <span class="n">force_sign</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>  <span class="c1"># in nonsplitcartan</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">return_all</span><span class="p">:</span>
