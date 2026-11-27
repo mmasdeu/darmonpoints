@@ -11,10 +11,10 @@ jobs:
   build-manual:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with: { submodules: recursive }
-      - uses: conda-incubator/setup-miniconda@v2
-        with: { miniforge-variant: "Mambaforge", miniforge-version: "latest" }
+      - uses: conda-incubator/setup-miniconda@v3
+        with: { miniforge-version: "latest" }
       - name: install dependencies
         shell: bash -l {0}
         run: |
@@ -23,7 +23,9 @@ jobs:
       - name: install package
         shell: bash -l {0}
         run: |
-          pip install --no-dependencies .
+          pip install --no-build-isolation --no-dependencies .
+          # doc/conf.py imports sage_docbuild
+          pip install --no-dependencies sage-docbuild
       - name: build documentation
         shell: bash -l {0}
         run: |

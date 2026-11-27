@@ -25,7 +25,6 @@ Replacements over Maite's code:
 
 """
 
-from sage.misc.search import search
 from sage.structure.richcmp import richcmp, richcmp_method
 from sage.structure.sage_object import SageObject
 
@@ -64,6 +63,12 @@ class MyMSymbol(SageObject):
     def tuple(self):
         return (self._c, self._d)
 
+    def __eq__(self, other):
+        return isinstance(other, MyMSymbol) and self.tuple() == other.tuple()
+
+    def __hash__(self):
+        return hash(self.tuple())
+
 
 @richcmp_method
 class P1NFList(SageObject):
@@ -101,7 +106,19 @@ class P1NFList(SageObject):
         """
         self.__N = N
         self.__list = my_p1NFlist(N)
-        # self.__list.sort()
+        # The list is not sorted, so positions are found with a dictionary
+        self.__positions = {}
+        for i, sym in enumerate(self.__list):
+            self.__positions.setdefault(sym, i)
+
+    def _position(self, sym):
+        r"""
+        The position in the list of the normalized M-symbol ``sym``.
+        """
+        try:
+            return self.__positions[sym]
+        except KeyError:
+            raise ValueError("%s is not in the list of M-symbols" % sym)
 
     def __richcmp__(self, other, op):
         """
@@ -293,8 +310,7 @@ class P1NFList(SageObject):
             True
         """
         c, d = self.__list[i].tuple()
-        t, j = search(self.__list, self.normalize(d, -c))
-        return j
+        return self._position(self.normalize(d, -c))
 
     def apply_TS(self, i):
         """
@@ -326,8 +342,7 @@ class P1NFList(SageObject):
             True
         """
         c, d = self.__list[i].tuple()
-        t, j = search(self.__list, self.normalize(c + d, -c))
-        return j
+        return self._position(self.normalize(c + d, -c))
 
     def apply_T_alpha(self, i, alpha=1):
         """
@@ -361,8 +376,7 @@ class P1NFList(SageObject):
             True
         """
         c, d = self.__list[i].tuple()
-        t, j = search(self.__list, self.normalize(c, alpha * c + d))
-        return j
+        return self._position(self.normalize(c, alpha * c + d))
 
     def apply_J_epsilon(self, i, e1, e2=1):
         r"""
@@ -394,8 +408,22 @@ class P1NFList(SageObject):
             2
             sage: P.apply_J_epsilon(4, -1)
             2
-            sage: P.apply_J_epsilon(4, u[0], u[1])
+            sage: eps = 2*a^2 + 4*a - 1
+            sage: eps.is_unit()
+            True
+            sage: P.apply_J_epsilon(4, eps, -1)
             5
+
+        (The generators of the unit group, and their order, depend on the
+        version of Sage, so this is checked independently of them.)
+
+        ::
+
+            sage: all(P.apply_J_epsilon(P.apply_J_epsilon(i, u[0]), 1, u[1])
+            ....:     == P.apply_J_epsilon(i, u[0], u[1]) for i in range(len(P)))
+            True
+            sage: sorted(P.apply_J_epsilon(i, u[0], u[1]) for i in range(len(P))) == list(range(len(P)))
+            True
 
         ::
 
@@ -409,8 +437,7 @@ class P1NFList(SageObject):
             True
         """
         c, d = self.__list[i].tuple()
-        t, j = search(self.__list, self.normalize(c * e1, d * e2))
-        return j
+        return self._position(self.normalize(c * e1, d * e2))
 
 
 # **************************************************************************
@@ -541,7 +568,7 @@ def lift_to_sl2_Ok(N, c, d):
         sage: M = Matrix(Ok, 2, lift_to_sl2_Ok(N, 0, 7))
         Traceback (most recent call last):
         ...
-        ValueError: <0> + <7> and the Fractional ideal (7, a) are not coprime.
+        ValueError: <0> + <7> and the Fractional ideal (7, ...) are not coprime.
     """
     k = N.number_field()
     if type(c) is int:
@@ -694,7 +721,9 @@ def normalize_tuple(N, elt, with_scalar=False):
     """
     k = N.number_field()
     R = k.ring_of_integers()
-    c, d = elt
+    # (plain integers, such as a coordinate 1 of an M-symbol, would not be
+    # accepted by the ideal arithmetic below)
+    c, d = (k(o) for o in elt)
 
     if c.mod(N) == 0:
         if with_scalar:

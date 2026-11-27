@@ -715,7 +715,8 @@ class AddMeromorphicFunctions(Parent, CachedRepresentation):
     sage: from darmonpoints.homology import Divisors
     sage: from darmonpoints.sarithgroup import BigArithGroup
     sage: padic_printing.mode('val-unit')
-    sage: K.<a> = Qq(7^2,5)
+    sage: R0.<X> = ZZ[]
+    sage: K.<a> = Qq(7^2, 5, modulus=X^2 + 6*X + 3)  # the output depends on the modulus: Sage's default has changed
     sage: G = BigArithGroup(7,1,1,use_shapiro=False, outfile='/dev/null')
     sage: M = AddMeromorphicFunctions(K)
     sage: Div = Divisors(K)
