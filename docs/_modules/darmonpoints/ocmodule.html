@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
     <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
-        <title>darmonpoints.ocmodule - darmonpoints 9.0.1 documentation</title>
+        <title>darmonpoints.ocmodule - darmonpoints 9.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 9.0.1 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 9.1.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -191,7 +191,7 @@
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 9.0.1 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 9.1.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -739,8 +739,47 @@
             <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">matrix</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">M</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_depth</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_powers_filtered</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">ZeroDivisionError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                <span class="k">pass</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_powers</span><span class="p">(</span><span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">submatrix</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_powers_filtered</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abcd</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        The matrix of :meth:`_get_powers`, with row `i` only computed modulo</span>
+<span class="sd">        `p^{N - i}` (`N` = ``depth - 1``), which is the precision of the moment</span>
+<span class="sd">        `i` in the filtration of overconvergent distributions. Cached, and</span>
+<span class="sd">        immutable.</span>
+
+<span class="sd">        EXAMPLES::</span>
+
+<span class="sd">            sage: from darmonpoints.ocmodule import OCVn</span>
+<span class="sd">            sage: V = OCVn(5, 6)</span>
+<span class="sd">            sage: g = matrix(ZZ, 2, 2, [2, 3, 5, 7])</span>
+<span class="sd">            sage: A, B = V._get_powers(g), V._get_powers_filtered(g)</span>
+<span class="sd">            sage: all((A[i, j] - B[i, j]) % 5^(5 - i) == 0 for i in range(5) for j in range(6))</span>
+<span class="sd">            True</span>
+<span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.moments</span><span class="w"> </span><span class="kn">import</span> <span class="n">moebius_moment_accumulate</span>
+
+        <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">abcd</span><span class="o">.</span><span class="n">list</span><span class="p">())</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_powers_filtered</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_powers_filtered</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pN</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">ZZ</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">key</span><span class="p">)</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_depth</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">MatrixSpace</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">depth</span><span class="p">)()</span>
+        <span class="n">moebius_moment_accumulate</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">,</span> <span class="n">depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+        <span class="n">M</span><span class="o">.</span><span class="n">set_immutable</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_powers_filtered</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">M</span>
+        <span class="k">return</span> <span class="n">M</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_powers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abcd</span><span class="p">,</span> <span class="n">emb</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
@@ -1278,7 +1317,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=af6b5015"></script>
+</div><script src="../../_static/documentation_options.js?v=7ac69e55"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

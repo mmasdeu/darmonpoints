@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
     <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
-        <title>darmonpoints.darmonvonk - darmonpoints 9.0.1 documentation</title>
+        <title>darmonpoints.darmonvonk - darmonpoints 9.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 9.0.1 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 9.1.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -191,7 +191,7 @@
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 9.0.1 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 9.1.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -350,6 +350,17 @@
             <span class="n">Up_reps</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">get_Up_reps</span><span class="p">())</span>
         <span class="n">Up_data</span> <span class="o">=</span> <span class="n">GGp</span><span class="o">.</span><span class="n">get_hecke_data</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">hecke_reps</span><span class="o">=</span><span class="n">Up_reps</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_improve_log</span><span class="p">(</span><span class="n">prec</span><span class="p">,</span> <span class="n">Up_reps</span><span class="p">,</span> <span class="n">Up_data</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">except</span> <span class="p">(</span>
+            <span class="ne">ValueError</span><span class="p">,</span>
+            <span class="ne">TypeError</span><span class="p">,</span>
+            <span class="ne">NotImplementedError</span><span class="p">,</span>
+            <span class="ne">ZeroDivisionError</span><span class="p">,</span>
+            <span class="ne">ImportError</span><span class="p">,</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">verbose</span><span class="p">(</span><span class="s2">"Not using logarithms to iterate Up (</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_improve_integer</span><span class="p">(</span><span class="n">prec</span><span class="p">,</span> <span class="n">Up_reps</span><span class="p">,</span> <span class="n">Up_data</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -371,6 +382,161 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">phi_even</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_odd</span> <span class="o">=</span> <span class="n">phi_list</span>
         <span class="k">return</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_improve_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">Up_reps</span><span class="p">,</span> <span class="n">Up_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Same as :meth:`improve`, computing with the logarithms of the series.</span>
+
+<span class="sd">        The values of the cocycle are principal units `f` (`f(0) = 1`) whose</span>
+<span class="sd">        coefficient of degree `m` is divisible by `p^m`. Their logarithms add</span>
+<span class="sd">        up when the series are multiplied, and the action of the group (with</span>
+<span class="sd">        the normalization `f(0) = 1`, which becomes `\log f(0) = 0`) is</span>
+<span class="sd">        linear on them: `U_p` becomes a linear map, whose matrix is built once</span>
+<span class="sd">        with the moment matrices of the products `g h` of `2 \times 2`</span>
+<span class="sd">        matrices (see</span>
+<span class="sd">        :meth:`darmonpoints.cohomology_arithmetic.ArithCohOverconvergent._Up_local_matrix_filtration`,</span>
+<span class="sd">        here acting on coefficients instead of moments). Then the iteration</span>
+<span class="sd">        only involves matrix-vector products, which get cheaper as the terms</span>
+<span class="sd">        gain `p`-adic digits, and the exponential is taken at the end.</span>
+
+<span class="sd">        The coefficients are scaled: `L' = p^c \log f`, with `p^c` larger than</span>
+<span class="sd">        the length `n` of the series, has its coefficient of degree `m`</span>
+<span class="sd">        divisible by `p^m`, and is stored as the integer coordinates of</span>
+<span class="sd">        `L'_m / p^m`, modulo `p^{n - m}`.</span>
+
+<span class="sd">        Raise ``ValueError`` (before changing anything) if some hypothesis</span>
+<span class="sd">        does not hold, so that :meth:`improve` falls back to the multiplicative</span>
+<span class="sd">        iteration.</span>
+<span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.meromorphic</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeromorphicIntegerArithmetic</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.moments</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">divexact_inplace</span><span class="p">,</span>
+            <span class="n">filtration_valuation</span><span class="p">,</span>
+            <span class="n">filtration_weighted_valuation</span><span class="p">,</span>
+            <span class="n">moebius_moment_accumulate_scaled</span><span class="p">,</span>
+            <span class="n">reduce_scaled_matrix</span><span class="p">,</span>
+            <span class="n">scaled_matvec</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span>
+        <span class="n">GGp</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">small_group</span><span class="p">()</span>
+        <span class="n">HpMer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">HpMer</span>
+        <span class="n">Mer</span> <span class="o">=</span> <span class="n">HpMer</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">Mer</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">MeromorphicIntegerArithmetic</span><span class="p">(</span><span class="n">Mer</span><span class="p">)</span>  <span class="c1"># NotImplementedError if not unramified</span>
+        <span class="n">O</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">_O</span>
+        <span class="n">dK</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">d</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">prime</span><span class="p">())</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">Mer</span><span class="o">.</span><span class="n">_prec</span><span class="p">)</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">p</span><span class="o">**</span><span class="n">n</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">p</span><span class="o">**</span><span class="n">c</span> <span class="o">&lt;=</span> <span class="n">n</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">phi1</span> <span class="o">=</span> <span class="n">HpMer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi1</span><span class="p">)</span>
+        <span class="n">one_param</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">_parameter</span> <span class="o">!=</span> <span class="n">one_param</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">phi1</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Only implemented for the trivial parameter"</span><span class="p">)</span>
+        <span class="n">gens</span> <span class="o">=</span> <span class="n">GGp</span><span class="o">.</span><span class="n">gens</span><span class="p">()</span>
+        <span class="n">ng</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gens</span><span class="p">)</span>
+        <span class="n">Ps</span> <span class="o">=</span> <span class="n">Mer</span><span class="o">.</span><span class="n">power_series_ring</span><span class="p">()</span>
+
+        <span class="c1"># Scaled logarithms of the values of phi1</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">scaled_log</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+            <span class="n">F</span> <span class="o">=</span> <span class="n">Ps</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">_value</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">F</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">F</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">F</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The values are not principal units of the right kind"</span><span class="p">)</span>
+            <span class="n">L</span> <span class="o">=</span> <span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">derivative</span><span class="p">()</span> <span class="o">/</span> <span class="n">F</span><span class="p">)</span><span class="o">.</span><span class="n">integral</span><span class="p">()</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dK</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">p</span><span class="o">**</span><span class="n">c</span> <span class="o">*</span> <span class="n">K</span><span class="p">(</span><span class="n">L</span><span class="p">[</span><span class="n">m</span><span class="p">])</span> <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">K</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">_coords</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dK</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">coords</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">%</span> <span class="n">p</span><span class="o">**</span><span class="n">m</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Unexpected valuation of the logarithm"</span><span class="p">)</span>
+                    <span class="n">cols</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">//</span> <span class="n">p</span><span class="o">**</span><span class="n">m</span> <span class="o">%</span> <span class="n">p</span> <span class="o">**</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">m</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">cols</span>
+
+        <span class="n">logs</span> <span class="o">=</span> <span class="p">[</span><span class="n">scaled_log</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">phi1</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="p">[</span><span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">ng</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">logs</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">L</span><span class="p">[</span><span class="n">r</span><span class="p">]])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dK</span><span class="p">)]</span>
+
+        <span class="c1"># The matrix of U_p on the scaled coefficients, built transposed: the</span>
+        <span class="c1"># rows of the block (i, j) are indexed by the coefficients of the input</span>
+        <span class="c1"># (value at gamma_i) and the columns by those of the output (gamma_j).</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Up_terms</span><span class="p">(</span><span class="n">Up_reps</span><span class="p">,</span> <span class="n">Up_data</span><span class="p">)</span>
+        <span class="n">contributions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">terms</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">lst</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">sign</span> <span class="ow">in</span> <span class="n">lst</span><span class="p">:</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="n">g</span> <span class="k">if</span> <span class="n">h</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">g</span> <span class="o">*</span> <span class="n">h</span>
+                    <span class="n">targets</span> <span class="o">=</span> <span class="n">contributions</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">{})</span>
+                    <span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">sign</span>
+        <span class="n">Ut</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">ng</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">ng</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">targets</span> <span class="ow">in</span> <span class="n">contributions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">ZZ</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">lift</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s2">"lift"</span><span class="p">)</span> <span class="k">else</span> <span class="n">o</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span>
+                <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">adjugate</span><span class="p">()</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="n">targets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">coeff</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">moebius_moment_accumulate_scaled</span><span class="p">(</span>
+                        <span class="n">Ut</span><span class="p">,</span> <span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">j</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">coeff</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span>
+                    <span class="p">)</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="n">Ut</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">Ut</span>
+        <span class="n">reduce_scaled_matrix</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ng</span><span class="p">):</span>
+            <span class="n">U</span><span class="o">.</span><span class="n">set_row_to_multiple_of_row</span><span class="p">(</span><span class="n">j</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">j</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># f(0) = 1</span>
+
+        <span class="c1"># Iterate on the logarithms</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span><span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">ng</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dK</span><span class="p">)],</span>
+            <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">__copy__</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">T</span><span class="p">],</span>
+        <span class="p">]</span>
+        <span class="n">reduced_to</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">prec</span><span class="p">):</span>
+            <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="o">/</span> <span class="n">prec</span><span class="p">,</span> <span class="s2">"Iterating Up (</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="n">prec</span><span class="p">))</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">filtration_valuation</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">T</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="mi">8</span> <span class="o">*</span> <span class="p">(</span><span class="n">reduced_to</span> <span class="o">-</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">v</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="n">n</span><span class="p">:</span>
+                <span class="n">reduce_scaled_matrix</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">v</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+                <span class="n">reduced_to</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="n">v</span>
+            <span class="n">newT</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">T</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">divexact_inplace</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="o">**</span><span class="n">v</span><span class="p">)</span>
+                <span class="n">w</span> <span class="o">=</span> <span class="n">scaled_matvec</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">v</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">w</span> <span class="o">=</span> <span class="n">p</span><span class="o">**</span><span class="n">v</span> <span class="o">*</span> <span class="n">w</span>
+                <span class="n">newT</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+            <span class="n">T</span> <span class="o">=</span> <span class="n">newT</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dK</span><span class="p">):</span>
+                <span class="n">acc</span><span class="p">[</span><span class="n">it</span> <span class="o">%</span> <span class="mi">2</span><span class="p">][</span><span class="n">r</span><span class="p">]</span> <span class="o">+=</span> <span class="n">T</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">filtration_weighted_valuation</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">T</span><span class="p">)</span> <span class="o">-</span> <span class="n">c</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="o">&gt;=</span> <span class="n">prec</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="n">update_progress</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">"Iterating Up (</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="p">(</span><span class="n">prec</span><span class="p">,</span> <span class="n">prec</span><span class="p">))</span>
+
+        <span class="c1"># Back to the series: f = exp(L), with f' = L' f</span>
+        <span class="n">inv</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">K</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">)]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">to_series</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">gi</span><span class="p">):</span>
+            <span class="n">L</span> <span class="o">=</span> <span class="p">[</span><span class="n">K</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">**</span><span class="n">m</span> <span class="o">*</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">cols</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">gi</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="n">m</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dK</span><span class="p">)]</span>
+                <span class="n">L</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">O</span><span class="o">.</span><span class="n">element</span><span class="p">([</span><span class="n">x</span> <span class="o">%</span> <span class="n">N</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">p</span><span class="o">**</span><span class="n">c</span><span class="p">)</span>
+            <span class="n">dL</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="o">*</span> <span class="n">L</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="p">[</span><span class="n">K</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inv</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="n">dL</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="n">f</span><span class="p">[</span><span class="n">m</span> <span class="o">-</span> <span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">Mer</span><span class="p">([</span><span class="n">o</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">f</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi_even</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_odd</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">HpMer</span><span class="p">([</span><span class="n">to_series</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">gi</span><span class="p">)</span> <span class="k">for</span> <span class="n">gi</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ng</span><span class="p">)])</span> <span class="k">for</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">acc</span>
+        <span class="p">]</span>
+        <span class="k">return</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_Up_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Up_reps</span><span class="p">,</span> <span class="n">Up_data</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
@@ -1307,7 +1473,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=af6b5015"></script>
+</div><script src="../../_static/documentation_options.js?v=7ac69e55"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

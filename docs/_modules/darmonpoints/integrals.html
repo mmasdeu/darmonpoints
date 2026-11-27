@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
     <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
-        <title>darmonpoints.integrals - darmonpoints 9.0.1 documentation</title>
+        <title>darmonpoints.integrals - darmonpoints 9.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 9.0.1 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 9.1.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -191,7 +191,7 @@
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 9.0.1 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 9.1.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -577,6 +577,234 @@
     <span class="k">return</span> <span class="n">ans</span>
 
 
+<span class="c1"># Use _collect_pairing_points from this number of moments on (below, it is</span>
+<span class="c1"># slower than pairing with the moments; above, it is faster, and it does not</span>
+<span class="c1"># need to keep the matrices of moments, which take a lot of memory)</span>
+<span class="n">_FAST_PAIRING_MIN_PREC</span> <span class="o">=</span> <span class="mi">150</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fast_pairing_data</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">cocycle</span><span class="p">,</span> <span class="n">Cp</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    The data used by :func:`_pair_cocycle_with_series`, or ``None`` if it</span>
+<span class="sd">    does not apply (``cocycle`` must take values in ``OCVn``, without</span>
+<span class="sd">    Shapiro's lemma, and ``Cp`` must be `\QQ_p` or a quadratic unramified</span>
+<span class="sd">    extension).</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.ocmodule</span><span class="w"> </span><span class="kn">import</span> <span class="n">OCVn</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.theta_additive</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ok_coordinates</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">cocycle</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">OCVn</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">G</span><span class="o">.</span><span class="n">use_shapiro</span><span class="p">()</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">H</span><span class="o">.</span><span class="n">_trivial_action</span>
+            <span class="ow">and</span> <span class="n">H</span><span class="o">.</span><span class="n">_acting_matrix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">O</span> <span class="o">=</span> <span class="n">_ok_coordinates</span><span class="p">(</span><span class="n">Cp</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">O</span><span class="o">.</span><span class="n">e</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">O</span><span class="o">.</span><span class="n">d</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">O</span><span class="o">.</span><span class="n">_kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Qp"</span><span class="p">,</span> <span class="s2">"unramified"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">Cp</span><span class="o">.</span><span class="n">prime</span><span class="p">())</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">_depth</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">_FAST_PAIRING_MIN_PREC</span><span class="p">:</span>
+        <span class="c1"># At low precision, the matrices of moments are small and caching</span>
+        <span class="c1"># them is faster</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">p</span><span class="o">**</span><span class="n">n</span>
+    <span class="k">if</span> <span class="n">O</span><span class="o">.</span><span class="n">d</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># g^2 = t1 g + t0</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">lift</span><span class="p">())</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">Cp</span><span class="o">.</span><span class="n">defining_polynomial</span><span class="p">()</span><span class="o">.</span><span class="n">list</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="n">f</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="o">-</span><span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">f</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="c1"># f_i(Y) = sum_{m &gt;= 1} v_i[m] p^m / m Y^m, where v_i are the moments of</span>
+    <span class="c1"># the value at the i-th generator: then sum_m v_i[m] y^m / m = f_i(y / p)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span>
+    <span class="n">polys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">cocycle</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">mom</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">_val</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+        <span class="n">cf</span> <span class="o">=</span> <span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">mom</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"valuation"</span><span class="p">)</span> <span class="k">else</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">//</span> <span class="n">p</span><span class="o">**</span><span class="n">e</span>
+            <span class="n">cf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ZZ</span><span class="p">(</span><span class="n">mom</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">lift</span><span class="p">())</span> <span class="o">*</span> <span class="n">p</span> <span class="o">**</span> <span class="p">(</span><span class="n">m</span> <span class="o">-</span> <span class="n">e</span><span class="p">)</span> <span class="o">*</span> <span class="n">unit</span><span class="o">.</span><span class="n">inverse_mod</span><span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span><span class="p">)</span>
+        <span class="n">polys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">cf</span><span class="p">,</span> <span class="n">Cp</span><span class="p">(</span><span class="n">ZZ</span><span class="p">(</span><span class="n">mom</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lift</span><span class="p">()))))</span>
+    <span class="n">acc</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">dict</span><span class="p">(</span><span class="n">logc0</span><span class="o">=</span><span class="n">Cp</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="n">O</span><span class="o">.</span><span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">points</span><span class="o">=</span><span class="p">[],</span> <span class="n">weights</span><span class="o">=</span><span class="p">[])</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">polys</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">H</span><span class="o">=</span><span class="n">H</span><span class="p">,</span> <span class="n">O</span><span class="o">=</span><span class="n">O</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">N</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">O</span><span class="o">.</span><span class="n">d</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="o">=</span><span class="n">t1</span><span class="p">,</span> <span class="n">polys</span><span class="o">=</span><span class="n">polys</span><span class="p">,</span> <span class="n">local</span><span class="o">=</span><span class="p">{},</span> <span class="n">acc</span><span class="o">=</span><span class="n">acc</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_collect_pairing_points</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">cocycle</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">logc0</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Record the contribution to the integral of the pairing of the series</span>
+<span class="sd">    `\log(c_0) + \sum_P n_P \log(1 - x_P z)` with the moments of</span>
+<span class="sd">    ``cocycle.evaluate(g, h)``, without computing these moments (it is</span>
+<span class="sd">    finished by :func:`_finish_pairing`).</span>
+
+<span class="sd">    The value is `hp \cdot \sum_i \partial_i(w) c(\gamma_i)` (see</span>
+<span class="sd">    ``ArithCohElement.evaluate``), a sum of terms `M(x) c(\gamma_i)` for</span>
+<span class="sd">    `2 \times 2` matrices `x`. Pairing a series with the moments of `M(x)\mu`</span>
+<span class="sd">    is pairing the series composed with the Moebius map of `x` with those of</span>
+<span class="sd">    `\mu` (modulo the filtration of overconvergent distributions, which is</span>
+<span class="sd">    the precision of the moments anyway), and since `\sum_P n_P = 0` the</span>
+<span class="sd">    composed series has the same form:</span>
+
+<span class="sd">    .. MATH::</span>
+
+<span class="sd">        \log(c_0) + \sum_P n_P \log(1 - x_P b/d) + \sum_P n_P \log(1 - y_P z),</span>
+<span class="sd">        \qquad y_P = \frac{a x_P - c}{d - b x_P},</span>
+
+<span class="sd">    for `x = [[a, b], [c, d]]`. So, for each generator `\gamma_i`, only the</span>
+<span class="sd">    constant term and the points `y_P / p` (with their weights) are recorded.</span>
+<span class="sd">    """</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"H"</span><span class="p">]</span>
+    <span class="n">O</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"O"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"p"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"N"</span><span class="p">]</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">S_arithgroup</span><span class="p">()</span>
+    <span class="n">Gpn</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">logc0</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">gq</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">quaternion_rep</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="n">gq</span> <span class="o">=</span> <span class="n">g</span>
+    <span class="n">hp</span> <span class="o">=</span> <span class="n">S</span><span class="o">.</span><span class="n">reduce_in_amalgam</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">return_word</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">he</span> <span class="o">=</span> <span class="n">hp</span><span class="o">**-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">h</span>
+    <span class="n">newg</span> <span class="o">=</span> <span class="n">S</span><span class="o">.</span><span class="n">reduce_in_amalgam</span><span class="p">(</span><span class="n">he</span> <span class="o">*</span> <span class="n">gq</span><span class="p">,</span> <span class="n">return_word</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">newg</span> <span class="k">if</span> <span class="n">newg</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span> <span class="ow">is</span> <span class="n">Gpn</span> <span class="k">else</span> <span class="n">Gpn</span><span class="p">(</span><span class="n">newg</span><span class="p">)</span>
+    <span class="n">fgrad</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">fox_gradient</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">word_rep</span><span class="p">))</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.moments</span><span class="w"> </span><span class="kn">import</span> <span class="n">mobius_transform_points</span>
+
+    <span class="n">Mh</span> <span class="o">=</span> <span class="n">Gpn</span><span class="p">(</span><span class="n">hp</span><span class="p">)</span><span class="o">.</span><span class="n">matrix</span><span class="p">()</span>
+    <span class="n">local</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"local"</span><span class="p">]</span>
+    <span class="n">d</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"d"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"t0"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"t1"</span><span class="p">]</span>
+    <span class="n">xcoords</span> <span class="o">=</span> <span class="p">[[</span><span class="n">o</span> <span class="o">%</span> <span class="n">N</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">O</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="n">xP</span><span class="p">)]</span> <span class="k">for</span> <span class="n">xP</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
+    <span class="n">ns</span> <span class="o">=</span> <span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="n">nP</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">nP</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">A</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fgrad</span><span class="p">):</span>
+        <span class="n">mono</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">monomial_coefficients</span><span class="p">(</span><span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mono</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"acc"</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">asum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">gp</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="n">mono</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">coeff</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">Mg</span> <span class="o">=</span> <span class="n">local</span><span class="p">[</span><span class="n">gp</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">Mg</span> <span class="o">=</span> <span class="n">local</span><span class="p">[</span><span class="n">gp</span><span class="p">]</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">matrix</span><span class="p">()</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">dd</span> <span class="o">=</span> <span class="p">(</span><span class="n">ZZ</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">lift</span><span class="p">())</span> <span class="o">%</span> <span class="n">N</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Mh</span> <span class="o">*</span> <span class="n">Mg</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">())</span>
+            <span class="n">asum</span> <span class="o">+=</span> <span class="n">coeff</span>
+            <span class="n">pts</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">mobius_transform_points</span><span class="p">(</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">dd</span><span class="p">,</span> <span class="n">xcoords</span><span class="p">,</span> <span class="n">ns</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">coeff</span><span class="p">),</span> <span class="n">p</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">d</span>
+            <span class="p">)</span>
+            <span class="n">acc</span><span class="p">[</span><span class="s2">"points"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pts</span><span class="p">)</span>
+            <span class="n">acc</span><span class="p">[</span><span class="s2">"weights"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span>
+            <span class="n">acc</span><span class="p">[</span><span class="s2">"unit"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_ok_mul</span><span class="p">(</span><span class="n">acc</span><span class="p">[</span><span class="s2">"unit"</span><span class="p">],</span> <span class="n">u</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+        <span class="n">acc</span><span class="p">[</span><span class="s2">"logc0"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">asum</span> <span class="o">*</span> <span class="n">logc0</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ok_mul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Product of the coordinates ``x`` and ``y`` in `\ZZ[g]/(g^2 - t_1 g - t_0)`</span>
+<span class="sd">    (``d = 2``) or `\ZZ` (``d = 1``), modulo ``N``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">%</span> <span class="n">N</span><span class="p">]</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">t0</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">t1</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_power_sums</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    The coordinates (``d`` lists of length ``n``) of the power sums</span>
+<span class="sd">    `\sum_k w_k y_k^m` for `0 \leq m &lt; n`, modulo ``N``, for points `y_k` of</span>
+<span class="sd">    `\ZZ[g]/(g^2 - t_1 g - t_0)` (``d = 2``) or `\ZZ` (``d = 1``).</span>
+
+<span class="sd">    They are the coefficients of `\sum_k w_k / (1 - y_k T)`, which is computed</span>
+<span class="sd">    by adding the fractions in pairs (a product tree), truncating at `T^n`,</span>
+<span class="sd">    and expanding the final fraction.</span>
+
+<span class="sd">    EXAMPLES::</span>
+
+<span class="sd">        sage: from darmonpoints.integrals import _power_sums</span>
+<span class="sd">        sage: _power_sums([[2], [3]], [1, 5], 4, 1000, 1, 0, 0)</span>
+<span class="sd">        [[6, 17, 49, 143]]</span>
+<span class="sd">        sage: [2^m + 5 * 3^m for m in range(4)]</span>
+<span class="sd">        [6, 17, 49, 143]</span>
+<span class="sd">    """</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">PolynomialRing</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="s2">"T"</span><span class="p">)</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">gen</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">red</span><span class="p">(</span><span class="n">P</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">P</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">mul</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">red</span><span class="p">([</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_mul_trunc_</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">)])</span>
+        <span class="n">p00</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_mul_trunc_</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">p11</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_mul_trunc_</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">p01</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_mul_trunc_</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_mul_trunc_</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">red</span><span class="p">([</span><span class="n">p00</span> <span class="o">+</span> <span class="n">t0</span> <span class="o">*</span> <span class="n">p11</span><span class="p">,</span> <span class="n">p01</span> <span class="o">+</span> <span class="n">t1</span> <span class="o">*</span> <span class="n">p11</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">red</span><span class="p">([</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)])</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.moments</span><span class="w"> </span><span class="kn">import</span> <span class="n">chunk_fractions</span>
+
+    <span class="n">one</span> <span class="o">=</span> <span class="p">[</span><span class="n">R</span><span class="o">.</span><span class="n">one</span><span class="p">()]</span> <span class="o">+</span> <span class="p">[</span><span class="n">R</span><span class="o">.</span><span class="n">zero</span><span class="p">()]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">points</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[[</span><span class="n">ZZ</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">*</span> <span class="n">n</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
+    <span class="c1"># Leaves: the fractions of chunks of points, computed in C</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">([</span><span class="n">R</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">num</span><span class="p">],</span> <span class="p">[</span><span class="n">R</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">den</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">den</span> <span class="ow">in</span> <span class="n">chunk_fractions</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="p">(</span><span class="n">N1</span><span class="p">,</span> <span class="n">D1</span><span class="p">),</span> <span class="p">(</span><span class="n">N2</span><span class="p">,</span> <span class="n">D2</span><span class="p">)</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">nodes</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">new</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">add</span><span class="p">(</span><span class="n">mul</span><span class="p">(</span><span class="n">N1</span><span class="p">,</span> <span class="n">D2</span><span class="p">),</span> <span class="n">mul</span><span class="p">(</span><span class="n">N2</span><span class="p">,</span> <span class="n">D1</span><span class="p">)),</span> <span class="n">mul</span><span class="p">(</span><span class="n">D1</span><span class="p">,</span> <span class="n">D2</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">new</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nodes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">new</span>
+    <span class="n">num</span><span class="p">,</span> <span class="n">den</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="c1"># Inverse of den (whose constant term is 1) by Newton's method</span>
+    <span class="n">inv</span> <span class="o">=</span> <span class="n">one</span>
+    <span class="n">prec</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="n">prec</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="n">prec</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">prec</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">mul</span><span class="p">(</span><span class="n">den</span><span class="p">,</span> <span class="n">inv</span><span class="p">)</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">e</span><span class="p">]</span>
+        <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">2</span>
+        <span class="n">inv</span> <span class="o">=</span> <span class="n">mul</span><span class="p">(</span><span class="n">inv</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">mul</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">inv</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">padded_list</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">S</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_finish_pairing</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    The sum of the pairings recorded by :func:`_collect_pairing_points`.</span>
+<span class="sd">    """</span>
+    <span class="n">O</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"O"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"p"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"N"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"d"</span><span class="p">]</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">cf</span><span class="p">,</span> <span class="n">v0</span><span class="p">),</span> <span class="n">acc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"polys"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"acc"</span><span class="p">]):</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">v0</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cf</span><span class="p">)</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">_power_sums</span><span class="p">(</span><span class="n">acc</span><span class="p">[</span><span class="s2">"points"</span><span class="p">],</span> <span class="n">acc</span><span class="p">[</span><span class="s2">"weights"</span><span class="p">],</span> <span class="n">n</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s2">"t0"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"t1"</span><span class="p">])</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">s</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cf</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">Sr</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span> <span class="o">%</span> <span class="n">N</span> <span class="k">for</span> <span class="n">Sr</span> <span class="ow">in</span> <span class="n">S</span><span class="p">]</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="n">O</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="n">acc</span><span class="p">[</span><span class="s2">"unit"</span><span class="p">],</span> <span class="n">K</span><span class="o">.</span><span class="n">precision_cap</span><span class="p">())</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="p">(</span><span class="n">acc</span><span class="p">[</span><span class="s2">"logc0"</span><span class="p">]</span> <span class="o">+</span> <span class="n">unit</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="o">*</span> <span class="n">v0</span> <span class="o">-</span> <span class="n">O</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">K</span><span class="o">.</span><span class="n">precision_cap</span><span class="p">())</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">val</span> <span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">total</span> <span class="o">+</span> <span class="n">val</span>
+    <span class="k">return</span> <span class="n">total</span>
+
+
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Integration pairing. The input is a cycle (an element of `H_1(G,\text{Div}^0)`)</span>
 <span class="sd">and a cocycle (an element of `H^1(G,\text{HC}(\ZZ))`).</span>
@@ -614,18 +842,25 @@
     <span class="n">resadd</span> <span class="o">=</span> <span class="n">Cp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">resval</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">inverses</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">Cp</span><span class="p">(</span><span class="n">QQ</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">prec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">fast</span> <span class="o">=</span> <span class="n">_fast_pairing_data</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">cocycle</span><span class="p">,</span> <span class="n">Cp</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">D</span> <span class="ow">in</span> <span class="n">cycle</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">twist</span><span class="p">:</span>
             <span class="n">D</span> <span class="o">=</span> <span class="n">D</span><span class="o">.</span><span class="n">left_act_by_matrix</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">wp</span><span class="p">(),</span> <span class="n">prec</span><span class="p">)</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">Cp</span><span class="p">))</span>
             <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">conjugate_by</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">wp</span><span class="p">()</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">rev</span><span class="p">),</span> <span class="n">xs</span><span class="p">,</span> <span class="n">c0val</span><span class="p">,</span> <span class="n">c0unit</span> <span class="ow">in</span> <span class="n">_locally_analytic_data</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
-            <span class="n">mu</span> <span class="o">=</span> <span class="n">cocycle</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">at_identity</span><span class="o">=</span><span class="n">G</span><span class="o">.</span><span class="n">use_shapiro</span><span class="p">())</span>
             <span class="n">mu0</span> <span class="o">=</span> <span class="n">cocycle</span><span class="p">[</span><span class="s2">"liftee"</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">at_identity</span><span class="o">=</span><span class="n">G</span><span class="o">.</span><span class="n">use_shapiro</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">nmom</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">moments</span><span class="p">())</span>
-            <span class="n">moments</span> <span class="o">=</span> <span class="p">[</span><span class="n">Cp</span><span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">moment</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">nmom</span><span class="p">,</span> <span class="n">prec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))]</span>
-            <span class="n">newresadd</span> <span class="o">=</span> <span class="n">_pair_with_moments</span><span class="p">(</span>
-                <span class="n">Cp</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">c0unit</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">moments</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">inverses</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">fast</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"reversed edges"</span><span class="p">)</span>
+                <span class="n">_collect_pairing_points</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">cocycle</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">c0unit</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">fast</span><span class="p">)</span>
+                <span class="n">newresadd</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mu</span> <span class="o">=</span> <span class="n">cocycle</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">at_identity</span><span class="o">=</span><span class="n">G</span><span class="o">.</span><span class="n">use_shapiro</span><span class="p">())</span>
+                <span class="n">nmom</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">moments</span><span class="p">())</span>
+                <span class="n">moments</span> <span class="o">=</span> <span class="p">[</span><span class="n">Cp</span><span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">moment</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">nmom</span><span class="p">,</span> <span class="n">prec</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))]</span>
+                <span class="n">newresadd</span> <span class="o">=</span> <span class="n">_pair_with_moments</span><span class="p">(</span>
+                    <span class="n">Cp</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">c0unit</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">moments</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">inverses</span>
+                <span class="p">)</span>
             <span class="n">newresval</span> <span class="o">=</span> <span class="n">c0val</span> <span class="o">*</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">mu0</span><span class="p">)</span>
             <span class="n">newresmul</span> <span class="o">=</span> <span class="n">c0unit</span> <span class="o">**</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">mu0</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">rev</span><span class="p">:</span>
@@ -635,6 +870,8 @@
             <span class="n">resadd</span> <span class="o">+=</span> <span class="n">newresadd</span>
             <span class="n">resval</span> <span class="o">+=</span> <span class="n">newresval</span>
             <span class="n">resmul</span> <span class="o">*=</span> <span class="n">newresmul</span>
+    <span class="k">if</span> <span class="n">fast</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">resadd</span> <span class="o">+=</span> <span class="n">_finish_pairing</span><span class="p">(</span><span class="n">fast</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">multiplicative</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">resadd</span><span class="p">,</span> <span class="n">resval</span><span class="p">,</span> <span class="n">resmul</span> <span class="k">if</span> <span class="n">return_valuation</span> <span class="k">else</span> <span class="n">resadd</span>
     <span class="k">else</span><span class="p">:</span>
@@ -850,7 +1087,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=af6b5015"></script>
+</div><script src="../../_static/documentation_options.js?v=7ac69e55"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
