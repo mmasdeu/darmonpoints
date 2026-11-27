@@ -15,7 +15,6 @@ from sage.misc.verbose import get_verbose, set_verbose, verbose
 from sage.rings.finite_rings.integer_mod_ring import IntegerModRing as Zmod
 from sage.rings.infinity import Infinity
 from sage.rings.integer_ring import Z as ZZ
-from sage.rings.number_field.number_field import is_fundamental_discriminant
 from sage.rings.padics.factory import Qp
 from sage.rings.padics.precision_error import PrecisionError
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
@@ -36,6 +35,14 @@ from .util import (
     quaternion_algebra_invariants_from_ramification,
     recognize_J,
 )
+
+try:
+    from sage.rings.number_field.number_field import is_fundamental_discriminant
+except ImportError:  # Sage >= 10.10: it is a method of Integer
+
+    def is_fundamental_discriminant(D):
+        return ZZ(D).is_fundamental_discriminant()
+
 
 r"""
     TESTS:

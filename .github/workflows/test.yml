@@ -33,5 +33,9 @@ jobs:
           pip install --no-build-isolation --no-dependencies .
       - name: doctest
         shell: bash -l {0}
+        # The sage launcher of recent versions has no -t option. Test the
+        # installed package (with its compiled extensions), from outside the
+        # checkout so that the sources are not imported instead.
         run: |
-          sage -t darmonpoints
+          cd "$RUNNER_TEMP"
+          python -m sage.doctest "$(python -c 'import darmonpoints, os; print(os.path.dirname(darmonpoints.__file__))')"
