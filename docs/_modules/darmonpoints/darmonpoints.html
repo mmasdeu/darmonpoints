@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
     <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
-        <title>darmonpoints.darmonpoints - darmonpoints 9.1.0 documentation</title>
+        <title>darmonpoints.darmonpoints - darmonpoints 9.1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 9.1.0 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 9.1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -191,7 +191,7 @@
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 9.1.0 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 9.1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -364,6 +364,12 @@
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="n">F_to_Qp</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">base_ring_local_embedding</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
+    <span class="c1"># Group elements act on points through their embedding at the default</span>
+    <span class="c1"># precision of G (that of the most precise embedding computed so far,</span>
+    <span class="c1"># initially 200). Make it at least prec, so that gamma fixes tau1 to its</span>
+    <span class="c1"># full precision (points of divisors with different precisions are</span>
+    <span class="c1"># different).</span>
+    <span class="n">G</span><span class="o">.</span><span class="n">get_embedding</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
     <span class="n">G</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">Gn</span>
     <span class="n">F</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
     <span class="n">t</span> <span class="o">=</span> <span class="n">PolynomialRing</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">"t"</span><span class="p">)</span><span class="o">.</span><span class="n">gen</span><span class="p">()</span>
@@ -968,7 +974,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=7ac69e55"></script>
+</div><script src="../../_static/documentation_options.js?v=debe1a4c"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

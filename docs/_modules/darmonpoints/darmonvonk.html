@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
     <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
-        <title>darmonpoints.darmonvonk - darmonpoints 9.1.0 documentation</title>
+        <title>darmonpoints.darmonvonk - darmonpoints 9.1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 9.1.0 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 9.1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -191,7 +191,7 @@
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 9.1.0 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 9.1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -283,6 +283,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.meromorphic</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeromorphicFunctions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.sarithgroup</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ProgressBar</span>
 
 <span class="c1"># distinguished_open = "OCp"  # Needed if we want to compare with Darmon points!</span>
 <span class="n">distinguished_open</span> <span class="o">=</span> <span class="s2">"Uinf"</span>
@@ -473,7 +474,9 @@
                     <span class="n">targets</span> <span class="o">=</span> <span class="n">contributions</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">{})</span>
                     <span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">sign</span>
         <span class="n">Ut</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">ng</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">ng</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="n">_ProgressBar</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">contributions</span><span class="p">),</span> <span class="s2">"Building Up matrix"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">targets</span> <span class="ow">in</span> <span class="n">contributions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">bar</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
             <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">ZZ</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">lift</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s2">"lift"</span><span class="p">)</span> <span class="k">else</span> <span class="n">o</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span>
                 <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">adjugate</span><span class="p">()</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
@@ -483,6 +486,7 @@
                     <span class="n">moebius_moment_accumulate_scaled</span><span class="p">(</span>
                         <span class="n">Ut</span><span class="p">,</span> <span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">j</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">coeff</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span>
                     <span class="p">)</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
         <span class="n">U</span> <span class="o">=</span> <span class="n">Ut</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
         <span class="k">del</span> <span class="n">Ut</span>
         <span class="n">reduce_scaled_matrix</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
@@ -1473,7 +1477,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=7ac69e55"></script>
+</div><script src="../../_static/documentation_options.js?v=debe1a4c"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
