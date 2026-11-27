@@ -1,15 +1,17 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="../../">
-  <head><meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>darmonpoints.cohomology_abstract - darmonpoints 7.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
+        <title>darmonpoints.cohomology_abstract - darmonpoints 8.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
     
     
@@ -91,19 +93,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -144,7 +133,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -160,14 +149,10 @@
   </symbol>
 </svg>
 
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
-<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
-<label class="overlay sidebar-overlay" for="__navigation">
-  <div class="visually-hidden">Hide navigation sidebar</div>
-</label>
-<label class="overlay toc-overlay" for="__toc">
-  <div class="visually-hidden">Hide table of contents sidebar</div>
-</label>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
 <a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
@@ -177,17 +162,15 @@
   <header class="mobile-header">
     <div class="header-left">
       <label class="nav-overlay-icon" for="__navigation">
-        <div class="visually-hidden">Toggle site navigation sidebar</div>
-        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 7.0.1 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 8.3 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
-        <button class="theme-toggle">
-          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
           <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
           <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -195,8 +178,7 @@
         </button>
       </div>
       <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
-        <div class="visually-hidden">Toggle table of contents sidebar</div>
-        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
   </header>
@@ -204,13 +186,12 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
-  
   <div class="sidebar-logo-container">
     <img class="sidebar-logo only-light" src="../../_static/logo.svg" alt="Light Logo"/>
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 7.0.1 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 8.3 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -231,6 +212,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.quatorder">Quaternion orders (PARI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.afuch">Arithmetic Fuchsian groups (Rickards’ library)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.kleinian">Arithmetic Kleinian groups</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../cohomology.html">Abstract cohomology class</a></li>
@@ -272,8 +256,7 @@
         </a>
         <div class="content-icon-container">
           <div class="theme-toggle-container theme-toggle-content">
-            <button class="theme-toggle">
-              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -281,8 +264,7 @@
             </button>
           </div>
           <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
-            <div class="visually-hidden">Toggle table of contents sidebar</div>
-            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
@@ -292,50 +274,48 @@
 <span class="c1">##    COHOMOLOGY    ##</span>
 <span class="c1">##                  ##</span>
 <span class="c1">######################</span>
-<span class="kn">import</span> <span class="nn">operator</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
 
-<span class="kn">from</span> <span class="nn">sage.algebras.group_algebra</span> <span class="kn">import</span> <span class="n">GroupAlgebra</span>
-<span class="kn">from</span> <span class="nn">sage.categories.action</span> <span class="kn">import</span> <span class="n">Action</span>
-<span class="kn">from</span> <span class="nn">sage.categories.homset</span> <span class="kn">import</span> <span class="n">Hom</span>
-<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.constructor</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">block_matrix</span><span class="p">,</span> <span class="n">column_matrix</span><span class="p">,</span> <span class="n">matrix</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
-<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_method</span>
-<span class="kn">from</span> <span class="nn">sage.misc.lazy_attribute</span> <span class="kn">import</span> <span class="n">lazy_attribute</span>
-<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
-<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">db_save</span>
-<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">free_module_element</span><span class="p">,</span> <span class="n">vector</span>
-<span class="kn">from</span> <span class="nn">sage.modules.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="kn">from</span> <span class="nn">sage.parallel.decorate</span> <span class="kn">import</span> <span class="n">fork</span><span class="p">,</span> <span class="n">parallel</span>
-<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">RR</span><span class="p">,</span>
-    <span class="n">ComplexField</span><span class="p">,</span>
-    <span class="n">LaurentSeriesRing</span><span class="p">,</span>
-    <span class="n">PolynomialRing</span><span class="p">,</span>
-    <span class="n">Qp</span><span class="p">,</span>
-    <span class="n">QuadraticField</span><span class="p">,</span>
-    <span class="n">RealField</span><span class="p">,</span>
-    <span class="n">Zmod</span><span class="p">,</span>
-    <span class="n">Zp</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sage.rings.number_field.number_field</span> <span class="kn">import</span> <span class="n">NumberField</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.precision_error</span> <span class="kn">import</span> <span class="n">PrecisionError</span>
-<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">ModuleElement</span><span class="p">,</span> <span class="n">MultiplicativeGroupElement</span>
-<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.algebras.group_algebra</span><span class="w"> </span><span class="kn">import</span> <span class="n">GroupAlgebra</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.categories.action</span><span class="w"> </span><span class="kn">import</span> <span class="n">Action</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.categories.homset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hom</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.groups.group</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlgebraicGroup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">block_matrix</span><span class="p">,</span> <span class="n">column_matrix</span><span class="p">,</span> <span class="n">matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.matrix_space</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_method</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.lazy_attribute</span><span class="w"> </span><span class="kn">import</span> <span class="n">lazy_attribute</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc_c</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.persist</span><span class="w"> </span><span class="kn">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">db_save</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.verbose</span><span class="w"> </span><span class="kn">import</span> <span class="n">verbose</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_module_element</span><span class="p">,</span> <span class="n">vector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.module</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.parallel.decorate</span><span class="w"> </span><span class="kn">import</span> <span class="n">fork</span><span class="p">,</span> <span class="n">parallel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.complex_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComplexField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.laurent_series_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">LaurentSeriesRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolynomialRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.integer_mod_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerModRing</span> <span class="k">as</span> <span class="n">Zmod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumberField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">Zp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.precision_error</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrecisionError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleElement</span><span class="p">,</span> <span class="n">MultiplicativeGroupElement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.parent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.richcmp</span><span class="w"> </span><span class="kn">import</span> <span class="n">op_EQ</span><span class="p">,</span> <span class="n">op_NE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.sage_object</span><span class="w"> </span><span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
 
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 
 
 <div class="viewcode-block" id="CohomologyElement">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement">[docs]</a>
-<span class="k">class</span> <span class="nc">CohomologyElement</span><span class="p">(</span><span class="n">ModuleElement</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CohomologyElement</span><span class="p">(</span><span class="n">ModuleElement</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Define an element of `H^1(G,V)`</span>
 
 <span class="sd">        INPUT:</span>
@@ -347,19 +327,19 @@
 
 <span class="sd">            sage: from darmonpoints.sarithgroup import BigArithGroup</span>
 <span class="sd">            sage: from darmonpoints.cohomology_arithmetic import ArithCoh</span>
-<span class="sd">            sage: G = BigArithGroup(5,6,1,use_shapiro=False,outfile=&#39;/tmp/darmonpoints.tmp&#39;) #  optional - magma</span>
-<span class="sd">            sage: Coh = ArithCoh(G) #  optional - magma</span>
-<span class="sd">            sage: 2 in Coh.hecke_matrix(13).eigenvalues() #  optional - magma</span>
+<span class="sd">            sage: G = BigArithGroup(5,6,1,use_shapiro=False,outfile='/tmp/darmonpoints.tmp')</span>
+<span class="sd">            sage: Coh = ArithCoh(G)</span>
+<span class="sd">            sage: 2 in Coh.hecke_matrix(13).eigenvalues()</span>
 <span class="sd">            True</span>
-<span class="sd">            sage: -4 in Coh.hecke_matrix(7).eigenvalues() #  optional - magma</span>
+<span class="sd">            sage: -4 in Coh.hecke_matrix(7).eigenvalues()</span>
 <span class="sd">            True</span>
-<span class="sd">            sage: PhiE = Coh.gen(1) #  optional - magma</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            sage: PhiE = Coh.gen(1)</span>
+<span class="sd">        """</span>
         <span class="n">G</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
         <span class="n">V</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;evaluate&quot;</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s2">"evaluate"</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">gens</span><span class="p">()]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -369,7 +349,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">gens</span><span class="p">()]</span>
         <span class="n">ModuleElement</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_evaluate_word_tietze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_word_tietze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_trivial_action</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_word_tietze_trivial</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">word</span><span class="p">))</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_acting_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -383,32 +363,86 @@
 
 <div class="viewcode-block" id="CohomologyElement.values">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.values">[docs]</a>
-    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_vector_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_vector_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">ambient</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">space</span><span class="p">()</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">vector</span><span class="p">(</span><span class="nb">sum</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">],</span> <span class="p">[]))</span>
         <span class="k">return</span> <span class="n">ambient</span><span class="p">(</span><span class="n">ambient</span><span class="o">.</span><span class="n">V</span><span class="p">()(</span><span class="n">ans</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;Cohomology class in </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"Cohomology class in </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_add_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_richcmp_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Compare two cohomology classes by their values on the generators.</span>
+
+<span class="sd">        Sage routes ``==`` and ``!=`` through ``_richcmp_``; without this the</span>
+<span class="sd">        comparison falls back to identity, so that two classes with identical</span>
+<span class="sd">        values (``2 * c`` and ``c + c``, say) compare as different.</span>
+
+<span class="sd">        There is no meaningful order on cohomology classes, so the ordering</span>
+<span class="sd">        operators are rejected rather than answered arbitrarily.</span>
+
+<span class="sd">        TESTS::</span>
+
+<span class="sd">            sage: from darmonpoints.sarithgroup import BigArithGroup</span>
+<span class="sd">            sage: from darmonpoints.cohomology_arithmetic import CohArbitrary</span>
+<span class="sd">            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='PSL2', use_shapiro=False, outfile='/tmp/darmonpoints.tmp')</span>
+<span class="sd">            sage: Coh = CohArbitrary(GS.small_group(), ZZ**1)</span>
+<span class="sd">            sage: c = Coh.gen(0)</span>
+<span class="sd">            sage: 2 * c == c + c</span>
+<span class="sd">            True</span>
+<span class="sd">            sage: c == c</span>
+<span class="sd">            True</span>
+<span class="sd">            sage: c != c</span>
+<span class="sd">            False</span>
+<span class="sd">            sage: c == Coh.gen(1)</span>
+<span class="sd">            False</span>
+<span class="sd">            sage: c - c == 0</span>
+<span class="sd">            True</span>
+<span class="sd">            sage: hash(2 * c) == hash(c + c)</span>
+<span class="sd">            True</span>
+<span class="sd">            sage: c &lt; c</span>
+<span class="sd">            Traceback (most recent call last):</span>
+<span class="sd">            ...</span>
+<span class="sd">            TypeError: cohomology classes are not ordered</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="n">op_EQ</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">==</span> <span class="n">right</span><span class="o">.</span><span class="n">_val</span>
+        <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="n">op_NE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span> <span class="o">!=</span> <span class="n">right</span><span class="o">.</span><span class="n">_val</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"cohomology classes are not ordered"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        A hash consistent with :meth:`_richcmp_`.</span>
+
+<span class="sd">        Values are not always hashable (Sage vectors have to be immutable</span>
+<span class="sd">        first), so fall back to a hash that depends only on the parent: that is</span>
+<span class="sd">        coarser than equality, but never inconsistent with it.</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">)))</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="p">[</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">,</span> <span class="n">right</span><span class="o">.</span><span class="n">_val</span><span class="p">)]</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_sub_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sub_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="p">[</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">,</span> <span class="n">right</span><span class="o">.</span><span class="n">_val</span><span class="p">)]</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_neg_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_neg_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="p">[</span><span class="o">-</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">])</span>
 
-    <span class="k">def</span> <span class="nf">_div_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_div_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">right</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
@@ -418,21 +452,21 @@
                 <span class="k">except</span> <span class="p">(</span><span class="ne">IndexError</span><span class="p">,</span> <span class="ne">ZeroDivisionError</span><span class="p">):</span>
                     <span class="k">pass</span>
         <span class="k">if</span> <span class="n">ans</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;It seems that we are trying to divide by 0&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"It seems that we are trying to divide by 0"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ans</span>
 
-    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="n">right</span><span class="p">)</span> <span class="o">*</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">])</span>
 
 <div class="viewcode-block" id="CohomologyElement.is_zero">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.is_zero">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_zero</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_zero</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vector_</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span></div>
 
 
 <div class="viewcode-block" id="CohomologyElement.valuation">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.valuation">[docs]</a>
-    <span class="k">def</span> <span class="nf">valuation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">valuation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">min</span><span class="p">([</span><span class="n">u</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">])</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
@@ -441,13 +475,16 @@
 
 <div class="viewcode-block" id="CohomologyElement.pair_with_cycle">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.pair_with_cycle">[docs]</a>
-    <span class="k">def</span> <span class="nf">pair_with_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xi</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">pair_with</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">xi</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pair_with_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">multiplicative</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">multiplicative</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">pair_with</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">multiplicative</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">xi</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">pair_with</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">multiplicative</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">xi</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CohomologyElement.evaluate">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.evaluate">[docs]</a>
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">at_identity</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">at_identity</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
         <span class="n">G</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span> <span class="ow">is</span> <span class="n">G</span><span class="p">:</span>
@@ -463,7 +500,7 @@
 
 <div class="viewcode-block" id="CohomologyElement.check_cocycle_property">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyElement.check_cocycle_property">[docs]</a>
-    <span class="k">def</span> <span class="nf">check_cocycle_property</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">g2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_cocycle_property</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">g2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">H</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
         <span class="n">G</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -489,7 +526,7 @@
                 <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_evaluate_word_tietze_naive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_word_tietze_naive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()(</span><span class="mi">0</span><span class="p">)</span>
@@ -511,7 +548,7 @@
                 <span class="n">ans</span> <span class="o">-=</span> <span class="n">gamma</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="n">g0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">ans</span> <span class="k">if</span> <span class="n">left_act_by</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">left_act_by</span> <span class="o">*</span> <span class="n">ans</span>
 
-    <span class="k">def</span> <span class="nf">_evaluate_word_tietze_foxgradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_word_tietze_foxgradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">HH</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
         <span class="n">G</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
         <span class="n">V</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
@@ -519,18 +556,18 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">V</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">R</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">&quot;dimension&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">"dimension"</span><span class="p">):</span>
             <span class="n">dim</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">dimension</span><span class="p">()</span>
             <span class="n">MS</span> <span class="o">=</span> <span class="n">MatrixSpace</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">&quot;basis&quot;</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">"basis"</span><span class="p">):</span>
             <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">basis</span><span class="p">())</span>
             <span class="n">MS</span> <span class="o">=</span> <span class="n">MatrixSpace</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">MS</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
         <span class="n">fgrad</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">fox_gradient</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">word</span><span class="p">))</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;_moments&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"_moments"</span><span class="p">):</span>
             <span class="n">ff</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">_moments</span><span class="o">.</span><span class="n">lift</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;_vector_&quot;</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"_vector_"</span><span class="p">):</span>
             <span class="n">ff</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">_vector_</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ff</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span>
@@ -539,7 +576,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">V</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_evaluate_word_tietze_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_word_tietze_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">left_act_by</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_trivial_action</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_word_tietze_trivial_identity</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 
@@ -566,13 +603,18 @@
                 <span class="n">ans</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="n">g0</span><span class="p">]</span><span class="o">.</span><span class="n">act_and_evaluate_at_identity</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ans</span> <span class="k">if</span> <span class="n">left_act_by</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">left_act_by</span> <span class="o">*</span> <span class="n">ans</span>
 
-    <span class="k">def</span> <span class="nf">_evaluate_word_tietze_trivial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_word_tietze_trivial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
+        <span class="c1"># With the trivial action, the value at a word only depends on the net</span>
+        <span class="c1"># number of times that each generator appears in it. These counts are</span>
+        <span class="c1"># cached on the parent, since the same words (e.g. those of the Hecke</span>
+        <span class="c1"># operators) are evaluated for many cocycles.</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_word_letter_counts</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="n">g</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">g</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="o">-</span><span class="n">g</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">word</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()(</span><span class="mi">0</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_evaluate_word_tietze_trivial_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_word_tietze_trivial_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="n">g</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">g</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="o">-</span><span class="n">g</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">word</span><span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
@@ -582,18 +624,18 @@
 
 <div class="viewcode-block" id="CohomologyGroup">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup">[docs]</a>
-<span class="k">class</span> <span class="nc">CohomologyGroup</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CohomologyGroup</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
     <span class="n">Element</span> <span class="o">=</span> <span class="n">CohomologyElement</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">action_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">action_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_group</span> <span class="o">=</span> <span class="n">G</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_coeffmodule</span> <span class="o">=</span> <span class="n">V</span>
         <span class="n">onemat</span> <span class="o">=</span> <span class="n">G</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gen_pows</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gen_pows_neg</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_trivial_action</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;trivial_action&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_trivial_action</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"trivial_action"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">action_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">&quot;dimension&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">"dimension"</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_acting_matrix</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">matrix</span><span class="p">(</span>
                     <span class="n">V</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span> <span class="n">V</span><span class="o">.</span><span class="n">dimension</span><span class="p">(),</span> <span class="n">V</span><span class="o">.</span><span class="n">dimension</span><span class="p">(),</span> <span class="mi">1</span>
                 <span class="p">)</span>
@@ -604,7 +646,7 @@
             <span class="n">V</span><span class="o">.</span><span class="n">_unset_coercions_used</span><span class="p">()</span>
             <span class="n">V</span><span class="o">.</span><span class="n">register_action</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">&quot;acting_matrix&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">"acting_matrix"</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_acting_matrix</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">V</span><span class="o">.</span><span class="n">acting_matrix</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">gens_local</span> <span class="o">=</span> <span class="p">[(</span><span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="o">**-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">gens</span><span class="p">()]</span>
         <span class="n">GA</span> <span class="o">=</span> <span class="n">GroupAlgebra</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
@@ -615,14 +657,38 @@
         <span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="n">ZZ</span><span class="p">)</span>
         <span class="k">return</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_word_letter_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        The list of pairs ``(i, c)``, with ``c`` nonzero, where ``c`` is the</span>
+<span class="sd">        number of occurrences of the ``i``-th generator (0-based) in the Tietze</span>
+<span class="sd">        word ``word`` minus the number of occurrences of its inverse.</span>
+<span class="sd">        """</span>
+        <span class="n">word</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_word_letter_counts_cache</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_word_letter_counts_cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="n">word</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">g</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">counts</span><span class="p">[</span><span class="n">g</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">counts</span><span class="p">[</span><span class="o">-</span><span class="n">g</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">word</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="k">if</span> <span class="n">c</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">ans</span>
+
 <div class="viewcode-block" id="CohomologyGroup.generator_acting_matrix">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.generator_acting_matrix">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">generator_acting_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generator_acting_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
         <span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">&quot;dimension&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">"dimension"</span><span class="p">):</span>
             <span class="n">dim</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">dimension</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">&quot;basis&quot;</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="s2">"basis"</span><span class="p">):</span>
             <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">basis</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">dim</span> <span class="o">=</span> <span class="kc">None</span>
@@ -631,40 +697,61 @@
 
 <div class="viewcode-block" id="CohomologyGroup.GA_to_local">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.GA_to_local">[docs]</a>
-    <span class="k">def</span> <span class="nf">GA_to_local</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">g0</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">g0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="n">a</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_acting_matrix</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">support</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
-                    <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">coefficients</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">monomials</span><span class="p">())</span>
-                <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">GA_to_local</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">g0</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Evaluate the group-algebra element ``x`` in the local action.</span>
+
+<span class="sd">        TESTS:</span>
+
+<span class="sd">        Evaluating a word through the Fox gradient (which goes through this</span>
+<span class="sd">        method) must agree with the naive evaluation (which does not). Pairing</span>
+<span class="sd">        ``coefficients()`` with ``monomials()`` by ``zip`` breaks this: the</span>
+<span class="sd">        former is sorted by the indexing set, the latter is not, so the two</span>
+<span class="sd">        disagree as soon as the group has a genuine order on its elements --</span>
+<span class="sd">        which is the case for ``SL2``, but not for ``PSL2``, where every order</span>
+<span class="sd">        comparison is ``False`` and the bug stays invisible::</span>
+
+<span class="sd">            sage: from darmonpoints.sarithgroup import BigArithGroup</span>
+<span class="sd">            sage: from darmonpoints.cohomology_arithmetic import ArithCoh</span>
+<span class="sd">            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='SL2', use_shapiro=True, outfile='/tmp/darmonpoints.tmp')</span>
+<span class="sd">            sage: f = ArithCoh(GS).gen(0)</span>
+<span class="sd">            sage: words = [(4,-2,-1,4,1,-4,4), (1,2,-1,3,-2), (2,2,-1,-1,3,4)]</span>
+<span class="sd">            sage: all(f._evaluate_word_tietze_foxgradient(w) == f._evaluate_word_tietze_naive(w) for w in words)</span>
+<span class="sd">            True</span>
+<span class="sd">        """</span>
+        <span class="c1"># Each coefficient must be paired with its own monomial: coefficients()</span>
+        <span class="c1"># returns the coefficients sorted by the indexing set, while monomials()</span>
+        <span class="c1"># follows the (arbitrary) order of the underlying dictionary, so zipping</span>
+        <span class="c1"># the two scrambles the pairing as soon as x has two distinct coefficients.</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">a</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_acting_matrix</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">monomial_coefficients</span><span class="p">(</span><span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">g0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ans</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_acting_matrix</span><span class="p">(</span><span class="n">g0</span><span class="p">)</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="n">a</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_acting_matrix</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">support</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
-                    <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">coefficients</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">monomials</span><span class="p">())</span>
-                <span class="p">)</span>
-            <span class="p">)</span></div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_acting_matrix</span><span class="p">(</span><span class="n">g0</span><span class="p">)</span> <span class="o">*</span> <span class="n">ans</span></div>
 
 
 <div class="viewcode-block" id="CohomologyGroup.group">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.group">[docs]</a>
-    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span></div>
 
 
 <div class="viewcode-block" id="CohomologyGroup.coefficient_module">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.coefficient_module">[docs]</a>
-    <span class="k">def</span> <span class="nf">coefficient_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coefficient_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coeffmodule</span></div>
 
 
 <div class="viewcode-block" id="CohomologyGroup.space">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.space">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Calculates the space of cocyles modulo coboundaries, as a Z-module.</span>
 
 <span class="sd">        TESTS:</span>
@@ -672,11 +759,11 @@
 <span class="sd">        sage: from darmonpoints.sarithgroup import *</span>
 <span class="sd">        sage: from darmonpoints.cohomology_abstract import *</span>
 <span class="sd">        sage: from darmonpoints.ocmodule import *</span>
-<span class="sd">        sage: GS = BigArithGroup(5, 6,1,use_shapiro=False,outfile=&#39;/tmp/darmonpoints.tmp&#39;) #  optional - magma</span>
-<span class="sd">        sage: G = GS.large_group() #  optional - magma</span>
-<span class="sd">        sage: V = OCVn(5,1)     #  optional - magma</span>
-<span class="sd">        sage: Coh = CohomologyGroup(G,V) #  optional - magma</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        sage: GS = BigArithGroup(5, 6,1,use_shapiro=False,outfile='/tmp/darmonpoints.tmp')</span>
+<span class="sd">        sage: G = GS.large_group()</span>
+<span class="sd">        sage: V = OCVn(5,1)</span>
+<span class="sd">        sage: Coh = CohomologyGroup(G,V)</span>
+<span class="sd">        """</span>
         <span class="n">verb</span> <span class="o">=</span> <span class="n">get_verbose</span><span class="p">()</span>
         <span class="n">set_verbose</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
@@ -689,7 +776,7 @@
         <span class="n">A</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">Vdim</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">gens</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">nr</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">get_relation_words</span><span class="p">()):</span>
             <span class="n">set_verbose</span><span class="p">(</span><span class="n">verb</span><span class="p">)</span>
-            <span class="n">verbose</span><span class="p">(</span><span class="s2">&quot;Processing relation word </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">nr</span><span class="p">)</span>
+            <span class="n">verbose</span><span class="p">(</span><span class="s2">"Processing relation word </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">nr</span><span class="p">)</span>
             <span class="n">set_verbose</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">Alist</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">MatrixSpace</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">Vdim</span><span class="p">,</span> <span class="n">Vdim</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">GA_to_local</span><span class="p">(</span><span class="n">o</span><span class="p">))</span>
@@ -713,7 +800,7 @@
 <div class="viewcode-block" id="CohomologyGroup.dimension">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.dimension">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">len</span><span class="p">([</span><span class="n">o</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="p">()</span><span class="o">.</span><span class="n">invariants</span><span class="p">()</span> <span class="k">if</span> <span class="n">o</span> <span class="o">==</span> <span class="mi">0</span><span class="p">])</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -722,19 +809,19 @@
 
 <div class="viewcode-block" id="CohomologyGroup.zero">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.zero">[docs]</a>
-    <span class="k">def</span> <span class="nf">zero</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">zero</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_coeffmodule</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">()</span><span class="o">.</span><span class="n">gens</span><span class="p">()))]</span>
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_an_element_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_an_element_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_element_constructor_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_element_constructor_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_coerce_map_from_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_map_from_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">CohomologyGroup</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
@@ -743,7 +830,7 @@
 <div class="viewcode-block" id="CohomologyGroup.gen">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.gen">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">gen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
         <span class="n">vi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="p">()</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">vi</span> <span class="o">=</span> <span class="n">vi</span><span class="o">.</span><span class="n">lift</span><span class="p">()</span>
@@ -752,20 +839,18 @@
         <span class="n">vi</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">vi</span><span class="p">)</span>
         <span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
         <span class="n">Vdim</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">dimension</span><span class="p">()</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vi</span><span class="p">),</span> <span class="n">Vdim</span><span class="p">):</span>
-            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">V</span><span class="p">(</span><span class="n">vi</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">Vdim</span><span class="p">]))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">(</span><span class="n">vi</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">Vdim</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vi</span><span class="p">),</span> <span class="n">Vdim</span><span class="p">)]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CohomologyGroup.gens">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.gens">[docs]</a>
-    <span class="k">def</span> <span class="nf">gens</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gens</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">())]</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;H^1(G,V), with G being </span><span class="si">%s</span><span class="s2"> and V = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"H^1(G,V), with G being </span><span class="si">%s</span><span class="s2"> and V = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">(),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">(),</span>
         <span class="p">)</span>
@@ -773,7 +858,7 @@
 <div class="viewcode-block" id="CohomologyGroup.fox_gradient">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.fox_gradient">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">fox_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">red</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fox_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">red</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">red</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">red</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
         <span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
@@ -794,7 +879,7 @@
 
 <div class="viewcode-block" id="CohomologyGroup.get_gen_pow">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.get_gen_pow">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_gen_pow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">red</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_gen_pow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">red</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">red</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">red</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
         <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -812,7 +897,7 @@
 
 <div class="viewcode-block" id="CohomologyGroup.get_fox_term">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.get_fox_term">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_fox_term</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">red</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_fox_term</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">red</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">red</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">red</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
         <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -839,7 +924,7 @@
 
 <div class="viewcode-block" id="CohomologyGroup.eval_at_genpow">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.eval_at_genpow">[docs]</a>
-    <span class="k">def</span> <span class="nf">eval_at_genpow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">red</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">eval_at_genpow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">red</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">red</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">red</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
         <span class="n">V</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">_val</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
@@ -869,14 +954,14 @@
 <div class="viewcode-block" id="CohomologyGroup.hecke_matrix">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.cohomology_abstract.CohomologyGroup.hecke_matrix">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">hecke_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">use_magma</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">g0</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># l can be oo</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hecke_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">use_magma</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">g0</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># l can be oo</span>
         <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">()</span>
         <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="n">M</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">cocycle</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gens</span><span class="p">()):</span>
             <span class="c1"># Construct column j of the matrix</span>
             <span class="n">verbose</span><span class="p">(</span>
-                <span class="s2">&quot;Constructing column </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2"> of the hecke matrix for prime </span><span class="si">%s</span><span class="s2">&quot;</span>
+                <span class="s2">"Constructing column </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2"> of the hecke matrix for prime </span><span class="si">%s</span><span class="s2">"</span>
                 <span class="o">%</span> <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="n">fvals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_hecke_operator</span><span class="p">(</span><span class="n">cocycle</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">use_magma</span><span class="o">=</span><span class="n">use_magma</span><span class="p">,</span> <span class="n">g0</span><span class="o">=</span><span class="n">g0</span><span class="p">)</span>
@@ -916,9 +1001,9 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4b9d3a76"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../../_static/scripts/furo.js?v=4e2eecee"></script>
+</div><script src="../../_static/documentation_options.js?v=8cc1add8"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>
 </html>

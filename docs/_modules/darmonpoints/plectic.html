@@ -1,15 +1,17 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="../../">
-  <head><meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>darmonpoints.plectic - darmonpoints 7.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
+        <title>darmonpoints.plectic - darmonpoints 8.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
     
     
@@ -91,19 +93,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -144,7 +133,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -160,14 +149,10 @@
   </symbol>
 </svg>
 
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
-<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
-<label class="overlay sidebar-overlay" for="__navigation">
-  <div class="visually-hidden">Hide navigation sidebar</div>
-</label>
-<label class="overlay toc-overlay" for="__toc">
-  <div class="visually-hidden">Hide table of contents sidebar</div>
-</label>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
 <a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
@@ -177,17 +162,15 @@
   <header class="mobile-header">
     <div class="header-left">
       <label class="nav-overlay-icon" for="__navigation">
-        <div class="visually-hidden">Toggle site navigation sidebar</div>
-        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 7.0.1 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 8.3 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
-        <button class="theme-toggle">
-          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
           <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
           <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -195,8 +178,7 @@
         </button>
       </div>
       <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
-        <div class="visually-hidden">Toggle table of contents sidebar</div>
-        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
   </header>
@@ -204,13 +186,12 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
-  
   <div class="sidebar-logo-container">
     <img class="sidebar-logo only-light" src="../../_static/logo.svg" alt="Light Logo"/>
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 7.0.1 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 8.3 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -231,6 +212,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.quatorder">Quaternion orders (PARI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.afuch">Arithmetic Fuchsian groups (Rickards’ library)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.kleinian">Arithmetic Kleinian groups</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../cohomology.html">Abstract cohomology class</a></li>
@@ -272,8 +256,7 @@
         </a>
         <div class="content-icon-container">
           <div class="theme-toggle-container theme-toggle-content">
-            <button class="theme-toggle">
-              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -281,59 +264,58 @@
             </button>
           </div>
           <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
-            <div class="visually-hidden">Toggle table of contents sidebar</div>
-            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for darmonpoints.plectic</h1><div class="highlight"><pre>
 <span></span><span class="c1">## Implementing Plectic SH points</span>
 <span class="c1">#################################</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
 
-<span class="kn">from</span> <span class="nn">sage.algebras.quatalg.all</span> <span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
-<span class="kn">from</span> <span class="nn">sage.functions.trig</span> <span class="kn">import</span> <span class="n">arctan</span>
-<span class="kn">from</span> <span class="nn">sage.groups.group</span> <span class="kn">import</span> <span class="n">AlgebraicGroup</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
-<span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cached_method</span><span class="p">,</span> <span class="n">lazy_attribute</span><span class="p">,</span> <span class="n">walltime</span>
-<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
-<span class="kn">from</span> <span class="nn">sage.misc.persist</span> <span class="kn">import</span> <span class="n">db</span>
-<span class="kn">from</span> <span class="nn">sage.modular.arithgroup.congroup_gamma0</span> <span class="kn">import</span> <span class="n">Gamma0_constructor</span> <span class="k">as</span> <span class="n">Gamma0</span>
-<span class="kn">from</span> <span class="nn">sage.modular.btquotients.btquotient</span> <span class="kn">import</span> <span class="n">BruhatTitsTree</span>
-<span class="kn">from</span> <span class="nn">sage.modular.cusps</span> <span class="kn">import</span> <span class="n">Cusp</span>
-<span class="kn">from</span> <span class="nn">sage.modules.all</span> <span class="kn">import</span> <span class="n">vector</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule_generic</span>
-<span class="kn">from</span> <span class="nn">sage.parallel.decorate</span> <span class="kn">import</span> <span class="n">parallel</span>
-<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">QQ</span><span class="p">,</span>
-    <span class="n">RR</span><span class="p">,</span>
-    <span class="n">ZZ</span><span class="p">,</span>
-    <span class="n">ComplexField</span><span class="p">,</span>
-    <span class="n">NumberField</span><span class="p">,</span>
-    <span class="n">PolynomialRing</span><span class="p">,</span>
-    <span class="n">Qp</span><span class="p">,</span>
-    <span class="n">Qq</span><span class="p">,</span>
-    <span class="n">QuadraticField</span><span class="p">,</span>
-    <span class="n">RealField</span><span class="p">,</span>
-    <span class="n">Zmod</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
-<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.algebras.quatalg.all</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.functions.trig</span><span class="w"> </span><span class="kn">import</span> <span class="n">arctan</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.groups.group</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlgebraicGroup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span> <span class="k">as</span> <span class="n">matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_method</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.lazy_attribute</span><span class="w"> </span><span class="kn">import</span> <span class="n">lazy_attribute</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.timing</span><span class="w"> </span><span class="kn">import</span> <span class="n">walltime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc_c</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.persist</span><span class="w"> </span><span class="kn">import</span> <span class="n">db</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modular.arithgroup.congroup_gamma0</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma0_constructor</span> <span class="k">as</span> <span class="n">Gamma0</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modular.btquotients.btquotient</span><span class="w"> </span><span class="kn">import</span> <span class="n">BruhatTitsTree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modular.cusps</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cusp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_module_element</span> <span class="k">as</span> <span class="n">vector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">FreeModule_generic</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.parallel.decorate</span><span class="w"> </span><span class="kn">import</span> <span class="n">parallel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.rational_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span> <span class="k">as</span> <span class="n">QQ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Z</span> <span class="k">as</span> <span class="n">ZZ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.complex_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComplexField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumberField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolynomialRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.number_field.number_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.real_mpfr</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.integer_mod_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerModRing</span> <span class="k">as</span> <span class="n">Zmod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">Qq</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiplicativeGroupElement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.parent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.sage_object</span><span class="w"> </span><span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
 
-<span class="kn">from</span> <span class="nn">.cohomology_arithmetic</span> <span class="kn">import</span> <span class="n">ArithCoh</span><span class="p">,</span> <span class="n">get_cocycle_from_elliptic_curve</span>
-<span class="kn">from</span> <span class="nn">.homology</span> <span class="kn">import</span> <span class="n">TrivialAction</span>
-<span class="kn">from</span> <span class="nn">.homology_abstract</span> <span class="kn">import</span> <span class="n">ArithHomology</span><span class="p">,</span> <span class="n">HomologyGroup</span>
-<span class="kn">from</span> <span class="nn">.sarithgroup</span> <span class="kn">import</span> <span class="n">ArithGroup</span><span class="p">,</span> <span class="n">BigArithGroup</span><span class="p">,</span> <span class="n">BigArithGroup_class</span><span class="p">,</span> <span class="n">BTEdge</span>
-<span class="kn">from</span> <span class="nn">.sparse</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.cohomology_arithmetic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArithCoh</span><span class="p">,</span> <span class="n">get_cocycle_from_elliptic_curve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.homology</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrivialAction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.homology_abstract</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArithHomology</span><span class="p">,</span> <span class="n">HomologyGroup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.sarithgroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArithGroup</span><span class="p">,</span> <span class="n">BigArithGroup</span><span class="p">,</span> <span class="n">BigArithGroup_class</span><span class="p">,</span> <span class="n">BTEdge</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.sparse</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 
 
 <div class="viewcode-block" id="PlecticGroup">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup">[docs]</a>
-<span class="k">def</span> <span class="nf">PlecticGroup</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">PlecticGroup</span><span class="p">(</span>
     <span class="n">p1</span><span class="p">,</span>
     <span class="n">p2</span><span class="p">,</span>
     <span class="n">quat_data</span><span class="p">,</span>
@@ -347,33 +329,29 @@
 <span class="p">):</span>
     <span class="c1"># global G, Coh, phiE, Phi, dK, J, J1, cycleGn, nn, Jlist</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;config.ini&quot;</span><span class="p">)</span>
-    <span class="n">param_dict</span> <span class="o">=</span> <span class="n">config_section_map</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;General&quot;</span><span class="p">)</span>
-    <span class="n">param_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config_section_map</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;Plectic&quot;</span><span class="p">))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"config.ini"</span><span class="p">)</span>
+    <span class="n">param_dict</span> <span class="o">=</span> <span class="n">config_section_map</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"General"</span><span class="p">)</span>
+    <span class="n">param_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config_section_map</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"Plectic"</span><span class="p">))</span>
     <span class="n">param_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">param</span> <span class="o">=</span> <span class="n">Bunch</span><span class="p">(</span><span class="o">**</span><span class="n">param_dict</span><span class="p">)</span>
 
     <span class="c1"># Get general parameters</span>
-    <span class="n">outfile</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;outfile&quot;</span><span class="p">)</span>
-    <span class="n">use_ps_dists</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_ps_dists&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="n">use_shapiro</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_shapiro&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="n">use_sage_db</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_sage_db&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="n">magma_seed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;magma_seed&quot;</span><span class="p">,</span> <span class="mi">1515316</span><span class="p">)</span>
-    <span class="n">use_magma</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_magma&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-    <span class="n">progress_bar</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;progress_bar&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-    <span class="n">sign_at_infinity</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sign_at_infinity&quot;</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">outfile</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"outfile"</span><span class="p">)</span>
+    <span class="n">use_ps_dists</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_ps_dists"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">use_shapiro</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_shapiro"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">use_sage_db</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_sage_db"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">magma_seed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"magma_seed"</span><span class="p">,</span> <span class="mi">1515316</span><span class="p">)</span>
+    <span class="n">use_magma</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_magma"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">progress_bar</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"progress_bar"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">sign_at_infinity</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sign_at_infinity"</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
 
-    <span class="n">page_path</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;page_path&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
-    <span class="n">page_path</span> <span class="o">+=</span> <span class="s2">&quot;/KleinianGroups-1.0/klngpspec&quot;</span>
-    <span class="k">if</span> <span class="n">magma</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">sage.interfaces.magma</span> <span class="kn">import</span> <span class="n">Magma</span>
-
-        <span class="n">magma</span> <span class="o">=</span> <span class="n">Magma</span><span class="p">()</span>
-        <span class="n">quit_when_done</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">quit_when_done</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using Magma version : </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">magma</span><span class="o">.</span><span class="n">version</span><span class="p">()))</span>
-    <span class="n">magma</span><span class="o">.</span><span class="n">attach_spec</span><span class="p">(</span><span class="n">page_path</span><span class="p">)</span>
+    <span class="c1"># Magma is only used when a session is passed (backend='magma')</span>
+    <span class="n">quit_when_done</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">magma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">page_path</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"page_path"</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+        <span class="n">page_path</span> <span class="o">+=</span> <span class="s2">"/KleinianGroups-1.0/klngpspec"</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Using Magma version : </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">magma</span><span class="o">.</span><span class="n">version</span><span class="p">()))</span>
+        <span class="n">magma</span><span class="o">.</span><span class="n">attach_spec</span><span class="p">(</span><span class="n">page_path</span><span class="p">)</span>
 
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">quat_data</span>
     <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -382,9 +360,9 @@
 
     <span class="k">if</span> <span class="n">grouptype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">base</span> <span class="o">==</span> <span class="n">QQ</span><span class="p">:</span>
-            <span class="n">grouptype</span> <span class="o">=</span> <span class="s2">&quot;PSL2&quot;</span>
+            <span class="n">grouptype</span> <span class="o">=</span> <span class="s2">"PSL2"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">grouptype</span> <span class="o">=</span> <span class="s2">&quot;PSL2&quot;</span>  <span class="c1"># DEBUG, was PGL2</span>
+            <span class="n">grouptype</span> <span class="o">=</span> <span class="s2">"PSL2"</span>  <span class="c1"># DEBUG, was PGL2</span>
     <span class="k">return</span> <span class="n">PlecticGroup_class</span><span class="p">(</span>
         <span class="n">base</span><span class="p">,</span>
         <span class="n">p1</span><span class="p">,</span>
@@ -402,10 +380,10 @@
 
 <div class="viewcode-block" id="PlecticGroup_class">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class">[docs]</a>
-<span class="k">class</span> <span class="nc">PlecticGroup_class</span><span class="p">(</span><span class="n">AlgebraicGroup</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PlecticGroup_class</span><span class="p">(</span><span class="n">AlgebraicGroup</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">""" """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">base</span><span class="p">,</span>
         <span class="n">p0</span><span class="p">,</span>
@@ -418,22 +396,25 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">=</span> <span class="n">base</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">GS</span> <span class="o">=</span> <span class="n">ArithGroup</span><span class="p">(</span>
-            <span class="n">base</span><span class="p">,</span>
-            <span class="n">discriminant</span><span class="p">,</span>
-            <span class="n">abtuple</span><span class="p">,</span>
-            <span class="n">p0</span> <span class="o">*</span> <span class="n">p1</span> <span class="o">*</span> <span class="n">level</span><span class="p">,</span>
-            <span class="n">info_magma</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;info_magma&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="n">magma</span><span class="o">=</span><span class="n">magma</span><span class="p">,</span>
-            <span class="n">compute_presentation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">info_magma</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"info_magma"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">info_magma</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">G_base_n</span> <span class="o">=</span> <span class="n">ArithGroup</span><span class="p">(</span>
+                <span class="n">base</span><span class="p">,</span>
+                <span class="n">discriminant</span><span class="p">,</span>
+                <span class="n">abtuple</span><span class="p">,</span>
+                <span class="n">level</span><span class="p">,</span>
+                <span class="n">info_magma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">magma</span><span class="o">=</span><span class="n">magma</span><span class="p">,</span>
+                <span class="n">compute_presentation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">info_magma</span> <span class="o">=</span> <span class="n">G_base_n</span>
         <span class="n">Gp0</span> <span class="o">=</span> <span class="n">ArithGroup</span><span class="p">(</span>
             <span class="n">base</span><span class="p">,</span>
             <span class="n">discriminant</span><span class="p">,</span>
             <span class="n">abtuple</span><span class="p">,</span>
             <span class="n">p0</span> <span class="o">*</span> <span class="n">level</span><span class="p">,</span>
-            <span class="n">info_magma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="p">,</span>
+            <span class="n">info_magma</span><span class="o">=</span><span class="n">info_magma</span><span class="p">,</span>
             <span class="n">magma</span><span class="o">=</span><span class="n">magma</span><span class="p">,</span>
             <span class="n">compute_presentation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -443,7 +424,18 @@
             <span class="n">discriminant</span><span class="p">,</span>
             <span class="n">abtuple</span><span class="p">,</span>
             <span class="n">p1</span> <span class="o">*</span> <span class="n">level</span><span class="p">,</span>
-            <span class="n">info_magma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="p">,</span>
+            <span class="n">info_magma</span><span class="o">=</span><span class="n">info_magma</span><span class="p">,</span>
+            <span class="n">magma</span><span class="o">=</span><span class="n">magma</span><span class="p">,</span>
+            <span class="n">compute_presentation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">GS</span> <span class="o">=</span> <span class="n">ArithGroup</span><span class="p">(</span>
+            <span class="n">base</span><span class="p">,</span>
+            <span class="n">discriminant</span><span class="p">,</span>
+            <span class="n">abtuple</span><span class="p">,</span>
+            <span class="n">p0</span> <span class="o">*</span> <span class="n">p1</span> <span class="o">*</span> <span class="n">level</span><span class="p">,</span>
+            <span class="n">info_magma</span><span class="o">=</span><span class="n">Gp1</span><span class="p">,</span>
+            <span class="n">intersection</span><span class="o">=</span><span class="n">Gp0</span><span class="p">,</span>
             <span class="n">magma</span><span class="o">=</span><span class="n">magma</span><span class="p">,</span>
             <span class="n">compute_presentation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -458,8 +450,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">_init_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span>
 
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;Gpn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Gp0</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;Gn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Gp1</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"Gpn"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Gp0</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"Gn"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Gp1</span>
         <span class="n">G0</span> <span class="o">=</span> <span class="n">BigArithGroup_class</span><span class="p">(</span>
             <span class="n">base</span><span class="p">,</span>
             <span class="n">p0</span><span class="p">,</span>
@@ -472,16 +464,9 @@
             <span class="n">magma</span><span class="o">=</span><span class="n">magma</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">G0</span><span class="o">.</span><span class="n">Gpn</span><span class="o">.</span><span class="n">_is_in_order</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="ow">and</span> <span class="n">G0</span><span class="o">.</span><span class="n">Gn</span><span class="o">.</span><span class="n">_is_in_order</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">_get_O_basis</span><span class="p">()</span>
-            <span class="p">]</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Try again later...&quot;</span><span class="p">)</span>
 
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;Gn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">G0</span><span class="o">.</span><span class="n">Gpn</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;Gpn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">G0</span><span class="o">.</span><span class="n">Gn</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"Gn"</span><span class="p">]</span> <span class="o">=</span> <span class="n">G0</span><span class="o">.</span><span class="n">Gpn</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"Gpn"</span><span class="p">]</span> <span class="o">=</span> <span class="n">G0</span><span class="o">.</span><span class="n">Gn</span>
         <span class="n">G1</span> <span class="o">=</span> <span class="n">BigArithGroup_class</span><span class="p">(</span>
             <span class="n">base</span><span class="p">,</span>
             <span class="n">p1</span><span class="p">,</span>
@@ -494,13 +479,6 @@
             <span class="n">magma</span><span class="o">=</span><span class="n">magma</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">G1</span><span class="o">.</span><span class="n">Gpn</span><span class="o">.</span><span class="n">_is_in_order</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="ow">and</span> <span class="n">G1</span><span class="o">.</span><span class="n">Gn</span><span class="o">.</span><span class="n">_is_in_order</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">_get_O_basis</span><span class="p">()</span>
-            <span class="p">]</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Try again later...&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">GG</span> <span class="o">=</span> <span class="p">[</span><span class="n">G0</span><span class="p">,</span> <span class="n">G1</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ideal_p0</span> <span class="o">=</span> <span class="n">G0</span><span class="o">.</span><span class="n">ideal_p</span>
@@ -523,38 +501,55 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">local_condition</span> <span class="o">=</span> <span class="n">e00</span>
         <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_wp</span>
         <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_wp</span>
-        <span class="n">wp0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">wp</span><span class="p">()</span>
-        <span class="n">wp1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">wp</span><span class="p">()</span>
+        <span class="c1"># The Bruhat-Tits representatives of GG[i] (get_BT_reps) must satisfy</span>
+        <span class="c1"># local_condition at the other prime, which is only possible if w_p is</span>
+        <span class="c1"># also in Gamma_0 at the other prime. So take w_p in the order of GS</span>
+        <span class="c1"># (of level p0 * p1): an element of this Eichler order whose norm</span>
+        <span class="c1"># generates p_i is an Atkin-Lehner element of it, and also of the</span>
+        <span class="c1"># orders of level p_i.</span>
+        <span class="n">QA</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="p">,</span> <span class="s2">"_QA"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">Gi</span><span class="p">,</span> <span class="n">pp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">,</span> <span class="p">[</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">QA</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cand</span> <span class="o">=</span> <span class="n">QA</span><span class="o">.</span><span class="n">normalizer_element_of_norm</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">_O_mat</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">gens_reduced</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">cand</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">Gi</span><span class="o">.</span><span class="n">set_wp</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                        <span class="k">pass</span>
+            <span class="n">Gi</span><span class="o">.</span><span class="n">wp</span><span class="p">()</span>
 
 <div class="viewcode-block" id="PlecticGroup_class.small_group">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.small_group">[docs]</a>
-    <span class="k">def</span> <span class="nf">small_group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">small_group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">GS</span></div>
 
 
 <div class="viewcode-block" id="PlecticGroup_class.base_field">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.base_field">[docs]</a>
-    <span class="k">def</span> <span class="nf">base_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">base_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span></div>
 
 
 <div class="viewcode-block" id="PlecticGroup_class.quaternion_algebra">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.quaternion_algebra">[docs]</a>
-    <span class="k">def</span> <span class="nf">quaternion_algebra</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quaternion_algebra</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Gpn</span><span class="o">.</span><span class="n">B</span></div>
 
 
 <div class="viewcode-block" id="PlecticGroup_class.embeddings">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.embeddings">[docs]</a>
-    <span class="k">def</span> <span class="nf">embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">embed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">embed</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="s2">&quot;S-Arithmetic Rational Group attached to data </span><span class="se">\</span>
+            <span class="s2">"S-Arithmetic Rational Group attached to data </span><span class="se">\</span>
 <span class="s2">       S = { (</span><span class="si">%s</span><span class="s2">), (</span><span class="si">%s</span><span class="s2">) }, </span><span class="se">\</span>
-<span class="s2">       disc = </span><span class="si">%s</span><span class="s2">, level = </span><span class="si">%s</span><span class="s2">&quot;</span>
+<span class="s2">       disc = </span><span class="si">%s</span><span class="s2">, level = </span><span class="si">%s</span><span class="s2">"</span>
             <span class="o">%</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">ideal_p0</span><span class="o">.</span><span class="n">gens_reduced</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">ideal_p1</span><span class="o">.</span><span class="n">gens_reduced</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span>
@@ -565,19 +560,19 @@
 
 <div class="viewcode-block" id="PlecticGroup_class.prime">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.prime">[docs]</a>
-    <span class="k">def</span> <span class="nf">prime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span></div>
 
 
 <div class="viewcode-block" id="PlecticGroup_class.use_shapiro">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.use_shapiro">[docs]</a>
-    <span class="k">def</span> <span class="nf">use_shapiro</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">use_shapiro</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">False</span></div>
 
 
 <div class="viewcode-block" id="PlecticGroup_class.edge_from_quaternion">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.edge_from_quaternion">[docs]</a>
-    <span class="k">def</span> <span class="nf">edge_from_quaternion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">edge_from_quaternion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">op_edge_adj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">BT</span><span class="p">,</span> <span class="n">g1</span><span class="p">),</span> <span class="n">op_edge_adj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">BT</span><span class="p">,</span> <span class="n">g2</span><span class="p">))</span></div>
 
 
@@ -585,7 +580,7 @@
 <div class="viewcode-block" id="PlecticGroup_class.construct_EV_dict">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.construct_EV_dict">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">construct_EV_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_EV_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
         <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">e0</span><span class="p">,</span> <span class="n">e1</span><span class="p">),</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_edge_reps</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -600,7 +595,7 @@
 <div class="viewcode-block" id="PlecticGroup_class.construct_VE_dict">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.construct_VE_dict">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">construct_VE_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_VE_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
         <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">e0</span><span class="p">,</span> <span class="n">e1</span><span class="p">),</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_edge_reps</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -615,9 +610,9 @@
 <div class="viewcode-block" id="PlecticGroup_class.construct_edge_reps">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.construct_edge_reps">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">construct_edge_reps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_edge_reps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
         <span class="n">prec</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Constructing edge reps for depth </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">depth</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Constructing edge reps for depth </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">depth</span><span class="p">)</span>
         <span class="n">edge_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">total_iters</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">**</span><span class="n">depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">n_iters</span> <span class="o">=</span> <span class="mi">0</span>
@@ -625,7 +620,7 @@
             <span class="n">n_iters</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">update_progress</span><span class="p">(</span>
                 <span class="nb">float</span><span class="p">(</span><span class="n">n_iters</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_iters</span><span class="p">,</span>
-                <span class="s2">&quot;Constructing edge reps for depth </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">depth</span><span class="p">,</span>
+                <span class="s2">"Constructing edge reps for depth </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">depth</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">g1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get_edges_upto</span><span class="p">(</span><span class="n">depth</span><span class="p">):</span>
                 <span class="n">h</span> <span class="o">=</span> <span class="n">g0</span> <span class="o">*</span> <span class="n">g1</span>
@@ -638,14 +633,14 @@
 
 <div class="viewcode-block" id="PlecticGroup_class.get_Up_reps_bianchi">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.get_Up_reps_bianchi">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_Up_reps_bianchi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">pi_bar</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_Up_reps_bianchi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">pi_bar</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_Up_reps</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get_Up_reps</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="PlecticGroup_class.get_edge_rep">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.get_edge_rep">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">get_edge_rep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">e1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_edge_rep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">e1</span><span class="p">):</span>
         <span class="n">depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">edge_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_edge_reps</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span>
@@ -658,13 +653,13 @@
 
 <div class="viewcode-block" id="PlecticGroup_class.get_BT_reps">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.get_BT_reps">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_BT_reps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_BT_reps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">g</span> <span class="o">*</span> <span class="n">h</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">G</span><span class="o">.</span><span class="n">get_BT_reps</span><span class="p">()</span> <span class="k">for</span> <span class="n">G</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">])]</span></div>
 
 
 <div class="viewcode-block" id="PlecticGroup_class.get_covering">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.get_covering">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_covering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_covering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
         <span class="n">cov0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_covering</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span>
         <span class="n">cov1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get_covering</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">product</span><span class="p">(</span><span class="n">cov0</span><span class="p">,</span> <span class="n">cov1</span><span class="p">)</span></div>
@@ -673,7 +668,7 @@
     <span class="c1"># Centered at vhat</span>
 <div class="viewcode-block" id="PlecticGroup_class.vert_depth">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.vert_depth">[docs]</a>
-    <span class="k">def</span> <span class="nf">vert_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v0</span><span class="p">,</span> <span class="n">v1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">vert_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v0</span><span class="p">,</span> <span class="n">v1</span><span class="p">):</span>
         <span class="n">vhat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vhat</span>
         <span class="n">a</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span><span class="o">.</span><span class="n">find_geodesic</span><span class="p">(</span><span class="n">vhat</span><span class="p">,</span> <span class="n">v0</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">b</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span><span class="o">.</span><span class="n">find_geodesic</span><span class="p">(</span><span class="n">vhat</span><span class="p">,</span> <span class="n">v1</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
@@ -684,7 +679,7 @@
 
 <div class="viewcode-block" id="PlecticGroup_class.reduce_in_amalgam">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.reduce_in_amalgam">[docs]</a>
-    <span class="k">def</span> <span class="nf">reduce_in_amalgam</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">return_word</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reduce_in_amalgam</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">return_word</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">return_word</span><span class="p">:</span>
             <span class="n">c</span><span class="p">,</span> <span class="n">wd2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reduce_in_amalgam</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">return_word</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">b</span><span class="p">,</span> <span class="n">wd1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reduce_in_amalgam</span><span class="p">(</span><span class="n">set_immutable</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="n">return_word</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -702,7 +697,7 @@
 
 <div class="viewcode-block" id="PlecticGroup_class.compute_presentation_GG">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.compute_presentation_GG">[docs]</a>
-    <span class="k">def</span> <span class="nf">compute_presentation_GG</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_presentation_GG</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Gpn</span><span class="o">.</span><span class="n">_init_geometric_data</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">_init_kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Gpn</span><span class="o">.</span><span class="n">_compute_presentation</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Gn</span><span class="o">.</span><span class="n">_init_geometric_data</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">_init_kwargs</span><span class="p">)</span>
@@ -712,7 +707,7 @@
 
 <div class="viewcode-block" id="PlecticGroup_class.compute_presentation_GS">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.compute_presentation_GS">[docs]</a>
-    <span class="k">def</span> <span class="nf">compute_presentation_GS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_presentation_GS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">_init_geometric_data</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">_init_kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">GS</span><span class="o">.</span><span class="n">_compute_presentation</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span></div>
@@ -720,7 +715,7 @@
 
 <div class="viewcode-block" id="PlecticGroup_class.get_degeneration">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.PlecticGroup_class.get_degeneration">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_degeneration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vv</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_degeneration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vv</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
         <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span><span class="o">.</span><span class="n">_p</span>
         <span class="n">even</span> <span class="o">=</span> <span class="n">vv</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
         <span class="n">elist</span> <span class="o">=</span> <span class="p">(</span>
@@ -740,7 +735,7 @@
 <span class="c1"># Computes nu0(phi)(gamma_{v0, e1})(v*,e*)</span>
 <div class="viewcode-block" id="get_nu0">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.get_nu0">[docs]</a>
-<span class="k">def</span> <span class="nf">get_nu0</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">v0</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Co</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">Ce</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scaling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_nu0</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">v0</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Co</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">Ce</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scaling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="n">BT</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">BT</span><span class="o">.</span><span class="n">_p</span>
     <span class="n">VE_dict</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">construct_VE_dict</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -760,7 +755,7 @@
 
 <div class="viewcode-block" id="get_nu1">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.get_nu1">[docs]</a>
-<span class="k">def</span> <span class="nf">get_nu1</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Co</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">Ce</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scaling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_nu1</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Co</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">Ce</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scaling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="n">BT</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">BT</span><span class="o">.</span><span class="n">_p</span>
     <span class="n">EV_dict</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">construct_EV_dict</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -781,7 +776,7 @@
 
 <div class="viewcode-block" id="find_coboundaries">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.find_coboundaries">[docs]</a>
-<span class="k">def</span> <span class="nf">find_coboundaries</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_coboundaries</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">):</span>
     <span class="n">BT</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">BT</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">BT</span><span class="o">.</span><span class="n">_p</span>
     <span class="n">estar</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">estar</span>
@@ -819,12 +814,12 @@
     <span class="n">c</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">solve_right</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
 
     <span class="n">scaling</span> <span class="o">=</span> <span class="n">lcm</span><span class="p">([</span><span class="n">o</span><span class="o">.</span><span class="n">denominator</span><span class="p">()</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">list</span><span class="p">()])</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;scaling = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">scaling</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"scaling = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">scaling</span><span class="p">)</span>
     <span class="n">phi</span> <span class="o">=</span> <span class="n">scaling</span> <span class="o">*</span> <span class="n">phi</span>  <span class="c1"># Fix scaling issue</span>
     <span class="n">c</span> <span class="o">*=</span> <span class="n">scaling</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">ZZ</span><span class="p">)</span>
     <span class="n">Cef</span><span class="p">,</span> <span class="n">Cof</span><span class="p">,</span> <span class="n">Ceh</span><span class="p">,</span> <span class="n">Coh</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;c = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"c = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
     <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">e0</span><span class="p">,</span> <span class="n">v1</span><span class="p">:</span> <span class="n">get_nu1</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">Co</span><span class="o">=</span><span class="n">Cof</span><span class="p">,</span> <span class="n">Ce</span><span class="o">=</span><span class="n">Cef</span><span class="p">)</span>
     <span class="c1"># h = lambda v0, e1 : get_nu0(G, phi, v0, e1, Co=Coh, Ce=Ceh) # DEBUG! much slower</span>
     <span class="n">h</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v0</span><span class="p">,</span> <span class="n">e1</span><span class="p">:</span> <span class="n">Ceh</span> <span class="k">if</span> <span class="p">(</span><span class="n">v0</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="n">Coh</span>
@@ -834,7 +829,7 @@
 
 <div class="viewcode-block" id="evaluate_HC">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.evaluate_HC">[docs]</a>
-<span class="k">def</span> <span class="nf">evaluate_HC</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">gamma_e</span><span class="p">,</span> <span class="n">edge_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scaling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_HC</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">gamma_e</span><span class="p">,</span> <span class="n">edge_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scaling</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="n">gamma_e_gamma</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">gamma_e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
         <span class="n">gamma_e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
@@ -859,7 +854,7 @@
 
 <div class="viewcode-block" id="op_edge_adj">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.op_edge_adj">[docs]</a>
-<span class="k">def</span> <span class="nf">op_edge_adj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">M</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">op_edge_adj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">M</span><span class="p">):</span>
     <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p</span>
     <span class="n">M</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">apply_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="n">o</span><span class="o">.</span><span class="n">lift</span><span class="p">())</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
@@ -872,7 +867,7 @@
 
     <span class="n">det</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">det</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;matrix must be invertible&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"matrix must be invertible"</span><span class="p">)</span>
 
     <span class="n">m00</span> <span class="o">=</span> <span class="n">M</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
     <span class="n">m01</span> <span class="o">=</span> <span class="n">M</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
@@ -902,7 +897,7 @@
 
 <div class="viewcode-block" id="compute_edge_to_eqs">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.compute_edge_to_eqs">[docs]</a>
-<span class="k">def</span> <span class="nf">compute_edge_to_eqs</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_edge_to_eqs</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
     <span class="n">edge_to_eqs</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">BT0</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span>
     <span class="n">BT1</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span>
@@ -916,7 +911,7 @@
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">total_iters</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertex_list</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge_list</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">vertex_list</span><span class="p">,</span> <span class="n">edge_list</span><span class="p">):</span>
-        <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_iters</span><span class="p">,</span> <span class="s2">&quot;Building edge_to_eqs dict&quot;</span><span class="p">)</span>
+        <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_iters</span><span class="p">,</span> <span class="s2">"Building edge_to_eqs dict"</span><span class="p">)</span>
         <span class="n">even</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="n">even</span><span class="p">:</span>
             <span class="n">sgn</span> <span class="o">=</span> <span class="mi">1</span>
@@ -939,7 +934,7 @@
 
 <div class="viewcode-block" id="compute_large_system_sparse_parallel">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.compute_large_system_sparse_parallel">[docs]</a>
-<span class="k">def</span> <span class="nf">compute_large_system_sparse_parallel</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">ff</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_large_system_sparse_parallel</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">ff</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
     <span class="n">BT0</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span>
     <span class="n">BT1</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span>
     <span class="n">vhat</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">vhat</span>
@@ -953,7 +948,7 @@
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">total_iters</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertex_list</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge_list</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">vertex_list</span><span class="p">,</span> <span class="n">edge_list</span><span class="p">):</span>
-        <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_iters</span><span class="p">,</span> <span class="s2">&quot;Building up large system&quot;</span><span class="p">)</span>
+        <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_iters</span><span class="p">,</span> <span class="s2">"Building up large system"</span><span class="p">)</span>
         <span class="n">even</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="n">even</span><span class="p">:</span>
             <span class="n">sgn</span> <span class="o">=</span> <span class="mi">1</span>
@@ -978,7 +973,7 @@
 
 <div class="viewcode-block" id="compute_indeps_parallel">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.compute_indeps_parallel">[docs]</a>
-<span class="k">def</span> <span class="nf">compute_indeps_parallel</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">ff</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">njobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_indeps_parallel</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">ff</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">njobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="n">BT0</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span>
     <span class="n">BT1</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">BT</span>
     <span class="n">vhat</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">vhat</span>
@@ -993,7 +988,7 @@
     <span class="n">total_iters</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertex_list</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge_list</span><span class="p">)</span>
     <span class="n">arg_list</span> <span class="o">=</span> <span class="p">[(</span><span class="n">ff</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="p">[])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">njobs</span><span class="p">)]</span>
     <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">vertex_list</span><span class="p">,</span> <span class="n">edge_list</span><span class="p">):</span>
-        <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_iters</span><span class="p">,</span> <span class="s2">&quot;Building up indeps&quot;</span><span class="p">)</span>
+        <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_iters</span><span class="p">,</span> <span class="s2">"Building up indeps"</span><span class="p">)</span>
         <span class="n">even</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">determinant</span><span class="p">()</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="n">even</span><span class="p">:</span>
             <span class="n">sgn</span> <span class="o">=</span> <span class="mi">1</span>
@@ -1001,18 +996,18 @@
             <span class="n">sgn</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
         <span class="n">arg_list</span><span class="p">[(</span><span class="n">i</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="n">njobs</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sgn</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
         <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Now computing independent term...&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Now computing independent term..."</span><span class="p">)</span>
 
     <span class="n">nrows</span> <span class="o">=</span> <span class="n">i</span>
     <span class="n">indeps</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nrows</span><span class="p">)]</span>
 
     <span class="nd">@parallel</span><span class="p">(</span><span class="n">ncpus</span><span class="o">=</span><span class="n">max_cpus</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">get_coeffs_aux</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">progress_bar</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_coeffs_aux</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">progress_bar</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">niters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">sgn</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">W</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
-                <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="o">/</span> <span class="n">niters</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="o">/</span> <span class="n">niters</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
             <span class="n">ans</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sgn</span> <span class="o">*</span> <span class="n">ff</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">v</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">sgn</span> <span class="o">*</span> <span class="n">hh</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">e</span><span class="p">))))</span>
         <span class="k">return</span> <span class="n">ans</span>
 
@@ -1024,7 +1019,7 @@
         <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">lst</span> <span class="ow">in</span> <span class="n">get_coeffs_aux</span><span class="p">(</span><span class="n">arg_list</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fval</span><span class="p">,</span> <span class="n">hval</span> <span class="ow">in</span> <span class="n">lst</span><span class="p">:</span>
-                <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="o">/</span> <span class="n">nrows</span><span class="p">,</span> <span class="s2">&quot;j = </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">nrows</span><span class="p">))</span>
+                <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="o">/</span> <span class="n">nrows</span><span class="p">,</span> <span class="s2">"j = </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">nrows</span><span class="p">))</span>
                 <span class="n">j</span> <span class="o">+=</span> <span class="mi">2</span>
                 <span class="n">indeps</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hval</span><span class="p">)</span>
                 <span class="n">indeps</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fval</span><span class="p">)</span>
@@ -1034,7 +1029,7 @@
 
 <div class="viewcode-block" id="sample_point">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.sample_point">[docs]</a>
-<span class="k">def</span> <span class="nf">sample_point</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_point</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
     <span class="n">ans</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">h1</span> <span class="o">=</span> <span class="n">h</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">h0</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
@@ -1049,7 +1044,7 @@
 
 <div class="viewcode-block" id="do_twist">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.do_twist">[docs]</a>
-<span class="k">def</span> <span class="nf">do_twist</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">tau1</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">do_twist</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">tau1</span><span class="p">):</span>
     <span class="n">Kp</span> <span class="o">=</span> <span class="n">tau0</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
     <span class="n">wp</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">wp</span><span class="p">()</span> <span class="o">*</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">wp</span><span class="p">()</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">Kp</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">())</span>
@@ -1064,7 +1059,7 @@
 
 <div class="viewcode-block" id="riemann_sum">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.riemann_sum">[docs]</a>
-<span class="k">def</span> <span class="nf">riemann_sum</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">riemann_sum</span><span class="p">(</span>
     <span class="n">G</span><span class="p">,</span>
     <span class="n">tau0</span><span class="p">,</span>
     <span class="n">tau1</span><span class="p">,</span>
@@ -1105,7 +1100,7 @@
         <span class="k">assert</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">he</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">prec</span><span class="p">)</span> <span class="o">==</span> <span class="n">he</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">assert</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">he</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">prec</span><span class="p">)</span> <span class="o">==</span> <span class="n">he</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
-            <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">RealField</span><span class="p">(</span><span class="mi">10</span><span class="p">)(</span><span class="n">n_ints</span><span class="p">)</span> <span class="o">/</span> <span class="n">ncover</span><span class="p">),</span> <span class="s2">&quot;Riemann sum&quot;</span><span class="p">)</span>
+            <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">RealField</span><span class="p">(</span><span class="mi">10</span><span class="p">)(</span><span class="n">n_ints</span><span class="p">)</span> <span class="o">/</span> <span class="n">ncover</span><span class="p">),</span> <span class="s2">"Riemann sum"</span><span class="p">)</span>
         <span class="n">n_ints</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">evaluate_HC</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">Phi</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">he</span><span class="p">,</span> <span class="n">edge_dict</span><span class="o">=</span><span class="n">edge_dict</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -1131,7 +1126,7 @@
 
 <div class="viewcode-block" id="riemann_sum_parallel">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.riemann_sum_parallel">[docs]</a>
-<span class="k">def</span> <span class="nf">riemann_sum_parallel</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">riemann_sum_parallel</span><span class="p">(</span>
     <span class="n">G</span><span class="p">,</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">tau1</span><span class="p">,</span> <span class="n">gammaquatrep</span><span class="p">,</span> <span class="n">phiE</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">Fdict</span><span class="p">,</span> <span class="n">njobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">twist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="mi">1</span>
 <span class="p">):</span>
     <span class="n">arg_list</span> <span class="o">=</span> <span class="p">[</span>
@@ -1140,10 +1135,10 @@
     <span class="p">]</span>
 
     <span class="nd">@parallel</span><span class="p">(</span><span class="n">ncpus</span><span class="o">=</span><span class="n">max_cpus</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">riemann_sum_parallel_aux</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">riemann_sum_parallel_aux</span><span class="p">(</span>
         <span class="n">G</span><span class="p">,</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">tau1</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">Phi</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">njobs</span><span class="p">,</span> <span class="n">twist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">progress_bar</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
 
         <span class="n">edge_dict</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">construct_edge_reps</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">F</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1173,7 +1168,7 @@
         <span class="p">):</span>
             <span class="n">n_iters</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">progress_bar</span><span class="p">:</span>
-                <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">n_iters</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_iters</span><span class="p">),</span> <span class="s2">&quot;Riemann sum&quot;</span><span class="p">)</span>
+                <span class="n">update_progress</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">n_iters</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">total_iters</span><span class="p">),</span> <span class="s2">"Riemann sum"</span><span class="p">)</span>
             <span class="n">he</span> <span class="o">=</span> <span class="p">(</span><span class="n">he0</span> <span class="o">*</span> <span class="n">he1</span><span class="p">,</span> <span class="n">he00</span> <span class="o">*</span> <span class="n">he10</span><span class="p">,</span> <span class="n">he01</span> <span class="o">*</span> <span class="n">he11</span><span class="p">)</span>
             <span class="n">gamma_e_gamma</span> <span class="o">=</span> <span class="p">(</span><span class="n">he</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">he</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">he</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
             <span class="n">e</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">edge_from_quaternion</span><span class="p">(</span><span class="o">*</span><span class="n">he</span><span class="p">)</span>
@@ -1205,12 +1200,12 @@
         <span class="n">ans</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">nfin</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">riemann_sum_parallel_aux</span><span class="p">(</span><span class="n">arg_list</span><span class="p">)):</span>
             <span class="n">update_progress</span><span class="p">(</span>
-                <span class="nb">float</span><span class="p">(</span><span class="n">nfin</span><span class="p">)</span> <span class="o">/</span> <span class="n">njobs</span><span class="p">,</span> <span class="s2">&quot;finished jobs / total = </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nfin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">njobs</span><span class="p">)</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">nfin</span><span class="p">)</span> <span class="o">/</span> <span class="n">njobs</span><span class="p">,</span> <span class="s2">"finished jobs / total = </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">nfin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">njobs</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">ans</span> <span class="o">+=</span> <span class="n">val</span>
             <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;An error occurred, printing output&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">"An error occurred, printing output"</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span>
         <span class="k">return</span> <span class="n">ans</span></div>
@@ -1219,14 +1214,14 @@
 
 <div class="viewcode-block" id="get_cycle">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.get_cycle">[docs]</a>
-<span class="k">def</span> <span class="nf">get_cycle</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_cycle</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">p</span>
     <span class="n">F_to_Qp</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">base_ring_local_embedding</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
     <span class="n">gamma_zeta</span><span class="p">,</span> <span class="n">zeta</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Gn</span><span class="o">.</span><span class="n">embed_order</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">F_to_Qp</span><span class="o">=</span><span class="n">F_to_Qp</span><span class="p">)</span>
     <span class="n">gammaquatrep</span> <span class="o">=</span> <span class="n">gamma_zeta</span><span class="o">.</span><span class="n">quaternion_rep</span>
     <span class="n">iota0</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_embedding</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
     <span class="n">iota1</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get_embedding</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
-    <span class="n">Cp</span> <span class="o">=</span> <span class="n">Qq</span><span class="p">(</span><span class="n">p</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+    <span class="n">Cp</span> <span class="o">=</span> <span class="n">Qq</span><span class="p">(</span><span class="n">p</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">"g"</span><span class="p">)</span>
     <span class="n">g</span> <span class="o">=</span> <span class="n">Cp</span><span class="o">.</span><span class="n">gen</span><span class="p">()</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">iota0</span><span class="p">(</span><span class="n">gammaquatrep</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
     <span class="n">D0</span> <span class="o">=</span> <span class="n">our_sqrt</span><span class="p">(</span><span class="n">Cp</span><span class="p">((</span><span class="n">a</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="p">))</span>
@@ -1240,7 +1235,7 @@
 
 <div class="viewcode-block" id="get_edge_list">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.get_edge_list">[docs]</a>
-<span class="k">def</span> <span class="nf">get_edge_list</span><span class="p">(</span><span class="n">BT</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_edge_list</span><span class="p">(</span><span class="n">BT</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
     <span class="n">ans</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">opp</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">depth</span><span class="p">):</span>
@@ -1258,7 +1253,7 @@
 
 <div class="viewcode-block" id="get_vertex_list">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.get_vertex_list">[docs]</a>
-<span class="k">def</span> <span class="nf">get_vertex_list</span><span class="p">(</span><span class="n">BT</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_vertex_list</span><span class="p">(</span><span class="n">BT</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
     <span class="n">ans</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">depth</span><span class="p">):</span>
         <span class="n">new_ans</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">BT</span><span class="o">.</span><span class="n">origin</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">BT</span><span class="o">.</span><span class="n">get_balls</span><span class="p">(</span><span class="n">center</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">i</span><span class="p">)]))</span>
@@ -1271,7 +1266,7 @@
 
 <div class="viewcode-block" id="lift_to_HC">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.lift_to_HC">[docs]</a>
-<span class="k">def</span> <span class="nf">lift_to_HC</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phiE</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">njobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">lift_to_HC</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phiE</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">njobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="n">phiE</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">find_coboundaries</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phiE</span><span class="p">)</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">compute_indeps_parallel</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phiE</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">njobs</span><span class="o">=</span><span class="n">njobs</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="n">max_cpus</span><span class="p">)</span>
     <span class="n">A</span><span class="p">,</span> <span class="n">edge_to_eqs</span> <span class="o">=</span> <span class="n">compute_large_system_sparse_parallel</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">phiE</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
@@ -1282,15 +1277,15 @@
 
 <div class="viewcode-block" id="compute_plectic_point">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.compute_plectic_point">[docs]</a>
-<span class="k">def</span> <span class="nf">compute_plectic_point</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_plectic_point</span><span class="p">(</span>
     <span class="n">G</span><span class="p">,</span> <span class="n">phiE</span><span class="p">,</span> <span class="n">Fdict</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">njobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
     <span class="n">gammaquatrep</span><span class="p">,</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">tau1</span> <span class="o">=</span> <span class="n">get_cycle</span><span class="p">(</span>
         <span class="n">G</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="mi">20</span>
     <span class="p">)</span>  <span class="c1"># 20 is the precision, okay for now</span>
-    <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;gammaquatrep = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">gammaquatrep</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
-    <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;tau0 = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
-    <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;tau1 = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">tau1</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+    <span class="n">fwrite</span><span class="p">(</span><span class="s2">"gammaquatrep = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">gammaquatrep</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+    <span class="n">fwrite</span><span class="p">(</span><span class="s2">"tau0 = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+    <span class="n">fwrite</span><span class="p">(</span><span class="s2">"tau1 = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">tau1</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">riemann_sum_parallel</span><span class="p">(</span>
         <span class="n">G</span><span class="p">,</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">tau1</span><span class="p">,</span> <span class="n">gammaquatrep</span><span class="p">,</span> <span class="n">phiE</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">Fdict</span><span class="p">,</span> <span class="n">njobs</span><span class="o">=</span><span class="n">njobs</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="n">max_cpus</span>
     <span class="p">)</span></div>
@@ -1299,14 +1294,14 @@
 
 <div class="viewcode-block" id="additive_integral">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.additive_integral">[docs]</a>
-<span class="k">def</span> <span class="nf">additive_integral</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">phi</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">additive_integral</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">phi</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Calculates the additive integral of the rational function phi against mu.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">phi_rat</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">rational_function</span><span class="p">()</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">phi</span><span class="p">]</span>
-    <span class="n">R</span> <span class="o">=</span> <span class="n">PowerSeriesRing</span><span class="p">(</span><span class="n">phi_rat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span> <span class="s2">&quot;z&quot;</span><span class="p">)</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">PowerSeriesRing</span><span class="p">(</span><span class="n">phi_rat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span> <span class="s2">"z"</span><span class="p">)</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">phi_rat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
-    <span class="n">R0</span> <span class="o">=</span> <span class="n">PowerSeriesRing</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">)</span>
+    <span class="n">R0</span> <span class="o">=</span> <span class="n">PowerSeriesRing</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">)</span>
     <span class="n">projection</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="p">(</span>
         <span class="n">f</span><span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span>
             <span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="n">o</span><span class="o">.</span><span class="n">_polynomial_list</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_base_ring</span><span class="o">=</span><span class="n">base</span>
@@ -1332,7 +1327,7 @@
 
 <div class="viewcode-block" id="check_is_cycle">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.plectic.check_is_cycle">[docs]</a>
-<span class="k">def</span> <span class="nf">check_is_cycle</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">cycle_list</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_is_cycle</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">cycle_list</span><span class="p">):</span>
     <span class="n">emb0</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">embed</span>
     <span class="n">emb1</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">GG</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">embed</span>
     <span class="n">ans0</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1379,9 +1374,9 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4b9d3a76"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../../_static/scripts/furo.js?v=4e2eecee"></script>
+</div><script src="../../_static/documentation_options.js?v=8cc1add8"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>
 </html>

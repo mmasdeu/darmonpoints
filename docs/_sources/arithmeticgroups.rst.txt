@@ -31,3 +31,27 @@ S-arithmetic group
    :members:
    :undoc-members:
    :show-inheritance:
+
+Quaternion orders (PARI)
+========================
+
+.. automodule:: darmonpoints.quatorder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Arithmetic Fuchsian groups (Rickards' library)
+==============================================
+
+.. automodule:: darmonpoints.afuch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Arithmetic Kleinian groups
+==========================
+
+.. automodule:: darmonpoints.kleinian
+   :members:
+   :undoc-members:
+   :show-inheritance:

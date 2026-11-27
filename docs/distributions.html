@@ -1,16 +1,18 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="./">
-  <head><meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Divisors" href="internals.html" /><link rel="prev" title="Integrals" href="integration.html" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Divisors" href="internals.html"><link rel="prev" title="Integrals" href="integration.html">
+        <link rel="prefetch" href="_static/logo.svg" as="image">
+        <link rel="prefetch" href="_static/logo.svg" as="image">
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>Overconvergent module of distributions - darmonpoints 7.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=387cc868" />
-    <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
+        <title>Overconvergent module of distributions - darmonpoints 8.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
     
     
@@ -92,19 +94,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -145,7 +134,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -161,14 +150,10 @@
   </symbol>
 </svg>
 
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
-<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
-<label class="overlay sidebar-overlay" for="__navigation">
-  <div class="visually-hidden">Hide navigation sidebar</div>
-</label>
-<label class="overlay toc-overlay" for="__toc">
-  <div class="visually-hidden">Hide table of contents sidebar</div>
-</label>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
 <a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
@@ -178,17 +163,15 @@
   <header class="mobile-header">
     <div class="header-left">
       <label class="nav-overlay-icon" for="__navigation">
-        <div class="visually-hidden">Toggle site navigation sidebar</div>
-        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">darmonpoints 7.0.1 documentation</div></a>
+      <a href="index.html"><div class="brand">darmonpoints 8.3 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
-        <button class="theme-toggle">
-          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
           <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
           <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -196,8 +179,7 @@
         </button>
       </div>
       <label class="toc-overlay-icon toc-header-icon" for="__toc">
-        <div class="visually-hidden">Toggle table of contents sidebar</div>
-        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
   </header>
@@ -205,13 +187,12 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
-  
   <div class="sidebar-logo-container">
     <img class="sidebar-logo only-light" src="_static/logo.svg" alt="Light Logo"/>
     <img class="sidebar-logo only-dark" src="_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 7.0.1 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 8.3 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -232,6 +213,9 @@
 <li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.quatorder">Quaternion orders (PARI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.afuch">Arithmetic Fuchsian groups (Rickards’ library)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arithmeticgroups.html#module-darmonpoints.kleinian">Arithmetic Kleinian groups</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="cohomology.html">Abstract cohomology class</a></li>
@@ -273,14 +257,17 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="_sources/distributions.rst.txt" title="View this page">
+  <a class="muted-link" href="https://github.com/sagemath/sage/blob/develop/distributions.rst?plain=true" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
-</div>
-<div class="theme-toggle-container theme-toggle-content">
-            <button class="theme-toggle">
-              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+</div><div class="edit-this-page">
+  <a class="muted-link" href="https://github.com/sagemath/sage/edit/develop/distributions.rst" rel="edit" title="Edit this page">
+    <svg><use href="#svg-pencil"></use></svg>
+    <span class="visually-hidden">Edit this page</span>
+  </a>
+</div><div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -288,8 +275,7 @@
             </button>
           </div>
           <label class="toc-overlay-icon toc-content-icon" for="__toc">
-            <div class="visually-hidden">Toggle table of contents sidebar</div>
-            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
@@ -298,14 +284,15 @@
 <p>Initialize self.  See help(type(self)) for accurate signature.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.ocmodule.AddMeromorphicFunctions">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">AddMeromorphicFunctions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">twisting_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#AddMeromorphicFunctions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.AddMeromorphicFunctions" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">AddMeromorphicFunctions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">twisting_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#AddMeromorphicFunctions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.AddMeromorphicFunctions" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Parent</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CachedRepresentation</span></code></p>
 <p>TESTS:</p>
 <p>sage: from darmonpoints.ocmodule import AddMeromorphicFunctions
 sage: from darmonpoints.homology import Divisors
 sage: from darmonpoints.sarithgroup import BigArithGroup
 sage: padic_printing.mode(‘val-unit’)
-sage: K.&lt;a&gt; = Qq(7^2,5)
+sage: R0.&lt;X&gt; = ZZ[]
+sage: K.&lt;a&gt; = Qq(7^2, 5, modulus=X^2 + 6*X + 3)  # the output depends on the modulus: Sage’s default has changed
 sage: G = BigArithGroup(7,1,1,use_shapiro=False, outfile=’/dev/null’)
 sage: M = AddMeromorphicFunctions(K)
 sage: Div = Divisors(K)
@@ -373,7 +360,7 @@ True</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.ocmodule.AddMeromorphicFunctionsElement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">AddMeromorphicFunctionsElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#AddMeromorphicFunctionsElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.AddMeromorphicFunctionsElement" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">AddMeromorphicFunctionsElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#AddMeromorphicFunctionsElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.AddMeromorphicFunctionsElement" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleElement</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.ocmodule.AddMeromorphicFunctionsElement.evaluate_additive">
@@ -414,7 +401,7 @@ True</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.ocmodule.OCVn">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">OCVn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#OCVn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.OCVn" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">OCVn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#OCVn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.OCVn" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UniqueRepresentation</span></code></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="darmonpoints.ocmodule.OCVn.Element">
@@ -516,7 +503,7 @@ the lines after the first need to be indented.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.ocmodule.OCVnElement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">OCVnElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#OCVnElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.OCVnElement" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">OCVnElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#OCVnElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.OCVnElement" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleElement</span></code></p>
 <p>This class represents elements in an overconvergent coefficient module.</p>
 <p>INPUT:</p>
@@ -604,17 +591,17 @@ assumed to be the a column vector.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.ocmodule.Sigma0Action">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">Sigma0Action</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#Sigma0Action"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.Sigma0Action" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">Sigma0Action</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#Sigma0Action"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.Sigma0Action" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.ocmodule.our_adjuster">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">our_adjuster</span></span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#our_adjuster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.our_adjuster" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">our_adjuster</span></span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#our_adjuster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.our_adjuster" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Sigma0ActionAdjuster</span></code></p>
 <p>Callable object that turns matrices into 4-tuples.</p>
 <p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">sage.modular.btquotients.pautomorphicform</span> <span class="kn">import</span> <span class="n">_btquot_adjuster</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span><span class="w"> </span><span class="nn">sage.modular.btquotients.pautomorphicform</span><span class="w"> </span><span class="kn">import</span> <span class="n">_btquot_adjuster</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">adj</span> <span class="o">=</span> <span class="n">_btquot_adjuster</span><span class="p">()</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">adj</span><span class="p">(</span><span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,[</span><span class="mf">1..4</span><span class="p">]))</span>
 <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -624,7 +611,7 @@ assumed to be the a column vector.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.ocmodule.ps_adjuster">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">ps_adjuster</span></span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#ps_adjuster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.ps_adjuster" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.ocmodule.</span></span><span class="sig-name descname"><span class="pre">ps_adjuster</span></span><a class="reference internal" href="_modules/darmonpoints/ocmodule.html#ps_adjuster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.ocmodule.ps_adjuster" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Sigma0ActionAdjuster</span></code></p>
 <p>Callable object that turns matrices into 4-tuples.</p>
 </dd></dl>
@@ -635,13 +622,13 @@ assumed to be the a column vector.</p></li>
 <p>Initialize self.  See help(type(self)) for accurate signature.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.representations.CoIndAction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">CoIndAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndAction" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">CoIndAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndAction" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.representations.CoIndElement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">CoIndElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndElement" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">CoIndElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndElement" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleElement</span></code></p>
 <p>Elements in a co-induced module are represented by lists [v_1,ldots v_r]
 indexed by the cosets of G(p) G(1).</p>
@@ -674,14 +661,14 @@ indexed by the cosets of G(p) G(1).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.representations.CoIndModule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">CoIndModule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndModule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndModule" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">CoIndModule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndModule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndModule" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Parent</span></code></p>
 <p>A co-induced module.</p>
 <p>TESTS:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">darmonpoints.homology</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">darmonpoints.cohomology_abstract</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="kn">from</span> <span class="nn">darmonpoints.sarithgroup</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">G</span> <span class="o">=</span> <span class="n">BigArithGroup</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">outfile</span><span class="o">=</span><span class="s1">&#39;/tmp/darmonpoints.tmp&#39;</span><span class="p">)</span> <span class="c1">#  optional - magma</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.homology</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.cohomology_abstract</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.sarithgroup</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">G</span> <span class="o">=</span> <span class="n">BigArithGroup</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">outfile</span><span class="o">=</span><span class="s1">'/tmp/darmonpoints.tmp'</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py attribute">
@@ -699,11 +686,11 @@ indexed by the cosets of G(p) G(1).</p>
 <dt class="sig sig-object py" id="darmonpoints.representations.CoIndModule.acting_matrix">
 <span class="sig-name descname"><span class="pre">acting_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndModule.acting_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndModule.acting_matrix" title="Link to this definition">¶</a></dt>
 <dd><p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span><span class="w"> </span><span class="nc">Foo</span><span class="p">:</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
 <span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
 <span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
@@ -745,11 +732,11 @@ indexed by the cosets of G(p) G(1).</p>
 <dt class="sig sig-object py" id="darmonpoints.representations.CoIndModule.gen">
 <span class="sig-name descname"><span class="pre">gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndModule.gen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndModule.gen" title="Link to this definition">¶</a></dt>
 <dd><p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span><span class="w"> </span><span class="nc">Foo</span><span class="p">:</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
 <span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
 <span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
@@ -766,11 +753,11 @@ indexed by the cosets of G(p) G(1).</p>
 <dt class="sig sig-object py" id="darmonpoints.representations.CoIndModule.gens">
 <span class="sig-name descname"><span class="pre">gens</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndModule.gens"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndModule.gens" title="Link to this definition">¶</a></dt>
 <dd><p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span><span class="w"> </span><span class="nc">Foo</span><span class="p">:</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
 <span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
 <span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
@@ -787,11 +774,11 @@ indexed by the cosets of G(p) G(1).</p>
 <dt class="sig sig-object py" id="darmonpoints.representations.CoIndModule.get_action_data">
 <span class="sig-name descname"><span class="pre">get_action_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#CoIndModule.get_action_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.CoIndModule.get_action_data" title="Link to this definition">¶</a></dt>
 <dd><p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span><span class="w"> </span><span class="nc">Foo</span><span class="p">:</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
 <span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
 <span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="o">....</span><span class="p">:</span>     <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
@@ -813,13 +800,13 @@ indexed by the cosets of G(p) G(1).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.representations.IndAction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">IndAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#IndAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.IndAction" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">IndAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algebra</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#IndAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.IndAction" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#darmonpoints.representations.CoIndAction" title="darmonpoints.representations.CoIndAction"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoIndAction</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.representations.IndElement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">IndElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#IndElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.IndElement" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">IndElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#IndElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.IndElement" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#darmonpoints.representations.CoIndElement" title="darmonpoints.representations.CoIndElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoIndElement</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.representations.IndElement.evaluate_at_identity">
@@ -830,7 +817,7 @@ indexed by the cosets of G(p) G(1).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.representations.IndModule">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">IndModule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#IndModule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.IndModule" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">IndModule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#IndModule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.IndModule" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#darmonpoints.representations.CoIndModule" title="darmonpoints.representations.CoIndModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoIndModule</span></code></a></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="darmonpoints.representations.IndModule.Element">
@@ -842,19 +829,19 @@ indexed by the cosets of G(p) G(1).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.representations.MatrixAction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">MatrixAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#MatrixAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.MatrixAction" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">MatrixAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#MatrixAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.MatrixAction" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.representations.Scaling">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">Scaling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#Scaling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.Scaling" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">Scaling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#Scaling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.Scaling" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.representations.TrivialAction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">TrivialAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#TrivialAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.TrivialAction" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.representations.</span></span><span class="sig-name descname"><span class="pre">TrivialAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/representations.html#TrivialAction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.representations.TrivialAction" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></p>
 </dd></dl>
 
@@ -864,7 +851,7 @@ indexed by the cosets of G(p) G(1).</p>
 <p>Initialize self.  See help(type(self)) for accurate signature.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctions">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">MeromorphicFunctions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">MeromorphicFunctions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Parent</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UniqueRepresentation</span></code></p>
 <p>TESTS:</p>
 <dl class="py attribute">
@@ -879,24 +866,21 @@ indexed by the cosets of G(p) G(1).</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctions.compute_action_data">
+<span class="sig-name descname"><span class="pre">compute_action_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctions.compute_action_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions.compute_action_data" title="Link to this definition">¶</a></dt>
+<dd><p>Uncached version of get_action_data. Looking up the cache of
+get_action_data needs hashing p-adic matrices, which is slow, so
+callers that do their own caching should use this one.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctions.get_action_data">
 <span class="sig-name descname"><span class="pre">get_action_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oldparam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctions.get_action_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctions.get_action_data" title="Link to this definition">¶</a></dt>
-<dd><p>EXAMPLES:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="k">class</span> <span class="nc">Foo</span><span class="p">:</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-<span class="o">....</span><span class="p">:</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="n">x</span>
-<span class="o">....</span><span class="p">:</span>     <span class="nd">@cached_method</span>
-<span class="o">....</span><span class="p">:</span>     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-<span class="o">....</span><span class="p">:</span>         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="o">^</span><span class="mi">2</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
-<span class="p">{}</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="p">()</span>
-<span class="mi">4</span>
-<span class="n">sage</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cache</span>
-<span class="p">{((),</span> <span class="p">()):</span> <span class="mi">4</span><span class="p">}</span>
-</pre></div>
-</div>
+<dd><p>Act on the power series by matrix g, given the old and new parameters.
+The action is given by the formula:
+(g * phi)(t) = phi(tau_0 g^-1 * tau_1^-1 t)
+which amounts to acting on the left by
+tau_1 g tau_0^-1</p>
 </dd></dl>
 
 <dl class="py method">
@@ -913,16 +897,21 @@ indexed by the cosets of G(p) G(1).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">MeromorphicFunctionsElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">MeromorphicFunctionsElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleElement</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement.eval_derivative">
-<span class="sig-name descname"><span class="pre">eval_derivative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.eval_derivative"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.eval_derivative" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">eval_derivative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.eval_derivative"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.eval_derivative" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement.eval_dlog">
+<span class="sig-name descname"><span class="pre">eval_dlog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.eval_dlog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.eval_dlog" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement.evaluate">
-<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.evaluate" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.evaluate" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -932,7 +921,7 @@ indexed by the cosets of G(p) G(1).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicFunctionsElement.left_act_by_matrix">
-<span class="sig-name descname"><span class="pre">left_act_by_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.left_act_by_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.left_act_by_matrix" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">left_act_by_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicFunctionsElement.left_act_by_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.left_act_by_matrix" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -952,6 +941,110 @@ indexed by the cosets of G(p) G(1).</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">MeromorphicIntegerArithmetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SageObject</span></code></p>
+<p>Arithmetic of the power series of a <a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions" title="darmonpoints.meromorphic.MeromorphicFunctions"><code class="xref py py-class docutils literal notranslate"><span class="pre">MeromorphicFunctions</span></code></a> space
+(truncated to <code class="docutils literal notranslate"><span class="pre">prec</span></code> terms) with integers, as used to iterate Hecke
+operators quickly.</p>
+<p>The base field <code class="docutils literal notranslate"><span class="pre">K</span></code> must be <cite>QQ_p</cite> or an unramified extension of it,
+and the series must have integral coefficients. An element of the ring
+of integers <cite>O_K</cite> is represented by its coordinates in the basis
+<cite>1, g, ldots, g^{d-1}</cite> reduced modulo <cite>p^N</cite> (<cite>N</cite> = <code class="docutils literal notranslate"><span class="pre">prec</span></code>), and a
+series by the list of the <cite>d</cite> integer polynomials (FLINT) of its
+coordinates. Since every operation is computed modulo <cite>p^N</cite>, the results
+agree with the <cite>p</cite>-adic computation done with absolute precision <cite>N</cite>
+(which is how <a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement" title="darmonpoints.meromorphic.MeromorphicFunctionsElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement</span></code></a> works), but are much
+faster than products of <cite>p</cite>-adic numbers.</p>
+<p>The methods raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when the input is not integral or not
+known to precision <cite>N</cite>, or when a unit is needed and the element is not
+one, so that the caller can fall back to the <cite>p</cite>-adic computation.</p>
+<p>EXAMPLES:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sage</span><span class="p">:</span> <span class="kn">from</span><span class="w"> </span><span class="nn">darmonpoints.meromorphic</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeromorphicFunctions</span><span class="p">,</span> <span class="n">MeromorphicIntegerArithmetic</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">R</span><span class="o">.&lt;</span><span class="n">x</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[]</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">K</span><span class="o">.&lt;</span><span class="n">g</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">Qp</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">extension</span><span class="p">(</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">M</span> <span class="o">=</span> <span class="n">MeromorphicFunctions</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">I</span> <span class="o">=</span> <span class="n">MeromorphicIntegerArithmetic</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">M</span><span class="p">([</span><span class="n">K</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="o">*</span><span class="n">g</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="o">^</span><span class="mi">4</span><span class="o">*</span><span class="n">g</span> <span class="o">+</span> <span class="mi">5</span><span class="p">]],</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">h</span> <span class="o">=</span> <span class="n">M</span><span class="p">([</span><span class="n">K</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="o">*</span><span class="n">g</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">]],</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">F</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">from_element</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">I</span><span class="o">.</span><span class="n">from_element</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">to_element</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">H</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="n">f</span> <span class="o">+</span> <span class="n">h</span><span class="p">))</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span>
+<span class="mi">10</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">to_element</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">F</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="o">-</span><span class="n">f</span><span class="p">))</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span>
+<span class="mi">10</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">A</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<span class="n">sage</span><span class="p">:</span> <span class="n">B</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">action_matrix</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">compute_action_data</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">_parameter</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">_parameter</span><span class="p">))</span>
+<span class="n">sage</span><span class="p">:</span> <span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">to_element</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">B</span><span class="p">)))</span> <span class="o">-</span> <span class="n">f</span><span class="o">.</span><span class="n">left_act_by_matrix</span><span class="p">(</span><span class="n">A</span><span class="p">))</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span>
+<span class="mi">10</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.act">
+<span class="sig-name descname"><span class="pre">act</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.act"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.act" title="Link to this definition">¶</a></dt>
+<dd><p>The action on the series <code class="docutils literal notranslate"><span class="pre">F</span></code> of the matrix <code class="docutils literal notranslate"><span class="pre">B</span></code> returned by
+<a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.action_matrix" title="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.action_matrix"><code class="xref py py-meth docutils literal notranslate"><span class="pre">action_matrix()</span></code></a> (not normalized).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.action_matrix">
+<span class="sig-name descname"><span class="pre">action_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.action_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.action_matrix" title="Link to this definition">¶</a></dt>
+<dd><p>The integer matrix of the action on the flattened coordinates of a
+series of the matrix <code class="docutils literal notranslate"><span class="pre">A</span></code> over <cite>K</cite> returned by
+<a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.get_action_data" title="darmonpoints.meromorphic.MeromorphicFunctions.get_action_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">MeromorphicFunctions.get_action_data()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.constant_term">
+<span class="sig-name descname"><span class="pre">constant_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">F</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.constant_term"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.constant_term" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.from_element">
+<span class="sig-name descname"><span class="pre">from_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.from_element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.from_element" title="Link to this definition">¶</a></dt>
+<dd><p>The integer representation of the series of <code class="docutils literal notranslate"><span class="pre">f</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.inverse">
+<span class="sig-name descname"><span class="pre">inverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">F</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.inverse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.inverse" title="Link to this definition">¶</a></dt>
+<dd><p>The inverse of the series <code class="docutils literal notranslate"><span class="pre">F</span></code>, whose constant term must be a unit
+(Newton iteration).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.mul">
+<span class="sig-name descname"><span class="pre">mul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.mul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.mul" title="Link to this definition">¶</a></dt>
+<dd><p>The product of the series <code class="docutils literal notranslate"><span class="pre">F</span></code> and <code class="docutils literal notranslate"><span class="pre">H</span></code> (truncated).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.normalize">
+<span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">F</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.normalize" title="Link to this definition">¶</a></dt>
+<dd><p>The multiple of <code class="docutils literal notranslate"><span class="pre">F</span></code> with constant term 1 (it must be a unit).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.scalar_inverse">
+<span class="sig-name descname"><span class="pre">scalar_inverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.scalar_inverse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.scalar_inverse" title="Link to this definition">¶</a></dt>
+<dd><p>The coordinates of the inverse of the unit of <cite>O_K</cite> with coordinates <code class="docutils literal notranslate"><span class="pre">c</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.to_element">
+<span class="sig-name descname"><span class="pre">to_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.to_element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.to_element" title="Link to this definition">¶</a></dt>
+<dd><p>The element of the space of meromorphic functions whose series is <code class="docutils literal notranslate"><span class="pre">F</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="darmonpoints.meromorphic.MeromorphicIntegerArithmetic.valuation">
+<span class="sig-name descname"><span class="pre">valuation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">F</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#MeromorphicIntegerArithmetic.valuation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.valuation" title="Link to this definition">¶</a></dt>
+<dd><p>The valuation of <code class="docutils literal notranslate"><span class="pre">F</span> <span class="pre">-</span> <span class="pre">1</span></code> (at most <cite>N</cite>), as computed by
+<a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.valuation" title="darmonpoints.meromorphic.MeromorphicFunctionsElement.valuation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.valuation()</span></code></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="darmonpoints.meromorphic.divisor_to_pseries">
 <span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">divisor_to_pseries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#divisor_to_pseries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.divisor_to_pseries" title="Link to this definition">¶</a></dt>
@@ -959,7 +1052,7 @@ indexed by the cosets of G(p) G(1).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="darmonpoints.meromorphic.evalpoly">
-<span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">evalpoly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">poly</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#evalpoly"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.evalpoly" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">darmonpoints.meromorphic.</span></span><span class="sig-name descname"><span class="pre">evalpoly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">poly</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/darmonpoints/meromorphic.html#evalpoly"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#darmonpoints.meromorphic.evalpoly" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -1118,6 +1211,7 @@ indexed by the cosets of G(p) G(1).</p>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions</span></code></a><ul>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.Element"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.Element</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.base_ring"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.base_ring()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.compute_action_data"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.compute_action_data()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.get_action_data"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.get_action_data()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.power_series_ring"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.power_series_ring()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctions.prime"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctions.prime()</span></code></a></li>
@@ -1125,12 +1219,26 @@ indexed by the cosets of G(p) G(1).</p>
 </li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement</span></code></a><ul>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.eval_derivative"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.eval_derivative()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.eval_dlog"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.eval_dlog()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.evaluate"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.evaluate()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.fast_act"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.fast_act()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.left_act_by_matrix"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.left_act_by_matrix()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.power_series"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.power_series()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.scale_by"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.scale_by()</span></code></a></li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicFunctionsElement.valuation"><code class="docutils literal notranslate"><span class="pre">MeromorphicFunctionsElement.valuation()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic</span></code></a><ul>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.act"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.act()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.action_matrix"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.action_matrix()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.constant_term"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.constant_term()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.from_element"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.from_element()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.inverse"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.inverse()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.mul"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.mul()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.normalize"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.normalize()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.scalar_inverse"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.scalar_inverse()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.to_element"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.to_element()</span></code></a></li>
+<li><a class="reference internal" href="#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.valuation"><code class="docutils literal notranslate"><span class="pre">MeromorphicIntegerArithmetic.valuation()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#darmonpoints.meromorphic.divisor_to_pseries"><code class="docutils literal notranslate"><span class="pre">divisor_to_pseries()</span></code></a></li>
@@ -1146,9 +1254,9 @@ indexed by the cosets of G(p) G(1).</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=4b9d3a76"></script>
-    <script src="_static/doctools.js?v=9a2dae69"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/scripts/furo.js?v=4e2eecee"></script>
+</div><script src="_static/documentation_options.js?v=8cc1add8"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
     </body>
 </html>

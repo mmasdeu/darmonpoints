@@ -1,15 +1,17 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="../../">
-  <head><meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>darmonpoints.meromorphic - darmonpoints 7.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
+        <title>darmonpoints.meromorphic - darmonpoints 8.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
     
     
@@ -91,19 +93,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -144,7 +133,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -160,14 +149,10 @@
   </symbol>
 </svg>
 
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
-<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
-<label class="overlay sidebar-overlay" for="__navigation">
-  <div class="visually-hidden">Hide navigation sidebar</div>
-</label>
-<label class="overlay toc-overlay" for="__toc">
-  <div class="visually-hidden">Hide table of contents sidebar</div>
-</label>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
 <a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
@@ -177,17 +162,15 @@
   <header class="mobile-header">
     <div class="header-left">
       <label class="nav-overlay-icon" for="__navigation">
-        <div class="visually-hidden">Toggle site navigation sidebar</div>
-        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 7.0.1 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 8.3 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
-        <button class="theme-toggle">
-          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
           <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
           <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -195,8 +178,7 @@
         </button>
       </div>
       <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
-        <div class="visually-hidden">Toggle table of contents sidebar</div>
-        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
   </header>
@@ -204,13 +186,12 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
-  
   <div class="sidebar-logo-container">
     <img class="sidebar-logo only-light" src="../../_static/logo.svg" alt="Light Logo"/>
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 7.0.1 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 8.3 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -231,6 +212,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.quatorder">Quaternion orders (PARI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.afuch">Arithmetic Fuchsian groups (Rickards’ library)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.kleinian">Arithmetic Kleinian groups</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../cohomology.html">Abstract cohomology class</a></li>
@@ -272,8 +256,7 @@
         </a>
         <div class="content-icon-container">
           <div class="theme-toggle-container theme-toggle-content">
-            <button class="theme-toggle">
-              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -281,8 +264,7 @@
             </button>
           </div>
           <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
-            <div class="visually-hidden">Toggle table of contents sidebar</div>
-            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
@@ -294,51 +276,70 @@
 <span class="c1">#</span>
 <span class="c1">#                  http://www.gnu.org/licenses/</span>
 <span class="c1">#########################################################################</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 
-<span class="kn">from</span> <span class="nn">sage.categories.pushout</span> <span class="kn">import</span> <span class="n">pushout</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.constructor</span> <span class="kn">import</span> <span class="n">Matrix</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
-<span class="kn">from</span> <span class="nn">sage.misc.all</span> <span class="kn">import</span> <span class="n">cputime</span>
-<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_function</span><span class="p">,</span> <span class="n">cached_method</span>
-<span class="kn">from</span> <span class="nn">sage.misc.misc_c</span> <span class="kn">import</span> <span class="n">prod</span>
-<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">get_verbose</span><span class="p">,</span> <span class="n">set_verbose</span><span class="p">,</span> <span class="n">verbose</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">FreeModuleElement_generic_dense</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">free_module_element</span> <span class="k">as</span> <span class="n">vector</span>
-<span class="kn">from</span> <span class="nn">sage.modules.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="kn">from</span> <span class="nn">sage.modules.vector_integer_dense</span> <span class="kn">import</span> <span class="n">Vector_integer_dense</span>
-<span class="kn">from</span> <span class="nn">sage.rings.all</span> <span class="kn">import</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">Zp</span>
-<span class="kn">from</span> <span class="nn">sage.rings.finite_rings.integer_mod_ring</span> <span class="kn">import</span> <span class="n">Zmod</span>
-<span class="kn">from</span> <span class="nn">sage.rings.infinity</span> <span class="kn">import</span> <span class="n">Infinity</span>
-<span class="kn">from</span> <span class="nn">sage.rings.integer_ring</span> <span class="kn">import</span> <span class="n">ZZ</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.factory</span> <span class="kn">import</span> <span class="n">ZpCA</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.padic_generic</span> <span class="kn">import</span> <span class="n">pAdicGeneric</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.precision_error</span> <span class="kn">import</span> <span class="n">PrecisionError</span>
-<span class="kn">from</span> <span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span> <span class="kn">import</span> <span class="n">PolynomialRing</span>
-<span class="kn">from</span> <span class="nn">sage.rings.power_series_ring</span> <span class="kn">import</span> <span class="n">PowerSeriesRing</span>
-<span class="kn">from</span> <span class="nn">sage.rings.rational_field</span> <span class="kn">import</span> <span class="n">QQ</span>
-<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">ModuleElement</span>
-<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
-<span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
-<span class="kn">from</span> <span class="nn">sage.structure.unique_representation</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.categories.pushout</span><span class="w"> </span><span class="kn">import</span> <span class="n">pushout</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">block_matrix</span><span class="p">,</span> <span class="n">matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.matrix_space</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.timing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cputime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_function</span><span class="p">,</span> <span class="n">cached_method</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.misc_c</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.verbose</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_verbose</span><span class="p">,</span> <span class="n">set_verbose</span><span class="p">,</span> <span class="n">verbose</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">FreeModuleElement_generic_dense</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_module_element</span> <span class="k">as</span> <span class="n">vector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.module</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.vector_integer_dense</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vector_integer_dense</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Integer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.finite_rings.integer_mod_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Zmod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.infinity</span><span class="w"> </span><span class="kn">import</span> <span class="n">Infinity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZZ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Zp</span><span class="p">,</span> <span class="n">ZpCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.padic_generic</span><span class="w"> </span><span class="kn">import</span> <span class="n">pAdicGeneric</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.precision_error</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrecisionError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.polynomial.polynomial_ring_constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolynomialRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.power_series_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">PowerSeriesRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.rational_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">QQ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleElement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.parent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.richcmp</span><span class="w"> </span><span class="kn">import</span> <span class="n">richcmp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.sage_object</span><span class="w"> </span><span class="kn">import</span> <span class="n">SageObject</span><span class="p">,</span> <span class="n">load</span><span class="p">,</span> <span class="n">save</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.unique_representation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CachedRepresentation</span><span class="p">,</span>
     <span class="n">UniqueRepresentation</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
 
-<span class="kn">from</span> <span class="nn">.divisors</span> <span class="kn">import</span> <span class="n">Divisors</span>
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">.divisors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Divisors</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">muted</span><span class="p">,</span> <span class="n">set_immutable</span><span class="p">,</span> <span class="n">speed_up_padic_inversion</span>
 
 <div class="viewcode-block" id="evalpoly">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.evalpoly">[docs]</a>
-<span class="k">def</span> <span class="nf">evalpoly</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evalpoly</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">prec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">prec</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">poly</span><span class="p">)</span>
     <span class="c1"># Initialize result</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">poly</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span><span class="mi">0</span><span class="p">)</span>
-    <span class="c1"># Evaluate value of polynomial</span>
-    <span class="c1"># using Horner&#39;s method</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">poly</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="c1"># Keep the low-degree terms t^0, ..., t^{prec-1} (matches the semantics</span>
+    <span class="c1"># of the old call site `evalpoly(self._value[:prec], ...)`).</span>
+    <span class="n">poly</span> <span class="o">=</span> <span class="n">poly</span><span class="p">[:</span><span class="n">prec</span><span class="p">]</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+    <span class="n">P0</span> <span class="o">=</span> <span class="n">poly</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">P0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">K</span><span class="p">:</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="p">(</span><span class="n">P0</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">K</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="c1"># Coercing coefficients that already lie in K is not free (it goes through</span>
+    <span class="c1"># the generic element constructor) and dominated the cost of evaluation.</span>
+    <span class="k">if</span> <span class="n">P0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">K</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">K</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">poly</span><span class="p">):</span>
+        <span class="n">poly</span> <span class="o">=</span> <span class="p">[</span><span class="n">K</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">poly</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+    <span class="c1"># Evaluate value of polynomial using Horner's method:</span>
+    <span class="c1"># result starts at 0 and we fold in poly[-1], poly[-2], ..., poly[0].</span>
+    <span class="c1"># (Seeding result with a coefficient and then also including that same</span>
+    <span class="c1"># coefficient in the loop double-counts it and adds a spurious</span>
+    <span class="c1"># poly[-1] * x**len(poly) term -- that was the previous bug here.)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">poly</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">*=</span> <span class="n">x</span>
         <span class="n">result</span> <span class="o">+=</span> <span class="n">a</span>
@@ -348,23 +349,27 @@
 
 <div class="viewcode-block" id="MeromorphicFunctionsElement">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement">[docs]</a>
-<span class="k">class</span> <span class="nc">MeromorphicFunctionsElement</span><span class="p">(</span><span class="n">ModuleElement</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MeromorphicFunctionsElement</span><span class="p">(</span><span class="n">ModuleElement</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameter</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
         <span class="n">ModuleElement</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
         <span class="n">prec</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_prec</span>
         <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
             <span class="n">K</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
             <span class="n">Ps</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_Ps</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">Divisors</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">divisor_to_pseries</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">Ps</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">support</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">normalize_point</span> <span class="o">=</span> <span class="n">Q</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># DEBUG</span>
-            <span class="k">elif</span> <span class="n">data</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">Ps</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>  <span class="c1"># multiplicative!</span>
-            <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span> <span class="o">==</span> <span class="n">parent</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">_value</span>
-            <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">Ps</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span> <span class="c1"># multiplicative!</span>
+            <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s2">"parent"</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">Divisors</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">divisor_to_pseries</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">Ps</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+                    <span class="c1"># assert len(data.support()) &gt; 1</span>
+                <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span> <span class="o">==</span> <span class="n">parent</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">_value</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">MeromorphicFunctions</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">vector</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">_value</span><span class="o">.</span><span class="n">apply_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="n">x</span><span class="o">.</span><span class="n">lift_to_precision</span><span class="p">())))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">val</span> <span class="o">=</span> <span class="n">Ps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
                 <span class="n">val</span> <span class="o">/=</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
@@ -383,49 +388,46 @@
 
 <div class="viewcode-block" id="MeromorphicFunctionsElement.power_series">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement.power_series">[docs]</a>
-    <span class="k">def</span> <span class="nf">power_series</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">power_series</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">power_series_ring</span><span class="p">()(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">))</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+
+    <span class="c1"># def polynomial_approximation(self, z, m):</span>
+    <span class="c1">#     K = self.parent().base_ring()</span>
+    <span class="c1">#     a, b, c, d = self._parameter.list()</span>
+    <span class="c1">#     phi = lambda Q: a / c if Q == Infinity else (a * Q + b) / (c * Q + d)</span>
+    <span class="c1">#     try:</span>
+    <span class="c1">#         _ = phi(self.normalize_point)</span>
+    <span class="c1">#         pole = -d / c</span>
+    <span class="c1">#     except AttributeError:</span>
+    <span class="c1">#         pole = None</span>
+    <span class="c1">#     valinf = 1</span>
+    <span class="c1">#     assert pole is None</span>
+    <span class="c1">#     fac = (z - pole) if pole is not None else 1</span>
+    <span class="c1">#     phiz = phi(z)</span>
+    <span class="c1">#     ans = fac * (sum(a*phiz**n for n, a in enumerate(self._value[:m]))) / valinf</span>
+    <span class="c1">#     return ans</span>
 
 <div class="viewcode-block" id="MeromorphicFunctionsElement.evaluate">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement.evaluate">[docs]</a>
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">):</span>  <span class="c1"># meromorphic functions</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">prec</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>  <span class="c1"># meromorphic functions</span>
         <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">D</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Integer</span><span class="p">):</span>
             <span class="n">D</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
         <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
         <span class="n">phi</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">Q</span><span class="p">:</span> <span class="n">a</span> <span class="o">/</span> <span class="n">c</span> <span class="k">if</span> <span class="n">Q</span> <span class="o">==</span> <span class="n">Infinity</span> <span class="k">else</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">pt</span> <span class="o">=</span> <span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_point</span><span class="p">)</span>
-            <span class="n">pole</span> <span class="o">=</span> <span class="o">-</span><span class="n">d</span> <span class="o">/</span> <span class="n">c</span>
-            <span class="n">valinf</span> <span class="o">=</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">pt</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_point</span> <span class="o">-</span> <span class="n">pole</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="n">pole</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">valinf</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">valinf</span> <span class="o">=</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">a</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">pole</span> <span class="ow">is</span> <span class="kc">None</span>
-
-        <span class="k">def</span> <span class="nf">ev</span><span class="p">(</span><span class="n">P</span><span class="p">):</span>
-            <span class="n">fac</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span> <span class="o">-</span> <span class="n">pole</span><span class="p">)</span> <span class="k">if</span> <span class="n">pole</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
-            <span class="n">phiP</span> <span class="o">=</span> <span class="n">phi</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">fac</span> <span class="o">*</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">phiP</span><span class="p">)</span> <span class="o">/</span> <span class="n">valinf</span>
-            <span class="c1"># except PrecisionError:</span>
-            <span class="c1">#     return fac</span>
-
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">D</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">Divisors</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">prod</span><span class="p">(</span><span class="n">ev</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">**</span> <span class="n">n</span> <span class="k">for</span> <span class="n">P</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">D</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">prod</span><span class="p">(</span><span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">phi</span><span class="p">(</span><span class="n">P</span><span class="p">),</span> <span class="n">prec</span><span class="o">=</span><span class="n">prec</span><span class="p">)</span> <span class="o">**</span> <span class="n">n</span> <span class="k">for</span> <span class="n">P</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">D</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ev</span><span class="p">(</span><span class="n">D</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">phi</span><span class="p">(</span><span class="n">D</span><span class="p">),</span> <span class="n">prec</span><span class="o">=</span><span class="n">prec</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MeromorphicFunctionsElement.eval_derivative">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement.eval_derivative">[docs]</a>
-    <span class="k">def</span> <span class="nf">eval_derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">eval_derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">return_value</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">D</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Integer</span><span class="p">):</span>
             <span class="n">D</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
@@ -434,75 +436,97 @@
         <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
         <span class="n">phi</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">Q</span><span class="p">:</span> <span class="n">a</span> <span class="o">/</span> <span class="n">c</span> <span class="k">if</span> <span class="n">Q</span> <span class="o">==</span> <span class="n">Infinity</span> <span class="k">else</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
-        <span class="n">valder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">power_series</span><span class="p">()</span><span class="o">.</span><span class="n">derivative</span><span class="p">()</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">pt</span> <span class="o">=</span> <span class="n">phi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_point</span><span class="p">)</span>
-            <span class="n">pole</span> <span class="o">=</span> <span class="o">-</span><span class="n">d</span> <span class="o">/</span> <span class="n">c</span>
-            <span class="n">valinf</span> <span class="o">=</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">pt</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_point</span> <span class="o">-</span> <span class="n">pole</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="n">pole</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">valinf</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">valinf</span> <span class="o">=</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">a</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">pole</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="n">phiD</span> <span class="o">=</span> <span class="n">phi</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">return_value</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">phiD</span><span class="p">)</span>
+        
+        <span class="n">valder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_derivative_coeffs</span><span class="p">()</span>
         <span class="n">chainrule</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">d</span> <span class="o">-</span> <span class="n">b</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">D</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="n">evalpoly</span><span class="p">(</span><span class="n">valder</span><span class="p">,</span> <span class="n">phi</span><span class="p">(</span><span class="n">D</span><span class="p">))</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">evalpoly</span><span class="p">(</span><span class="n">valder</span><span class="p">,</span> <span class="n">phiD</span><span class="p">)</span>
             <span class="o">*</span> <span class="n">chainrule</span>
-            <span class="o">/</span> <span class="n">valinf</span>
-            <span class="o">*</span> <span class="p">((</span><span class="n">D</span> <span class="o">-</span> <span class="n">pole</span><span class="p">)</span> <span class="k">if</span> <span class="n">pole</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">return_value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ans</span><span class="p">,</span> <span class="n">val</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ans</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_cmp_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+    <span class="nd">@cached_method</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_derivative_coeffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">power_series</span><span class="p">()</span><span class="o">.</span><span class="n">derivative</span><span class="p">()</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+
+    <span class="nd">@cached_method</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dlog_coeffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">power_series</span><span class="p">()</span><span class="o">.</span><span class="n">log</span><span class="p">()</span><span class="o">.</span><span class="n">derivative</span><span class="p">()</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MeromorphicFunctionsElement.eval_dlog">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement.eval_dlog">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">eval_dlog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">):</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">D</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Integer</span><span class="p">):</span>
+            <span class="n">D</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">D</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">Divisors</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">Q</span><span class="p">:</span> <span class="n">a</span> <span class="o">/</span> <span class="n">c</span> <span class="k">if</span> <span class="n">Q</span> <span class="o">==</span> <span class="n">Infinity</span> <span class="k">else</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">phiD</span> <span class="o">=</span> <span class="n">phi</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+        <span class="c1"># The coefficients of (log F)' do not depend on D: computing them (a power</span>
+        <span class="c1"># series logarithm) dominated the cost of each call, so cache them.</span>
+        <span class="n">valder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dlog_coeffs</span><span class="p">()</span>
+        <span class="n">chainrule</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">d</span> <span class="o">-</span> <span class="n">b</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">D</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">chainrule</span> <span class="o">*</span> <span class="n">evalpoly</span><span class="p">(</span><span class="n">valder</span><span class="p">,</span> <span class="n">phiD</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cmp_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">power_series</span><span class="p">()</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">right</span><span class="o">.</span><span class="n">power_series</span><span class="p">()</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">a</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">a</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">o</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
 
 <div class="viewcode-block" id="MeromorphicFunctionsElement.valuation">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement.valuation">[docs]</a>
-    <span class="k">def</span> <span class="nf">valuation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">valuation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
         <span class="n">b</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">o</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
         <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_add_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>  <span class="c1"># multiplicative!</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>  <span class="c1"># multiplicative!</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span> <span class="o">!=</span> <span class="n">right</span><span class="o">.</span><span class="n">_parameter</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Trying to add incompatible series&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Trying to add incompatible series"</span><span class="p">)</span>
         <span class="n">prec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_prec</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">power_series</span><span class="p">()</span> <span class="o">*</span> <span class="n">right</span><span class="o">.</span><span class="n">power_series</span><span class="p">())</span><span class="o">.</span><span class="n">list</span><span class="p">()[:</span><span class="n">prec</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">ans</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_sub_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>  <span class="c1"># multiplicative!</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sub_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>  <span class="c1"># multiplicative!</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span> <span class="o">!=</span> <span class="n">right</span><span class="o">.</span><span class="n">_parameter</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Trying to subtract incompatible series&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Trying to subtract incompatible series"</span><span class="p">)</span>
         <span class="n">prec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_prec</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">power_series</span><span class="p">()</span> <span class="o">/</span> <span class="n">right</span><span class="o">.</span><span class="n">power_series</span><span class="p">())</span><span class="o">.</span><span class="n">list</span><span class="p">()[:</span><span class="n">prec</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">ans</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_neg_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># multiplicative!</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_neg_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># multiplicative!</span>
         <span class="n">prec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_prec</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="p">(</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">power_series</span><span class="p">())</span><span class="o">.</span><span class="n">list</span><span class="p">()[:</span><span class="n">prec</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">ans</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MeromorphicFunctionsElement.scale_by">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement.scale_by">[docs]</a>
-    <span class="k">def</span> <span class="nf">scale_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>  <span class="c1"># multiplicative!</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scale_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>  <span class="c1"># multiplicative!</span>
+        <span class="n">prec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">_prec</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">power_series</span><span class="p">()</span> <span class="o">**</span> <span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()[:</span><span class="n">prec</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">ans</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">power_series</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">_acted_upon_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">on_left</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="ow">not</span> <span class="n">on_left</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_acted_upon_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">on_left</span><span class="p">):</span>
+        <span class="c1"># assert not on_left</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">Integer</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_by</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -510,7 +534,7 @@
 
 <div class="viewcode-block" id="MeromorphicFunctionsElement.fast_act">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement.fast_act">[docs]</a>
-    <span class="k">def</span> <span class="nf">fast_act</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fast_act</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="n">zz_ps_vec</span><span class="p">,</span> <span class="n">param</span> <span class="o">=</span> <span class="n">key</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">*</span> <span class="n">zz_ps_vec</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span>
@@ -519,24 +543,39 @@
 
 <div class="viewcode-block" id="MeromorphicFunctionsElement.left_act_by_matrix">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctionsElement.left_act_by_matrix">[docs]</a>
-    <span class="k">def</span> <span class="nf">left_act_by_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># meromorphic functions</span>
-        <span class="n">t</span> <span class="o">=</span> <span class="n">cputime</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">left_act_by_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fast</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>  <span class="c1"># meromorphic functions</span>
+        <span class="k">if</span> <span class="n">param</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">param</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span>
         <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
-        <span class="n">K</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
-        <span class="n">prec</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_prec</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_p</span>
         <span class="c1"># Below we code the action which is compatible with the usual action</span>
         <span class="c1"># P |-&gt; (aP+b)/(cP+D)</span>
-        <span class="n">zz_ps_vec</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">get_action_data</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
-        <span class="n">ans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">*</span> <span class="n">zz_ps_vec</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="n">ans</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="n">fast</span><span class="p">:</span>
+            <span class="n">zz_ps_vec</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">get_action_data</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
+            <span class="n">ans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">*</span> <span class="n">zz_ps_vec</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">ans</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">set_immutable</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">g</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span> <span class="o">==</span> <span class="n">MatrixSpace</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">g</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
+            <span class="n">K</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
+            <span class="n">prec</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_prec</span>
+            <span class="k">assert</span> <span class="n">param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">tg</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+            <span class="c1"># abcd = tau_0 g^-1 * tau_1^-1</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span> <span class="o">*</span> <span class="p">(</span><span class="n">tg</span> <span class="o">*</span> <span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">adjugate</span><span class="p">())</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+            <span class="n">zz</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">_Ps</span><span class="p">([</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">])</span> <span class="o">/</span> <span class="n">parent</span><span class="o">.</span><span class="n">_Ps</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">c</span><span class="p">]))</span>
+                <span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+                
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">evalpoly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">zz</span><span class="p">),</span> <span class="n">param</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 </div>
 
 
 
 <div class="viewcode-block" id="divisor_to_pseries">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.divisor_to_pseries">[docs]</a>
-<span class="k">def</span> <span class="nf">divisor_to_pseries</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">Ps</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">divisor_to_pseries</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">Ps</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
     <span class="n">t</span> <span class="o">=</span> <span class="n">Ps</span><span class="o">.</span><span class="n">gen</span><span class="p">()</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">parameter</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
     <span class="n">num</span> <span class="o">=</span> <span class="n">Ps</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
@@ -544,9 +583,11 @@
     <span class="k">for</span> <span class="n">Q</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
         <span class="n">K</span> <span class="o">=</span> <span class="n">Q</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">num</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">K</span><span class="p">(((</span><span class="n">c</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">b</span><span class="p">)))</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span> <span class="o">**</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">num</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">((</span><span class="n">c</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">b</span><span class="p">))</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span> <span class="o">**</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="n">num</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">den</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">K</span><span class="p">(((</span><span class="n">c</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">b</span><span class="p">)))</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span> <span class="o">**</span> <span class="n">ZZ</span><span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">den</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">((</span><span class="n">c</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">Q</span> <span class="o">+</span> <span class="n">b</span><span class="p">))</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span> <span class="o">**</span> <span class="n">ZZ</span><span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">den</span> <span class="o">=</span> <span class="n">den</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
     <span class="n">ans</span> <span class="o">=</span> <span class="n">Ps</span><span class="p">(</span><span class="n">num</span><span class="p">)</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span> <span class="o">*</span> <span class="o">~</span><span class="p">(</span><span class="n">Ps</span><span class="p">(</span><span class="n">den</span><span class="p">)</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">ans</span></div>
 
@@ -554,21 +595,22 @@
 
 <div class="viewcode-block" id="MeromorphicFunctions">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctions">[docs]</a>
-<span class="k">class</span> <span class="nc">MeromorphicFunctions</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">UniqueRepresentation</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MeromorphicFunctions</span><span class="p">(</span><span class="n">Parent</span><span class="p">,</span> <span class="n">UniqueRepresentation</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    TESTS:</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">Element</span> <span class="o">=</span> <span class="n">MeromorphicFunctionsElement</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">__classcall__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="c1"># radius = kwargs.pop(&#39;radius&#39;, None)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__classcall__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># radius = kwargs.pop('radius', None)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__classcall__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
         <span class="n">Parent</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">speed_up_padic_inversion</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">prec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_prec</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">precision_cap</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -578,41 +620,62 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_prec</span> <span class="o">=</span> <span class="n">prec</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_base_ring</span> <span class="o">=</span> <span class="n">K</span>
         <span class="n">psprec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prec</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_Ps</span> <span class="o">=</span> <span class="n">PowerSeriesRing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_ring</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">default_prec</span><span class="o">=</span><span class="n">psprec</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Ps</span> <span class="o">=</span> <span class="n">PowerSeriesRing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_ring</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">"t"</span><span class="p">,</span> <span class="n">default_prec</span><span class="o">=</span><span class="n">psprec</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MeromorphicFunctions.prime">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctions.prime">[docs]</a>
-    <span class="k">def</span> <span class="nf">prime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p</span></div>
 
 
 <div class="viewcode-block" id="MeromorphicFunctions.get_action_data">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctions.get_action_data">[docs]</a>
     <span class="nd">@cached_method</span>
-    <span class="k">def</span> <span class="nf">get_action_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">oldparam</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">verb_level</span> <span class="o">=</span> <span class="n">get_verbose</span><span class="p">()</span>
-        <span class="n">set_verbose</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">g</span><span class="o">.</span><span class="n">set_immutable</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_action_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">oldparam</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        Act on the power series by matrix g, given the old and new parameters.</span>
+<span class="sd">        The action is given by the formula:</span>
+<span class="sd">        (g * phi)(t) = phi(tau_0 g^-1 * tau_1^-1 t)</span>
+<span class="sd">        which amounts to acting on the left by</span>
+<span class="sd">        tau_1 g tau_0^-1</span>
+<span class="sd">        '''</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_action_data</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">oldparam</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MeromorphicFunctions.compute_action_data">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctions.compute_action_data">[docs]</a>
+    <span class="nd">@muted</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_action_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">oldparam</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        Uncached version of get_action_data. Looking up the cache of</span>
+<span class="sd">        get_action_data needs hashing p-adic matrices, which is slow, so</span>
+<span class="sd">        callers that do their own caching should use this one.</span>
+<span class="sd">        '''</span>
         <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">prec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">prec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prec</span>
         <span class="k">assert</span> <span class="n">param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">tg</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s1">'adjugate'</span><span class="p">):</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">matrix</span><span class="p">()</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+
+        <span class="c1"># abcd = tau_0 g^-1 * tau_1^-1</span>
         <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">oldparam</span> <span class="o">*</span> <span class="p">(</span><span class="n">tg</span> <span class="o">*</span> <span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">adjugate</span><span class="p">())</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">is_zero</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">c</span> <span class="o">/</span> <span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_action_matrix_moebius</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span>
         <span class="n">zz</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Ps</span><span class="p">([</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Ps</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">c</span><span class="p">]))</span>
-            <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="p">))</span>
             <span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
-        <span class="p">)</span>
+            <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+        <span class="p">)</span> <span class="c1"># zz = (at + b)/(ct + d)</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="p">[</span><span class="n">zz</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span><span class="mi">1</span><span class="p">),</span> <span class="n">zz</span><span class="p">]</span>
-        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">prec</span><span class="p">:</span>  <span class="c1"># DEBUG - was prec + 1</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">prec</span><span class="p">:</span>
             <span class="n">zz_ps</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="p">(</span><span class="n">zz</span> <span class="o">*</span> <span class="n">ans</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-                <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="p">))</span>
-                <span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>  <span class="c1"># DEBUG - was prec + 1</span>
+                <span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">map_coefficients</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
             <span class="p">)</span>
             <span class="n">ans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zz_ps</span><span class="p">)</span>
-        <span class="n">set_verbose</span><span class="p">(</span><span class="n">verb_level</span><span class="p">)</span>
         <span class="n">m</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">zz_ps</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ans</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">aij</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">zz_ps</span><span class="p">):</span>
@@ -620,26 +683,301 @@
         <span class="k">return</span> <span class="n">m</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_action_matrix_moebius</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        Same matrix as in get_action_data (row i contains the coefficients of</span>
+<span class="sd">        zz^i, where zz = (at + b)/(ct + d)), computed using that</span>
+<span class="sd">        zz^i = zz^(i-1) * (b1 + a1 t) / (1 + c1 t). This only needs O(prec)</span>
+<span class="sd">        operations per row instead of a product of power series.</span>
+
+<span class="sd">        Assumes that c/d has nonnegative valuation, so that the division by</span>
+<span class="sd">        1 + c1 t does not lose precision.</span>
+<span class="sd">        '''</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
+        <span class="n">dinv</span> <span class="o">=</span> <span class="o">~</span><span class="n">d</span>
+        <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">dinv</span><span class="p">,</span> <span class="n">b</span> <span class="o">*</span> <span class="n">dinv</span><span class="p">,</span> <span class="n">c</span> <span class="o">*</span> <span class="n">dinv</span>
+        <span class="n">bound</span> <span class="o">=</span> <span class="n">prec</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">zero</span> <span class="o">=</span> <span class="n">K</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="p">[</span><span class="n">K</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="n">zero</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">prec</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">prev_w</span> <span class="o">=</span> <span class="n">zero</span>
+            <span class="n">prev_u</span> <span class="o">=</span> <span class="n">zero</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">prec</span><span class="p">):</span>
+                <span class="n">wk</span> <span class="o">=</span> <span class="n">w</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                <span class="n">uk</span> <span class="o">=</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">wk</span> <span class="o">+</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">prev_w</span> <span class="o">-</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">prev_u</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">uk</span><span class="o">.</span><span class="n">_is_exact_zero</span><span class="p">():</span>
+                    <span class="n">uk</span> <span class="o">=</span> <span class="n">uk</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">bound</span><span class="p">)</span>
+                <span class="n">prev_w</span> <span class="o">=</span> <span class="n">wk</span>
+                <span class="n">prev_u</span> <span class="o">=</span> <span class="n">uk</span>
+                <span class="n">u</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uk</span><span class="p">)</span>
+            <span class="c1"># Like the coefficients of a polynomial, drop the trailing zeros</span>
+            <span class="c1"># (they are left as exact zeros in the matrix)</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">prec</span>
+            <span class="k">while</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">u</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">is_zero</span><span class="p">():</span>
+                <span class="n">n</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">break</span> <span class="c1"># All the remaining powers vanish</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">u</span>
+        <span class="k">return</span> <span class="n">m</span>
+
 <div class="viewcode-block" id="MeromorphicFunctions.base_ring">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctions.base_ring">[docs]</a>
-    <span class="k">def</span> <span class="nf">base_ring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">base_ring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_ring</span></div>
 
 
 <div class="viewcode-block" id="MeromorphicFunctions.power_series_ring">
 <a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicFunctions.power_series_ring">[docs]</a>
-    <span class="k">def</span> <span class="nf">power_series_ring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">power_series_ring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Ps</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_element_constructor_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="n">check</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_element_constructor_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">param</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">param</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_ring</span><span class="p">(),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="n">param</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="n">check</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="s2">&quot;Meromorphic Multiplicative Functions over </span><span class="si">%s</span><span class="s2"> with parameter </span><span class="si">%s</span><span class="s2">, p = </span><span class="si">%s</span><span class="s2"> and prec = </span><span class="si">%s</span><span class="s2">&quot;</span>
-            <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_ring</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prec</span><span class="p">)</span>
+            <span class="s2">"Meromorphic Multiplicative Functions over </span><span class="si">%s</span><span class="s2"> with p = </span><span class="si">%s</span><span class="s2"> and prec = </span><span class="si">%s</span><span class="s2">"</span>
+            <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_ring</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prec</span><span class="p">)</span>
         <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MeromorphicIntegerArithmetic</span><span class="p">(</span><span class="n">SageObject</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">    Arithmetic of the power series of a :class:`MeromorphicFunctions` space</span>
+<span class="sd">    (truncated to ``prec`` terms) with integers, as used to iterate Hecke</span>
+<span class="sd">    operators quickly.</span>
+
+<span class="sd">    The base field ``K`` must be `\QQ_p` or an unramified extension of it,</span>
+<span class="sd">    and the series must have integral coefficients. An element of the ring</span>
+<span class="sd">    of integers `O_K` is represented by its coordinates in the basis</span>
+<span class="sd">    `1, g, \ldots, g^{d-1}` reduced modulo `p^N` (`N` = ``prec``), and a</span>
+<span class="sd">    series by the list of the `d` integer polynomials (FLINT) of its</span>
+<span class="sd">    coordinates. Since every operation is computed modulo `p^N`, the results</span>
+<span class="sd">    agree with the `p`-adic computation done with absolute precision `N`</span>
+<span class="sd">    (which is how :class:`MeromorphicFunctionsElement` works), but are much</span>
+<span class="sd">    faster than products of `p`-adic numbers.</span>
+
+<span class="sd">    The methods raise ``ValueError`` when the input is not integral or not</span>
+<span class="sd">    known to precision `N`, or when a unit is needed and the element is not</span>
+<span class="sd">    one, so that the caller can fall back to the `p`-adic computation.</span>
+
+<span class="sd">    EXAMPLES::</span>
+
+<span class="sd">        sage: from darmonpoints.meromorphic import MeromorphicFunctions, MeromorphicIntegerArithmetic</span>
+<span class="sd">        sage: R.&lt;x&gt; = QQ[]</span>
+<span class="sd">        sage: K.&lt;g&gt; = Qp(5, 10).extension(x^2 - 3)</span>
+<span class="sd">        sage: M = MeromorphicFunctions(K, 5, 10)</span>
+<span class="sd">        sage: I = MeromorphicIntegerArithmetic(M)</span>
+<span class="sd">        sage: f = M([K(o) for o in [1, 5*g, 25, 0, 5^4*g + 5]], check=False)</span>
+<span class="sd">        sage: h = M([K(o) for o in [1, 5, 5*g, 0, 0, 25]], check=False)</span>
+<span class="sd">        sage: F, H = I.from_element(f), I.from_element(h)</span>
+<span class="sd">        sage: (I.to_element(I.mul(F, H)) - (f + h)).valuation()</span>
+<span class="sd">        10</span>
+<span class="sd">        sage: (I.to_element(I.inverse(F)) - (-f)).valuation()</span>
+<span class="sd">        10</span>
+<span class="sd">        sage: A = matrix(K, 2, 2, [1, 2, 5, 3])</span>
+<span class="sd">        sage: B = I.action_matrix(M.compute_action_data(A, f._parameter, f._parameter))</span>
+<span class="sd">        sage: (I.to_element(I.normalize(I.act(F, B))) - f.left_act_by_matrix(A)).valuation()</span>
+<span class="sd">        10</span>
+<span class="sd">    '''</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">M</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.theta_additive</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ok_coordinates</span>
+
+        <span class="n">K</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
+        <span class="n">O</span> <span class="o">=</span> <span class="n">_ok_coordinates</span><span class="p">(</span><span class="n">K</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">O</span><span class="o">.</span><span class="n">e</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">O</span><span class="o">.</span><span class="n">_kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Qp"</span><span class="p">,</span> <span class="s2">"unramified"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Only implemented for Qp and its unramified extensions"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_M</span> <span class="o">=</span> <span class="n">M</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_O</span> <span class="o">=</span> <span class="n">O</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">=</span> <span class="n">d</span> <span class="o">=</span> <span class="n">O</span><span class="o">.</span><span class="n">d</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">_prec</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">prime</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="n">p</span><span class="o">**</span><span class="n">n</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_R</span> <span class="o">=</span> <span class="n">PolynomialRing</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">"t"</span><span class="p">)</span>
+        <span class="c1"># Structure constants: basis[r] * basis[s] = sum_l c[r, s, l] basis[l]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">O</span><span class="o">.</span><span class="n">R</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">r</span><span class="p">,</span> <span class="n">l</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">O</span><span class="o">.</span><span class="n">R</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">r</span><span class="p">,</span> <span class="n">l</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="p">]</span>
+        <span class="k">assert</span> <span class="n">O</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="n">K</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">one</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_R</span><span class="o">.</span><span class="n">one</span><span class="p">()]</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_R</span><span class="o">.</span><span class="n">zero</span><span class="p">()]</span> <span class="o">*</span> <span class="p">(</span><span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_red</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">f</span> <span class="o">%</span> <span class="n">N</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">F</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">is_zero</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">precision_absolute</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Not enough precision"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">precision_absolute</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Not enough precision"</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_O</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ArithmeticError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Not integral"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.from_element">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.from_element">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        The integer representation of the series of ``f``.</span>
+<span class="sd">        '''</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_coords</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">_value</span><span class="p">[:</span><span class="n">n</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_R</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.to_element">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.to_element">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        The element of the space of meromorphic functions whose series is ``F``.</span>
+<span class="sd">        '''</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">O</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_O</span>
+        <span class="n">lists</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">padded_list</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">F</span><span class="p">]</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">O</span><span class="o">.</span><span class="n">element</span><span class="p">([</span><span class="n">lists</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)],</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_M</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="n">parameter</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.mul">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.mul">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">H</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        The product of the series ``F`` and ``H`` (truncated).</span>
+<span class="sd">        '''</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">F</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_mul_trunc_</span><span class="p">(</span><span class="n">H</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_R</span><span class="o">.</span><span class="n">zero</span><span class="p">()]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">+=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">F</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">_mul_trunc_</span><span class="p">(</span><span class="n">H</span><span class="p">[</span><span class="n">s</span><span class="p">],</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_red</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.constant_term">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.constant_term">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constant_term</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">F</span><span class="p">]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_scalar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_R</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.scalar_inverse">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.scalar_inverse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scalar_inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        The coordinates of the inverse of the unit of `O_K` with coordinates ``c``.</span>
+<span class="sd">        '''</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_O</span><span class="o">.</span><span class="n">element</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Not a unit"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coords</span><span class="p">(</span><span class="o">~</span><span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.inverse">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.inverse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        The inverse of the series ``F``, whose constant term must be a unit</span>
+<span class="sd">        (Newton iteration).</span>
+<span class="sd">        '''</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_R</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scalar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scalar_inverse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constant_term</span><span class="p">(</span><span class="n">F</span><span class="p">)))</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">:</span>
+            <span class="n">E</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+            <span class="n">E</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">E</span><span class="p">]</span>
+            <span class="n">E</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">2</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">E</span><span class="p">)</span>
+            <span class="n">k</span> <span class="o">*=</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.normalize">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.normalize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        The multiple of ``F`` with constant term 1 (it must be a unit).</span>
+<span class="sd">        '''</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_term</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">F</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scalar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scalar_inverse</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.valuation">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.valuation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">valuation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        The valuation of ``F - 1`` (at most `N`), as computed by</span>
+<span class="sd">        :meth:`MeromorphicFunctionsElement.valuation`.</span>
+<span class="sd">        '''</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
+        <span class="n">G</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">G</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">ans</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">G</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">list</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">ans</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ans</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">valuation</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ans</span></div>
+
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.action_matrix">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.action_matrix">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">action_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        The integer matrix of the action on the flattened coordinates of a</span>
+<span class="sd">        series of the matrix ``A`` over `K` returned by</span>
+<span class="sd">        :meth:`MeromorphicFunctions.get_action_data`.</span>
+<span class="sd">        '''</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span>
+        <span class="k">if</span> <span class="n">A</span><span class="o">.</span><span class="n">nrows</span><span class="p">()</span> <span class="o">!=</span> <span class="n">n</span> <span class="ow">or</span> <span class="n">A</span><span class="o">.</span><span class="n">ncols</span><span class="p">()</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Wrong size"</span><span class="p">)</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">_coords</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">A</span><span class="o">.</span><span class="n">rows</span><span class="p">()]</span>
+        <span class="n">As</span> <span class="o">=</span> <span class="p">[</span><span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">[[</span><span class="n">c</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">As</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="p">[[</span><span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span><span class="p">:</span>
+            <span class="n">blocks</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">l</span><span class="p">]</span> <span class="o">+=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">As</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">block_matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">subdivide</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span></div>
+
+
+<div class="viewcode-block" id="MeromorphicIntegerArithmetic.act">
+<a class="viewcode-back" href="../../distributions.html#darmonpoints.meromorphic.MeromorphicIntegerArithmetic.act">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">act</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">'''</span>
+<span class="sd">        The action on the series ``F`` of the matrix ``B`` returned by</span>
+<span class="sd">        :meth:`action_matrix` (not normalized).</span>
+<span class="sd">        '''</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">F</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">padded_list</span><span class="p">(</span><span class="n">n</span><span class="p">)])</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="p">((</span><span class="n">v</span> <span class="o">*</span> <span class="n">B</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_R</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">R</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">r</span> <span class="o">*</span> <span class="n">n</span> <span class="p">:</span> <span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span></div>
+</div>
 
 </pre></div>
         </article>
@@ -673,9 +1011,9 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4b9d3a76"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../../_static/scripts/furo.js?v=4e2eecee"></script>
+</div><script src="../../_static/documentation_options.js?v=8cc1add8"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>
 </html>

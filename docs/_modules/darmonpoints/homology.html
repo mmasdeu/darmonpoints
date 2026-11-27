@@ -1,15 +1,17 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="../../">
-  <head><meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>darmonpoints.homology - darmonpoints 7.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
+        <title>darmonpoints.homology - darmonpoints 8.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
     
     
@@ -91,19 +93,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -144,7 +133,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -160,14 +149,10 @@
   </symbol>
 </svg>
 
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
-<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
-<label class="overlay sidebar-overlay" for="__navigation">
-  <div class="visually-hidden">Hide navigation sidebar</div>
-</label>
-<label class="overlay toc-overlay" for="__toc">
-  <div class="visually-hidden">Hide table of contents sidebar</div>
-</label>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
 <a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
@@ -177,17 +162,15 @@
   <header class="mobile-header">
     <div class="header-left">
       <label class="nav-overlay-icon" for="__navigation">
-        <div class="visually-hidden">Toggle site navigation sidebar</div>
-        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 7.0.1 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 8.3 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
-        <button class="theme-toggle">
-          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
           <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
           <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -195,8 +178,7 @@
         </button>
       </div>
       <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
-        <div class="visually-hidden">Toggle table of contents sidebar</div>
-        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
   </header>
@@ -204,13 +186,12 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
-  
   <div class="sidebar-logo-container">
     <img class="sidebar-logo only-light" src="../../_static/logo.svg" alt="Light Logo"/>
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 7.0.1 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 8.3 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -231,6 +212,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.quatorder">Quaternion orders (PARI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.afuch">Arithmetic Fuchsian groups (Rickards’ library)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.kleinian">Arithmetic Kleinian groups</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../cohomology.html">Abstract cohomology class</a></li>
@@ -272,8 +256,7 @@
         </a>
         <div class="content-icon-container">
           <div class="theme-toggle-container theme-toggle-content">
-            <button class="theme-toggle">
-              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -281,8 +264,7 @@
             </button>
           </div>
           <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
-            <div class="visually-hidden">Toggle table of contents sidebar</div>
-            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
@@ -292,48 +274,50 @@
 <span class="c1">##     HOMOLOGY     ##</span>
 <span class="c1">##                  ##</span>
 <span class="c1">######################</span>
-<span class="kn">import</span> <span class="nn">operator</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">islice</span><span class="p">,</span> <span class="n">product</span><span class="p">,</span> <span class="n">starmap</span><span class="p">,</span> <span class="n">tee</span>
 
-<span class="kn">from</span> <span class="nn">sage.arith.all</span> <span class="kn">import</span> <span class="n">GCD</span>
-<span class="kn">from</span> <span class="nn">sage.categories.action</span> <span class="kn">import</span> <span class="n">Action</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.all</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">matrix</span>
-<span class="kn">from</span> <span class="nn">sage.matrix.matrix_space</span> <span class="kn">import</span> <span class="n">MatrixSpace</span>
-<span class="kn">from</span> <span class="nn">sage.misc.cachefunc</span> <span class="kn">import</span> <span class="n">cached_method</span>
-<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">verbose</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module</span> <span class="kn">import</span> <span class="n">FreeModule</span>
-<span class="kn">from</span> <span class="nn">sage.modules.free_module_element</span> <span class="kn">import</span> <span class="n">free_module_element</span>
-<span class="kn">from</span> <span class="nn">sage.modules.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="kn">from</span> <span class="nn">sage.rings.integer_ring</span> <span class="kn">import</span> <span class="n">ZZ</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.factory</span> <span class="kn">import</span> <span class="n">Qq</span><span class="p">,</span> <span class="n">ZpCA</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.precision_error</span> <span class="kn">import</span> <span class="n">PrecisionError</span>
-<span class="kn">from</span> <span class="nn">sage.rings.power_series_ring</span> <span class="kn">import</span> <span class="n">PowerSeriesRing</span>
-<span class="kn">from</span> <span class="nn">sage.sets.set</span> <span class="kn">import</span> <span class="n">Set</span>
-<span class="kn">from</span> <span class="nn">sage.structure.element</span> <span class="kn">import</span> <span class="n">ModuleElement</span><span class="p">,</span> <span class="n">MultiplicativeGroupElement</span>
-<span class="kn">from</span> <span class="nn">sage.structure.parent</span> <span class="kn">import</span> <span class="n">Parent</span>
-<span class="kn">from</span> <span class="nn">sage.structure.richcmp</span> <span class="kn">import</span> <span class="n">richcmp</span>
-<span class="kn">from</span> <span class="nn">sage.structure.sage_object</span> <span class="kn">import</span> <span class="n">SageObject</span>
-<span class="kn">from</span> <span class="nn">sage.structure.unique_representation</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">GCD</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.categories.action</span><span class="w"> </span><span class="kn">import</span> <span class="n">Action</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.constructor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span> <span class="k">as</span> <span class="n">matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.matrix.matrix_space</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.cachefunc</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_method</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.verbose</span><span class="w"> </span><span class="kn">import</span> <span class="n">verbose</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">FreeModule</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.free_module_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">free_module_element</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.modules.module</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZZ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qq</span><span class="p">,</span> <span class="n">ZpCA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.precision_error</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrecisionError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.power_series_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">PowerSeriesRing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.sets.set</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleElement</span><span class="p">,</span> <span class="n">MultiplicativeGroupElement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.parent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.richcmp</span><span class="w"> </span><span class="kn">import</span> <span class="n">richcmp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.sage_object</span><span class="w"> </span><span class="kn">import</span> <span class="n">SageObject</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.structure.unique_representation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CachedRepresentation</span><span class="p">,</span>
     <span class="n">UniqueRepresentation</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">_warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
 
-<span class="kn">from</span> <span class="nn">.divisors</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.homology_abstract</span> <span class="kn">import</span> <span class="n">ArithHomology</span><span class="p">,</span> <span class="n">HomologyGroup</span>
-<span class="kn">from</span> <span class="nn">.representations</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.divisors</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.homology_abstract</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArithHomology</span><span class="p">,</span> <span class="n">HomologyGroup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.representations</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 
 
 <div class="viewcode-block" id="lattice_homology_cycle">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.lattice_homology_cycle">[docs]</a>
-<span class="k">def</span> <span class="nf">lattice_homology_cycle</span><span class="p">(</span>
-    <span class="n">p</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">wp</span><span class="p">,</span> <span class="n">xlist</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">smoothen</span><span class="o">=</span><span class="kc">None</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">lattice_homology_cycle</span><span class="p">(</span>
+    <span class="n">p</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">wp</span><span class="p">,</span> <span class="n">xlist</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">smoothen</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">):</span>
     <span class="k">if</span> <span class="n">tau</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">Cp</span> <span class="o">=</span> <span class="n">Qq</span><span class="p">(</span><span class="n">p</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+        <span class="n">Cp</span> <span class="o">=</span> <span class="n">Qq</span><span class="p">(</span><span class="n">p</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="s2">"g"</span><span class="p">)</span> <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">base</span>
         <span class="n">wpinv_mat</span> <span class="o">=</span> <span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">change_ring</span><span class="p">(</span><span class="n">Cp</span><span class="p">)</span>
         <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">wpinv_mat</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
         <span class="n">tau</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">Cp</span><span class="o">.</span><span class="n">gen</span><span class="p">()</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">Cp</span><span class="o">.</span><span class="n">gen</span><span class="p">()</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
@@ -346,9 +330,7 @@
     <span class="n">xi2</span> <span class="o">=</span> <span class="n">H1</span><span class="p">({})</span>
     <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">:</span>
         <span class="n">xi1</span> <span class="o">+=</span> <span class="n">H1</span><span class="p">({</span><span class="n">G</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">quaternion_rep</span><span class="p">):</span> <span class="n">Div</span><span class="p">(</span><span class="n">tau</span><span class="p">)})</span><span class="o">.</span><span class="n">mult_by</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
-        <span class="n">xi2</span> <span class="o">+=</span> <span class="n">H1</span><span class="p">({</span><span class="n">G</span><span class="p">(</span><span class="n">wp</span><span class="o">**-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">*</span> <span class="n">wp</span><span class="p">):</span> <span class="n">wpinv_mat</span> <span class="o">*</span> <span class="n">Div</span><span class="p">(</span><span class="n">tau</span><span class="p">)})</span><span class="o">.</span><span class="n">mult_by</span><span class="p">(</span>
-            <span class="n">a</span>
-        <span class="p">)</span>
+        <span class="n">xi2</span> <span class="o">+=</span> <span class="n">H1</span><span class="p">({</span><span class="n">G</span><span class="p">(</span><span class="n">wp</span><span class="o">**-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">quaternion_rep</span> <span class="o">*</span> <span class="n">wp</span><span class="p">):</span> <span class="n">wpinv_mat</span> <span class="o">*</span> <span class="n">Div</span><span class="p">(</span><span class="n">tau</span><span class="p">)})</span><span class="o">.</span><span class="n">mult_by</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
     <span class="n">xi10</span> <span class="o">=</span> <span class="n">xi1</span>
     <span class="n">xi20</span> <span class="o">=</span> <span class="n">xi2</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
@@ -362,19 +344,21 @@
     <span class="k">if</span> <span class="n">smoothen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">newxi1</span> <span class="o">=</span> <span class="n">newxi1</span><span class="o">.</span><span class="n">hecke_smoothen</span><span class="p">(</span><span class="n">smoothen</span><span class="p">)</span>
         <span class="n">newxi2</span> <span class="o">=</span> <span class="n">newxi2</span><span class="o">.</span><span class="n">hecke_smoothen</span><span class="p">(</span><span class="n">smoothen</span><span class="p">)</span>
+    <span class="n">newxi1</span><span class="o">.</span><span class="n">twist</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">newxi2</span><span class="o">.</span><span class="n">twist</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="n">newxi1</span><span class="p">,</span> <span class="n">newxi2</span></div>
 
 
 
 <div class="viewcode-block" id="ArithGroupAction">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.ArithGroupAction">[docs]</a>
-<span class="k">class</span> <span class="nc">ArithGroupAction</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">emb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">emb_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ArithGroupAction</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">emb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">emb_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emb</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">embed</span> <span class="k">if</span> <span class="n">emb</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">emb</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emb_idx</span> <span class="o">=</span> <span class="n">emb_idx</span>
         <span class="n">Action</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">is_left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_act_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_act_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">K</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span>
             <span class="n">prec</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">precision_cap</span><span class="p">()</span>
@@ -386,56 +370,56 @@
 
 <div class="viewcode-block" id="TensorElement">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.TensorElement">[docs]</a>
-<span class="k">class</span> <span class="nc">TensorElement</span><span class="p">(</span><span class="n">ModuleElement</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TensorElement</span><span class="p">(</span><span class="n">ModuleElement</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Define an element of `H_1(G,V)`</span>
 <span class="sd">            - data: a list</span>
 
 <span class="sd">        TESTS:</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;data should be a dictionary indexed by elements of ArithGroup&quot;</span>
+                <span class="s2">"data should be a dictionary indexed by elements of ArithGroup"</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">ModuleElement</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">_cache_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cache_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
             <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">(),</span> <span class="nb">tuple</span><span class="p">([(</span><span class="n">g</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">_cache_key</span><span class="p">())</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()])]</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="TensorElement.size_of_support">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.TensorElement.size_of_support">[docs]</a>
-    <span class="k">def</span> <span class="nf">size_of_support</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">size_of_support</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;0&quot;</span>
+            <span class="k">return</span> <span class="s2">"0"</span>
         <span class="n">is_first</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">mystr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">mystr</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">is_first</span><span class="p">:</span>
-                <span class="n">mystr</span> <span class="o">+=</span> <span class="s2">&quot; + &quot;</span>
+                <span class="n">mystr</span> <span class="o">+=</span> <span class="s2">" + "</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">is_first</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="n">mystr</span> <span class="o">+=</span> <span class="s2">&quot;{</span><span class="si">%s</span><span class="s2">}|(</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span>
+            <span class="n">mystr</span> <span class="o">+=</span> <span class="s2">"{</span><span class="si">%s</span><span class="s2">}|(</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mystr</span>
 
 <div class="viewcode-block" id="TensorElement.short_rep">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.TensorElement.short_rep">[docs]</a>
-    <span class="k">def</span> <span class="nf">short_rep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">short_rep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[(</span><span class="n">g</span><span class="o">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">degree</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">size</span><span class="p">())</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_add_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="n">newdict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">right</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="k">try</span><span class="p">:</span>
@@ -446,7 +430,7 @@
                 <span class="n">newdict</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span><span class="n">newdict</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_sub_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sub_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
         <span class="n">newdict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">right</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">try</span><span class="p">:</span>
@@ -459,11 +443,14 @@
 
 <div class="viewcode-block" id="TensorElement.mult_by">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.TensorElement.mult_by">[docs]</a>
-    <span class="k">def</span> <span class="nf">mult_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__rmul__</span><span class="p">(</span><span class="n">a</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mult_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">newdict</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">a</span> <span class="o">*</span> <span class="n">v</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">if</span> <span class="n">a</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span><span class="n">newdict</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
         <span class="n">newdict</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">a</span> <span class="o">*</span> <span class="n">v</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">if</span> <span class="n">a</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()(</span><span class="n">newdict</span><span class="p">)</span></div>
 
@@ -471,15 +458,15 @@
 
 <div class="viewcode-block" id="TensorProduct">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.TensorProduct">[docs]</a>
-<span class="k">class</span> <span class="nc">TensorProduct</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TensorProduct</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
     <span class="n">Element</span> <span class="o">=</span> <span class="n">TensorElement</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">emb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">emb_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">emb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">emb_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        INPUT:</span>
 <span class="sd">        - G: an ArithGroup</span>
 <span class="sd">        - V: a CoeffModule</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_group</span> <span class="o">=</span> <span class="n">G</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_coeffmodule</span> <span class="o">=</span> <span class="n">V</span>
         <span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="n">ZZ</span><span class="p">)</span>
@@ -488,36 +475,36 @@
         <span class="n">V</span><span class="o">.</span><span class="n">register_action</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_arith_action</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_populate_coercion_lists_</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_an_element_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_an_element_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="nb">dict</span><span class="p">([(</span><span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">()</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coeffmodule</span><span class="o">.</span><span class="n">_an_element_</span><span class="p">())])</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;Tensor product of the group ring of </span><span class="si">%s</span><span class="s2"> with </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"Tensor product of the group ring of </span><span class="si">%s</span><span class="s2"> with </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">(),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">(),</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="TensorProduct.get_arith_action">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.TensorProduct.get_arith_action">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_arith_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_arith_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arith_action</span></div>
 
 
 <div class="viewcode-block" id="TensorProduct.group">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.TensorProduct.group">[docs]</a>
-    <span class="k">def</span> <span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span></div>
 
 
 <div class="viewcode-block" id="TensorProduct.coefficient_module">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.TensorProduct.coefficient_module">[docs]</a>
-    <span class="k">def</span> <span class="nf">coefficient_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coefficient_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coeffmodule</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_element_constructor_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_element_constructor_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">data</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -530,7 +517,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">{</span><span class="n">data</span><span class="p">:</span> <span class="n">ZZ</span><span class="p">(</span><span class="mi">1</span><span class="p">)})</span>
 
-    <span class="k">def</span> <span class="nf">_coerce_map_from_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_map_from_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">(</span>
                 <span class="n">S</span><span class="o">.</span><span class="n">group</span><span class="p">()</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
@@ -543,67 +530,127 @@
 
 <div class="viewcode-block" id="OneChainsElement">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement">[docs]</a>
-<span class="k">class</span> <span class="nc">OneChainsElement</span><span class="p">(</span><span class="n">TensorElement</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OneChainsElement</span><span class="p">(</span><span class="n">TensorElement</span><span class="p">):</span>
 <div class="viewcode-block" id="OneChainsElement.is_degree_zero_valued">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.is_degree_zero_valued">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_degree_zero_valued</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">return</span> <span class="kc">True</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_degree_zero_valued</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">degree_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">(),</span> <span class="n">Divisors</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">degree_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">warn</span><span class="p">(</span><span class="s1">'Using provided degree_map'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">degree_map</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">degree_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"zero_degree_equivalent only implemented for divisors coefficient module, or with a degree_map provided"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">degree_map</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="OneChainsElement.is_zero">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.is_zero">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_zero</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_zero</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_nonzero_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_nonzero_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_zero</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span> <span class="o">-</span> <span class="n">other</span><span class="p">)</span><span class="o">.</span><span class="n">is_zero</span><span class="p">()</span>
-
-<div class="viewcode-block" id="OneChainsElement.radius">
-<a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.radius">[docs]</a>
-    <span class="k">def</span> <span class="nf">radius</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">max</span><span class="p">([</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">radius</span><span class="p">()</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span></div>
-
 
 <div class="viewcode-block" id="OneChainsElement.zero_degree_equivalent">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.zero_degree_equivalent">[docs]</a>
-    <span class="k">def</span> <span class="nf">zero_degree_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">zero_degree_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">degree_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_boundary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Use the relations:</span>
-<span class="sd">            * gh|v = g|v + h|g^-1 v</span>
-<span class="sd">            * g^a|v = g|(v + g^-1v + ... + g^-(a-1)v)</span>
-<span class="sd">            * g^(-a)|v = - g^a|g^av</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">verbose</span><span class="p">(</span><span class="s2">&quot;Entering zero_degree_equivalent&quot;</span><span class="p">)</span>
+<span class="sd">            * gh|v = g|v + h|g^-1 v - delta(g|h|v))</span>
+<span class="sd">            * g^a|v = g|(v + g^-1v + ... + g^-(a-1)v) - delta(g|g^(a-1)|v + g|g^(a-2)|g^-1v + ... + g|g|g^(2-n)v)</span>
+<span class="sd">            * g^(-a)|v = - g^a|g^av + delta(g^-a|g^a|v + 1|1|v)</span>
+
+<span class="sd">        TESTS:</span>
+
+<span class="sd">        The chain below is only torsion (of order 2) in the abelianization, so</span>
+<span class="sd">        it has to be replaced by twice itself. Both the values of the chain and</span>
+<span class="sd">        the relations added to kill its weight must end up scaled consistently,</span>
+<span class="sd">        or the answer is not valued in degree-zero divisors::</span>
+
+<span class="sd">            sage: from darmonpoints.sarithgroup import BigArithGroup</span>
+<span class="sd">            sage: from darmonpoints.divisors import Divisors</span>
+<span class="sd">            sage: from darmonpoints.homology import OneChains</span>
+<span class="sd">            sage: import sys, io</span>
+<span class="sd">            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='PSL2', use_shapiro=False, outfile='/tmp/darmonpoints.tmp')</span>
+<span class="sd">            sage: G = GS.small_group()</span>
+<span class="sd">            sage: Cp = Qq(25, 10, names='g')</span>
+<span class="sd">            sage: Div = Divisors(Cp)</span>
+<span class="sd">            sage: c = OneChains(G, Div)({G.gen(13): Div(Cp.gen() + 2)})</span>
+<span class="sd">            sage: _out, sys.stdout = sys.stdout, io.StringIO()  # silence the progress bar</span>
+<span class="sd">            sage: ans, x_ord = c.zero_degree_equivalent(allow_multiple=True)</span>
+<span class="sd">            sage: sys.stdout = _out</span>
+<span class="sd">            sage: x_ord, ans.is_degree_zero_valued()</span>
+<span class="sd">            (2, True)</span>
+<span class="sd">        """</span>
+        <span class="c1"># Keep the caller's argument around: the final check re-derives its own</span>
+        <span class="c1"># map, and forwarding the one we filled in below would warn about a</span>
+        <span class="c1"># "provided" degree_map that the caller never provided.</span>
+        <span class="n">given_degree_map</span> <span class="o">=</span> <span class="n">degree_map</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">(),</span> <span class="n">Divisors</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">degree_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">warn</span><span class="p">(</span><span class="s1">'Using provided degree_map'</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">degree_map</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">degree_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"zero_degree_equivalent only implemented for divisors coefficient module, or with a degree_map provided"</span>
+            <span class="p">)</span>
+        <span class="n">verbose</span><span class="p">(</span><span class="s2">"Entering zero_degree_equivalent"</span><span class="p">)</span>
         <span class="n">HH</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
         <span class="n">V</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
-        <span class="n">G</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">HH</span><span class="o">.</span><span class="n">group</span><span class="p">()</span> <span class="c1"># Arithmetic group G = F/R</span>
+        <span class="n">ngens</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">gens</span><span class="p">())</span>
+        <span class="n">Gab</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">abelianization</span><span class="p">()</span> <span class="c1"># G^{ab} = F^{ab}/R^{ab}</span>
+        <span class="c1"># The elements of V forming the 1-chain, which are paired with the elements of G in self._data.keys()</span>
         <span class="n">oldvals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-        <span class="n">aux_element</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">oldvals</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">Gab</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">abelianization</span><span class="p">()</span>
-        <span class="n">xlist</span> <span class="o">=</span> <span class="p">[(</span><span class="n">g</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">degree</span><span class="p">())</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">oldvals</span><span class="p">)]</span>
+        <span class="c1"># xlist represents taking the degree map of the divisor</span>
+        <span class="n">xlist</span> <span class="o">=</span> <span class="p">[(</span><span class="n">g</span><span class="p">,</span> <span class="n">degree_map</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">oldvals</span><span class="p">)]</span>
+        <span class="c1"># We interpret xlist as an element of the abelianization of G</span>
         <span class="n">sum_abxlist</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">Gab</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">])</span>
+        <span class="c1"># Order in the abelianization</span>
         <span class="n">x_ord</span> <span class="o">=</span> <span class="n">sum_abxlist</span><span class="o">.</span><span class="n">order</span><span class="p">()</span>
+        <span class="n">verbose</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">x_ord</span><span class="w"> </span><span class="si">= }</span><span class="s2">"</span><span class="p">)</span>
+        <span class="c1"># We need a torsion element in the abelianization to reduce to degree zero</span>
         <span class="k">if</span> <span class="n">x_ord</span> <span class="o">==</span> <span class="n">Infinity</span> <span class="ow">or</span> <span class="p">(</span><span class="n">x_ord</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">allow_multiple</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Must yield torsion element in abelianization (</span><span class="si">%s</span><span class="s2">, order = </span><span class="si">%s</span><span class="s2">)&quot;</span>
+                <span class="s2">"Must yield torsion element in abelianization (</span><span class="si">%s</span><span class="s2">, order = </span><span class="si">%s</span><span class="s2">)"</span>
                 <span class="o">%</span> <span class="p">(</span><span class="n">sum_abxlist</span><span class="p">,</span> <span class="n">x_ord</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="p">)</span> <span class="c1"># TODO: if x_ord is Infinity, find a Hecke operator that kills it, and apply it to reduce to torsion</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># We adjust the weight of our 1-chain to be x_ord * C, which is trivial in the abelianization.</span>
+            <span class="c1"># The scaling has to happen here, on the values themselves: the relation</span>
+            <span class="c1"># terms appended below already carry their own multiplicity and must not</span>
+            <span class="c1"># be scaled by x_ord again.</span>
             <span class="n">xlist</span> <span class="o">=</span> <span class="p">[(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_ord</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">]</span>
-        <span class="n">gwordlist</span><span class="p">,</span> <span class="n">rel</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">calculate_weight_zero_word</span><span class="p">(</span><span class="n">xlist</span><span class="p">,</span> <span class="n">separated</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">gwordlist</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">word_rep</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">]</span>
+            <span class="n">oldvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">x_ord</span> <span class="o">*</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">oldvals</span><span class="p">]</span>
+        <span class="c1"># Let C be our 1-chain, degC \in R^{ab}, so we find the relations in R^{ab} that satisfy degC + \sum r_i^{ab} = 0 in F^{ab}</span>
+        <span class="n">weight_vector</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">vector</span><span class="p">(</span><span class="n">ZZ</span><span class="p">,</span> <span class="n">get_weight_vector</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">word_rep</span><span class="p">,</span> <span class="n">ngens</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">xlist</span><span class="p">)</span>
+        <span class="n">rel</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">_calculate_relation</span><span class="p">(</span><span class="n">weight_vector</span><span class="p">,</span> <span class="n">separated</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rel</span><span class="p">:</span>
+            <span class="n">gwordlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            <span class="n">oldvals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ZZ</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="n">V</span><span class="o">.</span><span class="n">an_element</span><span class="p">(</span><span class="n">degree</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">gwordlist</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">oldvals</span><span class="p">)</span>
+        <span class="n">verbose</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gwordlist</span><span class="si">=}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">verbose</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">oldvals</span><span class="si">=}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="c1"># For an arbitrary element v of V, \sum r_i \otimes v is a 1-boundary</span>
+        <span class="c1"># newdict will store the new 1-chain formed by C + \sum r_i \otimes v</span>
         <span class="n">newdict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+        <span class="n">boundary_list</span><span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Decompose each (g,v) tensor in the 1-cycle into a sum of tensors of the form (g_i, v_i) where g_i is a generator of G</span>
+        <span class="c1"># We store all 1-boundaries used in boundary_list</span>
         <span class="k">for</span> <span class="n">gword</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gwordlist</span><span class="p">,</span> <span class="n">oldvals</span><span class="p">):</span>
-            <span class="n">newv</span> <span class="o">=</span> <span class="n">V</span><span class="p">(</span><span class="n">x_ord</span> <span class="o">*</span> <span class="n">v</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tietze_to_syllables</span><span class="p">(</span><span class="n">gword</span><span class="p">):</span>
+            <span class="n">verbose</span><span class="p">(</span><span class="s2">"Processing </span><span class="si">%s</span><span class="s2">|</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">gword</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+            <span class="n">newv</span> <span class="o">=</span> <span class="n">V</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tietze_to_syllables</span><span class="p">(</span><span class="n">gword</span><span class="p">):</span> <span class="c1"># gi^a|v</span>
                 <span class="n">oldv</span> <span class="o">=</span> <span class="n">V</span><span class="p">(</span><span class="n">newv</span><span class="p">)</span>
                 <span class="n">g</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
                 <span class="n">newv</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span><span class="o">**-</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">V</span><span class="p">(</span><span class="n">oldv</span><span class="p">)</span>  <span class="c1"># for the next iteration</span>
@@ -614,54 +661,48 @@
                     <span class="n">sign</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
                 <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
                     <span class="n">newdict</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">+=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">sign</span><span class="p">)</span> <span class="o">*</span> <span class="n">oldv</span>
+                    <span class="n">boundary_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span><span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="o">**</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">g</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">ZZ</span><span class="p">(</span><span class="n">sign</span><span class="p">)</span><span class="o">*</span><span class="n">V</span><span class="p">(</span><span class="n">oldv</span><span class="p">))))</span> <span class="c1"># negative sign included</span>
                     <span class="n">oldv</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span><span class="o">**-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">oldv</span>
             <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">update_progress</span><span class="p">(</span>
                 <span class="nb">float</span><span class="p">(</span><span class="n">QQ</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span> <span class="o">/</span> <span class="n">QQ</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">oldvals</span><span class="p">))),</span>
-                <span class="s2">&quot;Reducing to degree zero equivalent&quot;</span><span class="p">,</span>
+                <span class="s2">"Reducing to degree zero equivalent"</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rel</span><span class="p">:</span>
-            <span class="n">newv</span> <span class="o">=</span> <span class="n">V</span><span class="p">(</span><span class="n">aux_element</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tietze_to_syllables</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
-                <span class="n">oldv</span> <span class="o">=</span> <span class="n">V</span><span class="p">(</span><span class="n">newv</span><span class="p">)</span>
-                <span class="n">g</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-                <span class="n">newv</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span><span class="o">**-</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">V</span><span class="p">(</span><span class="n">oldv</span><span class="p">)</span>
-                <span class="n">sign</span> <span class="o">=</span> <span class="mi">1</span>
-                <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">a</span> <span class="o">=</span> <span class="o">-</span><span class="n">a</span>
-                    <span class="n">oldv</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span><span class="o">**</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">V</span><span class="p">(</span><span class="n">oldv</span><span class="p">)</span>
-                    <span class="n">sign</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                    <span class="n">newdict</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">+=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">sign</span><span class="p">)</span> <span class="o">*</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">*</span> <span class="n">oldv</span>
-                    <span class="n">oldv</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span><span class="o">**-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">oldv</span>
-        <span class="n">verbose</span><span class="p">(</span><span class="s2">&quot;Done zero_degree_equivalent&quot;</span><span class="p">)</span>
+
+        <span class="n">verbose</span><span class="p">(</span><span class="s2">"Done zero_degree_equivalent"</span><span class="p">)</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">HH</span><span class="p">(</span><span class="n">newdict</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ans</span><span class="o">.</span><span class="n">is_degree_zero_valued</span><span class="p">():</span>
+        <span class="c1"># The final result should be valued in degree-zero divisors</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ans</span><span class="o">.</span><span class="n">is_degree_zero_valued</span><span class="p">(</span><span class="n">degree_map</span><span class="o">=</span><span class="n">given_degree_map</span><span class="p">):</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!&quot;</span>
+                <span class="s2">"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"</span>
             <span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The cycle is not valued in degree-zero divisors.&quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;EXPECT THINGS TO BREAK BADLY&quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;residue:&quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">([(</span><span class="n">ky</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">degree</span><span class="p">())</span> <span class="k">for</span> <span class="n">ky</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ans</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"The cycle is not valued in degree-zero divisors."</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"EXPECT THINGS TO BREAK BADLY"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">([(</span><span class="n">ky</span><span class="p">,</span> <span class="n">degree_map</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">ky</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ans</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!&quot;</span>
+                <span class="s2">"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">allow_multiple</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ans</span><span class="p">,</span> <span class="n">x_ord</span>
+            <span class="k">if</span> <span class="n">return_boundary</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ans</span><span class="p">,</span> <span class="n">x_ord</span><span class="p">,</span> <span class="n">boundary_list</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ans</span><span class="p">,</span> <span class="n">x_ord</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ans</span></div>
+            <span class="k">if</span> <span class="n">return_boundary</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ans</span><span class="p">,</span> <span class="n">boundary_list</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ans</span></div>
 
 
 <div class="viewcode-block" id="OneChainsElement.factor_into_generators">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.factor_into_generators">[docs]</a>
-    <span class="k">def</span> <span class="nf">factor_into_generators</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">factor_into_generators</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prec</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Use the relations:</span>
 <span class="sd">            * gh|v = g|v + h|g^-1 v</span>
 <span class="sd">            * g^a|v = g|(v + g^-1v + ... + g^-(a-1)v)</span>
 <span class="sd">            * g^(-a)|v = - g^a|g^av</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span>
         <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
         <span class="n">newdict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
@@ -686,7 +727,7 @@
 
 <div class="viewcode-block" id="OneChainsElement.act_by_hecke">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.act_by_hecke">[docs]</a>
-    <span class="k">def</span> <span class="nf">act_by_hecke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">g0</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">act_by_hecke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">g0</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">newdict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
         <span class="n">hecke_reps</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">get_hecke_reps</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">g0</span><span class="o">=</span><span class="n">g0</span><span class="p">)</span>
@@ -712,7 +753,7 @@
 
 <div class="viewcode-block" id="OneChainsElement.is_cycle">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.is_cycle">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_residue</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_residue</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()([])</span>
         <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">+=</span> <span class="p">(</span><span class="n">g</span><span class="o">**-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span> <span class="o">-</span> <span class="n">v</span>
@@ -720,12 +761,12 @@
             <span class="n">ans</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ans</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">return</span> <span class="n">ans</span> <span class="k">if</span> <span class="n">return_residue</span> <span class="o">==</span> <span class="kc">False</span> <span class="k">else</span> <span class="p">(</span><span class="n">ans</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">ans</span> <span class="k">if</span> <span class="n">return_residue</span> <span class="ow">is</span> <span class="kc">False</span> <span class="k">else</span> <span class="p">(</span><span class="n">ans</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="OneChainsElement.hecke_smoothen">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.hecke_smoothen">[docs]</a>
-    <span class="k">def</span> <span class="nf">hecke_smoothen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hecke_smoothen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">prec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">prec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span><span class="o">.</span><span class="n">precision_cap</span><span class="p">()</span>
         <span class="n">rnorm</span> <span class="o">=</span> <span class="n">r</span>
@@ -738,14 +779,44 @@
 
 <div class="viewcode-block" id="OneChainsElement.act_by_poly_hecke">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChainsElement.act_by_poly_hecke">[docs]</a>
-    <span class="k">def</span> <span class="nf">act_by_poly_hecke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">act_by_poly_hecke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Act on this 1-chain by ``f(T_r)``.</span>
+
+<span class="sd">        TESTS:</span>
+
+<span class="sd">        The action must be linear in ``f``, in particular in the unit of its</span>
+<span class="sd">        factorization -- which the two branches below have to account for</span>
+<span class="sd">        differently::</span>
+
+<span class="sd">            sage: from darmonpoints.sarithgroup import BigArithGroup</span>
+<span class="sd">            sage: from darmonpoints.divisors import Divisors</span>
+<span class="sd">            sage: from darmonpoints.homology import OneChains</span>
+<span class="sd">            sage: GS = BigArithGroup(5, 1, 11, base=QQ, grouptype='PSL2', use_shapiro=False, outfile='/tmp/darmonpoints.tmp')</span>
+<span class="sd">            sage: G = GS.small_group()</span>
+<span class="sd">            sage: Cp = Qq(25, 10, names='g')</span>
+<span class="sd">            sage: Div = Divisors(Cp)</span>
+<span class="sd">            sage: c = OneChains(G, Div)({G.gen(0): Div(Cp.gen() + 2)})</span>
+<span class="sd">            sage: x = QQ['x'].gen()</span>
+<span class="sd">            sage: is_zero = lambda ch: all(v.is_zero() for v in ch._data.values())</span>
+<span class="sd">            sage: is_zero(c.act_by_poly_hecke(2, 2*(x+1), prec=10) - c.act_by_poly_hecke(2, x+1, prec=10).mult_by(2))  # single-factor branch</span>
+<span class="sd">            True</span>
+<span class="sd">            sage: f = (x+1) * (x^2-3)</span>
+<span class="sd">            sage: is_zero(c.act_by_poly_hecke(2, 2*f, prec=10) - c.act_by_poly_hecke(2, f, prec=10).mult_by(2))  # recursive branch</span>
+<span class="sd">            True</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">f</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span>
         <span class="k">if</span> <span class="n">prec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">prec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">()</span><span class="o">.</span><span class="n">base_ring</span><span class="p">()</span><span class="o">.</span><span class="n">precision_cap</span><span class="p">()</span>
         <span class="n">facts</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">factor</span><span class="p">()</span>
+        <span class="c1"># NOTE the asymmetry between the two branches below: the Horner</span>
+        <span class="c1"># evaluation runs over the coefficients of f itself, so it already</span>
+        <span class="c1"># accounts for the unit of the factorization, while the recursive</span>
+        <span class="c1"># branch only ever multiplies the *monic* irreducible factors and so</span>
+        <span class="c1"># has to put the unit back by hand.</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">facts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">verbose</span><span class="p">(</span><span class="s2">&quot;Acting by f = </span><span class="si">%s</span><span class="s2"> and r = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">factor</span><span class="p">(),</span> <span class="n">r</span><span class="p">))</span>
+            <span class="n">verbose</span><span class="p">(</span><span class="s2">"Acting by f = </span><span class="si">%s</span><span class="s2"> and r = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">factor</span><span class="p">(),</span> <span class="n">r</span><span class="p">))</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">gen</span><span class="p">()</span>
             <span class="n">V</span> <span class="o">=</span> <span class="p">[</span><span class="n">ZZ</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">coefficients</span><span class="p">(</span><span class="n">sparse</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span>
             <span class="n">ans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mult_by</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
@@ -754,6 +825,7 @@
                 <span class="n">ans</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mult_by</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">ans</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">facts</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span>
             <span class="n">f0</span> <span class="o">=</span> <span class="n">facts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">ans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act_by_poly_hecke</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="n">prec</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">facts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
@@ -761,21 +833,21 @@
             <span class="k">for</span> <span class="n">f0</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">facts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
                     <span class="n">ans</span> <span class="o">=</span> <span class="n">ans</span><span class="o">.</span><span class="n">act_by_poly_hecke</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="n">prec</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">ans</span></div>
+            <span class="k">return</span> <span class="n">ans</span><span class="o">.</span><span class="n">mult_by</span><span class="p">(</span><span class="n">u</span><span class="p">)</span></div>
 </div>
 
 
 
 <div class="viewcode-block" id="OneChains">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.OneChains">[docs]</a>
-<span class="k">class</span> <span class="nc">OneChains</span><span class="p">(</span><span class="n">TensorProduct</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OneChains</span><span class="p">(</span><span class="n">TensorProduct</span><span class="p">):</span>
     <span class="n">Element</span> <span class="o">=</span> <span class="n">OneChainsElement</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">emb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">emb_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">emb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">emb_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">TensorProduct</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">emb</span><span class="p">,</span> <span class="n">emb_idx</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;Group of 1-chains on </span><span class="si">%s</span><span class="s2"> with values in </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_repr_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"Group of 1-chains on </span><span class="si">%s</span><span class="s2"> with values in </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">(),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">coefficient_module</span><span class="p">(),</span>
         <span class="p">)</span></div>
@@ -784,8 +856,8 @@
 
 <div class="viewcode-block" id="get_homology_kernel">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.get_homology_kernel">[docs]</a>
-<span class="k">def</span> <span class="nf">get_homology_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hecke_data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">verbose</span><span class="p">(</span><span class="s2">&quot;Entering get_homology_kernel...&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_homology_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hecke_data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">verbose</span><span class="p">(</span><span class="s2">"Entering get_homology_kernel..."</span><span class="p">)</span>
     <span class="n">verb</span> <span class="o">=</span> <span class="n">get_verbose</span><span class="p">()</span>
     <span class="n">set_verbose</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">hecke_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -804,7 +876,7 @@
     <span class="n">group</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
     <span class="n">Bsp</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">space</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">phif</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">phif</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">C</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">gens</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_shapiro</span><span class="p">():</span>
@@ -818,7 +890,7 @@
 
     <span class="n">f</span> <span class="o">=</span> <span class="n">Bsp</span><span class="o">.</span><span class="n">hom</span><span class="p">([</span><span class="n">vector</span><span class="p">(</span><span class="n">C</span><span class="p">(</span><span class="n">phif</span><span class="p">(</span><span class="n">o</span><span class="p">)))</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">B</span><span class="o">.</span><span class="n">gens</span><span class="p">()])</span>
 
-    <span class="k">def</span> <span class="nf">phig</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">phig</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="n">ans</span> <span class="o">=</span> <span class="n">C</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">gens</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_shapiro</span><span class="p">():</span>
@@ -833,7 +905,7 @@
     <span class="n">g</span> <span class="o">=</span> <span class="n">Bsp</span><span class="o">.</span><span class="n">hom</span><span class="p">([</span><span class="n">vector</span><span class="p">(</span><span class="n">C</span><span class="p">(</span><span class="n">phig</span><span class="p">(</span><span class="n">o</span><span class="p">)))</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">B</span><span class="o">.</span><span class="n">gens</span><span class="p">()])</span>
     <span class="n">maplist</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">]</span>
 
-    <span class="n">R</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">QQ</span><span class="p">[</span><span class="s2">"x"</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">ell</span><span class="p">,</span> <span class="n">f_ell_0</span> <span class="ow">in</span> <span class="n">hecke_data</span><span class="p">:</span>
         <span class="n">f_ell</span> <span class="o">=</span> <span class="n">R</span><span class="p">(</span><span class="n">f_ell_0</span><span class="p">)</span>
         <span class="n">Aq</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">hecke_matrix</span><span class="p">(</span><span class="n">ell</span><span class="p">,</span> <span class="n">with_torsion</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -864,14 +936,14 @@
     <span class="p">)</span>
     <span class="n">good_ker</span> <span class="o">=</span> <span class="p">[</span><span class="n">B</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">denominator</span><span class="p">()</span> <span class="o">*</span> <span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">good_ker</span><span class="o">.</span><span class="n">LLL</span><span class="p">()</span><span class="o">.</span><span class="n">rows</span><span class="p">()]</span>
     <span class="n">set_verbose</span><span class="p">(</span><span class="n">verb</span><span class="p">)</span>
-    <span class="n">verbose</span><span class="p">(</span><span class="s2">&quot;Done with get_homology_kernel&quot;</span><span class="p">)</span>
+    <span class="n">verbose</span><span class="p">(</span><span class="s2">"Done with get_homology_kernel"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">good_ker</span></div>
 
 
 
 <div class="viewcode-block" id="inverse_shapiro">
 <a class="viewcode-back" href="../../cohomology.html#darmonpoints.homology.inverse_shapiro">[docs]</a>
-<span class="k">def</span> <span class="nf">inverse_shapiro</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">inverse_shapiro</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_shapiro</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[(</span><span class="n">g</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Gpn</span><span class="o">.</span><span class="n">gens</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">())]</span>
     <span class="n">ans</span> <span class="o">=</span> <span class="p">[]</span>
@@ -915,9 +987,9 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4b9d3a76"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../../_static/scripts/furo.js?v=4e2eecee"></script>
+</div><script src="../../_static/documentation_options.js?v=8cc1add8"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>
 </html>

@@ -1,15 +1,17 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="../../">
-  <head><meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
+        <link rel="prefetch" href="../../_static/logo.svg" as="image">
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>darmonpoints.findcurve - darmonpoints 7.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
+        <title>darmonpoints.findcurve - darmonpoints 8.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="https://doc.sagemath.org/html/en/reference/_static/custom-furo.css" />
     
     
@@ -91,19 +93,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -144,7 +133,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -160,14 +149,10 @@
   </symbol>
 </svg>
 
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
-<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
-<label class="overlay sidebar-overlay" for="__navigation">
-  <div class="visually-hidden">Hide navigation sidebar</div>
-</label>
-<label class="overlay toc-overlay" for="__toc">
-  <div class="visually-hidden">Hide table of contents sidebar</div>
-</label>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
 <a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
@@ -177,17 +162,15 @@
   <header class="mobile-header">
     <div class="header-left">
       <label class="nav-overlay-icon" for="__navigation">
-        <div class="visually-hidden">Toggle site navigation sidebar</div>
-        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">darmonpoints 7.0.1 documentation</div></a>
+      <a href="../../index.html"><div class="brand">darmonpoints 8.3 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
-        <button class="theme-toggle">
-          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
           <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
           <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -195,8 +178,7 @@
         </button>
       </div>
       <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
-        <div class="visually-hidden">Toggle table of contents sidebar</div>
-        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
   </header>
@@ -204,13 +186,12 @@
     <div class="sidebar-container">
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
-  
   <div class="sidebar-logo-container">
     <img class="sidebar-logo only-light" src="../../_static/logo.svg" alt="Light Logo"/>
     <img class="sidebar-logo only-dark" src="../../_static/logo.svg" alt="Dark Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">darmonpoints 7.0.1 documentation</span>
+  <span class="sidebar-brand-text">darmonpoints 8.3 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -231,6 +212,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup_nscartan">Non-split Cartan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.arithgroup">Arithmetic group</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.sarithgroup">S-arithmetic group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.quatorder">Quaternion orders (PARI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.afuch">Arithmetic Fuchsian groups (Rickards’ library)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arithmeticgroups.html#module-darmonpoints.kleinian">Arithmetic Kleinian groups</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../cohomology.html">Abstract cohomology class</a></li>
@@ -272,8 +256,7 @@
         </a>
         <div class="content-icon-container">
           <div class="theme-toggle-container theme-toggle-content">
-            <button class="theme-toggle">
-              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -281,8 +264,7 @@
             </button>
           </div>
           <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
-            <div class="visually-hidden">Toggle table of contents sidebar</div>
-            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
@@ -290,20 +272,25 @@
 <span></span><span class="c1">######################################</span>
 <span class="c1">#####     Curve finding           ####</span>
 <span class="c1">######################################</span>
-<span class="kn">import</span> <span class="nn">configparser</span>
-<span class="kn">import</span> <span class="nn">datetime</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 
-<span class="kn">from</span> <span class="nn">sage.all</span> <span class="kn">import</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">,</span> <span class="n">Infinity</span><span class="p">,</span> <span class="n">Qp</span><span class="p">,</span> <span class="n">QuaternionAlgebra</span><span class="p">,</span> <span class="n">factor</span>
-<span class="kn">from</span> <span class="nn">sage.misc.verbose</span> <span class="kn">import</span> <span class="n">get_verbose</span><span class="p">,</span> <span class="n">set_verbose</span><span class="p">,</span> <span class="n">verbose</span>
-<span class="kn">from</span> <span class="nn">sage.rings.padics.precision_error</span> <span class="kn">import</span> <span class="n">PrecisionError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.rational_field</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span> <span class="k">as</span> <span class="n">QQ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.integer_ring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Z</span> <span class="k">as</span> <span class="n">ZZ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.infinity</span><span class="w"> </span><span class="kn">import</span> <span class="n">Infinity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.algebras.quatalg.quaternion_algebra</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuaternionAlgebra</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.arith.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">factor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.misc.verbose</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_verbose</span><span class="p">,</span> <span class="n">set_verbose</span><span class="p">,</span> <span class="n">verbose</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sage.rings.padics.precision_error</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrecisionError</span>
 
-<span class="kn">from</span> <span class="nn">.cohomology_arithmetic</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.homology</span> <span class="kn">import</span> <span class="n">get_homology_kernel</span><span class="p">,</span> <span class="n">inverse_shapiro</span><span class="p">,</span> <span class="n">lattice_homology_cycle</span>
-<span class="kn">from</span> <span class="nn">.integrals</span> <span class="kn">import</span> <span class="n">double_integral_zero_infty</span><span class="p">,</span> <span class="n">integrate_H1</span>
-<span class="kn">from</span> <span class="nn">.sarithgroup</span> <span class="kn">import</span> <span class="n">BigArithGroup</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.cohomology_arithmetic</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.homology</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_homology_kernel</span><span class="p">,</span> <span class="n">inverse_shapiro</span><span class="p">,</span> <span class="n">lattice_homology_cycle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.integrals</span><span class="w"> </span><span class="kn">import</span> <span class="n">double_integral_zero_infty</span><span class="p">,</span> <span class="n">integrate_H1</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.sarithgroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">BigArithGroup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Bunch</span><span class="p">,</span>
     <span class="n">config_section_map</span><span class="p">,</span>
     <span class="n">direct_sum_of_maps</span><span class="p">,</span>
@@ -315,7 +302,7 @@
 
 <div class="viewcode-block" id="find_curve">
 <a class="viewcode-back" href="../../highlevel.html#darmonpoints.findcurve.find_curve">[docs]</a>
-<span class="k">def</span> <span class="nf">find_curve</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_curve</span><span class="p">(</span>
     <span class="n">P</span><span class="p">,</span>
     <span class="n">DB</span><span class="p">,</span>
     <span class="n">NE</span><span class="p">,</span>
@@ -327,72 +314,72 @@
     <span class="n">ramification_at_infinity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    EXAMPLES:</span>
 
 <span class="sd">    First example::</span>
 
-<span class="sd">    sage: from darmonpoints.findcurve import find_curve</span>
-<span class="sd">    sage: find_curve(5,6,30,20) # long time # optional - magma</span>
-<span class="sd">    # B = F&lt;i,j,k&gt;, with i^2 = -1 and j^2 = 3</span>
-<span class="sd">    ...</span>
-<span class="sd">    &#39;(1, 0, 1, -289, 1862)&#39;</span>
+<span class="sd">        sage: from darmonpoints.findcurve import find_curve</span>
+<span class="sd">        sage: find_curve(5,6,30,20) # long time</span>
+<span class="sd">        # B = F&lt;i,j,k&gt;, with i^2 = -1 and j^2 = 3</span>
+<span class="sd">        ...</span>
+<span class="sd">        '(1, 0, 1, -289, 1862)'</span>
 
 <span class="sd">    A second example, now over a real quadratic::</span>
 
-<span class="sd">    sage: from darmonpoints.findcurve import find_curve</span>
-<span class="sd">    sage: F.&lt;r&gt; = QuadraticField(5)</span>
-<span class="sd">    sage: P = F.ideal(3/2*r + 1/2)</span>
-<span class="sd">    sage: D = F.ideal(3)</span>
-<span class="sd">    sage: find_curve(P,D,P*D,30,ramification_at_infinity = F.real_places()[:1]) # long time # optional - magma</span>
-<span class="sd">    ...</span>
+<span class="sd">        sage: from darmonpoints.findcurve import find_curve</span>
+<span class="sd">        sage: F.&lt;r&gt; = QuadraticField(5)</span>
+<span class="sd">        sage: P = F.ideal(3/2*r + 1/2)</span>
+<span class="sd">        sage: D = F.ideal(3)</span>
+<span class="sd">        sage: find_curve(P,D,P*D,30,ramification_at_infinity = F.real_places()[:1]) # long time</span>
+<span class="sd">        ...</span>
 
 <span class="sd">    Now over a cubic of mixed signature::</span>
 
-<span class="sd">    sage: from darmonpoints.findcurve import find_curve</span>
-<span class="sd">    sage: F.&lt;r&gt; = NumberField(x^3 -3)</span>
-<span class="sd">    sage: P = F.ideal(r-2)</span>
-<span class="sd">    sage: D = F.ideal(r-1)</span>
-<span class="sd">    sage: find_curve(P,D,P*D,30) # long time # optional - magma</span>
-<span class="sd">    ...</span>
+<span class="sd">        sage: from darmonpoints.findcurve import find_curve</span>
+<span class="sd">        sage: F.&lt;r&gt; = NumberField(x^3 -3)</span>
+<span class="sd">        sage: P = F.ideal(r-2)</span>
+<span class="sd">        sage: D = F.ideal(r-1)</span>
+<span class="sd">        sage: find_curve(P,D,P*D,30) # long time</span>
+<span class="sd">        ...</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;config.ini&quot;</span><span class="p">)</span>
-    <span class="n">param_dict</span> <span class="o">=</span> <span class="n">config_section_map</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;General&quot;</span><span class="p">)</span>
-    <span class="n">param_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config_section_map</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;FindCurve&quot;</span><span class="p">))</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"config.ini"</span><span class="p">)</span>
+    <span class="n">param_dict</span> <span class="o">=</span> <span class="n">config_section_map</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"General"</span><span class="p">)</span>
+    <span class="n">param_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">config_section_map</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"FindCurve"</span><span class="p">))</span>
     <span class="n">param_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">param</span> <span class="o">=</span> <span class="n">Bunch</span><span class="p">(</span><span class="o">**</span><span class="n">param_dict</span><span class="p">)</span>
 
     <span class="c1"># Get general parameters</span>
-    <span class="n">outfile</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;outfile&quot;</span><span class="p">)</span>
-    <span class="n">use_ps_dists</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_ps_dists&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="n">use_shapiro</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_shapiro&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="n">use_sage_db</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_sage_db&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="n">magma_seed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;magma_seed&quot;</span><span class="p">,</span> <span class="mi">1515316</span><span class="p">)</span>
-    <span class="n">use_magma</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;use_magma&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-    <span class="n">progress_bar</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;progress_bar&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-    <span class="n">sign_at_infinity</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sign_at_infinity&quot;</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">outfile</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"outfile"</span><span class="p">)</span>
+    <span class="n">use_ps_dists</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_ps_dists"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">use_shapiro</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_shapiro"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">use_sage_db</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_sage_db"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">magma_seed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"magma_seed"</span><span class="p">,</span> <span class="mi">1515316</span><span class="p">)</span>
+    <span class="n">use_magma</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_magma"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">progress_bar</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"progress_bar"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">sign_at_infinity</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sign_at_infinity"</span><span class="p">,</span> <span class="n">ZZ</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
 
     <span class="c1"># Get find_curve specific parameters</span>
-    <span class="n">grouptype</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;grouptype&quot;</span><span class="p">)</span>
-    <span class="n">hecke_bound</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hecke_bound&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-    <span class="n">timeout</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;timeout&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">check_conductor</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;check_conductor&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">grouptype</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"grouptype"</span><span class="p">)</span>
+    <span class="n">hecke_bound</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"hecke_bound"</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">timeout</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"timeout"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">check_conductor</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"check_conductor"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">initial_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">page_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/KleinianGroups-1.0/klngpspec&quot;</span>
-        <span class="k">if</span> <span class="n">magma</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">sage.interfaces.magma</span> <span class="kn">import</span> <span class="n">Magma</span>
-
-            <span class="n">quit_when_done</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">magma</span> <span class="o">=</span> <span class="n">Magma</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">quit_when_done</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_F</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">ring</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="n">_F</span> <span class="o">=</span> <span class="n">QQ</span>
+    <span class="c1"># Magma is only used when a session is passed (backend='magma')</span>
+    <span class="n">needs_magma</span> <span class="o">=</span> <span class="n">magma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">initial_data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">needs_magma</span><span class="p">:</span>
+        <span class="n">page_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"/KleinianGroups-1.0/klngpspec"</span>
+        <span class="n">quit_when_done</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">magma_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">magma</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s2">&quot;SetSeed(</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="n">magma_seed</span><span class="p">)</span>
+            <span class="n">magma</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s2">"SetSeed(</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="n">magma_seed</span><span class="p">)</span>
         <span class="n">magma</span><span class="o">.</span><span class="n">attach_spec</span><span class="p">(</span><span class="n">page_path</span><span class="p">)</span>
-        <span class="n">magma</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s2">&quot;Page_initialized := true&quot;</span><span class="p">)</span>
+        <span class="n">magma</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s2">"Page_initialized := true"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">quit_when_done</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -402,7 +389,7 @@
         <span class="n">F</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">ring</span><span class="p">()</span>
         <span class="n">Fdisc</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">discriminant</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">P</span> <span class="o">*</span> <span class="n">DB</span><span class="p">)</span><span class="o">.</span><span class="n">divides</span><span class="p">(</span><span class="n">NE</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Conductor (NE) should be divisible by P*DB&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Conductor (NE) should be divisible by P*DB"</span><span class="p">)</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">norm</span><span class="p">())</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
 
     <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -411,10 +398,10 @@
         <span class="n">p</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
         <span class="n">Fdisc</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">NE</span> <span class="o">%</span> <span class="p">(</span><span class="n">P</span> <span class="o">*</span> <span class="n">DB</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Conductor (NE) should be divisible by P*DB&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Conductor (NE) should be divisible by P*DB"</span><span class="p">)</span>
 
-    <span class="n">Ncartan</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Ncartan&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="n">param_dict</span><span class="p">[</span><span class="s2">&quot;nscartan&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ncartan</span>
+    <span class="n">Ncartan</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Ncartan"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">param_dict</span><span class="p">[</span><span class="s2">"nscartan"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ncartan</span>
     <span class="n">Np</span> <span class="o">=</span> <span class="n">NE</span> <span class="o">/</span> <span class="p">(</span><span class="n">P</span> <span class="o">*</span> <span class="n">DB</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">Ncartan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">Np</span> <span class="o">=</span> <span class="n">Np</span> <span class="o">/</span> <span class="n">Ncartan</span><span class="o">**</span><span class="mi">2</span>
@@ -422,32 +409,32 @@
         <span class="n">use_ps_dists</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># More efficient our own implementation</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">is_prime</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;P (= </span><span class="si">%s</span><span class="s2">) should be a prime, of inertia degree 1&quot;</span> <span class="o">%</span> <span class="n">P</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"P (= </span><span class="si">%s</span><span class="s2">) should be a prime, of inertia degree 1"</span> <span class="o">%</span> <span class="n">P</span><span class="p">)</span>
 
     <span class="n">working_prec</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="mi">2</span> <span class="o">*</span> <span class="n">prec</span> <span class="o">+</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>
 
-    <span class="n">sgninfty</span> <span class="o">=</span> <span class="s2">&quot;plus&quot;</span> <span class="k">if</span> <span class="n">sign_at_infinity</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;minus&quot;</span>
-    <span class="n">fname</span> <span class="o">=</span> <span class="s2">&quot;moments_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.sobj&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Fdisc</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">DB</span><span class="p">,</span> <span class="n">NE</span><span class="p">,</span> <span class="n">sgninfty</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span>
+    <span class="n">sgninfty</span> <span class="o">=</span> <span class="s2">"plus"</span> <span class="k">if</span> <span class="n">sign_at_infinity</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">"minus"</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="s2">"moments_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.sobj"</span> <span class="o">%</span> <span class="p">(</span><span class="n">Fdisc</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">DB</span><span class="p">,</span> <span class="n">NE</span><span class="p">,</span> <span class="n">sgninfty</span><span class="p">,</span> <span class="n">prec</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">outfile</span> <span class="o">==</span> <span class="s2">&quot;log&quot;</span><span class="p">:</span>
-        <span class="n">outfile</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.log&quot;</span> <span class="o">%</span> <span class="p">(</span>
+    <span class="k">if</span> <span class="n">outfile</span> <span class="o">==</span> <span class="s2">"log"</span><span class="p">:</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">.log"</span> <span class="o">%</span> <span class="p">(</span>
             <span class="n">P</span><span class="p">,</span>
             <span class="n">NE</span><span class="p">,</span>
             <span class="n">sgninfty</span><span class="p">,</span>
             <span class="n">prec</span><span class="p">,</span>
-            <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">-%H%M%S&quot;</span><span class="p">),</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2">-%H%M%S"</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">outfile</span> <span class="o">=</span> <span class="n">outfile</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;div&quot;</span><span class="p">)</span>
-        <span class="n">outfile</span> <span class="o">=</span> <span class="s2">&quot;/tmp/findcurve_&quot;</span> <span class="o">+</span> <span class="n">outfile</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="n">outfile</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="s2">"div"</span><span class="p">)</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="s2">"/tmp/findcurve_"</span> <span class="o">+</span> <span class="n">outfile</span>
 
     <span class="k">if</span> <span class="n">F</span> <span class="o">!=</span> <span class="n">QQ</span> <span class="ow">and</span> <span class="n">ramification_at_infinity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">F</span><span class="o">.</span><span class="n">signature</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">F</span><span class="o">.</span><span class="n">signature</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">ramification_at_infinity</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">real_places</span><span class="p">(</span>
                     <span class="n">prec</span><span class="o">=</span><span class="n">Infinity</span>
-                <span class="p">)</span>  <span class="c1"># Totally &#39;definite&#39;</span>
+                <span class="p">)</span>  <span class="c1"># Totally 'definite'</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Please specify the ramification at infinity&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Please specify the ramification at infinity"</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">F</span><span class="o">.</span><span class="n">signature</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">ideal</span><span class="p">(</span><span class="n">DB</span><span class="p">)</span><span class="o">.</span><span class="n">factor</span><span class="p">())</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">ramification_at_infinity</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Split at infinity</span>
@@ -459,7 +446,7 @@
             <span class="n">ramification_at_infinity</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">if</span> <span class="n">outfile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Partial results will be saved in </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Partial results will be saved in </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">outfile</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">initial_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">G</span><span class="p">,</span> <span class="n">phiE</span> <span class="o">=</span> <span class="n">initial_data</span>
@@ -486,11 +473,11 @@
                 <span class="n">magma</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
             <span class="n">mystr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mystr</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">30</span><span class="p">:</span>
-                <span class="n">mystr</span> <span class="o">=</span> <span class="n">mystr</span><span class="p">[:</span><span class="mi">14</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot; ... &quot;</span> <span class="o">+</span> <span class="n">mystr</span><span class="p">[</span><span class="o">-</span><span class="mi">14</span><span class="p">:]</span>
+                <span class="n">mystr</span> <span class="o">=</span> <span class="n">mystr</span><span class="p">[:</span><span class="mi">14</span><span class="p">]</span> <span class="o">+</span> <span class="s2">" ... "</span> <span class="o">+</span> <span class="n">mystr</span><span class="p">[</span><span class="o">-</span><span class="mi">14</span><span class="p">:]</span>
             <span class="k">if</span> <span class="n">return_all</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;Error when computing G: &quot;</span> <span class="o">+</span> <span class="n">mystr</span><span class="p">]</span>
+                <span class="k">return</span> <span class="p">[</span><span class="s2">"Error when computing G: "</span> <span class="o">+</span> <span class="n">mystr</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Error when computing G: &quot;</span> <span class="o">+</span> <span class="n">mystr</span>
+                <span class="k">return</span> <span class="s2">"Error when computing G: "</span> <span class="o">+</span> <span class="n">mystr</span>
 
         <span class="c1"># Define phiE, the cohomology class associated to the system of eigenvalues.</span>
         <span class="n">Coh</span> <span class="o">=</span> <span class="n">ArithCoh</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
@@ -506,24 +493,24 @@
             <span class="k">if</span> <span class="n">quit_when_done</span><span class="p">:</span>
                 <span class="n">magma</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">return_all</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;Error when finding cohomology class: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span>
+                <span class="k">return</span> <span class="p">[</span><span class="s2">"Error when finding cohomology class: "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;Error when finding cohomology class: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s2">"Error when finding cohomology class: "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">use_sage_db</span><span class="p">:</span>
             <span class="n">G</span><span class="o">.</span><span class="n">save_to_db</span><span class="p">()</span>
-        <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;Cohomology class found&quot;</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="s2">"Cohomology class found"</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">ker</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">inverse_shapiro</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">get_homology_kernel</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">hecke_data</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hecke_data&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">get_homology_kernel</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">hecke_data</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"hecke_data"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
         <span class="p">]</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">quit_when_done</span><span class="p">:</span>
             <span class="n">magma</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">return_all</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;Problem calculating homology kernel: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="s2">"Problem calculating homology kernel: "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Problem calculating homology kernel: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">"Problem calculating homology kernel: "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">return_all</span><span class="p">:</span>
         <span class="n">phiE</span> <span class="o">=</span> <span class="p">[</span><span class="n">phiE</span><span class="p">]</span>
@@ -541,9 +528,9 @@
                 <span class="n">progress_bar</span><span class="o">=</span><span class="n">progress_bar</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Problem when getting overconvergent class: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Problem when getting overconvergent class: "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
             <span class="k">continue</span>
-        <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;Done overconvergent lift&quot;</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="s2">"Done overconvergent lift"</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
         <span class="c1"># Find an element x of Gpn for not in the kernel of phi,</span>
         <span class="c1"># and such that both x and wp^-1 * x * wp are trivial in the abelianization of Gn.</span>
         <span class="k">try</span><span class="p">:</span>
@@ -556,9 +543,9 @@
                     <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
                     <span class="k">break</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Cocycle evaluates always to zero&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Cocycle evaluates always to zero"</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Problem when choosing element in kernel: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Problem when choosing element in kernel: "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
             <span class="k">continue</span>
         <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">xi1</span><span class="p">,</span> <span class="n">xi2</span> <span class="o">=</span> <span class="n">lattice_homology_cycle</span><span class="p">(</span>
@@ -572,10 +559,10 @@
                 <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">except</span> <span class="n">PrecisionError</span><span class="p">:</span>
                 <span class="n">working_prec</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">working_prec</span>
-                <span class="n">verbose</span><span class="p">(</span><span class="s2">&quot;Setting working_prec to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">working_prec</span><span class="p">)</span>
+                <span class="n">verbose</span><span class="p">(</span><span class="s2">"Setting working_prec to </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">working_prec</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Problem when computing homology cycle: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
-                <span class="n">verbose</span><span class="p">(</span><span class="s2">&quot;Exception occurred: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+                <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Problem when computing homology cycle: "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+                <span class="n">verbose</span><span class="p">(</span><span class="s2">"Exception occurred: "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
                 <span class="k">break</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -593,30 +580,30 @@
                 <span class="n">G</span><span class="p">,</span> <span class="n">xi2</span><span class="p">,</span> <span class="n">Phi</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">prec</span><span class="o">=</span><span class="n">working_prec</span><span class="p">,</span> <span class="n">twist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">progress_bar</span><span class="o">=</span><span class="n">progress_bar</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Problem with integration: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Problem with integration: </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
             <span class="k">continue</span>
 
         <span class="n">qE</span> <span class="o">=</span> <span class="n">qE1</span> <span class="o">/</span> <span class="n">qE2</span>
         <span class="n">qE</span> <span class="o">=</span> <span class="n">qE</span><span class="o">.</span><span class="n">add_bigoh</span><span class="p">(</span><span class="n">prec</span> <span class="o">+</span> <span class="n">qE</span><span class="o">.</span><span class="n">valuation</span><span class="p">())</span>
         <span class="n">Linv</span> <span class="o">=</span> <span class="n">qE</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">p_branch</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">qE</span><span class="o">.</span><span class="n">valuation</span><span class="p">()</span>
 
-        <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;Integral done. Now trying to recognize the curve&quot;</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
-        <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;F.&lt;r&gt; = NumberField(</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">minpoly</span><span class="p">()),</span> <span class="n">outfile</span><span class="p">)</span>
-        <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;N_E = </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">NE</span><span class="p">,</span> <span class="n">factor</span><span class="p">(</span><span class="n">NE</span><span class="p">)),</span> <span class="n">outfile</span><span class="p">)</span>
-        <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;D_B = </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">DB</span><span class="p">,</span> <span class="n">factor</span><span class="p">(</span><span class="n">DB</span><span class="p">)),</span> <span class="n">outfile</span><span class="p">)</span>
-        <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;Np = </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Np</span><span class="p">,</span> <span class="n">factor</span><span class="p">(</span><span class="n">Np</span><span class="p">)),</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="s2">"Integral done. Now trying to recognize the curve"</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="s2">"F.&lt;r&gt; = NumberField(</span><span class="si">%s</span><span class="s2">)"</span> <span class="o">%</span> <span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">gen</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">minpoly</span><span class="p">()),</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="s2">"N_E = </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">NE</span><span class="p">,</span> <span class="n">factor</span><span class="p">(</span><span class="n">NE</span><span class="p">)),</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="s2">"D_B = </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">DB</span><span class="p">,</span> <span class="n">factor</span><span class="p">(</span><span class="n">DB</span><span class="p">)),</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="s2">"Np = </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">Np</span><span class="p">,</span> <span class="n">factor</span><span class="p">(</span><span class="n">Np</span><span class="p">)),</span> <span class="n">outfile</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">Ncartan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;Ncartan = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Ncartan</span><span class="p">),</span> <span class="n">outfile</span><span class="p">)</span>
+            <span class="n">fwrite</span><span class="p">(</span><span class="s2">"Ncartan = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">Ncartan</span><span class="p">),</span> <span class="n">outfile</span><span class="p">)</span>
         <span class="n">fwrite</span><span class="p">(</span>
-            <span class="s2">&quot;Calculation with p = </span><span class="si">%s</span><span class="s2"> and prec = </span><span class="si">%s</span><span class="s2">+</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">working_prec</span> <span class="o">-</span> <span class="n">prec</span><span class="p">),</span>
+            <span class="s2">"Calculation with p = </span><span class="si">%s</span><span class="s2"> and prec = </span><span class="si">%s</span><span class="s2">+</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">prec</span><span class="p">,</span> <span class="n">working_prec</span> <span class="o">-</span> <span class="n">prec</span><span class="p">),</span>
             <span class="n">outfile</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;qE = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">qE</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
-        <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;Linv = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">Linv</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="s2">"qE = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">qE</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="s2">"Linv = </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">Linv</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
         <span class="n">Cp</span> <span class="o">=</span> <span class="n">qE</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">Cp</span><span class="o">.</span><span class="n">defining_polynomial</span><span class="p">()</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">fwrite</span><span class="p">(</span>
-                <span class="s2">&quot;# (where </span><span class="si">{g}</span><span class="s2"> satisfies: </span><span class="si">{defpoly}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="s2">"# (where </span><span class="si">{g}</span><span class="s2"> satisfies: </span><span class="si">{defpoly}</span><span class="s2">)"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">g</span><span class="o">=</span><span class="n">Cp</span><span class="o">.</span><span class="n">_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">defpoly</span><span class="o">=</span><span class="n">Cp</span><span class="o">.</span><span class="n">defining_polynomial</span><span class="p">(</span><span class="n">exact</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="p">),</span>
                 <span class="n">outfile</span><span class="p">,</span>
@@ -632,14 +619,14 @@
         <span class="k">if</span> <span class="n">curve</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">quit_when_done</span><span class="p">:</span>
                 <span class="n">magma</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
-            <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="p">)</span>
+            <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"None"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">curve</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">global_minimal_model</span><span class="p">()</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">):</span>
                 <span class="k">pass</span>
-            <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;EllipticCurve(F, </span><span class="si">%s</span><span class="s2"> )&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">a_invariants</span><span class="p">())),</span> <span class="n">outfile</span><span class="p">)</span>
-            <span class="n">fwrite</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+            <span class="n">fwrite</span><span class="p">(</span><span class="s2">"EllipticCurve(F, </span><span class="si">%s</span><span class="s2"> )"</span> <span class="o">%</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">a_invariants</span><span class="p">())),</span> <span class="n">outfile</span><span class="p">)</span>
+            <span class="n">fwrite</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
             <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">a_invariants</span><span class="p">()))</span>
     <span class="k">if</span> <span class="n">quit_when_done</span><span class="p">:</span>
         <span class="n">magma</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
@@ -680,9 +667,9 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4b9d3a76"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../../_static/scripts/furo.js?v=4e2eecee"></script>
+</div><script src="../../_static/documentation_options.js?v=8cc1add8"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     </body>
 </html>
