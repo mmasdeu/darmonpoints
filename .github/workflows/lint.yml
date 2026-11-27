@@ -18,11 +18,11 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-      - name: install dependencies
+          activate-environment: test
+          environment-file: environment.yml
+      - name: list packages
         shell: bash -l {0}
-        run: |
-          mamba env update --quiet -n test -f environment.yml
-          conda list
+        run: conda list
       - name: install package
         shell: bash -l {0}
         run: |

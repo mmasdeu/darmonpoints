@@ -7,7 +7,7 @@ channels:
 dependencies:
   - alabaster
   - black>=23,<24
-  - build
+  - python-build
   - cysignals
   - cython
   - docutils

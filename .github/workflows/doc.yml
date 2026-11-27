@@ -14,12 +14,14 @@ jobs:
       - uses: actions/checkout@v4
         with: { submodules: recursive }
       - uses: conda-incubator/setup-miniconda@v3
-        with: { miniforge-version: "latest" }
-      - name: install dependencies
+        with:
+          miniforge-version: latest
+          activate-environment: test
+          environment-file: environment.yml
+
+      - name: list packages
         shell: bash -l {0}
-        run: |
-          mamba env update -n test --quiet -f environment.yml
-          conda list
+        run: conda list
       - name: install package
         shell: bash -l {0}
         run: |
